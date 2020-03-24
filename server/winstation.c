@@ -38,7 +38,6 @@
 #include "user.h"
 #include "file.h"
 #include "security.h"
-#include "wine/unicode.h"
 
 
 static struct list winstation_list = LIST_INIT(winstation_list);
@@ -163,7 +162,7 @@ static struct object *winstation_lookup_name( struct object *obj, struct unicode
 
     if (!name) return NULL;  /* open the winstation itself */
 
-    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
+    if (get_path_element( name->str, name->len ) < name->len)  /* no backslash allowed in name */
     {
         set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
         return NULL;
@@ -262,7 +261,7 @@ static int desktop_link_name( struct object *obj, struct object_name *name, stru
         set_error( STATUS_OBJECT_TYPE_MISMATCH );
         return 0;
     }
-    if (memchrW( name->name, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
+    if (get_path_element( name->name, name->len ) < name->len)  /* no backslash allowed in name */
     {
         set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
         return 0;

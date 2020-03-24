@@ -276,6 +276,15 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
     return parent;
 }
 
+/* return length of first path element in name */
+data_size_t get_path_element( const WCHAR *name, data_size_t len )
+{
+    data_size_t i;
+
+    for (i = 0; i < len / sizeof(WCHAR); i++) if (name[i] == '\\') break;
+    return i * sizeof(WCHAR);
+}
+
 static struct object *create_object( struct object *parent, const struct object_ops *ops,
                                      const struct unicode_str *name, const struct security_descriptor *sd )
 {

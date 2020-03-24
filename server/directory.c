@@ -142,30 +142,28 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
     struct directory *dir = (struct directory *)obj;
     struct object *found;
     struct unicode_str tmp;
-    const WCHAR *p;
 
     assert( obj->ops == &directory_ops );
 
     if (!name) return NULL;  /* open the directory itself */
 
-    if (!(p = memchrW( name->str, '\\', name->len / sizeof(WCHAR) )))
-        /* Last element in the path name */
-        tmp.len = name->len;
-    else
-        tmp.len = (p - name->str) * sizeof(WCHAR);
-
     tmp.str = name->str;
+    tmp.len = get_path_element( name->str, name->len );
+
     if ((found = find_object( dir->entries, &tmp, attr )))
     {
-        /* Skip trailing \\ */
-        if (p)
+        /* Skip trailing \\ and move to the next element */
+        if (tmp.len < name->len)
         {
-            p++;
             tmp.len += sizeof(WCHAR);
+            name->str += tmp.len / sizeof(WCHAR);
+            name->len -= tmp.len;
         }
-        /* Move to the next element*/
-        name->str = p;
-        name->len -= tmp.len;
+        else
+        {
+            name->str = NULL;
+            name->len = 0;
+        }
         return found;
     }
 
@@ -173,7 +171,7 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
     {
         if (tmp.len == 0) /* Double backslash */
             set_error( STATUS_OBJECT_NAME_INVALID );
-        else if (p)  /* Path still has backslashes */
+        else if (tmp.len < name->len)  /* Path still has backslashes */
             set_error( STATUS_OBJECT_PATH_NOT_FOUND );
     }
     return NULL;
