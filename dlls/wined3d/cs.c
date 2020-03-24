@@ -2651,8 +2651,9 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
     struct wined3d_cs_packet *packet;
 
     header_size = FIELD_OFFSET(struct wined3d_cs_packet, data[0]);
-    size = (size + header_size - 1) & ~(header_size - 1);
     packet_size = FIELD_OFFSET(struct wined3d_cs_packet, data[size]);
+    packet_size = (packet_size + header_size - 1) & ~(header_size - 1);
+    size = packet_size - header_size;
     if (packet_size >= WINED3D_CS_QUEUE_SIZE)
     {
         ERR("Packet size %lu >= queue size %u.\n",
