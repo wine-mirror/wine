@@ -284,7 +284,6 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 #define MAX_CONSTANT_BUFFERS        15
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
-#define MAX_RENDER_TARGET_VIEWS     8
 #define MAX_UNORDERED_ACCESS_VIEWS  8
 #define MAX_TGSM_REGISTERS          8192
 #define MAX_VERTEX_BLENDS           4
@@ -1393,7 +1392,7 @@ struct ps_compile_args
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
     DWORD render_offscreen : 1;
-    DWORD rt_alpha_swizzle : 8; /* MAX_RENDER_TARGET_VIEWS, 8 */
+    DWORD rt_alpha_swizzle : 8; /* WINED3D_MAX_RENDER_TARGETS, 8 */
     DWORD dual_source_blend : 1;
     DWORD padding : 17;
 };
@@ -1917,7 +1916,7 @@ struct wined3d_rendertarget_info
 
 struct wined3d_fb_state
 {
-    struct wined3d_rendertarget_view *render_targets[MAX_RENDER_TARGET_VIEWS];
+    struct wined3d_rendertarget_view *render_targets[WINED3D_MAX_RENDER_TARGETS];
     struct wined3d_rendertarget_view *depth_stencil;
 };
 
@@ -2045,7 +2044,7 @@ struct wined3d_context_gl
     struct fbo_entry *current_fbo;
     GLuint fbo_read_binding;
     GLuint fbo_draw_binding;
-    struct wined3d_rendertarget_info blit_targets[MAX_RENDER_TARGET_VIEWS];
+    struct wined3d_rendertarget_info blit_targets[WINED3D_MAX_RENDER_TARGETS];
     uint32_t draw_buffers_mask; /* Enabled draw buffers, 31 max. */
 
     /* Queries. */
@@ -3859,7 +3858,7 @@ struct fbo_entry
     struct wined3d_fbo_entry_key
     {
         DWORD rb_namespace;
-        struct wined3d_fbo_resource objects[MAX_RENDER_TARGET_VIEWS + 1];
+        struct wined3d_fbo_resource objects[WINED3D_MAX_RENDER_TARGETS + 1];
     } key;
 };
 
@@ -5318,7 +5317,7 @@ static inline BOOL wined3d_resource_check_fbo_attached(const struct wined3d_stat
     if (!(resource->bind_flags & WINED3D_BIND_RENDER_TARGET))
         return FALSE;
 
-    for (i = 0; i < MAX_RENDER_TARGET_VIEWS; ++i)
+    for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
         if (rts[i] && rts[i]->resource == resource)
             return TRUE;
 

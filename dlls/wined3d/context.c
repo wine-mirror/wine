@@ -2755,7 +2755,7 @@ static inline GLenum draw_buffer_from_rt_mask(DWORD rt_mask)
 static void wined3d_context_gl_apply_draw_buffers(struct wined3d_context_gl *context_gl, uint32_t rt_mask)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    GLenum draw_buffers[MAX_RENDER_TARGET_VIEWS];
+    GLenum draw_buffers[WINED3D_MAX_RENDER_TARGETS];
 
     if (!rt_mask)
     {

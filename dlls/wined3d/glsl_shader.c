@@ -10395,7 +10395,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
 
         if (!use_legacy_fragment_output(gl_info))
         {
-            for (i = 0; i < MAX_RENDER_TARGET_VIEWS; ++i)
+            for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
             {
                 string_buffer_sprintf(tmp_name, "color_out%u", i);
                 if (state->blend_state && state->blend_state->dual_source)
