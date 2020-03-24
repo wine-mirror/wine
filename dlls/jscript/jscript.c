@@ -414,6 +414,15 @@ static void release_persistent_script_objs(JScript *This)
             release_named_item_script_obj(iter->named_item);
 }
 
+static void release_named_item_list(JScript *This)
+{
+    while(!list_empty(&This->ctx->named_items)) {
+        named_item_t *iter = LIST_ENTRY(list_head(&This->ctx->named_items), named_item_t, entry);
+        list_remove(&iter->entry);
+        release_named_item(iter);
+    }
+}
+
 static void exec_queued_code(JScript *This)
 {
     bytecode_t *iter;
@@ -433,6 +442,8 @@ static void exec_queued_code(JScript *This)
 
 static void decrease_state(JScript *This, SCRIPTSTATE state)
 {
+    named_item_t *item, *item_next;
+
     if(This->ctx) {
         switch(This->ctx->state) {
         case SCRIPTSTATE_CONNECTED:
@@ -453,14 +464,19 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
             clear_script_queue(This);
             release_persistent_script_objs(This);
 
-            while(!list_empty(&This->ctx->named_items)) {
-                named_item_t *iter = LIST_ENTRY(list_head(&This->ctx->named_items), named_item_t, entry);
-
-                list_remove(&iter->entry);
-                if(iter->disp)
-                    IDispatch_Release(iter->disp);
-                release_named_item_script_obj(iter);
-                release_named_item(iter);
+            LIST_FOR_EACH_ENTRY_SAFE(item, item_next, &This->ctx->named_items, named_item_t, entry)
+            {
+                if(item->disp)
+                {
+                    IDispatch_Release(item->disp);
+                    item->disp = NULL;
+                }
+                release_named_item_script_obj(item);
+                if(!(item->flags & SCRIPTITEM_ISPERSISTENT))
+                {
+                    list_remove(&item->entry);
+                    release_named_item(item);
+                }
             }
 
             if(This->ctx->secmgr) {
@@ -688,6 +704,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
                                             IActiveScriptSite *pass)
 {
     JScript *This = impl_from_IActiveScript(iface);
+    named_item_t *item;
     LCID lcid;
     HRESULT hres;
 
@@ -729,6 +746,16 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
         if(ctx) {
             script_release(ctx);
             return E_UNEXPECTED;
+        }
+    }
+
+    /* Retrieve new dispatches for persistent named items */
+    LIST_FOR_EACH_ENTRY(item, &This->ctx->named_items, named_item_t, entry)
+    {
+        if(!item->disp)
+        {
+            hres = retrieve_named_item_disp(pass, item);
+            if(FAILED(hres)) return hres;
         }
     }
 
@@ -829,6 +856,7 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 
     decrease_state(This, SCRIPTSTATE_CLOSED);
     clear_persistent_code_list(This);
+    release_named_item_list(This);
     return S_OK;
 }
 
