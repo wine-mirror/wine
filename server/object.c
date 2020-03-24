@@ -127,17 +127,9 @@ void *memdup( const void *data, size_t len )
 
 /*****************************************************************/
 
-static int get_name_hash( const struct namespace *namespace, const WCHAR *name, data_size_t len )
-{
-    WCHAR hash = 0;
-    len /= sizeof(WCHAR);
-    while (len--) hash ^= tolowerW(*name++);
-    return hash % namespace->hash_size;
-}
-
 void namespace_add( struct namespace *namespace, struct object_name *ptr )
 {
-    int hash = get_name_hash( namespace, ptr->name, ptr->len );
+    unsigned int hash = hash_strW( ptr->name, ptr->len, namespace->hash_size );
 
     list_add_head( &namespace->names[hash], &ptr->entry );
 }
@@ -450,7 +442,7 @@ struct object *find_object( const struct namespace *namespace, const struct unic
 
     if (!name || !name->len) return NULL;
 
-    list = &namespace->names[ get_name_hash( namespace, name->str, name->len ) ];
+    list = &namespace->names[ hash_strW( name->str, name->len, namespace->hash_size ) ];
     LIST_FOR_EACH( p, list )
     {
         const struct object_name *ptr = LIST_ENTRY( p, struct object_name, entry );

@@ -66,6 +66,14 @@ int memicmp_strW( const WCHAR *str1, const WCHAR *str2, data_size_t len )
     return ret;
 }
 
+unsigned int hash_strW( const WCHAR *str, data_size_t len, unsigned int hash_size )
+{
+    unsigned int i, hash = 0;
+
+    for (i = 0; i < len / sizeof(WCHAR); i++) hash = hash * 65599 + to_lower( str[i] );
+    return hash % hash_size;
+}
+
 WCHAR *ascii_to_unicode_str( const char *str, struct unicode_str *ret )
 {
     data_size_t i, len = strlen(str);
