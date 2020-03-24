@@ -581,6 +581,20 @@ interface IMFSampleGrabberSinkCallback2 : IMFSampleGrabberSinkCallback
         [in] IMFAttributes *attributes);
 }
 
+[
+    object,
+    uuid(26afea53-d9ed-42b5-ab80-e64f9ee34779),
+    local
+]
+interface IMFSeekInfo : IUnknown
+{
+    HRESULT GetNearestKeyFrames(
+        [in] const GUID *format,
+        [in] const PROPVARIANT *position,
+        [out] PROPVARIANT *prev_frame,
+        [out] PROPVARIANT *next_frame);
+}
+
 cpp_quote("HRESULT WINAPI CreatePropertyStore(IPropertyStore **store);")
 cpp_quote("HRESULT WINAPI MFCreateAudioRenderer(IMFAttributes *config, IMFMediaSink **sink);")
 cpp_quote("HRESULT WINAPI MFCreateAudioRendererActivate(IMFActivate **activate);")
@@ -1037,6 +1051,7 @@ cpp_quote("EXTERN_GUID(MF_TOPOLOGY_STATIC_PLAYBACK_OPTIMIZATIONS, 0xb86cac42, 0x
 
 cpp_quote("EXTERN_GUID(MF_RATE_CONTROL_SERVICE, 0x866fa297, 0xb802, 0x4bf8, 0x9d, 0xc9, 0x5e, 0x3b, 0x6a, 0x9f, 0x53, 0xc9);")
 cpp_quote("EXTERN_GUID(MF_LOCAL_MFT_REGISTRATION_SERVICE, 0xddf5cf9c, 0x4506, 0x45aa, 0xab, 0xf0, 0x6d, 0x5d, 0x94, 0xdd, 0x1b, 0x4a);")
+cpp_quote("EXTERN_C const GUID MF_SCRUBBING_SERVICE;")
 
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET, 0x62e3d776, 0x8100, 0x4e03, 0xa6, 0xe8, 0xbd, 0x38, 0x57, 0xac, 0x9c, 0x47);")
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, 0x0efda2c0, 0x2b69, 0x4e2e, 0xab, 0x8d, 0x46, 0xdc, 0xbf, 0xf7, 0xd2, 0x5d);")
