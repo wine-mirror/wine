@@ -81,6 +81,15 @@ struct d3d10_effect_object
     } object;
 };
 
+struct d3d10_effect_shader_resource
+{
+    D3D10_SHADER_INPUT_TYPE in_type;
+    unsigned int bind_point;
+    unsigned int bind_count;
+
+    struct d3d10_effect_variable *variable;
+};
+
 struct d3d10_effect_shader_signature
 {
     char *signature;
@@ -99,6 +108,9 @@ struct d3d10_effect_shader_variable
         ID3D10PixelShader *ps;
         ID3D10GeometryShader *gs;
     } shader;
+
+    unsigned int resource_count;
+    struct d3d10_effect_shader_resource *resources;
 };
 
 struct d3d10_effect_state_object_variable

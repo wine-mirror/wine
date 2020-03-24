@@ -656,6 +656,84 @@ static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag
     return S_OK;
 }
 
+static HRESULT get_fx10_shader_resources(struct d3d10_effect_variable *v, const void *data, size_t data_size)
+{
+    struct d3d10_effect_shader_variable *sv = &v->u.shader;
+    struct d3d10_effect_shader_resource *sr;
+    D3D10_SHADER_INPUT_BIND_DESC bind_desc;
+    ID3D10ShaderReflection *reflection;
+    struct d3d10_effect_variable *var;
+    D3D10_SHADER_DESC desc;
+    unsigned int i, y;
+    HRESULT hr;
+
+    if (FAILED(hr = D3D10ReflectShader(data, data_size, &reflection)))
+        return hr;
+
+    reflection->lpVtbl->GetDesc(reflection, &desc);
+    sv->resource_count = desc.BoundResources;
+
+    if (!(sv->resources = heap_calloc(sv->resource_count, sizeof(*sv->resources))))
+    {
+        ERR("Failed to allocate shader resource binding information memory.\n");
+        reflection->lpVtbl->Release(reflection);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < desc.BoundResources; ++i)
+    {
+        reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &bind_desc);
+        sr = &sv->resources[i];
+
+        sr->in_type = bind_desc.Type;
+        sr->bind_point = bind_desc.BindPoint;
+        sr->bind_count = bind_desc.BindCount;
+
+        switch (bind_desc.Type)
+        {
+            case D3D10_SIT_CBUFFER:
+            case D3D10_SIT_TBUFFER:
+                for (y = 0; y < v->effect->local_buffer_count; ++y)
+                {
+                    var = &v->effect->local_buffers[y];
+
+                    if (!strcmp(bind_desc.Name, var->name))
+                    {
+                        sr->variable = var;
+                        break;
+                    }
+                }
+                break;
+
+            case D3D10_SIT_SAMPLER:
+            case D3D10_SIT_TEXTURE:
+                for (y = 0; y < v->effect->local_variable_count; ++y)
+                {
+                    var = &v->effect->local_variables[y];
+
+                    if (!strcmp(bind_desc.Name, var->name))
+                    {
+                        sr->variable = var;
+                        break;
+                    }
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        if (!sr->variable)
+        {
+            WARN("Failed to find shader resource.\n");
+            reflection->lpVtbl->Release(reflection);
+            return E_FAIL;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offset, struct d3d10_effect_variable *v)
 {
     ID3D10Device *device = v->effect->device;
@@ -690,6 +768,9 @@ static HRESULT parse_fx10_shader(const char *data, size_t data_size, DWORD offse
 
     /* We got a shader VertexShader vs = NULL, so it is fine to skip this. */
     if (!dxbc_size) return S_OK;
+
+    if (FAILED(hr = get_fx10_shader_resources(v, ptr, dxbc_size)))
+        return hr;
 
     switch (v->type->basetype)
     {
@@ -2623,6 +2704,9 @@ static void d3d10_effect_shader_variable_destroy(struct d3d10_effect_shader_vari
             FIXME("Unhandled shader type %s.\n", debug_d3d10_shader_variable_type(type));
             break;
     }
+
+    if (s->resource_count)
+        heap_free(s->resources);
 }
 
 static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
