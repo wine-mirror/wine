@@ -1571,6 +1571,7 @@ class VkStruct(Sequence):
         self.union = union
         self.type_info = None # To be set later.
         self.struct_extensions = []
+        self.aliased_by = []
 
     def __getitem__(self, i):
         return self.members[i]
@@ -1581,7 +1582,10 @@ class VkStruct(Sequence):
     @staticmethod
     def from_alias(struct, alias):
         name = struct.attrib.get("name")
-        return VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+        aliasee = VkStruct(name, alias.members, alias.returnedonly, alias.structextends, alias=alias)
+
+        alias.add_aliased_by(aliasee)
+        return aliasee
 
     @staticmethod
     def from_xml(struct):
@@ -1666,6 +1670,10 @@ class VkStruct(Sequence):
             postfix (str, optional): text to append to end of struct name, useful for struct renaming.
         """
 
+        # Only define alias structs when doing conversions
+        if self.is_alias() and not conv:
+            return ""
+
         if self.union:
             text = "typedef union {0}".format(self.name)
         else:
@@ -1687,11 +1695,20 @@ class VkStruct(Sequence):
         if postfix is not None:
             text += "}} {0}{1};\n\n".format(self.name, postfix)
         else:
-            text += "}} {0};\n\n".format(self.name)
+            text += "}} {0};\n".format(self.name)
+
+        for aliasee in self.aliased_by:
+            text += "typedef {0} {1};\n".format(self.name, aliasee.name)
+
+        text += "\n"
+
         return text
 
     def is_alias(self):
         return bool(self.alias)
+
+    def add_aliased_by(self, aliasee):
+        self.aliased_by.append(aliasee)
 
     def needs_alignment(self):
         """ Check if structure needs alignment for 64-bit data.
