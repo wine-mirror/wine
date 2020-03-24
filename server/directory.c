@@ -270,12 +270,12 @@ static void create_session( unsigned int id )
     static const struct unicode_str link_local_str = {link_localW, sizeof(link_localW)};
     static const struct unicode_str link_session_str = {link_sessionW, sizeof(link_sessionW)};
 
-    static const WCHAR fmt_u[] = {'%','u',0};
     static struct directory *dir_bno_global, *dir_sessions, *dir_bnolinks;
     struct directory *dir_id, *dir_bno, *dir_dosdevices, *dir_windows, *dir_winstation;
     struct object *link_global, *link_local, *link_session, *link_bno, *link_windows;
     struct unicode_str id_str;
-    WCHAR id_strW[10];
+    char id_strA[10];
+    WCHAR *id_strW;
 
     if (!id)
     {
@@ -287,9 +287,8 @@ static void create_session( unsigned int id )
         make_object_static( (struct object *)dir_sessions );
     }
 
-    sprintfW( id_strW, fmt_u, id );
-    id_str.str = id_strW;
-    id_str.len = strlenW( id_strW ) * sizeof(WCHAR);
+    sprintf( id_strA, "%u", id );
+    id_strW = ascii_to_unicode_str( id_strA, &id_str );
     dir_id = create_directory( &dir_sessions->obj, &id_str, 0, HASH_SIZE, NULL );
     dir_dosdevices = create_directory( &dir_id->obj, &dir_dosdevices_str, 0, HASH_SIZE, NULL );
 
@@ -325,6 +324,7 @@ static void create_session( unsigned int id )
     release_object( dir_windows );
     release_object( dir_bno );
     release_object( dir_id );
+    free( id_strW );
 }
 
 void init_directories(void)

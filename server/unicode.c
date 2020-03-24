@@ -51,6 +51,17 @@ static inline char to_hex( char ch )
     return tolower(ch) - 'a' + 10;
 }
 
+WCHAR *ascii_to_unicode_str( const char *str, struct unicode_str *ret )
+{
+    data_size_t i, len = strlen(str);
+    WCHAR *p;
+
+    ret->len = len * sizeof(WCHAR);
+    ret->str = p = mem_alloc( ret->len );
+    if (p) for (i = 0; i < len; i++) p[i] = (unsigned char)str[i];
+    return p;
+}
+
 /* parse an escaped string back into Unicode */
 /* return the number of chars read from the input, or -1 on output overflow */
 int parse_strW( WCHAR *buffer, data_size_t *len, const char *src, char endchar )

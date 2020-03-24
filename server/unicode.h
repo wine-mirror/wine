@@ -27,12 +27,7 @@
 #include "wine/unicode.h"
 #include "object.h"
 
-static inline WCHAR *strdupW( const WCHAR *str )
-{
-    size_t len = (strlenW(str) + 1) * sizeof(WCHAR);
-    return memdup( str, len );
-}
-
+extern WCHAR *ascii_to_unicode_str( const char *str, struct unicode_str *ret );
 extern int parse_strW( WCHAR *buffer, data_size_t *len, const char *src, char endchar );
 extern int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] );
 

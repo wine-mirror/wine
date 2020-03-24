@@ -1740,25 +1740,16 @@ static int load_init_registry_from_file( const char *filename, struct key *key )
 
 static WCHAR *format_user_registry_path( const SID *sid, struct unicode_str *path )
 {
-    static const WCHAR prefixW[] = {'U','s','e','r','\\','S',0};
-    static const WCHAR formatW[] = {'-','%','u',0};
-    WCHAR buffer[7 + 10 + 10 + 10 * SID_MAX_SUB_AUTHORITIES];
-    WCHAR *p = buffer;
+    char buffer[7 + 11 + 11 + 11 * SID_MAX_SUB_AUTHORITIES], *p = buffer;
     unsigned int i;
 
-    strcpyW( p, prefixW );
-    p += strlenW( prefixW );
-    p += sprintfW( p, formatW, sid->Revision );
-    p += sprintfW( p, formatW, MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
-                                                   sid->IdentifierAuthority.Value[4] ),
-                                         MAKEWORD( sid->IdentifierAuthority.Value[3],
-                                                   sid->IdentifierAuthority.Value[2] )));
-    for (i = 0; i < sid->SubAuthorityCount; i++)
-        p += sprintfW( p, formatW, sid->SubAuthority[i] );
-
-    path->len = (p - buffer) * sizeof(WCHAR);
-    path->str = p = memdup( buffer, path->len );
-    return p;
+    p += sprintf( p, "User\\S-%u-%u", sid->Revision,
+                  MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
+                                      sid->IdentifierAuthority.Value[4] ),
+                            MAKEWORD( sid->IdentifierAuthority.Value[3],
+                                      sid->IdentifierAuthority.Value[2] )));
+    for (i = 0; i < sid->SubAuthorityCount; i++) p += sprintf( p, "-%u", sid->SubAuthority[i] );
+    return ascii_to_unicode_str( buffer, path );
 }
 
 /* get the cpu architectures that can be supported in the current prefix */
