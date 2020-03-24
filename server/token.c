@@ -39,8 +39,6 @@
 #include "request.h"
 #include "security.h"
 
-#include "wine/unicode.h"
-
 #define MAX_SUBAUTH_COUNT 1
 
 const LUID SeIncreaseQuotaPrivilege        = {  5, 0 };

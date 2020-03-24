@@ -24,7 +24,6 @@
 #include <stdio.h>
 
 #include "windef.h"
-#include "wine/unicode.h"
 #include "object.h"
 
 extern int memicmp_strW( const WCHAR *str1, const WCHAR *str2, data_size_t len );
