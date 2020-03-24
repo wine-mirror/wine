@@ -475,29 +475,32 @@ sub to_utf16(@)
 sub open_data_file($$)
 {
     my ($base, $name) = @_;
-    (my $dir = "data/$name") =~ s/\/[^\/]+$//;
+    my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
+    (my $dir = "$cache/$name") =~ s/\/[^\/]+$//;
+    my $suffix = ($base =~ /\/\Q$UNIVERSION\E/) ? "-$UNIVERSION" : "";
     local *FILE;
 
     if ($base =~ /.*\/([^\/]+)\.zip$/)
     {
-        my $zip = $1;
-        unless (-f "data/$zip")
+        my $zip = "$1$suffix.zip";
+        unless (-f "$cache/$zip")
         {
-            mkdir "data";
+            system "mkdir", "-p", $cache;
             print "Fetching $base...\n";
-            !system "wget", "-q", "-O", "data/$zip", $base or die "cannot fetch $base";
+            !system "wget", "-q", "-O", "$cache/$zip", $base or die "cannot fetch $base";
         }
-        open FILE, "-|", "unzip", "-p", "data/$zip", $name or die "cannot extract $name from $zip";
+        open FILE, "-|", "unzip", "-p", "$cache/$zip", $name or die "cannot extract $name from $zip";
     }
     else
     {
-        unless (-f "data/$name")
+        (my $dest = "$cache/$name") =~ s/(.*)(\.[^\/.]+)$/$1$suffix$2/;
+        unless (-f $dest)
         {
             system "mkdir", "-p", $dir;
             print "Fetching $base/$name...\n";
-            !system "wget", "-q", "-O", "data/$name", "$base/$name" or die "cannot fetch $base/$name";
+            !system "wget", "-q", "-O", $dest, "$base/$name" or die "cannot fetch $base/$name";
         }
-        open FILE, "<data/$name" or die "cannot open data/$name";
+        open FILE, "<$dest" or die "cannot open $dest";
     }
     return *FILE;
 }
