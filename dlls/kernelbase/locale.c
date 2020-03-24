@@ -658,7 +658,7 @@ static const struct sortguid *get_language_sort( const WCHAR *locale )
     const struct sortguid *ret;
     UNICODE_STRING str;
     GUID guid;
-    HKEY key;
+    HKEY key = 0;
     DWORD size, type;
 
     if (locale == LOCALE_NAME_USER_DEFAULT)
@@ -734,14 +734,14 @@ void init_locale(void)
     RtlInitNlsTables( ansi_ptr, oem_ptr, sort.casemap, &nls_info );
     RtlResetRtlTranslations( &nls_info );
 
-    current_locale_sort = get_language_sort( LOCALE_NAME_USER_DEFAULT );
-
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &tz_key, NULL );
     RegCreateKeyExW( HKEY_CURRENT_USER, L"Control Panel\\International",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &intl_key, NULL );
+
+    current_locale_sort = get_language_sort( LOCALE_NAME_USER_DEFAULT );
 
     if (GetDynamicTimeZoneInformation( &timezone ) != TIME_ZONE_ID_INVALID &&
         !RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\TimeZoneInformation",
