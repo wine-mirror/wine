@@ -1159,6 +1159,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetConsoleScreenBufferInfoEx( HANDLE handle,
     SERVER_START_REQ( set_console_output_info )
     {
         req->handle     = console_handle_unmap( handle );
+        req->mask       = SET_CONSOLE_OUTPUT_INFO_CURSOR_POS | SET_CONSOLE_OUTPUT_INFO_SIZE |
+                          SET_CONSOLE_OUTPUT_INFO_ATTR | SET_CONSOLE_OUTPUT_INFO_POPUP_ATTR |
+                          SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW | SET_CONSOLE_OUTPUT_INFO_MAX_SIZE;
         req->width      = info->dwSize.X;
         req->height     = info->dwSize.Y;
         req->cursor_x   = info->dwCursorPosition.X;
