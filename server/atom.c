@@ -214,7 +214,7 @@ static struct atom_entry *find_atom_entry( struct atom_table *table, const struc
     struct atom_entry *entry = table->entries[hash];
     while (entry)
     {
-        if (entry->len == str->len && !memicmpW( entry->str, str->str, str->len/sizeof(WCHAR) )) break;
+        if (entry->len == str->len && !memicmp_strW( entry->str, str->str, str->len )) break;
         entry = entry->next;
     }
     return entry;

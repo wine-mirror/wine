@@ -457,7 +457,7 @@ struct object *find_object( const struct namespace *namespace, const struct unic
         if (ptr->len != name->len) continue;
         if (attributes & OBJ_CASE_INSENSITIVE)
         {
-            if (!strncmpiW( ptr->name, name->str, name->len/sizeof(WCHAR) ))
+            if (!memicmp_strW( ptr->name, name->str, name->len ))
                 return grab_object( ptr->obj );
         }
         else

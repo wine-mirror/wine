@@ -177,8 +177,7 @@ static const struct object_ops key_ops =
 
 static inline int is_wow6432node( const WCHAR *name, unsigned int len )
 {
-    return (len == sizeof(wow6432node) &&
-            !memicmpW( name, wow6432node, ARRAY_SIZE( wow6432node )));
+    return (len == sizeof(wow6432node) && !memicmp_strW( name, wow6432node, sizeof( wow6432node )));
 }
 
 /*
@@ -438,8 +437,7 @@ static inline void get_req_path( struct unicode_str *str, int skip_root )
     str->str = get_req_data();
     str->len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
 
-    if (skip_root && str->len >= sizeof(root_name) &&
-        !memicmpW( str->str, root_name, ARRAY_SIZE( root_name )))
+    if (skip_root && str->len >= sizeof(root_name) && !memicmp_strW( str->str, root_name, sizeof(root_name) ))
     {
         str->str += ARRAY_SIZE( root_name );
         str->len -= sizeof(root_name);
@@ -647,7 +645,7 @@ static struct key *find_subkey( const struct key *key, const struct unicode_str 
     {
         i = (min + max) / 2;
         len = min( key->subkeys[i]->namelen, name->len );
-        res = memicmpW( key->subkeys[i]->name, name->str, len / sizeof(WCHAR) );
+        res = memicmp_strW( key->subkeys[i]->name, name->str, len );
         if (!res) res = key->subkeys[i]->namelen - name->len;
         if (!res)
         {
@@ -691,7 +689,7 @@ static struct key *follow_symlink( struct key *key, int iteration )
     path.str = value->data;
     path.len = (value->len / sizeof(WCHAR)) * sizeof(WCHAR);
     if (path.len <= sizeof(root_name)) return NULL;
-    if (memicmpW( path.str, root_name, ARRAY_SIZE( root_name ))) return NULL;
+    if (memicmp_strW( path.str, root_name, sizeof(root_name) )) return NULL;
     path.str += ARRAY_SIZE( root_name );
     path.len -= sizeof(root_name);
 
@@ -1054,7 +1052,7 @@ static struct key_value *find_value( const struct key *key, const struct unicode
     {
         i = (min + max) / 2;
         len = min( key->values[i].namelen, name->len );
-        res = memicmpW( key->values[i].name, name->str, len / sizeof(WCHAR) );
+        res = memicmp_strW( key->values[i].name, name->str, len );
         if (!res) res = key->values[i].namelen - name->len;
         if (!res)
         {
@@ -1116,7 +1114,7 @@ static void set_value( struct key *key, const struct unicode_str *name,
     if (key->flags & KEY_SYMLINK)
     {
         if (type != REG_LINK || name->len != symlink_str.len ||
-            memicmpW( name->str, symlink_str.str, name->len / sizeof(WCHAR) ))
+            memicmp_strW( name->str, symlink_str.str, name->len ))
         {
             set_error( STATUS_ACCESS_DENIED );
             return;
@@ -1614,7 +1612,7 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     len = (p - info->tmp) * sizeof(WCHAR);
     for (res = 1; key != root_key; res++)
     {
-        if (len == key->namelen && !memicmpW( info->tmp, key->name, len / sizeof(WCHAR) )) break;
+        if (len == key->namelen && !memicmp_strW( info->tmp, key->name, len )) break;
         key = key->parent;
     }
     if (key == root_key) res = 0;  /* no matching name */
@@ -2051,7 +2049,7 @@ DECL_HANDLER(create_key)
     class.len = (class.len / sizeof(WCHAR)) * sizeof(WCHAR);
 
     if (!objattr->rootdir && name.len >= sizeof(root_name) &&
-        !memicmpW( name.str, root_name, ARRAY_SIZE( root_name )))
+        !memicmp_strW( name.str, root_name, sizeof(root_name) ))
     {
         name.str += ARRAY_SIZE( root_name );
         name.len -= sizeof(root_name);
@@ -2209,7 +2207,7 @@ DECL_HANDLER(load_registry)
     }
 
     if (!objattr->rootdir && name.len >= sizeof(root_name) &&
-        !memicmpW( name.str, root_name, ARRAY_SIZE( root_name )))
+        !memicmp_strW( name.str, root_name, sizeof(root_name) ))
     {
         name.str += ARRAY_SIZE( root_name );
         name.len -= sizeof(root_name);

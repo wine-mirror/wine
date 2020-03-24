@@ -51,6 +51,21 @@ static inline char to_hex( char ch )
     return tolower(ch) - 'a' + 10;
 }
 
+static inline WCHAR to_lower( WCHAR ch )
+{
+    extern const WCHAR wine_casemap_lower[];
+    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
+}
+
+int memicmp_strW( const WCHAR *str1, const WCHAR *str2, data_size_t len )
+{
+    int ret = 0;
+
+    for (len /= sizeof(WCHAR); len; str1++, str2++, len--)
+        if ((ret = to_lower(*str1) - to_lower(*str2))) break;
+    return ret;
+}
+
 WCHAR *ascii_to_unicode_str( const char *str, struct unicode_str *ret )
 {
     data_size_t i, len = strlen(str);
