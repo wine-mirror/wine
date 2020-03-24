@@ -612,7 +612,8 @@ int resume_thread( struct thread *thread )
     int old_count = thread->suspend;
     if (thread->suspend > 0)
     {
-        if (!(--thread->suspend + thread->process->suspend)) wake_thread( thread );
+        if (!(--thread->suspend)) resume_delayed_debug_events( thread );
+        if (!(thread->suspend + thread->process->suspend)) wake_thread( thread );
     }
     return old_count;
 }

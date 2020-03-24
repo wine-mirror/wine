@@ -1278,7 +1278,7 @@ static void test_debugger(const char *argv0)
     ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
 
     if ((skip_reply_later = !ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER)))
-        todo_wine win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
+        win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
     else
     {
         DEBUG_EVENT de;
@@ -1402,7 +1402,7 @@ static void test_debugger(const char *argv0)
     else win_skip("call_debug_service_code not supported on this architecture\n");
 
     if (skip_reply_later)
-        todo_wine win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
+        win_skip("Skipping unsupported DBG_REPLY_LATER tests\n");
     else if (sizeof(loop_code) > 1)
     {
         HANDLE thread_a, thread_b;
