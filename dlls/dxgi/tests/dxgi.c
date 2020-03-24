@@ -4940,15 +4940,17 @@ static void test_multi_adapter(void)
 {
     unsigned int output_count = 0, expected_output_count = 0;
     unsigned int adapter_index, output_index, device_index;
+    DXGI_OUTPUT_DESC old_output_desc, output_desc;
     DISPLAY_DEVICEW display_device;
-    DXGI_OUTPUT_DESC output_desc;
     MONITORINFO monitor_info;
+    DEVMODEW old_mode, mode;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
     IDXGIOutput *output;
     HMONITOR monitor;
     BOOL found;
     HRESULT hr;
+    LONG ret;
 
     if (FAILED(hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory)))
     {
@@ -4973,7 +4975,8 @@ static void test_multi_adapter(void)
         for (output_index = 0; SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, output_index, &output)); ++output_index)
         {
             hr = IDXGIOutput_GetDesc(output, &output_desc);
-            ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#x.\n", adapter_index,
+                    output_index, hr);
 
             found = FALSE;
             display_device.cb = sizeof(display_device);
@@ -4985,39 +4988,158 @@ static void test_multi_adapter(void)
                     break;
                 }
             }
-            ok(found, "Failed to find device %s for adapter %u, output %u.\n",
-                    wine_dbgstr_w(output_desc.DeviceName), adapter_index, output_index);
+            ok(found, "Adapter %u output %u: Failed to find device %s.\n",
+                    adapter_index, output_index, wine_dbgstr_w(output_desc.DeviceName));
 
             ok(display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP,
-                    "Got unexpected state flags %#x for adapter %u, output %u.\n",
-                    display_device.StateFlags, adapter_index, output_index);
+                    "Adapter %u output %u: Got unexpected state flags %#x.\n", adapter_index,
+                    output_index, display_device.StateFlags);
             if (!adapter_index && !output_index)
                 ok(display_device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE,
-                        "Got unexpected state flags %#x for adapter %u, output %u.\n",
-                        display_device.StateFlags, adapter_index, output_index);
+                        "Adapter %u output %u: Got unexpected state flags %#x.\n", adapter_index,
+                        output_index, display_device.StateFlags);
             else
                 ok(!(display_device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE),
-                        "Got unexpected state flags %#x for adapter %u, output %u.\n",
-                        display_device.StateFlags, adapter_index, output_index);
+                        "Adapter %u output %u: Got unexpected state flags %#x.\n", adapter_index,
+                        output_index, display_device.StateFlags);
 
             /* Should have the same monitor handle. */
             monitor = get_monitor(display_device.DeviceName);
-            ok(!!monitor, "Failed to find monitor %s.\n", wine_dbgstr_w(display_device.DeviceName));
-            ok(monitor == output_desc.Monitor, "Got unexpected monitor %p, expected %p.\n",
-                    monitor, output_desc.Monitor);
+            ok(!!monitor, "Adapter %u output %u: Failed to find monitor %s.\n", adapter_index,
+                    output_index, wine_dbgstr_w(display_device.DeviceName));
+            ok(monitor == output_desc.Monitor,
+                    "Adapter %u output %u: Got unexpected monitor %p, expected %p.\n",
+                    adapter_index, output_index, monitor, output_desc.Monitor);
 
             /* Should have the same monitor rectangle. */
             monitor_info.cbSize = sizeof(monitor_info);
             ok(GetMonitorInfoA(monitor, &monitor_info),
-                    "Failed to get monitor info for adapter %u, output %u, error %#x.\n",
-                    adapter_index, output_index, GetLastError());
+                    "Adapter %u output %u: Failed to get monitor info, error %#x.\n", adapter_index,
+                    output_index, GetLastError());
             ok(EqualRect(&monitor_info.rcMonitor, &output_desc.DesktopCoordinates),
-                    "Got unexpected output rect %s, expected %s for adapter %u, output %u.\n",
-                    wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&output_desc.DesktopCoordinates),
-                    adapter_index, output_index);
+                    "Adapter %u output %u: Got unexpected output rect %s, expected %s.\n",
+                    adapter_index, output_index, wine_dbgstr_rect(&monitor_info.rcMonitor),
+                    wine_dbgstr_rect(&output_desc.DesktopCoordinates));
+
+            ++output_count;
+
+            /* Test output description after it got detached */
+            if (display_device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+            {
+                IDXGIOutput_Release(output);
+                continue;
+            }
+
+            old_output_desc = output_desc;
+
+            /* Save current display settings */
+            memset(&old_mode, 0, sizeof(old_mode));
+            old_mode.dmSize = sizeof(old_mode);
+            ret = EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &old_mode);
+            /* Win10 TestBots may return FALSE but it's actually successful */
+            ok(ret || broken(!ret),
+                    "Adapter %u output %u: EnumDisplaySettingsW failed for %s, error %#x.\n",
+                    adapter_index, output_index, wine_dbgstr_w(display_device.DeviceName),
+                    GetLastError());
+
+            /* Detach */
+            memset(&mode, 0, sizeof(mode));
+            mode.dmSize = sizeof(mode);
+            mode.dmFields = DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT;
+            mode.dmPosition = old_mode.dmPosition;
+            ret = ChangeDisplaySettingsExW(display_device.DeviceName, &mode, NULL,
+                    CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+            ok(ret == DISP_CHANGE_SUCCESSFUL,
+                    "Adapter %u output %u: ChangeDisplaySettingsExW %s returned unexpected %d.\n",
+                    adapter_index, output_index, wine_dbgstr_w(display_device.DeviceName), ret);
+            ret = ChangeDisplaySettingsExW(display_device.DeviceName, NULL, NULL, 0, NULL);
+            ok(ret == DISP_CHANGE_SUCCESSFUL,
+                    "Adapter %u output %u: ChangeDisplaySettingsExW %s returned unexpected %d.\n",
+                    adapter_index, output_index, wine_dbgstr_w(display_device.DeviceName), ret);
+
+            /* Check if it is really detached */
+            memset(&mode, 0, sizeof(mode));
+            mode.dmSize = sizeof(mode);
+            ret = EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &mode);
+            /* Win10 TestBots may return FALSE but it's actually successful */
+            ok(ret || broken(!ret) ,
+                    "Adapter %u output %u: EnumDisplaySettingsW failed for %s, error %#x.\n",
+                    adapter_index, output_index, wine_dbgstr_w(display_device.DeviceName),
+                    GetLastError());
+            if (mode.dmPelsWidth && mode.dmPelsHeight)
+            {
+                skip("Adapter %u output %u: Failed to detach device %s.\n", adapter_index,
+                        output_index, wine_dbgstr_w(display_device.DeviceName));
+                IDXGIOutput_Release(output);
+                continue;
+            }
+
+            /* Only the AttachedToDesktop field is updated after an output is detached.
+             * IDXGIAdapter_EnumOutputs() has to be called again to get other fields updated.
+             * But resolution changes are reflected right away. This weird behaviour is currently
+             * unimplemented in Wine */
+            memset(&output_desc, 0, sizeof(output_desc));
+            hr = IDXGIOutput_GetDesc(output, &output_desc);
+            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#x.\n", adapter_index,
+                    output_index, hr);
+            ok(!lstrcmpiW(output_desc.DeviceName, old_output_desc.DeviceName),
+                    "Adapter %u output %u: Expect device name %s, got %s.\n", adapter_index,
+                    output_index, wine_dbgstr_w(old_output_desc.DeviceName),
+                    wine_dbgstr_w(output_desc.DeviceName));
+            todo_wine
+            ok(EqualRect(&output_desc.DesktopCoordinates, &old_output_desc.DesktopCoordinates),
+                    "Adapter %u output %u: Expect desktop coordinates %s, got %s.\n",
+                    adapter_index, output_index,
+                    wine_dbgstr_rect(&old_output_desc.DesktopCoordinates),
+                    wine_dbgstr_rect(&output_desc.DesktopCoordinates));
+            ok(!output_desc.AttachedToDesktop,
+                    "Adapter %u output %u: Expect output not attached to desktop.\n", adapter_index,
+                    output_index);
+            ok(output_desc.Rotation == old_output_desc.Rotation,
+                    "Adapter %u output %u: Expect rotation %#x, got %#x.\n", adapter_index,
+                    output_index, old_output_desc.Rotation, output_desc.Rotation);
+            todo_wine
+            ok(output_desc.Monitor == old_output_desc.Monitor,
+                    "Adapter %u output %u: Expect monitor %p, got %p.\n", adapter_index,
+                    output_index, old_output_desc.Monitor, output_desc.Monitor);
+            IDXGIOutput_Release(output);
+
+            /* Call IDXGIAdapter_EnumOutputs() again to get up-to-date output description */
+            hr = IDXGIAdapter_EnumOutputs(adapter, output_index, &output);
+            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#x.\n", adapter_index,
+                    output_index, hr);
+            memset(&output_desc, 0, sizeof(output_desc));
+            hr = IDXGIOutput_GetDesc(output, &output_desc);
+            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#x.\n", adapter_index,
+                    output_index, hr);
+            ok(!lstrcmpiW(output_desc.DeviceName, display_device.DeviceName),
+                    "Adapter %u output %u: Expect device name %s, got %s.\n", adapter_index,
+                    output_index, wine_dbgstr_w(display_device.DeviceName),
+                    wine_dbgstr_w(output_desc.DeviceName));
+            ok(IsRectEmpty(&output_desc.DesktopCoordinates),
+                    "Adapter %u output %u: Expect desktop rect empty, got %s.\n", adapter_index,
+                    output_index, wine_dbgstr_rect(&output_desc.DesktopCoordinates));
+            ok(!output_desc.AttachedToDesktop,
+                    "Adapter %u output %u: Expect output not attached to desktop.\n", adapter_index,
+                    output_index);
+            ok(output_desc.Rotation == DXGI_MODE_ROTATION_IDENTITY,
+                    "Adapter %u output %u: Expect rotation %#x, got %#x.\n", adapter_index,
+                    output_index, DXGI_MODE_ROTATION_IDENTITY, output_desc.Rotation);
+            ok(!output_desc.Monitor, "Adapter %u output %u: Expect monitor NULL.\n", adapter_index,
+                    output_index);
+
+            /* Restore settings */
+            ret = ChangeDisplaySettingsExW(display_device.DeviceName, &old_mode, NULL,
+                    CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+            ok(ret == DISP_CHANGE_SUCCESSFUL,
+                    "Adapter %u output %u: ChangeDisplaySettingsExW %s returned unexpected %d.\n",
+                    adapter_index, output_index, wine_dbgstr_w(display_device.DeviceName), ret);
+            ret = ChangeDisplaySettingsExW(display_device.DeviceName, NULL, NULL, 0, NULL);
+            ok(ret == DISP_CHANGE_SUCCESSFUL,
+                    "Adapter %u output %u: ChangeDisplaySettingsExW %s returned unexpected %d.\n",
+                    adapter_index, output_index, wine_dbgstr_w(display_device.DeviceName), ret);
 
             IDXGIOutput_Release(output);
-            ++output_count;
         }
 
         IDXGIAdapter_Release(adapter);
