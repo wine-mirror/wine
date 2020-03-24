@@ -586,6 +586,13 @@ static void test_media_types(void)
     hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
+    mt.subtype = MEDIASUBTYPE_RGB24;
+    vih.bmiHeader.biCompression = BI_RGB;
+    vih.bmiHeader.biBitCount = 24;
+    vih.bmiHeader.biSizeImage= 32 * 24 * 3;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
 

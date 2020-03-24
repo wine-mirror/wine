@@ -47,7 +47,6 @@ typedef struct AVIDecImpl
 
     struct strmbase_sink sink;
 
-    AM_MEDIA_TYPE mt;
     HIC hvid;
     BITMAPINFOHEADER* pBihIn;
     BITMAPINFOHEADER* pBihOut;
@@ -238,21 +237,19 @@ static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *
         This->hvid = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, bmi, NULL, ICMODE_DECOMPRESS);
         if (This->hvid)
         {
-            const CLSID* outsubtype;
             DWORD bih_size;
             DWORD output_depth = bmi->biBitCount;
             DWORD result;
-            FreeMediaType(&This->mt);
 
             switch(bmi->biBitCount)
             {
-                case 32: outsubtype = &MEDIASUBTYPE_RGB32; break;
-                case 24: outsubtype = &MEDIASUBTYPE_RGB24; break;
-                case 16: outsubtype = &MEDIASUBTYPE_RGB565; break;
-                case 8:  outsubtype = &MEDIASUBTYPE_RGB8; break;
+                case 32:
+                case 24:
+                case 16:
+                case 8:
+                    break;
                 default:
                     WARN("Non standard input depth %d, forced output depth to 32\n", bmi->biBitCount);
-                    outsubtype = &MEDIASUBTYPE_RGB32;
                     output_depth = 32;
                     break;
             }
@@ -285,17 +282,6 @@ static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *
                 ERR("Unable to found a suitable output format (%d)\n", result);
                 goto failed;
             }
-
-            /* Update output media type */
-            CopyMediaType(&This->mt, pmt);
-            This->mt.subtype = *outsubtype;
-
-            if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
-                memcpy(&(((VIDEOINFOHEADER *)This->mt.pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize);
-            else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2))
-                memcpy(&(((VIDEOINFOHEADER2 *)This->mt.pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize);
-            else
-                assert(0);
 
             TRACE("Connection accepted\n");
             return S_OK;
@@ -351,12 +337,18 @@ static HRESULT avi_decompressor_source_query_interface(struct strmbase_pin *ifac
 static HRESULT avi_decompressor_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    VIDEOINFOHEADER *sink_format, *format;
 
-    if (IsEqualGUID(&mt->majortype, &filter->mt.majortype)
-            && (IsEqualGUID(&mt->subtype, &filter->mt.subtype)
-            || IsEqualGUID(&filter->mt.subtype, &GUID_NULL)))
-        return S_OK;
-    return S_FALSE;
+    if (!filter->sink.pin.peer || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return S_FALSE;
+
+    sink_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
+    format = (VIDEOINFOHEADER *)mt->pbFormat;
+
+    if (ICDecompressQuery(filter->hvid, &sink_format->bmiHeader, &format->bmiHeader))
+        return S_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface,
@@ -584,7 +576,6 @@ static void avi_decompressor_destroy(struct strmbase_filter *iface)
 
     filter->stream_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&filter->stream_cs);
-    FreeMediaType(&filter->mt);
     IUnknown_Release(filter->seeking);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
