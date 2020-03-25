@@ -311,6 +311,11 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
 
     input = NULL;
     output = buff;
+    output->size = size;
+    output->letter = letter;
+    output->type = type;
+    output->mount_point_offset = 0;
+    output->device_offset = 0;
 
     if (size > outsize)
     {
@@ -328,9 +333,7 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
         status = STATUS_MORE_ENTRIES;
         goto done;
     }
-    output->size = size;
-    output->letter = letter;
-    output->type = type;
+
     ptr = (char *)(output + 1);
 
     if (mount_point)
