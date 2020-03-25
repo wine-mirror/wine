@@ -278,7 +278,6 @@ static void INT21_IoctlHPScanHandler( CONTEXT * );
 static struct magic_device magic_devices[] =
 {
     { {'s','c','s','i','m','g','r','$',0}, NULL, { { 0, 0 } }, INT21_IoctlScsiMgrHandler },
-    { {'e','m','m','x','x','x','x','0',0}, NULL, { { 0, 0 } }, EMS_Ioctl_Handler },
     { {'h','p','s','c','a','n',0},         NULL, { { 0, 0 } }, INT21_IoctlHPScanHandler },
 };
 

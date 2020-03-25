@@ -36,7 +36,6 @@
 #define DOSVM_RELAY_DATA_SIZE 4096
 
 typedef void (*DOSRELAY)(CONTEXT*,void*);
-typedef void (WINAPI *RMCBPROC)(CONTEXT*);
 typedef void (WINAPI *INTPROC)(CONTEXT*);
 
 extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
@@ -44,19 +43,7 @@ extern WORD int16_sel DECLSPEC_HIDDEN;
 extern WORD relay_code_sel DECLSPEC_HIDDEN;
 extern WORD relay_data_sel DECLSPEC_HIDDEN;
 
-/*
- * Declare some CONTEXT.EFlags bits.
- * IF_MASK is only pushed into real mode stack.
- */
-#define V86_FLAG 0x00020000
-#define TF_MASK  0x00000100
-#define IF_MASK  0x00000200
-#define VIF_MASK 0x00080000
-#define VIP_MASK 0x00100000
-
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
-
-#define PTR_REAL_TO_LIN(seg,off) ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
 
 /* NOTE: Interrupts might get called from four modes: real mode, 16-bit,
  *       32-bit segmented (DPMI32) and 32-bit linear (via DeviceIoControl).
@@ -256,10 +243,6 @@ extern void WINAPI DOSVM_Int2fHandler(CONTEXT*) DECLSPEC_HIDDEN;
 
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT*) DECLSPEC_HIDDEN;
-
-/* int67.c */
-extern void WINAPI DOSVM_Int67Handler(CONTEXT*) DECLSPEC_HIDDEN;
-extern void EMS_Ioctl_Handler(CONTEXT*) DECLSPEC_HIDDEN;
 
 /* interrupts.c */
 extern void        __wine_call_int_handler( CONTEXT *, BYTE ) DECLSPEC_HIDDEN;

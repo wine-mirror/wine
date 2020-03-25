@@ -20,7 +20,6 @@ C_SRCS = \
 	int26.c \
 	int2f.c \
 	int31.c \
-	int67.c \
 	interrupts.c \
 	ioports.c \
 	kernel.c \
