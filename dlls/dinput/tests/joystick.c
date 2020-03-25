@@ -598,11 +598,34 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         {
             DWORD effect_status;
             struct DIPROPDWORD diprop_word;
+            void *tmp;
             GUID guid = {0};
 
             hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
                                                &effect_data.guid);
             ok(hr==DI_OK,"IDirectInputEffect_Initialize failed: %08x\n", hr);
+
+            /* Test SetParameters with NULL pointers */
+            todo_wine {
+            tmp = effect_data.eff.rgdwAxes;
+            effect_data.eff.rgdwAxes = NULL;
+            hr = IDirectInputEffect_SetParameters(effect, &effect_data.eff, DIEP_AXES);
+            ok(hr==DIERR_INVALIDPARAM,"IDirectInputEffect_SetParameters should fail with INVALIDPARAM, got: %08x\n", hr);
+            effect_data.eff.rgdwAxes = tmp;
+
+            tmp = effect_data.eff.rglDirection;
+            effect_data.eff.rglDirection = NULL;
+            hr = IDirectInputEffect_SetParameters(effect, &effect_data.eff, DIEP_DIRECTION);
+            ok(hr==DIERR_INVALIDPARAM,"IDirectInputEffect_SetParameters should fail with INVALIDPARAM, got: %08x\n", hr);
+            effect_data.eff.rglDirection = tmp;
+
+            tmp = effect_data.eff.lpvTypeSpecificParams;
+            effect_data.eff.lpvTypeSpecificParams = NULL;
+            hr = IDirectInputEffect_SetParameters(effect, &effect_data.eff, DIEP_TYPESPECIFICPARAMS);
+            ok(hr==DIERR_INVALIDPARAM,"IDirectInputEffect_SetParameters should fail with INVALIDPARAM, got: %08x\n", hr);
+            effect_data.eff.lpvTypeSpecificParams = tmp;
+            }
+
             hr = IDirectInputEffect_SetParameters(effect, &effect_data.eff, DIEP_AXES | DIEP_DIRECTION |
                                                   DIEP_TYPESPECIFICPARAMS);
             ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
