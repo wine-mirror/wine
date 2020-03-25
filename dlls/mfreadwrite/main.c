@@ -528,11 +528,16 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
 }
 
 static HRESULT source_reader_media_stream_state_handler(struct source_reader *reader, IMFMediaStream *stream,
-        MediaEventType event)
+        IMFMediaEvent *event)
 {
+    MediaEventType event_type;
+    LONGLONG timestamp;
+    PROPVARIANT value;
     unsigned int i;
     HRESULT hr;
     DWORD id;
+
+    IMFMediaEvent_GetType(event, &event_type);
 
     if (FAILED(hr = media_stream_get_id(stream, &id)))
     {
@@ -548,7 +553,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
         {
             EnterCriticalSection(&stream->cs);
 
-            switch (event)
+            switch (event_type)
             {
                 case MEEndOfStream:
                     stream->state = STREAM_STATE_EOS;
@@ -564,6 +569,16 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                 case MEStreamSeeked:
                 case MEStreamStarted:
                     stream->state = STREAM_STATE_READY;
+                    break;
+                case MEStreamTick:
+                    value.vt = VT_EMPTY;
+                    hr = SUCCEEDED(IMFMediaEvent_GetValue(event, &value)) && value.vt == VT_I8 ? S_OK : E_UNEXPECTED;
+                    timestamp = SUCCEEDED(hr) ? value.u.hVal.QuadPart : 0;
+                    PropVariantClear(&value);
+
+                    source_reader_queue_response(stream, hr, stream->index, MF_SOURCE_READERF_STREAMTICK, timestamp, NULL);
+
+                    WakeAllConditionVariable(&stream->sample_event);
                     break;
                 default:
                     ;
@@ -606,8 +621,9 @@ static HRESULT WINAPI source_reader_stream_events_callback_Invoke(IMFAsyncCallba
             break;
         case MEStreamSeeked:
         case MEStreamStarted:
+        case MEStreamTick:
         case MEEndOfStream:
-            hr = source_reader_media_stream_state_handler(reader, stream, event_type);
+            hr = source_reader_media_stream_state_handler(reader, stream, event);
             break;
         default:
             ;
@@ -664,6 +680,13 @@ static ULONG WINAPI src_reader_AddRef(IMFSourceReader *iface)
     return refcount;
 }
 
+static void source_reader_release_response(struct stream_response *response)
+{
+    if (response->sample)
+        IMFSample_Release(response->sample);
+    heap_free(response);
+}
+
 static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
@@ -697,10 +720,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
 
             LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->responses, struct stream_response, entry)
             {
-                if (ptr->sample)
-                    IMFSample_Release(ptr->sample);
                 list_remove(&ptr->entry);
-                heap_free(ptr);
+                source_reader_release_response(ptr);
             }
         }
         heap_free(reader->streams);
@@ -1231,6 +1252,8 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
             *sample = response->sample;
             if (*sample)
                 IMFSample_AddRef(*sample);
+            hr = response->status;
+            source_reader_release_response(response);
         }
         else
         {
