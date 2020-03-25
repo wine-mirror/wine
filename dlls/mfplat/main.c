@@ -1002,8 +1002,6 @@ MFTIME WINAPI MFGetSystemTime(void)
 {
     MFTIME mf;
 
-    TRACE("()\n");
-
     GetSystemTimeAsFileTime( (FILETIME*)&mf );
 
     return mf;
