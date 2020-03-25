@@ -806,21 +806,13 @@ static HRESULT WINAPI openobj_QueryInterface(IADsOpenDSObject *iface, REFIID rii
 static ULONG WINAPI openobj_AddRef(IADsOpenDSObject *iface)
 {
     LDAP_namespace *ldap = impl_from_IADsOpenDSObject(iface);
-    return InterlockedIncrement(&ldap->ref);
+    return IADs_AddRef(&ldap->IADs_iface);
 }
 
 static ULONG WINAPI openobj_Release(IADsOpenDSObject *iface)
 {
     LDAP_namespace *ldap = impl_from_IADsOpenDSObject(iface);
-    LONG ref = InterlockedDecrement(&ldap->ref);
-
-    if (!ref)
-    {
-        TRACE("destroying %p\n", iface);
-        HeapFree(GetProcessHeap(), 0, ldap);
-    }
-
-    return ref;
+    return IADs_Release(&ldap->IADs_iface);
 }
 
 static HRESULT WINAPI openobj_GetTypeInfoCount(IADsOpenDSObject *iface, UINT *count)
