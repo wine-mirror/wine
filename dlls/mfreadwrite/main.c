@@ -1888,26 +1888,26 @@ failed:
 
 static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
 {
-    static const UINT8 asfmagic[] = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
-    static const UINT8 wavmagic[] = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
-    static const UINT8 wavmask[]  = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    static const unsigned char asfmagic[]  = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
+    static const unsigned char wavmagic[]  = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
+    static const unsigned char wavmask[]   = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    static const unsigned char isommagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4mask[]   = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
     static const struct stream_content_url_hint
     {
-        const UINT8 *magic;
-        UINT32 magic_len;
+        const unsigned char *magic;
         const WCHAR *url;
-        const UINT8 *mask;
+        const unsigned char *mask;
     }
     url_hints[] =
     {
-        { asfmagic, sizeof(asfmagic), L".asf" },
-        { wavmagic, sizeof(wavmagic), L".wav", wavmask },
+        { asfmagic,  L".asf" },
+        { wavmagic,  L".wav", wavmask },
+        { isommagic, L".mp4", mp4mask },
     };
-    UINT8 buffer[4 * sizeof(unsigned int)];
+    unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
+    unsigned int i, j, length = 0, caps = 0;
     IMFAttributes *attributes;
-    UINT32 length = 0;
-    unsigned int i, j;
-    DWORD caps = 0;
     QWORD position;
     HRESULT hr;
 
@@ -1941,23 +1941,26 @@ static HRESULT bytestream_get_url_hint(IMFByteStream *stream, WCHAR const **url)
 
     for (i = 0; i < ARRAY_SIZE(url_hints); ++i)
     {
+        memcpy(pattern, buffer, sizeof(buffer));
         if (url_hints[i].mask)
         {
             unsigned int *mask = (unsigned int *)url_hints[i].mask;
-            unsigned int *data = (unsigned int *)buffer;
+            unsigned int *data = (unsigned int *)pattern;
 
             for (j = 0; j < sizeof(buffer) / sizeof(unsigned int); ++j)
                 data[j] &= mask[j];
 
         }
-        if (!memcmp(buffer, url_hints[i].magic, min(url_hints[i].magic_len, length)))
+        if (!memcmp(pattern, url_hints[i].magic, sizeof(pattern)))
         {
             *url = url_hints[i].url;
             break;
         }
     }
 
-    if (!*url)
+    if (*url)
+        TRACE("Stream type guessed as %s from %s.\n", debugstr_w(*url), debugstr_an((char *)buffer, length));
+    else
         WARN("Unrecognized content type %s.\n", debugstr_an((char *)buffer, length));
 
     return S_OK;
