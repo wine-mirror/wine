@@ -8015,7 +8015,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockStart(IMFClockStateSink *if
     struct system_time_source *source = impl_from_IMFClockStateSink(iface);
     HRESULT hr;
 
-    TRACE("%p, %s, %s.\n", iface, wine_dbgstr_longlong(system_time), wine_dbgstr_longlong(start_offset));
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(system_time), debugstr_time(start_offset));
 
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_START)))
@@ -8033,7 +8033,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockStop(IMFClockStateSink *ifa
     struct system_time_source *source = impl_from_IMFClockStateSink(iface);
     HRESULT hr;
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+    TRACE("%p, %s.\n", iface, debugstr_time(system_time));
 
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_STOP)))
@@ -8048,7 +8048,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockPause(IMFClockStateSink *if
     struct system_time_source *source = impl_from_IMFClockStateSink(iface);
     HRESULT hr;
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+    TRACE("%p, %s.\n", iface, debugstr_time(system_time));
 
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_PAUSE)))
@@ -8066,7 +8066,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockRestart(IMFClockStateSink *
     struct system_time_source *source = impl_from_IMFClockStateSink(iface);
     HRESULT hr;
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(system_time));
+    TRACE("%p, %s.\n", iface, debugstr_time(system_time));
 
     EnterCriticalSection(&source->cs);
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_RESTART)))
@@ -8084,7 +8084,7 @@ static HRESULT WINAPI system_time_source_sink_OnClockSetRate(IMFClockStateSink *
     struct system_time_source *source = impl_from_IMFClockStateSink(iface);
     double intpart;
 
-    TRACE("%p, %s, %f.\n", iface, wine_dbgstr_longlong(system_time), rate);
+    TRACE("%p, %s, %f.\n", iface, debugstr_time(system_time), rate);
 
     if (rate == 0.0f)
         return MF_E_UNSUPPORTED_RATE;

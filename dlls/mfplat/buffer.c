@@ -663,7 +663,7 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
     HRESULT hr;
     GUID major;
 
-    TRACE("%p, %s, %u, %u, %p.\n", media_type, wine_dbgstr_longlong(duration), min_length, alignment, buffer);
+    TRACE("%p, %s, %u, %u, %p.\n", media_type, debugstr_time(duration), min_length, alignment, buffer);
 
     if (!media_type)
         return E_INVALIDARG;
@@ -1075,7 +1075,7 @@ static HRESULT WINAPI sample_SetSampleTime(IMFSample *iface, LONGLONG timestamp)
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(timestamp));
+    TRACE("%p, %s.\n", iface, debugstr_time(timestamp));
 
     EnterCriticalSection(&sample->attributes.cs);
     sample->timestamp = timestamp;
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI sample_SetSampleDuration(IMFSample *iface, LONGLONG durati
 {
     struct sample *sample = impl_from_IMFSample(iface);
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(duration));
+    TRACE("%p, %s.\n", iface, debugstr_time(duration));
 
     EnterCriticalSection(&sample->attributes.cs);
     sample->duration = duration;
