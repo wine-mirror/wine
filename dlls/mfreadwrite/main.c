@@ -94,6 +94,11 @@ enum media_source_state
     SOURCE_STATE_STARTED,
 };
 
+enum media_stream_flags
+{
+    STREAM_FLAG_SAMPLE_REQUESTED = 0x1,
+};
+
 struct media_stream
 {
     IMFMediaStream *stream;
@@ -107,6 +112,7 @@ struct media_stream
     enum media_stream_state state;
     BOOL selected;
     BOOL presented;
+    DWORD flags;
 };
 
 struct source_reader
@@ -507,6 +513,7 @@ static HRESULT source_reader_media_sample_handler(struct source_reader *reader, 
         {
             EnterCriticalSection(&reader->streams[i].cs);
 
+            reader->streams[i].flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
             hr = source_reader_process_sample(&reader->streams[i], sample);
 
             LeaveCriticalSection(&reader->streams[i].cs);
@@ -1235,10 +1242,12 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
         {
             while (list_empty(&stream->responses) && stream->state != STREAM_STATE_EOS)
             {
-                if (stream->stream)
+                if (stream->stream && !(stream->flags & STREAM_FLAG_SAMPLE_REQUESTED))
                 {
                     if (FAILED(hr = IMFMediaStream_RequestSample(stream->stream, NULL)))
                         WARN("Sample request failed, hr %#x.\n", hr);
+                    else
+                        stream->flags |= STREAM_FLAG_SAMPLE_REQUESTED;
                 }
                 SleepConditionVariableCS(&stream->sample_event, &stream->cs, INFINITE);
             }
