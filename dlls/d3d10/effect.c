@@ -3619,9 +3619,119 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_pass_GetAnno
     return &null_variable.ID3D10EffectVariable_iface;
 }
 
+static void update_buffer(ID3D10Device *device, struct d3d10_effect_variable *v)
+{
+    struct d3d10_effect_buffer_variable *b = &v->u.buffer;
+
+    if (!b->changed)
+        return;
+
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)b->buffer, 0, NULL,
+            b->local_buffer, v->data_size, 0);
+
+    b->changed = FALSE;
+}
+
+static void apply_shader_resources(ID3D10Device *device, struct ID3D10EffectShaderVariable *variable)
+{
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(variable);
+    struct d3d10_effect_shader_variable *sv = &v->u.shader;
+    struct d3d10_effect_shader_resource *sr;
+    struct d3d10_effect_variable *rsrc_v;
+    ID3D10ShaderResourceView **srv;
+    unsigned int i;
+
+    for (i = 0; i < sv->resource_count; ++i)
+    {
+        sr = &sv->resources[i];
+        rsrc_v = sr->variable;
+
+        switch (sr->in_type)
+        {
+            case D3D10_SIT_CBUFFER:
+                update_buffer(device, rsrc_v);
+                switch (v->type->basetype)
+                {
+                    case D3D10_SVT_VERTEXSHADER:
+                        ID3D10Device_VSSetConstantBuffers(device, sr->bind_point, sr->bind_count,
+                                &rsrc_v->u.buffer.buffer);
+                        break;
+
+                    case D3D10_SVT_PIXELSHADER:
+                        ID3D10Device_PSSetConstantBuffers(device, sr->bind_point, sr->bind_count,
+                                &rsrc_v->u.buffer.buffer);
+                        break;
+
+                    case D3D10_SVT_GEOMETRYSHADER:
+                        ID3D10Device_GSSetConstantBuffers(device, sr->bind_point, sr->bind_count,
+                                &rsrc_v->u.buffer.buffer);
+                        break;
+
+                    default:
+                        WARN("Incorrect shader type to bind constant buffer.\n");
+                        break;
+                }
+                break;
+
+            case D3D10_SIT_TBUFFER:
+                update_buffer(device, rsrc_v);
+                srv = &rsrc_v->u.buffer.resource_view;
+
+                switch (v->type->basetype)
+                {
+                    case D3D10_SVT_VERTEXSHADER:
+                        ID3D10Device_VSSetShaderResources(device, sr->bind_point, sr->bind_count, srv);
+                        break;
+
+                    case D3D10_SVT_PIXELSHADER:
+                        ID3D10Device_PSSetShaderResources(device, sr->bind_point, sr->bind_count, srv);
+                        break;
+
+                    case D3D10_SVT_GEOMETRYSHADER:
+                        ID3D10Device_GSSetShaderResources(device, sr->bind_point, sr->bind_count, srv);
+                        break;
+
+                    default:
+                        WARN("Incorrect shader type to bind shader resource view.\n");
+                        break;
+                }
+                break;
+
+            case D3D10_SIT_SAMPLER:
+                switch (v->type->basetype)
+                {
+                    case D3D10_SVT_VERTEXSHADER:
+                        ID3D10Device_VSSetSamplers(device, sr->bind_point, sr->bind_count,
+                                &rsrc_v->u.state.object.sampler);
+                        break;
+
+                    case D3D10_SVT_PIXELSHADER:
+                        ID3D10Device_PSSetSamplers(device, sr->bind_point, sr->bind_count,
+                                &rsrc_v->u.state.object.sampler);
+                        break;
+
+                    case D3D10_SVT_GEOMETRYSHADER:
+                        ID3D10Device_GSSetSamplers(device, sr->bind_point, sr->bind_count,
+                                &rsrc_v->u.state.object.sampler);
+                        break;
+
+                    default:
+                        WARN("Incorrect shader type to bind sampler.\n");
+                        break;
+                }
+                break;
+
+            default:
+                WARN("Unhandled shader resource %#x.\n", sr->in_type);
+                break;
+        }
+    }
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface, UINT flags)
 {
-    struct d3d10_effect_pass *This = impl_from_ID3D10EffectPass(iface);
+    struct d3d10_effect_pass *pass = impl_from_ID3D10EffectPass(iface);
+    ID3D10Device *device = pass->technique->effect->device;
     HRESULT hr = S_OK;
     unsigned int i;
 
@@ -3629,9 +3739,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_pass_Apply(ID3D10EffectPass *iface
 
     if (flags) FIXME("Ignoring flags (%#x)\n", flags);
 
-    for (i = 0; i < This->object_count; ++i)
+    if (pass->vs.pShaderVariable != (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface)
+        apply_shader_resources(device, pass->vs.pShaderVariable);
+    if (pass->gs.pShaderVariable != (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface)
+        apply_shader_resources(device, pass->gs.pShaderVariable);
+    if (pass->ps.pShaderVariable != (ID3D10EffectShaderVariable *)&null_shader_variable.ID3D10EffectVariable_iface)
+        apply_shader_resources(device, pass->ps.pShaderVariable);
+
+    for (i = 0; i < pass->object_count; ++i)
     {
-        hr = d3d10_effect_object_apply(&This->objects[i]);
+        hr = d3d10_effect_object_apply(&pass->objects[i]);
         if (FAILED(hr)) break;
     }
 
