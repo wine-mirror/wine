@@ -601,7 +601,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *conte
 static RELAY_Stack16 *RELAY_GetPointer( DWORD offset )
 {
     offset = offset / sizeof(RELAY_Stack16) * sizeof(RELAY_Stack16);
-    return MapSL(MAKESEGPTR(DOSVM_dpmi_segments->relay_data_sel, offset));
+    return MapSL(MAKESEGPTR(relay_data_sel, offset));
 }
 
 
@@ -637,9 +637,9 @@ static void RELAY_MakeShortContext( CONTEXT *context )
     stack->stack_bottom = RELAY_MAGIC;
     stack->stack_top = RELAY_MAGIC;
 
-    context->SegSs = DOSVM_dpmi_segments->relay_data_sel;
+    context->SegSs = relay_data_sel;
     context->Esp = offset;
-    context->SegCs = DOSVM_dpmi_segments->relay_code_sel;
+    context->SegCs = relay_code_sel;
     context->Eip = 3;
 }
 
@@ -712,7 +712,7 @@ void DOSVM_RelayHandler( CONTEXT *context )
  */
 void DOSVM_BuildCallFrame( CONTEXT *context, DOSRELAY relay, LPVOID data )
 {
-    WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
+    WORD  code_sel = relay_code_sel;
 
     /*
      * Allocate separate stack for relay call.

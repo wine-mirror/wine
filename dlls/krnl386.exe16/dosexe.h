@@ -35,21 +35,14 @@
 /* amount of space reserved for relay stack */
 #define DOSVM_RELAY_DATA_SIZE 4096
 
-/* various real-mode code stubs */
-struct DPMI_segments
-{
-    WORD int16_sel;
-    WORD relay_code_sel;
-    WORD relay_data_sel;
-};
-
 typedef void (*DOSRELAY)(CONTEXT*,void*);
 typedef void (WINAPI *RMCBPROC)(CONTEXT*);
 typedef void (WINAPI *INTPROC)(CONTEXT*);
 
 extern WORD DOSVM_psp DECLSPEC_HIDDEN;     /* psp of current DOS task */
-extern WORD DOSVM_retval DECLSPEC_HIDDEN;  /* return value of previous DOS task */
-extern struct DPMI_segments *DOSVM_dpmi_segments DECLSPEC_HIDDEN;
+extern WORD int16_sel DECLSPEC_HIDDEN;
+extern WORD relay_code_sel DECLSPEC_HIDDEN;
+extern WORD relay_data_sel DECLSPEC_HIDDEN;
 
 /*
  * Declare some CONTEXT.EFlags bits.
@@ -218,8 +211,6 @@ typedef struct
 
 /* dosvm.c */
 extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
-extern LPVOID DOSVM_AllocDataUMB(DWORD, WORD *) DECLSPEC_HIDDEN;
-extern void DOSVM_InitSegments(void) DECLSPEC_HIDDEN;
 
 /* dma.c */
 extern int DMA_Transfer(int channel,int reqlength,void* buffer) DECLSPEC_HIDDEN;

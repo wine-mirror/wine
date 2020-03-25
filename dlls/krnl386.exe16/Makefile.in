@@ -8,7 +8,6 @@ C_SRCS = \
 	atom.c \
 	dma.c \
 	dosmem.c \
-	dosvm.c \
 	error.c \
 	file.c \
 	fpu.c \

@@ -48,6 +48,11 @@ WORD DOSMEM_0000H;        /* segment at 0:0 */
 WORD DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
 WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
+WORD DOSVM_psp = 0;
+WORD int16_sel = 0;
+WORD relay_code_sel = 0;
+WORD relay_data_sel = 0;
+
 /* DOS memory highest address (including HMA) */
 #define DOSMEM_SIZE             0x110000
 #define DOSMEM_64KB             0x10000
@@ -295,6 +300,57 @@ static void DOSMEM_Collapse( MCB* mcb )
     }
 }
 
+
+/***********************************************************************
+ *           DOSMEM_InitSegments
+ */
+static void DOSMEM_InitSegments(void)
+{
+    LPSTR ptr;
+    int   i;
+
+    static const char relay[]=
+    {
+        0xca, 0x04, 0x00, /* 16-bit far return and pop 4 bytes (relay void* arg) */
+        0xcd, 0x31,       /* int 31 */
+        0xfb, 0x66, 0xcb  /* sti and 32-bit far return */
+    };
+
+    /*
+     * PM / offset N*5: Interrupt N in 16-bit protected mode.
+     */
+    int16_sel = GLOBAL_Alloc( GMEM_FIXED, 5 * 256, 0, WINE_LDT_FLAGS_CODE );
+    ptr = GlobalLock16( int16_sel );
+    for(i=0; i<256; i++) {
+        /*
+         * Each 16-bit interrupt handler is 5 bytes:
+         * 0xCD,<i>       = int <i> (interrupt)
+         * 0xCA,0x02,0x00 = ret 2   (16-bit far return and pop 2 bytes / eflags)
+         */
+        ptr[i * 5 + 0] = 0xCD;
+        ptr[i * 5 + 1] = i;
+        ptr[i * 5 + 2] = 0xCA;
+        ptr[i * 5 + 3] = 0x02;
+        ptr[i * 5 + 4] = 0x00;
+    }
+    GlobalUnlock16( int16_sel );
+
+    /*
+     * PM / offset 0: Stub where __wine_call_from_16_regs returns.
+     * PM / offset 3: Stub which swaps back to 32-bit application code/stack.
+     * PM / offset 5: Stub which enables interrupts
+     */
+    relay_code_sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(relay), 0, WINE_LDT_FLAGS_CODE );
+    ptr = GlobalLock16( relay_code_sel );
+    memcpy( ptr, relay, sizeof(relay) );
+    GlobalUnlock16( relay_code_sel );
+
+    /*
+     * Space for 16-bit stack used by relay code.
+     */
+    relay_data_sel = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, DOSVM_RELAY_DATA_SIZE );
+}
+
 /******************************************************************
  *		DOSMEM_InitDosMemory
  */
@@ -349,7 +405,7 @@ BOOL DOSMEM_InitDosMemory(void)
             TRACE("DOS conventional memory initialized, %d bytes free.\n",
                   DOSMEM_Available());
 
-            DOSVM_InitSegments();
+            DOSMEM_InitSegments();
 
             SetEvent( hRunOnce );
             done = TRUE;

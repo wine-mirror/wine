@@ -97,6 +97,18 @@ static void WINAPI DOSVM_DefaultHandler( CONTEXT *context )
 
 
 /**********************************************************************
+ *          DOSVM_Exit
+ */
+void DOSVM_Exit( WORD retval )
+{
+    DWORD count;
+
+    ReleaseThunkLock( &count );
+    ExitThread( retval );
+}
+
+
+/**********************************************************************
  *         DOSVM_GetBuiltinHandler
  *
  * Return Wine interrupt handler procedure for a given interrupt.
@@ -189,7 +201,7 @@ static void DOSVM_HardwareInterruptPM( CONTEXT *context, BYTE intnum )
 {
     FARPROC16 addr = DOSVM_GetPMHandler16( intnum );
 
-    if (SELECTOROF(addr) == DOSVM_dpmi_segments->int16_sel)
+    if (SELECTOROF(addr) == int16_sel)
     {
         TRACE( "builtin interrupt %02x has been invoked "
                "(through vector %02x)\n",
@@ -243,14 +255,14 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
 
     DOSMEM_InitDosMemory();
 
-    if (context->SegCs == DOSVM_dpmi_segments->relay_code_sel)
+    if (context->SegCs == relay_code_sel)
     {
         /*
          * This must not be called using DOSVM_BuildCallFrame.
          */
         DOSVM_RelayHandler( context );
     }
-    else if (context->SegCs == DOSVM_dpmi_segments->int16_sel)
+    else if (context->SegCs == int16_sel)
     {
         /* Restore original flags stored into the stack by the caller. */
         WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
@@ -328,8 +340,7 @@ FARPROC16 DOSVM_GetPMHandler16( BYTE intnum )
     }
     if (!DOSVM_Vectors16[intnum])
     {
-        proc = (FARPROC16)MAKESEGPTR( DOSVM_dpmi_segments->int16_sel,
-                                                DOSVM_STUB_PM16 * intnum );
+        proc = (FARPROC16)MAKESEGPTR( int16_sel, DOSVM_STUB_PM16 * intnum );
         DOSVM_Vectors16[intnum] = proc;
     }
     return DOSVM_Vectors16[intnum];

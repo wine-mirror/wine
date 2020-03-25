@@ -520,9 +520,8 @@ static INT21_HEAP *INT21_GetHeapPointer( void )
 
     if (!heap_pointer)
     {
-        WORD heap_selector;
-
-        heap_pointer = DOSVM_AllocDataUMB( sizeof(INT21_HEAP), &heap_selector );
+        WORD heap_selector = GlobalAlloc16( GMEM_FIXED, sizeof(INT21_HEAP) );
+        heap_pointer = GlobalLock16( heap_selector );
         heap_pointer->misc_selector = heap_selector;
         INT21_FillHeap( heap_pointer );
     }
@@ -4782,8 +4781,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT *context )
 
     case 0x4d: /* GET RETURN CODE */
         TRACE("GET RETURN CODE (ERRORLEVEL)\n");
-        SET_AX( context, DOSVM_retval );
-        DOSVM_retval = 0;
+        SET_AX( context, 0 );
         break;
 
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */

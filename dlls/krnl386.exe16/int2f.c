@@ -459,10 +459,8 @@ static CDROM_HEAP *CDROM_GetHeap( void )
 
     if ( !heap_pointer )
     {
-        WORD heap_selector;
-
-        /* allocate a new DOS data segment */
-        heap_pointer = DOSVM_AllocDataUMB( sizeof(CDROM_HEAP), &heap_selector );
+        WORD heap_selector = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(CDROM_HEAP) );
+        heap_pointer = GlobalLock16( heap_selector );
         heap_pointer->cdrom_selector = heap_selector;
         CDROM_FillHeap( heap_pointer );
     }
