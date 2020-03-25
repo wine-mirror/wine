@@ -1216,8 +1216,31 @@ static HRESULT WINAPI search_GetFirstRow(IDirectorySearch *iface, ADS_SEARCH_HAN
 
 static HRESULT WINAPI search_GetNextRow(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
 {
-    FIXME("%p,%p: stub\n", iface, res);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    struct ldap_search_context *ldap_ctx = res;
+
+    TRACE("%p,%p\n", iface, res);
+
+    if (!ldap->ld) return E_NOTIMPL;
+
+    if (!res) return E_ADS_BAD_PARAMETER;
+
+    if (!ldap_ctx->entry)
+    {
+        ldap_ctx->count = ldap_count_entries(ldap->ld, ldap_ctx->res);
+        ldap_ctx->pos = 0;
+        ldap_ctx->entry = ldap_first_entry(ldap->ld, ldap_ctx->res);
+    }
+    else
+    {
+        if (ldap_ctx->pos >= ldap_ctx->count)
+            return S_ADS_NOMORE_ROWS;
+
+        ldap_ctx->entry = ldap_next_entry(ldap->ld, ldap_ctx->res);
+        ldap_ctx->pos++;
+    }
+
+    return ldap_ctx->entry ? S_OK : S_ADS_NOMORE_ROWS;
 }
 
 static HRESULT WINAPI search_GetPreviousRow(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
