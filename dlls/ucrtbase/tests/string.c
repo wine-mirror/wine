@@ -430,6 +430,29 @@ static void test_wcstok(void)
     ok(!token, "expected NULL, got %p\n", token);
 }
 
+static void test__strnicmp(void)
+{
+    static const char str1[] = "TEST";
+    static const char str2[] = "test";
+    int ret;
+
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
+    SET_EXPECT(invalid_parameter_handler);
+    errno = 0xdeadbeef;
+    ret = _strnicmp(str1, str2, -1);
+    todo_wine CHECK_CALLED(invalid_parameter_handler);
+    todo_wine ok(ret == _NLSCMPERROR, "got %d.\n", ret);
+    todo_wine ok(errno == EINVAL, "Unexpected errno %d.\n", errno);
+
+    ret = _strnicmp(str1, str2, 0x7fffffff);
+    ok(!ret, "got %d.\n", ret);
+
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+            "Cannot reset invalid parameter handler\n");
+}
+
 START_TEST(string)
 {
     test_strtod();
@@ -439,4 +462,5 @@ START_TEST(string)
     test_C_locale();
     test_mbsspn();
     test_wcstok();
+    test__strnicmp();
 }
