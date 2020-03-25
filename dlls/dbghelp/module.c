@@ -890,18 +890,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
             wImageName)
         {
             /* and finally an ELF or Mach-O module */
-            switch (module_get_type_by_name(wImageName))
-            {
-                case DMT_ELF:
-                    module = elf_load_module(pcs, wImageName, BaseOfDll);
-                    break;
-                case DMT_MACHO:
-                    module = macho_load_module(pcs, wImageName, BaseOfDll);
-                    break;
-                default:
-                    /* Ignored */
-                    break;
-            }
+            module = pcs->loader->load_module(pcs, wImageName, BaseOfDll);
         }
     }
     if (!module)
@@ -1431,6 +1420,11 @@ static BOOL native_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
+static struct module* native_load_module(struct process* pcs, const WCHAR* name, unsigned long addr)
+{
+    return NULL;
+}
+
 static BOOL native_enum_modules(struct process *process, enum_modules_cb cb, void* user)
 {
     return FALSE;
@@ -1445,6 +1439,7 @@ static BOOL native_fetch_file_info(struct process* process, const WCHAR* name, U
 const struct loader_ops no_loader_ops =
 {
     native_synchronize_module_list,
+    native_load_module,
     native_enum_modules,
     native_fetch_file_info,
 };
