@@ -396,6 +396,11 @@ typedef struct
     } search;
 } LDAP_namespace;
 
+struct ldap_search_context
+{
+    LDAPMessage *res;
+};
+
 static inline LDAP_namespace *impl_from_IADs(IADs *iface)
 {
     return CONTAINING_RECORD(iface, LDAP_namespace, IADs_iface);
@@ -1141,8 +1146,47 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
 static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filter, LPWSTR *names,
                                            DWORD count, PADS_SEARCH_HANDLE res)
 {
-    FIXME("%p,%s,%p,%u,%p: stub\n", iface, debugstr_w(filter), names, count, res);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    ULONG err, i;
+    WCHAR **props;
+    struct ldap_search_context *ldap_ctx;
+
+    TRACE("%p,%s,%p,%u,%p\n", iface, debugstr_w(filter), names, count, res);
+
+    if (!ldap->ld) return E_NOTIMPL;
+
+    if (!res) return E_ADS_BAD_PARAMETER;
+
+    ldap_ctx = heap_alloc_zero(sizeof(*ldap_ctx));
+    if (!ldap_ctx) return E_OUTOFMEMORY;
+
+    if (count == 0xffffffff)
+        props = NULL;
+    else
+    {
+        if (count && !names) return E_ADS_BAD_PARAMETER;
+
+        props = heap_alloc((count + 1) * sizeof(props[0]));
+        if (!props)
+            return E_OUTOFMEMORY;
+
+        for (i = 0; i < count; i++)
+            props[i] = names[i];
+
+        props[count] = NULL;
+    }
+
+    err = ldap_search_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props, FALSE, &ldap_ctx->res);
+    heap_free(props);
+    if (err != LDAP_SUCCESS)
+    {
+        TRACE("ldap_search_sW error %#x\n", err);
+        heap_free(ldap_ctx);
+        return HRESULT_FROM_WIN32(map_ldap_error(err));
+    }
+
+    *res = ldap_ctx;
+    return S_OK;
 }
 
 static HRESULT WINAPI search_AbandonSearch(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
