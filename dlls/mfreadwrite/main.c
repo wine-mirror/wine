@@ -72,9 +72,13 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( mfinstance );
 }
 
-struct sample
+struct stream_response
 {
     struct list entry;
+    HRESULT status;
+    DWORD stream_index;
+    DWORD stream_flags;
+    LONGLONG timestamp;
     IMFSample *sample;
 };
 
@@ -96,9 +100,10 @@ struct media_stream
     IMFMediaType *current;
     IMFTransform *decoder;
     DWORD id;
+    unsigned int index;
     CRITICAL_SECTION cs;
     CONDITION_VARIABLE sample_event;
-    struct list samples;
+    struct list responses;
     enum media_stream_state state;
     BOOL selected;
     BOOL presented;
@@ -366,18 +371,21 @@ static ULONG WINAPI source_reader_stream_events_callback_Release(IMFAsyncCallbac
     return IMFSourceReader_Release(&reader->IMFSourceReader_iface);
 }
 
-static void source_reader_queue_sample(struct media_stream *stream, IMFSample *sample)
+static void source_reader_queue_response(struct media_stream *stream, HRESULT status, DWORD stream_index,
+        DWORD stream_flags, LONGLONG timestamp, IMFSample *sample)
 {
-    struct sample *pending_sample;
+    struct stream_response *response;
 
-    if (!sample)
-        return;
+    response = heap_alloc_zero(sizeof(*response));
+    response->status = status;
+    response->stream_index = stream_index;
+    response->stream_flags = stream_flags;
+    response->timestamp = timestamp;
+    response->sample = sample;
+    if (response->sample)
+        IMFSample_AddRef(response->sample);
 
-    pending_sample = heap_alloc(sizeof(*pending_sample));
-    pending_sample->sample = sample;
-    IMFSample_AddRef(pending_sample->sample);
-
-    list_add_tail(&stream->samples, &pending_sample->entry);
+    list_add_tail(&stream->responses, &response->entry);
 }
 
 static HRESULT source_reader_pull_stream_samples(struct media_stream *stream)
@@ -385,6 +393,7 @@ static HRESULT source_reader_pull_stream_samples(struct media_stream *stream)
     MFT_OUTPUT_STREAM_INFO stream_info = { 0 };
     MFT_OUTPUT_DATA_BUFFER out_buffer;
     IMFMediaBuffer *buffer;
+    LONGLONG timestamp;
     DWORD status;
     HRESULT hr;
 
@@ -420,7 +429,11 @@ static HRESULT source_reader_pull_stream_samples(struct media_stream *stream)
             break;
         }
 
-        source_reader_queue_sample(stream, out_buffer.pSample);
+        timestamp = 0;
+        if (FAILED(IMFSample_GetSampleTime(out_buffer.pSample, &timestamp)))
+            WARN("Sample time wasn't set.\n");
+
+        source_reader_queue_response(stream, S_OK /* FIXME */, stream->index, 0, timestamp, out_buffer.pSample);
         if (out_buffer.pSample)
             IMFSample_Release(out_buffer.pSample);
         if (out_buffer.pEvents)
@@ -432,11 +445,16 @@ static HRESULT source_reader_pull_stream_samples(struct media_stream *stream)
 
 static HRESULT source_reader_process_sample(struct media_stream *stream, IMFSample *sample)
 {
+    LONGLONG timestamp;
     HRESULT hr;
 
     if (!stream->decoder)
     {
-        source_reader_queue_sample(stream, sample);
+        timestamp = 0;
+        if (FAILED(IMFSample_GetSampleTime(sample, &timestamp)))
+            WARN("Sample time wasn't set.\n");
+
+        source_reader_queue_response(stream, S_OK, stream->index, 0, timestamp, sample);
         return S_OK;
     }
 
@@ -667,7 +685,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
         for (i = 0; i < reader->stream_count; ++i)
         {
             struct media_stream *stream = &reader->streams[i];
-            struct sample *ptr, *next;
+            struct stream_response *ptr, *next;
 
             if (stream->stream)
                 IMFMediaStream_Release(stream->stream);
@@ -677,9 +695,10 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
                 IMFTransform_Release(stream->decoder);
             DeleteCriticalSection(&stream->cs);
 
-            LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->samples, struct sample, entry)
+            LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->responses, struct stream_response, entry)
             {
-                IMFSample_Release(ptr->sample);
+                if (ptr->sample)
+                    IMFSample_Release(ptr->sample);
                 list_remove(&ptr->entry);
                 heap_free(ptr);
             }
@@ -1089,22 +1108,18 @@ static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFG
     return IMFMediaSource_Start(reader->source, reader->descriptor, format, position);
 }
 
-static IMFSample *media_stream_pop_sample(struct media_stream *stream, DWORD *stream_flags)
+static struct stream_response *media_stream_pop_response(struct media_stream *stream)
 {
-    IMFSample *ret = NULL;
+    struct stream_response *response = NULL;
     struct list *head;
 
-    if ((head = list_head(&stream->samples)))
+    if ((head = list_head(&stream->responses)))
     {
-        struct sample *pending_sample = LIST_ENTRY(head, struct sample, entry);
-        ret = pending_sample->sample;
-        list_remove(&pending_sample->entry);
-        heap_free(pending_sample);
+        response = LIST_ENTRY(head, struct stream_response, entry);
+        list_remove(&response->entry);
     }
 
-    *stream_flags = (!ret && stream->state == STREAM_STATE_EOS) ? MF_SOURCE_READERF_ENDOFSTREAM : 0;
-
-    return ret;
+    return response;
 }
 
 static HRESULT source_reader_start_source(struct source_reader *reader)
@@ -1145,6 +1160,7 @@ static HRESULT source_reader_start_source(struct source_reader *reader)
 static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD index, DWORD flags, DWORD *actual_index,
         DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
+    struct stream_response *response;
     struct media_stream *stream;
     DWORD stream_index;
     HRESULT hr = S_OK;
@@ -1154,6 +1170,9 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
         return E_POINTER;
 
     *sample = NULL;
+
+    if (timestamp)
+        *timestamp = 0;
 
     switch (index)
     {
@@ -1179,8 +1198,6 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
         *stream_flags = MF_SOURCE_READERF_ERROR;
         if (actual_index)
             *actual_index = index;
-        if (timestamp)
-            *timestamp = 0;
         return hr;
     }
 
@@ -1195,7 +1212,7 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
     {
         if (!(flags & MF_SOURCE_READER_CONTROLF_DRAIN))
         {
-            while (list_empty(&stream->samples) && stream->state != STREAM_STATE_EOS)
+            while (list_empty(&stream->responses) && stream->state != STREAM_STATE_EOS)
             {
                 if (stream->stream)
                 {
@@ -1206,21 +1223,25 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
             }
         }
 
-        *sample = media_stream_pop_sample(stream, stream_flags);
+        if ((response = media_stream_pop_response(stream)))
+        {
+            *stream_flags = response->stream_flags;
+            if (timestamp)
+                *timestamp = response->timestamp;
+            *sample = response->sample;
+            if (*sample)
+                IMFSample_AddRef(*sample);
+        }
+        else
+        {
+            *stream_flags = list_empty(&stream->responses) && stream->state == STREAM_STATE_EOS ?
+                    MF_SOURCE_READERF_ENDOFSTREAM : 0;
+        }
     }
 
     LeaveCriticalSection(&stream->cs);
 
-    TRACE("Got sample %p.\n", *sample);
-
-    if (timestamp)
-    {
-        /* TODO: it's possible timestamp has to be set for some events.
-           For MEEndOfStream it's correct to return 0. */
-        *timestamp = 0;
-        if (*sample)
-            IMFSample_GetSampleTime(*sample, timestamp);
-    }
+    TRACE("Got sample %p, flags %#x.\n", *sample, *stream_flags);
 
     return hr;
 }
@@ -1466,9 +1487,10 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
         if (FAILED(hr))
             break;
 
+        object->streams[i].index = i;
         InitializeCriticalSection(&object->streams[i].cs);
         InitializeConditionVariable(&object->streams[i].sample_event);
-        list_init(&object->streams[i].samples);
+        list_init(&object->streams[i].responses);
     }
 
     if (FAILED(hr))
