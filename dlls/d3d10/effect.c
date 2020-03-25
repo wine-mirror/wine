@@ -124,6 +124,11 @@ static inline struct d3d10_effect_variable *impl_from_ID3D10EffectVariable(ID3D1
     return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
 }
 
+static inline struct d3d10_effect_variable *impl_from_ID3D10EffectShaderVariable(ID3D10EffectShaderVariable *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_effect_variable, ID3D10EffectVariable_iface);
+}
+
 struct d3d10_effect_state_property_info
 {
     UINT id;
@@ -6639,7 +6644,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetShaderDesc(
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetVertexShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10VertexShader **shader)
 {
-    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
 
     TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
 
@@ -6661,7 +6666,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetVertexShader(
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetGeometryShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10GeometryShader **shader)
 {
-    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
 
     TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
 
@@ -6683,7 +6688,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetGeometryShader(
 static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetPixelShader(
         ID3D10EffectShaderVariable *iface, UINT index, ID3D10PixelShader **shader)
 {
-    struct d3d10_effect_variable *v = impl_from_ID3D10EffectVariable((ID3D10EffectVariable *)iface);
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
 
     TRACE("iface %p, index %u, shader %p.\n", iface, index, shader);
 
@@ -6706,7 +6711,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureE
         ID3D10EffectShaderVariable *iface, UINT shader_index, UINT element_index,
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
     struct d3d10_effect_shader_variable *s;
     D3D10_SIGNATURE_PARAMETER_DESC *d;
 
@@ -6720,13 +6725,13 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetInputSignatureE
     }
 
     /* Check shader_index, this crashes on W7/DX10 */
-    if (shader_index >= This->effect->used_shader_count)
+    if (shader_index >= v->effect->used_shader_count)
     {
         WARN("This should crash on W7/DX10!\n");
         return E_FAIL;
     }
 
-    s = &This->effect->used_shaders[shader_index]->u.shader;
+    s = &v->effect->used_shaders[shader_index]->u.shader;
     if (!s->input_signature.signature)
     {
         WARN("No shader signature\n");
@@ -6762,7 +6767,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
         ID3D10EffectShaderVariable *iface, UINT shader_index, UINT element_index,
         D3D10_SIGNATURE_PARAMETER_DESC *desc)
 {
-    struct d3d10_effect_variable *This = (struct d3d10_effect_variable *)iface;
+    struct d3d10_effect_variable *v = impl_from_ID3D10EffectShaderVariable(iface);
     struct d3d10_effect_shader_variable *s;
     D3D10_SIGNATURE_PARAMETER_DESC *d;
 
@@ -6776,13 +6781,13 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_shader_variable_GetOutputSignature
     }
 
     /* Check shader_index, this crashes on W7/DX10 */
-    if (shader_index >= This->effect->used_shader_count)
+    if (shader_index >= v->effect->used_shader_count)
     {
         WARN("This should crash on W7/DX10!\n");
         return E_FAIL;
     }
 
-    s = &This->effect->used_shaders[shader_index]->u.shader;
+    s = &v->effect->used_shaders[shader_index]->u.shader;
     if (!s->output_signature.signature)
     {
         WARN("No shader signature\n");
