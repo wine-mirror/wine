@@ -922,6 +922,59 @@ static HRESULT source_reader_get_stream_read_index(struct source_reader *reader,
     return hr;
 }
 
+static void source_reader_release_responses(struct media_stream *stream)
+{
+    struct stream_response *ptr, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->responses, struct stream_response, entry)
+    {
+        list_remove(&ptr->entry);
+        source_reader_release_response(ptr);
+    }
+}
+
+static void source_reader_flush_stream(struct source_reader *reader, DWORD stream_index)
+{
+    struct media_stream *stream = &reader->streams[stream_index];
+
+    EnterCriticalSection(&stream->cs);
+
+    source_reader_release_responses(stream);
+    if (stream->decoder)
+        IMFTransform_ProcessMessage(stream->decoder, MFT_MESSAGE_COMMAND_FLUSH, 0);
+    stream->requests = 0;
+
+    LeaveCriticalSection(&stream->cs);
+}
+
+static HRESULT source_reader_flush(struct source_reader *reader, unsigned int index)
+{
+    unsigned int stream_index;
+
+    switch (index)
+    {
+        case MF_SOURCE_READER_FIRST_VIDEO_STREAM:
+            stream_index = reader->first_video_stream_index;
+            break;
+        case MF_SOURCE_READER_FIRST_AUDIO_STREAM:
+            stream_index = reader->first_audio_stream_index;
+            break;
+        case MF_SOURCE_READER_ALL_STREAMS:
+            for (stream_index = 0; stream_index < reader->stream_count; ++stream_index)
+            {
+                source_reader_flush_stream(reader, stream_index);
+            }
+
+            break;
+        default:
+            stream_index = index;
+    }
+
+    source_reader_flush_stream(reader, stream_index);
+
+    return S_OK;
+}
+
 static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct source_reader *reader = impl_from_async_commands_callback_IMFAsyncCallback(iface);
@@ -990,7 +1043,9 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
 
             break;
         case SOURCE_READER_ASYNC_FLUSH:
-            FIXME("Async flushing is not implemented.\n");
+            source_reader_flush(reader, command->stream_index);
+
+            IMFSourceReaderCallback_OnFlush(reader->async_callback, command->stream_index);
             break;
         default:
             ;
@@ -1063,7 +1118,6 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
         for (i = 0; i < reader->stream_count; ++i)
         {
             struct media_stream *stream = &reader->streams[i];
-            struct stream_response *ptr, *next;
 
             if (stream->stream)
                 IMFMediaStream_Release(stream->stream);
@@ -1073,11 +1127,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
                 IMFTransform_Release(stream->decoder);
             DeleteCriticalSection(&stream->cs);
 
-            LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &stream->responses, struct stream_response, entry)
-            {
-                list_remove(&ptr->entry);
-                source_reader_release_response(ptr);
-            }
+            source_reader_release_responses(stream);
         }
         heap_free(reader->streams);
         DeleteCriticalSection(&reader->cs);
@@ -1570,7 +1620,7 @@ static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
     struct source_reader_async_command *command;
     HRESULT hr;
 
-    FIXME("%p, %#x.\n", iface, index);
+    TRACE("%p, %#x.\n", iface, index);
 
     if (reader->async_callback)
     {
@@ -1584,9 +1634,7 @@ static HRESULT WINAPI src_reader_Flush(IMFSourceReader *iface, DWORD index)
         IUnknown_Release(&command->IUnknown_iface);
     }
     else
-    {
-        hr = E_NOTIMPL;
-    }
+        hr = source_reader_flush(reader, index);
 
     return hr;
 }
