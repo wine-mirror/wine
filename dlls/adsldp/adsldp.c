@@ -381,6 +381,7 @@ typedef struct
 {
     IADs IADs_iface;
     IADsOpenDSObject IADsOpenDSObject_iface;
+    IDirectorySearch IDirectorySearch_iface;
     LONG ref;
     LDAP *ld;
     BSTR host;
@@ -416,6 +417,13 @@ static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj
     {
         IADs_AddRef(iface);
         *obj = &ldap->IADsOpenDSObject_iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IDirectorySearch))
+    {
+        IADs_AddRef(iface);
+        *obj = &ldap->IDirectorySearch_iface;
         return S_OK;
     }
 
@@ -1046,6 +1054,120 @@ static const IADsOpenDSObjectVtbl IADsOpenDSObject_vtbl =
     openobj_OpenDSObject
 };
 
+static inline LDAP_namespace *impl_from_IDirectorySearch(IDirectorySearch *iface)
+{
+    return CONTAINING_RECORD(iface, LDAP_namespace, IDirectorySearch_iface);
+}
+
+static HRESULT WINAPI search_QueryInterface(IDirectorySearch *iface, REFIID riid, void **obj)
+{
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (!riid || !obj) return E_INVALIDARG;
+
+    if (IsEqualGUID(riid, &IID_IDirectorySearch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IDirectorySearch_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI search_AddRef(IDirectorySearch *iface)
+{
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    return IADs_AddRef(&ldap->IADs_iface);
+}
+
+static ULONG WINAPI search_Release(IDirectorySearch *iface)
+{
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    return IADs_Release(&ldap->IADs_iface);
+}
+
+static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_SEARCHPREF_INFO prefs, DWORD count)
+{
+    FIXME("%p,%p,%u: stub\n", iface, prefs, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filter, LPWSTR *names,
+                                           DWORD count, PADS_SEARCH_HANDLE res)
+{
+    FIXME("%p,%s,%p,%u,%p: stub\n", iface, debugstr_w(filter), names, count, res);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_AbandonSearch(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
+{
+    FIXME("%p,%p: stub\n", iface, res);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_GetFirstRow(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
+{
+    FIXME("%p,%p: stub\n", iface, res);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_GetNextRow(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
+{
+    FIXME("%p,%p: stub\n", iface, res);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_GetPreviousRow(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
+{
+    FIXME("%p,%p: stub\n", iface, res);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEARCH_HANDLE res, LPWSTR *names)
+{
+    FIXME("%p,%p,%p: stub\n", iface, res, names);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDLE res,
+                                       LPWSTR name, PADS_SEARCH_COLUMN col)
+{
+    FIXME("%p,%p,%s,%p: stub\n", iface, res, debugstr_w(name), col);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COLUMN col)
+{
+    FIXME("%p,%p: stub\n", iface, col);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI search_CloseSearchHandle(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
+{
+    FIXME("%p,%p: stub\n", iface, res);
+    return E_NOTIMPL;
+}
+
+static const IDirectorySearchVtbl IDirectorySearch_vtbl =
+{
+    search_QueryInterface,
+    search_AddRef,
+    search_Release,
+    search_SetSearchPreference,
+    search_ExecuteSearch,
+    search_AbandonSearch,
+    search_GetFirstRow,
+    search_GetNextRow,
+    search_GetPreviousRow,
+    search_GetNextColumnName,
+    search_GetColumn,
+    search_FreeColumn,
+    search_CloseSearchHandle
+};
+
 static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
 {
     LDAP_namespace *ldap;
@@ -1056,6 +1178,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
 
     ldap->IADs_iface.lpVtbl = &IADs_vtbl;
     ldap->IADsOpenDSObject_iface.lpVtbl = &IADsOpenDSObject_vtbl;
+    ldap->IDirectorySearch_iface.lpVtbl = &IDirectorySearch_vtbl;
     ldap->ref = 1;
     ldap->ld = NULL;
     ldap->host = NULL;

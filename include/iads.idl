@@ -99,8 +99,6 @@ typedef enum
     ADS_SEARCHPREF_EXTENDED_DN
 } ADS_SEARCHPREF_ENUM;
 
-typedef ADS_SEARCHPREF_ENUM *PADS_SEARCHPREF_INFO;
-
 typedef enum
 {
     ADS_STATUS_S_OK,
@@ -328,7 +326,7 @@ typedef struct ads_searchpref_info
     ADS_SEARCHPREF dwSearchPref;
     ADSVALUE vValue;
     ADS_STATUS dwStatus;
-} ADS_SEARCHPREF_INFO;
+} ADS_SEARCHPREF_INFO, *PADS_SEARCHPREF_INFO;
 
 typedef struct ads_search_column
 {
