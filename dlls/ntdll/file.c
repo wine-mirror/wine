@@ -3248,9 +3248,9 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
             FILE_FS_ATTRIBUTE_INFORMATION *info = buffer;
 
             FIXME( "%p: faking attribute info\n", handle );
-            info->FileSystemAttribute = FILE_SUPPORTS_ENCRYPTION | FILE_FILE_COMPRESSION |
-                                        FILE_PERSISTENT_ACLS | FILE_UNICODE_ON_DISK |
-                                        FILE_CASE_PRESERVED_NAMES | FILE_CASE_SENSITIVE_SEARCH;
+            info->FileSystemAttributes = FILE_SUPPORTS_ENCRYPTION | FILE_FILE_COMPRESSION |
+                                         FILE_PERSISTENT_ACLS | FILE_UNICODE_ON_DISK |
+                                         FILE_CASE_PRESERVED_NAMES | FILE_CASE_SENSITIVE_SEARCH;
             info->MaximumComponentNameLength = MAXIMUM_FILENAME_LENGTH - 1;
             info->FileSystemNameLength = sizeof(ntfsW);
             memcpy(info->FileSystemName, ntfsW, sizeof(ntfsW));
