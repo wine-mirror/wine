@@ -148,10 +148,10 @@ SEGPTR CALL32_CBClientEx_RetAddr = 0;
 
 extern int call_entry_point( void *func, int nb_args, const DWORD *args );
 extern void __wine_call_from_16_thunk(void);
-extern void FT_Prolog(void);
-extern void FT_PrologPrime(void);
-extern void QT_Thunk(void);
-extern void QT_ThunkPrime(void);
+extern void WINAPI FT_Prolog(void);
+extern void WINAPI FT_PrologPrime(void);
+extern void WINAPI QT_Thunk(void);
+extern void WINAPI QT_ThunkPrime(void);
 
 /***********************************************************************
  *                                                                     *
