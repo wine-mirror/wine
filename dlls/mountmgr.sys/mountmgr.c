@@ -330,7 +330,7 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
             output->type = type;
             iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, type ) + sizeof(output->type);
         }
-        status = STATUS_MORE_ENTRIES;
+        status = STATUS_BUFFER_OVERFLOW;
         goto done;
     }
 
