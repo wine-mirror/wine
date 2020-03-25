@@ -161,7 +161,6 @@ static HRESULT dxgi_adapter_get_desc(struct dxgi_adapter *adapter, DXGI_ADAPTER_
     adapter_id.driver_size = 0;
     adapter_id.description = description;
     adapter_id.description_size = sizeof(description);
-    adapter_id.device_name_size = 0;
 
     if (FAILED(hr = wined3d_adapter_get_identifier(adapter->wined3d_adapter, 0, &adapter_id)))
         return hr;
@@ -226,7 +225,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IWineDXGIAda
 
     adapter_id.driver_size = 0;
     adapter_id.description_size = 0;
-    adapter_id.device_name_size = 0;
 
     wined3d_mutex_lock();
     hr = wined3d_get_device_caps(adapter->wined3d_adapter, WINED3D_DEVICE_TYPE_HAL, &caps);
@@ -312,7 +310,6 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdap
 
     adapter_id.driver_size = 0;
     adapter_id.description_size = 0;
-    adapter_id.device_name_size = 0;
 
     if (FAILED(hr = wined3d_adapter_get_identifier(adapter->wined3d_adapter, 0, &adapter_id)))
         return hr;

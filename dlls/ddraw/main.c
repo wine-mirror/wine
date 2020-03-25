@@ -68,15 +68,13 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
 
     while (cont_enum && (wined3d_adapter = wined3d_get_adapter(wined3d, adapter_idx)))
     {
-        char DriverName[512] = "", DriverDescription[512] = "";
+        char device_name[512] = "", description[512] = "";
 
         /* The Battle.net System Checker expects the GetAdapterIdentifier DeviceName to match the
          * Driver Name, so obtain the DeviceName and GUID from D3D. */
         memset(&adapter_id, 0x0, sizeof(adapter_id));
-        adapter_id.device_name = DriverName;
-        adapter_id.device_name_size = sizeof(DriverName);
-        adapter_id.description = DriverDescription;
-        adapter_id.description_size = sizeof(DriverDescription);
+        adapter_id.description = description;
+        adapter_id.description_size = sizeof(description);
 
         wined3d_mutex_lock();
         if (FAILED(hr = wined3d_adapter_get_identifier(wined3d_adapter, 0x0, &adapter_id)))
@@ -101,8 +99,10 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
 
             TRACE("Interface %u: %s\n", interface_count++,
                     wine_dbgstr_guid(&adapter_id.device_identifier));
+            WideCharToMultiByte(CP_ACP, 0, output_desc.device_name, -1, device_name,
+                    sizeof(device_name), NULL, NULL);
             cont_enum = callback(&adapter_id.device_identifier, adapter_id.description,
-                    adapter_id.device_name, context, output_desc.monitor);
+                    device_name, context, output_desc.monitor);
         }
 
         if (FAILED(hr))

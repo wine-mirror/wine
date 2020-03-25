@@ -1742,8 +1742,6 @@ struct wined3d_adapter_identifier
     unsigned int driver_size;
     char *description;
     unsigned int description_size;
-    char *device_name;
-    unsigned int device_name_size;
     LARGE_INTEGER driver_version;
     DWORD vendor_id;
     DWORD device_id;

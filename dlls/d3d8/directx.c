@@ -120,8 +120,6 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
     adapter_id.driver_size = sizeof(identifier->Driver);
     adapter_id.description = identifier->Description;
     adapter_id.description_size = sizeof(identifier->Description);
-    adapter_id.device_name = NULL; /* d3d9 only */
-    adapter_id.device_name_size = 0; /* d3d9 only */
 
     wined3d_adapter = wined3d_output_get_adapter(d3d8->wined3d_outputs[output_idx]);
     if (SUCCEEDED(hr = wined3d_adapter_get_identifier(wined3d_adapter, flags, &adapter_id)))

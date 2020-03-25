@@ -1357,17 +1357,6 @@ HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapt
     wined3d_copy_name(identifier->driver, adapter->driver_info.name, identifier->driver_size);
     wined3d_copy_name(identifier->description, adapter->driver_info.description, identifier->description_size);
 
-    /* Note that d3d8 doesn't supply a device name. */
-    if (identifier->device_name_size)
-    {
-        if (!WideCharToMultiByte(CP_ACP, 0, adapter->device_name, -1, identifier->device_name,
-                identifier->device_name_size, NULL, NULL))
-        {
-            ERR("Failed to convert device name, last error %#x.\n", GetLastError());
-            goto fail;
-        }
-    }
-
     identifier->driver_version.u.HighPart = adapter->driver_info.version_high;
     identifier->driver_version.u.LowPart = adapter->driver_info.version_low;
     identifier->vendor_id = adapter->driver_info.vendor;
@@ -1385,10 +1374,6 @@ HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapt
     wined3d_mutex_unlock();
 
     return WINED3D_OK;
-
-fail:
-    wined3d_mutex_unlock();
-    return WINED3DERR_INVALIDCALL;
 }
 
 HRESULT CDECL wined3d_output_get_raster_status(const struct wined3d_output *output,

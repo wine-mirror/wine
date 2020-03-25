@@ -2607,7 +2607,6 @@ static HRESULT WINAPI ddraw7_GetDeviceIdentifier(IDirectDraw7 *iface,
     adapter_id.driver_size = sizeof(DDDI->szDriver);
     adapter_id.description = DDDI->szDescription;
     adapter_id.description_size = sizeof(DDDI->szDescription);
-    adapter_id.device_name_size = 0;
     wined3d_mutex_lock();
     hr = wined3d_adapter_get_identifier(ddraw->wined3d_adapter, 0x0, &adapter_id);
     wined3d_mutex_unlock();
