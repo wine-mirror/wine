@@ -924,7 +924,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
     HRESULT hr;
     ULONG err;
 
-    FIXME("%p,%s,%s,%p,%08x,%p: semi-stub\n", iface, debugstr_w(path), debugstr_w(user), password, flags, obj);
+    TRACE("%p,%s,%s,%p,%08x,%p\n", iface, debugstr_w(path), debugstr_w(user), password, flags, obj);
 
     hr = parse_path(path, &host, &port, &object);
     if (hr != S_OK) return hr;
