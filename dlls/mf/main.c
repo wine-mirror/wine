@@ -1894,7 +1894,7 @@ static HRESULT WINAPI sample_copier_transform_GetOutputStatus(IMFTransform *ifac
 
 static HRESULT WINAPI sample_copier_transform_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
 {
-    TRACE("%p, %s, %s.\n", iface, wine_dbgstr_longlong(lower), wine_dbgstr_longlong(upper));
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(lower), debugstr_time(upper));
 
     return E_NOTIMPL;
 }

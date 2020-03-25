@@ -31,6 +31,8 @@
 #include "wine/heap.h"
 #include "wine/list.h"
 
+#include "mf_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 enum session_command
@@ -3547,7 +3549,7 @@ static HRESULT WINAPI present_clock_Start(IMFPresentationClock *iface, LONGLONG 
     struct clock_state_change_param param = {{0}};
     HRESULT hr;
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(start_offset));
+    TRACE("%p, %s.\n", iface, debugstr_time(start_offset));
 
     EnterCriticalSection(&clock->cs);
     clock->start_offset = param.u.offset = start_offset;
@@ -3772,7 +3774,7 @@ static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags,
     struct clock_timer *clock_timer;
     HRESULT hr;
 
-    TRACE("%p, %#x, %s, %p, %p, %p.\n", iface, flags, wine_dbgstr_longlong(time), callback, state, cancel_key);
+    TRACE("%p, %#x, %s, %p, %p, %p.\n", iface, flags, debugstr_time(time), callback, state, cancel_key);
 
     if (!(clock_timer = heap_alloc_zero(sizeof(*clock_timer))))
         return E_OUTOFMEMORY;

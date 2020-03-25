@@ -1151,7 +1151,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockStart(IMFClockStateSink *
 {
     struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
 
-    TRACE("%p, %s, %s.\n", iface, wine_dbgstr_longlong(systime), wine_dbgstr_longlong(offset));
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
 
     sample_grabber_set_state(grabber, SINK_STATE_RUNNING);
 
@@ -1162,7 +1162,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockStop(IMFClockStateSink *i
 {
     struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
 
     sample_grabber_set_state(grabber, SINK_STATE_STOPPED);
 
@@ -1173,7 +1173,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockPause(IMFClockStateSink *
 {
     struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
 
     return IMFSampleGrabberSinkCallback_OnClockPause(sample_grabber_get_callback(grabber), systime);
 }
@@ -1182,7 +1182,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink
 {
     struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
 
-    TRACE("%p, %s.\n", iface, wine_dbgstr_longlong(systime));
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
 
     sample_grabber_set_state(grabber, SINK_STATE_RUNNING);
 
@@ -1193,7 +1193,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink
 {
     struct sample_grabber *grabber = impl_from_IMFClockStateSink(iface);
 
-    TRACE("%p, %s, %f.\n", iface, wine_dbgstr_longlong(systime), rate);
+    TRACE("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
 
     return IMFSampleGrabberSinkCallback_OnClockSetRate(sample_grabber_get_callback(grabber), systime, rate);
 }
