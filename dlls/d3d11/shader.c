@@ -1024,7 +1024,7 @@ static HRESULT validate_stream_output_entries(const D3D11_SO_DECLARATION_ENTRY *
                 continue;
 
             if (e1->Stream == e2->Stream
-                    && !_strnicmp(e1->SemanticName, e2->SemanticName, -1)
+                    && !stricmp(e1->SemanticName, e2->SemanticName)
                     && e1->SemanticIndex == e2->SemanticIndex
                     && e1->StartComponent < e2->StartComponent + e2->ComponentCount
                     && e1->StartComponent + e1->ComponentCount > e2->StartComponent)
