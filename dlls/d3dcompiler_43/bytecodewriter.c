@@ -939,7 +939,8 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERVS_VERSION(2, 1)){
+            if (This->shader->major_version != 2 || This->shader->minor_version != 1)
+            {
                 WARN("Predicate register is allowed only in vs_2_x\n");
                 This->state = E_INVALIDARG;
                 return;
@@ -1634,7 +1635,8 @@ static void vs_2_srcreg(struct bc_writer *This,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERVS_VERSION(2, 1)){
+            if (This->shader->major_version != 2 || This->shader->minor_version != 1)
+            {
                 WARN("Predicate register is allowed only in vs_2_x\n");
                 This->state = E_INVALIDARG;
                 return;
@@ -1871,7 +1873,8 @@ static void ps_2_srcreg(struct bc_writer *This,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERPS_VERSION(2, 1)){
+            if (This->shader->minor_version == 0)
+            {
                 WARN("Predicate register not supported in ps_2_0\n");
                 This->state = E_INVALIDARG;
             }
@@ -1917,7 +1920,8 @@ static void ps_2_0_dstreg(struct bc_writer *This,
             break;
 
         case BWRITERSPR_PREDICATE:
-            if(This->version != BWRITERPS_VERSION(2, 1)){
+            if (This->shader->minor_version == 0)
+            {
                 WARN("Predicate register not supported in ps_2_0\n");
                 This->state = E_INVALIDARG;
             }
@@ -2072,6 +2076,7 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
 static void sm_3_srcreg(struct bc_writer *This,
                         const struct shader_reg *reg,
                         struct bytecode_buffer *buffer) {
+    const struct bwriter_shader *shader = This->shader;
     DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
     DWORD d3d9reg;
 
@@ -2081,14 +2086,16 @@ static void sm_3_srcreg(struct bc_writer *This,
     token |= d3d9_srcmod(reg->srcmod);
 
     if(reg->rel_reg) {
-        if(reg->type == BWRITERSPR_CONST && This->version == BWRITERPS_VERSION(3, 0)) {
+        if (reg->type == BWRITERSPR_CONST && shader->type == ST_PIXEL)
+        {
             WARN("c%u[...] is unsupported in ps_3_0\n", reg->regnum);
             This->state = E_INVALIDARG;
             return;
         }
-        if(((reg->rel_reg->type == BWRITERSPR_ADDR && This->version == BWRITERVS_VERSION(3, 0)) ||
-           reg->rel_reg->type == BWRITERSPR_LOOP) &&
-           reg->rel_reg->regnum == 0) {
+
+        if (((reg->rel_reg->type == BWRITERSPR_ADDR && shader->type == ST_VERTEX)
+                || reg->rel_reg->type == BWRITERSPR_LOOP) && reg->rel_reg->regnum == 0)
+        {
             token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
         } else {
             WARN("Unsupported relative addressing register\n");
@@ -2111,12 +2118,13 @@ static void sm_3_dstreg(struct bc_writer *This,
                         const struct shader_reg *reg,
                         struct bytecode_buffer *buffer,
                         DWORD shift, DWORD mod) {
+    const struct bwriter_shader *shader = This->shader;
     DWORD token = (1u << 31); /* Bit 31 of registers is 1 */
     DWORD d3d9reg;
 
     if(reg->rel_reg) {
-        if(This->version == BWRITERVS_VERSION(3, 0) &&
-           reg->type == BWRITERSPR_OUTPUT) {
+        if (shader->type == ST_VERTEX && reg->type == BWRITERSPR_OUTPUT)
+        {
             token |= D3DVS_ADDRMODE_RELATIVE & D3DVS_ADDRESSMODE_MASK;
         } else {
             WARN("Relative addressing not supported for this shader type or register type\n");
@@ -2395,7 +2403,6 @@ static struct bc_writer *create_writer(DWORD version)
             WARN("Unexpected shader version requested: %08x\n", version);
             goto fail;
     }
-    ret->version = version;
     return ret;
 
 fail:
@@ -2437,6 +2444,7 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **resul
         return E_FAIL;
     }
     writer = create_writer(sm1_version(shader));
+    writer->shader = shader;
     *result = NULL;
 
     if(!writer) {

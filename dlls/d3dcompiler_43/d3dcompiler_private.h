@@ -332,11 +332,10 @@ struct bytecode_backend {
 /* Bytecode writing stuff */
 struct bc_writer {
     const struct bytecode_backend *funcs;
+    const struct bwriter_shader *shader;
 
     /* Avoid result checking */
     HRESULT                       state;
-
-    DWORD                         version;
 
     /* Vertex shader varying mapping */
     DWORD                         oPos_regnum;
