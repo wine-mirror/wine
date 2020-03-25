@@ -916,35 +916,36 @@ HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *in
     return WINED3D_OK;
 }
 
+static BOOL CALLBACK enum_monitor_proc(HMONITOR monitor, HDC hdc, RECT *rect, LPARAM lparam)
+{
+    struct wined3d_output_desc *desc = (struct wined3d_output_desc *)lparam;
+    MONITORINFOEXW monitor_info;
+
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info) &&
+            !lstrcmpiW(desc->device_name, monitor_info.szDevice))
+    {
+        desc->monitor = monitor;
+        desc->desktop_rect = monitor_info.rcMonitor;
+        desc->attached_to_desktop = TRUE;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
         struct wined3d_output_desc *desc)
 {
-    enum wined3d_display_rotation rotation;
-    const struct wined3d_adapter *adapter;
     struct wined3d_display_mode mode;
-    HMONITOR monitor;
-    HRESULT hr;
 
     TRACE("output %p, desc %p.\n", output, desc);
 
-    adapter = output->adapter;
-    if (!(monitor = MonitorFromPoint(adapter->monitor_position, MONITOR_DEFAULTTOPRIMARY)))
-        return WINED3DERR_INVALIDCALL;
-
-    if (FAILED(hr = wined3d_output_get_display_mode(output, &mode, &rotation)))
-        return hr;
-
+    memset(desc, 0, sizeof(*desc));
     desc->ordinal = output->ordinal;
-    memcpy(desc->device_name, adapter->device_name, sizeof(desc->device_name));
-    SetRect(&desc->desktop_rect, 0, 0, mode.width, mode.height);
-    OffsetRect(&desc->desktop_rect, adapter->monitor_position.x, adapter->monitor_position.y);
-    /* FIXME: We should get this from EnumDisplayDevices() when the adapters
-     * are created. */
-    desc->attached_to_desktop = TRUE;
-    desc->rotation = rotation;
-    desc->monitor = monitor;
-
-    return WINED3D_OK;
+    lstrcpyW(desc->device_name, output->device_name);
+    EnumDisplayMonitors(NULL, NULL, enum_monitor_proc, (LPARAM)desc);
+    return wined3d_output_get_display_mode(output, &mode, &desc->rotation);
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes

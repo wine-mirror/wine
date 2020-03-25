@@ -2914,7 +2914,6 @@ struct wined3d_output
 struct wined3d_adapter
 {
     unsigned int ordinal;
-    POINT monitor_position;
 
     struct wined3d_gl_info  gl_info;
     struct wined3d_d3d_info d3d_info;
