@@ -1431,6 +1431,11 @@ static BOOL native_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
+static BOOL native_enum_modules(struct process *process, enum_modules_cb cb, void* user)
+{
+    return FALSE;
+}
+
 static BOOL native_fetch_file_info(struct process* process, const WCHAR* name, ULONG_PTR load_addr, DWORD_PTR* base,
                                    DWORD* size, DWORD* checksum)
 {
@@ -1440,5 +1445,6 @@ static BOOL native_fetch_file_info(struct process* process, const WCHAR* name, U
 const struct loader_ops no_loader_ops =
 {
     native_synchronize_module_list,
+    native_enum_modules,
     native_fetch_file_info,
 };
