@@ -221,9 +221,6 @@ extern void WINAPI DOSVM_Int3cHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3dHandler(CONTEXT*) DECLSPEC_HIDDEN;
 extern void WINAPI DOSVM_Int3eHandler(CONTEXT*) DECLSPEC_HIDDEN;
 
-/* int13.c */
-extern void WINAPI DOSVM_Int13Handler(CONTEXT*) DECLSPEC_HIDDEN;
-
 /* int15.c */
 extern void WINAPI DOSVM_Int15Handler(CONTEXT*) DECLSPEC_HIDDEN;
 
