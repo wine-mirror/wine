@@ -1,7 +1,7 @@
 MODULE    = krnl386.exe16
 IMPORTLIB = kernel
 IMPORTS   = winecrt0 kernel32 ntdll
-DELAYIMPORTS = dsound user32
+DELAYIMPORTS = user32
 EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
 
 C_SRCS = \
@@ -30,7 +30,6 @@ C_SRCS = \
 	resource.c \
 	selector.c \
 	snoop.c \
-	soundblaster.c \
 	syslevel.c \
 	task.c \
 	thunk.c \

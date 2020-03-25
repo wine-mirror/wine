@@ -837,11 +837,6 @@ DWORD DOSVM_inport( int port, int size )
     case 0x201:
         res = ~0U; /* no joystick */
         break;
-    case 0x22a:
-    case 0x22c:
-    case 0x22e:
-        res = (DWORD)SB_ioport_in( port );
-	break;
     case 0x00:
     case 0x01:
     case 0x02:
@@ -1034,10 +1029,6 @@ void DOSVM_outport( int port, int size, DWORD value )
             cmos_image_initialized = TRUE;
         }
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
-        break;
-    case 0x226:
-    case 0x22c:
-        SB_ioport_out( port, (BYTE)value );
         break;
     case 0x00:
     case 0x01:

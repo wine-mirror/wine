@@ -255,8 +255,4 @@ extern void DOSVM_outport( int port, int size, DWORD value ) DECLSPEC_HIDDEN;
 void DOSVM_RelayHandler( CONTEXT * ) DECLSPEC_HIDDEN;
 void DOSVM_BuildCallFrame( CONTEXT *, DOSRELAY, LPVOID ) DECLSPEC_HIDDEN;
 
-/* soundblaster.c */
-extern void SB_ioport_out( WORD port, BYTE val ) DECLSPEC_HIDDEN;
-extern BYTE SB_ioport_in( WORD port ) DECLSPEC_HIDDEN;
-
 #endif /* __WINE_DOSEXE_H */
