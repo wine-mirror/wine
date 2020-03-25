@@ -141,6 +141,13 @@ typedef enum
 
 typedef enum
 {
+    ADS_SCOPE_BASE,
+    ADS_SCOPE_ONELEVEL,
+    ADS_SCOPE_SUBTREE
+} ADS_SCOPEENUM;
+
+typedef enum
+{
     ADS_PASSWORD_ENCODE_REQUIRE_SSL,
     ADS_PASSWORD_ENCODE_CLEAR
 } ADS_PASSWORD_ENCODING_ENUM;
@@ -318,7 +325,7 @@ typedef struct _adsvalue
         ADS_NT_SECURITY_DESCRIPTOR SecurityDescriptor;
         PADS_DN_WITH_BINARY pDNWithBinary;
         PADS_DN_WITH_STRING pDNWithString;
-    };
+    } DUMMYUNIONNAME;
 } ADSVALUE, *PADSVALUE;
 
 typedef struct ads_searchpref_info

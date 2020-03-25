@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "windef.h"
 #include "winbase.h"
@@ -389,6 +390,10 @@ typedef struct
     ULONG port;
     ULONG attrs_count, attrs_count_allocated;
     struct ldap_attribute *attrs;
+    struct
+    {
+        ADS_SCOPEENUM scope;
+    } search;
 } LDAP_namespace;
 
 static inline LDAP_namespace *impl_from_IADs(IADs *iface)
@@ -1091,8 +1096,46 @@ static ULONG WINAPI search_Release(IDirectorySearch *iface)
 
 static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_SEARCHPREF_INFO prefs, DWORD count)
 {
-    FIXME("%p,%p,%u: stub\n", iface, prefs, count);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    DWORD i;
+
+    TRACE("%p,%p,%u\n", iface, prefs, count);
+
+    for (i = 0; i < count; i++)
+    {
+        switch (prefs[i].dwSearchPref)
+        {
+        case ADS_SEARCHPREF_SEARCH_SCOPE:
+            if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
+            {
+                FIXME("ADS_SEARCHPREF_SEACH_SCOPE: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+
+            switch (prefs[i].vValue.u.Integer)
+            {
+            case ADS_SCOPE_BASE:
+            case ADS_SCOPE_ONELEVEL:
+            case ADS_SCOPE_SUBTREE:
+                ldap->search.scope = prefs[i].vValue.u.Integer;
+                prefs[i].dwStatus = ADS_STATUS_S_OK;
+                break;
+
+            default:
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+            break;
+
+        default:
+            FIXME("pref %d, type %u: stub\n", prefs[i].dwSearchPref, prefs[i].vValue.dwType);
+            prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
+            break;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filter, LPWSTR *names,
@@ -1186,6 +1229,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->attrs_count = 0;
     ldap->attrs_count_allocated = 0;
     ldap->attrs = NULL;
+    ldap->search.scope = ADS_SCOPE_SUBTREE;
 
     hr = IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
     IADs_Release(&ldap->IADs_iface);
