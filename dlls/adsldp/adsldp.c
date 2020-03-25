@@ -1234,8 +1234,15 @@ static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COL
 
 static HRESULT WINAPI search_CloseSearchHandle(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
 {
-    FIXME("%p,%p: stub\n", iface, res);
-    return E_NOTIMPL;
+    struct ldap_search_context *ldap_ctx = res;
+
+    TRACE("%p,%p\n", iface, res);
+
+    if (!res) return E_ADS_BAD_PARAMETER;
+
+    ldap_msgfree(ldap_ctx->res);
+
+    return S_OK;
 }
 
 static const IDirectorySearchVtbl IDirectorySearch_vtbl =
