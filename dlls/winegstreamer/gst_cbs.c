@@ -66,15 +66,11 @@ static DWORD WINAPI dispatch_thread(void *user)
 
     while (1)
     {
-        pthread_cond_wait(&cb_list_cond, &cb_list_lock);
+        while (list_empty(&cb_list)) pthread_cond_wait(&cb_list_cond, &cb_list_lock);
 
-        while (!list_empty(&cb_list))
-        {
-            cbdata = LIST_ENTRY(list_head(&cb_list), struct cb_data, entry);
-            list_remove(&cbdata->entry);
-
-            TrySubmitThreadpoolCallback(&perform_cb, cbdata, NULL);
-        }
+        cbdata = LIST_ENTRY(list_head(&cb_list), struct cb_data, entry);
+        list_remove(&cbdata->entry);
+        TrySubmitThreadpoolCallback(&perform_cb, cbdata, NULL);
     }
 
     pthread_mutex_unlock(&cb_list_lock);
