@@ -837,42 +837,6 @@ DWORD DOSVM_inport( int port, int size )
     case 0x201:
         res = ~0U; /* no joystick */
         break;
-    case 0x00:
-    case 0x01:
-    case 0x02:
-    case 0x03:
-    case 0x04:
-    case 0x05:
-    case 0x06:
-    case 0x07:
-    case 0xC0:
-    case 0xC2:
-    case 0xC4:
-    case 0xC6:
-    case 0xC8:
-    case 0xCA:
-    case 0xCC:
-    case 0xCE:
-    case 0x87:
-    case 0x83:
-    case 0x81:
-    case 0x82:
-    case 0x8B:
-    case 0x89:
-    case 0x8A:
-    case 0x487:
-    case 0x483:
-    case 0x481:
-    case 0x482:
-    case 0x48B:
-    case 0x489:
-    case 0x48A:
-    case 0x08:
-    case 0xD0:
-    case 0x0D:
-    case 0xDA:
-        res = (DWORD)DMA_ioport_in( port );
-        break;
     default:
         WARN("Direct I/O read attempted from port %x\n", port);
         break;
@@ -1029,54 +993,6 @@ void DOSVM_outport( int port, int size, DWORD value )
             cmos_image_initialized = TRUE;
         }
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
-        break;
-    case 0x00:
-    case 0x01:
-    case 0x02:
-    case 0x03:
-    case 0x04:
-    case 0x05:
-    case 0x06:
-    case 0x07:
-    case 0xC0:
-    case 0xC2:
-    case 0xC4:
-    case 0xC6:
-    case 0xC8:
-    case 0xCA:
-    case 0xCC:
-    case 0xCE:
-    case 0x87:
-    case 0x83:
-    case 0x81:
-    case 0x82:
-    case 0x8B:
-    case 0x89:
-    case 0x8A:
-    case 0x487:
-    case 0x483:
-    case 0x481:
-    case 0x482:
-    case 0x48B:
-    case 0x489:
-    case 0x48A:
-    case 0x08:
-    case 0xD0:
-    case 0x0B:
-    case 0xD6:
-    case 0x0A:
-    case 0xD4:
-    case 0x0F:
-    case 0xDE:
-    case 0x09:
-    case 0xD2:
-    case 0x0C:
-    case 0xD8:
-    case 0x0D:
-    case 0xDA:
-    case 0x0E:
-    case 0xDC:
-        DMA_ioport_out( port, (BYTE)value );
         break;
     default:
         WARN("Direct I/O write attempted to port %x\n", port );

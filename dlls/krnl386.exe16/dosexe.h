@@ -199,11 +199,6 @@ typedef struct
 /* dosvm.c */
 extern void DOSVM_Exit( WORD retval ) DECLSPEC_HIDDEN;
 
-/* dma.c */
-extern int DMA_Transfer(int channel,int reqlength,void* buffer) DECLSPEC_HIDDEN;
-extern void DMA_ioport_out( WORD port, BYTE val ) DECLSPEC_HIDDEN;
-extern BYTE DMA_ioport_in( WORD port ) DECLSPEC_HIDDEN;
-
 /* dosmem.c */
 extern BIOSDATA *DOSVM_BiosData( void ) DECLSPEC_HIDDEN;
 extern void DOSVM_start_bios_timer(void) DECLSPEC_HIDDEN;
