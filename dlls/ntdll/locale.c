@@ -1288,6 +1288,40 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1, const UNICODE_S
 }
 
 
+
+/******************************************************************************
+ *	RtlHashUnicodeString   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlHashUnicodeString( const UNICODE_STRING *string, BOOLEAN case_insensitive,
+                                      ULONG alg, ULONG *hash )
+{
+    unsigned int i;
+
+    if (!string || !hash) return STATUS_INVALID_PARAMETER;
+
+    switch (alg)
+    {
+    case HASH_STRING_ALGORITHM_DEFAULT:
+    case HASH_STRING_ALGORITHM_X65599:
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    *hash = 0;
+    if (!case_insensitive)
+        for (i = 0; i < string->Length / sizeof(WCHAR); i++)
+            *hash = *hash * 65599 + string->Buffer[i];
+    else if (nls_info.UpperCaseTable)
+        for (i = 0; i < string->Length / sizeof(WCHAR); i++)
+            *hash = *hash * 65599 + casemap( nls_info.UpperCaseTable, string->Buffer[i] );
+    else  /* locale not setup yet */
+        for (i = 0; i < string->Length / sizeof(WCHAR); i++)
+            *hash = *hash * 65599 + casemap_ascii( string->Buffer[i] );
+    return STATUS_SUCCESS;
+}
+
+
 /**************************************************************************
  *	RtlCustomCPToUnicodeN   (NTDLL.@)
  */

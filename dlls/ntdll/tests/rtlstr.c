@@ -1942,14 +1942,18 @@ struct hash_unicodestring_test {
 };
 
 static const struct hash_unicodestring_test hash_test[] = {
-    { {'T',0},                     FALSE, 0x00000054 },
-    { {'T','e','s','t',0},         FALSE, 0x766bb952 },
-    { {'T','e','S','t',0},         FALSE, 0x764bb172 },
-    { {'t','e','s','t',0},         FALSE, 0x4745d132 },
-    { {'t','e','s','t',0},         TRUE,  0x6689c132 },
-    { {'T','E','S','T',0},         TRUE,  0x6689c132 },
-    { {'T','E','S','T',0},         FALSE, 0x6689c132 },
-    { {'a','b','c','d','e','f',0}, FALSE, 0x971318c3 },
+    { L"T",         FALSE, 0x00000054 },
+    { L"Test",      FALSE, 0x766bb952 },
+    { L"TeSt",      FALSE, 0x764bb172 },
+    { L"test",      FALSE, 0x4745d132 },
+    { L"test",      TRUE,  0x6689c132 },
+    { L"TEST",      TRUE,  0x6689c132 },
+    { L"TEST",      FALSE, 0x6689c132 },
+    { L"t\xe9st",   FALSE, 0x8845cfb6 },
+    { L"t\xe9st",   TRUE,  0xa789bfb6 },
+    { L"T\xc9ST",   TRUE,  0xa789bfb6 },
+    { L"T\xc9ST",   FALSE, 0xa789bfb6 },
+    { L"abcdef",    FALSE, 0x971318c3 },
     { { 0 } }
 };
 
