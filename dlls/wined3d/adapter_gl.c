@@ -3423,7 +3423,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter,
         {ARB_STENCIL_TEXTURING,            MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_BUFFER_RANGE,         MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_QUERY_LEVELS,         MAKEDWORD_VERSION(4, 3)},
-        {ARB_TEXTURE_STORAGE_MULTISAMPLE,  MAKEDWORD_VERSION(4, 2)},
+        {ARB_TEXTURE_STORAGE_MULTISAMPLE,  MAKEDWORD_VERSION(4, 3)},
         {ARB_TEXTURE_VIEW,                 MAKEDWORD_VERSION(4, 3)},
 
         {ARB_BUFFER_STORAGE,               MAKEDWORD_VERSION(4, 4)},
