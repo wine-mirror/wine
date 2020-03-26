@@ -108,51 +108,6 @@ static WORD VXD_WinVersion(void)
     return (version >> 8) | (version << 8);
 }
 
-/* create a file handle to represent a VxD, by opening a dummy file in the wineserver directory */
-static HANDLE open_vxd_handle( LPCWSTR name )
-{
-    static const WCHAR prefixW[] = {'\\','?','?','\\','u','n','i','x'};
-    const char *dir = wine_get_server_dir();
-    int len;
-    HANDLE ret;
-    NTSTATUS status;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    IO_STATUS_BLOCK io;
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, NULL, 0 );
-    nameW.Length = sizeof(prefixW) + (len + strlenW( name )) * sizeof(WCHAR);
-    nameW.MaximumLength = nameW.Length + sizeof(WCHAR);
-    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.MaximumLength )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    memcpy( nameW.Buffer, prefixW, sizeof(prefixW) );
-    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + ARRAY_SIZE(prefixW), len );
-    len += ARRAY_SIZE(prefixW);
-    nameW.Buffer[len-1] = '/';
-    strcpyW( nameW.Buffer + len, name );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = 0;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    status = NtCreateFile( &ret, SYNCHRONIZE, &attr, &io, NULL, 0,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
-                           FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    if (status)
-    {
-        ret = 0;
-        SetLastError( RtlNtStatusToDosError(status) );
-    }
-    RtlFreeUnicodeString( &nameW );
-    return ret;
-}
-
 /* retrieve the DeviceIoControl function for a Vxd given a file handle */
 DeviceIoProc __wine_vxd_get_proc( HANDLE handle )
 {
@@ -240,11 +195,13 @@ HANDLE __wine_vxd_open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa
         }
         if (!vxd_modules[i].module)  /* new one, register it */
         {
+            WCHAR path[MAX_PATH];
             IO_STATUS_BLOCK io;
             FILE_INTERNAL_INFORMATION info;
 
-            /* get a file handle to the dummy file */
-            if (!(handle = open_vxd_handle( name )))
+            GetModuleFileNameW( module, path, MAX_PATH );
+            handle = CreateFileW( path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+            if (handle == INVALID_HANDLE_VALUE)
             {
                 FreeLibrary( module );
                 goto done;
