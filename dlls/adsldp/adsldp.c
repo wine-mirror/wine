@@ -1169,7 +1169,10 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
 
         props = heap_alloc((count + 1) * sizeof(props[0]));
         if (!props)
+        {
+            heap_free(ldap_ctx);
             return E_OUTOFMEMORY;
+        }
 
         for (i = 0; i < count; i++)
             props[i] = names[i];
