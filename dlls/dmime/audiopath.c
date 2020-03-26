@@ -216,21 +216,23 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_GetObjectInPath (IDirectMusicAud
 	return E_INVALIDARG;
 }
 
-static HRESULT WINAPI IDirectMusicAudioPathImpl_Activate (IDirectMusicAudioPath *iface, BOOL fActivate)
+static HRESULT WINAPI IDirectMusicAudioPathImpl_Activate(IDirectMusicAudioPath *iface, BOOL activate)
 {
-  struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
-  FIXME("(%p, %d): stub\n", This, fActivate);
-  if (!fActivate) {
-    if (!This->fActive) return S_OK;
-    This->fActive = FALSE;
-  } else {
-    if (This->fActive) return S_OK;
-    This->fActive = TRUE;
-    if (NULL != This->pDSBuffer) {
-      IDirectSoundBuffer_Stop(This->pDSBuffer);
+    struct IDirectMusicAudioPathImpl *This = impl_from_IDirectMusicAudioPath(iface);
+
+    FIXME("(%p, %d): semi-stub\n", This, activate);
+
+    if (!!activate == This->fActive)
+        return S_FALSE;
+
+    if (!activate && This->pDSBuffer) {
+        /* Path is being deactivated */
+        IDirectSoundBuffer_Stop(This->pDSBuffer);
     }
-  }
-  return S_OK;
+
+    This->fActive = !!activate;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectMusicAudioPathImpl_SetVolume (IDirectMusicAudioPath *iface, LONG lVolume, DWORD dwDuration)
