@@ -1342,6 +1342,42 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
 
     if (!res || !name || !ldap_ctx->entry) return E_ADS_BAD_PARAMETER;
 
+    if (!wcsicmp(name, L"ADsPath"))
+    {
+        WCHAR *dn = ldap_get_dnW(ldap->ld, ldap_ctx->entry);
+
+        col->pADsValues = heap_alloc(sizeof(col->pADsValues[0]));
+        if (!col->pADsValues)
+        {
+            hr = E_OUTOFMEMORY;
+            goto exit;
+        }
+
+        count = sizeof(L"LDAP://") + (wcslen(ldap->host) + 1 /* '/' */) * sizeof(WCHAR);
+        if (dn) count += wcslen(dn) * sizeof(WCHAR);
+
+        col->pADsValues[0].u.CaseIgnoreString = heap_alloc(count);
+        if (!col->pADsValues[0].u.CaseIgnoreString)
+        {
+            hr = E_OUTOFMEMORY;
+            goto exit;
+        }
+
+        wcscpy(col->pADsValues[0].u.CaseIgnoreString, L"LDAP://");
+        wcscat(col->pADsValues[0].u.CaseIgnoreString, ldap->host);
+        wcscat(col->pADsValues[0].u.CaseIgnoreString, L"/");
+        if (dn) wcscat(col->pADsValues[0].u.CaseIgnoreString, dn);
+        col->dwADsType = ADSTYPE_CASE_IGNORE_STRING;
+        col->dwNumValues = 1;
+        col->pszAttrName = strdupW(name);
+
+        TRACE("=> %s\n", debugstr_w(col->pADsValues[0].u.CaseIgnoreString));
+        hr = S_OK;
+exit:
+        ldap_memfreeW(dn);
+        return hr;
+    }
+
     values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
     if (!values) return ERROR_DS_NO_ATTRIBUTE_OR_VALUE;
 
