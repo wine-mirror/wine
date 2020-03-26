@@ -478,6 +478,18 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
         case MESourceStopped:
             hr = source_reader_source_state_handler(reader, event_type);
             break;
+        case MEBufferingStarted:
+        case MEBufferingStopped:
+        case MEConnectStart:
+        case MEConnectEnd:
+        case MEExtendedType:
+        case MESourceCharacteristicsChanged:
+        case MESourceMetadataChanged:
+        case MEContentProtectionMetadata:
+        case MEDeviceThermalStateChanged:
+            if (reader->async_callback)
+                IMFSourceReaderCallback_OnEvent(reader->async_callback, MF_SOURCE_READER_MEDIASOURCE, event);
+            break;
         default:
             ;
     }
