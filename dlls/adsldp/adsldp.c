@@ -1301,11 +1301,58 @@ static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEAR
     return S_ADS_NOMORE_COLUMNS;
 }
 
+static HRESULT add_column_values(ADS_SEARCH_COLUMN *col, struct berval **values, DWORD count)
+{
+    DWORD i;
+
+    col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
+    if (!col->pADsValues)
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; i++)
+    {
+        DWORD outlen;
+        TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+        col->pADsValues[i].u.CaseIgnoreString = strnAtoW(values[i]->bv_val, values[i]->bv_len, &outlen);
+        if (!col->pADsValues[i].u.CaseIgnoreString)
+        {
+            heap_free(col->pADsValues);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    col->dwADsType = ADSTYPE_CASE_IGNORE_STRING;
+    col->dwNumValues = count;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDLE res,
                                        LPWSTR name, PADS_SEARCH_COLUMN col)
 {
-    FIXME("%p,%p,%s,%p: stub\n", iface, res, debugstr_w(name), col);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    struct ldap_search_context *ldap_ctx = res;
+    HRESULT hr;
+    struct berval **values;
+    ULONG count;
+
+    TRACE("%p,%p,%s,%p\n", iface, res, debugstr_w(name), col);
+
+    if (!ldap->ld) return E_NOTIMPL;
+
+    if (!res || !name || !ldap_ctx->entry) return E_ADS_BAD_PARAMETER;
+
+    values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
+    if (!values) return ERROR_DS_NO_ATTRIBUTE_OR_VALUE;
+
+    count = ldap_count_values_len(values);
+
+    hr = add_column_values(col, values, count);
+    ldap_value_free_len(values);
+    if (hr == S_OK)
+        col->pszAttrName = strdupW(name);
+
+    return hr;
 }
 
 static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COLUMN col)

@@ -29,6 +29,23 @@ static inline WCHAR *strdupW(const WCHAR *src)
     return dst;
 }
 
+static inline LPWSTR strnAtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
+{
+    LPWSTR ret = NULL;
+    *outlen = 0;
+    if (str)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, inlen, NULL, 0 );
+        if ((ret = heap_alloc( (len + 1) * sizeof(WCHAR) )))
+        {
+            MultiByteToWideChar( CP_ACP, 0, str, inlen, ret, len );
+            ret[len] = 0;
+            *outlen = len;
+        }
+    }
+    return ret;
+}
+
 DWORD map_ldap_error(DWORD) DECLSPEC_HIDDEN;
 
 #endif
