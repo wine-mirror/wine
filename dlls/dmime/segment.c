@@ -614,8 +614,9 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
     IPersistStream *ps = NULL;
     IStream *clone;
     DMUS_IO_TRACK_HEADER thdr;
-    DMUS_IO_TRACK_EXTRAS_HEADER txhdr;
+    DMUS_IO_TRACK_EXTRAS_HEADER txhdr = {0};
     HRESULT hr;
+    DMUS_PRIVATE_SEGMENT_TRACK *item;
 
     TRACE("Parsing track form in %p: %s\n", stream, debugstr_chunk(riff));
 
@@ -647,7 +648,7 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
 
         if (chunk.id == DMUS_FOURCC_TRACK_EXTRAS_CHUNK &&
                 SUCCEEDED(stream_chunk_get_data(stream, &chunk, &txhdr, sizeof(txhdr)))) {
-            FIXME("DMUS_IO_TRACK_EXTRAS_HEADER chunk not handled\n");
+            FIXME("DMUS_IO_TRACK_EXTRAS_HEADER chunk not fully handled\n");
             TRACE("dwFlags: %#x, dwPriority: %u\n", txhdr.dwFlags, txhdr.dwPriority);
         }
     }
@@ -672,6 +673,11 @@ static HRESULT parse_track_form(IDirectMusicSegment8Impl *This, IStream *stream,
         goto done;
 
     hr = IDirectMusicSegment8_InsertTrack(&This->IDirectMusicSegment8_iface, track, thdr.dwGroup);
+    if (FAILED(hr))
+        goto done;
+
+    item = LIST_ENTRY(list_tail(&This->Tracks), DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    item->flags = txhdr.dwFlags;
 
 done:
     if (ps)
