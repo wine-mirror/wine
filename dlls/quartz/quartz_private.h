@@ -51,6 +51,7 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
     if (time < 0) buffer[i++] = '-';
 
     while (i--) rev[j++] = buffer[i];
+    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
     rev[j] = 0;
 
     return wine_dbg_sprintf("%s", rev);
