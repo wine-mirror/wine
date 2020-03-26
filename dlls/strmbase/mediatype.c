@@ -20,6 +20,7 @@
  */
 
 #include "strmbase_private.h"
+#include "dvdmedia.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
@@ -103,9 +104,34 @@ void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
     {
         VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
 
-        TRACE("source %s, target %s, bitrate %u, error rate %u, %s sec/frame, ",
-                wine_dbgstr_rect(&vih->rcSource), wine_dbgstr_rect(&vih->rcTarget),
-                vih->dwBitRate, vih->dwBitErrorRate, debugstr_time(vih->AvgTimePerFrame));
+        if (!IsRectEmpty(&vih->rcSource)) TRACE("source %s, ", wine_dbgstr_rect(&vih->rcSource));
+        if (!IsRectEmpty(&vih->rcTarget)) TRACE("target %s, ", wine_dbgstr_rect(&vih->rcTarget));
+        if (vih->dwBitRate) TRACE("bitrate %u, ", vih->dwBitRate);
+        if (vih->dwBitErrorRate) TRACE("error rate %u, ", vih->dwBitErrorRate);
+        TRACE("%s sec/frame, ", debugstr_time(vih->AvgTimePerFrame));
+        TRACE("size %dx%d, %u planes, %u bpp, compression %s, image size %u",
+                vih->bmiHeader.biWidth, vih->bmiHeader.biHeight, vih->bmiHeader.biPlanes,
+                vih->bmiHeader.biBitCount, debugstr_fourcc(vih->bmiHeader.biCompression),
+                vih->bmiHeader.biSizeImage);
+        if (vih->bmiHeader.biXPelsPerMeter || vih->bmiHeader.biYPelsPerMeter)
+            TRACE(", resolution %dx%d", vih->bmiHeader.biXPelsPerMeter, vih->bmiHeader.biYPelsPerMeter);
+        if (vih->bmiHeader.biClrUsed) TRACE(", %d colours", vih->bmiHeader.biClrUsed);
+        if (vih->bmiHeader.biClrImportant) TRACE(", %d important colours", vih->bmiHeader.biClrImportant);
+        TRACE(".\n");
+    }
+    else if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2) && mt->cbFormat >= sizeof(VIDEOINFOHEADER2))
+    {
+        VIDEOINFOHEADER2 *vih = (VIDEOINFOHEADER2 *)mt->pbFormat;
+
+        if (!IsRectEmpty(&vih->rcSource)) TRACE("source %s, ", wine_dbgstr_rect(&vih->rcSource));
+        if (!IsRectEmpty(&vih->rcTarget)) TRACE("target %s, ", wine_dbgstr_rect(&vih->rcTarget));
+        if (vih->dwBitRate) TRACE("bitrate %u, ", vih->dwBitRate);
+        if (vih->dwBitErrorRate) TRACE("error rate %u, ", vih->dwBitErrorRate);
+        TRACE("%s sec/frame, ", debugstr_time(vih->AvgTimePerFrame));
+        if (vih->dwInterlaceFlags) TRACE("interlace flags %#x, ", vih->dwInterlaceFlags);
+        if (vih->dwCopyProtectFlags) TRACE("copy-protection flags %#x, ", vih->dwCopyProtectFlags);
+        TRACE("aspect ratio %u/%u, ", vih->dwPictAspectRatioX, vih->dwPictAspectRatioY);
+        if (vih->u.dwControlFlags) TRACE("control flags %#x, ", vih->u.dwControlFlags);
         TRACE("size %dx%d, %u planes, %u bpp, compression %s, image size %u",
                 vih->bmiHeader.biWidth, vih->bmiHeader.biHeight, vih->bmiHeader.biPlanes,
                 vih->bmiHeader.biBitCount, debugstr_fourcc(vih->bmiHeader.biCompression),
