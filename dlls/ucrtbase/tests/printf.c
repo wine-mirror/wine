@@ -376,9 +376,6 @@ static void test_fwprintf(void)
     fclose(fp);
     unlink(file_name);
 
-    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-            "Invalid parameter handler was already set\n");
-
     /* NULL format */
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
@@ -398,9 +395,6 @@ static void test_fwprintf(void)
     /* format using % with NULL arglist*/
     /* crashes on Windows */
     /* ret = __stdio_common_vfwprintf(0, fp, cont_fmt, NULL, NULL); */
-
-    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-            "Cannot reset invalid parameter handler\n");
 }
 
 static int WINAPIV _vsnprintf_s_wrapper(char *str, size_t sizeOfBuffer,
@@ -628,6 +622,9 @@ static void test_printf_natural_string(void)
 
 START_TEST(printf)
 {
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
+
     test_snprintf();
     test_swprintf();
     test_fprintf();
