@@ -4225,7 +4225,7 @@ static void context_load_stream_output_buffers(struct wined3d_context *context,
 
 /* Context activation is done by the caller. */
 static BOOL context_apply_draw_state(struct wined3d_context *context,
-        const struct wined3d_device *device, const struct wined3d_state *state)
+        const struct wined3d_device *device, const struct wined3d_state *state, BOOL indexed)
 {
     const struct wined3d_state_entry *state_table = context->state_table;
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
@@ -4277,7 +4277,7 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
         if (isStateDirty(context, STATE_STREAMSRC))
             context_update_stream_info(context, state);
     }
-    if (state->index_buffer)
+    if (indexed && state->index_buffer)
     {
         if (context->stream_info.all_vbo)
             wined3d_buffer_load(state->index_buffer, context, state);
@@ -5194,7 +5194,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     if (parameters->indirect)
         wined3d_buffer_load(parameters->u.indirect.buffer, context, state);
 
-    if (!context_apply_draw_state(context, device, state))
+    if (!context_apply_draw_state(context, device, state, parameters->indexed))
     {
         context_release(context);
         WARN("Unable to apply draw state, skipping draw.\n");
