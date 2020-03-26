@@ -1579,18 +1579,6 @@ WINE_ERROR_WITH(freetype,[test "x$ac_cv_lib_soname_freetype" = x],
                 [FreeType ${notice_platform}development files not found. Fonts will not be built.],
                 [enable_fonts])
 
-dnl **** Check for parport (currently Linux only) ****
-AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
- AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#include <linux/ppdev.h>]], [[ioctl (1,PPCLAIM,0)]])],
-    [ac_cv_c_ppdev="yes"],[ac_cv_c_ppdev="no"]))
-if test "$ac_cv_c_ppdev" = "yes"
-then
-    AC_DEFINE(HAVE_PPDEV, 1, [Define if we can use ppdev.h for parallel port access])
-fi
-
 dnl **** Check for pthread functions ****
 WINE_CHECK_LIB_FUNCS(\
         pthread_getthreadid_np,
