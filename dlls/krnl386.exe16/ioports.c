@@ -59,12 +59,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-#if defined(linux) && !defined(__ANDROID__)
-# define DIRECT_IO_ACCESS
-#else
-# undef DIRECT_IO_ACCESS
-#endif
-
 static struct {
     WORD	countmax;
     WORD	latch;
@@ -174,17 +168,6 @@ static void IO_FixCMOSCheckSum(void)
 	TRACE("calculated hi %02x, lo %02x\n", cmosimage[0x2e], cmosimage[0x2f]);
 }
 
-#ifdef DIRECT_IO_ACCESS
-
-extern int iopl(int level);
-static char do_direct_port_access = -1;
-static char port_permissions[0x10000];
-
-#define IO_READ  1
-#define IO_WRITE 2
-
-#endif  /* DIRECT_IO_ACCESS */
-
 #ifdef HAVE_PPDEV
 static int do_pp_port_access = -1; /* -1: uninitialized, 1: not available
 				       0: available);*/
@@ -269,176 +252,6 @@ static WORD get_timer_val(unsigned timer)
 
     return val;
 }
-
-
-/**********************************************************************
- *	    IO_port_init
- */
-
-/* set_IO_permissions(int val1, int val)
- * Helper function for IO_port_init
- */
-#ifdef DIRECT_IO_ACCESS
-static void set_IO_permissions(int val1, int val, char rw)
-{
-	int j;
-	if (val1 != -1) {
-		if (val == -1) val = 0x3ff;
-		for (j = val1; j <= val; j++)
-			port_permissions[j] |= rw;
-
-		do_direct_port_access = 1;
-
-		val1 = -1;
-	} else if (val != -1) {
-		do_direct_port_access = 1;
-
-		port_permissions[val] |= rw;
-	}
-
-}
-
-/* do_IO_port_init_read_or_write(char* temp, char rw)
- * Helper function for IO_port_init
- */
-
-static void do_IO_port_init_read_or_write(const WCHAR *str, char rw)
-{
-    int val, val1;
-    unsigned int i;
-    WCHAR *end;
-    static const WCHAR allW[] = {'a','l','l',0};
-
-    if (!strcmpiW(str, allW))
-    {
-        for (i=0; i < sizeof(port_permissions); i++)
-            port_permissions[i] |= rw;
-    }
-    else
-    {
-        val = -1;
-        val1 = -1;
-        while (*str)
-        {
-            switch(*str)
-            {
-            case ',':
-            case ' ':
-            case '\t':
-                set_IO_permissions(val1, val, rw);
-                val1 = -1;
-                val = -1;
-                str++;
-                break;
-            case '-':
-                val1 = val;
-                if (val1 == -1) val1 = 0;
-                str++;
-                break;
-            default:
-                if (isdigitW(*str))
-                {
-                    val = strtoulW( str, &end, 0 );
-                    if (end == str)
-                    {
-                        val = -1;
-                        str++;
-                    }
-                    else str = end;
-                }
-                break;
-            }
-        }
-        set_IO_permissions(val1, val, rw);
-    }
-}
-
-static inline BYTE inb( WORD port )
-{
-    BYTE b;
-    __asm__ __volatile__( "inb %w1,%0" : "=a" (b) : "d" (port) );
-    return b;
-}
-
-static inline WORD inw( WORD port )
-{
-    WORD w;
-    __asm__ __volatile__( "inw %w1,%0" : "=a" (w) : "d" (port) );
-    return w;
-}
-
-static inline DWORD inl( WORD port )
-{
-    DWORD dw;
-    __asm__ __volatile__( "inl %w1,%0" : "=a" (dw) : "d" (port) );
-    return dw;
-}
-
-static inline void outb( BYTE value, WORD port )
-{
-    __asm__ __volatile__( "outb %b0,%w1" : : "a" (value), "d" (port) );
-}
-
-static inline void outw( WORD value, WORD port )
-{
-    __asm__ __volatile__( "outw %w0,%w1" : : "a" (value), "d" (port) );
-}
-
-static inline void outl( DWORD value, WORD port )
-{
-    __asm__ __volatile__( "outl %0,%w1" : : "a" (value), "d" (port) );
-}
-
-static void IO_port_init(void)
-{
-    char tmp[1024];
-    HANDLE root, hkey;
-    DWORD dummy;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-
-    static const WCHAR portsW[] = {'S','o','f','t','w','a','r','e','\\',
-                                   'W','i','n','e','\\','V','D','M','\\','P','o','r','t','s',0};
-    static const WCHAR readW[] = {'r','e','a','d',0};
-    static const WCHAR writeW[] = {'w','r','i','t','e',0};
-
-    do_direct_port_access = 0;
-    /* Can we do that? */
-    if (!iopl(3))
-    {
-        iopl(0);
-
-        RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = root;
-        attr.ObjectName = &nameW;
-        attr.Attributes = 0;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
-        RtlInitUnicodeString( &nameW, portsW );
-
-        /* @@ Wine registry key: HKCU\Software\Wine\VDM\Ports */
-        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
-        {
-            RtlInitUnicodeString( &nameW, readW );
-            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-            {
-                WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                do_IO_port_init_read_or_write(str, IO_READ);
-            }
-            RtlInitUnicodeString( &nameW, writeW );
-            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
-            {
-                WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                do_IO_port_init_read_or_write(str, IO_WRITE);
-            }
-            NtClose( hkey );
-        }
-        NtClose( root );
-    }
-}
-
-#endif  /* DIRECT_IO_ACCESS */
 
 
 #ifdef HAVE_PPDEV
@@ -749,24 +562,6 @@ DWORD DOSVM_inport( int port, int size )
     }
 #endif
 
-#ifdef DIRECT_IO_ACCESS
-    if (do_direct_port_access == -1) IO_port_init();
-    if ((do_direct_port_access)
-        /* Make sure we have access to the port */
-        && (port_permissions[port] & IO_READ))
-    {
-        iopl(3);
-        switch(size)
-        {
-        case 1: res = inb( port ); break;
-        case 2: res = inw( port ); break;
-        case 4: res = inl( port ); break;
-        }
-        iopl(0);
-        return res;
-    }
-#endif
-
     switch (port)
     {
     case 0x40:
@@ -859,25 +654,6 @@ void DOSVM_outport( int port, int size, DWORD value )
     if ((do_pp_port_access == 0) && (size == 1))
     {
         if (!IO_pp_outp(port,&value)) return;
-    }
-#endif
-
-#ifdef DIRECT_IO_ACCESS
-
-    if (do_direct_port_access == -1) IO_port_init();
-    if ((do_direct_port_access)
-        /* Make sure we have access to the port */
-        && (port_permissions[port] & IO_WRITE))
-    {
-        iopl(3);
-        switch(size)
-        {
-        case 1: outb( LOBYTE(value), port ); break;
-        case 2: outw( LOWORD(value), port ); break;
-        case 4: outl( value, port ); break;
-        }
-        iopl(0);
-        return;
     }
 #endif
 
