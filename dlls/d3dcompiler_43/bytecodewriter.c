@@ -592,9 +592,9 @@ static DWORD d3dsp_register( D3DSHADER_PARAM_REGISTER_TYPE type, DWORD num )
 /******************************************************
  * Implementation of the writer functions starts here *
  ******************************************************/
-static void write_declarations(struct bc_writer *This,
-                               struct bytecode_buffer *buffer, BOOL len,
-                               const struct declaration *decls, unsigned int num, DWORD type) {
+static void write_declarations(struct bc_writer *This, struct bytecode_buffer *buffer,
+        const struct declaration *decls, unsigned int num, DWORD type)
+{
     DWORD i;
     DWORD instr_dcl = D3DSIO_DCL;
     DWORD token;
@@ -602,9 +602,8 @@ static void write_declarations(struct bc_writer *This,
 
     ZeroMemory(&reg, sizeof(reg));
 
-    if(len) {
+    if (This->shader->major_version > 1)
         instr_dcl |= 2 << D3DSI_INSTLENGTH_SHIFT;
-    }
 
     for(i = 0; i < num; i++) {
         if(decls[i].builtin) continue;
@@ -759,7 +758,7 @@ static void vs_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
         return;
     }
 
-    write_declarations(This, buffer, FALSE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, FALSE);
 }
 
@@ -1569,7 +1568,7 @@ static void vs_2_header(struct bc_writer *This,
         return;
     }
 
-    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
@@ -1836,7 +1835,7 @@ static void ps_2_header(struct bc_writer *This, const struct bwriter_shader *sha
         return;
     }
 
-    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_samplers(shader, buffer);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
@@ -2065,8 +2064,8 @@ static const struct bytecode_backend ps_2_x_backend = {
 };
 
 static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
-    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
-    write_declarations(This, buffer, TRUE, shader->outputs, shader->num_outputs, BWRITERSPR_OUTPUT);
+    write_declarations(This, buffer, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, shader->outputs, shader->num_outputs, BWRITERSPR_OUTPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
