@@ -117,15 +117,15 @@ static void dump(const void* ptr, unsigned len)
 
 typedef struct dwarf2_abbrev_entry_attr_s
 {
-  unsigned long attribute;
-  unsigned long form;
+  ULONG_PTR attribute;
+  ULONG_PTR form;
   struct dwarf2_abbrev_entry_attr_s* next;
 } dwarf2_abbrev_entry_attr_t;
 
 typedef struct dwarf2_abbrev_entry_s
 {
-    unsigned long entry_code;
-    unsigned long tag;
+    ULONG_PTR entry_code;
+    ULONG_PTR tag;
     unsigned char have_child;
     unsigned num_attr;
     dwarf2_abbrev_entry_attr_t* attrs;
@@ -139,13 +139,13 @@ struct dwarf2_block
 
 struct attribute
 {
-    unsigned long               form;
+    ULONG_PTR                   form;
     enum {attr_direct, attr_abstract_origin, attr_specification} gotten_from;
     union
     {
-        unsigned long                   uvalue;
+        ULONG_PTR                       uvalue;
         ULONGLONG                       lluvalue;
-        long                            svalue;
+        LONG_PTR                        svalue;
         const char*                     string;
         struct dwarf2_block             block;
     } u;
@@ -194,8 +194,8 @@ typedef struct dwarf2_parse_context_s
     const struct elf_thunk_area*thunks;
     struct sparse_array         abbrev_table;
     struct sparse_array         debug_info_table;
-    unsigned long               load_offset;
-    unsigned long               ref_offset;
+    ULONG_PTR                   load_offset;
+    ULONG_PTR                   ref_offset;
     struct symt*                symt_cache[sc_num]; /* void, int1, int2, int4 */
     char*                       cpp_name;
 } dwarf2_parse_context_t;
@@ -239,14 +239,14 @@ static unsigned short dwarf2_parse_u2(dwarf2_traverse_context_t* ctx)
     return uvalue;
 }
 
-static unsigned long dwarf2_get_u4(const unsigned char* ptr)
+static ULONG_PTR dwarf2_get_u4(const unsigned char* ptr)
 {
     return *(const UINT32*)ptr;
 }
 
-static unsigned long dwarf2_parse_u4(dwarf2_traverse_context_t* ctx)
+static ULONG_PTR dwarf2_parse_u4(dwarf2_traverse_context_t* ctx)
 {
-    unsigned long uvalue = dwarf2_get_u4(ctx->data);
+    ULONG_PTR uvalue = dwarf2_get_u4(ctx->data);
     ctx->data += 4;
     return uvalue;
 }
@@ -263,9 +263,9 @@ static DWORD64 dwarf2_parse_u8(dwarf2_traverse_context_t* ctx)
     return uvalue;
 }
 
-static unsigned long dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const unsigned char** end)
+static ULONG_PTR dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, const unsigned char** end)
 {
-    unsigned long ret = 0;
+    ULONG_PTR ret = 0;
     unsigned char byte;
     unsigned shift = 0;
 
@@ -280,9 +280,9 @@ static unsigned long dwarf2_get_leb128_as_unsigned(const unsigned char* ptr, con
     return ret;
 }
 
-static unsigned long dwarf2_leb128_as_unsigned(dwarf2_traverse_context_t* ctx)
+static ULONG_PTR dwarf2_leb128_as_unsigned(dwarf2_traverse_context_t* ctx)
 {
-    unsigned long ret;
+    ULONG_PTR ret;
 
     assert(ctx);
 
@@ -291,9 +291,9 @@ static unsigned long dwarf2_leb128_as_unsigned(dwarf2_traverse_context_t* ctx)
     return ret;
 }
 
-static long dwarf2_get_leb128_as_signed(const unsigned char* ptr, const unsigned char** end)
+static LONG_PTR dwarf2_get_leb128_as_signed(const unsigned char* ptr, const unsigned char** end)
 {
-    long ret = 0;
+    LONG_PTR ret = 0;
     unsigned char byte;
     unsigned shift = 0;
     const unsigned size = sizeof(int) * 8;
@@ -316,9 +316,9 @@ static long dwarf2_get_leb128_as_signed(const unsigned char* ptr, const unsigned
     return ret;
 }
 
-static long dwarf2_leb128_as_signed(dwarf2_traverse_context_t* ctx)
+static LONG_PTR dwarf2_leb128_as_signed(dwarf2_traverse_context_t* ctx)
 {
-    long ret = 0;
+    LONG_PTR ret = 0;
 
     assert(ctx);
 
@@ -340,9 +340,9 @@ static unsigned dwarf2_leb128_length(const dwarf2_traverse_context_t* ctx)
  * We assume that in all cases word size from Dwarf matches the size of
  * addresses in platform where the exec is compiled.
  */
-static unsigned long dwarf2_get_addr(const unsigned char* ptr, unsigned word_size)
+static ULONG_PTR dwarf2_get_addr(const unsigned char* ptr, unsigned word_size)
 {
-    unsigned long ret;
+    ULONG_PTR ret;
 
     switch (word_size)
     {
@@ -359,9 +359,9 @@ static unsigned long dwarf2_get_addr(const unsigned char* ptr, unsigned word_siz
     return ret;
 }
 
-static unsigned long dwarf2_parse_addr(dwarf2_traverse_context_t* ctx)
+static ULONG_PTR dwarf2_parse_addr(dwarf2_traverse_context_t* ctx)
 {
-    unsigned long ret = dwarf2_get_addr(ctx->data, ctx->word_size);
+    ULONG_PTR ret = dwarf2_get_addr(ctx->data, ctx->word_size);
     ctx->data += ctx->word_size;
     return ret;
 }
@@ -385,7 +385,7 @@ static const char* dwarf2_debug_di(const dwarf2_debug_info_t* di)
 
 static dwarf2_abbrev_entry_t*
 dwarf2_abbrev_table_find_entry(const struct sparse_array* abbrev_table,
-                               unsigned long entry_code)
+                               ULONG_PTR entry_code)
 {
     assert( NULL != abbrev_table );
     return sparse_array_find(abbrev_table, entry_code);
@@ -395,12 +395,12 @@ static void dwarf2_parse_abbrev_set(dwarf2_traverse_context_t* abbrev_ctx,
                                     struct sparse_array* abbrev_table,
                                     struct pool* pool)
 {
-    unsigned long entry_code;
+    ULONG_PTR entry_code;
     dwarf2_abbrev_entry_t* abbrev_entry;
     dwarf2_abbrev_entry_attr_t* new = NULL;
     dwarf2_abbrev_entry_attr_t* last = NULL;
-    unsigned long attribute;
-    unsigned long form;
+    ULONG_PTR attribute;
+    ULONG_PTR form;
 
     assert( NULL != abbrev_ctx );
 
@@ -573,7 +573,7 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
 
     case DW_FORM_strp:
     {
-        unsigned long offset = dwarf2_get_u4(data);
+        ULONG_PTR offset = dwarf2_get_u4(data);
         attr->u.string = (const char*)ctx->sections[section_string].address + offset;
     }
     TRACE("strp<%s>\n", debugstr_a(attr->u.string));
@@ -888,7 +888,7 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
 
 static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
                                          const dwarf2_debug_info_t* di,
-                                         unsigned long dw,
+                                         ULONG_PTR dw,
                                          struct location* loc,
                                          const struct location* frame)
 {
@@ -941,7 +941,7 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
                                          sizeof(unsigned) + xloc.u.block.size);
             *ptr = xloc.u.block.size;
             memcpy(ptr + 1, xloc.u.block.ptr, xloc.u.block.size);
-            loc->offset = (unsigned long)ptr;
+            loc->offset = (ULONG_PTR)ptr;
             compute_location(&lctx, loc, NULL, frame);
         }
     }
@@ -1029,14 +1029,14 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
  * in all cases, range is relative to beginning of compilation unit
  */
 static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_info_t* di,
-                              unsigned long* plow, unsigned long* phigh)
+                              ULONG_PTR* plow, ULONG_PTR* phigh)
 {
     struct attribute            range;
 
     if (dwarf2_find_attribute(ctx, di, DW_AT_ranges, &range))
     {
         dwarf2_traverse_context_t   traverse;
-        unsigned long               low, high;
+        ULONG_PTR                   low, high;
 
         traverse.data = ctx->sections[section_ranges].address + range.u.uvalue;
         traverse.end_data = ctx->sections[section_ranges].address +
@@ -1084,8 +1084,8 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
                                        dwarf2_debug_info_t** pdi)
 {
     const dwarf2_abbrev_entry_t*abbrev;
-    unsigned long               entry_code;
-    unsigned long               offset;
+    ULONG_PTR                   entry_code;
+    ULONG_PTR                   offset;
     dwarf2_debug_info_t*        di;
     dwarf2_debug_info_t*        child;
     dwarf2_debug_info_t**       where;
@@ -1428,7 +1428,7 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
         {
             DWORD64     size;
             nbytes.u.uvalue = symt_get_info(ctx->module, elt_type, TI_GET_LENGTH, &size) ?
-                (unsigned long)size : 0;
+                (ULONG_PTR)size : 0;
         }
         bit_offset.u.uvalue = nbytes.u.uvalue * 8 - bit_offset.u.uvalue - bit_size.u.uvalue;
     }
@@ -1760,7 +1760,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             dwarf2_debug_info_t* di)
 {
     struct symt_block*  block;
-    unsigned long       low_pc, high_pc;
+    ULONG_PTR           low_pc, high_pc;
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
@@ -1814,7 +1814,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
 					  dwarf2_debug_info_t* di)
 {
     struct symt_block*  block;
-    unsigned long       low_pc, high_pc;
+    ULONG_PTR           low_pc, high_pc;
     struct vector*      children;
     dwarf2_debug_info_t*child;
     unsigned int        i;
@@ -1895,7 +1895,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
                                             dwarf2_debug_info_t* di)
 {
     struct attribute name;
-    unsigned long low_pc, high_pc;
+    ULONG_PTR low_pc, high_pc;
     struct attribute is_decl;
     struct attribute inline_flags;
     struct symt* ret_type;
@@ -2163,7 +2163,7 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     }
 }
 
-static void dwarf2_set_line_number(struct module* module, unsigned long address,
+static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
                                    const struct vector* v, unsigned file, unsigned line)
 {
     struct symt_function*       func;
@@ -2183,10 +2183,10 @@ static void dwarf2_set_line_number(struct module* module, unsigned long address,
 static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                                       dwarf2_parse_context_t* ctx,
                                       const char* compile_dir,
-                                      unsigned long offset)
+                                      ULONG_PTR offset)
 {
     dwarf2_traverse_context_t   traverse;
-    unsigned long               length;
+    ULONG_PTR                   length;
     unsigned                    insn_size, default_stmt;
     unsigned                    line_range, opcode_base;
     int                         line_base;
@@ -2276,7 +2276,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 
     while (traverse.data < traverse.end_data)
     {
-        unsigned long address = 0;
+        ULONG_PTR address = 0;
         unsigned file = 1;
         unsigned line = 1;
         unsigned is_stmt = default_stmt;
@@ -2374,16 +2374,16 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
                                           struct module* module,
                                           const struct elf_thunk_area* thunks,
                                           dwarf2_traverse_context_t* mod_ctx,
-                                          unsigned long load_offset)
+                                          ULONG_PTR load_offset)
 {
     dwarf2_parse_context_t ctx;
     dwarf2_traverse_context_t abbrev_ctx;
     dwarf2_debug_info_t* di;
     dwarf2_traverse_context_t cu_ctx;
     const unsigned char* comp_unit_start = mod_ctx->data;
-    unsigned long cu_length;
+    ULONG_PTR cu_length;
     unsigned short cu_version;
-    unsigned long cu_abbrev_offset;
+    ULONG_PTR cu_abbrev_offset;
     BOOL ret = FALSE;
 
     cu_length = dwarf2_parse_u4(mod_ctx);
@@ -2470,7 +2470,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
 }
 
 static BOOL dwarf2_lookup_loclist(const struct module_format* modfmt, const BYTE* start,
-                                  unsigned long ip, dwarf2_traverse_context_t* lctx)
+                                  ULONG_PTR ip, dwarf2_traverse_context_t* lctx)
 {
     DWORD_PTR                   beg, end;
     const BYTE*                 ptr = start;
@@ -2704,7 +2704,7 @@ static BOOL parse_cie_details(dwarf2_traverse_context_t* ctx, struct frame_info*
     return TRUE;
 }
 
-static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR delta,
+static BOOL dwarf2_get_cie(ULONG_PTR addr, struct module* module, DWORD_PTR delta,
                            dwarf2_traverse_context_t* fde_ctx, dwarf2_traverse_context_t* cie_ctx,
                            struct frame_info* info, BOOL in_eh_frame)
 {
@@ -2712,7 +2712,7 @@ static BOOL dwarf2_get_cie(unsigned long addr, struct module* module, DWORD_PTR 
     const unsigned char*        cie_ptr;
     const unsigned char*        last_cie_ptr = (const unsigned char*)~0;
     unsigned                    len, id;
-    unsigned long               start, range;
+    ULONG_PTR                   start, range;
     unsigned                    cie_id;
     const BYTE*                 start_data = fde_ctx->data;
 
@@ -3505,7 +3505,7 @@ static void dwarf2_module_remove(struct process* pcs, struct module_format* modf
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
-BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
+BOOL dwarf2_parse(struct module* module, ULONG_PTR load_offset,
                   const struct elf_thunk_area* thunks,
                   struct image_file_map* fmap)
 {
