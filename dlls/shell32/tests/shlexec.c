@@ -2693,16 +2693,17 @@ static void init_test(void)
         strcpy(tmpdir, "c:\\");
     else
         GetTempPathA(sizeof(tmpdir), tmpdir);
+    GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
 
     /* In case of a failure it is necessary to show the path that was passed to
      * ShellExecute(). That means the paths must not be randomized so as not to
      * prevent the TestBot from detecting new failures.
      */
     strcat(tmpdir, "wtShlexecDir");
-    GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
-    ok( rc, "failed to create %s err %u\n", tmpdir, GetLastError() );
+    ok( rc || GetLastError() == ERROR_ALREADY_EXISTS,
+        "failed to create %s err %u\n", tmpdir, GetLastError() );
     /* Set %TMPDIR% for the tests */
     SetEnvironmentVariableA("TMPDIR", tmpdir);
 
