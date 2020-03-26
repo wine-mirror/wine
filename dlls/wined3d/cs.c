@@ -612,7 +612,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     op->opcode = WINED3D_CS_OP_CLEAR;
     op->flags = flags & (WINED3DCLEAR_TARGET | WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
     op->rt_count = rt_count;
-    op->fb = &cs->fb;
+    op->fb = &cs->state.fb;
     SetRect(&op->draw_rect, vp->x, vp->y, vp->x + vp->width, vp->y + vp->height);
     if (state->rasterizer_state && state->rasterizer_state->desc.scissor)
         IntersectRect(&op->draw_rect, &op->draw_rect, &state->scissor_rects[0]);
@@ -624,12 +624,12 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
 
     for (i = 0; i < rt_count; ++i)
     {
-        if ((view = state->fb->render_targets[i]))
+        if ((view = state->fb.render_targets[i]))
             wined3d_resource_acquire(view->resource);
     }
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
-        view = state->fb->depth_stencil;
+        view = state->fb.depth_stencil;
         wined3d_resource_acquire(view->resource);
     }
 
@@ -915,11 +915,11 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     }
     for (i = 0; i < d3d_info->limits.max_rt_count; ++i)
     {
-        if (state->fb->render_targets[i])
-            wined3d_resource_release(state->fb->render_targets[i]->resource);
+        if (state->fb.render_targets[i])
+            wined3d_resource_release(state->fb.render_targets[i]->resource);
     }
-    if (state->fb->depth_stencil)
-        wined3d_resource_release(state->fb->depth_stencil->resource);
+    if (state->fb.depth_stencil)
+        wined3d_resource_release(state->fb.depth_stencil->resource);
     release_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     release_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
@@ -949,11 +949,11 @@ static void acquire_graphics_pipeline_resources(const struct wined3d_state *stat
     }
     for (i = 0; i < d3d_info->limits.max_rt_count; ++i)
     {
-        if (state->fb->render_targets[i])
-            wined3d_resource_acquire(state->fb->render_targets[i]->resource);
+        if (state->fb.render_targets[i])
+            wined3d_resource_acquire(state->fb.render_targets[i]->resource);
     }
-    if (state->fb->depth_stencil)
-        wined3d_resource_acquire(state->fb->depth_stencil->resource);
+    if (state->fb.depth_stencil)
+        wined3d_resource_acquire(state->fb.depth_stencil->resource);
     acquire_shader_resources(state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     acquire_unordered_access_resources(state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
@@ -1103,8 +1103,8 @@ static void wined3d_cs_exec_set_rendertarget_view(struct wined3d_cs *cs, const v
     BOOL prev_alpha_swizzle, curr_alpha_swizzle;
     struct wined3d_rendertarget_view *prev;
 
-    prev = cs->state.fb->render_targets[op->view_idx];
-    cs->fb.render_targets[op->view_idx] = op->view;
+    prev = cs->state.fb.render_targets[op->view_idx];
+    cs->state.fb.render_targets[op->view_idx] = op->view;
     device_invalidate_state(cs->device, STATE_FRAMEBUFFER);
 
     prev_alpha_swizzle = prev && prev->format->id == WINED3DFMT_A8_UNORM;
@@ -1132,7 +1132,7 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
     struct wined3d_device *device = cs->device;
     struct wined3d_rendertarget_view *prev;
 
-    if ((prev = cs->state.fb->depth_stencil) && prev->resource->type != WINED3D_RTYPE_BUFFER)
+    if ((prev = cs->state.fb.depth_stencil) && prev->resource->type != WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_texture *prev_texture = texture_from_resource(prev->resource);
 
@@ -1142,7 +1142,7 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
                     prev->sub_resource_idx, WINED3D_LOCATION_DISCARDED);
     }
 
-    cs->fb.depth_stencil = op->view;
+    cs->state.fb.depth_stencil = op->view;
 
     if (!prev != !op->view)
     {
@@ -1965,7 +1965,7 @@ static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 
     state_cleanup(&cs->state);
     memset(&cs->state, 0, sizeof(cs->state));
-    state_init(&cs->state, &cs->fb, &adapter->d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
+    state_init(&cs->state, &adapter->d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 }
 
 void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
@@ -2845,7 +2845,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     cs->ops = &wined3d_cs_st_ops;
     cs->device = device;
 
-    state_init(&cs->state, &cs->fb, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
+    state_init(&cs->state, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
     if (!(cs->data = heap_alloc(cs->data_size)))

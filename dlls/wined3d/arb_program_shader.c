@@ -700,7 +700,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv, str
     {
         const struct wined3d_shader *pshader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
         const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
-        UINT rt_height = state->fb->render_targets[0]->height;
+        UINT rt_height = state->fb.render_targets[0]->height;
 
         /* Load DirectX 9 float constants for pixel shader */
         priv->highest_dirty_ps_const = shader_arb_load_constants_f(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
@@ -4607,7 +4607,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         }
         else
         {
-            UINT rt_height = state->fb->render_targets[0]->height;
+            UINT rt_height = state->fb.render_targets[0]->height;
             shader_arb_ps_local_constants(compiled, context_gl, state, rt_height);
         }
 

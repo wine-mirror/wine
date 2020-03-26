@@ -3904,7 +3904,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     unsigned int i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    if (!d3d_info->srgb_write_control && needs_srgb_write(d3d_info, state, state->fb))
+    if (!d3d_info->srgb_write_control && needs_srgb_write(d3d_info, state, &state->fb))
     {
         static unsigned int warned = 0;
 
@@ -4161,9 +4161,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     args->render_offscreen = shader->reg_maps.vpos && gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS]
             ? context->render_offscreen : 0;
 
-    for (i = 0; i < ARRAY_SIZE(state->fb->render_targets); ++i)
+    for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
-        struct wined3d_rendertarget_view *rtv = state->fb->render_targets[i];
+        struct wined3d_rendertarget_view *rtv = state->fb.render_targets[i];
         if (rtv && rtv->format->id == WINED3DFMT_A8_UNORM && !is_identity_fixup(rtv->format->color_fixup))
             args->rt_alpha_swizzle |= 1u << i;
     }

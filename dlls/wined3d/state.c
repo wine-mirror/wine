@@ -236,7 +236,7 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
 
     /* No z test without depth stencil buffers */
-    if (!state->fb->depth_stencil)
+    if (!state->fb.depth_stencil)
     {
         TRACE("No Z buffer - disabling depth test\n");
         zenable = WINED3D_ZB_FALSE;
@@ -556,7 +556,7 @@ static BOOL is_blend_enabled(struct wined3d_context *context, const struct wined
 {
     const struct wined3d_blend_state *b = state->blend_state;
 
-    if (!state->fb->render_targets[index])
+    if (!state->fb.render_targets[index])
         return FALSE;
 
     if (!b->desc.rt[index].enable)
@@ -566,7 +566,7 @@ static BOOL is_blend_enabled(struct wined3d_context *context, const struct wined
      * With blending on we could face a big performance penalty.
      * The d3d9 visual test confirms the behavior. */
     if (context->render_offscreen
-            && !(state->fb->render_targets[index]->format_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+            && !(state->fb.render_targets[index]->format_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
         return FALSE;
 
     return TRUE;
@@ -610,7 +610,7 @@ static void blend(struct wined3d_context *context, const struct wined3d_state *s
     gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
     checkGLcall("glEnable GL_BLEND");
 
-    rt_format = state->fb->render_targets[0]->format;
+    rt_format = state->fb.render_targets[0]->format;
 
     gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.rt[0].src, b->desc.rt[0].dst, rt_format);
 
@@ -683,7 +683,7 @@ static void blend_db2(struct wined3d_context *context, const struct wined3d_stat
         return;
     }
 
-    rt_format = state->fb->render_targets[0]->format;
+    rt_format = state->fb.render_targets[0]->format;
     gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.rt[0].src, b->desc.rt[0].dst, rt_format);
     gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha, b->desc.rt[0].src_alpha, b->desc.rt[0].dst_alpha, rt_format);
 
@@ -766,7 +766,7 @@ static void blend_dbb(struct wined3d_context *context, const struct wined3d_stat
         GL_EXTCALL(glEnablei(GL_BLEND, i));
         checkGLcall("glEnablei GL_BLEND");
 
-        rt_format = state->fb->render_targets[i]->format;
+        rt_format = state->fb.render_targets[i]->format;
         gl_blend_from_d3d(&src_blend, &dst_blend, b->desc.rt[i].src, b->desc.rt[i].dst, rt_format);
         gl_blend_from_d3d(&src_blend_alpha, &dst_blend_alpha,
                 b->desc.rt[i].src_alpha, b->desc.rt[i].dst_alpha, rt_format);
@@ -1061,7 +1061,7 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
     GLint depthFail_back;
 
     /* No stencil test without a stencil buffer. */
-    if (!state->fb->depth_stencil)
+    if (!state->fb.depth_stencil)
     {
         gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
         checkGLcall("glDisable GL_STENCIL_TEST");
@@ -1075,7 +1075,7 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
     if (!(func_back = wined3d_gl_compare_func(state->render_states[WINED3D_RS_BACK_STENCILFUNC])))
         func_back = GL_ALWAYS;
     mask = state->render_states[WINED3D_RS_STENCILMASK];
-    ref = state->render_states[WINED3D_RS_STENCILREF] & ((1 << state->fb->depth_stencil->format->stencil_size) - 1);
+    ref = state->render_states[WINED3D_RS_STENCILREF] & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
     stencilFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILFAIL]);
     depthFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILZFAIL]);
     stencilPass = gl_stencil_op(state->render_states[WINED3D_RS_STENCILPASS]);
@@ -1157,7 +1157,7 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
 
 static void state_stencilwrite2s_ext(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3D_RS_STENCILWRITEMASK] : 0;
+    DWORD mask = state->fb.depth_stencil ? state->render_states[WINED3D_RS_STENCILWRITEMASK] : 0;
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
 
     GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -1171,7 +1171,7 @@ static void state_stencilwrite2s_ext(struct wined3d_context *context, const stru
 
 static void state_stencilwrite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3D_RS_STENCILWRITEMASK] : 0;
+    DWORD mask = state->fb.depth_stencil ? state->render_states[WINED3D_RS_STENCILWRITEMASK] : 0;
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
 
     gl_info->gl_ops.gl.p_glStencilMask(mask);
@@ -1859,7 +1859,7 @@ static void depthbias(struct wined3d_context *context, const struct wined3d_stat
 
     if (scale_bias || const_bias.f)
     {
-        const struct wined3d_rendertarget_view *depth = state->fb->depth_stencil;
+        const struct wined3d_rendertarget_view *depth = state->fb.depth_stencil;
         float factor, units, scale, clamp;
 
         clamp = r ? r->desc.depth_bias_clamp : 0.0f;
@@ -4092,8 +4092,8 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
 static void get_viewports(struct wined3d_context *context, const struct wined3d_state *state,
         unsigned int viewport_count, struct wined3d_viewport *viewports)
 {
-    const struct wined3d_rendertarget_view *depth_stencil = state->fb->depth_stencil;
-    const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
+    const struct wined3d_rendertarget_view *depth_stencil = state->fb.depth_stencil;
+    const struct wined3d_rendertarget_view *target = state->fb.render_targets[0];
     unsigned int width, height, i;
 
     for (i = 0; i < viewport_count; ++i)
@@ -4342,7 +4342,7 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
 
     if (!context->render_offscreen)
     {
-        const struct wined3d_rendertarget_view *target = state->fb->render_targets[0];
+        const struct wined3d_rendertarget_view *target = state->fb.render_targets[0];
         unsigned int width;
 
         wined3d_rendertarget_view_get_drawable_size(target, context, &width, &height);
@@ -4474,7 +4474,7 @@ void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if (needs_srgb_write(context->d3d_info, state, state->fb))
+    if (needs_srgb_write(context->d3d_info, state, &state->fb))
         gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
     else
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);

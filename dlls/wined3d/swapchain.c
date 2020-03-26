@@ -506,7 +506,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     struct wined3d_swapchain_gl *swapchain_gl = wined3d_swapchain_gl(swapchain);
     const struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
-    const struct wined3d_fb_state *fb = &swapchain->device->cs->fb;
+    const struct wined3d_fb_state *fb = &swapchain->device->cs->state.fb;
     struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
     struct wined3d_texture *logo_texture, *cursor_texture;
     const struct wined3d_gl_info *gl_info;

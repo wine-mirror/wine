@@ -1734,7 +1734,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
         const struct wined3d_vec4 correction_params =
         {
             /* Position is relative to the framebuffer, not the viewport. */
-            context->render_offscreen ? 0.0f : (float)state->fb->render_targets[0]->height,
+            context->render_offscreen ? 0.0f : (float)state->fb.render_targets[0]->height,
             context->render_offscreen ? 1.0f : -1.0f,
             0.0f,
             0.0f,

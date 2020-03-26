@@ -1851,13 +1851,11 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         state->streams[i].frequency = 1;
 }
 
-void state_init(struct wined3d_state *state, struct wined3d_fb_state *fb,
-        const struct wined3d_d3d_info *d3d_info, DWORD flags)
+void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info, DWORD flags)
 {
     unsigned int i;
 
     state->flags = flags;
-    state->fb = fb;
 
     for (i = 0; i < LIGHTMAP_SIZE; i++)
     {

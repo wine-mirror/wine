@@ -3319,7 +3319,7 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
     uint32_t rt_mask = 0, *cur_mask;
     unsigned int i;
 
-    if (isStateDirty(&context_gl->c, STATE_FRAMEBUFFER) || fb != state->fb
+    if (isStateDirty(&context_gl->c, STATE_FRAMEBUFFER) || fb != &state->fb
             || rt_count != gl_info->limits.buffers)
     {
         if (!have_framebuffer_attachment(rt_count, rts, dsv))
@@ -3431,7 +3431,7 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
 
 static uint32_t find_draw_buffers_mask(const struct wined3d_context_gl *context_gl, const struct wined3d_state *state)
 {
-    struct wined3d_rendertarget_view * const *rts = state->fb->render_targets;
+    struct wined3d_rendertarget_view * const *rts = state->fb.render_targets;
     struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int rt_mask, mask;
@@ -3463,7 +3463,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     uint32_t rt_mask = find_draw_buffers_mask(context_gl, state);
-    const struct wined3d_fb_state *fb = state->fb;
+    const struct wined3d_fb_state *fb = &state->fb;
     DWORD color_location = 0;
     DWORD *cur_mask;
 
@@ -4230,7 +4230,7 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     const struct wined3d_state_entry *state_table = context->state_table;
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    const struct wined3d_fb_state *fb = state->fb;
+    const struct wined3d_fb_state *fb = &state->fb;
     unsigned int i, base;
     WORD map;
 
@@ -5121,7 +5121,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         const struct wined3d_draw_parameters *parameters)
 {
     BOOL emulation = FALSE, rasterizer_discard = FALSE;
-    const struct wined3d_fb_state *fb = state->fb;
+    const struct wined3d_fb_state *fb = &state->fb;
     const struct wined3d_stream_info *stream_info;
     struct wined3d_rendertarget_view *dsv, *rtv;
     struct wined3d_stream_info si_emulated;
