@@ -144,6 +144,8 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_resource *resource = &buffer_gl->b.resource;
+    struct wined3d_buffer *buffer = &buffer_gl->b;
+    struct wined3d_cs *cs = resource->device->cs;
     GLuint bo;
 
     if (!buffer_gl->b.buffer_object)
@@ -158,7 +160,8 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
     {
         if (resource->bind_flags & WINED3D_BIND_VERTEX_BUFFER)
             device_invalidate_state(resource->device, STATE_STREAMSRC);
-        if (resource->bind_flags & WINED3D_BIND_INDEX_BUFFER)
+        if (resource->bind_flags & WINED3D_BIND_INDEX_BUFFER
+                && cs->state.index_buffer == buffer)
             device_invalidate_state(resource->device, STATE_INDEXBUFFER);
         if (resource->bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
         {
