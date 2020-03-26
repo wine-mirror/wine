@@ -115,7 +115,6 @@ struct samplerdecl {
     DWORD                   mod;
 };
 
-#define INSTRARRAY_INITIAL_SIZE 8
 struct bwriter_shader {
     enum shader_type        type;
     unsigned char major_version, minor_version;
@@ -149,6 +148,8 @@ static inline void *d3dcompiler_alloc(SIZE_T size)
 
 static inline void *d3dcompiler_realloc(void *ptr, SIZE_T size)
 {
+    if (!ptr)
+        return d3dcompiler_alloc(size);
     return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }
 
@@ -293,12 +294,9 @@ static inline void set_parse_status(enum parse_status *current, enum parse_statu
         *current = PARSE_WARN;
 }
 
-/* A reasonable value as initial size */
-#define BYTECODEBUFFER_INITIAL_SIZE 32
 struct bytecode_buffer {
     DWORD *data;
-    DWORD size;
-    DWORD alloc_size;
+    unsigned int size, alloc_size;
     /* For tracking rare out of memory situations without passing
      * return values around everywhere
      */

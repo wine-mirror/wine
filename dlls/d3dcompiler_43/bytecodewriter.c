@@ -27,6 +27,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bytecodewriter);
 
+static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
+{
+    unsigned int max_capacity, new_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~0u / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(8, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = count;
+
+    if (!(new_elements = d3dcompiler_realloc(*elements, new_capacity * size)))
+    {
+        ERR("Failed to allocate memory.\n");
+        return FALSE;
+    }
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
 /****************************************************************
  * General assembler shader construction helper routines follow *
  ****************************************************************/
@@ -73,30 +102,11 @@ struct instruction *alloc_instr(unsigned int srcs) {
  *  instr: Instruction to add to the shader
  */
 BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr) {
-    struct instruction      **new_instructions;
-
     if(!shader) return FALSE;
 
-    if(shader->instr_alloc_size == 0) {
-        shader->instr = d3dcompiler_alloc(sizeof(*shader->instr) * INSTRARRAY_INITIAL_SIZE);
-        if(!shader->instr) {
-            ERR("Failed to allocate the shader instruction array\n");
-            return FALSE;
-        }
-        shader->instr_alloc_size = INSTRARRAY_INITIAL_SIZE;
-    } else if(shader->instr_alloc_size == shader->num_instrs) {
-        new_instructions = d3dcompiler_realloc(shader->instr,
-                                       sizeof(*shader->instr) * (shader->instr_alloc_size) * 2);
-        if(!new_instructions) {
-            ERR("Failed to grow the shader instruction array\n");
-            return FALSE;
-        }
-        shader->instr = new_instructions;
-        shader->instr_alloc_size = shader->instr_alloc_size * 2;
-    } else if(shader->num_instrs > shader->instr_alloc_size) {
-        ERR("More instructions than allocated. This should not happen\n");
+    if (!array_reserve((void **)&shader->instr, &shader->instr_alloc_size,
+            shader->num_instrs + 1, sizeof(*shader->instr)))
         return FALSE;
-    }
 
     shader->instr[shader->num_instrs] = instr;
     shader->num_instrs++;
@@ -310,13 +320,6 @@ static struct bytecode_buffer *allocate_buffer(void) {
 
     ret = d3dcompiler_alloc(sizeof(*ret));
     if(!ret) return NULL;
-
-    ret->alloc_size = BYTECODEBUFFER_INITIAL_SIZE;
-    ret->data = d3dcompiler_alloc(sizeof(DWORD) * ret->alloc_size);
-    if(!ret->data) {
-        d3dcompiler_free(ret);
-        return NULL;
-    }
     ret->state = S_OK;
     return ret;
 }
@@ -324,18 +327,12 @@ static struct bytecode_buffer *allocate_buffer(void) {
 static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
     if(FAILED(buffer->state)) return;
 
-    if(buffer->alloc_size == buffer->size) {
-        DWORD *newarray;
-        buffer->alloc_size *= 2;
-        newarray = d3dcompiler_realloc(buffer->data,
-                               sizeof(DWORD) * buffer->alloc_size);
-        if(!newarray) {
-            ERR("Failed to grow the buffer data memory\n");
-            buffer->state = E_OUTOFMEMORY;
-            return;
-        }
-        buffer->data = newarray;
+    if (!array_reserve((void **)&buffer->data, &buffer->alloc_size, buffer->size + 1, sizeof(*buffer->data)))
+    {
+        buffer->state = E_OUTOFMEMORY;
+        return;
     }
+
     buffer->data[buffer->size++] = value;
 }
 
