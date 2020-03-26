@@ -1124,6 +1124,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
             case ADS_SCOPE_BASE:
             case ADS_SCOPE_ONELEVEL:
             case ADS_SCOPE_SUBTREE:
+                TRACE("SEARCH_SCOPE: %d\n", prefs[i].vValue.u.Integer);
                 ldap->search.scope = prefs[i].vValue.u.Integer;
                 prefs[i].dwStatus = ADS_STATUS_S_OK;
                 break;
