@@ -407,11 +407,12 @@ static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
     gst_video_info_set_format(&info, format, vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
     if ((caps = gst_video_info_to_caps(&info)))
     {
-        /* Clear the framerate; we don't actually care about it. (Yes,
-         * VIDEOINFOHEADER has an AvgTimePerFrame field, but that shouldn't
-         * matter for checking compatible caps.) */
+        /* Clear some fields that shouldn't prevent us from connecting. */
         for (i = 0; i < gst_caps_get_size(caps); ++i)
+        {
             gst_structure_remove_field(gst_caps_get_structure(caps, i), "framerate");
+            gst_structure_remove_field(gst_caps_get_structure(caps, i), "pixel-aspect-ratio");
+        }
     }
     return caps;
 }
