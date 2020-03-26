@@ -525,11 +525,11 @@ static void device_leftover_rasterizer_state(struct wine_rb_entry *entry, void *
     ERR("Leftover rasterizer state %p.\n", state);
 }
 
-static void device_free_blend_state(struct wine_rb_entry *entry, void *context)
+static void device_leftover_blend_state(struct wine_rb_entry *entry, void *context)
 {
-    struct wined3d_blend_state *state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
+    struct wined3d_blend_state *blend_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
 
-    wined3d_blend_state_decref(state);
+    ERR("Leftover blend state %p.\n", blend_state);
 }
 
 void wined3d_device_cleanup(struct wined3d_device *device)
@@ -538,8 +538,6 @@ void wined3d_device_cleanup(struct wined3d_device *device)
 
     if (device->swapchain_count)
         wined3d_device_uninit_3d(device);
-
-    wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
 
     wined3d_cs_destroy(device->cs);
 
@@ -570,6 +568,7 @@ void wined3d_device_cleanup(struct wined3d_device *device)
 
     wine_rb_destroy(&device->samplers, device_leftover_sampler, NULL);
     wine_rb_destroy(&device->rasterizer_states, device_leftover_rasterizer_state, NULL);
+    wine_rb_destroy(&device->blend_states, device_leftover_blend_state, NULL);
 
     wined3d_decref(device->wined3d);
     device->wined3d = NULL;
@@ -1118,6 +1117,13 @@ static void device_free_rasterizer_state(struct wine_rb_entry *entry, void *cont
     wined3d_rasterizer_state_decref(state);
 }
 
+static void device_free_blend_state(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_blend_state *blend_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
+
+    wined3d_blend_state_decref(blend_state);
+}
+
 void wined3d_device_uninit_3d(struct wined3d_device *device)
 {
     BOOL no3d = device->wined3d->flags & WINED3D_NO3D;
@@ -1159,6 +1165,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
     wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
+    wine_rb_clear(&device->blend_states, device_free_blend_state, NULL);
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
@@ -5336,6 +5343,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
     wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
+    wine_rb_clear(&device->blend_states, device_free_blend_state, NULL);
 
     if (reset_state)
     {
