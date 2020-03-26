@@ -38,6 +38,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "wincon.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel16_private.h"
@@ -49,7 +50,6 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 
-BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 /*
  * Note:
  * - Most of the file related functions are wrong. NT's kernel32
@@ -263,23 +263,6 @@ typedef struct
 #define KEY_PPAGE       0x51
 
 static int brk_flag;
-
-struct magic_device
-{
-    WCHAR  name[10];
-    HANDLE handle;
-    LARGE_INTEGER index;
-    void (*ioctl_handler)(CONTEXT *);
-};
-
-static void INT21_IoctlScsiMgrHandler( CONTEXT * );
-static void INT21_IoctlHPScanHandler( CONTEXT * );
-
-static struct magic_device magic_devices[] =
-{
-    { {'s','c','s','i','m','g','r','$',0}, NULL, { { 0, 0 } }, INT21_IoctlScsiMgrHandler },
-    { {'h','p','s','c','a','n',0},         NULL, { { 0, 0 } }, INT21_IoctlHPScanHandler },
-};
 
 
 /* Many calls translate a drive argument like this:
@@ -788,96 +771,6 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT *context )
 }
 
 /***********************************************************************
- *           INT21_CreateMagicDeviceHandle
- *
- * Create a dummy file handle for a "magic" device.
- */
-static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
-{
-    static const WCHAR prefixW[] = {'\\','?','?','\\','u','n','i','x'};
-    const char *dir = wine_get_server_dir();
-    int len;
-    HANDLE ret;
-    NTSTATUS status;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    IO_STATUS_BLOCK io;
-
-    len = MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, NULL, 0 );
-    nameW.Length = sizeof(prefixW) + (len + strlenW( name )) * sizeof(WCHAR);
-    nameW.MaximumLength = nameW.Length + sizeof(WCHAR);
-    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.MaximumLength )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    memcpy( nameW.Buffer, prefixW, sizeof(prefixW) );
-    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer + ARRAY_SIZE(prefixW), len );
-    len += ARRAY_SIZE(prefixW);
-    nameW.Buffer[len-1] = '/';
-    strcpyW( nameW.Buffer + len, name );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = 0;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
-    status = NtCreateFile( &ret, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &attr, &io, NULL, 0,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
-                           FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    if (status)
-    {
-        ret = 0;
-        SetLastError( RtlNtStatusToDosError(status) );
-    }
-    RtlFreeUnicodeString( &nameW );
-    return ret;
-}
-
-
-/***********************************************************************
- *           INT21_OpenMagicDevice
- *
- * Open a file handle for "magic" devices like EMMXXXX0.
- */
-static HANDLE INT21_OpenMagicDevice( LPCWSTR name, DWORD access )
-{
-    unsigned int i;
-    const WCHAR *p;
-    HANDLE handle;
-
-    if (name[0] && (name[1] == ':')) name += 2;
-    if ((p = strrchrW( name, '/' ))) name = p + 1;
-    if ((p = strrchrW( name, '\\' ))) name = p + 1;
-
-    for (i = 0; i < ARRAY_SIZE(magic_devices); i++)
-    {
-        int len = strlenW( magic_devices[i].name );
-        if (!strncmpiW( magic_devices[i].name, name, len ) &&
-            (!name[len] || name[len] == '.' || name[len] == ':')) break;
-    }
-    if (i == ARRAY_SIZE(magic_devices)) return 0;
-
-    if (!magic_devices[i].handle) /* need to open it */
-    {
-        IO_STATUS_BLOCK io;
-        FILE_INTERNAL_INFORMATION info;
-
-        if (!(handle = INT21_CreateMagicDeviceHandle( magic_devices[i].name ))) return 0;
-
-        NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
-        magic_devices[i].index = info.IndexNumber;
-        magic_devices[i].handle = handle;
-    }
-    if (!DuplicateHandle( GetCurrentProcess(), magic_devices[i].handle,
-                          GetCurrentProcess(), &handle, access, FALSE, 0 )) handle = 0;
-    return handle;
-}
-
-
-/***********************************************************************
  *           INT21_CreateFile
  *
  * Handler for:
@@ -1031,52 +924,44 @@ static BOOL INT21_CreateFile( CONTEXT *context,
      */
     MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
 
-    if ((winHandle = INT21_OpenMagicDevice( pathW, winAccess )))
-    {
-        dosStatus = 1;
+    winHandle = CreateFileW( pathW, winAccess, winSharing, NULL, winMode, winAttributes, 0 );
+    /* DOS allows opening files on a CDROM R/W */
+    if( winHandle == INVALID_HANDLE_VALUE &&
+        (GetLastError() == ERROR_WRITE_PROTECT ||
+         GetLastError() == ERROR_ACCESS_DENIED)) {
+        winHandle = CreateFileW( pathW, winAccess & ~GENERIC_WRITE,
+                                 winSharing, NULL, winMode, winAttributes, 0 );
     }
-    else
+
+    if (winHandle == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    /*
+     * Determine DOS file status.
+     *
+     * 1 = file opened
+     * 2 = file created
+     * 3 = file replaced
+     */
+    switch(winMode)
     {
-        winHandle = CreateFileW( pathW, winAccess, winSharing, NULL,
-                                 winMode, winAttributes, 0 );
-        /* DOS allows opening files on a CDROM R/W */
-        if( winHandle == INVALID_HANDLE_VALUE &&
-                (GetLastError() == ERROR_WRITE_PROTECT ||
-                 GetLastError() == ERROR_ACCESS_DENIED)) {
-            winHandle = CreateFileW( pathW, winAccess & ~GENERIC_WRITE,
-                    winSharing, NULL, winMode, winAttributes, 0 );
-        }
-
-        if (winHandle == INVALID_HANDLE_VALUE)
-            return FALSE;
-
-        /*
-         * Determine DOS file status.
-         *
-         * 1 = file opened
-         * 2 = file created
-         * 3 = file replaced
-         */
-        switch(winMode)
-        {
-        case OPEN_EXISTING:
-            dosStatus = 1;
-            break;
-        case TRUNCATE_EXISTING:
-            dosStatus = 3;
-            break;
-        case CREATE_NEW:
-            dosStatus = 2;
-            break;
-        case OPEN_ALWAYS:
-            dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
-            break;
-        case CREATE_ALWAYS:
-            dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
-            break;
-        default:
-            dosStatus = 0;
-        }
+    case OPEN_EXISTING:
+        dosStatus = 1;
+        break;
+    case TRUNCATE_EXISTING:
+        dosStatus = 3;
+        break;
+    case CREATE_NEW:
+        dosStatus = 2;
+        break;
+    case OPEN_ALWAYS:
+        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
+        break;
+    case CREATE_ALWAYS:
+        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
+        break;
+    default:
+        dosStatus = 0;
     }
 
     /*
@@ -2549,105 +2434,14 @@ static void INT21_Ioctl_Block( CONTEXT *context )
 
 
 /***********************************************************************
- *           INT21_IoctlScsiMgrHandler
- *
- * IOCTL handler for the SCSIMGR device.
- */
-static void INT21_IoctlScsiMgrHandler( CONTEXT *context )
-{
-    switch (AL_reg(context))
-    {
-    case 0x00: /* GET DEVICE INFORMATION */
-        SET_DX( context, 0xc0c0 );
-        break;
-
-    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
-        SET_DX( context, 0 );
-        break;
-
-    case 0x01: /* SET DEVICE INFORMATION */
-    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x06: /* GET INPUT STATUS */
-    case 0x07: /* GET OUTPUT STATUS */
-    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
-    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
-    default:
-        INT_BARF( context, 0x21 );
-        break;
-    }
-}
-
-
-/***********************************************************************
- *           INT21_IoctlHPScanHandler
- *
- * IOCTL handler for the HPSCAN device.
- */
-static void INT21_IoctlHPScanHandler( CONTEXT *context )
-{
-    switch (AL_reg(context))
-    {
-    case 0x00: /* GET DEVICE INFORMATION */
-        SET_DX( context, 0xc0c0 );
-        break;
-
-    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
-        SET_DX( context, 0 );
-        break;
-
-    case 0x01: /* SET DEVICE INFORMATION */
-    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x06: /* GET INPUT STATUS */
-    case 0x07: /* GET OUTPUT STATUS */
-    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
-    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
-    default:
-        INT_BARF( context, 0x21 );
-        break;
-    }
-}
-
-
-/***********************************************************************
  *           INT21_Ioctl_Char
  *
  * Handler for character device IOCTLs.
  */
 static void INT21_Ioctl_Char( CONTEXT *context )
 {
-    int status;
-    BOOL IsConsoleIOHandle = FALSE;
-    IO_STATUS_BLOCK io;
-    FILE_INTERNAL_INFORMATION info;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
-
-    status = NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
-    if (status)
-    {
-        if( VerifyConsoleIoHandle( handle))
-            IsConsoleIOHandle = TRUE;
-        else {
-            SET_AX( context, RtlNtStatusToDosError(status) );
-            SET_CFLAG( context );
-            return;
-        }
-    } else {
-        UINT i;
-        for (i = 0; i < ARRAY_SIZE(magic_devices); i++)
-        {
-            if (!magic_devices[i].handle) continue;
-            if (magic_devices[i].index.QuadPart == info.IndexNumber.QuadPart)
-            {
-                /* found it */
-                magic_devices[i].ioctl_handler( context );
-                return;
-            }
-        }
-    }
-
-    /* no magic device found, do default handling */
+    BOOL IsConsoleIOHandle = VerifyConsoleIoHandle( handle );
 
     switch (AL_reg(context))
     {
