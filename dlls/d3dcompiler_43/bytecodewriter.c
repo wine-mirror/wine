@@ -2285,130 +2285,29 @@ static const struct bytecode_backend ps_3_backend = {
     ps_3_handlers
 };
 
-static void init_vs10_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 1.0 writer\n");
-    writer->funcs = &vs_1_x_backend;
-}
-
-static void init_vs11_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 1.1 writer\n");
-    writer->funcs = &vs_1_x_backend;
-}
-
-static void init_vs20_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 2.0 writer\n");
-    writer->funcs = &vs_2_0_backend;
-}
-
-static void init_vs2x_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 2.x writer\n");
-    writer->funcs = &vs_2_x_backend;
-}
-
-static void init_vs30_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 vertex shader 3.0 writer\n");
-    writer->funcs = &vs_3_backend;
-}
-
-static void init_ps10_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.0 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps11_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.1 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps12_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.2 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps13_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.3 writer\n");
-    writer->funcs = &ps_1_0123_backend;
-}
-
-static void init_ps14_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 1.4 writer\n");
-    writer->funcs = &ps_1_4_backend;
-}
-
-static void init_ps20_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 2.0 writer\n");
-    writer->funcs = &ps_2_0_backend;
-}
-
-static void init_ps2x_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 2.x writer\n");
-    writer->funcs = &ps_2_x_backend;
-}
-
-static void init_ps30_dx9_writer(struct bc_writer *writer) {
-    TRACE("Creating DirectX9 pixel shader 3.0 writer\n");
-    writer->funcs = &ps_3_backend;
-}
-
-static struct bc_writer *create_writer(DWORD version)
+static const struct
 {
-    struct bc_writer *ret = d3dcompiler_alloc(sizeof(*ret));
-
-    if(!ret) {
-        WARN("Failed to allocate a bytecode writer instance\n");
-        return NULL;
-    }
-
-    switch(version) {
-        case BWRITERVS_VERSION(1, 0):
-            init_vs10_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(1, 1):
-            init_vs11_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(2, 0):
-            init_vs20_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(2, 1):
-            init_vs2x_dx9_writer(ret);
-            break;
-        case BWRITERVS_VERSION(3, 0):
-            init_vs30_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 0):
-            init_ps10_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 1):
-            init_ps11_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 2):
-            init_ps12_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 3):
-            init_ps13_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(1, 4):
-            init_ps14_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(2, 0):
-            init_ps20_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(2, 1):
-            init_ps2x_dx9_writer(ret);
-            break;
-        case BWRITERPS_VERSION(3, 0):
-            init_ps30_dx9_writer(ret);
-            break;
-        default:
-            WARN("Unexpected shader version requested: %08x\n", version);
-            goto fail;
-    }
-    return ret;
-
-fail:
-    d3dcompiler_free(ret);
-    return NULL;
+    enum shader_type type;
+    unsigned char major, minor;
+    const struct bytecode_backend *backend;
 }
+shader_backends[] =
+{
+    {ST_VERTEX, 1, 0, &vs_1_x_backend},
+    {ST_VERTEX, 1, 1, &vs_1_x_backend},
+    {ST_VERTEX, 2, 0, &vs_2_0_backend},
+    {ST_VERTEX, 2, 1, &vs_2_x_backend},
+    {ST_VERTEX, 3, 0, &vs_3_backend},
+
+    {ST_PIXEL, 1, 0, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 1, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 2, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 3, &ps_1_0123_backend},
+    {ST_PIXEL, 1, 4, &ps_1_4_backend},
+    {ST_PIXEL, 2, 0, &ps_2_0_backend},
+    {ST_PIXEL, 2, 1, &ps_2_x_backend},
+    {ST_PIXEL, 3, 0, &ps_3_backend},
+};
 
 static HRESULT call_instr_handler(struct bc_writer *writer,
                                   const struct instruction *instr,
@@ -2443,16 +2342,31 @@ HRESULT shader_write_bytecode(const struct bwriter_shader *shader, DWORD **resul
         ERR("NULL shader structure, aborting\n");
         return E_FAIL;
     }
-    writer = create_writer(sm1_version(shader));
+
+    if (!(writer = d3dcompiler_alloc(sizeof(*writer))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < ARRAY_SIZE(shader_backends); ++i)
+    {
+        if (shader->type == shader_backends[i].type
+                && shader->major_version == shader_backends[i].major
+                && shader->minor_version == shader_backends[i].minor)
+        {
+            writer->funcs = shader_backends[i].backend;
+            break;
+        }
+    }
+
+    if (!writer->funcs)
+    {
+        FIXME("Unsupported shader type %#x, version %u.%u.\n",
+                shader->type, shader->major_version, shader->minor_version);
+        d3dcompiler_free(writer);
+        return E_NOTIMPL;
+    }
+
     writer->shader = shader;
     *result = NULL;
-
-    if(!writer) {
-        WARN("Could not create a bytecode writer instance. Either unsupported version\n");
-        WARN("or out of memory\n");
-        hr = E_FAIL;
-        goto error;
-    }
 
     buffer = allocate_buffer();
     if(!buffer) {
