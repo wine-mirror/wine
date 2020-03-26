@@ -1110,6 +1110,12 @@ static HRESULT WINAPI ddraw_surface7_Lock(IDirectDrawSurface7 *iface,
     if (!surface_validate_lock_desc(surface, (DDSURFACEDESC *)surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
 
+    if (ddraw_surface_is_lost(surface))
+    {
+        WARN("Surface is lost.\n");
+        return DDERR_SURFACELOST;
+    }
+
     return surface_lock(surface, rect, surface_desc, surface_desc_size, flags, h);
 }
 
@@ -1125,6 +1131,12 @@ static HRESULT WINAPI ddraw_surface4_Lock(IDirectDrawSurface4 *iface, RECT *rect
     if (!surface_validate_lock_desc(surface, (DDSURFACEDESC *)surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
 
+    if (ddraw_surface_is_lost(surface))
+    {
+        WARN("Surface is lost.\n");
+        return DDERR_SURFACELOST;
+    }
+
     return surface_lock(surface, rect, surface_desc, surface_desc_size, flags, h);
 }
 
@@ -1137,6 +1149,12 @@ static HRESULT ddraw_surface_lock_ddsd(struct ddraw_surface *surface, RECT *rect
 
     if (!surface_validate_lock_desc(surface, surface_desc, &surface_desc_size))
         return DDERR_INVALIDPARAMS;
+
+    if (ddraw_surface_is_lost(surface))
+    {
+        WARN("Surface is lost.\n");
+        return DDERR_SURFACELOST;
+    }
 
     surface_desc2.dwSize = surface_desc->dwSize;
     surface_desc2.dwFlags = 0;

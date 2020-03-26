@@ -1056,6 +1056,7 @@ static void test_coop_level_d3d_state(void)
     IDirectDrawSurface7 *rt, *surface;
     IDirect3DDevice7 *device;
     IDirectDraw7 *ddraw;
+    DDSURFACEDESC2 lock;
     IDirect3D7 *d3d;
     D3DCOLOR color;
     DDSCAPS2 caps;
@@ -1116,6 +1117,13 @@ static void test_coop_level_d3d_state(void)
     hr = IDirectDrawSurface7_IsLost(rt);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
 
+    memset(&lock, 0, sizeof(lock));
+    lock.dwSize = sizeof(lock);
+    lock.lpSurface = (void *)0xdeadbeef;
+    hr = IDirectDrawSurface7_Lock(rt, NULL, &lock, DDLOCK_READONLY, NULL);
+    ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
+    ok(lock.lpSurface == (void *)0xdeadbeef, "Got unexpected lock.lpSurface %p.\n", lock.lpSurface);
+
     memset(&caps, 0, sizeof(caps));
     caps.dwCaps = DDSCAPS_ZBUFFER;
     hr = IDirectDrawSurface7_GetAttachedSurface(rt, &caps, &surface);
@@ -1125,6 +1133,11 @@ static void test_coop_level_d3d_state(void)
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw7_RestoreAllSurfaces(ddraw);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_Lock(rt, NULL, &lock, DDLOCK_READONLY, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_Unlock(rt, NULL);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     caps.dwCaps = DDSCAPS_ZBUFFER;
