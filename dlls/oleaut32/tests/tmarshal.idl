@@ -582,4 +582,27 @@ cpp_quote("struct Coclass3 { ICoclass1 *iface; };")
         interface ItestIF7;
     }
 
+    [
+        object,
+        uuid(ec236d8e-2cc7-44f2-b394-46c86ff3da74),
+        dual,
+        oleautomation
+    ]
+    interface ItestIF12 : IDispatch
+    {
+        [id(0x1234)] HRESULT fn4([in] int a);
+        [id(0x1235)] HRESULT fn5([in] int a);
+    }
+
+    [
+        object,
+        uuid(f711b105-554d-4751-818c-56fcc5d7c0d5),
+        dual,
+        oleautomation
+    ]
+    interface ItestIF13 : ItestIF12
+    {
+        [id(0x1236)] HRESULT fn6([in] GUID a);
+    }
+
 };
