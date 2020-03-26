@@ -2056,6 +2056,19 @@ static const char *debugstr_eventid(DWORD event)
         X(MEWMDRMProximityCompleted),
         X(MEWMDRMLicenseStoreCleaned),
         X(MEWMDRMRevocationDownloadCompleted),
+        X(METransformUnknown),
+        X(METransformNeedInput),
+        X(METransformHaveOutput),
+        X(METransformDrainComplete),
+        X(METransformMarker),
+        X(METransformInputStreamStateChanged),
+        X(MEByteStreamCharacteristicsChanged),
+        X(MEVideoCaptureDeviceRemoved),
+        X(MEVideoCaptureDevicePreempted),
+        X(MEStreamSinkFormatInvalidated),
+        X(MEEncodingParameters),
+        X(MEContentProtectionMetadata),
+        X(MEDeviceThermalStateChanged),
 #undef X
     };
 

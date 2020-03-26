@@ -567,6 +567,19 @@ enum {
     MEWMDRMLicenseStoreCleaned = 515,
     MEWMDRMRevocationDownloadCompleted = 516,
     MEWMDRMV1Anchor = MEWMDRMRevocationDownloadCompleted,
+    METransformUnknown = 600,
+    METransformNeedInput = 601,
+    METransformHaveOutput = 602,
+    METransformDrainComplete = 603,
+    METransformMarker = 604,
+    METransformInputStreamStateChanged = 605,
+    MEByteStreamCharacteristicsChanged = 700,
+    MEVideoCaptureDeviceRemoved = 800,
+    MEVideoCaptureDevicePreempted = 801,
+    MEStreamSinkFormatInvalidated = 802,
+    MEEncodingParameters = 803,
+    MEContentProtectionMetadata = 900,
+    MEDeviceThermalStateChanged = 950,
     MEReservedMax = 10000
 };
 
