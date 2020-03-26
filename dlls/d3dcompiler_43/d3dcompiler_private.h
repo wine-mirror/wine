@@ -294,61 +294,6 @@ static inline void set_parse_status(enum parse_status *current, enum parse_statu
         *current = PARSE_WARN;
 }
 
-struct bytecode_buffer {
-    DWORD *data;
-    unsigned int size, alloc_size;
-    /* For tracking rare out of memory situations without passing
-     * return values around everywhere
-     */
-    HRESULT state;
-};
-
-struct bc_writer; /* Predeclaration for use in vtable parameters */
-
-typedef void (*instr_writer)(struct bc_writer *This,
-                             const struct instruction *instr,
-                             struct bytecode_buffer *buffer);
-
-struct bytecode_backend {
-    void (*header)(struct bc_writer *This, const struct bwriter_shader *shader,
-                   struct bytecode_buffer *buffer);
-    void (*end)(struct bc_writer *This, const struct bwriter_shader *shader,
-                struct bytecode_buffer *buffer);
-    void (*srcreg)(struct bc_writer *This, const struct shader_reg *reg,
-                   struct bytecode_buffer *buffer);
-    void (*dstreg)(struct bc_writer *This, const struct shader_reg *reg,
-                   struct bytecode_buffer *buffer, DWORD shift, DWORD mod);
-    void (*opcode)(struct bc_writer *This, const struct instruction *instr,
-                   DWORD token, struct bytecode_buffer *buffer);
-
-    const struct instr_handler_table {
-        DWORD opcode;
-        instr_writer func;
-    } *instructions;
-};
-
-/* Bytecode writing stuff */
-struct bc_writer {
-    const struct bytecode_backend *funcs;
-    const struct bwriter_shader *shader;
-
-    /* Avoid result checking */
-    HRESULT                       state;
-
-    /* Vertex shader varying mapping */
-    DWORD                         oPos_regnum;
-    DWORD                         oD_regnum[2];
-    DWORD                         oT_regnum[8];
-    DWORD                         oFog_regnum;
-    DWORD                         oFog_mask;
-    DWORD                         oPts_regnum;
-    DWORD                         oPts_mask;
-
-    /* Pixel shader specific members */
-    DWORD                         t_regnum[8];
-    DWORD                         v_regnum[2];
-};
-
 /* Debug utility routines */
 const char *debug_print_srcmod(DWORD mod) DECLSPEC_HIDDEN;
 const char *debug_print_dstmod(DWORD mod) DECLSPEC_HIDDEN;

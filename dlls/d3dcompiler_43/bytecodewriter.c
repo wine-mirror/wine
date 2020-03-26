@@ -308,6 +308,52 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DW
     return TRUE;
 }
 
+struct bytecode_buffer
+{
+    DWORD *data;
+    unsigned int size, alloc_size;
+    HRESULT state;
+};
+
+struct bc_writer;
+
+typedef void (*instr_writer)(struct bc_writer *writer, const struct instruction *instr,
+        struct bytecode_buffer *buffer);
+
+struct bytecode_backend
+{
+    void (*header)(struct bc_writer *writer, const struct bwriter_shader *shader,
+            struct bytecode_buffer *buffer);
+    void (*end)(struct bc_writer *writer, const struct bwriter_shader *shader,
+            struct bytecode_buffer *buffer);
+    void (*srcreg)(struct bc_writer *writer, const struct shader_reg *reg,
+            struct bytecode_buffer *buffer);
+    void (*dstreg)(struct bc_writer *writer, const struct shader_reg *reg,
+            struct bytecode_buffer *buffer, DWORD shift, DWORD mod);
+    void (*opcode)(struct bc_writer *writer, const struct instruction *instr,
+            DWORD token, struct bytecode_buffer *buffer);
+
+    const struct instr_handler_table
+    {
+        DWORD opcode;
+        instr_writer func;
+    } *instructions;
+};
+
+struct bc_writer
+{
+    const struct bytecode_backend *funcs;
+    const struct bwriter_shader *shader;
+
+    HRESULT state;
+
+    /* Vertex shader varying mapping. */
+    DWORD oPos_regnum, oD_regnum[2], oT_regnum[8], oFog_regnum, oFog_mask, oPts_regnum, oPts_mask;
+
+    /* Pixel shader varying mapping. */
+    DWORD t_regnum[8], v_regnum[2];
+};
+
 
 /* shader bytecode buffer manipulation functions.
  * allocate_buffer creates a new buffer structure, put_dword adds a new
