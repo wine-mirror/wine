@@ -95,6 +95,12 @@ static void test_LDAP(void)
         password = test[i].password ? SysAllocString(test[i].password) : NULL;
 
         hr = IADsOpenDSObject_OpenDSObject(ads_open, path, user, password, test[i].flags, &disp);
+        if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+        {
+            SysFreeString(path);
+            skip("server is down\n");
+            break;
+        }
         ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
             IDispatch_Release(disp);
@@ -150,6 +156,12 @@ static void test_ParseDisplayName(void)
 
         count = 0xdeadbeef;
         hr = IParseDisplayName_ParseDisplayName(parse, bc, path, &count, &mk);
+        if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+        {
+            SysFreeString(path);
+            skip("server is down\n");
+            break;
+        }
         ok(hr == test[i].hr || hr == test[i].hr_ads_open, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
         {
@@ -184,6 +196,238 @@ todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
     IParseDisplayName_Release(parse);
 }
 
+struct result
+{
+    const WCHAR *name;
+    ADSTYPEENUM type;
+    const WCHAR *values[16];
+};
+
+struct search
+{
+    const WCHAR *dn;
+    ADS_SCOPEENUM scope;
+    struct result res[16];
+};
+
+static void do_search(const struct search *s)
+{
+    HRESULT hr;
+    IDirectorySearch *ds;
+    ADS_SEARCHPREF_INFO pref;
+    ADS_SEARCH_HANDLE sh;
+    ADS_SEARCH_COLUMN col;
+    LPWSTR name;
+    const struct result *res;
+
+    trace("search DN %s\n", wine_dbgstr_w(s->dn));
+
+    hr = ADsGetObject(s->dn, &IID_IDirectorySearch, (void **)&ds);
+    ok(hr == S_OK, "got %#x\n", hr);
+    if (hr != S_OK) return;
+
+    pref.dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
+    pref.vValue.dwType = ADSTYPE_INTEGER;
+    pref.vValue.Integer = s->scope;
+    pref.dwStatus = 0xdeadbeef;
+    hr = IDirectorySearch_SetSearchPreference(ds, &pref, 1);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(pref.dwStatus == ADS_STATUS_S_OK, "got %d\n", pref.dwStatus);
+
+    hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    res = s->res;
+
+    while ((hr = IDirectorySearch_GetNextRow(ds, sh)) != S_ADS_NOMORE_ROWS)
+    {
+        ok(hr == S_OK, "got %#x\n", hr);
+
+        while ((hr = IDirectorySearch_GetNextColumnName(ds, sh, &name)) != S_ADS_NOMORE_COLUMNS)
+        {
+            DWORD i;
+
+            ok(hr == S_OK, "got %#x\n", hr);
+            ok(res->name != NULL, "got extra row %s\n", wine_dbgstr_w(name));
+            ok(!wcscmp(res->name, name), "expected %s, got %s\n", wine_dbgstr_w(res->name), wine_dbgstr_w(name));
+
+            memset(&col, 0xde, sizeof(col));
+            hr = IDirectorySearch_GetColumn(ds, sh, name, &col);
+            ok(hr == S_OK, "got %#x\n", hr);
+
+            ok(col.dwADsType == res->type, "got %d for %s\n", col.dwADsType, wine_dbgstr_w(name));
+
+            for (i = 0; i < col.dwNumValues; i++)
+            {
+                ok(res->values[i] != NULL, "expected to have more values for %s\n", wine_dbgstr_w(name));
+                if (!res->values[i]) break;
+
+                ok(!wcscmp(res->values[i], col.pADsValues[i].CaseIgnoreString),
+                   "expected %s, got %s\n", wine_dbgstr_w(res->values[i]), wine_dbgstr_w(col.pADsValues[i].CaseIgnoreString));
+            }
+
+            ok(!res->values[i], "expected extra value %s\n", wine_dbgstr_w(res->values[i]));
+
+            FreeADsMem(name);
+            res++;
+        }
+    }
+
+    ok(res->name == NULL, "there are more rows in test data: %s\n", wine_dbgstr_w(res->name));
+
+    hr = IDirectorySearch_CloseSearchHandle(ds, sh);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    IDirectorySearch_Release(ds);
+}
+
+static void test_DirectorySearch(void)
+{
+    static const struct search root_base =
+    {
+        L"LDAP://ldap.forumsys.com", ADS_SCOPE_BASE,
+        {
+            { L"objectClass", ADSTYPE_CASE_IGNORE_STRING, { L"top", L"OpenLDAProotDSE", NULL } },
+            { L"ADsPath", ADSTYPE_CASE_IGNORE_STRING, { L"LDAP://ldap.forumsys.com/", NULL } },
+            { NULL }
+        }
+    };
+    static const struct search scientists_base =
+    {
+        L"LDAP://ldap.forumsys.com/OU=scientists,DC=example,DC=com", ADS_SCOPE_BASE,
+        {
+            { L"uniqueMember", ADSTYPE_CASE_IGNORE_STRING, { L"uid=einstein,dc=example,dc=com",
+              L"uid=galieleo,dc=example,dc=com", L"uid=tesla,dc=example,dc=com", L"uid=newton,dc=example,dc=com",
+              L"uid=training,dc=example,dc=com", L"uid=jmacy,dc=example,dc=com", NULL } },
+            { L"ou", ADSTYPE_CASE_IGNORE_STRING, { L"scientists", NULL } },
+            { L"cn", ADSTYPE_CASE_IGNORE_STRING, { L"Scientists", NULL } },
+            { L"objectClass", ADSTYPE_CASE_IGNORE_STRING, { L"groupOfUniqueNames", L"top", NULL } },
+            { L"ADsPath", ADSTYPE_CASE_IGNORE_STRING, { L"LDAP://ldap.forumsys.com/ou=scientists,dc=example,dc=com", NULL } },
+            { NULL }
+        }
+    };
+    static const struct search scientists_subtree =
+    {
+        L"LDAP://ldap.forumsys.com/OU=scientists,DC=example,DC=com", ADS_SCOPE_SUBTREE,
+        {
+            { L"uniqueMember", ADSTYPE_CASE_IGNORE_STRING, { L"uid=einstein,dc=example,dc=com",
+              L"uid=galieleo,dc=example,dc=com", L"uid=tesla,dc=example,dc=com", L"uid=newton,dc=example,dc=com",
+              L"uid=training,dc=example,dc=com", L"uid=jmacy,dc=example,dc=com", NULL } },
+            { L"ou", ADSTYPE_CASE_IGNORE_STRING, { L"scientists", NULL } },
+            { L"cn", ADSTYPE_CASE_IGNORE_STRING, { L"Scientists", NULL } },
+            { L"objectClass", ADSTYPE_CASE_IGNORE_STRING, { L"groupOfUniqueNames", L"top", NULL } },
+            { L"ADsPath", ADSTYPE_CASE_IGNORE_STRING, { L"LDAP://ldap.forumsys.com/ou=scientists,dc=example,dc=com", NULL } },
+            { L"uniqueMember", ADSTYPE_CASE_IGNORE_STRING, { L"uid=tesla,dc=example,dc=com", NULL } },
+            { L"ou", ADSTYPE_CASE_IGNORE_STRING, { L"italians", NULL } },
+            { L"cn", ADSTYPE_CASE_IGNORE_STRING, { L"Italians", NULL } },
+            { L"objectClass", ADSTYPE_CASE_IGNORE_STRING, { L"groupOfUniqueNames", L"top", NULL } },
+            { L"ADsPath", ADSTYPE_CASE_IGNORE_STRING, { L"LDAP://ldap.forumsys.com/ou=italians,ou=scientists,dc=example,dc=com", NULL } },
+            { NULL }
+        }
+    };
+    HRESULT hr;
+    IDirectorySearch *ds;
+    ADS_SEARCHPREF_INFO pref;
+    ADS_SEARCH_HANDLE sh;
+    ADS_SEARCH_COLUMN col;
+    LPWSTR name;
+
+    hr = ADsGetObject(L"LDAP://ldap.forumsys.com/rootDSE", &IID_IDirectorySearch, (void **)&ds);
+todo_wine
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
+    hr = ADsGetObject(L"LDAP://ldap.forumsys.com", &IID_IDirectorySearch, (void **)&ds);
+    ok(hr == S_OK, "got %#x\n", hr);
+    if (hr != S_OK) return;
+
+    pref.dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
+    pref.vValue.dwType = ADSTYPE_INTEGER;
+    pref.vValue.Integer = ADS_SCOPE_BASE;
+    pref.dwStatus = 0xdeadbeef;
+    hr = IDirectorySearch_SetSearchPreference(ds, &pref, 1);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(pref.dwStatus == ADS_STATUS_S_OK, "got %d\n", pref.dwStatus);
+
+    hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, NULL);
+    ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
+
+    if (0) /* crashes under XP */
+    {
+    hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, 1, &sh);
+    ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
+    }
+
+    hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
+    ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
+
+    hr = IDirectorySearch_GetPreviousRow(ds, sh);
+todo_wine
+    ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
+
+    while (IDirectorySearch_GetNextRow(ds, sh) != S_ADS_NOMORE_ROWS)
+    {
+        while (IDirectorySearch_GetNextColumnName(ds, sh, &name) != S_ADS_NOMORE_COLUMNS)
+        {
+            DWORD i;
+
+            hr = IDirectorySearch_GetColumn(ds, sh, name, &col);
+            ok(hr == S_OK, "got %#x for column %s\n", hr, wine_dbgstr_w(name));
+
+            if (winetest_debug > 1) /* useful to create test arrays */
+            {
+                printf("Column %s (values type %d):\n", wine_dbgstr_w(name), col.dwADsType);
+                printf("{ ");
+                for (i = 0; i < col.dwNumValues; i++)
+                    printf("%s, ", wine_dbgstr_w(col.pADsValues[i].CaseIgnoreString));
+                printf("NULL }\n");
+            }
+
+            hr = IDirectorySearch_FreeColumn(ds, &col);
+todo_wine
+            ok(hr == S_OK, "got %#x\n", hr);
+        }
+
+        name = (void *)0xdeadbeef;
+        hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
+        ok(hr == S_ADS_NOMORE_COLUMNS || broken(hr == S_OK) /* XP */, "got %#x\n", hr);
+        ok(name == NULL || broken(name && !wcscmp(name, L"ADsPath")) /* XP */, "got %p/%s\n", name, wine_dbgstr_w(name));
+    }
+
+    hr = IDirectorySearch_GetNextRow(ds, sh);
+    ok(hr == S_ADS_NOMORE_ROWS, "got %#x\n", hr);
+
+    name = NULL;
+    hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
+todo_wine
+    ok(hr == S_OK || broken(hr == S_ADS_NOMORE_COLUMNS) /* XP */, "got %#x\n", hr);
+todo_wine
+    ok((name && !wcscmp(name, L"ADsPath")) || broken(!name) /* XP */, "got %s\n", wine_dbgstr_w(name));
+    FreeADsMem(name);
+
+    name = (void *)0xdeadbeef;
+    hr = IDirectorySearch_GetNextColumnName(ds, sh, &name);
+    ok(hr == S_ADS_NOMORE_COLUMNS || broken(hr == S_OK) /* XP */, "got %#x\n", hr);
+    ok(name == NULL || broken(name && !wcscmp(name, L"ADsPath")) /* XP */, "got %p/%s\n", name, wine_dbgstr_w(name));
+
+    if (0) /* crashes under XP */
+    {
+    hr = IDirectorySearch_GetColumn(ds, sh, NULL, &col);
+    ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
+    }
+
+    hr = IDirectorySearch_CloseSearchHandle(ds, sh);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    IDirectorySearch_Release(ds);
+
+    do_search(&root_base);
+    do_search(&scientists_base);
+    do_search(&scientists_subtree);
+}
+
 START_TEST(ldap)
 {
     HRESULT hr;
@@ -193,6 +437,7 @@ START_TEST(ldap)
 
     test_LDAP();
     test_ParseDisplayName();
+    test_DirectorySearch();
 
     CoUninitialize();
 }
