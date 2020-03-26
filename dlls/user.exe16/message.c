@@ -152,7 +152,8 @@ static WNDPROC16 alloc_win16_thunk( WNDPROC handle )
     {
         assert( MAX_WINPROCS16 * sizeof(WINPROC_THUNK) <= 0x10000 );
 
-        if (!(thunk_selector = GlobalAlloc16( GMEM_FIXED, MAX_WINPROCS16 * sizeof(WINPROC_THUNK) )))
+        if (!(thunk_selector = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT,
+                                              MAX_WINPROCS16 * sizeof(WINPROC_THUNK) )))
             return NULL;
         PrestoChangoSelector16( thunk_selector, thunk_selector );
         thunk_array = GlobalLock16( thunk_selector );
