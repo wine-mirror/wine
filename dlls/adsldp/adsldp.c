@@ -399,6 +399,7 @@ typedef struct
 struct ldap_search_context
 {
     LDAPMessage *res, *entry;
+    BerElement *ber;
     ULONG count, pos;
 };
 
@@ -1249,6 +1250,7 @@ static HRESULT WINAPI search_GetNextRow(IDirectorySearch *iface, ADS_SEARCH_HAND
         return S_ADS_NOMORE_ROWS;
 
     ldap_ctx->pos++;
+    ldap_ctx->ber = NULL;
 
     return S_OK;
 }
@@ -1259,10 +1261,33 @@ static HRESULT WINAPI search_GetPreviousRow(IDirectorySearch *iface, ADS_SEARCH_
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEARCH_HANDLE res, LPWSTR *names)
+static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEARCH_HANDLE res, LPWSTR *name)
 {
-    FIXME("%p,%p,%p: stub\n", iface, res, names);
-    return E_NOTIMPL;
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    struct ldap_search_context *ldap_ctx = res;
+    WCHAR *attr;
+
+    TRACE("%p,%p,%p\n", iface, res, name);
+
+    if (!ldap->ld) return E_NOTIMPL;
+
+    if (!name || !ldap_ctx || !ldap_ctx->entry) return E_ADS_BAD_PARAMETER;
+
+    if (!ldap_ctx->ber)
+        attr = ldap_first_attributeW(ldap->ld, ldap_ctx->entry, &ldap_ctx->ber);
+    else
+        attr = ldap_next_attributeW(ldap->ld, ldap_ctx->entry, ldap_ctx->ber);
+
+    if (attr)
+    {
+        TRACE("=> %s\n", debugstr_w(attr));
+        *name = AllocADsStr(attr);
+        ldap_memfreeW(attr);
+        return *name ? S_OK : E_OUTOFMEMORY;
+    }
+
+    *name = NULL;
+    return S_ADS_NOMORE_COLUMNS;
 }
 
 static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDLE res,
