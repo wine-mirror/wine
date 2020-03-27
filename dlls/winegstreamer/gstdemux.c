@@ -227,6 +227,7 @@ static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE 
                 bih->biBitCount = 12; break;
             case mmioFOURCC('Y','U','Y','2'):
             case mmioFOURCC('Y','V','Y','U'):
+            case mmioFOURCC('U','Y','V','Y'):
                 bih->biBitCount = 16; break;
         }
         bih->biCompression = amt->subtype.Data1;
