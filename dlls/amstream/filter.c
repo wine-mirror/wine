@@ -242,25 +242,61 @@ static HRESULT WINAPI filter_GetClassID(IMediaStreamFilter *iface, CLSID *clsid)
     return S_OK;
 }
 
+static void set_state(struct filter *filter, FILTER_STATE state)
+{
+    if (filter->state != state)
+    {
+        ULONG i;
+
+        for (i = 0; i < filter->nb_streams; ++i)
+            IAMMediaStream_SetState(filter->streams[i], state);
+        filter->state = state;
+    }
+}
+
 static HRESULT WINAPI filter_Stop(IMediaStreamFilter *iface)
 {
-    FIXME("(%p)->(): Stub!\n", iface);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    EnterCriticalSection(&filter->cs);
+
+    set_state(filter, State_Stopped);
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_Pause(IMediaStreamFilter *iface)
 {
-    FIXME("(%p)->(): Stub!\n", iface);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    EnterCriticalSection(&filter->cs);
+
+    set_state(filter, State_Paused);
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_Run(IMediaStreamFilter *iface, REFERENCE_TIME start)
 {
-    FIXME("(%p)->(%s): Stub!\n", iface, wine_dbgstr_longlong(start));
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, start %s.\n", iface, wine_dbgstr_longlong(start));
+
+    EnterCriticalSection(&filter->cs);
+
+    set_state(filter, State_Running);
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_GetState(IMediaStreamFilter *iface, DWORD timeout, FILTER_STATE *state)
