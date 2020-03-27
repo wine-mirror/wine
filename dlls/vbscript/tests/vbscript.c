@@ -97,6 +97,7 @@ DEFINE_EXPECT(OnEnterScript);
 DEFINE_EXPECT(OnLeaveScript);
 DEFINE_EXPECT(OnScriptError);
 DEFINE_EXPECT(GetIDsOfNames);
+DEFINE_EXPECT(GetIDsOfNames_visible);
 DEFINE_EXPECT(GetItemInfo_global);
 DEFINE_EXPECT(GetItemInfo_global_code);
 DEFINE_EXPECT(GetItemInfo_visible);
@@ -218,6 +219,19 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOL
     return DISP_E_UNKNOWNNAME;
 }
 
+static HRESULT WINAPI visible_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names, UINT name_cnt,
+                                            LCID lcid, DISPID *ids)
+{
+    ok(name_cnt == 1, "name_cnt = %u\n", name_cnt);
+    if(!wcscmp(names[0], L"testCall")) {
+        *ids = 1;
+        return S_OK;
+    }
+
+    CHECK_EXPECT2(GetIDsOfNames_visible);
+    return DISP_E_UNKNOWNNAME;
+}
+
 static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID id, REFIID riid, LCID lcid, WORD flags,
                                       DISPPARAMS *dp, VARIANT *res, EXCEPINFO *ei, UINT *err)
 {
@@ -259,7 +273,7 @@ static const IDispatchVtbl visible_named_item_vtbl = {
     visible_Release,
     Dispatch_GetTypeInfoCount,
     Dispatch_GetTypeInfo,
-    Dispatch_GetIDsOfNames,
+    visible_GetIDsOfNames,
     Dispatch_Invoke
 };
 
@@ -1998,6 +2012,32 @@ static void test_named_items(void)
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(GetIDsOfNames);
     CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetItemInfo_visible);
+    SET_EXPECT(GetIDsOfNames_visible);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"dim abc\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    todo_wine CHECK_CALLED(GetItemInfo_visible);
+    todo_wine CHECK_CALLED(GetIDsOfNames_visible);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"abc = 5\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames_visible);
+    SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"testVar_global = 5\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(GetIDsOfNames_visible);
+    CHECK_CALLED(OnLeaveScript);
+
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
     hres = IActiveScriptParse_ParseScriptText(parse, L"set global_me = me\n", L"globalItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);

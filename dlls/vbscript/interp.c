@@ -181,6 +181,13 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    if(ctx->code->named_item) {
+        if(lookup_global_vars(ctx->code->named_item->script_obj, name, ref))
+            return S_OK;
+        if(lookup_global_funcs(ctx->code->named_item->script_obj, name, ref))
+            return S_OK;
+    }
+
     if(ctx->func->code_ctx->named_item && ctx->func->code_ctx->named_item->disp) {
         hres = disp_get_id(ctx->func->code_ctx->named_item->disp, name, invoke_type, TRUE, &id);
         if(SUCCEEDED(hres)) {
@@ -189,13 +196,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
             ref->u.d.id = id;
             return S_OK;
         }
-    }
-
-    if(ctx->code->named_item) {
-        if(lookup_global_vars(ctx->code->named_item->script_obj, name, ref))
-            return S_OK;
-        if(lookup_global_funcs(ctx->code->named_item->script_obj, name, ref))
-            return S_OK;
     }
 
     if(lookup_global_vars(script_obj, name, ref))
