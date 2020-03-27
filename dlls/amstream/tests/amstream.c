@@ -2737,6 +2737,37 @@ static void test_audiostream_receive_connection(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+void test_mediastreamfilter_get_state(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter;
+    FILTER_STATE state;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected non-null filter.\n");
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IMediaStreamFilter_GetState(filter, 0, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    state = 0xcc;
+    hr = IMediaStreamFilter_GetState(filter, 0, &state);
+    ok(state == State_Stopped, "Got state %#x.\n", state);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -2773,6 +2804,8 @@ START_TEST(amstream)
     test_audiostream_get_format();
     test_audiostream_set_format();
     test_audiostream_receive_connection();
+
+    test_mediastreamfilter_get_state();
 
     CoUninitialize();
 }

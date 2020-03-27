@@ -171,6 +171,7 @@ struct filter
     IFilterGraph *graph;
     ULONG nb_streams;
     IAMMediaStream **streams;
+    FILTER_STATE state;
 };
 
 static inline struct filter *impl_from_IMediaStreamFilter(IMediaStreamFilter *iface)
@@ -264,9 +265,19 @@ static HRESULT WINAPI filter_Run(IMediaStreamFilter *iface, REFERENCE_TIME start
 
 static HRESULT WINAPI filter_GetState(IMediaStreamFilter *iface, DWORD timeout, FILTER_STATE *state)
 {
-    FIXME("iface %p, timeout %u, state %p, stub!\n", iface, timeout, state);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    *state = State_Stopped;
+    TRACE("iface %p, timeout %u, state %p.\n", iface, timeout, state);
+
+    if (!state)
+        return E_POINTER;
+
+    EnterCriticalSection(&filter->cs);
+
+    *state = filter->state;
+
+    LeaveCriticalSection(&filter->cs);
+
     return S_OK;
 }
 
