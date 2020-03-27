@@ -5832,8 +5832,11 @@ static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
 
 static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *parent)
 {
-    TRACE("parent %p.\n", parent);
+    struct ddraw_texture *texture = parent;
 
+    TRACE("texture %p, texture_memory %p.\n", texture, texture->texture_memory);
+
+    heap_free(texture->texture_memory);
     heap_free(parent);
 }
 
@@ -5847,18 +5850,50 @@ static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource
     return DD_OK;
 }
 
+static HRESULT ddraw_surface_reserve_memory(struct wined3d_texture *wined3d_texture)
+{
+    static const unsigned int extra_size = 0x10000;
+
+    struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
+    struct wined3d_resource_desc desc;
+    unsigned int pitch, slice_pitch;
+    HRESULT hr;
+
+    wined3d_resource_get_desc(wined3d_texture_get_resource(wined3d_texture), &desc);
+    if (!(texture->texture_memory = heap_alloc_zero(desc.size + extra_size)))
+    {
+        ERR("Out of memory.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("texture->texture_memory %p.\n", texture->texture_memory);
+
+    wined3d_texture_get_pitch(wined3d_texture, 0, &pitch, &slice_pitch);
+
+    if (FAILED(hr = wined3d_texture_update_desc(wined3d_texture,
+            desc.width, desc.height, desc.format,
+            WINED3D_MULTISAMPLE_NONE, 0, texture->texture_memory, pitch)))
+    {
+        heap_free(texture->texture_memory);
+        texture->texture_memory = NULL;
+    }
+
+    return hr;
+}
+
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
         struct ddraw_surface **surface, IUnknown *outer_unknown, unsigned int version)
 {
     struct wined3d_sub_resource_desc wined3d_mip_desc;
     struct ddraw_surface *root, *mip, **attach;
     struct wined3d_resource_desc wined3d_desc;
+    DDPIXELFORMAT wined3d_display_mode_format;
     struct wined3d_texture *wined3d_texture;
     struct wined3d_display_mode mode;
     DDSURFACEDESC2 *desc, *mip_desc;
     struct ddraw_texture *texture;
     unsigned int layers = 1;
     unsigned int pitch = 0;
+    BOOL reserve_memory;
     UINT levels, i, j;
     HRESULT hr;
 
@@ -5879,6 +5914,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     if (!(texture = heap_alloc(sizeof(*texture))))
         return E_OUTOFMEMORY;
 
+    texture->texture_memory = NULL;
     texture->version = version;
     texture->surface_desc = *surface_desc;
     desc = &texture->surface_desc;
@@ -6020,12 +6056,14 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return hr_ddraw_from_wined3d(hr);
     }
 
+    wined3d_display_mode_format.dwSize = sizeof(wined3d_display_mode_format);
+    ddrawformat_from_wined3dformat(&wined3d_display_mode_format, mode.format_id);
+
     /* No pixelformat given? Use the current screen format. */
     if (!(desc->dwFlags & DDSD_PIXELFORMAT))
     {
         desc->dwFlags |= DDSD_PIXELFORMAT;
-        desc->u4.ddpfPixelFormat.dwSize = sizeof(desc->u4.ddpfPixelFormat);
-        ddrawformat_from_wined3dformat(&desc->u4.ddpfPixelFormat, mode.format_id);
+        desc->u4.ddpfPixelFormat = wined3d_display_mode_format;
     }
 
     wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
@@ -6434,6 +6472,16 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         goto fail;
     }
 
+    reserve_memory = !(desc->dwFlags & DDSD_LPSURFACE)
+            && desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY
+            && wined3d_display_mode_format.u1.dwRGBBitCount <= 16;
+
+    if (reserve_memory && FAILED(hr = ddraw_surface_reserve_memory(wined3d_texture)))
+    {
+        ERR("Failed to reserve surface memory, hr %#x.\n", hr);
+        goto fail;
+    }
+
     if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
         unsigned int count = desc->u5.dwBackBufferCount;
@@ -6448,6 +6496,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 goto fail;
             }
 
+            texture->texture_memory = NULL;
             texture->version = version;
             texture->surface_desc = root->surface_desc;
             desc = &texture->surface_desc;
@@ -6486,6 +6535,12 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             if (desc->dwFlags & DDSD_CKSRCBLT)
                 wined3d_texture_set_color_key(wined3d_texture, DDCKEY_SRCBLT,
                         (struct wined3d_color_key *)&desc->ddckCKSrcBlt);
+
+            if (reserve_memory && FAILED(hr = ddraw_surface_reserve_memory(wined3d_texture)))
+            {
+                hr = hr_ddraw_from_wined3d(hr);
+                goto fail;
+            }
 
             *attach = last;
             attach = &last->complex_array[0];
