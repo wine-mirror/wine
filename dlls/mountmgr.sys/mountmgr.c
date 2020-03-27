@@ -294,22 +294,25 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     char *device, *mount_point;
     int letter = tolowerW( input->letter );
     NTSTATUS status;
-    DWORD size, type = DEVICE_UNKNOWN;
+    DWORD size, type = DEVICE_UNKNOWN, serial;
     enum mountmgr_fs_type fs_type;
     enum device_type device_type;
     char *ptr;
+    WCHAR *label;
 
     if (!letter)
     {
-        if ((status = query_unix_device( input->unix_dev, &device_type,
-                                         &fs_type, &device, &mount_point )))
+        if ((status = query_unix_device( input->unix_dev, &device_type, &fs_type,
+                                         &serial, &device, &mount_point, &label )))
             return status;
     }
     else
     {
         if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
 
-        if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &device, &mount_point ))) return status;
+        if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &serial, &device,
+                                        &mount_point, &label )))
+            return status;
     }
 
     switch (device_type)
@@ -334,8 +337,10 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     output->letter = letter;
     output->type = type;
     output->fs_type = fs_type;
+    output->serial = serial;
     output->mount_point_offset = 0;
     output->device_offset = 0;
+    output->label_offset = 0;
 
     if (size > outsize)
     {
@@ -372,6 +377,14 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     }
     else output->device_offset = 0;
 
+    if (label)
+    {
+        output->label_offset = ptr - (char *)output;
+        strcpyW( (WCHAR *)ptr, label );
+        ptr += (strlenW(label) + 1) * sizeof(WCHAR);
+    }
+    else output->label_offset = 0;
+
     TRACE( "returning %c: dev %s mount %s type %u\n",
            letter, debugstr_a(device), debugstr_a(mount_point), type );
 
@@ -379,6 +392,7 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
 done:
     RtlFreeHeap( GetProcessHeap(), 0, device );
     RtlFreeHeap( GetProcessHeap(), 0, mount_point );
+    RtlFreeHeap( GetProcessHeap(), 0, label );
     return status;
 }
 

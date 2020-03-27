@@ -152,6 +152,15 @@ static char *strdupA( const char *str )
     return ret;
 }
 
+static WCHAR *strdupW( const WCHAR *str )
+{
+    WCHAR *ret;
+
+    if (!str) return NULL;
+    if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR) ))) strcpyW( ret, str );
+    return ret;
+}
+
 static const GUID *get_default_uuid( int letter )
 {
     static GUID guid;
@@ -1631,7 +1640,7 @@ enum mountmgr_fs_type get_mountmgr_fs_type(enum fs_type fs_type)
 
 /* query information about an existing dos drive, by letter or udi */
 NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type,
-                           char **device, char **mount_point )
+                           DWORD *serial, char **device, char **mount_point, WCHAR **label )
 {
     NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct dos_drive *drive;
@@ -1644,8 +1653,10 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_
         disk_device = drive->volume->device;
         if (type) *type = disk_device->type;
         if (fs_type) *fs_type = get_mountmgr_fs_type( drive->volume->fs_type );
+        if (serial) *serial = drive->volume->serial;
         if (device) *device = strdupA( disk_device->unix_device );
         if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
+        if (label) *label = strdupW( drive->volume->label );
         status = STATUS_SUCCESS;
         break;
     }
@@ -1655,7 +1666,8 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_
 
 /* query information about an existing unix device, by dev_t */
 NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
-                            enum mountmgr_fs_type *fs_type, char **device, char **mount_point )
+                            enum mountmgr_fs_type *fs_type, DWORD *serial, char **device,
+                            char **mount_point, WCHAR **label )
 {
     NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct volume *volume;
@@ -1674,8 +1686,10 @@ NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
 
         if (type) *type = disk_device->type;
         if (fs_type) *fs_type = get_mountmgr_fs_type( volume->fs_type );
+        if (serial) *serial = volume->serial;
         if (device) *device = strdupA( disk_device->unix_device );
         if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
+        if (label) *label = strdupW( volume->label );
         status = STATUS_SUCCESS;
         break;
     }
