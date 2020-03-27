@@ -5360,6 +5360,234 @@ static void test_effect_matrix_variable(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+/*
+ * test_effect_resource_variable
+ */
+#if 0
+Texture2D t0;
+Texture2D t_a[2];
+
+float4 VS( float4 Pos : POSITION ) : SV_POSITION { return float4(1.0f, 1.0f, 1.0f, 1.0f); }
+
+float4 PS( float4 Pos : SV_POSITION ) : SV_Target
+{
+    uint4 tmp;
+
+    tmp = t0.Load(int3(0, 0, 0));
+    tmp = t_a[0].Load(int4(0, 0, 0, 0));
+    tmp = t_a[1].Load(int4(0, 0, 0, 0));
+    return float4(1.0f, 1.0f, 0.0f, 1.0f) + tmp;
+}
+
+technique10 rsrc_test
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_4_0, VS()));
+        SetPixelShader(CompileShader(ps_4_0, PS()));
+    }
+}
+#endif
+static DWORD fx_test_resource_variable[] =
+{
+    0x43425844, 0x767a8421, 0xdcbfffe6, 0x83df123d, 0x189ce72a, 0x00000001, 0x0000065a, 0x00000001,
+    0x00000024, 0x30315846, 0x0000062e, 0xfeff1001, 0x00000000, 0x00000000, 0x00000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000582, 0x00000000, 0x00000003, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x74786554,
+    0x32657275, 0x00040044, 0x00020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x000c0000,
+    0x30740000, 0x00000400, 0x00000200, 0x00000200, 0x00000000, 0x00000000, 0x00000000, 0x00000c00,
+    0x615f7400, 0x72737200, 0x65745f63, 0x70007473, 0x01b40030, 0x58440000, 0x338d4342, 0xc5a69f46,
+    0x56883ae5, 0xa98fccc2, 0x00018ead, 0x01b40000, 0x00050000, 0x00340000, 0x008c0000, 0x00c00000,
+    0x00f40000, 0x01380000, 0x44520000, 0x00504645, 0x00000000, 0x00000000, 0x00000000, 0x001c0000,
+    0x04000000, 0x0100fffe, 0x001c0000, 0x694d0000, 0x736f7263, 0x2074666f, 0x20295228, 0x4c534c48,
+    0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x322e3920, 0x35392e39, 0x31332e32, 0xab003131,
+    0x5349abab, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000,
+    0x00000000, 0x000f0000, 0x4f500000, 0x49544953, 0xab004e4f, 0x534fabab, 0x002c4e47, 0x00010000,
+    0x00080000, 0x00200000, 0x00000000, 0x00010000, 0x00030000, 0x00000000, 0x000f0000, 0x56530000,
+    0x534f505f, 0x4f495449, 0x4853004e, 0x003c5244, 0x00400000, 0x000f0001, 0x00670000, 0x20f20400,
+    0x00000010, 0x00010000, 0x00360000, 0x20f20800, 0x00000010, 0x40020000, 0x00000000, 0x00003f80,
+    0x00003f80, 0x00003f80, 0x003e3f80, 0x54530100, 0x00745441, 0x00020000, 0x00000000, 0x00000000,
+    0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00010000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x005a0000, 0x00000000, 0x035c0000, 0x58440000, 0xe3754342, 0x3e477f40,
+    0xed6f143f, 0xf16d26ce, 0x00010c3a, 0x035c0000, 0x00050000, 0x00340000, 0x00d00000, 0x01040000,
+    0x01380000, 0x02e00000, 0x44520000, 0x00944645, 0x00000000, 0x00000000, 0x00020000, 0x001c0000,
+    0x04000000, 0x0100ffff, 0x00630000, 0x005c0000, 0x00020000, 0x00050000, 0x00040000, 0xffff0000,
+    0x0000ffff, 0x00010000, 0x000c0000, 0x005f0000, 0x00020000, 0x00050000, 0x00040000, 0xffff0000,
+    0x0001ffff, 0x00020000, 0x000c0000, 0x30740000, 0x615f7400, 0x63694d00, 0x6f736f72, 0x28207466,
+    0x48202952, 0x204c534c, 0x64616853, 0x43207265, 0x69706d6f, 0x2072656c, 0x39322e39, 0x3235392e,
+    0x3131332e, 0x53490031, 0x002c4e47, 0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00010000,
+    0x00030000, 0x00000000, 0x000f0000, 0x56530000, 0x534f505f, 0x4f495449, 0x534f004e, 0x002c4e47,
+    0x00010000, 0x00080000, 0x00200000, 0x00000000, 0x00000000, 0x00030000, 0x00000000, 0x000f0000,
+    0x56530000, 0x7261545f, 0x00746567, 0x4853abab, 0x01a05244, 0x00400000, 0x00680000, 0x18580000,
+    0x70000400, 0x00000010, 0x55550000, 0x18580000, 0x70000400, 0x00010010, 0x55550000, 0x18580000,
+    0x70000400, 0x00020010, 0x55550000, 0x00650000, 0x20f20300, 0x00000010, 0x00680000, 0x00020200,
+    0x002d0000, 0x00f20a00, 0x00000010, 0x40020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x7e460000, 0x00000010, 0x001c0000, 0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x00560000,
+    0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x002d0000, 0x00f20a00, 0x00010010, 0x40020000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x7e460000, 0x00010010, 0x00000000, 0x00f20700,
+    0x00000010, 0x0e460000, 0x00000010, 0x0e460000, 0x00010010, 0x001c0000, 0x00f20500, 0x00000010,
+    0x0e460000, 0x00000010, 0x00560000, 0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x002d0000,
+    0x00f20a00, 0x00010010, 0x40020000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x7e460000,
+    0x00020010, 0x00000000, 0x00f20700, 0x00000010, 0x0e460000, 0x00000010, 0x0e460000, 0x00010010,
+    0x001c0000, 0x00f20500, 0x00000010, 0x0e460000, 0x00000010, 0x00560000, 0x00f20500, 0x00000010,
+    0x0e460000, 0x00000010, 0x00000000, 0x20f20a00, 0x00000010, 0x0e460000, 0x00000010, 0x40020000,
+    0x00000000, 0x00003f80, 0x00003f80, 0x00000000, 0x003e3f80, 0x54530100, 0x00745441, 0x000d0000,
+    0x00020000, 0x00000000, 0x00010000, 0x00030000, 0x00000000, 0x00000000, 0x00010000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00060000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x021a0000, 0x00000000, 0x002a0000, 0x000e0000,
+    0x00000000, 0xffff0000, 0x0000ffff, 0x00490000, 0x002d0000, 0x00000000, 0xffff0000, 0x0000ffff,
+    0x004d0000, 0x00010000, 0x00000000, 0x00570000, 0x00020000, 0x00000000, 0x00060000, 0x00000000,
+    0x00070000, 0x02120000, 0x00070000, 0x00000000, 0x00070000, 0x057a0000, 0x00000000,
+};
+
+static void create_effect_texture_resource(ID3D10Device *device, ID3D10ShaderResourceView **srv,
+        ID3D10Texture2D **tex)
+{
+    D3D10_TEXTURE2D_DESC tex_desc;
+    HRESULT hr;
+
+    tex_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    tex_desc.Width  = 8;
+    tex_desc.Height = 8;
+    tex_desc.ArraySize = 1;
+    tex_desc.MipLevels = 0;
+    tex_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    tex_desc.Usage = D3D10_USAGE_DEFAULT;
+    tex_desc.CPUAccessFlags = 0;
+    tex_desc.SampleDesc.Count = 1;
+    tex_desc.SampleDesc.Quality = 0;
+    tex_desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture2D(device, &tex_desc, NULL, tex);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)*tex, NULL, srv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+}
+
+#define get_effect_shader_resource_variable(a) get_effect_shader_resource_variable_(__LINE__, a)
+static ID3D10EffectShaderResourceVariable *get_effect_shader_resource_variable_(unsigned int line,
+        ID3D10EffectVariable *var)
+{
+    D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10EffectType *type;
+    HRESULT hr;
+
+    type = var->lpVtbl->GetType(var);
+    ok_(__FILE__, line)(!!type, "Got unexpected type %p.\n", type);
+    hr = type->lpVtbl->GetDesc(type, &type_desc);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok_(__FILE__, line)(type_desc.Type == D3D10_SVT_TEXTURE2D, "Type is %x, expected %x.\n",
+            type_desc.Type, D3D10_SVT_TEXTURE2D);
+    return var->lpVtbl->AsShaderResource(var);
+}
+
+static void test_effect_resource_variable(void)
+{
+    ID3D10ShaderResourceView *srv0, *srv_a[2], *srv_tmp[2];
+    ID3D10EffectShaderResourceVariable *t0, *t_a, *t_a_0;
+    ID3D10EffectTechnique *technique;
+    ID3D10Texture2D *tex0, *tex_a[2];
+    ID3D10EffectVariable *var;
+    ID3D10EffectPass *pass;
+    ID3D10Device *device;
+    ID3D10Effect *effect;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = create_effect(fx_test_resource_variable, 0, device, NULL, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    var = effect->lpVtbl->GetVariableByName(effect, "t0");
+    t0 = get_effect_shader_resource_variable(var);
+    create_effect_texture_resource(device, &srv0, &tex0);
+    hr = t0->lpVtbl->SetResource(t0, srv0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    var = effect->lpVtbl->GetVariableByName(effect, "t_a");
+    t_a = get_effect_shader_resource_variable(var);
+    for (i = 0; i < 2; ++i)
+        create_effect_texture_resource(device, &srv_a[i], &tex_a[i]);
+    hr = t_a->lpVtbl->SetResourceArray(t_a, srv_a, 0, 2);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Apply the pass to bind the resource to the shader. */
+    technique = effect->lpVtbl->GetTechniqueByName(effect, "rsrc_test");
+    ok(!!technique, "Got unexpected technique %p.\n", technique);
+    pass = technique->lpVtbl->GetPassByName(technique, "p0");
+    ok(!!pass, "Got unexpected pass %p.\n", pass);
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetShaderResources(device, 0, 1, &srv_tmp[0]);
+    ok(srv_tmp[0] == srv0, "Got unexpected shader resource view %p.\n", srv_tmp[0]);
+    ID3D10ShaderResourceView_Release(srv_tmp[0]);
+
+    ID3D10Device_PSGetShaderResources(device, 1, 2, srv_tmp);
+    for (i = 0; i < 2; ++i)
+    {
+        ok(srv_tmp[i] == srv_a[i], "Got unexpected shader resource view %p.\n", srv_tmp[i]);
+        ID3D10ShaderResourceView_Release(srv_tmp[i]);
+    }
+
+    /* Test individual array element variable SetResource. */
+    var = t_a->lpVtbl->GetElement(t_a, 1);
+    t_a_0 = get_effect_shader_resource_variable(var);
+    hr = t_a_0->lpVtbl->SetResource(t_a_0, srv0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetShaderResources(device, 1, 2, srv_tmp);
+    ok(srv_tmp[0] == srv_a[0], "Got unexpected shader resource view %p.\n", srv_tmp[0]);
+    ok(srv_tmp[1] == srv0, "Got unexpected shader resource view %p.\n", srv_tmp[1]);
+    for (i = 0; i < 2; ++i)
+        ID3D10ShaderResourceView_Release(srv_tmp[i]);
+
+    /* Test offset. */
+    hr = t_a->lpVtbl->SetResourceArray(t_a, srv_a, 1, 1);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSGetShaderResources(device, 1, 2, srv_tmp);
+    ok(srv_tmp[0] == srv_a[0], "Got unexpected shader resource view %p.\n", srv_tmp[0]);
+    ok(srv_tmp[1] == srv_a[0], "Got unexpected shader resource view %p.\n", srv_tmp[1]);
+    for (i = 0; i < 2; ++i)
+        ID3D10ShaderResourceView_Release(srv_tmp[i]);
+
+    if (0)
+    {
+        /* This crashes on Windows. */
+        hr = t_a->lpVtbl->SetResourceArray(t_a, srv_a, 2, 2);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    ID3D10ShaderResourceView_Release(srv0);
+    ID3D10Texture2D_Release(tex0);
+    for (i = 0; i < 2; ++i)
+    {
+        ID3D10ShaderResourceView_Release(srv_a[i]);
+        ID3D10Texture2D_Release(tex_a[i]);
+    }
+
+    effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(effect)
 {
     test_effect_constant_buffer_type();
@@ -5375,4 +5603,5 @@ START_TEST(effect)
     test_effect_scalar_variable();
     test_effect_vector_variable();
     test_effect_matrix_variable();
+    test_effect_resource_variable();
 }
