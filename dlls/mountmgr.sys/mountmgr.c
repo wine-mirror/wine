@@ -295,12 +295,13 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     int letter = tolowerW( input->letter );
     NTSTATUS status;
     DWORD size, type = DEVICE_UNKNOWN;
+    enum mountmgr_fs_type fs_type;
     enum device_type device_type;
     char *ptr;
 
     if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
 
-    if ((status = query_dos_device( letter - 'a', &device_type, &device, &mount_point ))) return status;
+    if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &device, &mount_point ))) return status;
     switch (device_type)
     {
     case DEVICE_UNKNOWN:      type = DRIVE_UNKNOWN; break;
@@ -322,6 +323,7 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     output->size = size;
     output->letter = letter;
     output->type = type;
+    output->fs_type = fs_type;
     output->mount_point_offset = 0;
     output->device_offset = 0;
 

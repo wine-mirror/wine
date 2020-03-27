@@ -1618,7 +1618,8 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
 }
 
 /* query information about an existing dos drive, by letter or udi */
-NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, char **mount_point )
+NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type,
+                           char **device, char **mount_point )
 {
     NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct dos_drive *drive;
@@ -1630,6 +1631,18 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, ch
         if (drive->drive != letter) continue;
         disk_device = drive->volume->device;
         if (type) *type = disk_device->type;
+        if (fs_type)
+        {
+            switch (drive->volume->fs_type)
+            {
+            case FS_ISO9660: *fs_type = MOUNTMGR_FS_TYPE_ISO9660; break;
+            case FS_UDF:     *fs_type = MOUNTMGR_FS_TYPE_UDF; break;
+            case FS_FAT1216: *fs_type = MOUNTMGR_FS_TYPE_FAT; break;
+            case FS_FAT32:   *fs_type = MOUNTMGR_FS_TYPE_FAT32; break;
+            default:         *fs_type = MOUNTMGR_FS_TYPE_NTFS; break;
+            }
+            *fs_type = drive->volume->fs_type;
+        }
         if (device) *device = strdupA( disk_device->unix_device );
         if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
         status = STATUS_SUCCESS;
