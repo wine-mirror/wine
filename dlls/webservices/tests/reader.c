@@ -2556,7 +2556,8 @@ static void test_cdata(void)
 static void test_WsFindAttribute(void)
 {
     static const char test[] = "<t attr='value' attr2='value2'></t>";
-    WS_XML_STRING ns = {0, NULL}, localname = {4, (BYTE *)"attr"};
+    static const char test2[] = "<p:t attr='value' p:attr2='value2' xmlns:p=\"ns\"></t>";
+    WS_XML_STRING ns = {0, NULL}, ns2 = {2, (BYTE *)"ns"}, localname = {4, (BYTE *)"attr"};
     WS_XML_STRING localname2 = {5, (BYTE *)"attr2"}, localname3 = {5, (BYTE *)"attr3"};
     WS_XML_READER *reader;
     ULONG index;
@@ -2637,6 +2638,32 @@ static void test_WsFindAttribute(void)
     hr = WsFindAttribute( reader, &localname3, &ns, FALSE, &index, NULL );
     ok( hr == S_FALSE, "got %08x\n", hr );
     ok( index == ~0u, "got %u\n", index );
+
+    hr = set_input( reader, test2, sizeof(test2) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    index = 0xdeadbeef;
+    hr = WsFindAttribute( reader, &localname, &ns, TRUE, &index, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !index, "got %u\n", index );
+
+    hr = WsFindAttribute( reader, &localname2, &ns2, TRUE, &index, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFindAttribute( reader, &localname2, &ns, TRUE, &index, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_input( reader, test2, sizeof(test2) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFindAttribute( reader, &localname, &ns2, TRUE, &index, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
 
     WsFreeReader( reader );
 }

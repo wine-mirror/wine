@@ -4343,9 +4343,24 @@ static HRESULT get_text( struct reader *reader, WS_TYPE_MAPPING mapping, const W
     {
     case WS_ATTRIBUTE_TYPE_MAPPING:
     {
-        ULONG index;
-        if (!(*found = find_attribute( reader, localname, ns, &index ))) return S_OK;
-        return get_attribute_text( reader, index, ret );
+        ULONG i;
+        WS_XML_ELEMENT_NODE *elem = &reader->current->hdr;
+
+        *found = FALSE;
+        for (i = 0; i < elem->attributeCount; i++)
+        {
+            const WS_XML_STRING *localname2 = elem->attributes[i]->localName;
+            const WS_XML_STRING *ns2 = elem->attributes[i]->ns;
+
+            if (cmp_name( localname->bytes, localname->length, localname2->bytes, localname2->length )) continue;
+            if (!ns->length || !cmp_name( ns->bytes, ns->length, ns2->bytes, ns2->length ))
+            {
+                *found = TRUE;
+                break;
+            }
+        }
+        if (!*found) return S_OK;
+        return get_attribute_text( reader, i, ret );
     }
     case WS_ELEMENT_TYPE_MAPPING:
     case WS_ELEMENT_CONTENT_TYPE_MAPPING:
