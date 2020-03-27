@@ -1673,9 +1673,9 @@
 @ cdecl -arch=win32 ?_Winerror_message@std@@YAKKPADK@Z(long ptr long) _Winerror_message
 @ cdecl -arch=win64 ?_Winerror_message@std@@YAKKPEADK@Z(long ptr long) _Winerror_message
 @ stub ?_XGetLastError@std@@YAXXZ
-@ stub ?_XLgamma@std@@YAMM@Z
-@ stub ?_XLgamma@std@@YANN@Z
-@ stub ?_XLgamma@std@@YAOO@Z
+@ cdecl ?_XLgamma@std@@YAMM@Z(float) std__XLgamma_float
+@ cdecl ?_XLgamma@std@@YANN@Z(double) std__XLgamma_double
+@ cdecl ?_XLgamma@std@@YAOO@Z(double) std__XLgamma_double
 @ cdecl ?_Xbad_alloc@std@@YAXXZ() _Xmem
 @ stub ?_Xbad_function_call@std@@YAXXZ
 @ cdecl -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z(str) _Xinvalid_argument
