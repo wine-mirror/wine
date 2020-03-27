@@ -32,6 +32,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "ntdll_misc.h"
 
 static const unsigned short wctypes[256] =
 {
@@ -89,7 +90,7 @@ static const unsigned short wctypes[256] =
 /*********************************************************************
  *           _wcsicmp    (NTDLL.@)
  */
-INT __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
+int __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 {
     for (;;)
     {
@@ -122,7 +123,7 @@ LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str )
 /*********************************************************************
  *           _wcsnicmp    (NTDLL.@)
  */
-INT __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, INT n )
+int __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 {
     int ret = 0;
     for ( ; n > 0; n--, str1++, str2++)
@@ -166,7 +167,7 @@ LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
 /***********************************************************************
  *           wcslen    (NTDLL.@)
  */
-INT __cdecl NTDLL_wcslen( LPCWSTR str )
+size_t __cdecl NTDLL_wcslen( LPCWSTR str )
 {
     const WCHAR *s = str;
     while (*s) s++;
@@ -197,7 +198,7 @@ LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
 /*********************************************************************
  *           wcscmp    (NTDLL.@)
  */
-INT __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
+int __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
     return *str1 - *str2;
@@ -207,7 +208,7 @@ INT __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
 /*********************************************************************
  *           wcscspn    (NTDLL.@)
  */
-INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
+size_t __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
 {
     const WCHAR *ptr;
     for (ptr = str; *ptr; ptr++) if (NTDLL_wcschr( reject, *ptr )) break;
@@ -218,7 +219,7 @@ INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
 /*********************************************************************
  *           wcsncat    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
+LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, size_t n )
 {
     LPWSTR ret = s1;
     while (*s1) s1++;
@@ -231,7 +232,7 @@ LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
 /*********************************************************************
  *           wcsncmp    (NTDLL.@)
  */
-INT __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
+int __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 {
     if (n <= 0) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -242,7 +243,7 @@ INT __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, INT n )
 /*********************************************************************
  *           wcsncpy    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
+LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 {
     WCHAR *ret = s1;
     while (n-- > 0) if (!(*s1++ = *s2++)) break;
@@ -264,7 +265,7 @@ LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 /*********************************************************************
  *           wcsrchr    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
+LPWSTR __cdecl NTDLL_wcsrchr( LPCWSTR str, WCHAR ch )
 {
     WCHAR *ret = NULL;
     do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
@@ -275,7 +276,7 @@ LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
 /*********************************************************************
  *           wcsspn    (NTDLL.@)
  */
-INT __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
+size_t __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
 {
     const WCHAR *ptr;
     for (ptr = str; *ptr; ptr++) if (!NTDLL_wcschr( accept, *ptr )) break;

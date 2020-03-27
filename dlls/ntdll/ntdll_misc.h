@@ -271,6 +271,29 @@ NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
 void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 
 /* string functions */
-int __cdecl NTDLL_tolower( int c );
-int __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
+int    __cdecl NTDLL_tolower( int c );
+int    __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
+int    __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 );
+int    __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n );
+int    __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 );
+int    __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n );
+WCHAR  __cdecl NTDLL_towlower( WCHAR ch );
+WCHAR  __cdecl NTDLL_towupper( WCHAR ch );
+LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str );
+LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str );
+LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src );
+LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src );
+LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch );
+size_t __cdecl NTDLL_wcslen( LPCWSTR str );
+size_t __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject );
+LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, size_t n );
+LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n );
+LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept );
+LPWSTR __cdecl NTDLL_wcsrchr( LPCWSTR str, WCHAR ch );
+size_t __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept );
+LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub );
+LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim );
+LONG   __cdecl NTDLL_wcstol( LPCWSTR s, LPWSTR *end, INT base );
+ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
+
 #endif
