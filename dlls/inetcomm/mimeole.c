@@ -765,13 +765,13 @@ static void init_content_encoding(MimeBody *body, header_t *header)
 {
     const char *encoding = header->value.u.pszVal;
 
-    if(!_strnicmp(encoding, "base64", -1))
+    if(!stricmp(encoding, "base64"))
         body->encoding = IET_BASE64;
-    else if(!_strnicmp(encoding, "quoted-printable", -1))
+    else if(!stricmp(encoding, "quoted-printable"))
         body->encoding = IET_QP;
-    else if(!_strnicmp(encoding, "7bit", -1))
+    else if(!stricmp(encoding, "7bit"))
         body->encoding = IET_7BIT;
-    else if(!_strnicmp(encoding, "8bit", -1))
+    else if(!stricmp(encoding, "8bit"))
         body->encoding = IET_8BIT;
     else
         FIXME("unknown encoding %s\n", debugstr_a(encoding));
