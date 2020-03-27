@@ -105,6 +105,7 @@ DEFINE_EXPECT(OnEnterScript);
 DEFINE_EXPECT(OnLeaveScript);
 DEFINE_EXPECT(OnScriptError);
 DEFINE_EXPECT(GetIDsOfNames);
+DEFINE_EXPECT(GetIDsOfNames_visible);
 DEFINE_EXPECT(GetIDsOfNames_persistent);
 DEFINE_EXPECT(GetItemInfo_global);
 DEFINE_EXPECT(GetItemInfo_global_code);
@@ -214,6 +215,19 @@ static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOL
     return DISP_E_UNKNOWNNAME;
 }
 
+static HRESULT WINAPI visible_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names, UINT name_cnt,
+                                            LCID lcid, DISPID *ids)
+{
+    ok(name_cnt == 1, "name_cnt = %u\n", name_cnt);
+    if(!wcscmp(names[0], L"testCall")) {
+        *ids = 1;
+        return S_OK;
+    }
+
+    CHECK_EXPECT2(GetIDsOfNames_visible);
+    return DISP_E_UNKNOWNNAME;
+}
+
 static HRESULT WINAPI persistent_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names, UINT name_cnt,
                                                LCID lcid, DISPID *ids)
 {
@@ -264,7 +278,7 @@ static const IDispatchVtbl visible_named_item_vtbl = {
     visible_Release,
     Dispatch_GetTypeInfoCount,
     Dispatch_GetTypeInfo,
-    Dispatch_GetIDsOfNames,
+    visible_GetIDsOfNames,
     Dispatch_Invoke
 };
 
@@ -1354,6 +1368,39 @@ static void test_named_items(void)
     CHECK_CALLED(OnLeaveScript);
 
     SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames_visible);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"var abc;\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    todo_wine
+    CHECK_CALLED(GetIDsOfNames_visible);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"abc = 5;\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(GetIDsOfNames_visible);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"testVar_global = 5;\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    todo_wine
+    CHECK_CALLED(GetIDsOfNames_visible);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"var abc; testVar_global = 5;\n", L"visibleCodeItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
     hr = IActiveScriptParse_ParseScriptText(parse, L"global_this = this;\n", L"globalItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
@@ -1478,6 +1525,18 @@ static void test_named_items(void)
     IDispatchEx_Release(dispex2);
     IDispatchEx_Release(dispex);
 
+    dispex = get_script_dispatch(script, L"persistent");
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"this", L"persistent", NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == (IDispatch*)dispex,
+        "Unexpected 'this': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    IDispatchEx_Release(dispex);
+
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
     hr = IActiveScriptParse_ParseScriptText(parse, L"var x = 13;\n", L"persistent", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
@@ -1556,6 +1615,41 @@ static void test_named_items(void)
     ok(V_VT(&var) == VT_I4 && V_I4(&var) == 13, "Unexpected 'x': V_VT = %d, V_I4 = %d\n", V_VT(&var), V_I4(&var));
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
+
+    /* this object it set to named idem when persistent items are re-initialized, even for CODEONLY items */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"this", L"persistent", NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    todo_wine
+    ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &persistent_named_item,
+        "Unexpected 'this': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
+    VariantClear(&var);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    /* lookups also query named items */
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    SET_EXPECT(GetIDsOfNames_persistent);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"var abc123;", L"persistent", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    todo_wine
+    CHECK_CALLED(GetIDsOfNames_persistent);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
+    SET_EXPECT(GetIDsOfNames_persistent);
+    SET_EXPECT(OnScriptError);
+    hr = IActiveScriptParse_ParseScriptText(parse, L"testCall();", L"persistent", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(FAILED(hr), "ParseScriptText returned: %08x\n", hr);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+    todo_wine
+    CHECK_CALLED(GetIDsOfNames_persistent);
+    CHECK_CALLED(OnScriptError);
 
     dispex = get_script_dispatch(script, NULL);
     for (i = 0; i < ARRAY_SIZE(global_idents); i++)
