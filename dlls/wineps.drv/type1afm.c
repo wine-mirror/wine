@@ -457,7 +457,7 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	return TRUE;
     }
 
-    if (_strnicmp(sz, "false", -1) == 0)
+    if (stricmp(sz, "false") == 0)
     {
     	afm->IsFixedPitch = FALSE;
 	*p_found = TRUE;
@@ -465,7 +465,7 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	return TRUE;
     }
 
-    if (_strnicmp(sz, "true", -1) == 0)
+    if (stricmp(sz, "true") == 0)
     {
     	afm->IsFixedPitch = TRUE;
 	*p_found = TRUE;

@@ -191,7 +191,7 @@ static void read_afms(FILE *f_c, FILE *f_h)
 	int	i, num_metrics;
 
 	cp = strrchr(de->d_name, '.');	    	    	    /* Does it end in   */
-	if (cp == NULL || _strnicmp(cp, ".afm", -1) != 0)   /*   .afm or .AFM?  */
+	if (cp == NULL || stricmp(cp, ".afm") != 0)   /*   .afm or .AFM?  */
 	    continue;
 
 	f = fopen(de->d_name, "r");
