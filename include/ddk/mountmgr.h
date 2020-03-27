@@ -63,12 +63,13 @@ enum mountmgr_fs_type
 
 struct mountmgr_unix_drive
 {
-    ULONG  size;
-    ULONG  type;
-    ULONG  fs_type;
-    WCHAR  letter;
-    USHORT mount_point_offset;
-    USHORT device_offset;
+    ULONG     size;
+    ULONG     type;
+    ULONG     fs_type;
+    ULONGLONG unix_dev;
+    WCHAR     letter;
+    USHORT    mount_point_offset;
+    USHORT    device_offset;
 };
 
 #define IOCTL_MOUNTMGR_QUERY_DHCP_REQUEST_PARAMS CTL_CODE(MOUNTMGRCONTROLTYPE, 64, METHOD_BUFFERED, FILE_READ_ACCESS | FILE_WRITE_ACCESS)

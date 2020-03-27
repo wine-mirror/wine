@@ -1617,6 +1617,18 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
     return status;
 }
 
+enum mountmgr_fs_type get_mountmgr_fs_type(enum fs_type fs_type)
+{
+    switch (fs_type)
+    {
+    case FS_ISO9660: return MOUNTMGR_FS_TYPE_ISO9660;
+    case FS_UDF:     return MOUNTMGR_FS_TYPE_UDF;
+    case FS_FAT1216: return MOUNTMGR_FS_TYPE_FAT;
+    case FS_FAT32:   return MOUNTMGR_FS_TYPE_FAT32;
+    default:         return MOUNTMGR_FS_TYPE_NTFS;
+    }
+}
+
 /* query information about an existing dos drive, by letter or udi */
 NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type,
                            char **device, char **mount_point )
@@ -1631,18 +1643,37 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_
         if (drive->drive != letter) continue;
         disk_device = drive->volume->device;
         if (type) *type = disk_device->type;
-        if (fs_type)
-        {
-            switch (drive->volume->fs_type)
-            {
-            case FS_ISO9660: *fs_type = MOUNTMGR_FS_TYPE_ISO9660; break;
-            case FS_UDF:     *fs_type = MOUNTMGR_FS_TYPE_UDF; break;
-            case FS_FAT1216: *fs_type = MOUNTMGR_FS_TYPE_FAT; break;
-            case FS_FAT32:   *fs_type = MOUNTMGR_FS_TYPE_FAT32; break;
-            default:         *fs_type = MOUNTMGR_FS_TYPE_NTFS; break;
-            }
-            *fs_type = drive->volume->fs_type;
-        }
+        if (fs_type) *fs_type = get_mountmgr_fs_type( drive->volume->fs_type );
+        if (device) *device = strdupA( disk_device->unix_device );
+        if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
+        status = STATUS_SUCCESS;
+        break;
+    }
+    LeaveCriticalSection( &device_section );
+    return status;
+}
+
+/* query information about an existing unix device, by dev_t */
+NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
+                            enum mountmgr_fs_type *fs_type, char **device, char **mount_point )
+{
+    NTSTATUS status = STATUS_NO_SUCH_DEVICE;
+    struct volume *volume;
+    struct disk_device *disk_device;
+    struct stat st;
+
+    EnterCriticalSection( &device_section );
+    LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
+    {
+        disk_device = volume->device;
+
+        if (!disk_device->unix_device
+            || stat( disk_device->unix_device, &st ) < 0
+            || st.st_rdev != unix_dev)
+            continue;
+
+        if (type) *type = disk_device->type;
+        if (fs_type) *fs_type = get_mountmgr_fs_type( volume->fs_type );
         if (device) *device = strdupA( disk_device->unix_device );
         if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
         status = STATUS_SUCCESS;

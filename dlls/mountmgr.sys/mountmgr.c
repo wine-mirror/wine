@@ -299,9 +299,19 @@ static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
     enum device_type device_type;
     char *ptr;
 
-    if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
+    if (!letter)
+    {
+        if ((status = query_unix_device( input->unix_dev, &device_type,
+                                         &fs_type, &device, &mount_point )))
+            return status;
+    }
+    else
+    {
+        if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
 
-    if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &device, &mount_point ))) return status;
+        if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &device, &mount_point ))) return status;
+    }
+
     switch (device_type)
     {
     case DEVICE_UNKNOWN:      type = DRIVE_UNKNOWN; break;
