@@ -107,6 +107,8 @@
 #include "winioctl.h"
 #include "ddk/ntddk.h"
 #include "ddk/ntddser.h"
+#define WINE_MOUNTMGR_EXTENSIONS
+#include "ddk/mountmgr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -118,8 +120,6 @@ mode_t FILE_umask = 0;
 
 #define FILE_WRITE_TO_END_OF_FILE      ((LONGLONG)-1)
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
-
-static const WCHAR ntfsW[] = {'N','T','F','S'};
 
 /* fetch the attributes of a file */
 static inline ULONG get_file_attributes( const struct stat *st )
@@ -3120,6 +3120,124 @@ static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
     return STATUS_SUCCESS;
 }
 
+/* Find a DOS device which can act as the root of "path".
+ * Similar to find_drive_root(), but returns -1 instead of crossing volumes. */
+static int find_dos_device( const char *path )
+{
+    int len = strlen(path);
+    int drive;
+    char *buffer;
+    struct stat st;
+    struct drive_info info[MAX_DOS_DRIVES];
+    dev_t dev_id;
+
+    if (!DIR_get_drives_info( info )) return -1;
+
+    if (stat( path, &st ) < 0) return -1;
+    dev_id = st.st_dev;
+
+    /* strip off trailing slashes */
+    while (len > 1 && path[len - 1] == '/') len--;
+
+    /* make a copy of the path */
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return -1;
+    memcpy( buffer, path, len );
+    buffer[len] = 0;
+
+    for (;;)
+    {
+        if (!stat( buffer, &st ) && S_ISDIR( st.st_mode ))
+        {
+            if (st.st_dev != dev_id) break;
+
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+                if ((info[drive].dev == st.st_dev) && (info[drive].ino == st.st_ino))
+                {
+                    if (len == 1) len = 0;  /* preserve root slash in returned path */
+                    TRACE( "%s -> drive %c:, root=%s, name=%s\n",
+                           debugstr_a(path), 'A' + drive, debugstr_a(buffer), debugstr_a(path + len));
+                    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+                    return drive;
+                }
+            }
+        }
+        if (len <= 1) break;  /* reached root */
+        while (path[len - 1] != '/') len--;
+        while (path[len - 1] == '/') len--;
+        buffer[len] = 0;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return -1;
+}
+
+static struct mountmgr_unix_drive *get_mountmgr_fs_info( HANDLE handle, int fd )
+{
+    struct mountmgr_unix_drive *drive;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    ANSI_STRING unix_name;
+    IO_STATUS_BLOCK io;
+    HANDLE mountmgr;
+    NTSTATUS status;
+    int letter;
+
+    if (server_get_unix_name( handle, &unix_name ))
+        return NULL;
+
+    letter = find_dos_device( unix_name.Buffer );
+    RtlFreeAnsiString( &unix_name );
+
+    if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, 1024 )))
+        return NULL;
+
+    if (letter == -1)
+    {
+        struct stat st;
+
+        if (fstat( fd, &st ) == -1)
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, drive );
+            return NULL;
+        }
+
+        drive->unix_dev = st.st_dev;
+        drive->letter = 0;
+    }
+    else
+        drive->letter = 'a' + letter;
+
+    RtlInitUnicodeString( &string, MOUNTMGR_DEVICE_NAME );
+    InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
+    if (NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT ))
+        return NULL;
+
+    status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
+                                    drive, sizeof(*drive), drive, 1024 );
+    if (status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (!(drive = RtlReAllocateHeap( GetProcessHeap(), 0, drive, drive->size )))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, drive );
+            NtClose( mountmgr );
+            return NULL;
+        }
+        status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
+                                        drive, sizeof(*drive), drive, drive->size );
+    }
+    NtClose( mountmgr );
+
+    if (status)
+    {
+        WARN("failed to retrieve filesystem type from mountmgr, status %#x\n", status);
+        RtlFreeHeap( GetProcessHeap(), 0, drive );
+        return NULL;
+    }
+
+    return drive;
+}
+
 
 /******************************************************************************
  *  NtQueryVolumeInformationFile		[NTDLL.@]
@@ -3240,24 +3358,96 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         }
         break;
     case FileFsAttributeInformation:
-        if (length < offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName[ARRAY_SIZE( ntfsW )] ))
-            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+    {
+        static const WCHAR fatW[] = {'F','A','T'};
+        static const WCHAR fat32W[] = {'F','A','T','3','2'};
+        static const WCHAR ntfsW[] = {'N','T','F','S'};
+        static const WCHAR cdfsW[] = {'C','D','F','S'};
+        static const WCHAR udfW[] = {'U','D','F'};
+
+        FILE_FS_ATTRIBUTE_INFORMATION *info = buffer;
+        struct mountmgr_unix_drive *drive;
+        enum mountmgr_fs_type fs_type = MOUNTMGR_FS_TYPE_NTFS;
+
+        if (length < sizeof(FILE_FS_ATTRIBUTE_INFORMATION))
+        {
+            io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+
+        if ((drive = get_mountmgr_fs_info( handle, fd )))
+        {
+            fs_type = drive->fs_type;
+            RtlFreeHeap( GetProcessHeap(), 0, drive );
+        }
         else
         {
-            FILE_FS_ATTRIBUTE_INFORMATION *info = buffer;
+            struct statfs stfs;
 
-            FIXME( "%p: faking attribute info\n", handle );
-            info->FileSystemAttributes = FILE_SUPPORTS_ENCRYPTION | FILE_FILE_COMPRESSION |
-                                         FILE_PERSISTENT_ACLS | FILE_UNICODE_ON_DISK |
-                                         FILE_CASE_PRESERVED_NAMES | FILE_CASE_SENSITIVE_SEARCH;
-            info->MaximumComponentNameLength = MAXIMUM_FILENAME_LENGTH - 1;
-            info->FileSystemNameLength = sizeof(ntfsW);
-            memcpy(info->FileSystemName, ntfsW, sizeof(ntfsW));
-
-            io->Information = sizeof(*info);
-            io->u.Status = STATUS_SUCCESS;
+            if (!fstatfs( fd, &stfs ))
+            {
+#if defined(linux) && defined(HAVE_FSTATFS)
+                switch (stfs.f_type)
+                {
+                case 0x9660:
+                    fs_type = MOUNTMGR_FS_TYPE_ISO9660;
+                    break;
+                case 0x15013346:
+                    fs_type = MOUNTMGR_FS_TYPE_UDF;
+                    break;
+                case 0x4d44:
+                    fs_type = MOUNTMGR_FS_TYPE_FAT32;
+                    break;
+                }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+                if (!strcmp( stfs.f_fstypename, "cd9660" ))
+                    fs_type = MOUNTMGR_FS_TYPE_ISO9660;
+                else if (!strcmp( stfs.f_fstypename, "udf" ))
+                    fs_type = MOUNTMGR_FS_TYPE_UDF;
+                else if (!strcmp( stfs.f_fstypename, "msdos" ))
+                    fs_type = MOUNTMGR_FS_TYPE_FAT32;
+#endif
+            }
         }
+
+        switch (fs_type)
+        {
+        case MOUNTMGR_FS_TYPE_ISO9660:
+            info->FileSystemAttributes = FILE_READ_ONLY_VOLUME;
+            info->MaximumComponentNameLength = 221;
+            info->FileSystemNameLength = min( sizeof(cdfsW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, cdfsW, info->FileSystemNameLength);
+            break;
+        case MOUNTMGR_FS_TYPE_UDF:
+            info->FileSystemAttributes = FILE_READ_ONLY_VOLUME | FILE_UNICODE_ON_DISK | FILE_CASE_SENSITIVE_SEARCH;
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(udfW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, udfW, info->FileSystemNameLength);
+            break;
+        case MOUNTMGR_FS_TYPE_FAT:
+            info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES; /* FIXME */
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(fatW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, fatW, info->FileSystemNameLength);
+            break;
+        case MOUNTMGR_FS_TYPE_FAT32:
+            info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES; /* FIXME */
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(fat32W), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, fat32W, info->FileSystemNameLength);
+            break;
+        default:
+            info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES | FILE_PERSISTENT_ACLS;
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(ntfsW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, ntfsW, info->FileSystemNameLength);
+            break;
+        }
+
+        io->Information = offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) + info->FileSystemNameLength;
+        io->u.Status = STATUS_SUCCESS;
         break;
+    }
     case FileFsControlInformation:
         FIXME( "%p: control info not supported\n", handle );
         break;
