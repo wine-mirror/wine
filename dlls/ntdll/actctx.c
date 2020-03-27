@@ -1002,7 +1002,7 @@ static void free_entity_array(struct entity_array *array)
 static BOOL is_matching_string( const WCHAR *str1, const WCHAR *str2 )
 {
     if (!str1) return !str2;
-    return str2 && !strcmpiW( str1, str2 );
+    return str2 && !RtlCompareUnicodeStrings( str1, strlenW(str1), str2, strlenW(str2), TRUE );
 }
 
 static BOOL is_matching_identity( const struct assembly_identity *id1,
@@ -1012,7 +1012,7 @@ static BOOL is_matching_identity( const struct assembly_identity *id1,
     if (!is_matching_string( id1->arch, id2->arch )) return FALSE;
     if (!is_matching_string( id1->public_key, id2->public_key )) return FALSE;
 
-    if (id1->language && id2->language && strcmpiW( id1->language, id2->language ))
+    if (id1->language && id2->language && !is_matching_string( id1->language, id2->language ))
     {
         if (strcmpW( wildcardW, id1->language ) && strcmpW( wildcardW, id2->language ))
             return FALSE;
@@ -3479,6 +3479,7 @@ static NTSTATUS build_dllredirect_section(ACTIVATION_CONTEXT* actctx, struct str
 static struct string_index *find_string_index(const struct strsection_header *section, const UNICODE_STRING *name)
 {
     struct string_index *iter, *index = NULL;
+    UNICODE_STRING str;
     ULONG hash = 0, i;
 
     RtlHashUnicodeString(name, TRUE, HASH_STRING_ALGORITHM_X65599, &hash);
@@ -3488,9 +3489,9 @@ static struct string_index *find_string_index(const struct strsection_header *se
     {
         if (iter->hash == hash)
         {
-            const WCHAR *nameW = (WCHAR*)((BYTE*)section + iter->name_offset);
-
-            if (!strcmpiW(nameW, name->Buffer))
+            str.Buffer = (WCHAR *)((BYTE *)section + iter->name_offset);
+            str.Length = iter->name_len;
+            if (RtlEqualUnicodeString( &str, name, TRUE ))
             {
                 index = iter;
                 break;
@@ -3724,6 +3725,7 @@ static NTSTATUS find_window_class(ACTIVATION_CONTEXT* actctx, const UNICODE_STRI
 {
     struct string_index *iter, *index = NULL;
     struct wndclass_redirect_data *class;
+    UNICODE_STRING str;
     ULONG hash;
     int i;
 
@@ -3748,9 +3750,9 @@ static NTSTATUS find_window_class(ACTIVATION_CONTEXT* actctx, const UNICODE_STRI
     {
         if (iter->hash == hash)
         {
-            const WCHAR *nameW = (WCHAR*)((BYTE*)actctx->wndclass_section + iter->name_offset);
-
-            if (!strcmpiW(nameW, name->Buffer))
+            str.Buffer = (WCHAR *)((BYTE *)actctx->wndclass_section + iter->name_offset);
+            str.Length = iter->name_len;
+            if (RtlEqualUnicodeString( &str, name, TRUE ))
             {
                 index = iter;
                 break;

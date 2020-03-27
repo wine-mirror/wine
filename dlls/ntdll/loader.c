@@ -491,15 +491,18 @@ static WINE_MODREF *get_modref( HMODULE hmod )
 static WINE_MODREF *find_basename_module( LPCWSTR name )
 {
     PLIST_ENTRY mark, entry;
+    UNICODE_STRING name_str;
 
-    if (cached_modref && !strcmpiW( name, cached_modref->ldr.BaseDllName.Buffer ))
+    RtlInitUnicodeString( &name_str, name );
+
+    if (cached_modref && RtlEqualUnicodeString( &name_str, &cached_modref->ldr.BaseDllName, TRUE ))
         return cached_modref;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
         LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
-        if (!strcmpiW( name, mod->BaseDllName.Buffer ))
+        if (RtlEqualUnicodeString( &name_str, &mod->BaseDllName, TRUE ))
         {
             cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
             return cached_modref;
