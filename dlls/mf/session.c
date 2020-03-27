@@ -2805,28 +2805,41 @@ static ULONG WINAPI session_rate_support_Release(IMFRateSupport *iface)
     return IMFMediaSession_Release(&session->IMFMediaSession_iface);
 }
 
-static void session_presentation_object_get_rate(IUnknown *object, MFRATE_DIRECTION direction,
+static HRESULT session_presentation_object_get_rate(IUnknown *object, MFRATE_DIRECTION direction,
         BOOL thin, BOOL fastest, float *result)
 {
     IMFRateSupport *rate_support;
     float rate;
+    HRESULT hr;
 
-    if (SUCCEEDED(MFGetService(object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support)))
+    /* For objects that don't support rate control, it's assumed that only forward direction is allowed, at 1.0f. */
+
+    if (FAILED(hr = MFGetService(object, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support)))
     {
-        rate = 0.0f;
-        if (fastest)
+        if (direction == MFRATE_FORWARD)
         {
-            if (SUCCEEDED(IMFRateSupport_GetFastestRate(rate_support, direction, thin, &rate)))
-                *result = min(fabsf(rate), *result);
+            *result = 1.0f;
+            return S_OK;
         }
         else
-        {
-            if (SUCCEEDED(IMFRateSupport_GetSlowestRate(rate_support, direction, thin, &rate)))
-                *result = max(fabsf(rate), *result);
-        }
-
-        IMFRateSupport_Release(rate_support);
+            return MF_E_REVERSE_UNSUPPORTED;
     }
+
+    rate = 0.0f;
+    if (fastest)
+    {
+        if (SUCCEEDED(hr = IMFRateSupport_GetFastestRate(rate_support, direction, thin, &rate)))
+            *result = min(fabsf(rate), *result);
+    }
+    else
+    {
+        if (SUCCEEDED(hr = IMFRateSupport_GetSlowestRate(rate_support, direction, thin, &rate)))
+            *result = max(fabsf(rate), *result);
+    }
+
+    IMFRateSupport_Release(rate_support);
+
+    return hr;
 }
 
 static HRESULT session_get_presentation_rate(struct media_session *session, MFRATE_DIRECTION direction,
@@ -2834,24 +2847,33 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
 {
     struct media_source *source;
     struct media_sink *sink;
+    HRESULT hr = E_POINTER;
 
     *result = 0.0f;
 
     EnterCriticalSection(&session->cs);
 
-    LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+    if (session->presentation.topo_status != MF_TOPOSTATUS_INVALID)
     {
-        session_presentation_object_get_rate((IUnknown *)source->source, direction, thin, fastest, result);
-    }
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)source->source, direction, thin, fastest, result)))
+                break;
+        }
 
-    LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
-    {
-        session_presentation_object_get_rate((IUnknown *)sink->sink, direction, thin, fastest, result);
+        if (SUCCEEDED(hr))
+        {
+            LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+            {
+                if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)sink->sink, direction, thin, fastest, result)))
+                    break;
+            }
+        }
     }
 
     LeaveCriticalSection(&session->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI session_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
