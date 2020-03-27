@@ -524,7 +524,7 @@ static void test_WsSetInput(void)
 
     found = -1;
     hr = WsReadToStartElement( reader, NULL, NULL, &found, NULL );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
     if (hr == S_OK)
     {
         ok( found == TRUE, "got %d\n", found );

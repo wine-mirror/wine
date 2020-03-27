@@ -395,7 +395,7 @@ struct reader
     WS_READ_CALLBACK             input_cb;
     void                        *input_cb_state;
     struct xmlbuf               *input_buf;
-    const unsigned char         *input_data;
+    unsigned char               *input_conv;
     ULONG                        input_size;
     ULONG                        text_conv_offset;
     unsigned char               *stream_buf;
@@ -519,6 +519,7 @@ static void free_reader( struct reader *reader )
     clear_prefixes( reader->prefixes, reader->nb_prefixes );
     heap_free( reader->prefixes );
     heap_free( reader->stream_buf );
+    heap_free( reader->input_conv );
 
     reader->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &reader->cs );
@@ -6893,18 +6894,40 @@ static WS_CHARSET detect_charset( const unsigned char *data, ULONG size, ULONG *
     return ret;
 }
 
-static void set_input_buffer( struct reader *reader, const unsigned char *data, ULONG size )
+static HRESULT utf16le_to_utf8( const unsigned char *data, ULONG size, unsigned char **buf, ULONG *buflen )
+{
+    if (size % sizeof(WCHAR)) return E_INVALIDARG;
+    *buflen = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data, size / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (!(*buf = heap_alloc( *buflen ))) return E_OUTOFMEMORY;
+    WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data, size / sizeof(WCHAR), (char *)*buf, *buflen, NULL, NULL );
+    return S_OK;
+}
+
+static HRESULT set_input_buffer( struct reader *reader, const unsigned char *data, ULONG size )
 {
     reader->input_type  = WS_XML_READER_INPUT_TYPE_BUFFER;
     reader->input_buf   = NULL;
-    reader->input_data  = data;
-    reader->input_size  = size;
 
-    reader->read_size   = reader->input_size;
-    reader->read_pos    = 0;
-    reader->read_bufptr = reader->input_data;
+    if (reader->input_enc == WS_XML_READER_ENCODING_TYPE_TEXT && reader->input_charset == WS_CHARSET_UTF16LE)
+    {
+        unsigned char *buf;
+        ULONG buflen;
+        HRESULT hr;
 
+        if ((hr = utf16le_to_utf8( data, size, &buf, &buflen )) != S_OK) return hr;
+        heap_free( reader->input_conv );
+        reader->read_bufptr = reader->input_conv = buf;
+        reader->read_size   = reader->input_size = buflen;
+    }
+    else
+    {
+        reader->read_bufptr = data;
+        reader->read_size   = reader->input_size = size;
+    }
+
+    reader->read_pos         = 0;
     reader->text_conv_offset = 0;
+    return S_OK;
 }
 
 static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, void *state )
@@ -6913,7 +6936,6 @@ static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, 
     reader->input_cb       = callback;
     reader->input_cb_state = state;
     reader->input_buf      = NULL;
-    reader->input_data     = reader->stream_buf;
     reader->input_size     = STREAM_BUFSIZE;
 
     if (reader->read_pos >= reader->read_size) reader->read_size = 0;
@@ -6922,9 +6944,8 @@ static void set_input_stream( struct reader *reader, WS_READ_CALLBACK callback, 
         memmove( reader->stream_buf, reader->stream_buf + reader->read_pos, reader->read_size - reader->read_pos );
         reader->read_size -= reader->read_pos;
     }
-    reader->read_pos    = 0;
-    reader->read_bufptr = reader->input_data;
-
+    reader->read_pos         = 0;
+    reader->read_bufptr      = reader->stream_buf;
     reader->text_conv_offset = 0;
 }
 
@@ -6997,7 +7018,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     case WS_XML_READER_INPUT_TYPE_BUFFER:
     {
         const WS_XML_READER_BUFFER_INPUT *buf = (const WS_XML_READER_BUFFER_INPUT *)input;
-        set_input_buffer( reader, (const unsigned char *)buf->encodedData + offset, buf->encodedDataSize - offset );
+        hr = set_input_buffer( reader, (const unsigned char *)buf->encodedData + offset, buf->encodedDataSize - offset );
+        if (hr != S_OK) goto done;
         break;
     }
     case WS_XML_READER_INPUT_TYPE_STREAM:
@@ -7026,22 +7048,35 @@ done:
     return hr;
 }
 
-static void set_input_xml_buffer( struct reader *reader, struct xmlbuf *buf )
+static HRESULT set_input_xml_buffer( struct reader *reader, struct xmlbuf *xmlbuf )
 {
     reader->input_type    = WS_XML_READER_INPUT_TYPE_BUFFER;
-    reader->input_buf     = buf;
-    reader->input_enc     = buf->encoding;
-    reader->input_charset = buf->charset;
-    reader->input_data    = buf->bytes.bytes;
-    reader->input_size    = buf->bytes.length;
-    reader->dict_static   = buf->dict_static;
-    reader->dict          = buf->dict;
+    reader->input_buf     = xmlbuf;
+    reader->input_enc     = xmlbuf->encoding;
+    reader->input_charset = xmlbuf->charset;
+    reader->dict_static   = xmlbuf->dict_static;
+    reader->dict          = xmlbuf->dict;
 
-    reader->read_size   = reader->input_size;
-    reader->read_pos    = 0;
-    reader->read_bufptr = reader->input_data;
+    if (reader->input_enc == WS_XML_READER_ENCODING_TYPE_TEXT && reader->input_charset == WS_CHARSET_UTF16LE)
+    {
+        unsigned char *buf;
+        ULONG buflen;
+        HRESULT hr;
 
+        if ((hr = utf16le_to_utf8( xmlbuf->bytes.bytes, xmlbuf->bytes.length, &buf, &buflen )) != S_OK) return hr;
+        heap_free( reader->input_conv );
+        reader->read_bufptr = reader->input_conv = buf;
+        reader->read_size   = reader->input_size = buflen;
+    }
+    else
+    {
+        reader->read_bufptr = xmlbuf->bytes.bytes;
+        reader->read_size   = reader->input_size = xmlbuf->bytes.length;
+    }
+
+    reader->read_pos         = 0;
     reader->text_conv_offset = 0;
+    return S_OK;
 }
 
 /**************************************************************************
@@ -7078,7 +7113,7 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
     }
 
     if ((hr = init_reader( reader )) != S_OK) goto done;
-    set_input_xml_buffer( reader, xmlbuf );
+    if ((hr = set_input_xml_buffer( reader, xmlbuf )) != S_OK) goto done;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) hr = E_OUTOFMEMORY;
     else read_insert_bof( reader, node );
