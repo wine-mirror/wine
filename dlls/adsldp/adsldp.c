@@ -390,6 +390,8 @@ typedef struct
     ULONG port;
     ULONG attrs_count, attrs_count_allocated;
     struct ldap_attribute *attrs;
+    struct attribute_type *at;
+    ULONG at_count;
     struct
     {
         ADS_SCOPEENUM scope;
@@ -479,6 +481,7 @@ static ULONG WINAPI ldapns_Release(IADs *iface)
         SysFreeString(ldap->host);
         SysFreeString(ldap->object);
         free_attributes(ldap);
+        free_attribute_types(ldap->at, ldap->at_count);
         heap_free(ldap);
     }
 
@@ -937,7 +940,8 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
     IADs *ads;
     LDAP *ld = NULL;
     HRESULT hr;
-    ULONG err;
+    ULONG err, at_count = 0;
+    struct attribute_type *at = NULL;
 
     TRACE("%p,%s,%s,%p,%08x,%p\n", iface, debugstr_w(path), debugstr_w(user), password, flags, obj);
 
@@ -1035,6 +1039,8 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
                 goto fail;
             }
         }
+
+        at = load_schema(ld, &at_count);
     }
 
     hr = LDAPNamespace_create(&IID_IADs, (void **)&ads);
@@ -1045,6 +1051,8 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
         ldap->host = host;
         ldap->port = port;
         ldap->object = object;
+        ldap->at = at;
+        ldap->at_count = at_count;
         hr = IADs_QueryInterface(ads, &IID_IDispatch, (void **)obj);
         IADs_Release(ads);
         return hr;
@@ -1306,9 +1314,13 @@ static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEAR
     return S_ADS_NOMORE_COLUMNS;
 }
 
-static HRESULT add_column_values(ADS_SEARCH_COLUMN *col, struct berval **values, DWORD count)
+static HRESULT add_column_values(LDAP_namespace *ldap, ADS_SEARCH_COLUMN *col,
+                                 const WCHAR *name, struct berval **values, DWORD count)
 {
+    ADSTYPEENUM type;
     DWORD i;
+
+    type = get_schema_type(name, ldap->at, ldap->at_count);
 
     col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
     if (!col->pADsValues)
@@ -1316,18 +1328,44 @@ static HRESULT add_column_values(ADS_SEARCH_COLUMN *col, struct berval **values,
 
     for (i = 0; i < count; i++)
     {
-        DWORD outlen;
-        TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
-        col->pADsValues[i].u.CaseIgnoreString = strnAtoW(values[i]->bv_val, values[i]->bv_len, &outlen);
-        if (!col->pADsValues[i].u.CaseIgnoreString)
+        switch (type)
         {
-            heap_free(col->pADsValues);
-            return E_OUTOFMEMORY;
+        default:
+            FIXME("no special handling for type %d\n", type);
+            /* fall through */
+        case ADSTYPE_DN_STRING:
+        case ADSTYPE_CASE_EXACT_STRING:
+        case ADSTYPE_CASE_IGNORE_STRING:
+        case ADSTYPE_PRINTABLE_STRING:
+        case ADSTYPE_NT_SECURITY_DESCRIPTOR:
+        {
+            DWORD outlen;
+            TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+            col->pADsValues[i].u.CaseIgnoreString = strnUtoW(values[i]->bv_val, values[i]->bv_len, &outlen);
+            if (!col->pADsValues[i].u.CaseIgnoreString)
+            {
+                heap_free(col->pADsValues);
+                return E_OUTOFMEMORY;
+            }
+            break;
+        }
+
+        case ADSTYPE_INTEGER:
+            col->pADsValues[i].u.Integer = strtol(values[i]->bv_val, NULL, 10);
+            TRACE("%s => %d\n", debugstr_an(values[i]->bv_val, values[i]->bv_len), col->pADsValues[i].u.Integer);
+            break;
+
+        case ADSTYPE_OCTET_STRING:
+            TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+            col->pADsValues[i].u.OctetString.dwLength = values[i]->bv_len;
+            col->pADsValues[i].u.OctetString.lpValue = (BYTE *)values[i]->bv_val;
+            break;
         }
     }
 
-    col->dwADsType = ADSTYPE_CASE_IGNORE_STRING;
+    col->dwADsType = type;
     col->dwNumValues = count;
+    col->pszAttrName = strdupW(name);
 
     return S_OK;
 }
@@ -1388,10 +1426,8 @@ exit:
 
     count = ldap_count_values_len(values);
 
-    hr = add_column_values(col, values, count);
+    hr = add_column_values(ldap, col, name, values, count);
     ldap_value_free_len(values);
-    if (hr == S_OK)
-        col->pszAttrName = strdupW(name);
 
     return hr;
 }
@@ -1451,6 +1487,8 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->attrs_count_allocated = 0;
     ldap->attrs = NULL;
     ldap->search.scope = ADS_SCOPE_SUBTREE;
+    ldap->at = NULL;
+    ldap->at_count = 0;
 
     hr = IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
     IADs_Release(&ldap->IADs_iface);

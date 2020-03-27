@@ -6,7 +6,8 @@ EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	adsldp.c \
-	ldap.c
+	ldap.c \
+	schema.c
 
 IDL_SRCS = \
 	adsldp.idl
