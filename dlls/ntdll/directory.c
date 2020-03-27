@@ -1296,9 +1296,8 @@ BOOL DIR_is_hidden_file( const UNICODE_STRING *name )
 /***********************************************************************
  *           hash_short_file_name
  *
- * Transform a Unix file name into a hashed DOS name. If the name is a valid
- * DOS name, it is converted to upper-case; otherwise it is replaced by a
- * hashed version that fits in 8.3 format.
+ * Transform a Unix file name into a hashed DOS name. If the name is not a valid
+ * DOS name, it is replaced by a hashed version that fits in 8.3 format.
  * 'buffer' must be at least 12 characters long.
  * Returns length of short name in bytes; short name is NOT null-terminated.
  */
@@ -1334,7 +1333,7 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
     for (i = 4, p = name->Buffer, dst = buffer; i > 0; i--, p++)
     {
         if (p == end || p == ext) break;
-        *dst++ = is_invalid_dos_char(*p) ? '_' : toupperW(*p);
+        *dst++ = is_invalid_dos_char(*p) ? '_' : *p;
     }
     /* Pad to 5 chars with '~' */
     while (i-- >= 0) *dst++ = '~';
@@ -1349,7 +1348,7 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
     {
         *dst++ = '.';
         for (i = 3, ext++; (i > 0) && ext < end; i--, ext++)
-            *dst++ = is_invalid_dos_char(*ext) ? '_' : toupperW(*ext);
+            *dst++ = is_invalid_dos_char(*ext) ? '_' : *ext;
     }
     return dst - buffer;
 }
@@ -1446,7 +1445,7 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
 static BOOL append_entry( struct dir_data *data, const char *long_name,
                           const char *short_name, const UNICODE_STRING *mask )
 {
-    int i, long_len, short_len;
+    int long_len, short_len;
     WCHAR long_nameW[MAX_DIR_ENTRY_LEN + 1];
     WCHAR short_nameW[13];
     UNICODE_STRING str;
@@ -1463,7 +1462,6 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
     {
         short_len = ntdll_umbstowcs( short_name, strlen(short_name),
                                      short_nameW, ARRAY_SIZE( short_nameW ) - 1 );
-        for (i = 0; i < short_len; i++) short_nameW[i] = toupperW( short_nameW[i] );
     }
     else  /* generate a short name if necessary */
     {
@@ -1474,6 +1472,7 @@ static BOOL append_entry( struct dir_data *data, const char *long_name,
             short_len = hash_short_file_name( &str, short_nameW );
     }
     short_nameW[short_len] = 0;
+    wcsupr( short_nameW );
 
     TRACE( "long %s short %s mask %s\n",
            debugstr_w( long_nameW ), debugstr_w( short_nameW ), debugstr_us( mask ));
