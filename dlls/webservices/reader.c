@@ -2654,7 +2654,17 @@ static HRESULT read_node_text( struct reader * );
 
 static HRESULT read_startelement_text( struct reader *reader )
 {
+    HRESULT hr;
+
+    if (read_cmp( reader, "<?", 2 ) == S_OK)
+    {
+        if ((hr = read_xmldecl( reader )) != S_OK) return hr;
+    }
     read_skip_whitespace( reader );
+    if (read_cmp( reader, "<", 1 ) == S_OK)
+    {
+        if ((hr = read_element_text( reader )) != S_OK) return hr;
+    }
     if (read_cmp( reader, "/>", 2 ) == S_OK)
     {
         read_skip( reader, 2 );
@@ -3021,8 +3031,7 @@ static HRESULT read_node_text( struct reader *reader )
         else if (reader->state == READER_STATE_CDATA) return read_endcdata( reader );
         else if (read_cmp( reader, "<?", 2 ) == S_OK)
         {
-            hr = read_xmldecl( reader );
-            if (FAILED( hr )) return hr;
+            if ((hr = read_xmldecl( reader )) != S_OK) return hr;
         }
         else if (read_cmp( reader, "</", 2 ) == S_OK) return read_endelement_text( reader );
         else if (read_cmp( reader, "<![CDATA[", 9 ) == S_OK) return read_startcdata( reader );

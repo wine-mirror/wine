@@ -31,7 +31,7 @@ static const char data2[] =
     {0xef,0xbb,0xbf,'<','t','e','x','t','>','t','e','s','t','<','/','t','e','x','t','>',0};
 
 static const char data3[] =
-    "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?> "
     "<text>test</TEXT>";
 
 static const char data4[] =
@@ -927,6 +927,52 @@ static void test_WsReadStartElement(void)
 
     hr = WsReadEndElement( reader, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_input( reader, data3, sizeof(data3) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_TEXT_NODE *text = (WS_XML_TEXT_NODE *)node;
+        ok( text->node.nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", text->node.nodeType );
+        ok( text->text != NULL, "text not set\n" );
+        if (text->text)
+        {
+            WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+            ok( text->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text->text->textType );
+            ok( utf8->value.length == 4, "got %u\n", utf8->value.length );
+            ok( !memcmp( utf8->value.bytes, "test", 4 ), "wrong data\n" );
+        }
+    }
+
+    hr = set_input( reader, " <text>test</text>", sizeof(" <text>test</text>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadStartElement( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_TEXT_NODE *text = (WS_XML_TEXT_NODE *)node;
+        ok( text->node.nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", text->node.nodeType );
+        ok( text->text != NULL, "text not set\n" );
+        if (text->text)
+        {
+            WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+            ok( text->text->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", text->text->textType );
+            ok( utf8->value.length == 4, "got %u\n", utf8->value.length );
+            ok( !memcmp( utf8->value.bytes, "test", 4 ), "wrong data\n" );
+        }
+    }
 
     WsFreeReader( reader );
 }
