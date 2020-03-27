@@ -280,7 +280,7 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
     case UNC_PATH:
         return 0;
     case DEVICE_PATH:
-        if (!strcmpiW( dos_name, consoleW ))
+        if (!wcsicmp( dos_name, consoleW ))
             return MAKELONG( sizeof(conW), 4 * sizeof(WCHAR) );  /* 4 is length of \\.\ prefix */
         return 0;
     case ABSOLUTE_DRIVE_PATH:

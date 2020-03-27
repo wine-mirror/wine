@@ -951,7 +951,7 @@ static BOOL is_dll_native_subsystem( LDR_MODULE *mod, const IMAGE_NT_HEADERS *nt
             DWORD len = strlen(name);
             if (len * sizeof(WCHAR) >= sizeof(buffer)) continue;
             ascii_to_unicode( buffer, name, len + 1 );
-            if (!strcmpiW( buffer, ntdllW ) || !strcmpiW( buffer, kernel32W ))
+            if (!wcsicmp( buffer, ntdllW ) || !wcsicmp( buffer, kernel32W ))
             {
                 TRACE( "%s imports %s, assuming not native\n", debugstr_w(filename), debugstr_w(buffer) );
                 return FALSE;
@@ -1761,7 +1761,7 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
         p++;
         for (i = 0; i < len; i++)
             if (tolowerW(p[i]) != tolowerW( (WCHAR)filename[i]) ) break;
-        if (i == len && (!p[len] || !strcmpiW( p + len, soW )))
+        if (i == len && (!p[len] || !wcsicmp( p + len, soW )))
         {
             /* the filename matches, use path as the full path */
             len += p - path->Buffer;
@@ -2768,7 +2768,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         DWORD dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
 
         p++;
-        if (!dirlen || strncmpiW( p, info->lpAssemblyDirectoryName, dirlen ) || strcmpiW( p + dirlen, dotManifestW ))
+        if (!dirlen || strncmpiW( p, info->lpAssemblyDirectoryName, dirlen ) || wcsicmp( p + dirlen, dotManifestW ))
         {
             /* manifest name does not match directory name, so it's not a global
              * windows/winsxs manifest; use the manifest directory name instead */

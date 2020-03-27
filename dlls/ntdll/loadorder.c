@@ -65,7 +65,7 @@ static struct loadorder_list env_list;
  */
 static int cmp_sort_func(const void *s1, const void *s2)
 {
-    return strcmpiW(((const module_loadorder_t *)s1)->modulename, ((const module_loadorder_t *)s2)->modulename);
+    return wcsicmp(((const module_loadorder_t *)s1)->modulename, ((const module_loadorder_t *)s2)->modulename);
 }
 
 

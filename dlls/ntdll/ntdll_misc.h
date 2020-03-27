@@ -296,4 +296,6 @@ LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim );
 LONG   __cdecl NTDLL_wcstol( LPCWSTR s, LPWSTR *end, INT base );
 ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
 
+#define wcsicmp(s1,s2) NTDLL__wcsicmp(s1,s2)
+
 #endif

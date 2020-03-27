@@ -343,9 +343,9 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
             {
                 WCHAR *str = (WCHAR *)info->Data;
                 str[info->DataLength / sizeof(WCHAR)] = 0;
-                if (!strcmpiW( str, WinNTW )) version->wProductType = VER_NT_WORKSTATION;
-                else if (!strcmpiW( str, LanmanNTW )) version->wProductType = VER_NT_DOMAIN_CONTROLLER;
-                else if (!strcmpiW( str, ServerNTW )) version->wProductType = VER_NT_SERVER;
+                if (!wcsicmp( str, WinNTW )) version->wProductType = VER_NT_WORKSTATION;
+                else if (!wcsicmp( str, LanmanNTW )) version->wProductType = VER_NT_DOMAIN_CONTROLLER;
+                else if (!wcsicmp( str, ServerNTW )) version->wProductType = VER_NT_SERVER;
             }
             NtClose( hkey2 );
         }

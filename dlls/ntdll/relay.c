@@ -292,9 +292,9 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
     {
         int len;
 
-        if (!strcmpiW( *listitem, module )) return !show;
+        if (!wcsicmp( *listitem, module )) return !show;
         len = strlenW( *listitem );
-        if (!strncmpiW( *listitem, module, len ) && !strcmpiW( module + len, dllW ))
+        if (!strncmpiW( *listitem, module, len ) && !wcsicmp( module + len, dllW ))
             return !show;
     }
     return show;
