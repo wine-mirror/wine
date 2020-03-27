@@ -2344,7 +2344,7 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *u
     strcat( unix_name, "/dosdevices/" );
     dev = unix_name + strlen(unix_name);
 
-    for (i = 0; i < name_len; i++) dev[i] = (char)tolowerW(name[i]);
+    for (i = 0; i < name_len; i++) dev[i] = (name[i] >= 'A' && name[i] <= 'Z' ? name[i] + 32 : name[i]);
     dev[i] = 0;
 
     /* special case for drive devices */
@@ -2755,7 +2755,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     struct stat st;
     char *unix_name;
     int pos, ret, name_len, unix_len, prefix_len;
-    WCHAR prefix[MAX_DIR_ENTRY_LEN];
+    WCHAR prefix[MAX_DIR_ENTRY_LEN + 1];
     BOOLEAN is_unix = FALSE;
 
     name     = nameW->Buffer;
@@ -2784,8 +2784,10 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     if (pos == name_len)  /* no subdir, plain DOS device */
         return get_dos_device( name, name_len, unix_name_ret );
 
-    for (prefix_len = 0; prefix_len < pos; prefix_len++)
-        prefix[prefix_len] = tolowerW(name[prefix_len]);
+    prefix_len = pos;
+    memcpy( prefix, name, prefix_len * sizeof(WCHAR) );
+    prefix[prefix_len] = 0;
+    wcslwr( prefix );
 
     name += prefix_len;
     name_len -= prefix_len;
