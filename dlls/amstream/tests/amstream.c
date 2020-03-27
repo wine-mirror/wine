@@ -684,21 +684,21 @@ static void test_add_stream(void)
     ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)&teststream, &test_mspid, 0, &stream);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(stream == (IMediaStream *)&teststream, "Streams didn't match.\n");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream == (IMediaStream *)&teststream, "Streams didn't match.\n");
     if (hr == S_OK) IMediaStream_Release(stream);
     todo_wine ok(teststream_mmstream == mmstream, "IAMMultiMediaStream objects didn't match.\n");
-    todo_wine ok(teststream_filter == stream_filter, "IMediaStreamFilter objects didn't match.\n");
+    ok(teststream_filter == stream_filter, "IMediaStreamFilter objects didn't match.\n");
     todo_wine ok(!!teststream_graph, "Expected a non-NULL graph.\n");
 
     check_enum_stream(mmstream, stream_filter, 0, video_stream);
     check_enum_stream(mmstream, stream_filter, 1, audio_stream);
-    todo_wine check_enum_stream(mmstream, stream_filter, 2, (IMediaStream *)&teststream);
+    check_enum_stream(mmstream, stream_filter, 2, (IMediaStream *)&teststream);
     check_enum_stream(mmstream, stream_filter, 3, NULL);
 
     check_get_stream(mmstream, stream_filter, &MSPID_PrimaryVideo, video_stream);
     check_get_stream(mmstream, stream_filter, &MSPID_PrimaryAudio, audio_stream);
-    todo_wine check_get_stream(mmstream, stream_filter, &test_mspid, (IMediaStream *)&teststream);
+    check_get_stream(mmstream, stream_filter, &test_mspid, (IMediaStream *)&teststream);
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
@@ -839,7 +839,7 @@ static void test_add_stream(void)
     ok(hr == MS_E_PURPOSEID, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &test_mspid,
             AMMSF_ADDDEFAULTRENDERER, &audio_stream);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     IMediaStreamFilter_Release(stream_filter);
     ref = IAMMultiMediaStream_Release(mmstream);

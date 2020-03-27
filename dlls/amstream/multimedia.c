@@ -298,6 +298,16 @@ static HRESULT WINAPI multimedia_stream_GetFilter(IAMMultiMediaStream *iface,
     return S_OK;
 }
 
+static void add_stream(struct multimedia_stream *mmstream, IAMMediaStream *stream, IMediaStream **ret_stream)
+{
+    IMediaStreamFilter_AddMediaStream(mmstream->filter, stream);
+    if (ret_stream)
+    {
+        *ret_stream = (IMediaStream *)stream;
+        IMediaStream_AddRef(*ret_stream);
+    }
+}
+
 static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *iface,
         IUnknown *stream_object, const MSPID *PurposeId, DWORD dwFlags, IMediaStream **ret_stream)
 {
@@ -308,9 +318,6 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
 
     TRACE("mmstream %p, stream_object %p, id %s, flags %#x, ret_stream %p.\n",
             This, stream_object, debugstr_guid(PurposeId), dwFlags, ret_stream);
-
-    if (!IsEqualGUID(PurposeId, &MSPID_PrimaryVideo) && !IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
-        return MS_E_PURPOSEID;
 
     if (IMediaStreamFilter_GetMediaStream(This->filter, PurposeId, &stream) == S_OK)
     {
@@ -343,19 +350,43 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
         return hr;
     }
 
+    if (stream_object)
+    {
+        hr = IUnknown_QueryInterface(stream_object, &IID_IAMMediaStream, (void **)&pStream);
+        if (SUCCEEDED(hr))
+        {
+            MSPID stream_id;
+            hr = IAMMediaStream_GetInformation(pStream, &stream_id, NULL);
+            if (SUCCEEDED(hr))
+            {
+                if (IsEqualGUID(PurposeId, &stream_id))
+                {
+                    add_stream(This, pStream, ret_stream);
+                    hr = S_OK;
+                }
+                else
+                {
+                    hr = MS_E_PURPOSEID;
+                }
+            }
+
+            IAMMediaStream_Release(pStream);
+
+            return hr;
+        }
+    }
+
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
         hr = ddraw_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->type, &pStream);
-    else
+    else if (IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
         hr = audio_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->type, &pStream);
+    else
+        return MS_E_PURPOSEID;
 
     if (SUCCEEDED(hr))
     {
-        /* Add stream to the media stream filter */
-        IMediaStreamFilter_AddMediaStream(This->filter, pStream);
-        if (ret_stream)
-            *ret_stream = (IMediaStream *)pStream;
-        else
-            IAMMediaStream_Release(pStream);
+        add_stream(This, pStream, ret_stream);
+        IAMMediaStream_Release(pStream);
     }
 
     return hr;
