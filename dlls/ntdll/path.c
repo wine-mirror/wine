@@ -306,13 +306,13 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
     switch(end - start + 1)
     {
     case 3:
-        if (strncmpiW( start, auxW, 3 ) &&
-            strncmpiW( start, conW, 3 ) &&
-            strncmpiW( start, nulW, 3 ) &&
-            strncmpiW( start, prnW, 3 )) break;
+        if (wcsnicmp( start, auxW, 3 ) &&
+            wcsnicmp( start, conW, 3 ) &&
+            wcsnicmp( start, nulW, 3 ) &&
+            wcsnicmp( start, prnW, 3 )) break;
         return MAKELONG( 3 * sizeof(WCHAR), (start - dos_name) * sizeof(WCHAR) );
     case 4:
-        if (strncmpiW( start, comW, 3 ) && strncmpiW( start, lptW, 3 )) break;
+        if (wcsnicmp( start, comW, 3 ) && wcsnicmp( start, lptW, 3 )) break;
         if (*end <= '0' || *end > '9') break;
         return MAKELONG( 4 * sizeof(WCHAR), (start - dos_name) * sizeof(WCHAR) );
     default:  /* can't match anything */
@@ -1045,7 +1045,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     if (size && ptr[size - 1] != '\\') ptr[size++] = '\\';
 
     /* convert \??\UNC\ path to \\ prefix */
-    if (size >= 4 && !strncmpiW(ptr, UncPfxW, 4))
+    if (size >= 4 && !wcsnicmp(ptr, UncPfxW, 4))
     {
         ptr += 2;
         size -= 2;

@@ -2160,7 +2160,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         {
             WCHAR short_nameW[12];
             ret = hash_short_file_name( &str, short_nameW );
-            if (ret == length && !strncmpiW( short_nameW, name, length ))
+            if (ret == length && !wcsnicmp( short_nameW, name, length ))
             {
                 strcpy( unix_name + pos, de->d_name );
                 closedir( dir );
@@ -2409,7 +2409,7 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
         return ARRAY_SIZE( nt_prefixW );
 
     if (name->Length >= sizeof(dosdev_prefixW) &&
-        !strncmpiW( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
+        !wcsnicmp( name->Buffer, dosdev_prefixW, ARRAY_SIZE( dosdev_prefixW )))
         return ARRAY_SIZE( dosdev_prefixW );
 
     return 0;

@@ -144,7 +144,7 @@ static void set_registry_variables( WCHAR **env, HANDLE hkey, ULONG type )
         }
         /* PATH is magic */
         if (env_name.Length == sizeof(pathW) &&
-            !strncmpiW( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
+            !wcsnicmp( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
             !RtlQueryEnvironmentVariable_U( *env, &env_name, &tmp ))
         {
             RtlAppendUnicodeToString( &tmp, sep );
@@ -662,7 +662,7 @@ static inline BOOL is_path_prefix( const WCHAR *prefix, const WCHAR *path, const
 {
     DWORD len = strlenW( prefix );
 
-    if (strncmpiW( path, prefix, len )) return FALSE;
+    if (wcsnicmp( path, prefix, len )) return FALSE;
     while (path[len] == '\\') len++;
     return path + len == file;
 }

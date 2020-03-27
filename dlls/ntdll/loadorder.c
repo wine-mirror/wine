@@ -447,7 +447,7 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
 
     /* Strip path information if the module resides in the system directory
      */
-    if (!strncmpiW( system_dir, path, strlenW( system_dir )))
+    if (!wcsnicmp( system_dir, path, strlenW( system_dir )))
     {
         const WCHAR *p = path + strlenW( system_dir );
         while (*p == '\\' || *p == '/') p++;

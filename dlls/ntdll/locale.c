@@ -1719,7 +1719,7 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
             p = buf;
             while (*p)
             {
-                if (!strncmpiW( p, script, len ) && (!p[len] || p[len] == ';')) break;
+                if (!wcsnicmp( p, script, len ) && (!p[len] || p[len] == ';')) break;
                 if (!(p = strchrW( p, ';'))) break;
                 p++;
             }
