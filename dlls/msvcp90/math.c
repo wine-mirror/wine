@@ -2362,3 +2362,36 @@ short __cdecl _FExp(float *x, float y, short scale)
 
     return dclass(*x);
 }
+
+/* ?_XLgamma@std@@YANN@Z */
+double __cdecl std__XLgamma_double(double z)
+{
+    /* Lanczos coefficients g=5, n=6 */
+    static const double lc[] = {
+        1.000000000190015,
+        76.18009172947146,
+        -86.50532032941677,
+        24.01409824083091,
+        -1.231739572450155,
+        0.1208650973866179e-2,
+        -0.5395239384953e-5
+    };
+    static const double log_sqrt_2pi = 0.91893853320467274178;
+
+    double base = z + 4.5, sum = 0;
+    int i;
+
+    if (z < 0.5) return log(M_PI / sin(M_PI * z)) - std__XLgamma_double(1 - z);
+
+    z--;
+    for(i = ARRAY_SIZE(lc) - 1; i >= 1; i--)
+        sum += lc[i] / (z + i);
+    sum += lc[0];
+    return log_sqrt_2pi + log(sum) - base + log(base) * (z + 0.5);
+}
+
+/* ?_XLgamma@tr1@std@@YAMM@Z */
+float __cdecl std__XLgamma_float(float z)
+{
+    return std__XLgamma_double(z);
+}

@@ -3185,9 +3185,9 @@
 @ cdecl -arch=win64 ?_Widen_s@?$ctype@G@std@@QEBAPEBDPEBD0PEAG_K@Z(ptr ptr ptr ptr long) ctype_wchar__Widen_s
 @ thiscall -arch=win32 ?_Widen_s@?$ctype@_W@std@@QBEPBDPBD0PA_WI@Z(ptr ptr ptr ptr long) ctype_wchar__Widen_s
 @ cdecl -arch=win64 ?_Widen_s@?$ctype@_W@std@@QEBAPEBDPEBD0PEA_W_K@Z(ptr ptr ptr ptr long) ctype_wchar__Widen_s
-@ stub ?_XLgamma@tr1@std@@YAMM@Z
-@ stub ?_XLgamma@tr1@std@@YANN@Z
-@ stub ?_XLgamma@tr1@std@@YAOO@Z
+@ cdecl ?_XLgamma@tr1@std@@YAMM@Z(float) std__XLgamma_float
+@ cdecl ?_XLgamma@tr1@std@@YANN@Z(double) std__XLgamma_double
+@ cdecl ?_XLgamma@tr1@std@@YAOO@Z(double) std__XLgamma_double
 @ stub ?_Xbad@tr1@std@@YAXW4error_type@regex_constants@12@@Z
 @ stub -arch=win32 ?_Xfsopen@std@@YAPAU_iobuf@@PB_W0H@Z
 @ stub -arch=win64 ?_Xfsopen@std@@YAPEAU_iobuf@@PEB_W0H@Z

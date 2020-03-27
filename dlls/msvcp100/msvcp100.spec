@@ -1260,9 +1260,9 @@
 @ cdecl -arch=win64 ?_Unlock@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UEAAXXZ(ptr) basic_streambuf_wchar__Unlock
 @ thiscall -arch=win32 ?_Unlock@_Mutex@std@@QAEXXZ(ptr) mutex_unlock
 @ cdecl -arch=win64 ?_Unlock@_Mutex@std@@QEAAXXZ(ptr) mutex_unlock
-@ stub ?_XLgamma@tr1@std@@YAMM@Z
-@ stub ?_XLgamma@tr1@std@@YANN@Z
-@ stub ?_XLgamma@tr1@std@@YAOO@Z
+@ cdecl ?_XLgamma@tr1@std@@YAMM@Z(float) std__XLgamma_float
+@ cdecl ?_XLgamma@tr1@std@@YANN@Z(double) std__XLgamma_double
+@ cdecl ?_XLgamma@tr1@std@@YAOO@Z(double) std__XLgamma_double
 @ stub ?_Xbad@tr1@std@@YAXW4error_type@regex_constants@12@@Z
 @ stub ?_Xfunc@tr1@std@@YAXXZ
 @ cdecl -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z(str) _Xinvalid_argument
