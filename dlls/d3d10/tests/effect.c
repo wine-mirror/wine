@@ -5168,7 +5168,8 @@ static void compare_matrix(const char *name, unsigned int line, struct d3d10_mat
         for (col = 0; col < col_count; ++col)
         {
             tmp = !transpose ? b->m[row][col] : b->m[col][row];
-            ok(a->m[row][col] == tmp, "Variable %s, line %d, got unexpected value 0x%08x.\n", name, line,
+            ok_(__FILE__, line)(a->m[row][col] == tmp,
+                    "Variable %s (%u, %u), got unexpected value 0x%08x.\n", name, row, col,
                     *(unsigned int *)&tmp);
         }
     }
