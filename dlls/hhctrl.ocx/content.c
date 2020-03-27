@@ -148,9 +148,9 @@ static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, Content
 
         TRACE("%s\n", node.buf);
 
-        if(!_strnicmp(node_name.buf, "/object", -1))
+        if(!stricmp(node_name.buf, "/object"))
             break;
-        if(!_strnicmp(node_name.buf, "param", -1))
+        if(!stricmp(node_name.buf, "param"))
             parse_obj_node_param(item, hhc_root, node.buf, info->pCHMInfo->codePage);
 
         strbuf_zero(&node);
@@ -195,7 +195,7 @@ static ContentItem *parse_ul(HHInfo *info, stream_t *stream, ContentItem *hhc_ro
 
         TRACE("%s\n", node.buf);
 
-        if(!_strnicmp(node_name.buf, "object", -1)) {
+        if(!stricmp(node_name.buf, "object")) {
             const char *ptr;
             int len;
 
@@ -210,10 +210,10 @@ static ContentItem *parse_ul(HHInfo *info, stream_t *stream, ContentItem *hhc_ro
                 if(!ret)
                     ret = prev;
             }
-        }else if(!_strnicmp(node_name.buf, "ul", -1)) {
+        }else if(!stricmp(node_name.buf, "ul")) {
             new_item = parse_ul(info, stream, hhc_root);
             insert_item(prev, new_item, INSERT_CHILD);
-        }else if(!_strnicmp(node_name.buf, "/ul", -1)) {
+        }else if(!stricmp(node_name.buf, "/ul")) {
             break;
         }
 
@@ -245,7 +245,7 @@ static ContentItem *parse_hhc(HHInfo *info, IStream *str, ContentItem *hhc_root,
 
         TRACE("%s\n", node.buf);
 
-        if(!_strnicmp(node_name.buf, "ul", -1)) {
+        if(!stricmp(node_name.buf, "ul")) {
             ContentItem *item = parse_ul(info, &stream, hhc_root);
             prev = insert_item(prev, item, INSERT_CHILD);
             if(!ret)
