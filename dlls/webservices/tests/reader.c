@@ -6841,6 +6841,67 @@ static void test_stream_input(void)
     WsFreeReader( reader );
 }
 
+static void test_description_type(void)
+{
+    static WS_XML_STRING ns = {0, NULL}, ns2 = {2, (BYTE *)"ns"}, localname = {1, (BYTE *)"t"};
+    static WS_XML_STRING val = {3, (BYTE *)"val"};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_FIELD_DESCRIPTION f, f2, *fields[2];
+    WS_STRUCT_DESCRIPTION s;
+    struct test
+    {
+        const WS_STRUCT_DESCRIPTION *desc;
+        INT32                        val;
+    } *test;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping = WS_TYPE_ATTRIBUTE_FIELD_MAPPING;
+    f.type    = WS_DESCRIPTION_TYPE;
+    fields[0] = &f;
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping   = WS_ATTRIBUTE_FIELD_MAPPING;
+    f2.localName = &val;
+    f2.ns        = &ns;
+    f2.offset    = FIELD_OFFSET(struct test, val);
+    f2.type      = WS_INT32_TYPE;
+    fields[1] = &f2;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 2;
+    s.typeLocalName = &localname;
+    s.typeNs        = &ns;
+
+    prepare_struct_type_test( reader, "<t val=\"-1\" xmlns=\"ns\"/>" );
+    hr = WsReadToStartElement( reader, &localname, &ns2, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    test = NULL;
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    if (test)
+    {
+        ok( test->val == -1, "got %d\n", test->val );
+        ok( test->desc == &s, "got %p\n", test->desc );
+    }
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -6891,4 +6952,5 @@ START_TEST(reader)
     test_repeating_element_choice();
     test_empty_text_field();
     test_stream_input();
+    test_description_type();
 }

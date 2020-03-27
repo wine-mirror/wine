@@ -5968,6 +5968,29 @@ static HRESULT read_type_qname( struct reader *reader, WS_TYPE_MAPPING mapping,
     return S_OK;
 }
 
+static HRESULT read_type_description( struct reader *reader, WS_TYPE_MAPPING mapping,
+                                      const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                      const WS_STRUCT_DESCRIPTION *desc, WS_READ_OPTION option,
+                                      WS_HEAP *heap, void *ret, ULONG size, BOOL *found )
+{
+    switch (option)
+    {
+    case WS_READ_REQUIRED_POINTER:
+    case WS_READ_OPTIONAL_POINTER:
+    {
+        if (size != sizeof(desc)) return E_INVALIDARG;
+        *(const WS_STRUCT_DESCRIPTION **)ret = desc;
+        *found = TRUE;
+        break;
+    }
+    default:
+        FIXME( "read option %u not supported\n", option );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static BOOL is_empty_text_node( const struct node *node )
 {
     const WS_XML_TEXT_NODE *text = (const WS_XML_TEXT_NODE *)node;
@@ -6165,7 +6188,8 @@ static WS_READ_OPTION get_field_read_option( WS_TYPE type, ULONG options )
     }
 }
 
-static HRESULT read_type_field( struct reader *, const WS_FIELD_DESCRIPTION *, WS_HEAP *, char *, ULONG );
+static HRESULT read_type_field( struct reader *, const WS_STRUCT_DESCRIPTION *, const WS_FIELD_DESCRIPTION *,
+                                WS_HEAP *, char *, ULONG );
 
 static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTION *desc, WS_HEAP *heap, void *ret,
                                 ULONG size, BOOL *found )
@@ -6193,7 +6217,7 @@ static HRESULT read_type_union( struct reader *reader, const WS_UNION_DESCRIPTIO
     else
     {
         ULONG offset = desc->fields[i]->field.offset;
-        if ((hr = read_type_field( reader, &desc->fields[i]->field, heap, ret, offset )) != S_OK) return hr;
+        if ((hr = read_type_field( reader, NULL, &desc->fields[i]->field, heap, ret, offset )) != S_OK) return hr;
         *(int *)((char *)ret + desc->enumOffset) = desc->fields[i]->value;
     }
 
@@ -6297,8 +6321,8 @@ static HRESULT read_type_text( struct reader *reader, const WS_FIELD_DESCRIPTION
     return hr;
 }
 
-static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, char *buf,
-                                ULONG offset )
+static HRESULT read_type_field( struct reader *reader, const WS_STRUCT_DESCRIPTION *desc_struct,
+                                const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, char *buf, ULONG offset )
 {
     char *ptr;
     WS_READ_OPTION option;
@@ -6323,8 +6347,9 @@ static HRESULT read_type_field( struct reader *reader, const WS_FIELD_DESCRIPTIO
     switch (desc->mapping)
     {
     case WS_TYPE_ATTRIBUTE_FIELD_MAPPING:
-        FIXME( "WS_TYPE_ATTRIBUTE_FIELD_MAPPING not supported\n" );
-        return S_OK;
+        hr = read_type( reader, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->localName, desc->ns,
+                        desc_struct, option, heap, ptr, size, &found );
+        break;
 
     case WS_ATTRIBUTE_FIELD_MAPPING:
         hr = read_type( reader, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->localName, desc->ns,
@@ -6424,7 +6449,7 @@ static HRESULT read_type_struct( struct reader *reader, WS_TYPE_MAPPING mapping,
     for (i = 0; i < desc->fieldCount; i++)
     {
         offset = desc->fields[i]->offset;
-        if ((hr = read_type_field( reader, desc->fields[i], heap, buf, offset )) != S_OK) break;
+        if ((hr = read_type_field( reader, desc, desc->fields[i], heap, buf, offset )) != S_OK) break;
     }
 
     switch (option)
@@ -6649,6 +6674,10 @@ static HRESULT read_type( struct reader *reader, WS_TYPE_MAPPING mapping, WS_TYP
 
     case WS_XML_QNAME_TYPE:
         hr = read_type_qname( reader, mapping, localname, ns, desc, option, heap, value, size, found );
+        break;
+
+    case WS_DESCRIPTION_TYPE:
+        hr = read_type_description( reader, mapping, localname, ns, desc, option, heap, value, size, found );
         break;
 
     case WS_STRUCT_TYPE:
@@ -7419,7 +7448,7 @@ static ULONG get_field_size( const WS_FIELD_DESCRIPTION *desc )
 static HRESULT read_param( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap, void *ret )
 {
     if (!ret && !(ret = ws_alloc_zero( heap, get_field_size(desc) ))) return WS_E_QUOTA_EXCEEDED;
-    return read_type_field( reader, desc, heap, ret, 0 );
+    return read_type_field( reader, NULL, desc, heap, ret, 0 );
 }
 
 static HRESULT read_param_array( struct reader *reader, const WS_FIELD_DESCRIPTION *desc, WS_HEAP *heap,
