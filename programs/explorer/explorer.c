@@ -718,6 +718,7 @@ static void copy_path_root(LPWSTR root, LPWSTR path)
  * Command Line parameters are:
  * [/n]  Opens in single-paned view for each selected items. This is default
  * [/e,] Uses Windows Explorer View
+ * [/cd,object] Specifies the root level of the view
  * [/root,object] Specifies the root level of the view
  * [/select,object] parent folder is opened and specified object is selected
  */
@@ -725,6 +726,7 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
 {
     static const WCHAR arg_n[] = {'/','n'};
     static const WCHAR arg_e[] = {'/','e',','};
+    static const WCHAR arg_cd[] = {'/','c','d',','};
     static const WCHAR arg_root[] = {'/','r','o','o','t',','};
     static const WCHAR arg_select[] = {'/','s','e','l','e','c','t',','};
     static const WCHAR arg_desktop[] = {'/','d','e','s','k','t','o','p'};
@@ -744,6 +746,11 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
         {
             parameters->explorer_mode = TRUE;
             p += ARRAY_SIZE( arg_e );
+        }
+        else if (wcsncmp(p, arg_cd, ARRAY_SIZE( arg_cd ))==0)
+        {
+            p += ARRAY_SIZE( arg_cd );
+            p = copy_path_string(parameters->root,p);
         }
         else if (wcsncmp(p, arg_root, ARRAY_SIZE( arg_root ))==0)
         {
