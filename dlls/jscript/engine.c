@@ -670,12 +670,19 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
             }
         }
 
-        if(ctx->call_ctx->bytecode->named_item) {
-            jsdisp_t *script_obj = ctx->call_ctx->bytecode->named_item->script_obj;
-            hres = jsdisp_get_id(script_obj, identifier, 0, &id);
+        item = ctx->call_ctx->bytecode->named_item;
+        if(item) {
+            hres = jsdisp_get_id(item->script_obj, identifier, 0, &id);
             if(SUCCEEDED(hres)) {
-                exprval_set_disp_ref(ret, to_disp(script_obj), id);
+                exprval_set_disp_ref(ret, to_disp(item->script_obj), id);
                 return S_OK;
+            }
+            if(!(item->flags & SCRIPTITEM_CODEONLY)) {
+                hres = disp_get_id(ctx, item->disp, identifier, identifier, 0, &id);
+                if(SUCCEEDED(hres)) {
+                    exprval_set_disp_ref(ret, item->disp, id);
+                    return S_OK;
+                }
             }
         }
     }
@@ -3050,7 +3057,8 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
     }
 
     if(flags & (EXEC_GLOBAL | EXEC_EVAL)) {
-        BOOL lookup_globals = (flags & EXEC_GLOBAL) && !bytecode->named_item;
+        named_item_t *item = bytecode->named_item;
+        DISPID id;
 
         for(i=0; i < function->var_cnt; i++) {
             TRACE("[%d] %s %d\n", i, debugstr_w(function->variables[i].name), function->variables[i].func_id);
@@ -3063,13 +3071,19 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
 
                 hres = jsdisp_propput_name(variable_obj, function->variables[i].name, jsval_obj(func_obj));
                 jsdisp_release(func_obj);
-            }else if(!lookup_globals || !lookup_global_members(ctx, function->variables[i].name, NULL)) {
-                DISPID id = 0;
-
-                hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);
-                if(FAILED(hres))
-                    goto fail;
+                continue;
             }
+
+            if(item && !(item->flags & SCRIPTITEM_CODEONLY)
+                && SUCCEEDED(disp_get_id(ctx, item->disp, function->variables[i].name, function->variables[i].name, 0, &id)))
+                    continue;
+
+            if(!item && (flags & EXEC_GLOBAL) && lookup_global_members(ctx, function->variables[i].name, NULL))
+                continue;
+
+            hres = jsdisp_get_id(variable_obj, function->variables[i].name, fdexNameEnsure, &id);
+            if(FAILED(hres))
+                goto fail;
         }
     }
 

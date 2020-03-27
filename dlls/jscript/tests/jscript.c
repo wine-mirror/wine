@@ -1373,7 +1373,6 @@ static void test_named_items(void)
     hr = IActiveScriptParse_ParseScriptText(parse, L"var abc;\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
     CHECK_CALLED(OnEnterScript);
-    todo_wine
     CHECK_CALLED(GetIDsOfNames_visible);
     CHECK_CALLED(OnLeaveScript);
 
@@ -1389,7 +1388,6 @@ static void test_named_items(void)
     hr = IActiveScriptParse_ParseScriptText(parse, L"testVar_global = 5;\n", L"visibleItem", NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
     CHECK_CALLED(OnEnterScript);
-    todo_wine
     CHECK_CALLED(GetIDsOfNames_visible);
     CHECK_CALLED(OnLeaveScript);
 
