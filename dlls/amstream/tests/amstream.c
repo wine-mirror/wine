@@ -305,25 +305,43 @@ error:
 }
 
 static const GUID test_mspid = {0x88888888};
-static IAMMediaStream teststream;
-static LONG teststream_refcount = 1;
-static IAMMultiMediaStream *teststream_mmstream;
-static IMediaStreamFilter *teststream_filter;
-static IFilterGraph *teststream_graph;
+
+struct teststream
+{
+    IAMMediaStream IAMMediaStream_iface;
+    IPin IPin_iface;
+    LONG refcount;
+    IAMMultiMediaStream *mmstream;
+    IMediaStreamFilter *filter;
+    IFilterGraph *graph;
+};
+
+static struct teststream *impl_from_IAMMediaStream(IAMMediaStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct teststream, IAMMediaStream_iface);
+}
+
+static struct teststream *impl_from_IPin(IPin *iface)
+{
+    return CONTAINING_RECORD(iface, struct teststream, IPin_iface);
+}
 
 static HRESULT WINAPI pin_QueryInterface(IPin *iface, REFIID iid, void **out)
 {
-    return IAMMediaStream_QueryInterface(&teststream, iid, out);
+    struct teststream *stream = impl_from_IPin(iface);
+    return IAMMediaStream_QueryInterface(&stream->IAMMediaStream_iface, iid, out);
 }
 
 static ULONG WINAPI pin_AddRef(IPin *iface)
 {
-    return IAMMediaStream_AddRef(&teststream);
+    struct teststream *stream = impl_from_IPin(iface);
+    return IAMMediaStream_AddRef(&stream->IAMMediaStream_iface);
 }
 
 static ULONG WINAPI pin_Release(IPin *iface)
 {
-    return IAMMediaStream_Release(&teststream);
+    struct teststream *stream = impl_from_IPin(iface);
+    return IAMMediaStream_Release(&stream->IAMMediaStream_iface);
 }
 
 static HRESULT WINAPI pin_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYPE *mt)
@@ -439,10 +457,10 @@ static const IPinVtbl pin_vtbl =
     pin_NewSegment
 };
 
-static IPin testpin = {&pin_vtbl};
-
 static HRESULT WINAPI stream_QueryInterface(IAMMediaStream *iface, REFIID iid, void **out)
 {
+    struct teststream *stream = impl_from_IAMMediaStream(iface);
+
     if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
 
     if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IMediaStream) || IsEqualGUID(iid, &IID_IAMMediaStream))
@@ -454,7 +472,7 @@ static HRESULT WINAPI stream_QueryInterface(IAMMediaStream *iface, REFIID iid, v
     else if (IsEqualGUID(iid, &IID_IPin))
     {
         IAMMediaStream_AddRef(iface);
-        *out = &testpin;
+        *out = &stream->IPin_iface;
         return S_OK;
     }
 
@@ -464,12 +482,14 @@ static HRESULT WINAPI stream_QueryInterface(IAMMediaStream *iface, REFIID iid, v
 
 static ULONG WINAPI stream_AddRef(IAMMediaStream *iface)
 {
-    return InterlockedIncrement(&teststream_refcount);
+    struct teststream *stream = impl_from_IAMMediaStream(iface);
+    return InterlockedIncrement(&stream->refcount);
 }
 
 static ULONG WINAPI stream_Release(IAMMediaStream *iface)
 {
-    return InterlockedDecrement(&teststream_refcount);
+    struct teststream *stream = impl_from_IAMMediaStream(iface);
+    return InterlockedDecrement(&stream->refcount);
 }
 
 static HRESULT WINAPI stream_GetMultiMediaStream(IAMMediaStream *iface, IMultiMediaStream **mmstream)
@@ -526,22 +546,25 @@ static HRESULT WINAPI stream_SetState(IAMMediaStream *iface, FILTER_STATE state)
 
 static HRESULT WINAPI stream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *mmstream)
 {
+    struct teststream *stream = impl_from_IAMMediaStream(iface);
     if (winetest_debug > 1) trace("JoinAMMultiMediaStream(%p)\n", mmstream);
-    teststream_mmstream = mmstream;
+    stream->mmstream = mmstream;
     return S_OK;
 }
 
 static HRESULT WINAPI stream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
 {
+    struct teststream *stream = impl_from_IAMMediaStream(iface);
     if (winetest_debug > 1) trace("JoinFilter(%p)\n", filter);
-    teststream_filter = filter;
+    stream->filter = filter;
     return S_OK;
 }
 
 static HRESULT WINAPI stream_JoinFilterGraph(IAMMediaStream *iface, IFilterGraph *graph)
 {
+    struct teststream *stream = impl_from_IAMMediaStream(iface);
     if (winetest_debug > 1) trace("JoinFilterGraph(%p)\n", graph);
-    teststream_graph = graph;
+    stream->graph = graph;
     return S_OK;
 }
 
@@ -563,7 +586,13 @@ static const IAMMediaStreamVtbl stream_vtbl =
     stream_JoinFilterGraph,
 };
 
-static IAMMediaStream teststream = {&stream_vtbl};
+static void teststream_init(struct teststream *stream)
+{
+    memset(stream, 0, sizeof(*stream));
+    stream->IAMMediaStream_iface.lpVtbl = &stream_vtbl;
+    stream->IPin_iface.lpVtbl = &pin_vtbl;
+    stream->refcount = 1;
+}
 
 #define check_enum_stream(a,b,c,d) check_enum_stream_(__LINE__,a,b,c,d)
 static void check_enum_stream_(int line, IAMMultiMediaStream *mmstream,
@@ -616,6 +645,7 @@ static void test_add_stream(void)
     IMediaStream *video_stream, *audio_stream, *stream;
     IDirectDrawMediaStream *ddraw_stream;
     IMediaStreamFilter *stream_filter;
+    struct teststream teststream;
     IDirectDraw *ddraw, *ddraw2;
     IEnumFilters *enum_filters;
     IBaseFilter *filters[3];
@@ -623,6 +653,8 @@ static void test_add_stream(void)
     ULONG ref, count;
     CLSID clsid;
     HRESULT hr;
+
+    teststream_init(&teststream);
 
     hr = IAMMultiMediaStream_GetFilter(mmstream, &stream_filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -687,9 +719,9 @@ static void test_add_stream(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(stream == (IMediaStream *)&teststream, "Streams didn't match.\n");
     if (hr == S_OK) IMediaStream_Release(stream);
-    todo_wine ok(teststream_mmstream == mmstream, "IAMMultiMediaStream objects didn't match.\n");
-    ok(teststream_filter == stream_filter, "IMediaStreamFilter objects didn't match.\n");
-    todo_wine ok(!!teststream_graph, "Expected a non-NULL graph.\n");
+    todo_wine ok(teststream.mmstream == mmstream, "IAMMultiMediaStream objects didn't match.\n");
+    ok(teststream.filter == stream_filter, "IMediaStreamFilter objects didn't match.\n");
+    todo_wine ok(!!teststream.graph, "Expected a non-NULL graph.\n");
 
     check_enum_stream(mmstream, stream_filter, 0, video_stream);
     check_enum_stream(mmstream, stream_filter, 1, audio_stream);
@@ -725,7 +757,7 @@ static void test_add_stream(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IMediaStream_Release(audio_stream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
-    ok(teststream_refcount == 1, "Got outstanding refcount %d.\n", ref);
+    ok(teststream.refcount == 1, "Got outstanding refcount %d.\n", teststream.refcount);
 
     /* The return parameter is optional. */
 
