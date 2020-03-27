@@ -71,6 +71,16 @@ static const WCHAR target_id_keyW[] = {'T','a','r','g','e','t',' ','I','d',' ','
 static const WCHAR lun_keyW[] = {'L','o','g','i','c','a','l',' ','U','n','i','t',' ','I','d',' ','%','d',0};
 static const WCHAR devnameW[] = {'D','e','v','i','c','e','N','a','m','e',0};
 
+enum fs_type
+{
+    FS_ERROR,    /* error accessing the device */
+    FS_UNKNOWN,  /* unknown file system */
+    FS_FAT1216,
+    FS_FAT32,
+    FS_ISO9660,
+    FS_UDF       /* For reference [E] = Ecma-167.pdf, [U] = udf260.pdf */
+};
+
 struct disk_device
 {
     enum device_type      type;        /* drive type */
@@ -90,6 +100,9 @@ struct volume
     unsigned int          ref;         /* ref count */
     GUID                  guid;        /* volume uuid */
     struct mount_point   *mount;       /* Volume{xxx} mount point */
+    WCHAR                 label[256];  /* volume label */
+    DWORD                 serial;      /* volume serial number */
+    enum fs_type          fs_type;     /* file system type */
 };
 
 struct dos_drive
@@ -203,6 +216,510 @@ static void send_notify( int drive, int code )
     BroadcastSystemMessageW( BSF_FORCEIFHUNG|BSF_QUERY, NULL,
                              WM_DEVICECHANGE, code, (LPARAM)&info );
 }
+
+#define BLOCK_SIZE 2048
+#define SUPERBLOCK_SIZE BLOCK_SIZE
+
+#define CDFRAMES_PERSEC         75
+#define CDFRAMES_PERMIN         (CDFRAMES_PERSEC * 60)
+#define FRAME_OF_ADDR(a)        ((a)[1] * CDFRAMES_PERMIN + (a)[2] * CDFRAMES_PERSEC + (a)[3])
+#define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc)->TrackData[(idx) - (toc)->FirstTrack].Address)
+
+#define GETWORD(buf,off)  MAKEWORD(buf[(off)],buf[(off+1)])
+#define GETLONG(buf,off)  MAKELONG(GETWORD(buf,off),GETWORD(buf,off+2))
+
+static int open_volume_file( const struct volume *volume, const char *file )
+{
+    const char *unix_mount = volume->device->unix_mount;
+    char *path;
+    int fd;
+
+    if (!unix_mount) return -1;
+
+    if (unix_mount[0] == '/')
+    {
+        if (!(path = HeapAlloc( GetProcessHeap(), 0, strlen( unix_mount ) + 1 + strlen( file ) + 1 )))
+            return -1;
+
+        strcpy( path, unix_mount );
+    }
+    else
+    {
+        const char *config_dir = wine_get_config_dir();
+
+        if (!(path = HeapAlloc( GetProcessHeap(), 0, strlen( config_dir )
+                + strlen("/dosdevices/") + strlen(unix_mount) + 1 + strlen( file ) + 1 )))
+            return -1;
+
+        strcpy( path, config_dir );
+        strcat( path, "/dosdevices/" );
+        strcat( path, unix_mount );
+    }
+    strcat( path, "/" );
+    strcat( path, file );
+
+    fd = open( path, O_RDONLY );
+    HeapFree( GetProcessHeap(), 0, path );
+    return fd;
+}
+
+/* get the label by reading it from a file at the root of the filesystem */
+static void get_filesystem_label( struct volume *volume )
+{
+    int fd;
+    ssize_t size;
+    char buffer[256], *p;
+
+    volume->label[0] = 0;
+
+    if ((fd = open_volume_file( volume, ".windows-label" )) == -1)
+        return;
+    size = read( fd, buffer, sizeof(buffer) );
+    close( fd );
+
+    p = buffer + size;
+    while (p > buffer && (p[-1] == ' ' || p[-1] == '\r' || p[-1] == '\n')) p--;
+    *p = 0;
+    if (!MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, volume->label, ARRAY_SIZE(volume->label) ))
+        volume->label[ARRAY_SIZE(volume->label) - 1] = 0;
+}
+
+/* get the serial number by reading it from a file at the root of the filesystem */
+static void get_filesystem_serial( struct volume *volume )
+{
+    int fd;
+    ssize_t size;
+    char buffer[32];
+
+    volume->serial = 0;
+
+    if ((fd = open_volume_file( volume, ".windows-serial" )) == -1)
+        return;
+    size = read( fd, buffer, sizeof(buffer) );
+    close( fd );
+
+    if (size < 0) return;
+    buffer[size] = 0;
+    volume->serial = strtoul( buffer, NULL, 16 );
+}
+
+
+/******************************************************************
+ *		VOLUME_FindCdRomDataBestVoldesc
+ */
+static DWORD VOLUME_FindCdRomDataBestVoldesc( HANDLE handle )
+{
+    BYTE cur_vd_type, max_vd_type = 0;
+    BYTE buffer[0x800];
+    DWORD size, offs, best_offs = 0, extra_offs = 0;
+
+    for (offs = 0x8000; offs <= 0x9800; offs += 0x800)
+    {
+        /* if 'CDROM' occurs at position 8, this is a pre-iso9660 cd, and
+         * the volume label is displaced forward by 8
+         */
+        if (SetFilePointer( handle, offs, NULL, FILE_BEGIN ) != offs) break;
+        if (!ReadFile( handle, buffer, sizeof(buffer), &size, NULL )) break;
+        if (size != sizeof(buffer)) break;
+        /* check for non-ISO9660 signature */
+        if (!memcmp( buffer + 11, "ROM", 3 )) extra_offs = 8;
+        cur_vd_type = buffer[extra_offs];
+        if (cur_vd_type == 0xff) /* voldesc set terminator */
+            break;
+        if (cur_vd_type > max_vd_type)
+        {
+            max_vd_type = cur_vd_type;
+            best_offs = offs + extra_offs;
+        }
+    }
+    return best_offs;
+}
+
+
+/***********************************************************************
+ *           VOLUME_ReadFATSuperblock
+ */
+static enum fs_type VOLUME_ReadFATSuperblock( HANDLE handle, BYTE *buff )
+{
+    DWORD size;
+
+    /* try a fixed disk, with a FAT partition */
+    if (SetFilePointer( handle, 0, NULL, FILE_BEGIN ) != 0 ||
+        !ReadFile( handle, buff, SUPERBLOCK_SIZE, &size, NULL ))
+    {
+        if (GetLastError() == ERROR_BAD_DEV_TYPE) return FS_UNKNOWN;  /* not a real device */
+        return FS_ERROR;
+    }
+
+    if (size < SUPERBLOCK_SIZE) return FS_UNKNOWN;
+
+    /* FIXME: do really all FAT have their name beginning with
+     * "FAT" ? (At least FAT12, FAT16 and FAT32 have :)
+     */
+    if (!memcmp(buff+0x36, "FAT", 3) || !memcmp(buff+0x52, "FAT", 3))
+    {
+        /* guess which type of FAT we have */
+        int reasonable;
+        unsigned int sectors,
+                     sect_per_fat,
+                     total_sectors,
+                     num_boot_sectors,
+                     num_fats,
+                     num_root_dir_ents,
+                     bytes_per_sector,
+                     sectors_per_cluster,
+                     nclust;
+        sect_per_fat = GETWORD(buff, 0x16);
+        if (!sect_per_fat) sect_per_fat = GETLONG(buff, 0x24);
+        total_sectors = GETWORD(buff, 0x13);
+        if (!total_sectors)
+            total_sectors = GETLONG(buff, 0x20);
+        num_boot_sectors = GETWORD(buff, 0x0e);
+        num_fats =  buff[0x10];
+        num_root_dir_ents = GETWORD(buff, 0x11);
+        bytes_per_sector = GETWORD(buff, 0x0b);
+        sectors_per_cluster = buff[0x0d];
+        /* check if the parameters are reasonable and will not cause
+         * arithmetic errors in the calculation */
+        reasonable = num_boot_sectors < total_sectors &&
+                     num_fats < 16 &&
+                     bytes_per_sector >= 512 && bytes_per_sector % 512 == 0 &&
+                     sectors_per_cluster >= 1;
+        if (!reasonable) return FS_UNKNOWN;
+        sectors =  total_sectors - num_boot_sectors - num_fats * sect_per_fat -
+            (num_root_dir_ents * 32 + bytes_per_sector - 1) / bytes_per_sector;
+        nclust = sectors / sectors_per_cluster;
+        if ((buff[0x42] == 0x28 || buff[0x42] == 0x29) &&
+                !memcmp(buff+0x52, "FAT", 3)) return FS_FAT32;
+        if (nclust < 65525)
+        {
+            if ((buff[0x26] == 0x28 || buff[0x26] == 0x29) &&
+                    !memcmp(buff+0x36, "FAT", 3))
+                return FS_FAT1216;
+        }
+    }
+    return FS_UNKNOWN;
+}
+
+
+/***********************************************************************
+ *           VOLUME_ReadCDBlock
+ */
+static BOOL VOLUME_ReadCDBlock( HANDLE handle, BYTE *buff, INT offs )
+{
+    DWORD size, whence = offs >= 0 ? FILE_BEGIN : FILE_END;
+
+    if (SetFilePointer( handle, offs, NULL, whence ) != offs ||
+        !ReadFile( handle, buff, SUPERBLOCK_SIZE, &size, NULL ) ||
+        size != SUPERBLOCK_SIZE)
+        return FALSE;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           VOLUME_ReadCDSuperblock
+ */
+static enum fs_type VOLUME_ReadCDSuperblock( HANDLE handle, BYTE *buff )
+{
+    int i;
+    DWORD offs;
+
+    /* Check UDF first as UDF and ISO9660 structures can coexist on the same medium
+     *  Starting from sector 16, we may find :
+     *  - a CD-ROM Volume Descriptor Set (ISO9660) containing one or more Volume Descriptors
+     *  - an Extended Area (UDF) -- [E] 2/8.3.1 and [U] 2.1.7
+     *  There is no explicit end so read 16 sectors and then give up */
+    for( i=16; i<16+16; i++)
+    {
+        if (!VOLUME_ReadCDBlock(handle, buff, i*BLOCK_SIZE))
+            continue;
+
+        /* We are supposed to check "BEA01", "NSR0x" and "TEA01" IDs + verify tag checksum
+         *  but we assume the volume is well-formatted */
+        if (!memcmp(&buff[1], "BEA01", 5)) return FS_UDF;
+    }
+
+    offs = VOLUME_FindCdRomDataBestVoldesc( handle );
+    if (!offs) return FS_UNKNOWN;
+
+    if (!VOLUME_ReadCDBlock(handle, buff, offs))
+        return FS_ERROR;
+
+    /* check for the iso9660 identifier */
+    if (!memcmp(&buff[1], "CD001", 5)) return FS_ISO9660;
+    return FS_UNKNOWN;
+}
+
+
+/**************************************************************************
+ *                        UDF_Find_PVD
+ * Find the Primary Volume Descriptor
+ */
+static BOOL UDF_Find_PVD( HANDLE handle, BYTE pvd[] )
+{
+    unsigned int i;
+    DWORD offset;
+    INT locations[] = { 256, -1, -257, 512 };
+
+    for(i=0; i<ARRAY_SIZE(locations); i++)
+    {
+        if (!VOLUME_ReadCDBlock(handle, pvd, locations[i]*BLOCK_SIZE))
+            return FALSE;
+
+        /* Tag Identifier of Anchor Volume Descriptor Pointer is 2 -- [E] 3/10.2.1 */
+        if (pvd[0]==2 && pvd[1]==0)
+        {
+            /* Tag location (Uint32) at offset 12, little-endian */
+            offset  = pvd[20 + 0];
+            offset |= pvd[20 + 1] << 8;
+            offset |= pvd[20 + 2] << 16;
+            offset |= pvd[20 + 3] << 24;
+            offset *= BLOCK_SIZE;
+
+            if (!VOLUME_ReadCDBlock(handle, pvd, offset))
+                return FALSE;
+
+            /* Check for the Primary Volume Descriptor Tag Id -- [E] 3/10.1.1 */
+            if (pvd[0]!=1 || pvd[1]!=0)
+                return FALSE;
+
+            /* 8 or 16 bits per character -- [U] 2.1.1 */
+            if (!(pvd[24]==8 || pvd[24]==16))
+                return FALSE;
+
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+/**************************************************************************
+ *                              VOLUME_GetSuperblockLabel
+ */
+static void VOLUME_GetSuperblockLabel( struct volume *volume, HANDLE handle, const BYTE *superblock )
+{
+    const BYTE *label_ptr = NULL;
+    DWORD label_len;
+
+    switch (volume->fs_type)
+    {
+    case FS_ERROR:
+        label_len = 0;
+        break;
+    case FS_UNKNOWN:
+        get_filesystem_label( volume );
+        return;
+    case FS_FAT1216:
+        label_ptr = superblock + 0x2b;
+        label_len = 11;
+        break;
+    case FS_FAT32:
+        label_ptr = superblock + 0x47;
+        label_len = 11;
+        break;
+    case FS_ISO9660:
+        {
+            BYTE ver = superblock[0x5a];
+
+            if (superblock[0x58] == 0x25 && superblock[0x59] == 0x2f &&  /* Unicode ID */
+                ((ver == 0x40) || (ver == 0x43) || (ver == 0x45)))
+            { /* yippee, unicode */
+                unsigned int i;
+
+                for (i = 0; i < 16; i++)
+                    volume->label[i] = (superblock[40+2*i] << 8) | superblock[41+2*i];
+                volume->label[i] = 0;
+                while (i && volume->label[i-1] == ' ') volume->label[--i] = 0;
+                return;
+            }
+            label_ptr = superblock + 40;
+            label_len = 32;
+            break;
+        }
+    case FS_UDF:
+        {
+            BYTE pvd[BLOCK_SIZE];
+
+            if(!UDF_Find_PVD(handle, pvd))
+            {
+                label_len = 0;
+                break;
+            }
+
+            /* [E] 3/10.1.4 and [U] 2.1.1 */
+            if(pvd[24]==8)
+            {
+                label_ptr = pvd + 24 + 1;
+                label_len = pvd[24+32-1];
+                break;
+            }
+            else
+            {
+                unsigned int i;
+
+                label_len = 1 + pvd[24+32-1];
+                for (i = 0; i < label_len; i += 2)
+                    volume->label[i/2] = (pvd[24+1+i] << 8) | pvd[24+1+i+1];
+                volume->label[label_len] = 0;
+                return;
+            }
+        }
+    }
+    if (label_len) RtlMultiByteToUnicodeN( volume->label, sizeof(volume->label) - sizeof(WCHAR),
+                                           &label_len, (const char *)label_ptr, label_len );
+    label_len /= sizeof(WCHAR);
+    volume->label[label_len] = 0;
+    while (label_len && volume->label[label_len-1] == ' ') volume->label[--label_len] = 0;
+}
+
+
+/**************************************************************************
+ *                              UDF_Find_FSD_Sector
+ * Find the File Set Descriptor used to compute the serial of a UDF volume
+ */
+static int UDF_Find_FSD_Sector( HANDLE handle, BYTE block[] )
+{
+    int i, PVD_sector, PD_sector, PD_length;
+
+    if(!UDF_Find_PVD(handle,block))
+        goto default_sector;
+
+    /* Retrieve the tag location of the PVD -- [E] 3/7.2 */
+    PVD_sector  = block[12 + 0];
+    PVD_sector |= block[12 + 1] << 8;
+    PVD_sector |= block[12 + 2] << 16;
+    PVD_sector |= block[12 + 3] << 24;
+
+    /* Find the Partition Descriptor */
+    for(i=PVD_sector+1; ; i++)
+    {
+        if(!VOLUME_ReadCDBlock(handle, block, i*BLOCK_SIZE))
+            goto default_sector;
+
+        /* Partition Descriptor Tag Id -- [E] 3/10.5.1 */
+        if(block[0]==5 && block[1]==0)
+            break;
+
+        /* Terminating Descriptor Tag Id -- [E] 3/10.9.1 */
+        if(block[0]==8 && block[1]==0)
+            goto default_sector;
+    }
+
+    /* Find the partition starting location -- [E] 3/10.5.8 */
+    PD_sector  = block[188 + 0];
+    PD_sector |= block[188 + 1] << 8;
+    PD_sector |= block[188 + 2] << 16;
+    PD_sector |= block[188 + 3] << 24;
+
+    /* Find the partition length -- [E] 3/10.5.9 */
+    PD_length  = block[192 + 0];
+    PD_length |= block[192 + 1] << 8;
+    PD_length |= block[192 + 2] << 16;
+    PD_length |= block[192 + 3] << 24;
+
+    for(i=PD_sector; i<PD_sector+PD_length; i++)
+    {
+        if(!VOLUME_ReadCDBlock(handle, block, i*BLOCK_SIZE))
+            goto default_sector;
+
+        /* File Set Descriptor Tag Id -- [E] 3/14.1.1 */
+        if(block[0]==0 && block[1]==1)
+            return i;
+    }
+
+default_sector:
+    WARN("FSD sector not found, serial may be incorrect\n");
+    return 257;
+}
+
+
+/**************************************************************************
+ *                              VOLUME_GetSuperblockSerial
+ */
+static void VOLUME_GetSuperblockSerial( struct volume *volume, HANDLE handle, const BYTE *superblock )
+{
+    int FSD_sector;
+    BYTE block[BLOCK_SIZE];
+
+    switch (volume->fs_type)
+    {
+    case FS_ERROR:
+        break;
+    case FS_UNKNOWN:
+        get_filesystem_serial( volume );
+        break;
+    case FS_FAT1216:
+        volume->serial = GETLONG( superblock, 0x27 );
+        break;
+    case FS_FAT32:
+        volume->serial = GETLONG( superblock, 0x43 );
+        break;
+    case FS_UDF:
+        FSD_sector = UDF_Find_FSD_Sector(handle, block);
+        if (!VOLUME_ReadCDBlock(handle, block, FSD_sector*BLOCK_SIZE))
+            break;
+        superblock = block;
+        /* fallthrough */
+    case FS_ISO9660:
+        {
+            BYTE sum[4];
+            int i;
+
+            sum[0] = sum[1] = sum[2] = sum[3] = 0;
+            for (i = 0; i < 2048; i += 4)
+            {
+                /* DON'T optimize this into DWORD !! (breaks overflow) */
+                sum[0] += superblock[i+0];
+                sum[1] += superblock[i+1];
+                sum[2] += superblock[i+2];
+                sum[3] += superblock[i+3];
+            }
+            /*
+             * OK, another braindead one... argh. Just believe it.
+             * Me$$ysoft chose to reverse the serial number in NT4/W2K.
+             * It's true and nobody will ever be able to change it.
+             */
+            if ((GetVersion() & 0x80000000) || volume->fs_type == FS_UDF)
+                volume->serial = (sum[3] << 24) | (sum[2] << 16) | (sum[1] << 8) | sum[0];
+            else
+                volume->serial = (sum[0] << 24) | (sum[1] << 16) | (sum[2] << 8) | sum[3];
+        }
+    }
+}
+
+
+/**************************************************************************
+ *                              VOLUME_GetAudioCDSerial
+ */
+static DWORD VOLUME_GetAudioCDSerial( const CDROM_TOC *toc )
+{
+    DWORD serial = 0;
+    int i;
+
+    for (i = 0; i <= toc->LastTrack - toc->FirstTrack; i++)
+        serial += ((toc->TrackData[i].Address[1] << 16) |
+                   (toc->TrackData[i].Address[2] << 8) |
+                   toc->TrackData[i].Address[3]);
+
+    /*
+     * dwStart, dwEnd collect the beginning and end of the disc respectively, in
+     * frames.
+     * There it is collected for correcting the serial when there are less than
+     * 3 tracks.
+     */
+    if (toc->LastTrack - toc->FirstTrack + 1 < 3)
+    {
+        DWORD dwStart = FRAME_OF_TOC(toc, toc->FirstTrack);
+        DWORD dwEnd = FRAME_OF_TOC(toc, toc->LastTrack + 1);
+        serial += dwEnd - dwStart;
+    }
+    return serial;
+}
+
 
 /* create the disk device for a given volume */
 static NTSTATUS create_disk_device( enum device_type type, struct disk_device **device_ret )
@@ -473,6 +990,72 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
     return NULL;
 }
 
+static BOOL get_volume_device_info( struct volume *volume )
+{
+    const char *unix_device = volume->device->unix_device;
+    ANSI_STRING unix_name;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE handle;
+    NTSTATUS ret;
+    CDROM_TOC toc;
+    DWORD size;
+    BYTE superblock[SUPERBLOCK_SIZE];
+    IO_STATUS_BLOCK io;
+
+    if (!unix_device)
+        return FALSE;
+
+    RtlInitAnsiString( &unix_name, unix_device );
+    if ((ret = wine_unix_to_nt_file_name( &unix_name, &nt_name )))
+    {
+        ERR("Failed to convert %s to NT, status %#x\n", debugstr_a(unix_device), ret);
+        return FALSE;
+    }
+
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if ((ret = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT )))
+    {
+        WARN("Failed to open %s, status %#x\n", debugstr_a(unix_device), ret);
+        RtlFreeUnicodeString( &nt_name );
+        return FALSE;
+    }
+
+    if (DeviceIoControl( handle, IOCTL_CDROM_READ_TOC, NULL, 0, &toc, sizeof(toc), &size, 0 ))
+    {
+        if (!(toc.TrackData[0].Control & 0x04))  /* audio track */
+        {
+            static const WCHAR audiocdW[] = {'A','u','d','i','o',' ','C','D',0};
+            TRACE( "%s: found audio CD\n", debugstr_a(unix_device) );
+            lstrcpynW( volume->label, audiocdW, ARRAY_SIZE(volume->label) );
+            volume->serial = VOLUME_GetAudioCDSerial( &toc );
+            volume->fs_type = FS_ISO9660;
+            CloseHandle( handle );
+            return TRUE;
+        }
+        volume->fs_type = VOLUME_ReadCDSuperblock( handle, superblock );
+    }
+    else
+    {
+        volume->fs_type = VOLUME_ReadFATSuperblock( handle, superblock );
+        if (volume->fs_type == FS_UNKNOWN) volume->fs_type = VOLUME_ReadCDSuperblock( handle, superblock );
+    }
+
+    TRACE( "%s: found fs type %d\n", debugstr_a(unix_device), volume->fs_type );
+    if (volume->fs_type == FS_ERROR)
+    {
+        CloseHandle( handle );
+        return FALSE;
+    }
+
+    VOLUME_GetSuperblockLabel( volume, handle, superblock );
+    VOLUME_GetSuperblockSerial( volume, handle, superblock );
+
+    CloseHandle( handle );
+    return TRUE;
+}
+
 /* change the information for an existing volume */
 static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive, const char *device,
                                  const char *mount_point, enum device_type type, const GUID *guid )
@@ -505,6 +1088,21 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
     }
     disk_device->unix_device = strdupA( device );
     disk_device->unix_mount = strdupA( mount_point );
+
+    if (!get_volume_device_info( volume ))
+    {
+        if (volume->device->type == DEVICE_CDROM)
+            volume->fs_type = FS_ISO9660;
+        else if (volume->device->type == DEVICE_DVD)
+            volume->fs_type = FS_UDF;
+        else
+            volume->fs_type = FS_UNKNOWN;
+
+        get_filesystem_label( volume );
+        get_filesystem_serial( volume );
+    }
+
+    TRACE("fs_type %#x, label %s, serial %08x\n", volume->fs_type, debugstr_w(volume->label), volume->serial);
 
     if (guid && memcmp( &volume->guid, guid, sizeof(volume->guid) ))
     {
