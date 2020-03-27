@@ -1599,7 +1599,7 @@ static void test_named_items(void)
     CHECK_CALLED(OnStateChange_CONNECTED);
     CHECK_CALLED_MULTI(OnEnterScript, 5);
     CHECK_CALLED_MULTI(OnLeaveScript, 5);
-    todo_wine CHECK_CALLED(GetIDsOfNames_persistent);
+    CHECK_CALLED(GetIDsOfNames_persistent);
     test_state(script, SCRIPTSTATE_CONNECTED);
 
     dispex2 = get_script_dispatch(script, L"persistent");
@@ -1619,7 +1619,6 @@ static void test_named_items(void)
     SET_EXPECT(OnLeaveScript);
     hr = IActiveScriptParse_ParseScriptText(parse, L"this", L"persistent", NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &var, NULL);
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
-    todo_wine
     ok(V_VT(&var) == VT_DISPATCH && V_DISPATCH(&var) == &persistent_named_item,
         "Unexpected 'this': V_VT = %d, V_DISPATCH = %p\n", V_VT(&var), V_DISPATCH(&var));
     VariantClear(&var);
@@ -1634,7 +1633,6 @@ static void test_named_items(void)
     ok(hr == S_OK, "ParseScriptText failed: %08x\n", hr);
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
-    todo_wine
     CHECK_CALLED(GetIDsOfNames_persistent);
 
     SET_EXPECT(OnEnterScript);
@@ -1645,7 +1643,6 @@ static void test_named_items(void)
     ok(FAILED(hr), "ParseScriptText returned: %08x\n", hr);
     CHECK_CALLED(OnEnterScript);
     CHECK_CALLED(OnLeaveScript);
-    todo_wine
     CHECK_CALLED(GetIDsOfNames_persistent);
     CHECK_CALLED(OnScriptError);
 

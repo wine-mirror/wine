@@ -757,6 +757,9 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
             hres = retrieve_named_item_disp(pass, item);
             if(FAILED(hres)) return hres;
         }
+
+        /* For some reason, CODEONLY flag is lost in re-initialized scripts */
+        item->flags &= ~SCRIPTITEM_CODEONLY;
     }
 
     This->site = pass;
