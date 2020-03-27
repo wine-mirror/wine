@@ -77,6 +77,7 @@ struct gstdemux_source
     IQualityControl IQualityControl_iface;
 
     GstPad *their_src, *post_sink, *post_src, *my_sink;
+    GstElement *flip;
     AM_MEDIA_TYPE mt;
     HANDLE caps_event;
     GstSegment *segment;
@@ -1010,15 +1011,13 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
             return;
         }
 
-        /* GStreamer outputs video top-down, but DirectShow expects bottom-up. */
+        /* GStreamer outputs RGB video top-down, but DirectShow expects bottom-up. */
         if (!(flip = gst_element_factory_make("videoflip", NULL)))
         {
             ERR("Failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             return;
         }
-
-        gst_util_set_object_arg(G_OBJECT(flip), "method", "vertical-flip");
 
         gst_bin_add(GST_BIN(This->container), vconv); /* bin takes ownership */
         gst_element_sync_state_with_parent(vconv);
@@ -1029,6 +1028,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
 
         pin->post_sink = gst_element_get_static_pad(vconv, "sink");
         pin->post_src = gst_element_get_static_pad(flip, "src");
+        pin->flip = flip;
     }
     else if (!strcmp(typename, "audio/x-raw"))
     {
@@ -2053,6 +2053,9 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
     {
         VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)pin->pin.pin.mt.pbFormat;
         buffer_size = format->bmiHeader.biSizeImage;
+
+        gst_util_set_object_arg(G_OBJECT(pin->flip), "method",
+                format->bmiHeader.biCompression == BI_RGB ? "vertical-flip" : "none");
     }
     else if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_WaveFormatEx)
             && (IsEqualGUID(&pin->pin.pin.mt.subtype, &MEDIASUBTYPE_PCM)
