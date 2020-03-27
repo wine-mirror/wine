@@ -2102,7 +2102,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     {
                         ret = ntdll_umbstowcs( kde[1].d_name, strlen(kde[1].d_name),
                                                buffer, MAX_DIR_ENTRY_LEN );
-                        if (ret == length && !strncmpiW( buffer, name, length))
+                        if (ret == length && !RtlCompareUnicodeStrings( buffer, ret, name, ret, TRUE ))
                         {
                             strcpy( unix_name + pos, kde[1].d_name );
                             RtlLeaveCriticalSection( &dir_section );
@@ -2112,7 +2112,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     }
                     ret = ntdll_umbstowcs( kde[0].d_name, strlen(kde[0].d_name),
                                            buffer, MAX_DIR_ENTRY_LEN );
-                    if (ret == length && !strncmpiW( buffer, name, length))
+                    if (ret == length && !RtlCompareUnicodeStrings( buffer, ret, name, ret, TRUE ))
                     {
                         strcpy( unix_name + pos,
                                 kde[1].d_name[0] ? kde[1].d_name : kde[0].d_name );
@@ -2146,7 +2146,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     while ((de = readdir( dir )))
     {
         ret = ntdll_umbstowcs( de->d_name, strlen(de->d_name), buffer, MAX_DIR_ENTRY_LEN );
-        if (ret == length && !strncmpiW( buffer, name, length ))
+        if (ret == length && !RtlCompareUnicodeStrings( buffer, ret, name, ret, TRUE ))
         {
             strcpy( unix_name + pos, de->d_name );
             closedir( dir );

@@ -903,16 +903,20 @@ NTSTATUS WINAPI RtlDestroyEnvironment(PWSTR env)
 
 static LPCWSTR ENV_FindVariable(PCWSTR var, PCWSTR name, unsigned namelen)
 {
-    for (; *var; var += strlenW(var) + 1)
+    while (*var)
     {
         /* match var names, but avoid setting a var with a name including a '='
          * (a starting '=' is valid though)
          */
-        if (strncmpiW(var, name, namelen) == 0 && var[namelen] == '=' &&
-            strchrW(var + 1, '=') == var + namelen) 
+        unsigned int len = strlenW( var );
+        if (len > namelen &&
+            var[namelen] == '=' &&
+            !RtlCompareUnicodeStrings( var, namelen, name, namelen, TRUE ) &&
+            strchrW(var + 1, '=') == var + namelen)
         {
             return var + namelen + 1;
         }
+        var += len + 1;
     }
     return NULL;
 }
@@ -987,7 +991,7 @@ void WINAPI RtlSetCurrentEnvironment(PWSTR new_env, PWSTR* old_env)
 NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name, 
                                           PUNICODE_STRING value)
 {
-    INT         len, old_size;
+    INT varlen, len, old_size;
     LPWSTR      p, env;
     NTSTATUS    nts = STATUS_VARIABLE_NOT_FOUND;
 
@@ -1011,9 +1015,11 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     old_size = get_env_length( env );
 
     /* Find a place to insert the string */
-    for (p = env; *p; p += strlenW(p) + 1)
+    for (p = env; *p; p += varlen + 1)
     {
-        if (!strncmpiW(name->Buffer, p, len) && (p[len] == '=')) break;
+        varlen = strlenW(p);
+        if (varlen > len && p[len] == '=' &&
+            !RtlCompareUnicodeStrings( name->Buffer, len, p, len, TRUE )) break;
     }
     if (!value && !*p) goto done;  /* Value to remove doesn't exist */
 
