@@ -2326,9 +2326,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
     pVMR->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = strmbase_renderer_init(&pVMR->renderer, outer, clsid, L"VMR Input0", &renderer_ops);
-    if (FAILED(hr))
-        goto fail;
+    strmbase_renderer_init(&pVMR->renderer, outer, clsid, L"VMR Input0", &renderer_ops);
 
     hr = video_window_init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
             &pVMR->renderer.filter, &pVMR->renderer.sink.pin, &renderer_BaseWindowFuncTable);

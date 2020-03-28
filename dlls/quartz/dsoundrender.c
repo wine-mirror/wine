@@ -825,12 +825,8 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
     memset(object, 0, sizeof(*object));
 
-    if (FAILED(hr = strmbase_renderer_init(&object->renderer, outer,
-            &CLSID_DSoundRender, L"Audio Input pin (rendered)", &renderer_ops)))
-    {
-        CoTaskMemFree(object);
-        return hr;
-    }
+    strmbase_renderer_init(&object->renderer, outer,
+            &CLSID_DSoundRender, L"Audio Input pin (rendered)", &renderer_ops);
 
     if (FAILED(hr = system_clock_create(&object->renderer.filter.IUnknown_inner, &object->system_clock)))
     {

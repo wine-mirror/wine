@@ -716,11 +716,8 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
 
     pVideoRenderer->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = strmbase_renderer_init(&pVideoRenderer->renderer, outer,
+    strmbase_renderer_init(&pVideoRenderer->renderer, outer,
             &CLSID_VideoRenderer, L"In", &renderer_ops);
-
-    if (FAILED(hr))
-        goto fail;
 
     hr = video_window_init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
             &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.sink.pin,

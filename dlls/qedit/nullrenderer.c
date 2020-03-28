@@ -64,20 +64,15 @@ static const struct strmbase_renderer_ops renderer_ops =
 
 HRESULT null_renderer_create(IUnknown *outer, IUnknown **out)
 {
-    HRESULT hr;
     NullRendererImpl *pNullRenderer;
 
     *out = NULL;
 
     pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
 
-    hr = strmbase_renderer_init(&pNullRenderer->renderer, outer,
+    strmbase_renderer_init(&pNullRenderer->renderer, outer,
             &CLSID_NullRenderer, L"In", &renderer_ops);
 
-    if (FAILED(hr))
-        CoTaskMemFree(pNullRenderer);
-    else
-        *out = &pNullRenderer->renderer.filter.IUnknown_inner;
-
+    *out = &pNullRenderer->renderer.filter.IUnknown_inner;
     return S_OK;
 }
