@@ -43,7 +43,7 @@ typedef struct AVIDecImpl
 
     struct strmbase_source source;
     IQualityControl source_IQualityControl_iface;
-    IUnknown *seeking;
+    struct strmbase_passthrough passthrough;
 
     struct strmbase_sink sink;
 
@@ -300,7 +300,7 @@ static HRESULT avi_decompressor_source_query_interface(struct strmbase_pin *ifac
     if (IsEqualGUID(iid, &IID_IQualityControl))
         *out = &filter->source_IQualityControl_iface;
     else if (IsEqualGUID(iid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(filter->seeking, iid, out);
+        *out = &filter->passthrough.IMediaSeeking_iface;
     else
         return E_NOINTERFACE;
 
@@ -548,10 +548,10 @@ static void avi_decompressor_destroy(struct strmbase_filter *iface)
 
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->source);
+    strmbase_passthrough_cleanup(&filter->passthrough);
 
     filter->stream_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&filter->stream_cs);
-    IUnknown_Release(filter->seeking);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
 
@@ -603,8 +603,6 @@ static const struct strmbase_filter_ops filter_ops =
 HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
 {
     AVIDecImpl *object;
-    ISeekingPassThru *passthrough;
-    HRESULT hr;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -618,21 +616,9 @@ HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
 
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
     object->source_IQualityControl_iface.lpVtbl = &source_qc_vtbl;
-
-    if (FAILED(hr = CoCreateInstance(&CLSID_SeekingPassThru,
-            (IUnknown *)&object->source.pin.IPin_iface, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void **)&object->seeking)))
-    {
-        strmbase_sink_cleanup(&object->sink);
-        strmbase_source_cleanup(&object->source);
-        strmbase_filter_cleanup(&object->filter);
-        free(object);
-        return hr;
-    }
-
-    IUnknown_QueryInterface(object->seeking, &IID_ISeekingPassThru, (void **)&passthrough);
-    ISeekingPassThru_Init(passthrough, FALSE, &object->sink.pin.IPin_iface);
-    ISeekingPassThru_Release(passthrough);
+    strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
+    ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
+            &object->sink.pin.IPin_iface);
 
     TRACE("Created AVI decompressor %p.\n", object);
     *out = &object->filter.IUnknown_inner;
