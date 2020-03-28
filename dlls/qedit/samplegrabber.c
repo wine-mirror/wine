@@ -39,8 +39,7 @@ typedef struct _SG_Impl {
     ISampleGrabber ISampleGrabber_iface;
 
     struct strmbase_source source;
-    /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
-    IUnknown *seekthru_unk;
+    struct strmbase_passthrough passthrough;
 
     struct strmbase_sink sink;
     AM_MEDIA_TYPE filter_mt;
@@ -86,8 +85,6 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         ISampleGrabberCB_Release(This->grabberIface);
     FreeMediaType(&This->filter_mt);
     CoTaskMemFree(This->bufferData);
-    if(This->seekthru_unk)
-        IUnknown_Release(This->seekthru_unk);
 }
 
 static struct strmbase_pin *sample_grabber_get_pin(struct strmbase_filter *iface, unsigned int index)
@@ -108,6 +105,7 @@ static void sample_grabber_destroy(struct strmbase_filter *iface)
     SampleGrabber_cleanup(filter);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->source);
+    strmbase_passthrough_cleanup(&filter->passthrough);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
 }
@@ -550,10 +548,15 @@ static HRESULT sample_grabber_source_query_interface(struct strmbase_pin *iface,
 {
     SG_Impl *filter = impl_from_source_pin(iface);
 
-    if (IsEqualGUID(iid, &IID_IMediaPosition) || IsEqualGUID(iid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(filter->seekthru_unk, iid, out);
+    if (IsEqualGUID(iid, &IID_IMediaPosition))
+        *out = &filter->passthrough.IMediaPosition_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->passthrough.IMediaSeeking_iface;
     else
         return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT sample_grabber_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -637,8 +640,6 @@ static const struct strmbase_source_ops source_ops =
 HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out)
 {
     SG_Impl* obj = NULL;
-    ISeekingPassThru *passthru;
-    HRESULT hr;
 
     obj = CoTaskMemAlloc(sizeof(SG_Impl));
     if (NULL == obj) {
@@ -652,7 +653,10 @@ HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out)
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
 
     strmbase_sink_init(&obj->sink, &obj->filter, L"In", &sink_ops, NULL);
+
     strmbase_source_init(&obj->source, &obj->filter, L"Out", &source_ops);
+    strmbase_passthrough_init(&obj->passthrough, (IUnknown *)&obj->source.pin.IPin_iface);
+    ISeekingPassThru_Init(&obj->passthrough.ISeekingPassThru_iface, FALSE, &obj->sink.pin.IPin_iface);
 
     obj->allocator = NULL;
     obj->grabberIface = NULL;
@@ -660,14 +664,6 @@ HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out)
     obj->oneShot = OneShot_None;
     obj->bufferLen = -1;
     obj->bufferData = NULL;
-
-    hr = CoCreateInstance(&CLSID_SeekingPassThru, &obj->filter.IUnknown_inner,
-            CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&obj->seekthru_unk);
-    if(hr)
-        return hr;
-    IUnknown_QueryInterface(obj->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-    ISeekingPassThru_Init(passthru, FALSE, &obj->sink.pin.IPin_iface);
-    ISeekingPassThru_Release(passthru);
 
     *out = &obj->filter.IUnknown_inner;
     return S_OK;
