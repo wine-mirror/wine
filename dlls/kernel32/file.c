@@ -507,11 +507,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
                 || !MoveFileExW( lpReplacedFileName, temp_file, MOVEFILE_REPLACE_EXISTING ))
             return FALSE;
 
-        if (!DeleteFileW( temp_file ))
-        {
-            SetLastError( ERROR_UNABLE_TO_REMOVE_REPLACED );
-            return FALSE;
-        }
+        DeleteFileW( temp_file );
     }
 
     /*

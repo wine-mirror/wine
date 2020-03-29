@@ -3841,12 +3841,12 @@ static void test_ReplaceFileA(void)
     ok(ret, "got error %u\n", GetLastError());
 
     ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %u\n", GetLastError());
 
     CloseHandle(mapping);
     CloseHandle(hReplacedFile);
     ret = DeleteFileA(replaced);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %u\n", GetLastError());
 }
 
 /*
