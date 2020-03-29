@@ -69,6 +69,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 #ifndef N_STAB
 #define N_STAB		0xe0
 #endif
+#ifndef N_PEXT
+#define N_PEXT		0x10
+#endif
 #ifndef N_TYPE
 #define N_TYPE		0x1e
 #endif
@@ -82,6 +85,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 #endif
 #ifndef N_ABS
 #define N_ABS		0x02
+#endif
+#ifndef N_SECT
+#define N_SECT		0x0e
 #endif
 
 #define N_GSYM		0x20
@@ -1643,16 +1649,13 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             /* Always ignore these, they seem to be used only on Darwin. */
             break;
         case N_ABS:
-#ifdef N_SECT
         case N_SECT:
-#endif
             /* FIXME: Other definition types (N_TEXT, N_DATA, N_BSS, ...)? */
             if (callback)
             {
                 BOOL is_public = (stab_ptr->n_type & N_EXT);
                 BOOL is_global = is_public;
 
-#ifdef N_PEXT
                 /* "private extern"; shared among compilation units in a shared
                  * library, but not accessible from outside the library. */
                 if (stab_ptr->n_type & N_PEXT)
@@ -1660,7 +1663,6 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                     is_public = FALSE;
                     is_global = TRUE;
                 }
-#endif
 
                 if (*ptr == '_') ptr++;
                 stab_strcpy(symname, sizeof(symname), ptr);
