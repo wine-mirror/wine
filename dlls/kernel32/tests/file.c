@@ -1795,7 +1795,8 @@ static void test_DeleteFileA( void )
 {
     BOOL ret;
     char temp_path[MAX_PATH], temp_file[MAX_PATH];
-    HANDLE hfile;
+    HANDLE hfile, mapping;
+    char **argv;
 
     ret = DeleteFileA(NULL);
     ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER ||
@@ -1842,6 +1843,28 @@ static void test_DeleteFileA( void )
         "Expected ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
     ret = RemoveDirectoryA("testdir");
     ok(ret, "Remove a directory failed, got error %d\n", GetLastError());
+
+    winetest_get_mainargs(&argv);
+
+    ret = CopyFileA(argv[0], temp_file, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    hfile = CreateFileA(temp_file, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    mapping = CreateFileMappingA(hfile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
+    ok(!!mapping, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteFileA(temp_file);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+
+    CloseHandle(mapping);
+
+    ret = DeleteFileA(temp_file);
+    ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(hfile);
 }
 
 static void test_DeleteFileW( void )
@@ -3540,7 +3563,7 @@ static BOOL check_file_time( const FILETIME *ft1, const FILETIME *ft2, UINT tole
 static void test_ReplaceFileA(void)
 {
     char replaced[MAX_PATH], replacement[MAX_PATH], backup[MAX_PATH];
-    HANDLE hReplacedFile, hReplacementFile, hBackupFile;
+    HANDLE hReplacedFile, hReplacementFile, hBackupFile, mapping;
     static const char replacedData[] = "file-to-replace";
     static const char replacementData[] = "new-file";
     static const char backupData[] = "backup-file";
@@ -3549,6 +3572,7 @@ static void test_ReplaceFileA(void)
     char temp_path[MAX_PATH];
     DWORD ret;
     BOOL retok, removeBackup = FALSE;
+    char **argv;
 
     if (!pReplaceFileA)
     {
@@ -3786,6 +3810,43 @@ static void test_ReplaceFileA(void)
            broken(GetLastError() == ERROR_ACCESS_DENIED), /* win2k */
            "DeleteFileA: error (backup) %d\n", GetLastError());
     }
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, replaced);
+    ok(ret, "got error %u\n", GetLastError());
+    hReplacedFile = CreateFileA(replaced, 0, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacedFile != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(hReplacedFile);
+    ret = DeleteFileA(replaced);
+    ok(ret, "got error %u\n", GetLastError());
+
+    winetest_get_mainargs(&argv);
+
+    ret = CopyFileA(argv[0], replaced, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    hReplacedFile = CreateFileA(replaced, GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hReplacedFile != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    mapping = CreateFileMappingA(hReplacedFile, NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL);
+    ok(!!mapping, "got error %u\n", GetLastError());
+
+    ret = GetTempFileNameA(temp_path, prefix, 0, replacement);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = ReplaceFileA(replaced, replacement, NULL, 0, 0, 0);
+    todo_wine ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(mapping);
+    CloseHandle(hReplacedFile);
+    ret = DeleteFileA(replaced);
+    todo_wine ok(ret, "got error %u\n", GetLastError());
 }
 
 /*
@@ -3847,9 +3908,10 @@ static void test_ReplaceFileW(void)
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "SetFileAttributesW: error setting to read only %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = pReplaceFileW(replaced, replacement, backup, 0, 0, 0);
-    ok(ret != ERROR_UNABLE_TO_REMOVE_REPLACED,
-        "ReplaceFileW: unexpected error %d\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
     ret = SetFileAttributesW(replaced, FILE_ATTRIBUTE_NORMAL);
     ok(ret || GetLastError() == ERROR_ACCESS_DENIED,
        "SetFileAttributesW: error setting to normal %d\n", GetLastError());
