@@ -60,6 +60,7 @@
 #include "winnls.h"
 
 #include "dbghelp_private.h"
+#include "image_private.h"
 
 #include "wine/debug.h"
 
@@ -111,15 +112,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 #define N_LBRAC		0xc0
 #define N_EXCL		0xc2
 #define N_RBRAC		0xe0
-
-struct stab_nlist
-{
-    unsigned            n_strx;
-    unsigned char       n_type;
-    char                n_other;
-    short               n_desc;
-    unsigned            n_value;
-};
 
 static void stab_strcpy(char* dest, int sz, const char* source)
 {
