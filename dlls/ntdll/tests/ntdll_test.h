@@ -1,5 +1,5 @@
 /*
- * Unit test suite for ntdll path functions
+ * Unit test suite for ntdll functions
  *
  * Copyright 2003 Eric Pouech
  *
