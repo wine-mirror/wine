@@ -386,7 +386,6 @@ todo_wine
             }
 
             hr = IDirectorySearch_FreeColumn(ds, &col);
-todo_wine
             ok(hr == S_OK, "got %#x\n", hr);
         }
 

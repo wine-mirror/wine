@@ -1446,8 +1446,13 @@ exit:
 
 static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COLUMN col)
 {
-    FIXME("%p,%p: stub\n", iface, col);
-    return E_NOTIMPL;
+    TRACE("%p,%p\n", iface, col);
+
+    if (!col) return E_ADS_BAD_PARAMETER;
+
+    heap_free(col->pADsValues);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI search_CloseSearchHandle(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
