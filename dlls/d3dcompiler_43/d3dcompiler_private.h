@@ -700,7 +700,7 @@ struct hlsl_ir_var
     const struct reg_reservation *reg_reservation;
     struct list scope_entry, param_entry;
 
-    struct hlsl_var_allocation *allocation;
+    unsigned int first_write, last_read;
 };
 
 struct hlsl_ir_function
