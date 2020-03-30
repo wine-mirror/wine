@@ -179,7 +179,7 @@ exit:
     return ret;
 }
 
-#ifdef HAVE_LDAP_H
+#ifdef HAVE_LDAP
 
 static int sasl_interact( LDAP *ld, unsigned flags, void *defaults, void *interact )
 {
@@ -219,7 +219,7 @@ static int sasl_interact( LDAP *ld, unsigned flags, void *defaults, void *intera
 #endif /* HAVE_SASL_SASL_H */
 }
 
-#endif /* HAVE_LDAP_H */
+#endif /* HAVE_LDAP */
 
 /***********************************************************************
  *      ldap_bind_sW     (WLDAP32.@)
