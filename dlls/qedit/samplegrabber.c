@@ -107,7 +107,7 @@ static void sample_grabber_destroy(struct strmbase_filter *iface)
     strmbase_source_cleanup(&filter->source);
     strmbase_passthrough_cleanup(&filter->passthrough);
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
 static HRESULT sample_grabber_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
@@ -639,32 +639,27 @@ static const struct strmbase_source_ops source_ops =
 
 HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out)
 {
-    SG_Impl* obj = NULL;
+    SG_Impl *object;
 
-    obj = CoTaskMemAlloc(sizeof(SG_Impl));
-    if (NULL == obj) {
-        *out = NULL;
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
-    }
-    ZeroMemory(obj, sizeof(SG_Impl));
 
-    strmbase_filter_init(&obj->filter, outer, &CLSID_SampleGrabber, &filter_ops);
-    obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
-    obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
+    strmbase_filter_init(&object->filter, outer, &CLSID_SampleGrabber, &filter_ops);
+    object->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
+    object->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
 
-    strmbase_sink_init(&obj->sink, &obj->filter, L"In", &sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
 
-    strmbase_source_init(&obj->source, &obj->filter, L"Out", &source_ops);
-    strmbase_passthrough_init(&obj->passthrough, (IUnknown *)&obj->source.pin.IPin_iface);
-    ISeekingPassThru_Init(&obj->passthrough.ISeekingPassThru_iface, FALSE, &obj->sink.pin.IPin_iface);
+    strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+    strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
+    ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
+            &object->sink.pin.IPin_iface);
 
-    obj->allocator = NULL;
-    obj->grabberIface = NULL;
-    obj->grabberMethod = -1;
-    obj->oneShot = OneShot_None;
-    obj->bufferLen = -1;
-    obj->bufferData = NULL;
+    object->grabberMethod = -1;
+    object->oneShot = OneShot_None;
+    object->bufferLen = -1;
 
-    *out = &obj->filter.IUnknown_inner;
+    TRACE("Created sample grabber %p.\n", object);
+    *out = &object->filter.IUnknown_inner;
     return S_OK;
 }
