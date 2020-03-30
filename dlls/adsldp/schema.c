@@ -183,7 +183,7 @@ static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
     while (*p)
     {
         while (is_space(*p)) p++;
-        if (*p == ')') break;
+        if (*p == ')') return TRUE;
 
         if (!wcsnicmp(p, L"NAME", 4))
         {
@@ -228,7 +228,10 @@ static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
         }
     }
 
-    return TRUE;
+    WARN("attribute definition is not terminated\n");
+
+    free_attribute_type(at);
+    return FALSE;
 }
 
 struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
