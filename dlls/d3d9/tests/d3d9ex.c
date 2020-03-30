@@ -48,18 +48,19 @@ static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER9 *identifier)
     return !strcmp(identifier->Driver, "d3d10warp.dll");
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
-    unsigned int i;
-
-    for (i = 0; i < 4; ++i)
-    {
-        if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
-            return FALSE;
-        c1 >>= 8;
-        c2 >>= 8;
-    }
-    return TRUE;
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 static DWORD get_pixel_color(IDirect3DDevice9Ex *device, unsigned int x, unsigned int y)
