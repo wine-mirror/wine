@@ -285,9 +285,9 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
         if (p)
         {
             *p++ = 0;
-            version->dwMinorVersion = atoiW( p );
+            version->dwMinorVersion = wcstoul( p, NULL, 10 );
         }
-        version->dwMajorVersion = atoiW( str );
+        version->dwMajorVersion = wcstoul( str, NULL, 10 );
     }
 
     if (version->dwMajorVersion)   /* we got the main version, now fetch the other fields */
@@ -302,7 +302,7 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
         {
             WCHAR *str = (WCHAR *)info->Data;
             str[info->DataLength / sizeof(WCHAR)] = 0;
-            version->dwBuildNumber = atoiW( str );
+            version->dwBuildNumber = wcstoul( str, NULL, 10 );
         }
 
         /* get version description */
@@ -400,7 +400,7 @@ static BOOL get_win9x_registry_version( RTL_OSVERSIONINFOEXW *version )
         str[info->DataLength / sizeof(WCHAR)] = 0;
         p = strchrW( str, '.' );
         if (p) *p++ = 0;
-        version->dwMajorVersion = atoiW( str );
+        version->dwMajorVersion = wcstoul( str, NULL, 10 );
         if (p)
         {
             str = p;
@@ -408,9 +408,9 @@ static BOOL get_win9x_registry_version( RTL_OSVERSIONINFOEXW *version )
             if (p)
             {
                 *p++ = 0;
-                version->dwBuildNumber = atoiW( p );
+                version->dwBuildNumber = wcstoul( p, NULL, 10 );
             }
-            version->dwMinorVersion = atoiW( str );
+            version->dwMinorVersion = wcstoul( str, NULL, 10 );
         }
         /* build number contains version too on Win9x */
         version->dwBuildNumber |= MAKEWORD( version->dwMinorVersion, version->dwMajorVersion ) << 16;

@@ -301,6 +301,7 @@ ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
 #define towupper(c) NTDLL_towupper(c)
 #define wcslwr(s) NTDLL__wcslwr(s)
 #define wcsupr(s) NTDLL__wcsupr(s)
+#define wcstoul(s,e,b) NTDLL_wcstoul(s,e,b)
 
 /* convert from straight ASCII to Unicode without depending on the current codepage */
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
