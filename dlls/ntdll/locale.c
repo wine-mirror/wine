@@ -1496,7 +1496,9 @@ NTSTATUS WINAPI RtlUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
  */
 WCHAR WINAPI RtlDowncaseUnicodeChar( WCHAR wch )
 {
-    return casemap( nls_info.LowerCaseTable, wch );
+    if (nls_info.LowerCaseTable) return casemap( nls_info.LowerCaseTable, wch );
+    if (wch >= 'A' && wch <= 'Z') wch += 'a' - 'A';
+    return wch;
 }
 
 

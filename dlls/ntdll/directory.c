@@ -1316,8 +1316,8 @@ static ULONG hash_short_file_name( const UNICODE_STRING *name, LPWSTR buffer )
     if (!is_case_sensitive)
     {
         for (p = name->Buffer, hash = 0xbeef; p < end - 1; p++)
-            hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p) ^ (tolowerW(p[1]) << 8);
-        hash = (hash<<3) ^ (hash>>5) ^ tolowerW(*p); /* Last character */
+            hash = (hash<<3) ^ (hash>>5) ^ RtlDowncaseUnicodeChar(*p) ^ (RtlDowncaseUnicodeChar(p[1]) << 8);
+        hash = (hash<<3) ^ (hash>>5) ^ RtlDowncaseUnicodeChar(*p); /* Last character */
     }
     else
     {
@@ -2245,29 +2245,24 @@ static int match_redirect( const WCHAR *path, int len, const WCHAR *redir, BOOLE
 {
     int i = 0;
 
-    while (i < len && *redir)
+    while (i < len)
     {
-        if (IS_SEPARATOR(path[i]))
+        int start = i;
+        while (i < len && !IS_SEPARATOR(path[i])) i++;
+        if (check_case)
         {
-            if (*redir++ != '\\') return 0;
-            while (i < len && IS_SEPARATOR(path[i])) i++;
-            continue;  /* move on to next path component */
-        }
-        else if (check_case)
-        {
-            if (path[i] != *redir) return 0;
+            if (strncmpW( path + start, redir, i - start )) return 0;
         }
         else
         {
-            if (tolowerW(path[i]) != tolowerW(*redir)) return 0;
+            if (wcsnicmp( path + start, redir, i - start )) return 0;
         }
-        i++;
-        redir++;
+        redir += i - start;
+        while (i < len && IS_SEPARATOR(path[i])) i++;
+        if (!*redir) return i;
+        if (*redir++ != '\\') return 0;
     }
-    if (*redir) return 0;
-    if (i < len && !IS_SEPARATOR(path[i])) return 0;
-    while (i < len && IS_SEPARATOR(path[i])) i++;
-    return i;
+    return 0;
 }
 
 

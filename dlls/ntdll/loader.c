@@ -1749,16 +1749,17 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
 {
     static const WCHAR nt_prefixW[] = {'\\','?','?','\\',0};
     static const WCHAR soW[] = {'.','s','o',0};
-    WCHAR *p, *fullname;
-    size_t i, len = strlen(filename);
+    WCHAR *p, *fullname, filenameW[256];
+    size_t len = strlen(filename);
+
+    if (len >= ARRAY_SIZE(filenameW)) return FALSE;
+    ascii_to_unicode( filenameW, filename, len + 1 );
 
     /* check if path can correspond to the dll we have */
     if (path && (p = strrchrW( path->Buffer, '\\' )))
     {
         p++;
-        for (i = 0; i < len; i++)
-            if (tolowerW(p[i]) != tolowerW( (WCHAR)filename[i]) ) break;
-        if (i == len && (!p[len] || !wcsicmp( p + len, soW )))
+        if (!wcsnicmp( p, filenameW, len ) && (!p[len] || !wcsicmp( p + len, soW )))
         {
             /* the filename matches, use path as the full path */
             len += p - path->Buffer;
@@ -1775,7 +1776,7 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
         return FALSE;
     strcpyW( fullname, nt_prefixW );
     strcatW( fullname, system_dir );
-    ascii_to_unicode( fullname + strlenW(fullname), filename, len + 1 );
+    strcatW( fullname, filenameW );
 done:
     RtlInitUnicodeString( nt_name, fullname );
     return TRUE;
