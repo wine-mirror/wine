@@ -9872,35 +9872,35 @@ msgstr " seg"
 msgid "Select Source"
 msgstr "Selecione a origem"
 
-#: tzres.rc:84
+#: tzres.rc:86
 msgid "China Standard Time"
 msgstr ""
 
-#: tzres.rc:85
+#: tzres.rc:87
 msgid "China Daylight Time"
 msgstr ""
 
-#: tzres.rc:164
+#: tzres.rc:166
 msgid "North Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:165
+#: tzres.rc:167
 msgid "North Asia Daylight Time"
 msgstr ""
 
-#: tzres.rc:106
+#: tzres.rc:108
 msgid "Georgian Standard Time"
 msgstr ""
 
-#: tzres.rc:107
+#: tzres.rc:109
 msgid "Georgian Daylight Time"
 msgstr ""
 
-#: tzres.rc:156
+#: tzres.rc:158
 msgid "Nepal Standard Time"
 msgstr ""
 
-#: tzres.rc:157
+#: tzres.rc:159
 msgid "Nepal Daylight Time"
 msgstr ""
 
@@ -9912,13 +9912,13 @@ msgstr ""
 msgid "Cape Verde Daylight Time"
 msgstr ""
 
-#: tzres.rc:116
+#: tzres.rc:118
 #, fuzzy
 #| msgid "Date and time"
 msgid "Haiti Standard Time"
 msgstr "Data e hora"
 
-#: tzres.rc:117
+#: tzres.rc:119
 #, fuzzy
 #| msgid "Date and time"
 msgid "Haiti Daylight Time"
@@ -9936,11 +9936,11 @@ msgstr "Europeu Central"
 msgid "Central European Daylight Time"
 msgstr "Europeu Central"
 
-#: tzres.rc:144
+#: tzres.rc:146
 msgid "Morocco Standard Time"
 msgstr ""
 
-#: tzres.rc:145
+#: tzres.rc:147
 msgid "Morocco Daylight Time"
 msgstr ""
 
@@ -9956,45 +9956,45 @@ msgstr "Europeu Central"
 msgid "Central Europe Daylight Time"
 msgstr "Europeu Central"
 
-#: tzres.rc:122
+#: tzres.rc:124
 msgid "Iran Standard Time"
 msgstr ""
 
-#: tzres.rc:123
+#: tzres.rc:125
 msgid "Iran Daylight Time"
 msgstr ""
 
-#: tzres.rc:154
+#: tzres.rc:156
 msgid "Namibia Standard Time"
 msgstr ""
 
-#: tzres.rc:155
+#: tzres.rc:157
 msgid "Namibia Daylight Time"
 msgstr ""
 
-#: tzres.rc:204
+#: tzres.rc:206
 msgid "Tonga Standard Time"
 msgstr ""
 
-#: tzres.rc:205
+#: tzres.rc:207
 msgid "Tonga Daylight Time"
 msgstr ""
 
-#: tzres.rc:148
+#: tzres.rc:150
 msgid "Mountain Standard Time (Mexico)"
 msgstr ""
 
-#: tzres.rc:149
+#: tzres.rc:151
 msgid "Mountain Daylight Time (Mexico)"
 msgstr ""
 
-#: tzres.rc:108
+#: tzres.rc:110
 #, fuzzy
 #| msgid "&Standard bar"
 msgid "GMT Standard Time"
 msgstr "&Barra padrão"
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "GMT Daylight Time"
 msgstr ""
 
@@ -10014,35 +10014,35 @@ msgstr ""
 msgid "Arabic Daylight Time"
 msgstr ""
 
-#: tzres.rc:136
+#: tzres.rc:138
 msgid "Magadan Standard Time"
 msgstr ""
 
-#: tzres.rc:137
+#: tzres.rc:139
 msgid "Magadan Daylight Time"
 msgstr ""
 
-#: tzres.rc:160
+#: tzres.rc:162
 msgid "Newfoundland Standard Time"
 msgstr ""
 
-#: tzres.rc:161
+#: tzres.rc:163
 msgid "Newfoundland Daylight Time"
 msgstr ""
 
-#: tzres.rc:228
+#: tzres.rc:230
 msgid "West Pacific Standard Time"
 msgstr ""
 
-#: tzres.rc:229
+#: tzres.rc:231
 msgid "West Pacific Daylight Time"
 msgstr ""
 
-#: tzres.rc:168
+#: tzres.rc:170
 msgid "Pacific Standard Time"
 msgstr ""
 
-#: tzres.rc:169
+#: tzres.rc:171
 msgid "Pacific Daylight Time"
 msgstr ""
 
@@ -10054,59 +10054,59 @@ msgstr ""
 msgid "Azerbaijan Daylight Time"
 msgstr ""
 
-#: tzres.rc:186
+#: tzres.rc:188
 msgid "Samoa Standard Time"
 msgstr ""
 
-#: tzres.rc:187
+#: tzres.rc:189
 msgid "Samoa Daylight Time"
 msgstr ""
 
-#: tzres.rc:128
+#: tzres.rc:130
 msgid "Kaliningrad Standard Time"
 msgstr ""
 
-#: tzres.rc:129
+#: tzres.rc:131
 msgid "Kaliningrad Daylight Time"
 msgstr ""
 
-#: tzres.rc:170
+#: tzres.rc:172
 msgid "Pacific Standard Time (Mexico)"
 msgstr ""
 
-#: tzres.rc:171
+#: tzres.rc:173
 msgid "Pacific Daylight Time (Mexico)"
 msgstr ""
 
-#: tzres.rc:140
+#: tzres.rc:142
 msgid "Middle East Standard Time"
 msgstr ""
 
-#: tzres.rc:141
+#: tzres.rc:143
 msgid "Middle East Daylight Time"
 msgstr ""
 
-#: tzres.rc:202
+#: tzres.rc:204
 msgid "Tokyo Standard Time"
 msgstr ""
 
-#: tzres.rc:203
+#: tzres.rc:205
 msgid "Tokyo Daylight Time"
 msgstr ""
 
-#: tzres.rc:134
+#: tzres.rc:136
 msgid "Line Islands Standard Time"
 msgstr ""
 
-#: tzres.rc:135
+#: tzres.rc:137
 msgid "Line Islands Daylight Time"
 msgstr ""
 
-#: tzres.rc:126
+#: tzres.rc:128
 msgid "Jordan Standard Time"
 msgstr ""
 
-#: tzres.rc:127
+#: tzres.rc:129
 msgid "Jordan Daylight Time"
 msgstr ""
 
@@ -10126,11 +10126,11 @@ msgstr ""
 msgid "Azores Daylight Time"
 msgstr ""
 
-#: tzres.rc:162
+#: tzres.rc:164
 msgid "North Asia East Standard Time"
 msgstr ""
 
-#: tzres.rc:163
+#: tzres.rc:165
 msgid "North Asia East Daylight Time"
 msgstr ""
 
@@ -10142,49 +10142,49 @@ msgstr ""
 msgid "Argentina Daylight Time"
 msgstr ""
 
-#: tzres.rc:150
+#: tzres.rc:152
 msgid "Myanmar Standard Time"
 msgstr ""
 
-#: tzres.rc:151
+#: tzres.rc:153
 msgid "Myanmar Daylight Time"
 msgstr ""
 
-#: tzres.rc:214 tzres.rc:215
+#: tzres.rc:216 tzres.rc:217
 msgid "Coordinated Universal Time"
 msgstr ""
 
-#: tzres.rc:120
+#: tzres.rc:122
 msgid "India Standard Time"
 msgstr ""
 
-#: tzres.rc:121
+#: tzres.rc:123
 msgid "India Daylight Time"
 msgstr ""
 
-#: tzres.rc:114
+#: tzres.rc:116
 #, fuzzy
 #| msgid "&Standard bar"
 msgid "GTB Standard Time"
 msgstr "&Barra padrão"
 
-#: tzres.rc:115
+#: tzres.rc:117
 msgid "GTB Daylight Time"
 msgstr ""
 
-#: tzres.rc:206
+#: tzres.rc:208
 msgid "Turkey Standard Time"
 msgstr ""
 
-#: tzres.rc:207
+#: tzres.rc:209
 msgid "Turkey Daylight Time"
 msgstr ""
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "Fiji Standard Time"
 msgstr ""
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "Fiji Daylight Time"
 msgstr ""
 
@@ -10196,35 +10196,35 @@ msgstr ""
 msgid "Canada Central Daylight Time"
 msgstr ""
 
-#: tzres.rc:198
+#: tzres.rc:200
 msgid "Taipei Standard Time"
 msgstr ""
 
-#: tzres.rc:199
+#: tzres.rc:201
 msgid "Taipei Daylight Time"
 msgstr ""
 
-#: tzres.rc:224
+#: tzres.rc:226
 msgid "W. Europe Standard Time"
 msgstr ""
 
-#: tzres.rc:225
+#: tzres.rc:227
 msgid "W. Europe Daylight Time"
 msgstr ""
 
-#: tzres.rc:142
+#: tzres.rc:144
 msgid "Montevideo Standard Time"
 msgstr ""
 
-#: tzres.rc:143
+#: tzres.rc:145
 msgid "Montevideo Daylight Time"
 msgstr ""
 
-#: tzres.rc:172
+#: tzres.rc:174
 msgid "Pakistan Standard Time"
 msgstr ""
 
-#: tzres.rc:173
+#: tzres.rc:175
 msgid "Pakistan Daylight Time"
 msgstr ""
 
@@ -10244,19 +10244,19 @@ msgstr ""
 msgid "AUS Eastern Daylight Time"
 msgstr ""
 
-#: tzres.rc:152
+#: tzres.rc:154
 msgid "N. Central Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:153
+#: tzres.rc:155
 msgid "N. Central Asia Daylight Time"
 msgstr ""
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Eastern Standard Time"
 msgstr ""
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Eastern Daylight Time"
 msgstr ""
 
@@ -10276,27 +10276,27 @@ msgstr ""
 msgid "Atlantic Daylight Time"
 msgstr ""
 
-#: tzres.rc:146
+#: tzres.rc:148
 msgid "Mountain Standard Time"
 msgstr ""
 
-#: tzres.rc:147
+#: tzres.rc:149
 msgid "Mountain Daylight Time"
 msgstr ""
 
-#: tzres.rc:210
+#: tzres.rc:212
 msgid "US Eastern Standard Time"
 msgstr ""
 
-#: tzres.rc:211
+#: tzres.rc:213
 msgid "US Eastern Daylight Time"
 msgstr ""
 
-#: tzres.rc:200
+#: tzres.rc:202
 msgid "Tasmania Standard Time"
 msgstr ""
 
-#: tzres.rc:201
+#: tzres.rc:203
 msgid "Tasmania Daylight Time"
 msgstr ""
 
@@ -10308,19 +10308,19 @@ msgstr ""
 msgid "Central America Daylight Time"
 msgstr ""
 
-#: tzres.rc:212
+#: tzres.rc:214
 msgid "US Mountain Standard Time"
 msgstr ""
 
-#: tzres.rc:213
+#: tzres.rc:215
 msgid "US Mountain Daylight Time"
 msgstr ""
 
-#: tzres.rc:192
+#: tzres.rc:194
 msgid "South Africa Standard Time"
 msgstr ""
 
-#: tzres.rc:193
+#: tzres.rc:195
 msgid "South Africa Daylight Time"
 msgstr ""
 
@@ -10332,11 +10332,11 @@ msgstr ""
 msgid "Cen. Australia Daylight Time"
 msgstr ""
 
-#: tzres.rc:194
+#: tzres.rc:196
 msgid "Sri Lanka Standard Time"
 msgstr ""
 
-#: tzres.rc:195
+#: tzres.rc:197
 msgid "Sri Lanka Daylight Time"
 msgstr ""
 
@@ -10348,19 +10348,19 @@ msgstr ""
 msgid "Afghanistan Daylight Time"
 msgstr ""
 
-#: tzres.rc:230
+#: tzres.rc:232
 msgid "Yakutsk Standard Time"
 msgstr ""
 
-#: tzres.rc:231
+#: tzres.rc:233
 msgid "Yakutsk Daylight Time"
 msgstr ""
 
-#: tzres.rc:180
+#: tzres.rc:182
 msgid "SA Eastern Standard Time"
 msgstr ""
 
-#: tzres.rc:181
+#: tzres.rc:183
 msgid "SA Eastern Daylight Time"
 msgstr ""
 
@@ -10380,35 +10380,35 @@ msgstr ""
 msgid "Arabian Daylight Time"
 msgstr ""
 
-#: tzres.rc:178
+#: tzres.rc:180
 msgid "Russian Standard Time"
 msgstr ""
 
-#: tzres.rc:179
+#: tzres.rc:181
 msgid "Russian Daylight Time"
 msgstr ""
 
-#: tzres.rc:176
+#: tzres.rc:178
 msgid "Romance Standard Time"
 msgstr ""
 
-#: tzres.rc:177
+#: tzres.rc:179
 msgid "Romance Daylight Time"
 msgstr ""
 
-#: tzres.rc:100
+#: tzres.rc:102
 msgid "Ekaterinburg Standard Time"
 msgstr ""
 
-#: tzres.rc:101
+#: tzres.rc:103
 msgid "Ekaterinburg Daylight Time"
 msgstr ""
 
-#: tzres.rc:196
+#: tzres.rc:198
 msgid "Syria Standard Time"
 msgstr ""
 
-#: tzres.rc:197
+#: tzres.rc:199
 msgid "Syria Daylight Time"
 msgstr ""
 
@@ -10420,27 +10420,27 @@ msgstr ""
 msgid "AUS Central Daylight Time"
 msgstr ""
 
-#: tzres.rc:112
+#: tzres.rc:114
 msgid "Greenwich Standard Time"
 msgstr ""
 
-#: tzres.rc:113
+#: tzres.rc:115
 msgid "Greenwich Daylight Time"
 msgstr ""
 
-#: tzres.rc:208
+#: tzres.rc:210
 msgid "Ulaanbaatar Standard Time"
 msgstr ""
 
-#: tzres.rc:209
+#: tzres.rc:211
 msgid "Ulaanbaatar Daylight Time"
 msgstr ""
 
-#: tzres.rc:124
+#: tzres.rc:126
 msgid "Israel Standard Time"
 msgstr ""
 
-#: tzres.rc:125
+#: tzres.rc:127
 msgid "Israel Daylight Time"
 msgstr ""
 
@@ -10452,19 +10452,19 @@ msgstr ""
 msgid "Bangladesh Daylight Time"
 msgstr ""
 
-#: tzres.rc:182
+#: tzres.rc:184
 msgid "SA Pacific Standard Time"
 msgstr ""
 
-#: tzres.rc:183
+#: tzres.rc:185
 msgid "SA Pacific Daylight Time"
 msgstr ""
 
-#: tzres.rc:226
+#: tzres.rc:228
 msgid "West Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:227
+#: tzres.rc:229
 msgid "West Asia Daylight Time"
 msgstr ""
 
@@ -10476,29 +10476,29 @@ msgstr ""
 msgid "Alaskan Daylight Time"
 msgstr ""
 
-#: tzres.rc:174
+#: tzres.rc:176
 msgid "Paraguay Standard Time"
 msgstr ""
 
-#: tzres.rc:175
+#: tzres.rc:177
 msgid "Paraguay Daylight Time"
 msgstr ""
 
-#: tzres.rc:86
+#: tzres.rc:88
 #, fuzzy
 #| msgid "Date and time"
 msgid "Dateline Standard Time"
 msgstr "Data e hora"
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "Dateline Daylight Time"
 msgstr ""
 
-#: tzres.rc:132
+#: tzres.rc:134
 msgid "Libya Standard Time"
 msgstr ""
 
-#: tzres.rc:133
+#: tzres.rc:135
 msgid "Libya Daylight Time"
 msgstr ""
 
@@ -10510,35 +10510,35 @@ msgstr ""
 msgid "Bahia Daylight Time"
 msgstr ""
 
-#: tzres.rc:216
+#: tzres.rc:218
 msgid "Venezuela Standard Time"
 msgstr ""
 
-#: tzres.rc:217
+#: tzres.rc:219
 msgid "Venezuela Daylight Time"
 msgstr ""
 
-#: tzres.rc:118
+#: tzres.rc:120
 msgid "Hawaiian Standard Time"
 msgstr ""
 
-#: tzres.rc:119
+#: tzres.rc:121
 msgid "Hawaiian Daylight Time"
 msgstr ""
 
-#: tzres.rc:188
+#: tzres.rc:190
 msgid "SE Asia Standard Time"
 msgstr ""
 
-#: tzres.rc:189
+#: tzres.rc:191
 msgid "SE Asia Daylight Time"
 msgstr ""
 
-#: tzres.rc:158
+#: tzres.rc:160
 msgid "New Zealand Standard Time"
 msgstr ""
 
-#: tzres.rc:159
+#: tzres.rc:161
 msgid "New Zealand Daylight Time"
 msgstr ""
 
@@ -10570,97 +10570,109 @@ msgstr ""
 msgid "Belarus Daylight Time"
 msgstr ""
 
-#: tzres.rc:184
+#: tzres.rc:186
 msgid "SA Western Standard Time"
 msgstr ""
 
-#: tzres.rc:185
+#: tzres.rc:187
 msgid "SA Western Daylight Time"
 msgstr ""
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "Greenland Standard Time"
 msgstr ""
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "Greenland Daylight Time"
 msgstr ""
 
-#: tzres.rc:94
+#: tzres.rc:96
 #, fuzzy
 #| msgid "Date and time"
 msgid "Easter Island Standard Time"
 msgstr "Data e hora"
 
-#: tzres.rc:95
+#: tzres.rc:97
 #, fuzzy
 #| msgid "Date and time"
 msgid "Easter Island Daylight Time"
 msgstr "Data e hora"
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Egypt Standard Time"
 msgstr ""
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Egypt Daylight Time"
 msgstr ""
 
-#: tzres.rc:138
+#: tzres.rc:140
 msgid "Mauritius Standard Time"
 msgstr ""
 
-#: tzres.rc:139
+#: tzres.rc:141
 msgid "Mauritius Daylight Time"
 msgstr ""
 
-#: tzres.rc:218
+#: tzres.rc:220
 msgid "Vladivostok Standard Time"
 msgstr ""
 
-#: tzres.rc:219
+#: tzres.rc:221
 msgid "Vladivostok Daylight Time"
 msgstr ""
 
-#: tzres.rc:190
+#: tzres.rc:192
 msgid "Singapore Standard Time"
 msgstr ""
 
-#: tzres.rc:191
+#: tzres.rc:193
 msgid "Singapore Daylight Time"
 msgstr ""
 
-#: tzres.rc:130
+#: tzres.rc:132
 msgid "Korea Standard Time"
 msgstr ""
 
-#: tzres.rc:131
+#: tzres.rc:133
 msgid "Korea Daylight Time"
 msgstr ""
 
-#: tzres.rc:88
+#: tzres.rc:84
+#, fuzzy
+#| msgid "Date and time"
+msgid "Chatham Islands Standard Time"
+msgstr "Data e hora"
+
+#: tzres.rc:85
+#, fuzzy
+#| msgid "Date and time"
+msgid "Chatham Islands Daylight Time"
+msgstr "Data e hora"
+
+#: tzres.rc:90
 msgid "E. Africa Standard Time"
 msgstr ""
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "E. Africa Daylight Time"
 msgstr ""
 
-#: tzres.rc:104
+#: tzres.rc:106
 #, fuzzy
 #| msgid "&Standard bar"
 msgid "FLE Standard Time"
 msgstr "&Barra padrão"
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "FLE Daylight Time"
 msgstr ""
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "E. South America Standard Time"
 msgstr ""
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "E. South America Daylight Time"
 msgstr ""
 
@@ -10672,35 +10684,35 @@ msgstr ""
 msgid "Central Pacific Daylight Time"
 msgstr ""
 
-#: tzres.rc:222
+#: tzres.rc:224
 msgid "W. Central Africa Standard Time"
 msgstr ""
 
-#: tzres.rc:223
+#: tzres.rc:225
 msgid "W. Central Africa Daylight Time"
 msgstr ""
 
-#: tzres.rc:166
+#: tzres.rc:168
 msgid "Pacific SA Standard Time"
 msgstr ""
 
-#: tzres.rc:167
+#: tzres.rc:169
 msgid "Pacific SA Daylight Time"
 msgstr ""
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. Australia Standard Time"
 msgstr ""
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. Australia Daylight Time"
 msgstr ""
 
-#: tzres.rc:220
+#: tzres.rc:222
 msgid "W. Australia Standard Time"
 msgstr ""
 
-#: tzres.rc:221
+#: tzres.rc:223
 msgid "W. Australia Daylight Time"
 msgstr ""
 
