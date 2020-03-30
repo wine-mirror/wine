@@ -1434,7 +1434,11 @@ exit:
     }
 
     values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
-    if (!values) return ERROR_DS_NO_ATTRIBUTE_OR_VALUE;
+    if (!values)
+    {
+        memset(col, 0, sizeof(*col));
+        return E_ADS_COLUMN_NOT_SET;
+    }
 
     count = ldap_count_values_len(values);
 

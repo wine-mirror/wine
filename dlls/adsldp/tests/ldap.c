@@ -417,6 +417,18 @@ todo_wine
     ok(hr == E_ADS_BAD_PARAMETER, "got %#x\n", hr);
     }
 
+    hr = IDirectorySearch_GetFirstRow(ds, sh);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    memset(&col, 0x55, sizeof(col));
+    hr = IDirectorySearch_GetColumn(ds, sh, (WCHAR *)L"deadbeef", &col);
+    ok(hr == E_ADS_COLUMN_NOT_SET, "got %#x\n", hr);
+    ok(!col.pszAttrName, "got %p\n", col.pszAttrName);
+    ok(col.dwADsType == ADSTYPE_INVALID || broken(col.dwADsType != ADSTYPE_INVALID) /* XP */, "got %d\n", col.dwADsType);
+    ok(!col.pADsValues, "got %p\n", col.pADsValues);
+    ok(!col.dwNumValues, "got %u\n", col.dwNumValues);
+    ok(!col.hReserved, "got %p\n", col.hReserved);
+
     hr = IDirectorySearch_CloseSearchHandle(ds, sh);
     ok(hr == S_OK, "got %#x\n", hr);
 
