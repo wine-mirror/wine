@@ -103,6 +103,21 @@ static void vector_eq_(unsigned int line, const D3DVECTOR *left, const D3DVECTOR
     expect_vector_(line, left, U1(*right).x, U2(*right).y, U3(*right).z, 0);
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
+}
+
 static D3DRMMATRIX4D identity = {
     { 1.0f, 0.0f, 0.0f, 0.0f },
     { 0.0f, 1.0f, 0.0f, 0.0f },
@@ -6712,18 +6727,6 @@ static IDirect3DDevice2 *create_device2_without_ds(IDirectDraw2 *ddraw, HWND win
     IDirect3D2_Release(d3d);
     IDirectDrawSurface_Release(surface);
     return device;
-}
-
-static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
-{
-    if ((c1 & 0xff) - (c2 & 0xff) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if ((c1 & 0xff) - (c2 & 0xff) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if ((c1 & 0xff) - (c2 & 0xff) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if ((c1 & 0xff) - (c2 & 0xff) > max_diff) return FALSE;
-    return TRUE;
 }
 
 static void clear_depth_surface(IDirectDrawSurface *surface, DWORD value)
