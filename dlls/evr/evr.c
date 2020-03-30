@@ -46,7 +46,7 @@ static void evr_destroy(struct strmbase_renderer *iface)
     evr_filter *filter = impl_from_strmbase_renderer(iface);
 
     strmbase_renderer_cleanup(&filter->renderer);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
 static HRESULT WINAPI evr_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
@@ -72,16 +72,13 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     evr_filter *object;
 
-    *out = NULL;
-
-    object = CoTaskMemAlloc(sizeof(evr_filter));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     strmbase_renderer_init(&object->renderer, outer,
             &CLSID_EnhancedVideoRenderer, L"EVR Input0", &renderer_ops);
 
+    TRACE("Created EVR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
-
     return S_OK;
 }
