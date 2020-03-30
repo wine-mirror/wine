@@ -9618,123 +9618,123 @@ msgstr " s"
 msgid "Select Source"
 msgstr "Valitse lähde"
 
-#: tzres.rc:86
+#: tzres.rc:88
 msgid "China Standard Time"
 msgstr "Kiinan normaaliaika"
 
-#: tzres.rc:87
+#: tzres.rc:89
 msgid "China Daylight Time"
 msgstr "Kiinan kesäaika"
 
-#: tzres.rc:166
+#: tzres.rc:168
 msgid "North Asia Standard Time"
 msgstr "Pohjois-Aasian normaaliaika"
 
-#: tzres.rc:167
+#: tzres.rc:169
 msgid "North Asia Daylight Time"
 msgstr "Pohjois-Aasian kesäaika"
 
-#: tzres.rc:108
+#: tzres.rc:110
 msgid "Georgian Standard Time"
 msgstr "Georgian normaaliaika"
 
-#: tzres.rc:109
+#: tzres.rc:111
 msgid "Georgian Daylight Time"
 msgstr "Georgian kesäaika"
 
-#: tzres.rc:158
+#: tzres.rc:160
 msgid "Nepal Standard Time"
 msgstr "Nepalin normaaliaika"
 
-#: tzres.rc:159
+#: tzres.rc:161
 msgid "Nepal Daylight Time"
 msgstr "Nepalin kesäaika"
 
-#: tzres.rc:62
+#: tzres.rc:64
 msgid "Cape Verde Standard Time"
 msgstr "Kap Verden normaaliaika"
 
-#: tzres.rc:63
+#: tzres.rc:65
 msgid "Cape Verde Daylight Time"
 msgstr "Kap Verden kesäaika"
 
-#: tzres.rc:118
+#: tzres.rc:120
 msgid "Haiti Standard Time"
 msgstr "Haitin normaaliaika"
 
-#: tzres.rc:119
+#: tzres.rc:121
 msgid "Haiti Daylight Time"
 msgstr "Haitin kesäaika"
 
-#: tzres.rc:76
+#: tzres.rc:78
 msgid "Central European Standard Time"
 msgstr "Keski-Euroopan normaaliaika"
 
-#: tzres.rc:77
+#: tzres.rc:79
 msgid "Central European Daylight Time"
 msgstr "Keski-Euroopan kesäaika"
 
-#: tzres.rc:146
+#: tzres.rc:148
 msgid "Morocco Standard Time"
 msgstr "Marokon normaaliaika"
 
-#: tzres.rc:147
+#: tzres.rc:149
 msgid "Morocco Daylight Time"
 msgstr "Marokon kesäaika"
 
-#: tzres.rc:74
+#: tzres.rc:76
 msgid "Central Europe Standard Time"
 msgstr "Keski-Euroopan normaaliaika"
 
-#: tzres.rc:75
+#: tzres.rc:77
 msgid "Central Europe Daylight Time"
 msgstr "Keski-Euroopan kesäaika"
 
-#: tzres.rc:124
+#: tzres.rc:126
 msgid "Iran Standard Time"
 msgstr "Iranin normaaliaika"
 
-#: tzres.rc:125
+#: tzres.rc:127
 msgid "Iran Daylight Time"
 msgstr "Iranin kesäaika"
 
-#: tzres.rc:156
+#: tzres.rc:158
 msgid "Namibia Standard Time"
 msgstr "Namibian normaaliaika"
 
-#: tzres.rc:157
+#: tzres.rc:159
 msgid "Namibia Daylight Time"
 msgstr "Namibian kesäaika"
 
-#: tzres.rc:206
+#: tzres.rc:208
 msgid "Tonga Standard Time"
 msgstr "Tongan normaaliaika"
 
-#: tzres.rc:207
+#: tzres.rc:209
 msgid "Tonga Daylight Time"
 msgstr "Tongan kesäaika"
 
-#: tzres.rc:150
+#: tzres.rc:152
 msgid "Mountain Standard Time (Mexico)"
 msgstr "Kalliovuorten normaaliaika (Meksiko)"
 
-#: tzres.rc:151
+#: tzres.rc:153
 msgid "Mountain Daylight Time (Mexico)"
 msgstr "Kalliovuorten kesäaika (Meksiko)"
 
-#: tzres.rc:110
+#: tzres.rc:112
 msgid "GMT Standard Time"
 msgstr "GMT-normaaliaika"
 
-#: tzres.rc:111
+#: tzres.rc:113
 msgid "GMT Daylight Time"
 msgstr "GMT-kesäaika"
 
-#: tzres.rc:70
+#: tzres.rc:72
 msgid "Central Asia Standard Time"
 msgstr "Keski-Aasian normaaliaika"
 
-#: tzres.rc:71
+#: tzres.rc:73
 msgid "Central Asia Daylight Time"
 msgstr "Keski-Aasian kesäaika"
 
@@ -9746,35 +9746,35 @@ msgstr "Arabian normaaliaika"
 msgid "Arabic Daylight Time"
 msgstr "Arabian kesäaika"
 
-#: tzres.rc:138
+#: tzres.rc:140
 msgid "Magadan Standard Time"
 msgstr "Magadanin normaaliaika"
 
-#: tzres.rc:139
+#: tzres.rc:141
 msgid "Magadan Daylight Time"
 msgstr "Magadanin kesäaika"
 
-#: tzres.rc:162
+#: tzres.rc:164
 msgid "Newfoundland Standard Time"
 msgstr "Newfoundlandin normaaliaika"
 
-#: tzres.rc:163
+#: tzres.rc:165
 msgid "Newfoundland Daylight Time"
 msgstr "Newfoundlandin kesäaika"
 
-#: tzres.rc:230
+#: tzres.rc:232
 msgid "West Pacific Standard Time"
 msgstr "Länsi-Tyynenmeren normaaliaika"
 
-#: tzres.rc:231
+#: tzres.rc:233
 msgid "West Pacific Daylight Time"
 msgstr "Länsi-Tyynenmeren kesäaika"
 
-#: tzres.rc:170
+#: tzres.rc:172
 msgid "Pacific Standard Time"
 msgstr "Tyynenmeren normaaliaika"
 
-#: tzres.rc:171
+#: tzres.rc:173
 msgid "Pacific Daylight Time"
 msgstr "Tyynenmeren kesäaika"
 
@@ -9786,67 +9786,67 @@ msgstr "Azerbaidžanin normaaliaika"
 msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaidžanin kesäaika"
 
-#: tzres.rc:188
+#: tzres.rc:190
 msgid "Samoa Standard Time"
 msgstr "Samoan normaaliaika"
 
-#: tzres.rc:189
+#: tzres.rc:191
 msgid "Samoa Daylight Time"
 msgstr "Samoan kesäaika"
 
-#: tzres.rc:130
+#: tzres.rc:132
 msgid "Kaliningrad Standard Time"
 msgstr "Kaliningradin normaaliaika"
 
-#: tzres.rc:131
+#: tzres.rc:133
 msgid "Kaliningrad Daylight Time"
 msgstr "Kaliningradin kesäaika"
 
-#: tzres.rc:172
+#: tzres.rc:174
 msgid "Pacific Standard Time (Mexico)"
 msgstr "Tyynenmeren normaaliaika (Meksiko)"
 
-#: tzres.rc:173
+#: tzres.rc:175
 msgid "Pacific Daylight Time (Mexico)"
 msgstr "Tyynenmeren kesäaika (Meksiko)"
 
-#: tzres.rc:142
+#: tzres.rc:144
 msgid "Middle East Standard Time"
 msgstr "Lähi-idän normaaliaika"
 
-#: tzres.rc:143
+#: tzres.rc:145
 msgid "Middle East Daylight Time"
 msgstr "Lähi-idän kesäaika"
 
-#: tzres.rc:204
+#: tzres.rc:206
 msgid "Tokyo Standard Time"
 msgstr "Tokion normaaliaika"
 
-#: tzres.rc:205
+#: tzres.rc:207
 msgid "Tokyo Daylight Time"
 msgstr "Tokion kesäaika"
 
-#: tzres.rc:136
+#: tzres.rc:138
 msgid "Line Islands Standard Time"
 msgstr "Linesaarten normaaliaika"
 
-#: tzres.rc:137
+#: tzres.rc:139
 msgid "Line Islands Daylight Time"
 msgstr "Linesaarten kesäaika"
 
-#: tzres.rc:128
+#: tzres.rc:130
 msgid "Jordan Standard Time"
 msgstr "Jordanian normaaliaika"
 
-#: tzres.rc:129
+#: tzres.rc:131
 msgid "Jordan Daylight Time"
 msgstr "Jordanian kesäaika"
 
-#: tzres.rc:80
+#: tzres.rc:82
 msgid "Central Standard Time"
 msgstr "Keskinen normaaliaika"
 
-#: tzres.rc:81
+#: tzres.rc:83
 msgid "Central Daylight Time"
 msgstr "Keskinen kesäaika"
 
@@ -9858,11 +9858,11 @@ msgstr "Azorien normaaliaika"
 msgid "Azores Daylight Time"
 msgstr "Azorien kesäaika"
 
-#: tzres.rc:164
+#: tzres.rc:166
 msgid "North Asia East Standard Time"
 msgstr "Itäisen Pohjois-Aasian normaaliaika"
 
-#: tzres.rc:165
+#: tzres.rc:167
 msgid "North Asia East Daylight Time"
 msgstr "Itäisen Pohjois-Aasian kesäaika"
 
@@ -9874,95 +9874,95 @@ msgstr "Argentiinan normaaliaika"
 msgid "Argentina Daylight Time"
 msgstr "Argentiinan kesäaika"
 
-#: tzres.rc:152
+#: tzres.rc:154
 msgid "Myanmar Standard Time"
 msgstr "Myanmarin normaaliaika"
 
-#: tzres.rc:153
+#: tzres.rc:155
 msgid "Myanmar Daylight Time"
 msgstr "Myanmarin kesäaika"
 
-#: tzres.rc:216 tzres.rc:217
+#: tzres.rc:218 tzres.rc:219
 msgid "Coordinated Universal Time"
 msgstr "UTC-aika"
 
-#: tzres.rc:122
+#: tzres.rc:124
 msgid "India Standard Time"
 msgstr "Intian normaaliaika"
 
-#: tzres.rc:123
+#: tzres.rc:125
 msgid "India Daylight Time"
 msgstr "Intian kesäaika"
 
-#: tzres.rc:116
+#: tzres.rc:118
 msgid "GTB Standard Time"
 msgstr "GT-normaaliaika"
 
-#: tzres.rc:117
+#: tzres.rc:119
 msgid "GTB Daylight Time"
 msgstr "GT-kesäaika"
 
-#: tzres.rc:208
+#: tzres.rc:210
 msgid "Turkey Standard Time"
 msgstr "Turkin normaaliaika"
 
-#: tzres.rc:209
+#: tzres.rc:211
 msgid "Turkey Daylight Time"
 msgstr "Turkin kesäaika"
 
-#: tzres.rc:104
+#: tzres.rc:106
 msgid "Fiji Standard Time"
 msgstr "Fidžin normaaliaika"
 
-#: tzres.rc:105
+#: tzres.rc:107
 msgid "Fiji Daylight Time"
 msgstr "Fidžin kesäaika"
 
-#: tzres.rc:60
+#: tzres.rc:62
 msgid "Canada Central Standard Time"
 msgstr "Kanadan keskinen normaaliaika"
 
-#: tzres.rc:61
+#: tzres.rc:63
 msgid "Canada Central Daylight Time"
 msgstr "Kanadan keskinen kesäaika"
 
-#: tzres.rc:200
+#: tzres.rc:202
 msgid "Taipei Standard Time"
 msgstr "Taipein normaaliaika"
 
-#: tzres.rc:201
+#: tzres.rc:203
 msgid "Taipei Daylight Time"
 msgstr "Taipein kesäaika"
 
-#: tzres.rc:226
+#: tzres.rc:228
 msgid "W. Europe Standard Time"
 msgstr "Länsi-Euroopan normaaliaika"
 
-#: tzres.rc:227
+#: tzres.rc:229
 msgid "W. Europe Daylight Time"
 msgstr "Länsi-Euroopan kesäaika"
 
-#: tzres.rc:144
+#: tzres.rc:146
 msgid "Montevideo Standard Time"
 msgstr "Montevideon normaaliaika"
 
-#: tzres.rc:145
+#: tzres.rc:147
 msgid "Montevideo Daylight Time"
 msgstr "Montevideon kesäaika"
 
-#: tzres.rc:174
+#: tzres.rc:176
 msgid "Pakistan Standard Time"
 msgstr "Pakistanin normaaliaika"
 
-#: tzres.rc:175
+#: tzres.rc:177
 msgid "Pakistan Daylight Time"
 msgstr "Pakistanin kesäaika"
 
-#: tzres.rc:64
+#: tzres.rc:66
 msgid "Caucasus Standard Time"
 msgstr "Kaukasuksen normaaliaika"
 
-#: tzres.rc:65
+#: tzres.rc:67
 msgid "Caucasus Daylight Time"
 msgstr "Kaukasuksen kesäaika"
 
@@ -9974,27 +9974,27 @@ msgstr "Australian itäinen normaaliaika"
 msgid "AUS Eastern Daylight Time"
 msgstr "Australian itäinen kesäaika"
 
-#: tzres.rc:154
+#: tzres.rc:156
 msgid "N. Central Asia Standard Time"
 msgstr "Pohjoisen Keski-Aasian normaaliaika"
 
-#: tzres.rc:155
+#: tzres.rc:157
 msgid "N. Central Asia Daylight Time"
 msgstr "Pohjoisen Keski-Aasian kesäaika"
 
-#: tzres.rc:98
+#: tzres.rc:100
 msgid "Eastern Standard Time"
 msgstr "Itäinen normaaliaika"
 
-#: tzres.rc:99
+#: tzres.rc:101
 msgid "Eastern Daylight Time"
 msgstr "Itäinen kesäaika"
 
-#: tzres.rc:82
+#: tzres.rc:84
 msgid "Central Standard Time (Mexico)"
 msgstr "Keskinen normaaliaika (Meksiko)"
 
-#: tzres.rc:83
+#: tzres.rc:85
 msgid "Central Daylight Time (Mexico)"
 msgstr "Keskinen kesäaika (Meksiko)"
 
@@ -10006,67 +10006,67 @@ msgstr "Atlantin normaaliaika"
 msgid "Atlantic Daylight Time"
 msgstr "Atlantin kesäaika"
 
-#: tzres.rc:148
+#: tzres.rc:150
 msgid "Mountain Standard Time"
 msgstr "Kalliovuorten normaaliaika"
 
-#: tzres.rc:149
+#: tzres.rc:151
 msgid "Mountain Daylight Time"
 msgstr "Kalliovuorten kesäaika"
 
-#: tzres.rc:212
+#: tzres.rc:214
 msgid "US Eastern Standard Time"
 msgstr "Itäinen normaaliaika (USA)"
 
-#: tzres.rc:213
+#: tzres.rc:215
 msgid "US Eastern Daylight Time"
 msgstr "Itäinen kesäaika (USA)"
 
-#: tzres.rc:202
+#: tzres.rc:204
 msgid "Tasmania Standard Time"
 msgstr "Tasmanian normaaliaika"
 
-#: tzres.rc:203
+#: tzres.rc:205
 msgid "Tasmania Daylight Time"
 msgstr "Tasmanian kesäaika"
 
-#: tzres.rc:68
+#: tzres.rc:70
 msgid "Central America Standard Time"
 msgstr "Keski-Amerikan normaaliaika"
 
-#: tzres.rc:69
+#: tzres.rc:71
 msgid "Central America Daylight Time"
 msgstr "Keski-Amerikan kesäaika"
 
-#: tzres.rc:214
+#: tzres.rc:216
 msgid "US Mountain Standard Time"
 msgstr "Kalliovuorten normaaliaika (USA)"
 
-#: tzres.rc:215
+#: tzres.rc:217
 msgid "US Mountain Daylight Time"
 msgstr "Kalliovuorten kesäaika (USA)"
 
-#: tzres.rc:194
+#: tzres.rc:196
 msgid "South Africa Standard Time"
 msgstr "Etelä-Afrikan normaaliaika"
 
-#: tzres.rc:195
+#: tzres.rc:197
 msgid "South Africa Daylight Time"
 msgstr "Etelä-Afrikan kesäaika"
 
-#: tzres.rc:66
+#: tzres.rc:68
 msgid "Cen. Australia Standard Time"
 msgstr "Keski-Australian normaaliaika"
 
-#: tzres.rc:67
+#: tzres.rc:69
 msgid "Cen. Australia Daylight Time"
 msgstr "Keski-Australian kesäaika"
 
-#: tzres.rc:196
+#: tzres.rc:198
 msgid "Sri Lanka Standard Time"
 msgstr "Sri Lankan normaaliaika"
 
-#: tzres.rc:197
+#: tzres.rc:199
 msgid "Sri Lanka Daylight Time"
 msgstr "Sri Lankan kesäaika"
 
@@ -10078,19 +10078,19 @@ msgstr "Afganistanin normaaliaika"
 msgid "Afghanistan Daylight Time"
 msgstr "Afganistanin kesäaika"
 
-#: tzres.rc:232
+#: tzres.rc:234
 msgid "Yakutsk Standard Time"
 msgstr "Jakutskin normaaliaika"
 
-#: tzres.rc:233
+#: tzres.rc:235
 msgid "Yakutsk Daylight Time"
 msgstr "Jakutskin kesäaika"
 
-#: tzres.rc:182
+#: tzres.rc:184
 msgid "SA Eastern Standard Time"
 msgstr "Etelä-Amerikan itäinen normaaliaika"
 
-#: tzres.rc:183
+#: tzres.rc:185
 msgid "SA Eastern Daylight Time"
 msgstr "Etelä-Amerikan itäinen kesäaika"
 
@@ -10110,35 +10110,35 @@ msgstr "Arabian normaaliaika"
 msgid "Arabian Daylight Time"
 msgstr "Arabian kesäaika"
 
-#: tzres.rc:180
+#: tzres.rc:182
 msgid "Russian Standard Time"
 msgstr "Venäjän normaaliaika"
 
-#: tzres.rc:181
+#: tzres.rc:183
 msgid "Russian Daylight Time"
 msgstr "Venäjän kesäaika"
 
-#: tzres.rc:178
+#: tzres.rc:180
 msgid "Romance Standard Time"
 msgstr "Romaaninen normaaliaika"
 
-#: tzres.rc:179
+#: tzres.rc:181
 msgid "Romance Daylight Time"
 msgstr "Romaaninen kesäaika"
 
-#: tzres.rc:102
+#: tzres.rc:104
 msgid "Ekaterinburg Standard Time"
 msgstr "Jekaterinburgin normaaliaika"
 
-#: tzres.rc:103
+#: tzres.rc:105
 msgid "Ekaterinburg Daylight Time"
 msgstr "Jekaterinburgin kesäaika"
 
-#: tzres.rc:198
+#: tzres.rc:200
 msgid "Syria Standard Time"
 msgstr "Syyrian normaaliaika"
 
-#: tzres.rc:199
+#: tzres.rc:201
 msgid "Syria Daylight Time"
 msgstr "Syyrian kesäaika"
 
@@ -10150,27 +10150,27 @@ msgstr "Australian keskinen normaaliaika"
 msgid "AUS Central Daylight Time"
 msgstr "Australian keskinen kesäaika"
 
-#: tzres.rc:114
+#: tzres.rc:116
 msgid "Greenwich Standard Time"
 msgstr "Greenwichin normaaliaika"
 
-#: tzres.rc:115
+#: tzres.rc:117
 msgid "Greenwich Daylight Time"
 msgstr "Greenwichin kesäaika"
 
-#: tzres.rc:210
+#: tzres.rc:212
 msgid "Ulaanbaatar Standard Time"
 msgstr "Ulaanbaatarin normaaliaika"
 
-#: tzres.rc:211
+#: tzres.rc:213
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Ulaanbaatarin kesäaika"
 
-#: tzres.rc:126
+#: tzres.rc:128
 msgid "Israel Standard Time"
 msgstr "Israelin normaaliaika"
 
-#: tzres.rc:127
+#: tzres.rc:129
 msgid "Israel Daylight Time"
 msgstr "Israelin kesäaika"
 
@@ -10182,19 +10182,19 @@ msgstr "Bangladeshin normaaliaika"
 msgid "Bangladesh Daylight Time"
 msgstr "Bangladeshin kesäaika"
 
-#: tzres.rc:184
+#: tzres.rc:186
 msgid "SA Pacific Standard Time"
 msgstr "Etelä-Amerikan Tyynenmeren normaaliaika"
 
-#: tzres.rc:185
+#: tzres.rc:187
 msgid "SA Pacific Daylight Time"
 msgstr "Etelä-Amerikan Tyynenmeren kesäaika"
 
-#: tzres.rc:228
+#: tzres.rc:230
 msgid "West Asia Standard Time"
 msgstr "Länsi-Aasian normaaliaika"
 
-#: tzres.rc:229
+#: tzres.rc:231
 msgid "West Asia Daylight Time"
 msgstr "Länsi-Aasian kesäaika"
 
@@ -10206,27 +10206,27 @@ msgstr "Alaskan normaaliaika"
 msgid "Alaskan Daylight Time"
 msgstr "Alaskan kesäaika"
 
-#: tzres.rc:176
+#: tzres.rc:178
 msgid "Paraguay Standard Time"
 msgstr "Paraguayn normaaliaika"
 
-#: tzres.rc:177
+#: tzres.rc:179
 msgid "Paraguay Daylight Time"
 msgstr "Paraguayn kesäaika"
 
-#: tzres.rc:88
+#: tzres.rc:90
 msgid "Dateline Standard Time"
 msgstr "Päivämäärärajan normaaliaika"
 
-#: tzres.rc:89
+#: tzres.rc:91
 msgid "Dateline Daylight Time"
 msgstr "Päivämäärärajan kesäaika"
 
-#: tzres.rc:134
+#: tzres.rc:136
 msgid "Libya Standard Time"
 msgstr "Libyan normaaliaika"
 
-#: tzres.rc:135
+#: tzres.rc:137
 msgid "Libya Daylight Time"
 msgstr "Libyan kesäaika"
 
@@ -10238,35 +10238,47 @@ msgstr "Bahian normaaliaika"
 msgid "Bahia Daylight Time"
 msgstr "Bahian kesäaika"
 
-#: tzres.rc:218
+#: tzres.rc:220
 msgid "Venezuela Standard Time"
 msgstr "Venezuelan normaaliaika"
 
-#: tzres.rc:219
+#: tzres.rc:221
 msgid "Venezuela Daylight Time"
 msgstr "Venezuelan kesäaika"
 
-#: tzres.rc:120
+#: tzres.rc:60
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Bougainville Standard Time"
+msgstr "Kalliovuorten normaaliaika"
+
+#: tzres.rc:61
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Bougainville Daylight Time"
+msgstr "Kalliovuorten kesäaika"
+
+#: tzres.rc:122
 msgid "Hawaiian Standard Time"
 msgstr "Havaijin normaaliaika"
 
-#: tzres.rc:121
+#: tzres.rc:123
 msgid "Hawaiian Daylight Time"
 msgstr "Havaijin kesäaika"
 
-#: tzres.rc:190
+#: tzres.rc:192
 msgid "SE Asia Standard Time"
 msgstr "Kaakkois-Aasian normaaliaika"
 
-#: tzres.rc:191
+#: tzres.rc:193
 msgid "SE Asia Daylight Time"
 msgstr "Kaakkois-Aasian kesäaika"
 
-#: tzres.rc:160
+#: tzres.rc:162
 msgid "New Zealand Standard Time"
 msgstr "Uuden-Seelannin normaaliaika"
 
-#: tzres.rc:161
+#: tzres.rc:163
 msgid "New Zealand Daylight Time"
 msgstr "Uuden-Seelannin kesäaika"
 
@@ -10278,11 +10290,11 @@ msgstr "Aleuttien normaaliaika"
 msgid "Aleutian Daylight Time"
 msgstr "Aleuttien kesäaika"
 
-#: tzres.rc:72
+#: tzres.rc:74
 msgid "Central Brazilian Standard Time"
 msgstr "Keski-Brasilian normaaliaika"
 
-#: tzres.rc:73
+#: tzres.rc:75
 msgid "Central Brazilian Daylight Time"
 msgstr "Keski-Brasilian kesäaika"
 
@@ -10294,143 +10306,143 @@ msgstr "Valko-Venäjän normaaliaika"
 msgid "Belarus Daylight Time"
 msgstr "Valko-Venäjän kesäaika"
 
-#: tzres.rc:186
+#: tzres.rc:188
 msgid "SA Western Standard Time"
 msgstr "Etelä-Amerikan läntinen normaaliaika"
 
-#: tzres.rc:187
+#: tzres.rc:189
 msgid "SA Western Daylight Time"
 msgstr "Etelä-Amerikan läntinen kesäaika"
 
-#: tzres.rc:112
+#: tzres.rc:114
 msgid "Greenland Standard Time"
 msgstr "Grönlannin normaaliaika"
 
-#: tzres.rc:113
+#: tzres.rc:115
 msgid "Greenland Daylight Time"
 msgstr "Grönlannin kesäaika"
 
-#: tzres.rc:96
+#: tzres.rc:98
 msgid "Easter Island Standard Time"
 msgstr "Pääsiäissaarten normaaliaika"
 
-#: tzres.rc:97
+#: tzres.rc:99
 msgid "Easter Island Daylight Time"
 msgstr "Pääsiäissaarten kesäaika"
 
-#: tzres.rc:100
+#: tzres.rc:102
 msgid "Egypt Standard Time"
 msgstr "Egyptin normaaliaika"
 
-#: tzres.rc:101
+#: tzres.rc:103
 msgid "Egypt Daylight Time"
 msgstr "Egyptin kesäaika"
 
-#: tzres.rc:140
+#: tzres.rc:142
 msgid "Mauritius Standard Time"
 msgstr "Mauritiuksen normaaliaika"
 
-#: tzres.rc:141
+#: tzres.rc:143
 msgid "Mauritius Daylight Time"
 msgstr "Mauritiuksen kesäaika"
 
-#: tzres.rc:220
+#: tzres.rc:222
 msgid "Vladivostok Standard Time"
 msgstr "Vladivostokin normaaliaika"
 
-#: tzres.rc:221
+#: tzres.rc:223
 msgid "Vladivostok Daylight Time"
 msgstr "Vladivostokin kesäaika"
 
-#: tzres.rc:192
+#: tzres.rc:194
 msgid "Singapore Standard Time"
 msgstr "Singaporen normaaliaika"
 
-#: tzres.rc:193
+#: tzres.rc:195
 msgid "Singapore Daylight Time"
 msgstr "Singaporen kesäaika"
 
-#: tzres.rc:132
+#: tzres.rc:134
 msgid "Korea Standard Time"
 msgstr "Korean normaaliaika"
 
-#: tzres.rc:133
+#: tzres.rc:135
 msgid "Korea Daylight Time"
 msgstr "Korean kesäaika"
 
-#: tzres.rc:84
+#: tzres.rc:86
 #, fuzzy
 #| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
 msgstr "Pääsiäissaarten normaaliaika"
 
-#: tzres.rc:85
+#: tzres.rc:87
 #, fuzzy
 #| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
 msgstr "Pääsiäissaarten kesäaika"
 
-#: tzres.rc:90
+#: tzres.rc:92
 msgid "E. Africa Standard Time"
 msgstr "Itä-Afrikan normaaliaika"
 
-#: tzres.rc:91
+#: tzres.rc:93
 msgid "E. Africa Daylight Time"
 msgstr "Itä-Afrikan kesäaika"
 
-#: tzres.rc:106
+#: tzres.rc:108
 msgid "FLE Standard Time"
 msgstr "Suomen normaaliaika"
 
-#: tzres.rc:107
+#: tzres.rc:109
 msgid "FLE Daylight Time"
 msgstr "Suomen kesäaika"
 
-#: tzres.rc:94
+#: tzres.rc:96
 msgid "E. South America Standard Time"
 msgstr "Itäisen Etelä-Amerikan normaaliaika"
 
-#: tzres.rc:95
+#: tzres.rc:97
 msgid "E. South America Daylight Time"
 msgstr "Itäisen Etelä-Amerikan kesäaika"
 
-#: tzres.rc:78
+#: tzres.rc:80
 msgid "Central Pacific Standard Time"
 msgstr "Keski-Tyynenmeren normaaliaika"
 
-#: tzres.rc:79
+#: tzres.rc:81
 msgid "Central Pacific Daylight Time"
 msgstr "Keski-Tyynenmeren kesäaika"
 
-#: tzres.rc:224
+#: tzres.rc:226
 msgid "W. Central Africa Standard Time"
 msgstr "Läntisen Keski-Afrikan normaaliaika"
 
-#: tzres.rc:225
+#: tzres.rc:227
 msgid "W. Central Africa Daylight Time"
 msgstr "Läntisen Keski-Afrikan kesäaika"
 
-#: tzres.rc:168
+#: tzres.rc:170
 msgid "Pacific SA Standard Time"
 msgstr "Tyynenmeren Etelä-Amerikan normaaliaika"
 
-#: tzres.rc:169
+#: tzres.rc:171
 msgid "Pacific SA Daylight Time"
 msgstr "Tyynenmeren Etelä-Amerikan kesäaika"
 
-#: tzres.rc:92
+#: tzres.rc:94
 msgid "E. Australia Standard Time"
 msgstr "Itä-Australian normaaliaika"
 
-#: tzres.rc:93
+#: tzres.rc:95
 msgid "E. Australia Daylight Time"
 msgstr "Itä-Australian kesäaika"
 
-#: tzres.rc:222
+#: tzres.rc:224
 msgid "W. Australia Standard Time"
 msgstr "Länsi-Australian normaaliaika"
 
-#: tzres.rc:223
+#: tzres.rc:225
 msgid "W. Australia Daylight Time"
 msgstr "Länsi-Australian kesäaika"
 

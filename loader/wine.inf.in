@@ -2826,6 +2826,17 @@ HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"MUI_Std",,"@tzres.dll,-56576"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"Std",,"Belarus Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Belarus Standard Time,"TZI",1,4c,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"Display",,"Pacific/Bougainville"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"Dlt",,"Bougainville Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"MUI_Dlt",,"@tzres.dll,-51969"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"MUI_Std",,"@tzres.dll,-51968"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"Std",,"Bougainville Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time,"TZI",1,6c,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"2013",1,a8,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"2014",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,01,00,03,00,01,00,00,00,00,00,00,00,00,00,00,00,0c,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"2015",1,6c,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"FirstEntry",0x10001,"2013"
+HKLM,%CurrentVersionNT%\Time Zones\Bougainville Standard Time\Dynamic DST,"LastEntry",0x10001,"2015"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Display",,"America/Regina"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"Dlt",,"Canada Central Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Canada Central Standard Time,"MUI_Dlt",,"@tzres.dll,-25713"
