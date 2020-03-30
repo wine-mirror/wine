@@ -76,8 +76,6 @@ static HRESULT (WINAPI *pMFCopyImage)(BYTE *dest, LONG deststride, const BYTE *s
 static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 static HRESULT (WINAPI *pMFCreateSourceResolver)(IMFSourceResolver **resolver);
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
-static void*   (WINAPI *pMFHeapAlloc)(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
-static void    (WINAPI *pMFHeapFree)(void *p);
 static HRESULT (WINAPI *pMFPutWaitingWorkItem)(HANDLE event, LONG priority, IMFAsyncResult *result, MFWORKITEM_KEY *key);
 static HRESULT (WINAPI *pMFAllocateSerialWorkQueue)(DWORD queue, DWORD *serial_queue);
 static HRESULT (WINAPI *pMFAddPeriodicCallback)(MFPERIODICCALLBACK callback, IUnknown *context, DWORD *key);
@@ -678,8 +676,6 @@ static void init_functions(void)
     X(MFCreateTransformActivate);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
-    X(MFHeapAlloc);
-    X(MFHeapFree);
     X(MFPutWaitingWorkItem);
     X(MFRegisterLocalByteStreamHandler);
     X(MFRegisterLocalSchemeHandler);
@@ -2483,16 +2479,10 @@ static void test_MFHeapAlloc(void)
 {
     void *res;
 
-    if (!pMFHeapAlloc)
-    {
-        win_skip("MFHeapAlloc() is not available.\n");
-        return;
-    }
-
-    res = pMFHeapAlloc(16, 0, NULL, 0, eAllocationTypeIgnore);
+    res = MFHeapAlloc(16, 0, NULL, 0, eAllocationTypeIgnore);
     ok(res != NULL, "MFHeapAlloc failed.\n");
 
-    pMFHeapFree(res);
+    MFHeapFree(res);
 }
 
 static void test_scheduled_items(void)
