@@ -2981,6 +2981,17 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"MUI_Dlt",,"@t
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"MUI_Std",,"@tzres.dll,-32800"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Std",,"Central Standard Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"Display",,"Pacific/Chatham"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"Dlt",,"Chatham Islands Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"MUI_Dlt",,"@tzres.dll,-62305"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"MUI_Std",,"@tzres.dll,-62304"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"Std",,"Chatham Islands Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time,"TZI",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,2d,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"2006",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,03,00,03,00,2d,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"2007",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,03,00,03,00,2d,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"2008",1,03,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,2d,00,00,00,00,00,00,00,09,00,00,00,05,00,02,00,2d,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"FirstEntry",0x10001,"2006"
+HKLM,%CurrentVersionNT%\Time Zones\Chatham Islands Standard Time\Dynamic DST,"LastEntry",0x10001,"2008"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Display",,"Asia/Shanghai"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Dlt",,"China Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"MUI_Dlt",,"@tzres.dll,-161"

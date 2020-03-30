@@ -80,6 +80,8 @@ STRINGTABLE
   17457 "Central Daylight Time"
   32800 "Central Standard Time (Mexico)"
   32801 "Central Daylight Time (Mexico)"
+  62304 "Chatham Islands Standard Time"
+  62305 "Chatham Islands Daylight Time"
     160 "China Standard Time"
     161 "China Daylight Time"
   50384 "Dateline Standard Time"
