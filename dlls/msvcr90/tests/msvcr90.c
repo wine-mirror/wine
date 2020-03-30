@@ -135,7 +135,7 @@ static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
 static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, __ms_va_list valist);
 static size_t (__cdecl *p___strncnt)(const char *str, size_t count);
-static int (__cdecl *p_swscanf)(const wchar_t *str, const wchar_t* format, ...);
+static int (WINAPIV *p_swscanf)(const wchar_t *str, const wchar_t* format, ...);
 static int (__cdecl *p____mb_cur_max_l_func)(_locale_t locale);
 static _locale_t (__cdecl *p__create_locale)(int, const char*);
 static void (__cdecl *p__free_locale)(_locale_t);
