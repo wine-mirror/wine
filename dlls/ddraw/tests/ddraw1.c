@@ -49,18 +49,6 @@ struct create_window_thread_param
     HANDLE thread;
 };
 
-static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
-{
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    return TRUE;
-}
-
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -83,6 +71,21 @@ static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, floa
             && compare_float(vec->y, y, ulps)
             && compare_float(vec->z, z, ulps)
             && compare_float(vec->w, w, ulps);
+}
+
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 static BOOL ddraw_get_identifier(IDirectDraw *ddraw, DDDEVICEIDENTIFIER *identifier)
@@ -11770,7 +11773,7 @@ static void test_depth_readback(void)
             depth = *((DWORD *)ptr) & z_mask;
             expected_depth = (x * (0.9 / 640.0) + y * (0.1 / 480.0)) * z_mask;
             max_diff = ((0.5f * 0.9f) / 640.0f) * z_mask;
-            ok(abs(expected_depth - depth) <= max_diff,
+            ok(compare_uint(expected_depth, depth, max_diff),
                     "z_depth %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                     z_depth, depth, expected_depth - depth, expected_depth, max_diff, x, y);
         }

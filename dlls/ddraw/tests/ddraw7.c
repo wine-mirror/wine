@@ -87,16 +87,19 @@ static BOOL compare_vec4(const struct vec4 *vec, float x, float y, float z, floa
             && compare_float(vec->w, w, ulps);
 }
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
 static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    return TRUE;
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 static ULONG get_refcount(IUnknown *iface)
@@ -14726,11 +14729,11 @@ static void test_depth_readback(void)
                  * Arx Fatalis is broken on the Geforce 9 in the same way it was broken in Wine (bug 43654).
                  * The !tests[i].s_depth is supposed to rule out D16 on GF9 and D24X8 on GF7. */
                 todo_wine_if(tests[i].todo)
-                    ok(abs(expected_depth - depth) <= max_diff
+                    ok(compare_uint(expected_depth, depth, max_diff)
                             || (ddraw_is_nvidia(ddraw) && (all_zero || all_one || !tests[i].s_depth)),
                             "Test %u: Got depth 0x%08x (diff %d), expected 0x%08x+/-%u, at %u, %u.\n",
                             i, depth, expected_depth - depth, expected_depth, max_diff, x, y);
-                if (abs(expected_depth - depth) > max_diff)
+                if (!compare_uint(expected_depth, depth, max_diff))
                     all_pass = FALSE;
 
                 hr = IDirectDrawSurface7_Unlock(ds, &r);
