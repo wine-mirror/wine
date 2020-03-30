@@ -3379,8 +3379,8 @@ NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LP
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if ((p = memrchrW( key->Buffer, '\\', key->Length / sizeof(WCHAR) ))) p++;
-    else p = key->Buffer;
+    p = key->Buffer + key->Length / sizeof(WCHAR);
+    while (p > key->Buffer && p[-1] != '\\') p--;
     len = key->Length - (p - key->Buffer) * sizeof(WCHAR);
     name_str.Buffer = path;
     name_str.Length = sizeof(optionsW) + len;
