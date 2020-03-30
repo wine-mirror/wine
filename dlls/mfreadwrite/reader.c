@@ -895,7 +895,7 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
         source_reader_release_response(response);
     }
 
-    return request_sample;
+    return !request_sample;
 }
 
 static HRESULT source_reader_get_stream_read_index(struct source_reader *reader, DWORD index, DWORD *stream_index)
@@ -984,8 +984,8 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
     struct source_reader_async_command *command;
     struct stream_response *response;
     DWORD stream_index, stream_flags;
-    BOOL request_sample = FALSE;
     struct media_stream *stream;
+    BOOL report_sample = FALSE;
     IMFSample *sample = NULL;
     LONGLONG timestamp = 0;
     HRESULT hr, status;
@@ -1008,10 +1008,8 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
 
             if (SUCCEEDED(hr = source_reader_start_source(reader)))
             {
-                request_sample = source_reader_get_read_result(reader, stream, command->flags, &status, &stream_index,
-                        &stream_flags, &timestamp, &sample);
-
-                if (request_sample)
+                if (!(report_sample = source_reader_get_read_result(reader, stream, command->flags, &status, &stream_index,
+                        &stream_flags, &timestamp, &sample)))
                 {
                     stream->requests++;
                     source_reader_request_sample(reader, stream);
@@ -1021,7 +1019,7 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
 
             LeaveCriticalSection(&stream->cs);
 
-            if (!request_sample)
+            if (report_sample)
                 IMFSourceReaderCallback_OnReadSample(reader->async_callback, status, stream_index, stream_flags,
                         timestamp, sample);
 
@@ -1532,7 +1530,6 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
     unsigned int actual_index_tmp;
     struct media_stream *stream;
     LONGLONG timestamp_tmp;
-    BOOL request_sample;
     DWORD stream_index;
     HRESULT hr = S_OK;
 
@@ -1563,10 +1560,8 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
 
     if (SUCCEEDED(hr = source_reader_start_source(reader)))
     {
-        request_sample = source_reader_get_read_result(reader, stream, flags, &hr, actual_index, stream_flags,
-               timestamp, sample);
-
-        if (request_sample)
+        if (!source_reader_get_read_result(reader, stream, flags, &hr, actual_index, stream_flags,
+               timestamp, sample))
         {
             while (list_empty(&stream->responses) && stream->state != STREAM_STATE_EOS)
             {
