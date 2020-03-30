@@ -1337,7 +1337,6 @@ static HRESULT add_column_values(LDAP_namespace *ldap, ADS_SEARCH_COLUMN *col,
         case ADSTYPE_CASE_EXACT_STRING:
         case ADSTYPE_CASE_IGNORE_STRING:
         case ADSTYPE_PRINTABLE_STRING:
-        case ADSTYPE_NT_SECURITY_DESCRIPTOR:
         {
             DWORD outlen;
             TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
