@@ -2438,7 +2438,7 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
 
     if (is_file_executable( fd->unix_name ) != is_file_executable( name ) && !fstat( fd->unix_fd, &st ))
     {
-        if (is_file_executable( fd->unix_name ))
+        if (is_file_executable( name ))
             /* set executable bit where read bit is set */
             st.st_mode |= (st.st_mode & 0444) >> 2;
         else
