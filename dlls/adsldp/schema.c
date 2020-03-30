@@ -143,8 +143,30 @@ static WCHAR *parse_name(WCHAR **str)
     return name;
 }
 
+static void skip_token(WCHAR **str)
+{
+    WCHAR *p = *str;
+
+    while (is_space(*p)) p++;
+
+    if (*p == '\'')
+    {
+        p++;
+        while (*p && *p != '\'') p++;
+    }
+    else
+    {
+        while (*p && !is_space(*p)) p++;
+    }
+
+    *str = *p ? p + 1 : p;
+}
+
 static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
 {
+    static const WCHAR * const not_supported[] = { L"DESC", L"EQUALITY",
+        L"ORDERING", L"SUBSTR", L"SUP", L"USAGE", L"X-ORDERED" };
+    int i;
     WCHAR *p = str;
 
     at->oid = NULL;
@@ -184,9 +206,25 @@ static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
         }
         else
         {
-            FIXME("not supported token at %s\n", debugstr_w(p));
-            free_attribute_type(at);
-            return FALSE;
+            BOOL recognized = FALSE;
+
+            for (i = 0; i < ARRAY_SIZE(not_supported); i++)
+            {
+                if (!wcsnicmp(p, not_supported[i], wcslen(not_supported[i])))
+                {
+                    p += wcslen(not_supported[i]);
+                    skip_token(&p);
+                    recognized = TRUE;
+                    break;
+                }
+            }
+
+            if (!recognized)
+            {
+                FIXME("not supported token at %s\n", debugstr_w(p));
+                free_attribute_type(at);
+                return FALSE;
+            }
         }
     }
 
@@ -251,8 +289,8 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
                     continue;
                 }
 
-                TRACE("oid %s, name %s, syntax %s, single-value %d\n", debugstr_w(at[i].oid),
-                      debugstr_w(at[i].name), debugstr_w(at[i].syntax), at[i].single_value);
+                TRACE("oid %s, name %s, syntax %s, single-value %d\n", debugstr_w(at[count].oid),
+                      debugstr_w(at[count].name), debugstr_w(at[count].syntax), at[count].single_value);
 
                 count++;
             }
