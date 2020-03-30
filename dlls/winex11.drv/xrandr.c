@@ -60,6 +60,7 @@ MAKE_FUNCPTR(XRRFreeScreenResources)
 MAKE_FUNCPTR(XRRGetCrtcInfo)
 MAKE_FUNCPTR(XRRGetOutputInfo)
 MAKE_FUNCPTR(XRRGetScreenResources)
+MAKE_FUNCPTR(XRRGetScreenSizeRange)
 MAKE_FUNCPTR(XRRSetCrtcConfig)
 MAKE_FUNCPTR(XRRSetScreenSize)
 static typeof(XRRGetScreenResources) *pXRRGetScreenResourcesCurrent;
@@ -114,6 +115,7 @@ static int load_xrandr(void)
         LOAD_FUNCPTR(XRRGetCrtcInfo)
         LOAD_FUNCPTR(XRRGetOutputInfo)
         LOAD_FUNCPTR(XRRGetScreenResources)
+        LOAD_FUNCPTR(XRRGetScreenSizeRange)
         LOAD_FUNCPTR(XRRSetCrtcConfig)
         LOAD_FUNCPTR(XRRSetScreenSize)
         r = 2;
@@ -361,9 +363,13 @@ static int xrandr12_get_current_mode(void)
 
 static void get_screen_size( XRRScreenResources *resources, unsigned int *width, unsigned int *height )
 {
+    int min_width = 0, min_height = 0, max_width, max_height;
     XRRCrtcInfo *crtc_info;
     int i;
-    *width = *height = 0;
+
+    pXRRGetScreenSizeRange( gdi_display, root_window, &min_width, &min_height, &max_width, &max_height );
+    *width = min_width;
+    *height = min_height;
 
     for (i = 0; i < resources->ncrtc; ++i)
     {
