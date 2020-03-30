@@ -1211,7 +1211,8 @@ static HRESULT sample_copy_to_buffer(struct sample *sample, IMFMediaBuffer *buff
         }
     }
 
-    IMFMediaBuffer_SetCurrentLength(buffer, dst_current_length);
+    if (FAILED(IMFMediaBuffer_SetCurrentLength(buffer, dst_current_length)))
+        WARN("Failed to set buffer length.\n");
 
     if (locked)
         IMFMediaBuffer_Unlock(buffer);
