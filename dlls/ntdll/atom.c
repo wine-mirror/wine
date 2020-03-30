@@ -34,6 +34,7 @@
 
 #include "wine/server.h"
 #include "wine/unicode.h"
+#include "ntdll_misc.h"
 
 #include "wine/debug.h"
 
@@ -109,7 +110,7 @@ static ULONG integral_atom_name(WCHAR* buffer, ULONG len, RTL_ATOM atom)
     WCHAR tmp[16];
     int ret;
 
-    ret = sprintfW( tmp, fmt, atom );
+    ret = NTDLL_swprintf( tmp, fmt, atom );
     if (!len) return ret * sizeof(WCHAR);
     if (len <= ret) ret = len - 1;
     memcpy( buffer, tmp, ret * sizeof(WCHAR) );

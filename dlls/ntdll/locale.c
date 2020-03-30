@@ -590,16 +590,16 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
         break;
     case NLS_SECTION_CASEMAP:
         if (id) return STATUS_UNSUCCESSFUL;
-        sprintfW( buffer, keyfmtW, langW );
-        sprintfW( value, langfmtW, LANGIDFROMLCID(system_lcid) );
+        NTDLL_swprintf( buffer, keyfmtW, langW );
+        NTDLL_swprintf( value, langfmtW, LANGIDFROMLCID(system_lcid) );
         break;
     case NLS_SECTION_CODEPAGE:
-        sprintfW( buffer, keyfmtW, cpW );
-        sprintfW( value, cpfmtW, id );
+        NTDLL_swprintf( buffer, keyfmtW, cpW );
+        NTDLL_swprintf( value, cpfmtW, id );
         break;
     case NLS_SECTION_NORMALIZE:
-        sprintfW( buffer, keyfmtW, normW );
-        sprintfW( value, normfmtW, id );
+        NTDLL_swprintf( buffer, keyfmtW, normW );
+        NTDLL_swprintf( value, normfmtW, id );
         break;
     default:
         return STATUS_INVALID_PARAMETER_1;
@@ -635,7 +635,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
             name = intlW;
             break;
         case NLS_SECTION_CODEPAGE:
-            sprintfW( buffer, cpdefaultW, id );
+            NTDLL_swprintf( buffer, cpdefaultW, id );
             name = buffer;
             break;
         case NLS_SECTION_NORMALIZE:
@@ -657,7 +657,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     valueW.MaximumLength = (strlenW(name) + strlenW(dir) + 5) * sizeof(WCHAR);
     if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
         return STATUS_NO_MEMORY;
-    valueW.Length = sprintfW( valueW.Buffer, pathfmtW, dir, name ) * sizeof(WCHAR);
+    valueW.Length = NTDLL_swprintf( valueW.Buffer, pathfmtW, dir, name ) * sizeof(WCHAR);
     InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
     status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
     if (!status) TRACE( "found %s\n", debugstr_w( valueW.Buffer ));

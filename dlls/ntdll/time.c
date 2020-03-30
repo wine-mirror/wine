@@ -729,7 +729,7 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
     UNICODE_STRING nameW, nameDynamicW;
     WCHAR buf[128], yearW[16];
 
-    sprintfW(yearW, fmtW, year);
+    NTDLL_swprintf(yearW, fmtW, year);
 
     attrDynamic.Length = sizeof(attrDynamic);
     attrDynamic.RootDirectory = 0; /* will be replaced later */

@@ -1605,7 +1605,7 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
                                     strlenW(params->ImagePathName.Buffer) +
                                     strlenW(params->CommandLine.Buffer)) * sizeof(WCHAR));
         if (!cmdline) return STATUS_NO_MEMORY;
-        sprintfW( cmdline, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
+        NTDLL_swprintf( cmdline, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
                   winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
         RtlInitUnicodeString( &strW, cmdline );
         memset( &pe_info, 0, sizeof(pe_info) );

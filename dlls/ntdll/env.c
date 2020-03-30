@@ -399,10 +399,10 @@ static void set_wow64_environment( WCHAR **env )
     set_wine_path_variable( env, wineconfigdirW, wine_get_config_dir() );
     for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
     {
-        sprintfW( buf, winedlldirW, i );
+        NTDLL_swprintf( buf, winedlldirW, i );
         set_wine_path_variable( env, buf, path );
     }
-    sprintfW( buf, winedlldirW, i );
+    NTDLL_swprintf( buf, winedlldirW, i );
     set_wine_path_variable( env, buf, NULL );
 
     /* set the PROCESSOR_ARCHITECTURE variable */

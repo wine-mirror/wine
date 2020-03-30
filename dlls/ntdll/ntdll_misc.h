@@ -295,6 +295,7 @@ LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub );
 LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim );
 LONG   __cdecl NTDLL_wcstol( LPCWSTR s, LPWSTR *end, INT base );
 ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
+int    WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... );
 
 #define wcsicmp(s1,s2) NTDLL__wcsicmp(s1,s2)
 #define wcsnicmp(s1,s2,n) NTDLL__wcsnicmp(s1,s2,n)
