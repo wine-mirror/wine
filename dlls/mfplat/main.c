@@ -8058,15 +8058,35 @@ static HRESULT WINAPI system_time_source_sink_OnClockStart(IMFClockStateSink *if
         LONGLONG start_offset)
 {
     struct system_time_source *source = impl_from_IMFClockStateSink(iface);
+    MFCLOCK_STATE state;
     HRESULT hr;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_time(system_time), debugstr_time(start_offset));
 
     EnterCriticalSection(&source->cs);
+    state = source->state;
     if (SUCCEEDED(hr = system_time_source_change_state(source, CLOCK_CMD_START)))
     {
         system_time_source_apply_rate(source, &system_time);
-        source->start_offset = -system_time + start_offset;
+        if (start_offset == PRESENTATION_CURRENT_POSITION)
+        {
+            switch (state)
+            {
+                case MFCLOCK_STATE_RUNNING:
+                    break;
+                case MFCLOCK_STATE_PAUSED:
+                    source->start_offset -= system_time;
+                    break;
+                default:
+                    source->start_offset = -system_time;
+                    break;
+                    ;
+            }
+        }
+        else
+        {
+            source->start_offset = -system_time + start_offset;
+        }
     }
     LeaveCriticalSection(&source->cs);
 
