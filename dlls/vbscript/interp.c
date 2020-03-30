@@ -188,7 +188,9 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
             return S_OK;
     }
 
-    if(ctx->func->code_ctx->named_item && ctx->func->code_ctx->named_item->disp) {
+    if(ctx->func->code_ctx->named_item && ctx->func->code_ctx->named_item->disp &&
+       !(ctx->func->code_ctx->named_item->flags & SCRIPTITEM_CODEONLY))
+    {
         hres = disp_get_id(ctx->func->code_ctx->named_item->disp, name, invoke_type, TRUE, &id);
         if(SUCCEEDED(hres)) {
             ref->type = REF_DISP;

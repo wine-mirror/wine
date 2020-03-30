@@ -2040,6 +2040,13 @@ static void test_named_items(void)
 
     SET_EXPECT(OnEnterScript);
     SET_EXPECT(OnLeaveScript);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"dim abc\ntestVar_global = 5\n", L"visibleCodeItem", NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    CHECK_CALLED(OnEnterScript);
+    CHECK_CALLED(OnLeaveScript);
+
+    SET_EXPECT(OnEnterScript);
+    SET_EXPECT(OnLeaveScript);
     hres = IActiveScriptParse_ParseScriptText(parse, L"set global_me = me\n", L"globalItem", NULL, NULL, 0, 0, SCRIPTTEXT_ISPERSISTENT, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     CHECK_CALLED(OnEnterScript);
