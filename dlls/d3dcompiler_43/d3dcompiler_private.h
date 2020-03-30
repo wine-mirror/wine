@@ -658,10 +658,15 @@ struct hlsl_ir_node
 {
     struct list entry;
     enum hlsl_ir_node_type type;
-    unsigned int index; /* for liveness ranges */
     struct hlsl_type *data_type;
 
     struct source_location loc;
+
+    /* Liveness ranges. "index" is the index of this instruction. Since this is
+     * essentially an SSA value, the earliest live point is the index. This is
+     * true even for loops, since currently we can't have a reference to a
+     * value generated in an earlier iteration of the loop. */
+    unsigned int index, last_read;
 };
 
 #define HLSL_STORAGE_EXTERN          0x00000001

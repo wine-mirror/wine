@@ -2607,7 +2607,9 @@ static struct hlsl_ir_var *hlsl_var_from_deref(const struct hlsl_deref *deref)
 
 /* Compute the earliest and latest liveness for each variable. In the case that
  * a variable is accessed inside of a loop, we promote its liveness to extend
- * to at least the range of the entire loop. */
+ * to at least the range of the entire loop. Note that we don't need to do this
+ * for anonymous nodes, since there's currently no way to use a node which was
+ * calculated in an earlier iteration of the loop. */
 static void compute_liveness_recurse(struct list *instrs, unsigned int loop_first, unsigned int loop_last)
 {
     struct hlsl_ir_node *instr;
@@ -2623,6 +2625,17 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             var = hlsl_var_from_deref(&assignment->lhs);
             if (!var->first_write)
                 var->first_write = loop_first ? min(instr->index, loop_first) : instr->index;
+            assignment->rhs->last_read = instr->index;
+            break;
+        }
+        case HLSL_IR_CONSTANT:
+            break;
+        case HLSL_IR_CONSTRUCTOR:
+        {
+            struct hlsl_ir_constructor *constructor = constructor_from_node(instr);
+            unsigned int i;
+            for (i = 0; i < constructor->args_count; ++i)
+                constructor->args[i]->last_read = instr->index;
             break;
         }
         case HLSL_IR_DEREF:
@@ -2630,6 +2643,18 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             struct hlsl_ir_deref *deref = deref_from_node(instr);
             var = hlsl_var_from_deref(&deref->src);
             var->last_read = loop_last ? max(instr->index, loop_last) : instr->index;
+            if (deref->src.type == HLSL_IR_DEREF_ARRAY)
+                deref->src.v.array.index->last_read = instr->index;
+            break;
+        }
+        case HLSL_IR_EXPR:
+        {
+            struct hlsl_ir_expr *expr = expr_from_node(instr);
+            expr->operands[0]->last_read = instr->index;
+            if (expr->operands[1])
+                expr->operands[1]->last_read = instr->index;
+            if (expr->operands[2])
+                expr->operands[2]->last_read = instr->index;
             break;
         }
         case HLSL_IR_IF:
@@ -2638,6 +2663,14 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             compute_liveness_recurse(iff->then_instrs, loop_first, loop_last);
             if (iff->else_instrs)
                 compute_liveness_recurse(iff->else_instrs, loop_first, loop_last);
+            iff->condition->last_read = instr->index;
+            break;
+        }
+        case HLSL_IR_JUMP:
+        {
+            struct hlsl_ir_jump *jump = jump_from_node(instr);
+            if (jump->type == HLSL_IR_JUMP_RETURN && jump->return_value)
+                jump->return_value->last_read = instr->index;
             break;
         }
         case HLSL_IR_LOOP:
@@ -2645,6 +2678,12 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             struct hlsl_ir_loop *loop = loop_from_node(instr);
             compute_liveness_recurse(loop->body, loop_first ? loop_first : instr->index,
                     loop_last ? loop_last : loop->next_index);
+            break;
+        }
+        case HLSL_IR_SWIZZLE:
+        {
+            struct hlsl_ir_swizzle *swizzle = swizzle_from_node(instr);
+            swizzle->val->last_read = instr->index;
             break;
         }
         default:
