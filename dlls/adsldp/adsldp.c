@@ -1349,6 +1349,19 @@ static HRESULT add_column_values(LDAP_namespace *ldap, ADS_SEARCH_COLUMN *col,
             break;
         }
 
+        case ADSTYPE_BOOLEAN:
+            if (stricmp(values[i]->bv_val, "TRUE"))
+                col->pADsValues[i].u.Boolean = 1;
+            else if (stricmp(values[i]->bv_val, "FALSE"))
+                col->pADsValues[i].u.Boolean = 0;
+            else
+            {
+                FIXME("not recognized boolean value %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+                col->pADsValues[i].u.Boolean = 0;
+            }
+            TRACE("=> %d\n", col->pADsValues[i].u.Boolean);
+            break;
+
         case ADSTYPE_INTEGER:
             col->pADsValues[i].u.Integer = strtol(values[i]->bv_val, NULL, 10);
             TRACE("%s => %d\n", debugstr_an(values[i]->bv_val, values[i]->bv_len), col->pADsValues[i].u.Integer);

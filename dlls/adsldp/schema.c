@@ -58,6 +58,8 @@ ADSTYPEENUM get_schema_type(const WCHAR *name, const struct attribute_type *at, 
     type = find_schema_type(name, at, at_count);
     if (!type || !type->syntax) return ADSTYPE_CASE_IGNORE_STRING;
 
+    if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.7"))
+        return ADSTYPE_BOOLEAN;
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.12"))
         return ADSTYPE_DN_STRING;
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.15"))
