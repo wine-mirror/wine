@@ -26,14 +26,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
-typedef struct NullRendererImpl
+struct null_renderer
 {
     struct strmbase_renderer renderer;
-} NullRendererImpl;
+};
 
-static inline NullRendererImpl *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
+static struct null_renderer *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
 {
-    return CONTAINING_RECORD(iface, NullRendererImpl, renderer);
+    return CONTAINING_RECORD(iface, struct null_renderer, renderer);
 }
 
 static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
@@ -49,7 +49,7 @@ static HRESULT WINAPI NullRenderer_CheckMediaType(struct strmbase_renderer *ifac
 
 static void null_renderer_destroy(struct strmbase_renderer *iface)
 {
-    NullRendererImpl *filter = impl_from_strmbase_renderer(iface);
+    struct null_renderer *filter = impl_from_strmbase_renderer(iface);
 
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);
@@ -64,7 +64,7 @@ static const struct strmbase_renderer_ops renderer_ops =
 
 HRESULT null_renderer_create(IUnknown *outer, IUnknown **out)
 {
-    NullRendererImpl *object;
+    struct null_renderer *object;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
