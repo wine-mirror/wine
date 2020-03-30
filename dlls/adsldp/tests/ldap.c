@@ -106,11 +106,23 @@ static void test_LDAP(void)
             IDispatch_Release(disp);
 
         hr = ADsOpenObject(path, user, password, test[i].flags, &IID_IADs, (void **)&ads);
+        if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+        {
+            SysFreeString(path);
+            skip("server is down\n");
+            break;
+        }
         ok(hr == test[i].hr || hr == test[i].hr_ads_get, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
             IADs_Release(ads);
 
         hr = ADsGetObject(path, &IID_IDispatch, (void **)&disp);
+        if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+        {
+            SysFreeString(path);
+            skip("server is down\n");
+            break;
+        }
         ok(hr == test[i].hr || hr == test[i].hr_ads_get, "%d: got %#x, expected %#x\n", i, hr, test[i].hr);
         if (hr == S_OK)
             IDispatch_Release(disp);
@@ -337,8 +349,12 @@ todo_wine
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     hr = ADsGetObject(L"LDAP://ldap.forumsys.com", &IID_IDirectorySearch, (void **)&ds);
+    if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+    {
+        skip("server is down\n");
+        return;
+    }
     ok(hr == S_OK, "got %#x\n", hr);
-    if (hr != S_OK) return;
 
     pref.dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
     pref.vValue.dwType = ADSTYPE_INTEGER;

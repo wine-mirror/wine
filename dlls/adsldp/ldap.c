@@ -69,7 +69,7 @@ DWORD map_ldap_error(DWORD err)
     case LDAP_NO_OBJECT_CLASS_MODS:     return ERROR_DS_CANT_MOD_OBJ_CLASS;
     case LDAP_RESULTS_TOO_LARGE:        return ERROR_DS_OBJECT_RESULTS_TOO_LARGE;
     case LDAP_AFFECTS_MULTIPLE_DSAS:    return ERROR_DS_AFFECTS_MULTIPLE_DSAS;
-    case LDAP_SERVER_DOWN:              return  ERROR_DS_SERVER_DOWN;
+    case LDAP_SERVER_DOWN:              return ERROR_DS_SERVER_DOWN;
     case LDAP_LOCAL_ERROR:              return ERROR_DS_LOCAL_ERROR;
     case LDAP_ENCODING_ERROR:           return ERROR_DS_ENCODING_ERROR;
     case LDAP_DECODING_ERROR:           return ERROR_DS_DECODING_ERROR;
