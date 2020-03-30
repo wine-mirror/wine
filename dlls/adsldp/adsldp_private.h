@@ -50,6 +50,7 @@ struct attribute_type
 {
     WCHAR *oid;
     WCHAR *name;
+    ULONG name_count;
     WCHAR *syntax;
     int single_value;
 };

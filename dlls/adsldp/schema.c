@@ -32,10 +32,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
 
 static const struct attribute_type *find_schema_type(const WCHAR *name, const struct attribute_type *at, ULONG count)
 {
-    ULONG i;
+    ULONG i, n, off;
 
     for (i = 0; i < count; i++)
-        if (at[i].name && !wcsicmp(at[i].name, name)) return &at[i];
+    {
+        if (!at[i].name) continue;
+
+        off = 0;
+
+        for (n = 0; n < at[i].name_count; n++)
+        {
+            if (!wcsicmp(at[i].name + off, name)) return &at[i];
+            off += wcslen(at[i].name + off) + 1;
+        }
+    }
 
     return NULL;
 }
@@ -114,12 +124,63 @@ static WCHAR *parse_oid(WCHAR **str)
     return oid;
 }
 
-static WCHAR *parse_name(WCHAR **str)
+static WCHAR *parse_name(WCHAR **str, ULONG *name_count)
 {
     WCHAR *name, *p = *str, *end;
     int count;
 
+    *name_count = 0;
+
     while (is_space(*p)) p++;
+
+    if (*p == '(')
+    {
+        int total_count = 0;
+
+        p++;
+        name = NULL;
+
+        while (*p)
+        {
+            WCHAR *tmp_name, *new_name;
+            ULONG dummy;
+
+            while (is_space(*p)) p++;
+            if (*p == ')')
+            {
+                *str = p + 1;
+                return name;
+            }
+
+            tmp_name = parse_name(&p, &dummy);
+            if (!tmp_name) break;
+
+            TRACE("NAME[%u] %s\n", *name_count, debugstr_w(tmp_name));
+
+            count = wcslen(tmp_name);
+
+            if (!name)
+                new_name = heap_alloc((count + 1) * sizeof(WCHAR));
+            else
+                new_name = heap_realloc(name, (total_count + count + 1) * sizeof(WCHAR));
+
+            if (!new_name) break;
+
+            memcpy(new_name + total_count, tmp_name, (count + 1) * sizeof(WCHAR));
+
+            name = new_name;
+            heap_free(tmp_name);
+            total_count += count + 1;
+
+            *name_count += 1;
+            *str = p;
+        }
+
+        *str = *p ? p + 1 : p;
+
+        heap_free(name);
+        return NULL;
+    }
 
     if (*p != '\'')
     {
@@ -137,6 +198,8 @@ static WCHAR *parse_name(WCHAR **str)
 
     memcpy(name, p, count * sizeof(WCHAR));
     name[count] = 0;
+
+    *name_count = 1;
 
     *str = end + 1;
 
@@ -171,6 +234,7 @@ static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
 
     at->oid = NULL;
     at->name = NULL;
+    at->name_count = 0;
     at->syntax = NULL;
     at->single_value = 0;
 
@@ -188,7 +252,7 @@ static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
         if (!wcsnicmp(p, L"NAME", 4))
         {
             p += 4;
-            at->name = parse_name(&p);
+            at->name = parse_name(&p, &at->name_count);
         }
         else if (!wcsnicmp(p, L"SYNTAX", 6))
         {
@@ -292,8 +356,8 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
                     continue;
                 }
 
-                TRACE("oid %s, name %s, syntax %s, single-value %d\n", debugstr_w(at[count].oid),
-                      debugstr_w(at[count].name), debugstr_w(at[count].syntax), at[count].single_value);
+                TRACE("oid %s, name %s, name_count %u, syntax %s, single-value %d\n", debugstr_w(at[count].oid),
+                      debugstr_w(at[count].name), at[count].name_count, debugstr_w(at[count].syntax), at[count].single_value);
 
                 count++;
             }
