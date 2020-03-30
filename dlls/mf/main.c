@@ -760,17 +760,20 @@ static HRESULT WINAPI file_scheme_handler_BeginCreateObject(IMFSchemeHandler *if
 
     hr = MFCreateAsyncResult(&context->IUnknown_iface, &handler->IMFAsyncCallback_iface, (IUnknown *)caller, &item);
     IUnknown_Release(&context->IUnknown_iface);
-    IMFAsyncResult_Release(caller);
     if (SUCCEEDED(hr))
     {
         if (SUCCEEDED(hr = MFPutWorkItemEx(MFASYNC_CALLBACK_QUEUE_IO, item)))
         {
             if (cancel_cookie)
-                IMFAsyncResult_GetState(item, cancel_cookie);
+            {
+                *cancel_cookie = (IUnknown *)caller;
+                IUnknown_AddRef(*cancel_cookie);
+            }
         }
 
         IMFAsyncResult_Release(item);
     }
+    IMFAsyncResult_Release(caller);
 
     return hr;
 }
