@@ -52,7 +52,7 @@ static void null_renderer_destroy(struct strmbase_renderer *iface)
     NullRendererImpl *filter = impl_from_strmbase_renderer(iface);
 
     strmbase_renderer_cleanup(&filter->renderer);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
 static const struct strmbase_renderer_ops renderer_ops =
@@ -64,15 +64,14 @@ static const struct strmbase_renderer_ops renderer_ops =
 
 HRESULT null_renderer_create(IUnknown *outer, IUnknown **out)
 {
-    NullRendererImpl *pNullRenderer;
+    NullRendererImpl *object;
 
-    *out = NULL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    pNullRenderer = CoTaskMemAlloc(sizeof(NullRendererImpl));
+    strmbase_renderer_init(&object->renderer, outer, &CLSID_NullRenderer, L"In", &renderer_ops);
 
-    strmbase_renderer_init(&pNullRenderer->renderer, outer,
-            &CLSID_NullRenderer, L"In", &renderer_ops);
-
-    *out = &pNullRenderer->renderer.filter.IUnknown_inner;
+    TRACE("Created null renderer %p.\n", object);
+    *out = &object->renderer.filter.IUnknown_inner;
     return S_OK;
 }
