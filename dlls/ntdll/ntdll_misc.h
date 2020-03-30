@@ -298,6 +298,7 @@ ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
 
 #define wcsicmp(s1,s2) NTDLL__wcsicmp(s1,s2)
 #define wcsnicmp(s1,s2,n) NTDLL__wcsnicmp(s1,s2,n)
+#define towupper(c) NTDLL_towupper(c)
 #define wcslwr(s) NTDLL__wcslwr(s)
 #define wcsupr(s) NTDLL__wcsupr(s)
 

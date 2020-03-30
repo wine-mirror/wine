@@ -670,7 +670,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     case RELATIVE_DRIVE_PATH:   /* c:foo   */
         dep = 2;
-        if (toupperW(name[0]) != toupperW(cd->Buffer[0]) || cd->Buffer[1] != ':')
+        if (wcsnicmp( name, cd->Buffer, 2 ))
         {
             UNICODE_STRING      var, val;
 

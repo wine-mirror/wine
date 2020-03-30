@@ -1638,7 +1638,8 @@ WCHAR __cdecl NTDLL_towlower( WCHAR ch )
  */
 WCHAR __cdecl NTDLL_towupper( WCHAR ch )
 {
-    return casemap( nls_info.UpperCaseTable, ch );
+    if (nls_info.UpperCaseTable) return casemap( nls_info.UpperCaseTable, ch );
+    return casemap_ascii( ch );
 }
 
 

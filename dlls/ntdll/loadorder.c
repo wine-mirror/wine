@@ -89,13 +89,12 @@ static const WCHAR *get_basename( const WCHAR *name )
  *
  * Remove extension if it is ".dll".
  */
-static inline void remove_dll_ext( WCHAR *ext )
+static inline void remove_dll_ext( WCHAR *name )
 {
-    if (ext[0] == '.' &&
-        toupperW(ext[1]) == 'D' &&
-        toupperW(ext[2]) == 'L' &&
-        toupperW(ext[3]) == 'L' &&
-        !ext[4]) ext[0] = 0;
+    static const WCHAR dllW[] = {'.','d','l','l',0};
+    WCHAR *p = strrchrW( name, '.' );
+
+    if (p && !wcsicmp( p, dllW )) *p = 0;
 }
 
 
@@ -213,8 +212,7 @@ static void add_load_order_set( WCHAR *entry )
         if (*end) *end++ = 0;
         if (*entry)
         {
-            WCHAR *ext = strrchrW(entry, '.');
-            if (ext) remove_dll_ext( ext );
+            remove_dll_ext( entry );
             ldo.modulename = entry;
             add_load_order( &ldo );
             entry = end;
@@ -457,9 +455,8 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
     if (!(len = strlenW(path))) return ret;
     if (!(module = RtlAllocateHeap( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR) ))) return ret;
     strcpyW( module+1, path );  /* reserve module[0] for the wildcard char */
+    remove_dll_ext( module + 1 );
     basename = (WCHAR *)get_basename( module+1 );
-
-    if (len >= 4) remove_dll_ext( module + 1 + len - 4 );
 
     /* first explicit module name */
     if ((ret = get_load_order_value( std_key, app_key, module+1 )) != LO_INVALID)

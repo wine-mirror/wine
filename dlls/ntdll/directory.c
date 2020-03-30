@@ -1394,7 +1394,7 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
             if (is_case_sensitive)
                 while (name < name_end && (*name != *mask)) name++;
             else
-                while (name < name_end && (toupperW(*name) != toupperW(*mask))) name++;
+                while (name < name_end && (towupper(*name) != towupper(*mask))) name++;
             next_to_retry = name;
             break;
         case '?':
@@ -1403,7 +1403,7 @@ static BOOLEAN match_filename( const UNICODE_STRING *name_str, const UNICODE_STR
             break;
         default:
             if (is_case_sensitive) mismatch = (*mask != *name);
-            else mismatch = (toupperW(*mask) != toupperW(*name));
+            else mismatch = (towupper(*mask) != towupper(*name));
 
             if (!mismatch)
             {
