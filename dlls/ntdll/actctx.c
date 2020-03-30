@@ -1272,6 +1272,7 @@ static xmlstr_t find_xmlns( xmlbuf_t *xmlbuf, const xmlstr_t *name )
 static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *end)
 {
     const WCHAR* ptr;
+    WCHAR quote;
 
     if (xmlbuf->error) return FALSE;
 
@@ -1319,11 +1320,12 @@ static BOOL next_xml_attr(xmlbuf_t *xmlbuf, struct xml_attr *attr, BOOL *end)
 
     if (ptr == xmlbuf->end || (*ptr != '"' && *ptr != '\'')) return set_error( xmlbuf );
 
-    attr->value.ptr = ++ptr;
+    quote = *ptr++;
+    attr->value.ptr = ptr;
     if (ptr == xmlbuf->end) return set_error( xmlbuf );
 
-    ptr = memchrW(ptr, ptr[-1], xmlbuf->end - ptr);
-    if (!ptr)
+    while (ptr < xmlbuf->end && *ptr != quote) ptr++;
+    if (ptr == xmlbuf->end)
     {
         xmlbuf->ptr = xmlbuf->end;
         return set_error( xmlbuf );
@@ -1369,8 +1371,8 @@ static BOOL next_xml_elem( xmlbuf_t *xmlbuf, struct xml_elem *elem, const struct
 
     for (;;)
     {
-        ptr = memchrW(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr);
-        if (!ptr)
+        for (ptr = xmlbuf->ptr; ptr < xmlbuf->end; ptr++) if (*ptr == '<') break;
+        if (ptr == xmlbuf->end)
         {
             xmlbuf->ptr = xmlbuf->end;
             return set_error( xmlbuf );
@@ -1447,7 +1449,8 @@ static BOOL parse_text_content(xmlbuf_t* xmlbuf, xmlstr_t* content)
 
     if (xmlbuf->error) return FALSE;
 
-    if (!(ptr = memchrW(xmlbuf->ptr, '<', xmlbuf->end - xmlbuf->ptr))) return set_error( xmlbuf );
+    for (ptr = xmlbuf->ptr; ptr < xmlbuf->end; ptr++) if (*ptr == '<') break;
+    if (ptr == xmlbuf->end) return set_error( xmlbuf );
 
     content->ptr = xmlbuf->ptr;
     content->len = ptr - xmlbuf->ptr;

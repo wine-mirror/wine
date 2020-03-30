@@ -305,9 +305,12 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
 
 static inline BOOL has_wildcard( const UNICODE_STRING *mask )
 {
-    return (!mask ||
-            memchrW( mask->Buffer, '*', mask->Length / sizeof(WCHAR) ) ||
-            memchrW( mask->Buffer, '?', mask->Length / sizeof(WCHAR) ));
+    int i;
+
+    if (!mask) return TRUE;
+    for (i = 0; i < mask->Length / sizeof(WCHAR); i++)
+        if (mask->Buffer[i] == '*' || mask->Buffer[i] == '?') return TRUE;
+    return FALSE;
 }
 
 /* get space from the current directory data buffer, allocating a new one if necessary */

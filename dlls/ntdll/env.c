@@ -1081,7 +1081,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
                                              WCHAR *dst, SIZE_T count, SIZE_T *plen )
 {
     SIZE_T len, total_size = 1;  /* 1 for terminating '\0' */
-    LPCWSTR env, p, var;
+    LPCWSTR env, var;
 
     if (!renv)
     {
@@ -1094,27 +1094,26 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
     {
         if (*src != '%')
         {
-            if ((p = memchrW( src, '%', src_len ))) len = p - src;
-            else len = src_len;
+            for (len = 0; len < src_len; len++) if (src[len] == '%') break;
             var = src;
             src += len;
             src_len -= len;
         }
         else  /* we are at the start of a variable */
         {
-            if ((p = memchrW( src + 1, '%', src_len - 1 )))
+            for (len = 1; len < src_len; len++) if (src[len] == '%') break;
+            if (len < src_len)
             {
-                len = p - src - 1;  /* Length of the variable name */
-                if ((var = ENV_FindVariable( env, src + 1, len )))
+                if ((var = ENV_FindVariable( env, src + 1, len - 1 )))
                 {
-                    src += len + 2;  /* Skip the variable name */
-                    src_len -= len + 2;
+                    src += len + 1;  /* Skip the variable name */
+                    src_len -= len + 1;
                     len = strlenW(var);
                 }
                 else
                 {
                     var = src;  /* Copy original name instead */
-                    len += 2;
+                    len++;
                     src += len;
                     src_len -= len;
                 }
@@ -1122,7 +1121,6 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
             else  /* unfinished variable name, ignore it */
             {
                 var = src;
-                len = src_len;  /* Copy whole string */
                 src += len;
                 src_len = 0;
             }
