@@ -136,7 +136,7 @@
 @ stdcall MFRegisterLocalSchemeHandler(wstr ptr)
 @ stdcall MFRemovePeriodicCallback(long) rtworkq.RtwqRemovePeriodicCallback
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
-@ stdcall MFScheduleWorkItemEx(ptr int64 ptr)
+@ stdcall MFScheduleWorkItemEx(ptr int64 ptr) rtworkq.RtwqScheduleWorkItem
 @ stub MFSerializeAttributesToStream
 @ stub MFSerializeEvent
 @ stub MFSerializeMediaTypeToStream

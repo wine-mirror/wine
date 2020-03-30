@@ -120,16 +120,6 @@ HRESULT WINAPI MFScheduleWorkItem(IMFAsyncCallback *callback, IUnknown *state, I
 }
 
 /***********************************************************************
- *      MFScheduleWorkItemEx (mfplat.@)
- */
-HRESULT WINAPI MFScheduleWorkItemEx(IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key)
-{
-    TRACE("%p, %s, %p.\n", result, wine_dbgstr_longlong(timeout), key);
-
-    return RtwqScheduleWorkItem((IRtwqAsyncResult *)result, timeout, key);
-}
-
-/***********************************************************************
  *      MFInvokeCallback (mfplat.@)
  */
 HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result)
