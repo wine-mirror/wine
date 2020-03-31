@@ -442,6 +442,13 @@ static enum wined3d_transform_state wined3d_transform_state_from_d3d(D3DTRANSFOR
     return (enum wined3d_transform_state)state;
 }
 
+static enum wined3d_render_state wined3d_render_state_from_d3d(D3DRENDERSTATETYPE state)
+{
+    if (state == D3DRS_ZBIAS)
+        return WINED3D_RS_DEPTHBIAS;
+    return (enum wined3d_render_state)state;
+}
+
 /* Handle table functions */
 static DWORD d3d8_allocate_handle(struct d3d8_handle_table *t, void *object, enum d3d8_handle_type type)
 {
@@ -1910,9 +1917,7 @@ static HRESULT WINAPI d3d8_device_SetRenderState(IDirect3DDevice8 *iface,
     TRACE("iface %p, state %#x, value %#x.\n", iface, state, value);
 
     wined3d_mutex_lock();
-    if (state == D3DRS_ZBIAS)
-        state = WINED3D_RS_DEPTHBIAS;
-    wined3d_stateblock_set_render_state(device->update_state, state, value);
+    wined3d_stateblock_set_render_state(device->update_state, wined3d_render_state_from_d3d(state), value);
     if (state == D3DRS_POINTSIZE && value == D3D8_RESZ_CODE)
         resolve_depth_buffer(device);
     wined3d_mutex_unlock();
