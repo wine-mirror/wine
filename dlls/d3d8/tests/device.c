@@ -2662,6 +2662,7 @@ static void test_wndproc(void)
 {
     struct wndproc_thread_param thread_params;
     struct device_desc device_desc;
+    static WINDOWPOS windowpos;
     IDirect3DDevice8 *device;
     WNDCLASSA wc = {0};
     IDirect3D8 *d3d8;
@@ -2677,7 +2678,6 @@ static void test_wndproc(void)
     DEVMODEW devmode;
     LONG change_ret, device_style;
     BOOL ret;
-    WINDOWPOS windowpos;
 
     static const struct message create_messages[] =
     {
@@ -2777,7 +2777,7 @@ static void test_wndproc(void)
         {WM_SIZE,               FOCUS_WINDOW,   TRUE,   SIZE_MAXIMIZED},
         {0,                     0,              FALSE,  0},
     };
-    struct message mode_change_messages[] =
+    static const struct message mode_change_messages[] =
     {
         {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
@@ -2790,7 +2790,7 @@ static void test_wndproc(void)
          * ShowWindow does not send such a message because the window is already visible. */
         {0,                     0,              FALSE,  0},
     };
-    struct message mode_change_messages_hidden[] =
+    static const struct message mode_change_messages_hidden[] =
     {
         {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
@@ -2856,6 +2856,9 @@ static void test_wndproc(void)
         IDirect3D8_Release(d3d8);
         return;
     }
+
+    filter_messages = NULL;
+    expect_messages = NULL;
 
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "d3d8_test_wndproc_wc";
@@ -3200,6 +3203,7 @@ static void test_wndproc(void)
     flush_events();
     ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
             expect_messages->message, expect_messages->window, i);
+    expect_messages = NULL;
 
     /* World of Warplanes hides the window by removing WS_VISIBLE and expects Reset() to show it again. */
     device_style = GetWindowLongA(device_window, GWL_STYLE);
@@ -3219,6 +3223,7 @@ static void test_wndproc(void)
     flush_events();
     ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it.\n",
             expect_messages->message, expect_messages->window);
+    expect_messages = NULL;
 
     ok(windowpos.hwnd == device_window && !windowpos.hwndInsertAfter
             && !windowpos.x && !windowpos.y && !windowpos.cx && !windowpos.cy
@@ -3242,6 +3247,7 @@ static void test_wndproc(void)
 
 done:
     filter_messages = NULL;
+    expect_messages = NULL;
     IDirect3D8_Release(d3d8);
 
     SetEvent(thread_params.test_finished);
@@ -3271,6 +3277,9 @@ static void test_wndproc_windowed(void)
 
     d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a D3D object.\n");
+
+    filter_messages = NULL;
+    expect_messages = NULL;
 
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "d3d8_test_wndproc_wc";
@@ -4176,6 +4185,9 @@ static void test_device_window_reset(void)
     LONG_PTR proc;
     HRESULT hr;
     ULONG ref;
+
+    filter_messages = NULL;
+    expect_messages = NULL;
 
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "d3d8_test_wndproc_wc";
