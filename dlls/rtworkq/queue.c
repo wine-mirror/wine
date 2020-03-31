@@ -1471,3 +1471,17 @@ HRESULT WINAPI RtwqAllocateSerialWorkQueue(DWORD target_queue, DWORD *queue)
     desc.target_queue = target_queue;
     return alloc_user_queue(&desc, queue);
 }
+
+HRESULT WINAPI RtwqJoinWorkQueue(DWORD queue, HANDLE hFile, HANDLE *cookie)
+{
+    FIXME("%#x, %p, %p.\n", queue, hFile, cookie);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqUnjoinWorkQueue(DWORD queue, HANDLE cookie)
+{
+    FIXME("%#x, %p.\n", queue, cookie);
+
+    return E_NOTIMPL;
+}

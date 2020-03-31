@@ -124,6 +124,7 @@
 @ stub MFInitVideoFormat_RGB
 @ stdcall MFInvokeCallback(ptr)
 @ stub MFJoinIoPort
+@ stdcall MFJoinWorkQueue(long long ptr) rtworkq.RtwqJoinWorkQueue
 @ stdcall MFLockPlatform() rtworkq.RtwqLockPlatform
 @ stdcall MFLockWorkQueue(long) rtworkq.RtwqLockWorkQueue
 @ stdcall MFPutWaitingWorkItem(long long ptr ptr) rtworkq.RtwqPutWaitingWorkItem
@@ -158,6 +159,7 @@
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread
+@ stdcall MFUnjoinWorkQueue(long long) rtworkq.RtwqUnjoinWorkQueue
 @ stdcall MFUnlockPlatform() rtworkq.RtwqUnlockPlatform
 @ stdcall MFUnlockWorkQueue(long) rtworkq.RtwqUnlockWorkQueue
 @ stdcall MFUnwrapMediaType(ptr ptr)

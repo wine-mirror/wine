@@ -14,7 +14,7 @@
 @ stub RtwqGetWorkQueueMMCSSPriority
 @ stub RtwqGetWorkQueueMMCSSTaskId
 @ stdcall RtwqInvokeCallback(ptr)
-@ stub RtwqJoinWorkQueue
+@ stdcall RtwqJoinWorkQueue(long long ptr)
 @ stdcall RtwqLockPlatform()
 @ stdcall RtwqLockSharedWorkQueue(wstr long ptr ptr)
 @ stdcall RtwqLockWorkQueue(long)
@@ -30,7 +30,7 @@
 @ stdcall RtwqSetLongRunning(long long)
 @ stdcall RtwqShutdown()
 @ stdcall RtwqStartup()
-@ stub RtwqUnjoinWorkQueue
+@ stdcall RtwqUnjoinWorkQueue(long long)
 @ stdcall RtwqUnlockPlatform()
 @ stdcall RtwqUnlockWorkQueue(long)
 @ stub RtwqUnregisterPlatformEvents
