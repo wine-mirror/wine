@@ -1308,65 +1308,141 @@ static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEAR
     return S_ADS_NOMORE_COLUMNS;
 }
 
-static HRESULT add_column_values(LDAP_namespace *ldap, ADS_SEARCH_COLUMN *col,
-                                 const WCHAR *name, struct berval **values, DWORD count)
+static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_context *ldap_ctx,
+                                 LPWSTR name, ADS_SEARCH_COLUMN *col)
 {
     ADSTYPEENUM type;
-    DWORD i;
+    DWORD i, count;
 
     type = get_schema_type(name, ldap->at, ldap->at_count);
+    TRACE("%s => type %d\n", debugstr_w(name), type);
 
-    col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
-    if (!col->pADsValues)
-        return E_OUTOFMEMORY;
-
-    for (i = 0; i < count; i++)
+    switch (type)
     {
-        switch (type)
+    default:
+        FIXME("no special handling for type %d\n", type);
+        /* fall through */
+    case ADSTYPE_DN_STRING:
+    case ADSTYPE_CASE_EXACT_STRING:
+    case ADSTYPE_CASE_IGNORE_STRING:
+    case ADSTYPE_PRINTABLE_STRING:
+    {
+        WCHAR **values = ldap_get_valuesW(ldap->ld, ldap_ctx->entry, name);
+        if (!values)
         {
-        default:
-            FIXME("no special handling for type %d\n", type);
-            /* fall through */
-        case ADSTYPE_DN_STRING:
-        case ADSTYPE_CASE_EXACT_STRING:
-        case ADSTYPE_CASE_IGNORE_STRING:
-        case ADSTYPE_PRINTABLE_STRING:
+            memset(col, 0, sizeof(*col));
+            return E_ADS_COLUMN_NOT_SET;
+        }
+        count = ldap_count_valuesW(values);
+
+        col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
+        if (!col->pADsValues)
         {
-            DWORD outlen;
-            TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
-            col->pADsValues[i].u.CaseIgnoreString = strnUtoW(values[i]->bv_val, values[i]->bv_len, &outlen);
-            if (!col->pADsValues[i].u.CaseIgnoreString)
-            {
-                heap_free(col->pADsValues);
-                return E_OUTOFMEMORY;
-            }
-            break;
+            ldap_value_freeW(values);
+            return E_OUTOFMEMORY;
         }
 
-        case ADSTYPE_BOOLEAN:
-            if (stricmp(values[i]->bv_val, "TRUE"))
+        for (i = 0; i < count; i++)
+        {
+            TRACE("=> %s\n", debugstr_w(values[i]));
+            col->pADsValues[i].u.CaseIgnoreString = values[i];
+        }
+
+        col->hReserved = values;
+        break;
+    }
+
+    case ADSTYPE_BOOLEAN:
+    {
+        WCHAR **values = ldap_get_valuesW(ldap->ld, ldap_ctx->entry, name);
+        if (!values)
+        {
+            memset(col, 0, sizeof(*col));
+            return E_ADS_COLUMN_NOT_SET;
+        }
+        count = ldap_count_valuesW(values);
+
+        col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
+        if (!col->pADsValues)
+        {
+            ldap_value_freeW(values);
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            if (wcsicmp(values[i], L"TRUE"))
                 col->pADsValues[i].u.Boolean = 1;
-            else if (stricmp(values[i]->bv_val, "FALSE"))
+            else if (wcsicmp(values[i], L"FALSE"))
                 col->pADsValues[i].u.Boolean = 0;
             else
             {
-                FIXME("not recognized boolean value %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+                FIXME("not recognized boolean value %s\n", debugstr_w(values[i]));
                 col->pADsValues[i].u.Boolean = 0;
             }
             TRACE("=> %d\n", col->pADsValues[i].u.Boolean);
-            break;
+        }
 
-        case ADSTYPE_INTEGER:
-            col->pADsValues[i].u.Integer = strtol(values[i]->bv_val, NULL, 10);
-            TRACE("%s => %d\n", debugstr_an(values[i]->bv_val, values[i]->bv_len), col->pADsValues[i].u.Integer);
-            break;
+        ldap_value_freeW(values);
+        col->hReserved = NULL;
+        break;
+    }
 
-        case ADSTYPE_OCTET_STRING:
+    case ADSTYPE_INTEGER:
+    {
+        WCHAR **values = ldap_get_valuesW(ldap->ld, ldap_ctx->entry, name);
+        if (!values)
+        {
+            memset(col, 0, sizeof(*col));
+            return E_ADS_COLUMN_NOT_SET;
+        }
+        count = ldap_count_valuesW(values);
+
+        col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
+        if (!col->pADsValues)
+        {
+            ldap_value_freeW(values);
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            col->pADsValues[i].u.Integer = wcstol(values[i], NULL, 10);
+            TRACE("%s => %d\n", debugstr_w(values[i]), col->pADsValues[i].u.Integer);
+        }
+
+        ldap_value_freeW(values);
+        col->hReserved = NULL;
+        break;
+    }
+
+    case ADSTYPE_OCTET_STRING:
+    {
+        struct berval **values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
+        if (!values)
+        {
+            memset(col, 0, sizeof(*col));
+            return E_ADS_COLUMN_NOT_SET;
+        }
+        count = ldap_count_values_len(values);
+
+        col->pADsValues = heap_alloc(count * sizeof(col->pADsValues[0]));
+        if (!col->pADsValues)
+        {
+            ldap_value_free_len(values);
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < count; i++)
+        {
             TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
             col->pADsValues[i].u.OctetString.dwLength = values[i]->bv_len;
             col->pADsValues[i].u.OctetString.lpValue = (BYTE *)values[i]->bv_val;
-            break;
         }
+
+        col->hReserved = values;
+        break;
+    }
     }
 
     col->dwADsType = type;
@@ -1382,7 +1458,6 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
     LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
     struct ldap_search_context *ldap_ctx = res;
     HRESULT hr;
-    struct berval **values;
     ULONG count;
 
     TRACE("%p,%p,%s,%p\n", iface, res, debugstr_w(name), col);
@@ -1417,6 +1492,7 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
         col->dwADsType = ADSTYPE_CASE_IGNORE_STRING;
         col->dwNumValues = 1;
         col->pszAttrName = strdupW(name);
+        col->hReserved = NULL;
 
         TRACE("=> %s\n", debugstr_w(col->pADsValues[0].u.CaseIgnoreString));
         hr = S_OK;
@@ -1425,19 +1501,7 @@ exit:
         return hr;
     }
 
-    values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
-    if (!values)
-    {
-        memset(col, 0, sizeof(*col));
-        return E_ADS_COLUMN_NOT_SET;
-    }
-
-    count = ldap_count_values_len(values);
-
-    hr = add_column_values(ldap, col, name, values, count);
-    ldap_value_free_len(values);
-
-    return hr;
+    return add_column_values(ldap, ldap_ctx, name, col);
 }
 
 static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COLUMN col)
@@ -1447,6 +1511,13 @@ static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COL
     if (!col) return E_ADS_BAD_PARAMETER;
 
     heap_free(col->pADsValues);
+    if (col->hReserved)
+    {
+        if (col->dwADsType == ADSTYPE_OCTET_STRING)
+            ldap_value_free_len(col->hReserved);
+        else
+            ldap_value_freeW(col->hReserved);
+    }
 
     return S_OK;
 }
