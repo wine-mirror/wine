@@ -116,7 +116,7 @@ static const WCHAR **build_list( const WCHAR *buffer )
         WCHAR *str = (WCHAR *)(ret + count + 1);
         WCHAR *q = str;
 
-        strcpyW( str, buffer );
+        wcscpy( str, buffer );
         count = 0;
         for (;;)
         {

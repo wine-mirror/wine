@@ -849,7 +849,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     {
         if (!strcmpW( buffer, posixW ) || !strcmpW( buffer, cW ))
             return MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-        strcpyW( win_name, buffer );
+        wcscpy( win_name, buffer );
     }
     else
     {
@@ -874,7 +874,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
 
     /* rebuild a Windows name */
 
-    strcpyW( win_name, buffer );
+    wcscpy( win_name, buffer );
     if (modifier)
     {
         if (!strcmpW( modifier, latinW )) strcatW( win_name, latnW );
@@ -885,7 +885,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     {
         p = win_name + strlenW(win_name);
         *p++ = '-';
-        strcpyW( p, country );
+        wcscpy( p, country );
     }
 
     if (!RtlLocaleNameToLcid( win_name, &lcid, 0 )) return lcid;
@@ -1672,7 +1672,7 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
         goto found;
     }
     if (strlenW( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
-    strcpyW( lang, name );
+    wcscpy( lang, name );
 
     if ((p = strpbrkW( lang, sepW )) && *p == '-')
     {

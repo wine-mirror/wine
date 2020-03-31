@@ -38,7 +38,6 @@
 #include "ntdll_misc.h"
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

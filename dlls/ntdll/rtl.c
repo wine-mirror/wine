@@ -42,7 +42,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "ntdll_misc.h"
 #include "inaddr.h"
 #include "in6addr.h"
@@ -1119,7 +1118,7 @@ NTSTATUS WINAPI RtlIpv4AddressToStringExW(const IN_ADDR *pin, USHORT port, LPWST
 
     if (*psize > needed) {
         *psize = needed + 1;
-        strcpyW(buffer, tmp_ip);
+        wcscpy(buffer, tmp_ip);
         return STATUS_SUCCESS;
     }
 

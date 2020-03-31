@@ -504,7 +504,7 @@ void version_init(void)
     if ((p = strrchrW( appname, '/' ))) appname = p + 1;
     if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
 
-    strcpyW( appversion, appdefaultsW );
+    wcscpy( appversion, appdefaultsW );
     strcatW( appversion, appname );
     RtlInitUnicodeString( &nameW, appversion );
     attr.RootDirectory = config_key;
@@ -595,7 +595,7 @@ NTSTATUS WINAPI RtlGetVersion( RTL_OSVERSIONINFOEXW *info )
     info->dwMinorVersion = current_version->dwMinorVersion;
     info->dwBuildNumber  = current_version->dwBuildNumber;
     info->dwPlatformId   = current_version->dwPlatformId;
-    strcpyW( info->szCSDVersion, current_version->szCSDVersion );
+    wcscpy( info->szCSDVersion, current_version->szCSDVersion );
     if(info->dwOSVersionInfoSize == sizeof(RTL_OSVERSIONINFOEXW))
     {
         info->wServicePackMajor = current_version->wServicePackMajor;

@@ -1774,7 +1774,7 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
     if (!(fullname = RtlAllocateHeap( GetProcessHeap(), 0,
                                       (strlenW(system_dir) + len + 5) * sizeof(WCHAR) )))
         return FALSE;
-    strcpyW( fullname, nt_prefixW );
+    wcscpy( fullname, nt_prefixW );
     strcatW( fullname, system_dir );
     strcatW( fullname, filenameW );
 done:
@@ -2235,7 +2235,7 @@ static NTSTATUS get_dll_load_path_search_flags( LPCWSTR module, DWORD flags, WCH
                 p = append_path( p, dir->dir + 4 /* \??\ */, -1 );
             p = append_path( p, dll_directory.Buffer, dll_directory.Length / sizeof(WCHAR) );
         }
-        if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) strcpyW( p, system_dir );
+        if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) wcscpy( p, system_dir );
         else
         {
             if (p > ret) p--;
@@ -2781,7 +2781,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
             }
             memcpy( p, info->lpAssemblyManifestPath, dirlen * sizeof(WCHAR) );
             p += dirlen;
-            strcpyW( p, libname );
+            wcscpy( p, libname );
             goto done;
         }
     }
@@ -2800,14 +2800,14 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         status = STATUS_NO_MEMORY;
         goto done;
     }
-    strcpyW( p, user_shared_data->NtSystemRoot );
+    wcscpy( p, user_shared_data->NtSystemRoot );
     p += strlenW(p);
     memcpy( p, winsxsW, sizeof(winsxsW) );
     p += ARRAY_SIZE( winsxsW );
     memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
     p += info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
     *p++ = '\\';
-    strcpyW( p, libname );
+    wcscpy( p, libname );
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
     RtlReleaseActivationContext( data.hActCtx );
@@ -2844,7 +2844,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
         if (*ptr == ';') ptr++;
         memcpy( name, paths, len * sizeof(WCHAR) );
         if (len && name[len - 1] != '\\') name[len++] = '\\';
-        strcpyW( name + len, search );
+        wcscpy( name + len, search );
 
         nt_name->Buffer = NULL;
         if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, nt_name, NULL, NULL ))) goto done;
@@ -2859,7 +2859,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
     if (!found_image)
     {
         /* not found, return file in the system dir to be loaded as builtin */
-        strcpyW( name, system_dir );
+        wcscpy( name, system_dir );
         strcatW( name, search );
         if (!RtlDosPathNameToNtPathName_U( name, nt_name, NULL, NULL )) status = STATUS_NO_MEMORY;
     }
@@ -2895,7 +2895,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
             if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
                                              (strlenW(libname)+strlenW(default_ext)+1) * sizeof(WCHAR))))
                 return STATUS_NO_MEMORY;
-            strcpyW( dllname, libname );
+            wcscpy( dllname, libname );
             strcatW( dllname, default_ext );
             libname = dllname;
         }

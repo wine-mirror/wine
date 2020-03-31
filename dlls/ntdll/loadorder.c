@@ -343,7 +343,7 @@ static HANDLE get_app_key( const WCHAR *app_name )
                            sizeof(AppDefaultsW) + sizeof(DllOverridesW) +
                            strlenW(app_name) * sizeof(WCHAR) );
     if (!str) return 0;
-    strcpyW( str, AppDefaultsW );
+    wcscpy( str, AppDefaultsW );
     strcatW( str, app_name );
     strcatW( str, DllOverridesW );
 
@@ -454,7 +454,7 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
 
     if (!(len = strlenW(path))) return ret;
     if (!(module = RtlAllocateHeap( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR) ))) return ret;
-    strcpyW( module+1, path );  /* reserve module[0] for the wildcard char */
+    wcscpy( module+1, path );  /* reserve module[0] for the wildcard char */
     remove_dll_ext( module + 1 );
     basename = (WCHAR *)get_basename( module+1 );
 

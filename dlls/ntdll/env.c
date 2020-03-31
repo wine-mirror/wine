@@ -709,7 +709,7 @@ static void get_image_path( const char *argv0, UNICODE_STRING *path )
             /* build builtin path inside system directory */
             len = strlenW( system_dir );
             if (strlenW( name ) >= MAX_PATH - 4 - len) goto failed;
-            strcpyW( full_name, system_dir );
+            wcscpy( full_name, system_dir );
             strcatW( full_name, name );
             if (!strchrW( name, '.' )) strcatW( full_name, exeW );
         }
@@ -744,7 +744,7 @@ static void set_library_wargv( char **argv, const UNICODE_STRING *image )
     p = (WCHAR *)(wargv + argc + 1);
     if (image)
     {
-        strcpyW( p, image->Buffer );
+        wcscpy( p, image->Buffer );
         wargv[0] = p;
         p += 1 + image->Length / sizeof(WCHAR);
         total -= 1 + image->Length / sizeof(WCHAR);
@@ -831,7 +831,7 @@ static void build_command_line( WCHAR **argv, UNICODE_STRING *cmdline )
         }
         else
         {
-            strcpyW( p, *arg );
+            wcscpy( p, *arg );
             p += strlenW( p );
         }
         if (has_space)

@@ -348,7 +348,7 @@ static const char *add_dir_data_nameA( struct dir_data *data, const char *name )
 static const WCHAR *add_dir_data_nameW( struct dir_data *data, const WCHAR *name )
 {
     WCHAR *ptr = get_dir_data_space( data, (strlenW( name ) + 1) * sizeof(WCHAR) );
-    if (ptr) strcpyW( ptr, name );
+    if (ptr) wcscpy( ptr, name );
     return ptr;
 }
 

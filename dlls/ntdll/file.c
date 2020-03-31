@@ -99,7 +99,6 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "ntdll_misc.h"

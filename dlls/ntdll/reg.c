@@ -1192,7 +1192,7 @@ static NTSTATUS RTL_KeyHandleCreateObject(ULONG RelativeTo, PCWSTR Path, POBJECT
     if (str->Buffer == NULL)
         return STATUS_NO_MEMORY;
 
-    strcpyW(str->Buffer, base);
+    wcscpy(str->Buffer, base);
     strcatW(str->Buffer, Path);
     str->Length = len - sizeof(WCHAR);
     str->MaximumLength = len;
