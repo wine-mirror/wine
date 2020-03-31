@@ -1775,8 +1775,8 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
                                       (strlenW(system_dir) + len + 5) * sizeof(WCHAR) )))
         return FALSE;
     wcscpy( fullname, nt_prefixW );
-    strcatW( fullname, system_dir );
-    strcatW( fullname, filenameW );
+    wcscat( fullname, system_dir );
+    wcscat( fullname, filenameW );
 done:
     RtlInitUnicodeString( nt_name, fullname );
     return TRUE;
@@ -2860,7 +2860,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
     {
         /* not found, return file in the system dir to be loaded as builtin */
         wcscpy( name, system_dir );
-        strcatW( name, search );
+        wcscat( name, search );
         if (!RtlDosPathNameToNtPathName_U( name, nt_name, NULL, NULL )) status = STATUS_NO_MEMORY;
     }
     else status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
@@ -2896,7 +2896,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
                                              (strlenW(libname)+strlenW(default_ext)+1) * sizeof(WCHAR))))
                 return STATUS_NO_MEMORY;
             wcscpy( dllname, libname );
-            strcatW( dllname, default_ext );
+            wcscat( dllname, default_ext );
             libname = dllname;
         }
     }

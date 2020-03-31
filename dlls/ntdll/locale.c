@@ -679,8 +679,8 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
         return STATUS_NO_MEMORY;
     if (!RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ))
     {
-        strcatW( valueW.Buffer, dataprefixW );
-        strcatW( valueW.Buffer, name );
+        wcscat( valueW.Buffer, dataprefixW );
+        wcscat( valueW.Buffer, name );
         valueW.Length = strlenW(valueW.Buffer) * sizeof(WCHAR);
         InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
         status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
@@ -877,7 +877,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     wcscpy( win_name, buffer );
     if (modifier)
     {
-        if (!strcmpW( modifier, latinW )) strcatW( win_name, latnW );
+        if (!strcmpW( modifier, latinW )) wcscat( win_name, latnW );
         else if (!strcmpW( modifier, euroW )) {} /* ignore */
         else return 0;
     }

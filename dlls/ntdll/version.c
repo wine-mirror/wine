@@ -505,7 +505,7 @@ void version_init(void)
     if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
 
     wcscpy( appversion, appdefaultsW );
-    strcatW( appversion, appname );
+    wcscat( appversion, appname );
     RtlInitUnicodeString( &nameW, appversion );
     attr.RootDirectory = config_key;
 

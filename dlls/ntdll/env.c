@@ -689,7 +689,7 @@ static void get_image_path( const char *argv0, UNICODE_STRING *path )
         if (RtlDoesFileExists_U( full_name )) goto done;
         if (len < (MAX_PATH - 4) * sizeof(WCHAR) && !strchrW( file_part, '.' ))
         {
-            strcatW( file_part, exeW );
+            wcscat( file_part, exeW );
             if (RtlDoesFileExists_U( full_name )) goto done;
         }
         /* check for builtin path inside system directory */
@@ -710,8 +710,8 @@ static void get_image_path( const char *argv0, UNICODE_STRING *path )
             len = strlenW( system_dir );
             if (strlenW( name ) >= MAX_PATH - 4 - len) goto failed;
             wcscpy( full_name, system_dir );
-            strcatW( full_name, name );
-            if (!strchrW( name, '.' )) strcatW( full_name, exeW );
+            wcscat( full_name, name );
+            if (!strchrW( name, '.' )) wcscat( full_name, exeW );
         }
     }
 done:

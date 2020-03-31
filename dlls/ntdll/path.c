@@ -399,7 +399,7 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
     {
     case UNC_PATH: /* \\foo */
         offset = 2;
-        strcatW(ntpath->Buffer, UncPfxW);
+        wcscat(ntpath->Buffer, UncPfxW);
         break;
     case DEVICE_PATH: /* \\.\foo */
         offset = 4;
@@ -409,7 +409,7 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
         break;
     }
 
-    strcatW(ntpath->Buffer, ptr + offset);
+    wcscat(ntpath->Buffer, ptr + offset);
     ntpath->Length = strlenW(ntpath->Buffer) * sizeof(WCHAR);
 
     if (file_part && *file_part)
@@ -514,7 +514,7 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
             /* append '\\' if none is present */
             if (needed > 0 && name[needed - 1] != '\\') name[needed++] = '\\';
             wcscpy(&name[needed], search);
-            if (ext) strcatW(&name[needed], ext);
+            if (ext) wcscat(&name[needed], ext);
             if (RtlDoesFileExists_U(name))
             {
                 len = RtlGetFullPathName_U(name, buffer_size, buffer, file_part);

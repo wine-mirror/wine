@@ -344,8 +344,8 @@ static HANDLE get_app_key( const WCHAR *app_name )
                            strlenW(app_name) * sizeof(WCHAR) );
     if (!str) return 0;
     wcscpy( str, AppDefaultsW );
-    strcatW( str, app_name );
-    strcatW( str, DllOverridesW );
+    wcscat( str, app_name );
+    wcscat( str, DllOverridesW );
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
