@@ -94,6 +94,7 @@ struct gdb_context
     struct dbg_process*         process;
     /* Unix environment */
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
+    BOOL                        no_ack_mode;
 };
 
 static BOOL tgt_process_gdbproxy_read(HANDLE hProcess, const void* addr,
@@ -1614,15 +1615,11 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_ok;
         if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
-            if (*target_xml)
-                return packet_reply(gdbctx, "PacketSize=400;qXfer:features:read+");
-            else
-            {
-                /* no features supported */
-                packet_reply_open(gdbctx);
-                packet_reply_close(gdbctx);
-                return packet_done;
-            }
+            packet_reply_open(gdbctx);
+            packet_reply_add(gdbctx, "QStartNoAckMode+;");
+            if (*target_xml) packet_reply_add(gdbctx, "PacketSize=400;qXfer:features:read+");
+            packet_reply_close(gdbctx);
+            return packet_done;
         }
         break;
     case 'T':
@@ -1656,6 +1653,17 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         break;
     }
     ERR("Unhandled query %s\n", debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
+    return packet_error;
+}
+
+static enum packet_return packet_set(struct gdb_context* gdbctx)
+{
+    if (strncmp(gdbctx->in_packet, "StartNoAckMode", 14) == 0)
+    {
+        gdbctx->no_ack_mode = TRUE;
+        return packet_ok;
+    }
+
     return packet_error;
 }
 
@@ -1736,7 +1744,7 @@ static struct packet_entry packet_entries[] =
         {'p', packet_read_register},
         {'P', packet_write_register},
         {'q', packet_query},
-        /* {'Q', packet_set}, */
+        {'Q', packet_set},
         /* {'R', packet,restart}, only in extended mode ! */
         {'s', packet_step},        
         /*{'S', packet_step_signal}, hard(er) to implement */
@@ -1757,7 +1765,8 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
      * end points to the end of the received data buffer
      */
 
-    while ((ptr = memchr(sum, '$', end - sum)) &&
+    while (!gdbctx->no_ack_mode &&
+           (ptr = memchr(sum, '$', end - sum)) &&
            (sum = memchr(ptr, '#', end - ptr)) &&
            (end - sum >= 3) && sscanf(sum, "#%02x", &cksum) == 1)
     {
@@ -1998,6 +2007,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->last_sig = 0;
     gdbctx->in_trap = FALSE;
     gdbctx->process = NULL;
+    gdbctx->no_ack_mode = FALSE;
     for (i = 0; i < ARRAY_SIZE(gdbctx->wine_segs); i++)
         gdbctx->wine_segs[i] = 0;
 
