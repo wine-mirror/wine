@@ -1388,8 +1388,8 @@ static int compare_mode(const void *a, const void *b)
 {
     const struct mode *mode_a = a;
     const struct mode *mode_b = b;
-    unsigned int w = mode_a->w - mode_b->w;
-    unsigned int h = mode_a->h - mode_b->h;
+    int w = mode_a->w - mode_b->w;
+    int h = mode_a->h - mode_b->h;
     return abs(w) >= abs(h) ? -w : -h;
 }
 
