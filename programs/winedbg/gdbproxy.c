@@ -814,15 +814,12 @@ static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsi
 
 static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 {
-    enum packet_return ret = packet_done;
-
-    packet_reply_open(gdbctx);
-
     if (gdbctx->process != NULL)
     {
         unsigned char           sig;
         unsigned                i;
 
+        packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "T");
         sig = gdbctx->last_sig;
         packet_reply_val(gdbctx, sig, 1);
@@ -840,19 +837,17 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
             packet_reply_register_hex_to(gdbctx, i);
             packet_reply_add(gdbctx, ";");
         }
+
+        packet_reply_close(gdbctx);
+        return packet_done;
     }
     else
     {
         /* Try to put an exit code
          * Cannot use GetExitCodeProcess, wouldn't fit in a 8 bit value, so
          * just indicate the end of process and exit */
-        packet_reply_add(gdbctx, "W00");
-        /*if (!gdbctx->extended)*/ ret |= packet_last_f;
+        return packet_reply(gdbctx, "W00") | packet_last_f;
     }
-
-    packet_reply_close(gdbctx);
-
-    return ret;
 }
 
 #if 0
@@ -1159,10 +1154,7 @@ static enum packet_return packet_kill(struct gdb_context* gdbctx)
     if (!gdbctx->extended)
         /* dunno whether GDB cares or not */
 #endif
-    wait(NULL);
-    exit(0);
-    /* assume we can't really answer something here */
-    /* return packet_done; */
+    return packet_ok | packet_last_f;
 }
 
 static enum packet_return packet_thread(struct gdb_context* gdbctx)
