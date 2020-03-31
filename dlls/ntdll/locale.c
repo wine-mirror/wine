@@ -845,7 +845,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     if (len == ARRAY_SIZE(buffer)) return 0;
     buffer[len] = 0;
 
-    if (!(p = strpbrkW( buffer, sepW )))
+    if (!(p = wcspbrk( buffer, sepW )))
     {
         if (!strcmpW( buffer, posixW ) || !strcmpW( buffer, cW ))
             return MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
@@ -857,7 +857,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
         {
             *p++ = 0;
             country = p;
-            p = strpbrkW( p, sepW + 1 );
+            p = wcspbrk( p, sepW + 1 );
         }
         if (p && *p == '.')
         {
@@ -1674,16 +1674,16 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
     if (strlenW( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
     wcscpy( lang, name );
 
-    if ((p = strpbrkW( lang, sepW )) && *p == '-')
+    if ((p = wcspbrk( lang, sepW )) && *p == '-')
     {
         *p++ = 0;
         country = p;
-        if ((p = strpbrkW( p, sepW )) && *p == '-')
+        if ((p = wcspbrk( p, sepW )) && *p == '-')
         {
             *p++ = 0;
             script = country;
             country = p;
-            p = strpbrkW( p, sepW );
+            p = wcspbrk( p, sepW );
         }
         if (p) *p = 0;  /* FIXME: modifier is ignored */
         /* second value can be script or country, check length to resolve the ambiguity */
