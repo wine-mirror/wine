@@ -99,6 +99,8 @@ enum media_source_state
 enum media_stream_flags
 {
     STREAM_FLAG_SAMPLE_REQUESTED = 0x1,
+    STREAM_FLAG_SELECTED = 0x2,
+    STREAM_FLAG_PRESENTED = 0x4,
 };
 
 struct media_stream
@@ -109,9 +111,7 @@ struct media_stream
     DWORD id;
     unsigned int index;
     enum media_stream_state state;
-    BOOL selected;
-    BOOL presented;
-    DWORD flags;
+    unsigned int flags;
     unsigned int requests;
 };
 
@@ -841,18 +841,23 @@ static HRESULT source_reader_get_stream_selection(const struct source_reader *re
 
 static HRESULT source_reader_start_source(struct source_reader *reader)
 {
-    BOOL selection_changed = FALSE;
+    BOOL selected, selection_changed = FALSE;
     PROPVARIANT position;
     HRESULT hr = S_OK;
-    DWORD i;
+    unsigned int i;
 
     if (reader->source_state == SOURCE_STATE_STARTED)
     {
         for (i = 0; i < reader->stream_count; ++i)
         {
-            if (FAILED(hr = source_reader_get_stream_selection(reader, i, &reader->streams[i].selected)))
+            if (FAILED(hr = source_reader_get_stream_selection(reader, i, &selected)))
                 return hr;
-            selection_changed = reader->streams[i].selected ^ reader->streams[i].presented;
+            if (selected)
+                reader->streams[i].flags |= STREAM_FLAG_SELECTED;
+            else
+                reader->streams[i].flags &= ~STREAM_FLAG_SELECTED;
+            selection_changed = !!(reader->streams[i].flags & STREAM_FLAG_SELECTED) ^
+                    !!(reader->streams[i].flags & STREAM_FLAG_PRESENTED);
             if (selection_changed)
                 break;
         }
@@ -867,7 +872,10 @@ static HRESULT source_reader_start_source(struct source_reader *reader)
         if (SUCCEEDED(hr = IMFMediaSource_Start(reader->source, reader->descriptor, &GUID_NULL, &position)))
         {
             for (i = 0; i < reader->stream_count; ++i)
-                reader->streams[i].presented = reader->streams[i].selected;
+            {
+                if (reader->streams[i].flags & STREAM_FLAG_SELECTED)
+                    reader->streams[i].flags |= STREAM_FLAG_PRESENTED;
+            }
         }
     }
 
