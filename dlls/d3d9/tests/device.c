@@ -1742,15 +1742,29 @@ cleanup:
 
 static void test_cursor(void)
 {
+    unsigned int adapter_idx, adapter_count, test_idx;
     IDirect3DSurface9 *cursor = NULL;
+    struct device_desc device_desc;
+    unsigned int width, height;
     IDirect3DDevice9 *device;
+    HRESULT expected_hr, hr;
+    D3DDISPLAYMODE mode;
     CURSORINFO info;
     IDirect3D9 *d3d;
     ULONG refcount;
     HCURSOR cur;
     HWND window;
-    HRESULT hr;
     BOOL ret;
+
+    static const DWORD device_flags[] = {0, CREATE_DEVICE_FULLSCREEN};
+    static const SIZE cursor_sizes[] =
+    {
+        {1, 1},
+        {2, 4},
+        {3, 2},
+        {2, 3},
+        {6, 6},
+    };
 
     window = create_window();
     ok(!!window, "Failed to create a window.\n");
@@ -1812,8 +1826,91 @@ static void test_cursor(void)
     ok(info.flags & (CURSOR_SHOWING|CURSOR_SUPPRESSED), "The gdi cursor is hidden (%08x)\n", info.flags);
     ok(info.hCursor != cur, "The cursor handle is %p\n", info.hCursor);
 
+    /* Cursor dimensions must all be powers of two */
+    for (test_idx = 0; test_idx < ARRAY_SIZE(cursor_sizes); ++test_idx)
+    {
+        width = cursor_sizes[test_idx].cx;
+        height = cursor_sizes[test_idx].cy;
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height, D3DFMT_A8R8G8B8,
+                D3DPOOL_DEFAULT, &cursor, NULL);
+        ok(hr == D3D_OK, "Test %u: CreateOffscreenPlainSurface failed, hr %#x.\n", test_idx, hr);
+        hr = IDirect3DDevice9_SetCursorProperties(device, 0, 0, cursor);
+        if (width && !(width & (width - 1)) && height && !(height & (height - 1)))
+            expected_hr = D3D_OK;
+        else
+            expected_hr = D3DERR_INVALIDCALL;
+        todo_wine_if(expected_hr == D3DERR_INVALIDCALL)
+        ok(hr == expected_hr, "Test %u: Expect SetCursorProperties return %#x, got %#x.\n",
+                test_idx, expected_hr, hr);
+        IDirect3DSurface9_Release(cursor);
+    }
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+
+    /* Cursor dimensions must not exceed adapter display mode */
+    device_desc.device_window = window;
+    device_desc.width = 640;
+    device_desc.height = 480;
+
+    adapter_count = IDirect3D9_GetAdapterCount(d3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        for (test_idx = 0; test_idx < ARRAY_SIZE(device_flags); ++test_idx)
+        {
+            device_desc.adapter_ordinal = adapter_idx;
+            device_desc.flags = device_flags[test_idx];
+            if (!(device = create_device(d3d, window, &device_desc)))
+            {
+                skip("Adapter %u test %u: Failed to create a D3D device.\n", adapter_idx, test_idx);
+                break;
+            }
+
+            hr = IDirect3D9_GetAdapterDisplayMode(d3d, adapter_idx, &mode);
+            ok(hr == D3D_OK, "Adapter %u test %u: GetAdapterDisplayMode failed, hr %#x.\n",
+                    adapter_idx, test_idx, hr);
+
+            /* Find the largest width and height that are powers of two and less than the display mode */
+            width = 1;
+            height = 1;
+            while (width * 2 <= mode.Width)
+                width *= 2;
+            while (height * 2 <= mode.Height)
+                height *= 2;
+
+            hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height,
+                    D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &cursor, NULL);
+            ok(hr == D3D_OK, "Adapter %u test %u: CreateOffscreenPlainSurface failed, hr %#x.\n",
+                    adapter_idx, test_idx, hr);
+            hr = IDirect3DDevice9_SetCursorProperties(device, 0, 0, cursor);
+            ok(hr == D3D_OK, "Adapter %u test %u: SetCursorProperties failed, hr %#x.\n",
+                    adapter_idx, test_idx, hr);
+            IDirect3DSurface9_Release(cursor);
+
+            hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width * 2, height,
+                    D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &cursor, NULL);
+            ok(hr == D3D_OK, "Adapter %u test %u: CreateOffscreenPlainSurface failed, hr %#x.\n",
+                    adapter_idx, test_idx, hr);
+            hr = IDirect3DDevice9_SetCursorProperties(device, 0, 0, cursor);
+            ok(hr == D3DERR_INVALIDCALL,
+                    "Adapter %u test %u: Expect SetCursorProperties return %#x, got %#x.\n",
+                    adapter_idx, test_idx, D3DERR_INVALIDCALL, hr);
+            IDirect3DSurface9_Release(cursor);
+
+            hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height * 2,
+                    D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &cursor, NULL);
+            ok(hr == D3D_OK, "Adapter %u test %u: CreateOffscreenPlainSurface failed, hr %#x.\n",
+                    adapter_idx, test_idx, hr);
+            hr = IDirect3DDevice9_SetCursorProperties(device, 0, 0, cursor);
+            ok(hr == D3DERR_INVALIDCALL,
+                    "Adapter %u test %u: Expect SetCursorProperties return %#x, got %#x.\n",
+                    adapter_idx, test_idx, D3DERR_INVALIDCALL, hr);
+            IDirect3DSurface9_Release(cursor);
+
+            refcount = IDirect3DDevice9_Release(device);
+            ok(!refcount, "Adapter %u: Device has %u references left.\n", adapter_idx, refcount);
+        }
+    }
 cleanup:
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
