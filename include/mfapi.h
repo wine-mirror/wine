@@ -488,6 +488,8 @@ HRESULT WINAPI MFAllocateWorkQueue(DWORD *queue);
 HRESULT WINAPI MFAllocateWorkQueueEx(MFASYNC_WORKQUEUE_TYPE queue_type, DWORD *queue);
 HRESULT WINAPI MFBeginCreateFile(MF_FILE_ACCESSMODE access_mode, MF_FILE_OPENMODE open_mode, MF_FILE_FLAGS flags,
         const WCHAR *path, IMFAsyncCallback *callback, IUnknown *state, IUnknown **cancel_cookie);
+HRESULT WINAPI MFBeginRegisterWorkQueueWithMMCSSEx(DWORD queue, const WCHAR *usage_class, DWORD taskid, LONG priority,
+        IMFAsyncCallback *callback, IUnknown *state);
 HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height, UINT32 *size);
 HRESULT WINAPI MFCancelCreateFile(IUnknown *cancel_cookie);
 HRESULT WINAPI MFCancelWorkItem(MFWORKITEM_KEY key);
@@ -518,6 +520,9 @@ HRESULT WINAPI MFGetAttributesAsBlobSize(IMFAttributes *attributes, UINT32 *size
 HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD format, DWORD width, LONG *stride);
 HRESULT WINAPI MFGetPlaneSize(DWORD format, DWORD width, DWORD height, DWORD *size);
 HRESULT WINAPI MFGetTimerPeriodicity(DWORD *periodicity);
+HRESULT WINAPI MFGetWorkQueueMMCSSClass(DWORD queue, WCHAR *class, DWORD *length);
+HRESULT WINAPI MFGetWorkQueueMMCSSPriority(DWORD queue, LONG *priority);
+HRESULT WINAPI MFGetWorkQueueMMCSSTaskId(DWORD queue, DWORD *taskid);
 HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *input_type,
                        MFT_REGISTER_TYPE_INFO *output_type, IMFAttributes *attributes,
                        CLSID **pclsids, UINT32 *pcount);
@@ -535,6 +540,7 @@ HRESULT WINAPI MFPutWorkItemEx(DWORD queue, IMFAsyncResult *result);
 HRESULT WINAPI MFPutWorkItemEx2(DWORD queue, LONG priority, IMFAsyncResult *result);
 HRESULT WINAPI MFRegisterLocalByteStreamHandler(const WCHAR *extension, const WCHAR *mime, IMFActivate *activate);
 HRESULT WINAPI MFRegisterLocalSchemeHandler(const WCHAR *scheme, IMFActivate *activate);
+HRESULT WINAPI MFRegisterPlatformWithMMCSS(const WCHAR *usage_class, DWORD *taskid, LONG priority);
 HRESULT WINAPI MFScheduleWorkItem(IMFAsyncCallback *callback, IUnknown *state, INT64 timeout, MFWORKITEM_KEY *key);
 HRESULT WINAPI MFScheduleWorkItemEx(IMFAsyncResult *result, INT64 timeout, MFWORKITEM_KEY *key);
 HRESULT WINAPI MFTRegister(CLSID clsid, GUID category, LPWSTR name, UINT32 flags, UINT32 cinput,
@@ -551,6 +557,7 @@ HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
 HRESULT WINAPI MFUnlockPlatform(void);
 HRESULT WINAPI MFUnlockWorkQueue(DWORD queue);
+HRESULT WINAPI MFUnregisterPlatformFromMMCSS(void);
 HRESULT WINAPI MFTUnregister(CLSID clsid);
 HRESULT WINAPI MFTUnregisterLocal(IClassFactory *factory);
 HRESULT WINAPI MFTUnregisterLocalByCLSID(CLSID clsid);

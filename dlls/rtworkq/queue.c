@@ -1485,3 +1485,60 @@ HRESULT WINAPI RtwqUnjoinWorkQueue(DWORD queue, HANDLE cookie)
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI RtwqGetWorkQueueMMCSSClass(DWORD queue, WCHAR *class, DWORD *length)
+{
+    FIXME("%#x, %p, %p.\n", queue, class, length);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqGetWorkQueueMMCSSTaskId(DWORD queue, DWORD *taskid)
+{
+    FIXME("%#x, %p.\n", queue, taskid);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqGetWorkQueueMMCSSPriority(DWORD queue, LONG *priority)
+{
+    FIXME("%#x, %p.\n", queue, priority);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqRegisterPlatformWithMMCSS(const WCHAR *class, DWORD *taskid, LONG priority)
+{
+    FIXME("%s, %p, %d.\n", debugstr_w(class), taskid, priority);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqUnregisterPlatformFromMMCSS(void)
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqBeginRegisterWorkQueueWithMMCSS(DWORD queue, const WCHAR *class, DWORD taskid, LONG priority,
+        IRtwqAsyncCallback *callback, IUnknown *state)
+{
+    FIXME("%#x, %s, %u, %d, %p, %p.\n", queue, debugstr_w(class), taskid, priority, callback, state);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqRegisterPlatformEvents(IRtwqPlatformEvents *events)
+{
+    FIXME("%p.\n", events);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI RtwqUnregisterPlatformEvents(IRtwqPlatformEvents *events)
+{
+    FIXME("%p.\n", events);
+
+    return E_NOTIMPL;
+}

@@ -24,6 +24,7 @@
 @ stdcall MFBeginCreateFile(long long long wstr ptr ptr ptr)
 @ stub MFBeginGetHostByName
 @ stub MFBeginRegisterWorkQueueWithMMCSS
+@ stdcall MFBeginRegisterWorkQueueWithMMCSSEx(long wstr long long ptr ptr) rtworkq.RtwqBeginRegisterWorkQueueWithMMCSS
 @ stub MFBeginUnregisterWorkQueueWithMMCSS
 @ stub MFBlockThread
 @ stub MFCalculateBitmapImageSize
@@ -107,8 +108,9 @@
 @ stdcall MFGetSystemTime()
 @ stdcall MFGetTimerPeriodicity(ptr)
 @ stub MFGetUncompressedVideoFormat
-@ stub MFGetWorkQueueMMCSSClass
-@ stub MFGetWorkQueueMMCSSTaskId
+@ stdcall MFGetWorkQueueMMCSSClass(long ptr ptr) rtworkq.RtwqGetWorkQueueMMCSSClass
+@ stdcall MFGetWorkQueueMMCSSTaskId(long ptr) rtworkq.RtwqGetWorkQueueMMCSSTaskId
+@ stdcall MFGetWorkQueueMMCSSPriority(long ptr) rtworkq.RtwqGetWorkQueueMMCSSPriority
 @ stdcall MFHeapAlloc(long long str long long)
 @ stdcall MFHeapFree(ptr)
 @ stub MFInitAMMediaTypeFromMFMediaType
@@ -135,6 +137,7 @@
 @ stub MFRecordError
 @ stdcall MFRegisterLocalByteStreamHandler(wstr wstr ptr)
 @ stdcall MFRegisterLocalSchemeHandler(wstr ptr)
+@ stdcall MFRegisterPlatformWithMMCSS(wstr ptr long) rtworkq.RtwqRegisterPlatformWithMMCSS
 @ stdcall MFRemovePeriodicCallback(long) rtworkq.RtwqRemovePeriodicCallback
 @ stdcall MFScheduleWorkItem(ptr ptr int64 ptr)
 @ stdcall MFScheduleWorkItemEx(ptr int64 ptr) rtworkq.RtwqScheduleWorkItem
@@ -156,6 +159,7 @@
 @ stdcall MFTUnregister(int128)
 @ stdcall MFTUnregisterLocal(ptr)
 @ stdcall MFTUnregisterLocalByCLSID(int128)
+@ stdcall MFUnregisterPlatformFromMMCSS() rtworkq.RtwqUnregisterPlatformFromMMCSS
 @ stub MFTraceError
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread

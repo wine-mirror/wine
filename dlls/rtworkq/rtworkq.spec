@@ -1,7 +1,7 @@
 @ stdcall RtwqAddPeriodicCallback(ptr ptr ptr)
 @ stdcall RtwqAllocateSerialWorkQueue(long ptr)
 @ stdcall RtwqAllocateWorkQueue(long ptr)
-@ stub RtwqBeginRegisterWorkQueueWithMMCSS
+@ stdcall RtwqBeginRegisterWorkQueueWithMMCSS(long wstr long long ptr ptr)
 @ stub RtwqBeginUnregisterWorkQueueWithMMCSS
 @ stdcall RtwqCancelDeadline(long)
 @ stub RtwqCancelMultipleWaitingWorkItem
@@ -10,9 +10,9 @@
 @ stub RtwqEndRegisterWorkQueueWithMMCSS
 @ stub RtwqEndUnregisterWorkQueueWithMMCSS
 @ stub RtwqGetPlatform
-@ stub RtwqGetWorkQueueMMCSSClass
-@ stub RtwqGetWorkQueueMMCSSPriority
-@ stub RtwqGetWorkQueueMMCSSTaskId
+@ stdcall RtwqGetWorkQueueMMCSSClass(long ptr ptr)
+@ stdcall RtwqGetWorkQueueMMCSSPriority(long ptr)
+@ stdcall RtwqGetWorkQueueMMCSSTaskId(long ptr)
 @ stdcall RtwqInvokeCallback(ptr)
 @ stdcall RtwqJoinWorkQueue(long long ptr)
 @ stdcall RtwqLockPlatform()
@@ -21,8 +21,8 @@
 @ stub RtwqPutMultipleWaitingWorkItem
 @ stdcall RtwqPutWaitingWorkItem(long long ptr ptr)
 @ stdcall RtwqPutWorkItem(long long ptr)
-@ stub RtwqRegisterPlatformEvents
-@ stub RtwqRegisterPlatformWithMMCSS
+@ stdcall RtwqRegisterPlatformEvents(ptr)
+@ stdcall RtwqRegisterPlatformWithMMCSS(wstr ptr long)
 @ stdcall RtwqRemovePeriodicCallback(long)
 @ stdcall RtwqScheduleWorkItem(ptr int64 ptr)
 @ stdcall RtwqSetDeadline(long int64 ptr)
@@ -33,5 +33,5 @@
 @ stdcall RtwqUnjoinWorkQueue(long long)
 @ stdcall RtwqUnlockPlatform()
 @ stdcall RtwqUnlockWorkQueue(long)
-@ stub RtwqUnregisterPlatformEvents
-@ stub RtwqUnregisterPlatformFromMMCSS
+@ stdcall RtwqUnregisterPlatformEvents(ptr)
+@ stdcall RtwqUnregisterPlatformFromMMCSS()
