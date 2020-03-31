@@ -887,9 +887,6 @@
 /* Define to 1 if `ips_total' is a member of `struct ip_stats'. */
 #undef HAVE_STRUCT_IP_STATS_IPS_TOTAL
 
-/* Define to 1 if the system has the type `struct link_map'. */
-#undef HAVE_STRUCT_LINK_MAP
-
 /* Define to 1 if `msg_accrights' is a member of `struct msghdr'. */
 #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 
@@ -904,9 +901,6 @@
 
 /* Define to 1 if `name' is a member of `struct option'. */
 #undef HAVE_STRUCT_OPTION_NAME
-
-/* Define to 1 if the system has the type `struct r_debug'. */
-#undef HAVE_STRUCT_R_DEBUG
 
 /* Define to 1 if `sin6_scope_id' is a member of `struct sockaddr_in6'. */
 #undef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
@@ -1018,17 +1012,11 @@
 /* Define to 1 if you have the <sys/cdio.h> header file. */
 #undef HAVE_SYS_CDIO_H
 
-/* Define to 1 if you have the <sys/elf32.h> header file. */
-#undef HAVE_SYS_ELF32_H
-
 /* Define to 1 if you have the <sys/epoll.h> header file. */
 #undef HAVE_SYS_EPOLL_H
 
 /* Define to 1 if you have the <sys/event.h> header file. */
 #undef HAVE_SYS_EVENT_H
-
-/* Define to 1 if you have the <sys/exec_elf.h> header file. */
-#undef HAVE_SYS_EXEC_ELF_H
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
 #undef HAVE_SYS_FILIO_H

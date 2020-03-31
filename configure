@@ -7438,10 +7438,8 @@ for ac_header in \
 	sys/attr.h \
 	sys/auxv.h \
 	sys/cdio.h \
-	sys/elf32.h \
 	sys/epoll.h \
 	sys/event.h \
-	sys/exec_elf.h \
 	sys/filio.h \
 	sys/ioctl.h \
 	sys/ipc.h \
@@ -18565,38 +18563,6 @@ if test "x$ac_cv_type_struct_xinpgen" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_XINPGEN 1
-_ACEOF
-
-
-fi
-
-
-ac_fn_c_check_type "$LINENO" "struct r_debug" "ac_cv_type_struct_r_debug" "#ifdef HAVE_LINK_H
-#include <link.h>
-#endif
-#ifdef HAVE_SYS_LINK_H
-#include <sys/link.h>
-#endif
-"
-if test "x$ac_cv_type_struct_r_debug" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_R_DEBUG 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "struct link_map" "ac_cv_type_struct_link_map" "#ifdef HAVE_LINK_H
-#include <link.h>
-#endif
-#ifdef HAVE_SYS_LINK_H
-#include <sys/link.h>
-#endif
-"
-if test "x$ac_cv_type_struct_link_map" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_LINK_MAP 1
 _ACEOF
 
 

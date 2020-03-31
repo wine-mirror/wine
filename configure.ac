@@ -498,10 +498,8 @@ AC_CHECK_HEADERS(\
 	sys/attr.h \
 	sys/auxv.h \
 	sys/cdio.h \
-	sys/elf32.h \
 	sys/epoll.h \
 	sys/event.h \
-	sys/exec_elf.h \
 	sys/filio.h \
 	sys/ioctl.h \
 	sys/ipc.h \
@@ -2311,14 +2309,6 @@ AC_CHECK_TYPES([struct xinpgen],,,
 #endif
 #ifdef HAVE_NETINET_IN_PCB_H
 #include <netinet/in_pcb.h>
-#endif])
-
-AC_CHECK_TYPES([struct r_debug, struct link_map],,,
-[#ifdef HAVE_LINK_H
-#include <link.h>
-#endif
-#ifdef HAVE_SYS_LINK_H
-#include <sys/link.h>
 #endif])
 
 AC_CHECK_MEMBERS([struct ff_effect.direction],,,
