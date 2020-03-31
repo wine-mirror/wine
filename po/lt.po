@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-03-04 09:19+0200\n"
+"PO-Revision-Date: 2020-03-31 23:40+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9885,16 +9885,12 @@ msgid "Argentina Daylight Time"
 msgstr "Argentinos vasaros laikas"
 
 #: tzres.rc:142
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "Mauricijaus juostinis laikas"
+msgstr "Markizo juostinis laikas"
 
 #: tzres.rc:143
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "Mauricijaus vasaros laikas"
+msgstr "Markizo vasaros laikas"
 
 #: tzres.rc:156
 msgid "Myanmar Standard Time"
@@ -10269,16 +10265,12 @@ msgid "Venezuela Daylight Time"
 msgstr "Venesuelos vasaros laikas"
 
 #: tzres.rc:60
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "Kalnų juostinis laikas"
+msgstr "Bugenvilio juostinis laikas"
 
 #: tzres.rc:61
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "Kalnų vasaros laikas"
+msgstr "Bugenvilio vasaros laikas"
 
 #: tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10393,16 +10385,12 @@ msgid "Korea Daylight Time"
 msgstr "Korėjos vasaros laikas"
 
 #: tzres.rc:86
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "Velykų salos juostinis laikas"
+msgstr "Čatamo salų juostinis laikas"
 
 #: tzres.rc:87
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Velykų salos vasaros laikas"
+msgstr "Čatamo salų vasaros laikas"
 
 #: tzres.rc:92
 msgid "E. Africa Standard Time"
