@@ -1201,7 +1201,6 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     SIZE_T              r = 0;
 
     assert(gdbctx->in_trap);
-    /* FIXME:check in_packet_len for reading %p,%x */
     if (sscanf(gdbctx->in_packet, "%p,%x", &addr, &len) != 2) return packet_error;
     if (len <= 0) return packet_error;
     TRACE("Read %u bytes at %p\n", len, addr);
@@ -1794,6 +1793,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                 {
                     gdbctx->in_packet = gdbctx->in_buf + 2;
                     gdbctx->in_packet_len = plen - 1;
+                    gdbctx->in_packet[gdbctx->in_packet_len] = '\0';
                     ret = (packet_entries[i].handler)(gdbctx);
                 }
                 switch (ret & ~packet_last_f)
