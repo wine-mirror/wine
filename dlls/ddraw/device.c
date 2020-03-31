@@ -79,6 +79,23 @@ static enum wined3d_render_state wined3d_render_state_from_ddraw(D3DRENDERSTATET
     return (enum wined3d_render_state)state;
 }
 
+static enum wined3d_transform_state wined3d_transform_state_from_ddraw(D3DTRANSFORMSTATETYPE state)
+{
+    switch (state)
+    {
+        case D3DTRANSFORMSTATE_WORLD:
+            return WINED3D_TS_WORLD_MATRIX(0);
+        case D3DTRANSFORMSTATE_WORLD1:
+            return WINED3D_TS_WORLD_MATRIX(1);
+        case D3DTRANSFORMSTATE_WORLD2:
+            return WINED3D_TS_WORLD_MATRIX(2);
+        case D3DTRANSFORMSTATE_WORLD3:
+            return WINED3D_TS_WORLD_MATRIX(3);
+        default:
+            return (enum wined3d_transform_state)state;
+    }
+}
+
 static inline struct d3d_device *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d_device, IUnknown_inner);
@@ -3096,34 +3113,16 @@ static HRESULT d3d_device7_SetTransform(IDirect3DDevice7 *iface,
         D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    enum wined3d_transform_state wined3d_state;
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
-
-    switch (state)
-    {
-        case D3DTRANSFORMSTATE_WORLD:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(0);
-            break;
-        case D3DTRANSFORMSTATE_WORLD1:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(1);
-            break;
-        case D3DTRANSFORMSTATE_WORLD2:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(2);
-            break;
-        case D3DTRANSFORMSTATE_WORLD3:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(3);
-            break;
-        default:
-            wined3d_state = state;
-    }
 
     if (!matrix)
         return DDERR_INVALIDPARAMS;
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    wined3d_stateblock_set_transform(device->update_state, wined3d_state, (const struct wined3d_matrix *)matrix);
+    wined3d_stateblock_set_transform(device->update_state,
+            wined3d_transform_state_from_ddraw(state), (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3205,34 +3204,15 @@ static HRESULT d3d_device7_GetTransform(IDirect3DDevice7 *iface,
         D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    enum wined3d_transform_state wined3d_state;
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
-
-    switch (state)
-    {
-        case D3DTRANSFORMSTATE_WORLD:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(0);
-            break;
-        case D3DTRANSFORMSTATE_WORLD1:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(1);
-            break;
-        case D3DTRANSFORMSTATE_WORLD2:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(2);
-            break;
-        case D3DTRANSFORMSTATE_WORLD3:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(3);
-            break;
-        default:
-            wined3d_state = state;
-    }
 
     if (!matrix)
         return DDERR_INVALIDPARAMS;
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    memcpy(matrix, &device->stateblock_state->transforms[wined3d_state], sizeof(*matrix));
+    memcpy(matrix, &device->stateblock_state->transforms[wined3d_transform_state_from_ddraw(state)], sizeof(*matrix));
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3309,32 +3289,13 @@ static HRESULT d3d_device7_MultiplyTransform(IDirect3DDevice7 *iface,
         D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
-    enum wined3d_transform_state wined3d_state;
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
-
-    switch (state)
-    {
-        case D3DTRANSFORMSTATE_WORLD:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(0);
-            break;
-        case D3DTRANSFORMSTATE_WORLD1:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(1);
-            break;
-        case D3DTRANSFORMSTATE_WORLD2:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(2);
-            break;
-        case D3DTRANSFORMSTATE_WORLD3:
-            wined3d_state = WINED3D_TS_WORLD_MATRIX(3);
-            break;
-        default:
-            wined3d_state = state;
-    }
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
     wined3d_stateblock_multiply_transform(device->state,
-            wined3d_state, (struct wined3d_matrix *)matrix);
+            wined3d_transform_state_from_ddraw(state), (struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
