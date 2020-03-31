@@ -204,7 +204,7 @@ static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS
     present_parameters->BackBufferHeight = swapchain_desc->backbuffer_height;
     present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(swapchain_desc->backbuffer_format);
     present_parameters->BackBufferCount = swapchain_desc->backbuffer_count;
-    present_parameters->MultiSampleType = swapchain_desc->multisample_type;
+    present_parameters->MultiSampleType = d3dmultisample_type_from_wined3d(swapchain_desc->multisample_type);
     present_parameters->SwapEffect = d3dswapeffect_from_wined3dswapeffect(swapchain_desc->swap_effect);
     present_parameters->hDeviceWindow = swapchain_desc->device_window;
     present_parameters->Windowed = swapchain_desc->windowed;
@@ -255,6 +255,11 @@ static enum wined3d_swap_interval wined3dswapinterval_from_d3d(DWORD interval)
     }
 }
 
+static enum wined3d_multisample_type wined3d_multisample_type_from_d3d(D3DMULTISAMPLE_TYPE type)
+{
+    return (enum wined3d_multisample_type)type;
+}
+
 static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
         const D3DPRESENT_PARAMETERS *present_parameters)
 {
@@ -291,7 +296,7 @@ static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
     swapchain_desc->backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
     swapchain_desc->backbuffer_count = max(1, present_parameters->BackBufferCount);
     swapchain_desc->backbuffer_bind_flags = WINED3D_BIND_RENDER_TARGET;
-    swapchain_desc->multisample_type = present_parameters->MultiSampleType;
+    swapchain_desc->multisample_type = wined3d_multisample_type_from_d3d(present_parameters->MultiSampleType);
     swapchain_desc->multisample_quality = 0; /* d3d9 only */
     swapchain_desc->swap_effect = wined3dswapeffect_from_d3dswapeffect(present_parameters->SwapEffect);
     swapchain_desc->device_window = present_parameters->hDeviceWindow;
@@ -1263,7 +1268,8 @@ static HRESULT WINAPI d3d8_device_CreateRenderTarget(IDirect3DDevice8 *iface, UI
         access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
 
     return d3d8_device_create_surface(device, wined3dformat_from_d3dformat(format),
-            multisample_type, WINED3D_BIND_RENDER_TARGET, access, width, height, surface);
+            wined3d_multisample_type_from_d3d(multisample_type),
+            WINED3D_BIND_RENDER_TARGET, access, width, height, surface);
 }
 
 static HRESULT WINAPI d3d8_device_CreateDepthStencilSurface(IDirect3DDevice8 *iface,
@@ -1281,7 +1287,7 @@ static HRESULT WINAPI d3d8_device_CreateDepthStencilSurface(IDirect3DDevice8 *if
     *surface = NULL;
 
     return d3d8_device_create_surface(device, wined3dformat_from_d3dformat(format),
-            multisample_type, WINED3D_BIND_DEPTH_STENCIL,
+            wined3d_multisample_type_from_d3d(multisample_type), WINED3D_BIND_DEPTH_STENCIL,
             WINED3D_RESOURCE_ACCESS_GPU, width, height, surface);
 }
 
