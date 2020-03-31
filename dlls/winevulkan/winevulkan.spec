@@ -239,3 +239,5 @@
 @ stdcall -private wine_vkUpdateDescriptorSets(ptr long ptr long ptr)
 @ stdcall -private wine_vkWaitForFences(ptr long ptr long int64)
 @ stdcall -private wine_vkWaitSemaphores(ptr ptr int64)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

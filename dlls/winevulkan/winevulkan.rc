@@ -1,4 +1,5 @@
-/*
+/* Wine Vulkan resources
+ *
  * Copyright 2017 Roderick Colenbrander
  *
  * This library is free software; you can redistribute it and/or
@@ -25,3 +26,6 @@
 #define WINE_PRODUCTNAME_STR "Wine Vulkan"
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: winevulkan.json */
+winevulkan_json RCDATA winevulkan.json

@@ -1,9 +1,9 @@
 MODULE    = winevulkan.dll
 IMPORTLIB = winevulkan
-IMPORTS   = user32 gdi32
+IMPORTS   = user32 gdi32 advapi32
 
 C_SRCS = \
 	vulkan.c \
 	vulkan_thunks.c
 
-RC_SRCS = version.rc
+RC_SRCS = winevulkan.rc
