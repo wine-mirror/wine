@@ -271,6 +271,8 @@ static void do_search(const struct search *s)
 
             for (i = 0; i < col.dwNumValues; i++)
             {
+                ok(col.pADsValues[i].dwType == col.dwADsType, "%u: got %d for %s\n", i, col.pADsValues[i].dwType, wine_dbgstr_w(name));
+
                 ok(res->values[i] != NULL, "expected to have more values for %s\n", wine_dbgstr_w(name));
                 if (!res->values[i]) break;
 

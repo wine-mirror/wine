@@ -1345,6 +1345,7 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
         for (i = 0; i < count; i++)
         {
             TRACE("=> %s\n", debugstr_w(values[i]));
+            col->pADsValues[i].dwType = type;
             col->pADsValues[i].u.CaseIgnoreString = values[i];
         }
 
@@ -1371,6 +1372,8 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
 
         for (i = 0; i < count; i++)
         {
+            col->pADsValues[i].dwType = type;
+
             if (wcsicmp(values[i], L"TRUE"))
                 col->pADsValues[i].u.Boolean = 1;
             else if (wcsicmp(values[i], L"FALSE"))
@@ -1436,6 +1439,7 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
         for (i = 0; i < count; i++)
         {
             TRACE("=> %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+            col->pADsValues[i].dwType = type;
             col->pADsValues[i].u.OctetString.dwLength = values[i]->bv_len;
             col->pADsValues[i].u.OctetString.lpValue = (BYTE *)values[i]->bv_val;
         }
@@ -1489,6 +1493,7 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
         wcscat(col->pADsValues[0].u.CaseIgnoreString, ldap->host);
         wcscat(col->pADsValues[0].u.CaseIgnoreString, L"/");
         if (dn) wcscat(col->pADsValues[0].u.CaseIgnoreString, dn);
+        col->pADsValues[0].dwType = ADSTYPE_CASE_IGNORE_STRING;
         col->dwADsType = ADSTYPE_CASE_IGNORE_STRING;
         col->dwNumValues = 1;
         col->pszAttrName = strdupW(name);
