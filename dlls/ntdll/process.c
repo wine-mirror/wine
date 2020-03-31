@@ -1578,7 +1578,7 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
 
     /* check for .com or .pif extension */
     if (status == STATUS_INVALID_IMAGE_NOT_MZ &&
-        (p = strrchrW( params->ImagePathName.Buffer, '.' )) &&
+        (p = wcsrchr( params->ImagePathName.Buffer, '.' )) &&
         (!wcsicmp( p, comW ) || !wcsicmp( p, pifW )))
         status = STATUS_INVALID_IMAGE_WIN_16;
 

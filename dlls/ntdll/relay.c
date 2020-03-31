@@ -223,7 +223,7 @@ static BOOL check_list( const WCHAR *module, int ordinal, const char *func, cons
     sprintf( ord_str, "%d", ordinal );
     for(; *list; list++)
     {
-        const WCHAR *p = strrchrW( *list, '.' );
+        const WCHAR *p = wcsrchr( *list, '.' );
         if (p && p > *list)  /* check module and function */
         {
             int len = p - *list;

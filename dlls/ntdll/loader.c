@@ -1186,7 +1186,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     wm->ldr.LoadCount     = 1;
 
     RtlCreateUnicodeString( &wm->ldr.FullDllName, nt_name->Buffer + 4 /* \??\ prefix */ );
-    if ((p = strrchrW( wm->ldr.FullDllName.Buffer, '\\' ))) p++;
+    if ((p = wcsrchr( wm->ldr.FullDllName.Buffer, '\\' ))) p++;
     else p = wm->ldr.FullDllName.Buffer;
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
@@ -1756,7 +1756,7 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
     ascii_to_unicode( filenameW, filename, len + 1 );
 
     /* check if path can correspond to the dll we have */
-    if (path && (p = strrchrW( path->Buffer, '\\' )))
+    if (path && (p = wcsrchr( path->Buffer, '\\' )))
     {
         p++;
         if (!wcsnicmp( p, filenameW, len ) && (!p[len] || !wcsicmp( p + len, soW )))
@@ -2101,8 +2101,8 @@ static inline const WCHAR *get_module_path_end( const WCHAR *module )
     const WCHAR *p;
     const WCHAR *mod_end = module;
 
-    if ((p = strrchrW( mod_end, '\\' ))) mod_end = p;
-    if ((p = strrchrW( mod_end, '/' ))) mod_end = p;
+    if ((p = wcsrchr( mod_end, '\\' ))) mod_end = p;
+    if ((p = wcsrchr( mod_end, '/' ))) mod_end = p;
     if (mod_end == module + 2 && module[1] == ':') mod_end++;
     if (mod_end == module && module[0] && module[1] == ':') mod_end += 2;
     return mod_end;
@@ -2683,8 +2683,8 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 
     /* Fix the name in case we have a full path and extension */
     name = nt_name->Buffer;
-    if ((p = strrchrW( name, '\\' ))) name = p + 1;
-    if ((p = strrchrW( name, '/' ))) name = p + 1;
+    if ((p = wcsrchr( name, '\\' ))) name = p + 1;
+    if ((p = wcsrchr( name, '/' ))) name = p + 1;
 
     TRACE("Trying built-in %s\n", debugstr_w(name));
 
@@ -2761,7 +2761,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         goto done;
     }
 
-    if ((p = strrchrW( info->lpAssemblyManifestPath, '\\' )))
+    if ((p = wcsrchr( info->lpAssemblyManifestPath, '\\' )))
     {
         DWORD len, dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
         p++;
@@ -2890,7 +2890,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
 
     if (default_ext)  /* first append default extension */
     {
-        if (!(ext = strrchrW( libname, '.')) || wcschr( ext, '/' ) || wcschr( ext, '\\'))
+        if (!(ext = wcsrchr( libname, '.')) || wcschr( ext, '/' ) || wcschr( ext, '\\'))
         {
             if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
                                              (strlenW(libname)+strlenW(default_ext)+1) * sizeof(WCHAR))))

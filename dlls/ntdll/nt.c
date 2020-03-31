@@ -2673,7 +2673,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                         procname[wine_server_reply_size(reply) / sizeof(WCHAR)] = 0;
 
                         /* Get only the executable name, not the path */
-                        if ((exename = strrchrW(procname, '\\')) != NULL) exename++;
+                        if ((exename = wcsrchr(procname, '\\')) != NULL) exename++;
                         else exename = procname;
 
                         wlen = (strlenW(exename) + 1) * sizeof(WCHAR);

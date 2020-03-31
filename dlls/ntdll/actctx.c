@@ -3235,7 +3235,7 @@ static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identit
     path[path_us.Length/sizeof(WCHAR)] = '\\';
     wcscpy( path + path_us.Length/sizeof(WCHAR) + 1, file );
     RtlInitUnicodeString( &path_us, path );
-    *strrchrW(file, '.') = 0;  /* remove .manifest extension */
+    *wcsrchr(file, '.') = 0;  /* remove .manifest extension */
 
     if (!open_nt_file( &handle, &path_us ))
     {
@@ -4998,7 +4998,7 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
         else module = NtCurrentTeb()->Peb->ImageBaseAddress;
 
         if ((status = get_module_filename( module, &dir, 0 ))) goto error;
-        if ((p = strrchrW( dir.Buffer, '\\' ))) p[1] = 0;
+        if ((p = wcsrchr( dir.Buffer, '\\' ))) p[1] = 0;
         actctx->appdir.info = dir.Buffer;
     }
 

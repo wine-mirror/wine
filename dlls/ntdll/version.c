@@ -501,8 +501,8 @@ void version_init(void)
 
     /* open AppDefaults\\appname key */
 
-    if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-    if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+    if ((p = wcsrchr( appname, '/' ))) appname = p + 1;
+    if ((p = wcsrchr( appname, '\\' ))) appname = p + 1;
 
     wcscpy( appversion, appdefaultsW );
     wcscat( appversion, appname );

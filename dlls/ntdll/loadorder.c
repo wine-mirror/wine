@@ -79,8 +79,8 @@ static const WCHAR *get_basename( const WCHAR *name )
     const WCHAR *ptr;
 
     if (name[0] && name[1] == ':') name += 2;  /* strip drive specification */
-    if ((ptr = strrchrW( name, '\\' ))) name = ptr + 1;
-    if ((ptr = strrchrW( name, '/' ))) name = ptr + 1;
+    if ((ptr = wcsrchr( name, '\\' ))) name = ptr + 1;
+    if ((ptr = wcsrchr( name, '/' ))) name = ptr + 1;
     return name;
 }
 
@@ -92,7 +92,7 @@ static const WCHAR *get_basename( const WCHAR *name )
 static inline void remove_dll_ext( WCHAR *name )
 {
     static const WCHAR dllW[] = {'.','d','l','l',0};
-    WCHAR *p = strrchrW( name, '.' );
+    WCHAR *p = wcsrchr( name, '.' );
 
     if (p && !wcsicmp( p, dllW )) *p = 0;
 }

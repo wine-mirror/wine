@@ -364,7 +364,7 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
         ntpath->Buffer[1] = '?';  /* change \\?\ to \??\ */
         if (file_part)
         {
-            if ((ptr = strrchrW( ntpath->Buffer, '\\' )) && ptr[1]) *file_part = ptr + 1;
+            if ((ptr = wcsrchr( ntpath->Buffer, '\\' )) && ptr[1]) *file_part = ptr + 1;
             else *file_part = NULL;
         }
         return STATUS_SUCCESS;
@@ -855,7 +855,7 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
     }
 
     /* find file part */
-    if (file_part && (ptr = strrchrW(buffer, '\\')) != NULL && ptr >= buffer + 2 && *++ptr)
+    if (file_part && (ptr = wcsrchr(buffer, '\\')) != NULL && ptr >= buffer + 2 && *++ptr)
         *file_part = ptr;
     return reqsize;
 }
