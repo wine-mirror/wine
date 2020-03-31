@@ -926,8 +926,9 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
     return !request_sample;
 }
 
-static HRESULT source_reader_get_stream_read_index(struct source_reader *reader, DWORD index, DWORD *stream_index)
+static HRESULT source_reader_get_stream_read_index(struct source_reader *reader, unsigned int index, unsigned int *stream_index)
 {
+    unsigned int i;
     BOOL selected;
     HRESULT hr;
 
@@ -940,8 +941,26 @@ static HRESULT source_reader_get_stream_read_index(struct source_reader *reader,
             *stream_index = reader->first_audio_stream_index;
             break;
         case MF_SOURCE_READER_ANY_STREAM:
-            FIXME("Non-specific requests are not supported.\n");
-            return E_NOTIMPL;
+            if (reader->async_callback)
+            {
+                /* Pick first selected stream. */
+                for (i = 0; i < reader->stream_count; ++i)
+                {
+                    if (SUCCEEDED(source_reader_get_stream_selection(reader, i, &selected)) && selected)
+                    {
+                        *stream_index = i;
+                        break;
+                    }
+                }
+
+                if (i == reader->stream_count)
+                    return MF_E_MEDIA_SOURCE_NO_STREAMS_SELECTED;
+            }
+            else
+            {
+                FIXME("Non-specific requests are not supported.\n");
+                return E_NOTIMPL;
+            }
         default:
             *stream_index = index;
     }
@@ -1016,10 +1035,10 @@ static HRESULT source_reader_flush(struct source_reader *reader, unsigned int in
 static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct source_reader *reader = impl_from_async_commands_callback_IMFAsyncCallback(iface);
+    struct media_stream *stream, stub_stream = { .requests = 1 };
     struct source_reader_async_command *command;
     struct stream_response *response;
     DWORD stream_index, stream_flags;
-    struct media_stream *stream;
     BOOL report_sample = FALSE;
     IMFSample *sample = NULL;
     LONGLONG timestamp = 0;
@@ -1034,21 +1053,26 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
     switch (command->op)
     {
         case SOURCE_READER_ASYNC_READ:
-            if (FAILED(hr = source_reader_get_stream_read_index(reader, command->stream_index, &stream_index)))
-                return hr;
-
             EnterCriticalSection(&reader->cs);
-
-            stream = &reader->streams[stream_index];
 
             if (SUCCEEDED(hr = source_reader_start_source(reader)))
             {
-                if (!(report_sample = source_reader_get_read_result(reader, stream, command->flags, &status, &stream_index,
-                        &stream_flags, &timestamp, &sample)))
+                if (SUCCEEDED(hr = source_reader_get_stream_read_index(reader, command->stream_index, &stream_index)))
                 {
-                    stream->requests++;
-                    source_reader_request_sample(reader, stream);
-                    /* FIXME: set error stream/reader state on request failure */
+                    stream = &reader->streams[stream_index];
+
+                    if (!(report_sample = source_reader_get_read_result(reader, stream, command->flags, &status, &stream_index,
+                            &stream_flags, &timestamp, &sample)))
+                    {
+                        stream->requests++;
+                        source_reader_request_sample(reader, stream);
+                        /* FIXME: set error stream/reader state on request failure */
+                    }
+                }
+                else
+                {
+                    stub_stream.index = command->stream_index;
+                    source_reader_queue_response(reader, &stub_stream, hr, MF_SOURCE_READERF_ERROR, 0, NULL);
                 }
             }
 
