@@ -374,4 +374,9 @@ static inline D3DMULTISAMPLE_TYPE d3dmultisample_type_from_wined3d(enum wined3d_
     return (D3DMULTISAMPLE_TYPE)type;
 }
 
+static inline enum wined3d_device_type wined3d_device_type_from_d3d(D3DDEVTYPE type)
+{
+    return (enum wined3d_device_type)type;
+}
+
 #endif /* __WINE_D3DX8_PRIVATE_H */
