@@ -1228,7 +1228,7 @@ BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
     {
         for (i = 0; i < len; i++)
         {
-            if (strchrW(std_control_chars, s[i]))
+            if (wcschr(std_control_chars, s[i]))
             {
                 out_flags |= IS_TEXT_UNICODE_CONTROLS;
                 break;
@@ -1240,7 +1240,7 @@ BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
     {
         for (i = 0; i < len; i++)
         {
-            if (strchrW(byterev_control_chars, s[i]))
+            if (wcschr(byterev_control_chars, s[i]))
             {
                 out_flags |= IS_TEXT_UNICODE_REVERSE_CONTROLS;
                 break;

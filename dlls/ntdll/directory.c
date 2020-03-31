@@ -234,7 +234,7 @@ static inline BOOL is_invalid_dos_char( WCHAR ch )
 {
     static const WCHAR invalid_chars[] = { INVALID_DOS_CHARS,'~','.',0 };
     if (ch > 0x7f) return TRUE;
-    return strchrW( invalid_chars, ch ) != NULL;
+    return wcschr( invalid_chars, ch ) != NULL;
 }
 
 /* check if the device can be a mounted volume */
@@ -2685,7 +2685,7 @@ NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
 
     /* check for invalid characters */
     for (p = name; p < name + name_len; p++)
-        if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
+        if (*p < 32 || wcschr( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
 
     unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
     if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
@@ -2773,7 +2773,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     for (pos = 0; pos < name_len; pos++)
     {
         if (IS_SEPARATOR(name[pos])) break;
-        if (name[pos] < 32 || strchrW( invalid_charsW, name[pos] ))
+        if (name[pos] < 32 || wcschr( invalid_charsW, name[pos] ))
             return STATUS_OBJECT_NAME_INVALID;
     }
     if (pos > MAX_DIR_ENTRY_LEN)
@@ -2801,7 +2801,7 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     else
     {
         for (p = name; p < name + name_len; p++)
-            if (*p < 32 || strchrW( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
+            if (*p < 32 || wcschr( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
     }
 
     unix_len = (prefix_len + name_len) * 3 + MAX_DIR_ENTRY_LEN + 3;

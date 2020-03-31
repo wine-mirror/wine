@@ -454,7 +454,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
 
     while (*p)
     {
-        q = strchrW( p, '%' );
+        q = wcschr( p, '%' );
 
         /* there are no % characters left: output the rest of the string */
         if( !q )

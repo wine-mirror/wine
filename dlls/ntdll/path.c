@@ -488,7 +488,7 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
         filelen = 1 /* for \ */ + strlenW(search) + 1 /* \0 */;
 
         /* Windows only checks for '.' without worrying about path components */
-        if (strchrW( search, '.' )) ext = NULL;
+        if (wcschr( search, '.' )) ext = NULL;
         if (ext != NULL) filelen += strlenW(ext);
 
         while (*paths)

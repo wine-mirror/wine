@@ -182,7 +182,7 @@ static inline void *get_rva( HMODULE module, DWORD va )
 /* check whether the file name contains a path */
 static inline BOOL contains_path( LPCWSTR name )
 {
-    return ((*name && (name[1] == ':')) || strchrW(name, '/') || strchrW(name, '\\'));
+    return ((*name && (name[1] == ':')) || wcschr(name, '/') || wcschr(name, '\\'));
 }
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
@@ -608,7 +608,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name)) return NULL;
     ascii_to_unicode( mod_name, forward, end - forward );
     mod_name[end - forward] = 0;
-    if (!strchrW( mod_name, '.' ))
+    if (!wcschr( mod_name, '.' ))
     {
         if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name) - sizeof(dllW)) return NULL;
         memcpy( mod_name + (end - forward), dllW, sizeof(dllW) );
@@ -2890,7 +2890,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
 
     if (default_ext)  /* first append default extension */
     {
-        if (!(ext = strrchrW( libname, '.')) || strchrW( ext, '/' ) || strchrW( ext, '\\'))
+        if (!(ext = strrchrW( libname, '.')) || wcschr( ext, '/' ) || wcschr( ext, '\\'))
         {
             if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
                                              (strlenW(libname)+strlenW(default_ext)+1) * sizeof(WCHAR))))
@@ -4162,7 +4162,7 @@ NTSTATUS WINAPI RtlGetExePath( PCWSTR name, PWSTR *path )
     const WCHAR *module = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
 
     /* same check as NeedCurrentDirectoryForExePathW */
-    if (!strchrW( name, '\\' ))
+    if (!wcschr( name, '\\' ))
     {
         static const WCHAR env_name[] = {'N','o','D','e','f','a','u','l','t','C','u','r','r','e','n','t',
                                          'D','i','r','e','c','t','o','r','y','I','n',

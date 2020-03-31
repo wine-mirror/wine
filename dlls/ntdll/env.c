@@ -681,13 +681,13 @@ static void get_image_path( const char *argv0, UNICODE_STRING *path )
     ntdll_umbstowcs( argv0, len, name, len );
 
     if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH ||
-        strchrW( name, '/' ) || strchrW( name, '\\' ))
+        wcschr( name, '/' ) || wcschr( name, '\\' ))
     {
         len = RtlGetFullPathName_U( name, sizeof(full_name), full_name, &file_part );
         if (!len || len > sizeof(full_name)) goto failed;
         /* try first without extension */
         if (RtlDoesFileExists_U( full_name )) goto done;
-        if (len < (MAX_PATH - 4) * sizeof(WCHAR) && !strchrW( file_part, '.' ))
+        if (len < (MAX_PATH - 4) * sizeof(WCHAR) && !wcschr( file_part, '.' ))
         {
             wcscat( file_part, exeW );
             if (RtlDoesFileExists_U( full_name )) goto done;
@@ -711,7 +711,7 @@ static void get_image_path( const char *argv0, UNICODE_STRING *path )
             if (strlenW( name ) >= MAX_PATH - 4 - len) goto failed;
             wcscpy( full_name, system_dir );
             wcscat( full_name, name );
-            if (!strchrW( name, '.' )) wcscat( full_name, exeW );
+            if (!wcschr( name, '.' )) wcscat( full_name, exeW );
         }
     }
 done:
@@ -809,8 +809,8 @@ static void build_command_line( WCHAR **argv, UNICODE_STRING *cmdline )
 
         /* check for quotes and spaces in this argument */
         if (arg == argv || !**arg) has_space = TRUE;
-        else has_space = strchrW( *arg, ' ' ) || strchrW( *arg, '\t' );
-        has_quote = strchrW( *arg, '"' ) != NULL;
+        else has_space = wcschr( *arg, ' ' ) || wcschr( *arg, '\t' );
+        has_quote = wcschr( *arg, '"' ) != NULL;
 
         /* now transfer it to the command line */
         if (has_space) *p++ = '"';
@@ -912,7 +912,7 @@ static LPCWSTR ENV_FindVariable(PCWSTR var, PCWSTR name, unsigned namelen)
         if (len > namelen &&
             var[namelen] == '=' &&
             !RtlCompareUnicodeStrings( var, namelen, name, namelen, TRUE ) &&
-            strchrW(var + 1, '=') == var + namelen)
+            wcschr(var + 1, '=') == var + namelen)
         {
             return var + namelen + 1;
         }

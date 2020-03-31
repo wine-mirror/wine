@@ -863,7 +863,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
         {
             *p++ = 0;
             /* charset, ignore */
-            p = strchrW( p, '@' );
+            p = wcschr( p, '@' );
         }
         if (p)
         {
@@ -1723,7 +1723,7 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
             while (*p)
             {
                 if (!wcsnicmp( p, script, len ) && (!p[len] || p[len] == ';')) break;
-                if (!(p = strchrW( p, ';'))) break;
+                if (!(p = wcschr( p, ';'))) break;
                 p++;
             }
             if (!p || !*p) continue;

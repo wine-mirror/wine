@@ -281,7 +281,7 @@ static BOOL get_nt_registry_version( RTL_OSVERSIONINFOEXW *version )
     {
         WCHAR *p, *str = (WCHAR *)info->Data;
         str[info->DataLength / sizeof(WCHAR)] = 0;
-        p = strchrW( str, '.' );
+        p = wcschr( str, '.' );
         if (p)
         {
             *p++ = 0;
@@ -398,13 +398,13 @@ static BOOL get_win9x_registry_version( RTL_OSVERSIONINFOEXW *version )
     {
         WCHAR *p, *str = (WCHAR *)info->Data;
         str[info->DataLength / sizeof(WCHAR)] = 0;
-        p = strchrW( str, '.' );
+        p = wcschr( str, '.' );
         if (p) *p++ = 0;
         version->dwMajorVersion = wcstoul( str, NULL, 10 );
         if (p)
         {
             str = p;
-            p = strchrW( str, '.' );
+            p = wcschr( str, '.' );
             if (p)
             {
                 *p++ = 0;

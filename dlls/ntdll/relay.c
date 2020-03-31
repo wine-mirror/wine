@@ -104,7 +104,7 @@ static const WCHAR **build_list( const WCHAR *buffer )
     const WCHAR *p = buffer;
     const WCHAR **ret;
 
-    while ((p = strchrW( p, ';' )))
+    while ((p = wcschr( p, ';' )))
     {
         count++;
         p++;
@@ -121,7 +121,7 @@ static const WCHAR **build_list( const WCHAR *buffer )
         for (;;)
         {
             ret[count++] = q;
-            if (!(q = strchrW( q, ';' ))) break;
+            if (!(q = wcschr( q, ';' ))) break;
             *q++ = 0;
         }
         ret[count++] = NULL;

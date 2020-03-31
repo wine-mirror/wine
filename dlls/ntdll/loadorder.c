@@ -199,7 +199,7 @@ static void add_load_order( const module_loadorder_t *plo )
 static void add_load_order_set( WCHAR *entry )
 {
     module_loadorder_t ldo;
-    WCHAR *end = strchrW( entry, '=' );
+    WCHAR *end = wcschr( entry, '=' );
 
     if (!end) return;
     *end++ = 0;
@@ -253,7 +253,7 @@ static void init_load_order(void)
     {
         while (*entry == ';') entry++;
         if (!*entry) break;
-        next = strchrW( entry, ';' );
+        next = wcschr( entry, ';' );
         if (next) *next++ = 0;
         else next = entry + strlenW(entry);
         add_load_order_set( entry );
@@ -449,7 +449,7 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
     {
         const WCHAR *p = path + strlenW( system_dir );
         while (*p == '\\' || *p == '/') p++;
-        if (!strchrW( p, '\\' ) && !strchrW( p, '/' )) path = p;
+        if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
     }
 
     if (!(len = strlenW(path))) return ret;
