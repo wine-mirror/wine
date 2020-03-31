@@ -101,6 +101,11 @@ static enum wined3d_primitive_type wined3d_primitive_type_from_ddraw(D3DPRIMITIV
     return (enum wined3d_primitive_type)type;
 }
 
+static enum wined3d_stateblock_type wined3d_stateblock_type_from_ddraw(D3DSTATEBLOCKTYPE type)
+{
+    return (enum wined3d_stateblock_type)type;
+}
+
 static inline struct d3d_device *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d_device, IUnknown_inner);
@@ -5969,9 +5974,8 @@ static HRESULT d3d_device7_CreateStateBlock(IDirect3DDevice7 *iface,
         return D3DERR_INBEGINSTATEBLOCK;
     }
 
-    /* The D3DSTATEBLOCKTYPE enum is fine here. */
-    hr = wined3d_stateblock_create(device->wined3d_device, device->state, type, &wined3d_sb);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_stateblock_create(device->wined3d_device,
+            device->state, wined3d_stateblock_type_from_ddraw(type), &wined3d_sb)))
     {
         WARN("Failed to create stateblock, hr %#x.\n", hr);
         wined3d_mutex_unlock();
