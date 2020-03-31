@@ -391,7 +391,7 @@ typedef struct
     ULONG attrs_count, attrs_count_allocated;
     struct ldap_attribute *attrs;
     struct attribute_type *at;
-    ULONG at_count;
+    ULONG at_single_count, at_multiple_count;
     struct
     {
         ADS_SCOPEENUM scope;
@@ -484,7 +484,7 @@ static ULONG WINAPI ldapns_Release(IADs *iface)
         SysFreeString(ldap->host);
         SysFreeString(ldap->object);
         free_attributes(ldap);
-        free_attribute_types(ldap->at, ldap->at_count);
+        free_attribute_types(ldap->at, ldap->at_single_count + ldap->at_multiple_count);
         heap_free(ldap);
     }
 
@@ -943,7 +943,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
     IADs *ads;
     LDAP *ld = NULL;
     HRESULT hr;
-    ULONG err, at_count = 0;
+    ULONG err, at_single_count = 0, at_multiple_count = 0;
     struct attribute_type *at = NULL;
 
     TRACE("%p,%s,%s,%p,%08x,%p\n", iface, debugstr_w(path), debugstr_w(user), password, flags, obj);
@@ -1043,7 +1043,7 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
             }
         }
 
-        at = load_schema(ld, &at_count);
+        at = load_schema(ld, &at_single_count, &at_multiple_count);
     }
 
     hr = LDAPNamespace_create(&IID_IADs, (void **)&ads);
@@ -1055,7 +1055,8 @@ static HRESULT WINAPI openobj_OpenDSObject(IADsOpenDSObject *iface, BSTR path, B
         ldap->port = port;
         ldap->object = object;
         ldap->at = at;
-        ldap->at_count = at_count;
+        ldap->at_single_count = at_single_count;
+        ldap->at_multiple_count = at_multiple_count;
         hr = IADs_QueryInterface(ads, &IID_IDispatch, (void **)obj);
         IADs_Release(ads);
         return hr;
@@ -1314,7 +1315,7 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
     ADSTYPEENUM type;
     DWORD i, count;
 
-    type = get_schema_type(name, ldap->at, ldap->at_count);
+    type = get_schema_type(name, ldap->at, ldap->at_single_count, ldap->at_multiple_count);
     TRACE("%s => type %d\n", debugstr_w(name), type);
 
     switch (type)
@@ -1577,7 +1578,8 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->attrs = NULL;
     ldap->search.scope = ADS_SCOPE_SUBTREE;
     ldap->at = NULL;
-    ldap->at_count = 0;
+    ldap->at_single_count = 0;
+    ldap->at_multiple_count = 0;
 
     hr = IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
     IADs_Release(&ldap->IADs_iface);

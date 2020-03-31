@@ -56,8 +56,8 @@ struct attribute_type
 };
 
 DWORD map_ldap_error(DWORD) DECLSPEC_HIDDEN;
-struct attribute_type *load_schema(LDAP *ld, ULONG *) DECLSPEC_HIDDEN;
-ADSTYPEENUM get_schema_type(const WCHAR *, const struct attribute_type *, ULONG) DECLSPEC_HIDDEN;
+struct attribute_type *load_schema(LDAP *ld, ULONG *, ULONG *) DECLSPEC_HIDDEN;
+ADSTYPEENUM get_schema_type(const WCHAR *, const struct attribute_type *, ULONG, ULONG) DECLSPEC_HIDDEN;
 void free_attribute_types(struct attribute_type *, ULONG) DECLSPEC_HIDDEN;
 
 #endif

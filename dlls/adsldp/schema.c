@@ -30,11 +30,41 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
 
-static const struct attribute_type *find_schema_type(const WCHAR *name, const struct attribute_type *at, ULONG count)
+static const struct attribute_type *find_schema_type_sorted(const WCHAR *name, const struct attribute_type *at, ULONG count)
 {
+    int idx, min, max, res;
+
+    if (!count) return NULL;
+
+    min = 0;
+    max = count - 1;
+
+    while (min <= max)
+    {
+        idx = (min + max) / 2;
+        res = wcsicmp(name, at[idx].name);
+        if (!res) return &at[idx];
+        if (res > 0) min = idx + 1;
+        else max = idx - 1;
+    }
+
+    return NULL;
+}
+
+
+static const struct attribute_type *find_schema_type(const WCHAR *name, const struct attribute_type *at, ULONG single, ULONG multiple)
+{
+    const struct attribute_type *found;
     ULONG i, n, off;
 
-    for (i = 0; i < count; i++)
+    /* Perform binary search within definitions with single name */
+    found = find_schema_type_sorted(name, at, single);
+    if (found) return found;
+
+    /* Perform linear search within definitions with multiple names */
+    at += single;
+
+    for (i = 0; i < multiple; i++)
     {
         off = 0;
 
@@ -45,15 +75,16 @@ static const struct attribute_type *find_schema_type(const WCHAR *name, const st
         }
     }
 
+    FIXME("%s not found\n", debugstr_w(name));
     return NULL;
 }
 
 /* RFC 4517 */
-ADSTYPEENUM get_schema_type(const WCHAR *name, const struct attribute_type *at, ULONG at_count)
+ADSTYPEENUM get_schema_type(const WCHAR *name, const struct attribute_type *at, ULONG single, ULONG multiple)
 {
     const struct attribute_type *type;
 
-    type = find_schema_type(name, at, at_count);
+    type = find_schema_type(name, at, single, multiple);
     if (!type || !type->syntax) return ADSTYPE_CASE_IGNORE_STRING;
 
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.7"))
@@ -300,16 +331,29 @@ static BOOL parse_attribute_type(WCHAR *str, struct attribute_type *at)
     return FALSE;
 }
 
-struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
+static int __cdecl at_cmp(const void *a1, const void *a2)
+{
+    const struct attribute_type *at1 = a1;
+    const struct attribute_type *at2 = a2;
+
+    if (at1->name_count == 1 && at2->name_count == 1)
+        return wcsicmp(at1->name, at2->name);
+
+    /* put definitions with multiple names at the end */
+    return at1->name_count - at2->name_count;
+}
+
+struct attribute_type *load_schema(LDAP *ld, ULONG *at_single_count, ULONG *at_multiple_count)
 {
     WCHAR *subschema[] = { (WCHAR *)L"subschemaSubentry", NULL };
     WCHAR *attribute_types[] = { (WCHAR *)L"attributeTypes", NULL };
-    ULONG err, count;
+    ULONG err, count, multiple_count;
     LDAPMessage *res, *entry;
     WCHAR **schema = NULL;
     struct attribute_type *at = NULL;
 
-    *at_count = 0;
+    *at_single_count = 0;
+    *at_multiple_count = 0;
 
     err = ldap_search_sW(ld, NULL, LDAP_SCOPE_BASE, (WCHAR *)L"(objectClass=*)", subschema, FALSE, &res);
     if (err != LDAP_SUCCESS)
@@ -334,6 +378,7 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
     }
 
     count = 0;
+    multiple_count = 0;
 
     entry = ldap_first_entry(ld, res);
     if (entry)
@@ -367,6 +412,9 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
                 TRACE("oid %s, name %s, name_count %u, syntax %s, single-value %d\n", debugstr_w(at[count].oid),
                       debugstr_w(at[count].name), at[count].name_count, debugstr_w(at[count].syntax), at[count].single_value);
 
+                if (at[count].name_count > 1)
+                    multiple_count++;
+
                 count++;
             }
 
@@ -376,7 +424,13 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
 
 exit:
     ldap_msgfree(res);
-    if (at) *at_count = count;
+    if (at)
+    {
+        *at_single_count = count - multiple_count;
+        *at_multiple_count = multiple_count;
+
+        qsort(at, count, sizeof(at[0]), at_cmp);
+    }
 
     return at;
 }
