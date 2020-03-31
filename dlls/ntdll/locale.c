@@ -24,6 +24,7 @@
 
 #include <locale.h>
 #include <langinfo.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -34,9 +35,11 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "ntdll_misc.h"
 #include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
@@ -2032,7 +2035,7 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
         WCHAR *buffer = RtlAllocateHeap( GetProcessHeap(), 0, dstlen * sizeof(WCHAR) );
         if (!buffer) return STATUS_NO_MEMORY;
         status = RtlNormalizeString( form, str, len, buffer, &dstlen );
-        result = !status && (dstlen == len) && !strncmpW( buffer, str, len );
+        result = !status && (dstlen == len) && !wcsncmp( buffer, str, len );
         RtlFreeHeap( GetProcessHeap(), 0, buffer );
     }
     *res = result;

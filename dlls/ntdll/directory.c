@@ -104,7 +104,6 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ntdll_misc.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/list.h"
 #include "wine/library.h"
@@ -2254,7 +2253,7 @@ static int match_redirect( const WCHAR *path, int len, const WCHAR *redir, BOOLE
         while (i < len && !IS_SEPARATOR(path[i])) i++;
         if (check_case)
         {
-            if (strncmpW( path + start, redir, i - start )) return 0;
+            if (wcsncmp( path + start, redir, i - start )) return 0;
         }
         else
         {

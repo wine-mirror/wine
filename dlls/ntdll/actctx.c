@@ -36,7 +36,6 @@
 #include "ntdll_misc.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(actctx);
 
@@ -754,7 +753,7 @@ static WCHAR *xmlstrdupW(const xmlstr_t* str)
 
 static inline BOOL xmlstr_cmp(const xmlstr_t* xmlstr, const WCHAR *str)
 {
-    return !strncmpW(xmlstr->ptr, str, xmlstr->len) && !str[xmlstr->len];
+    return !wcsncmp(xmlstr->ptr, str, xmlstr->len) && !str[xmlstr->len];
 }
 
 static inline BOOL xmlstr_cmpi(const xmlstr_t* xmlstr, const WCHAR *str)
@@ -771,8 +770,8 @@ static BOOL xml_name_cmp( const struct xml_elem *elem1, const struct xml_elem *e
 {
     return (elem1->name.len == elem2->name.len &&
             elem1->ns.len == elem2->ns.len &&
-            !strncmpW( elem1->name.ptr, elem2->name.ptr, elem1->name.len ) &&
-            !strncmpW( elem1->ns.ptr, elem2->ns.ptr, elem1->ns.len ));
+            !wcsncmp( elem1->name.ptr, elem2->name.ptr, elem1->name.len ) &&
+            !wcsncmp( elem1->ns.ptr, elem2->ns.ptr, elem1->ns.len ));
 }
 
 static inline BOOL xml_elem_cmp(const struct xml_elem *elem, const WCHAR *str, const WCHAR *namespace)
@@ -1230,7 +1229,7 @@ static BOOL is_xmlns_attr( const struct xml_attr *attr )
 {
     const int len = wcslen( xmlnsW );
     if (attr->name.len < len) return FALSE;
-    if (strncmpW( attr->name.ptr, xmlnsW, len )) return FALSE;
+    if (wcsncmp( attr->name.ptr, xmlnsW, len )) return FALSE;
     return (attr->name.len == len || attr->name.ptr[len] == ':');
 }
 
@@ -1262,7 +1261,7 @@ static xmlstr_t find_xmlns( xmlbuf_t *xmlbuf, const xmlstr_t *name )
     for (i = xmlbuf->ns_pos - 1; i >= 0; i--)
     {
         if (xmlbuf->namespaces[i].name.len == name->len &&
-            !strncmpW( xmlbuf->namespaces[i].name.ptr, name->ptr, name->len ))
+            !wcsncmp( xmlbuf->namespaces[i].name.ptr, name->ptr, name->len ))
             return xmlbuf->namespaces[i].value;
     }
     if (xmlbuf->ns_pos) WARN( "namespace %s not found\n", debugstr_xmlstr( name ));
@@ -1602,7 +1601,7 @@ static OLEMISC get_olemisc_value(const WCHAR *str, int len)
 
         n = (min+max)/2;
 
-        c = strncmpW(olemisc_values[n].name, str, len);
+        c = wcsncmp(olemisc_values[n].name, str, len);
         if (!c && !olemisc_values[n].name[len])
             return olemisc_values[n].value;
 

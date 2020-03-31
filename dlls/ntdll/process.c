@@ -53,7 +53,6 @@
 #include "wine/exception.h"
 #include "wine/library.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 
 #ifdef HAVE_MACH_MACH_H
 #include <mach/mach.h>
@@ -1434,7 +1433,7 @@ static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **win
     while (*ptr)
     {
         static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
-        if (!*winedebug && !strncmpW( ptr, WINEDEBUG, ARRAY_SIZE( WINEDEBUG ) - 1 ))
+        if (!*winedebug && !wcsncmp( ptr, WINEDEBUG, ARRAY_SIZE( WINEDEBUG ) - 1 ))
         {
             DWORD len = wcslen(ptr) * 3 + 1;
             if ((*winedebug = RtlAllocateHeap( GetProcessHeap(), 0, len )))

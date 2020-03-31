@@ -32,7 +32,6 @@
 #include "ntdll_misc.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
@@ -439,7 +438,7 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
     if (!init_done) init_load_order();
     std_key = get_standard_key();
     if (app_name) app_key = get_app_key( app_name );
-    if (!strncmpW( path, nt_prefixW, 4 )) path += 4;
+    if (!wcsncmp( path, nt_prefixW, 4 )) path += 4;
 
     TRACE("looking for %s\n", debugstr_w(path));
 

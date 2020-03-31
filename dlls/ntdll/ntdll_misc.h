@@ -312,6 +312,7 @@ int    WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... );
 #define wcscspn(s,r) NTDLL_wcscspn(s,r)
 #define wcsspn(s,a) NTDLL_wcsspn(s,a)
 #define wcscmp(s1,s2) NTDLL_wcscmp(s1,s2)
+#define wcsncmp(s1,s2,n) NTDLL_wcsncmp(s1,s2,n)
 
 /* convert from straight ASCII to Unicode without depending on the current codepage */
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
