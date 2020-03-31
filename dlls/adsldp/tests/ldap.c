@@ -344,8 +344,10 @@ static void test_DirectorySearch(void)
     ADS_SEARCH_COLUMN col;
     LPWSTR name;
 
+    hr = ADsGetObject(L"LDAP:", &IID_IDirectorySearch, (void **)&ds);
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+
     hr = ADsGetObject(L"LDAP://ldap.forumsys.com/rootDSE", &IID_IDirectorySearch, (void **)&ds);
-todo_wine
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     hr = ADsGetObject(L"LDAP://ldap.forumsys.com", &IID_IDirectorySearch, (void **)&ds);
@@ -439,7 +441,7 @@ todo_wine
     memset(&col, 0x55, sizeof(col));
     hr = IDirectorySearch_GetColumn(ds, sh, (WCHAR *)L"deadbeef", &col);
     ok(hr == E_ADS_COLUMN_NOT_SET, "got %#x\n", hr);
-    ok(!col.pszAttrName, "got %p\n", col.pszAttrName);
+    ok(!col.pszAttrName || broken(col.pszAttrName != NULL) /* XP */, "got %p\n", col.pszAttrName);
     ok(col.dwADsType == ADSTYPE_INVALID || broken(col.dwADsType != ADSTYPE_INVALID) /* XP */, "got %d\n", col.dwADsType);
     ok(!col.pADsValues, "got %p\n", col.pADsValues);
     ok(!col.dwNumValues, "got %u\n", col.dwNumValues);

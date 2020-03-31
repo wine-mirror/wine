@@ -437,6 +437,9 @@ static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj
 
     if (IsEqualGUID(riid, &IID_IDirectorySearch))
     {
+        if (!ldap->ld || (ldap->object && !wcsicmp(ldap->object, L"rootDSE")))
+            return E_NOINTERFACE;
+
         IADs_AddRef(iface);
         *obj = &ldap->IDirectorySearch_iface;
         return S_OK;
@@ -1167,8 +1170,6 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
 
     TRACE("%p,%s,%p,%u,%p\n", iface, debugstr_w(filter), names, count, res);
 
-    if (!ldap->ld) return E_NOTIMPL;
-
     if (!res) return E_ADS_BAD_PARAMETER;
 
     ldap_ctx = heap_alloc_zero(sizeof(*ldap_ctx));
@@ -1217,12 +1218,9 @@ static HRESULT WINAPI search_AbandonSearch(IDirectorySearch *iface, ADS_SEARCH_H
 
 static HRESULT WINAPI search_GetFirstRow(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
 {
-    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
     struct ldap_search_context *ldap_ctx = res;
 
     TRACE("%p,%p\n", iface, res);
-
-    if (!ldap->ld) return E_NOTIMPL;
 
     if (!res) return E_ADS_BAD_PARAMETER;
 
@@ -1237,8 +1235,6 @@ static HRESULT WINAPI search_GetNextRow(IDirectorySearch *iface, ADS_SEARCH_HAND
     struct ldap_search_context *ldap_ctx = res;
 
     TRACE("%p,%p\n", iface, res);
-
-    if (!ldap->ld) return E_NOTIMPL;
 
     if (!res) return E_ADS_BAD_PARAMETER;
 
@@ -1282,8 +1278,6 @@ static HRESULT WINAPI search_GetNextColumnName(IDirectorySearch *iface, ADS_SEAR
     WCHAR *attr;
 
     TRACE("%p,%p,%p\n", iface, res, name);
-
-    if (!ldap->ld) return E_NOTIMPL;
 
     if (!name || !ldap_ctx || !ldap_ctx->entry) return E_ADS_BAD_PARAMETER;
 
@@ -1392,8 +1386,6 @@ static HRESULT WINAPI search_GetColumn(IDirectorySearch *iface, ADS_SEARCH_HANDL
     ULONG count;
 
     TRACE("%p,%p,%s,%p\n", iface, res, debugstr_w(name), col);
-
-    if (!ldap->ld) return E_NOTIMPL;
 
     if (!res || !name || !ldap_ctx->entry) return E_ADS_BAD_PARAMETER;
 
