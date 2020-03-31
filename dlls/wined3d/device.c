@@ -4910,9 +4910,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 {
     unsigned int texture_level = sub_resource_idx % texture->level_count;
     unsigned int cursor_width, cursor_height;
-    struct wined3d_display_mode mode;
     struct wined3d_map_desc map_desc;
-    HRESULT hr;
 
     TRACE("device %p, x_hotspot %u, y_hotspot %u, texture %p, sub_resource_idx %u.\n",
             device, x_hotspot, y_hotspot, texture, sub_resource_idx);
@@ -4940,19 +4938,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
     if ((cursor_width & (cursor_width - 1)) || (cursor_height & (cursor_height - 1)))
     {
         WARN("Cursor size %ux%u are not all powers of two.\n", cursor_width, cursor_height);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (FAILED(hr = wined3d_output_get_display_mode(&device->adapter->outputs[0], &mode, NULL)))
-    {
-        ERR("Failed to get display mode, hr %#x.\n", hr);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (cursor_width > mode.width || cursor_height > mode.height)
-    {
-        WARN("Texture %p, sub-resource %u dimensions are %ux%u, but screen dimensions are %ux%u.\n",
-                texture, sub_resource_idx, cursor_width, cursor_height, mode.width, mode.height);
         return WINED3DERR_INVALIDCALL;
     }
 
