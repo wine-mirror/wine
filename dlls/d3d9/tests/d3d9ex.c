@@ -2631,6 +2631,7 @@ static void test_wndproc(void)
 {
     struct wndproc_thread_param thread_params;
     struct device_desc device_desc;
+    static WINDOWPOS windowpos;
     IDirect3DDevice9Ex *device;
     WNDCLASSA wc = {0};
     HANDLE thread;
@@ -2646,7 +2647,6 @@ static void test_wndproc(void)
     LONG change_ret, device_style;
     BOOL ret;
     IDirect3D9Ex *d3d9ex;
-    WINDOWPOS windowpos;
 
     static const struct message create_messages[] =
     {
@@ -2747,7 +2747,7 @@ static void test_wndproc(void)
         /* WM_SIZE(SIZE_MAXIMIZED) is unreliable on native. */
         {0,                     0,              FALSE,  0},
     };
-    struct message mode_change_messages[] =
+    static const struct message mode_change_messages[] =
     {
         {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
@@ -2760,7 +2760,7 @@ static void test_wndproc(void)
          * ShowWindow does not send such a message because the window is already visible. */
         {0,                     0,              FALSE,  0},
     };
-    struct message mode_change_messages_hidden[] =
+    static const struct message mode_change_messages_hidden[] =
     {
         {WM_WINDOWPOSCHANGING,  DEVICE_WINDOW,  FALSE,  0},
         {WM_WINDOWPOSCHANGED,   DEVICE_WINDOW,  FALSE,  0},
@@ -2777,7 +2777,7 @@ static void test_wndproc(void)
         {WM_DISPLAYCHANGE,      FOCUS_WINDOW,   FALSE,  0},
         {0,                     0,              FALSE,  0},
     };
-    struct
+    static const struct
     {
         DWORD create_flags;
         const struct message *focus_loss_messages;
@@ -2858,6 +2858,9 @@ static void test_wndproc(void)
         skip("Could not find adequate modes, skipping mode tests.\n");
         return;
     }
+
+    filter_messages = NULL;
+    expect_messages = NULL;
 
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "d3d9_test_wndproc_wc";
@@ -3189,6 +3192,7 @@ static void test_wndproc(void)
         flush_events();
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
+        expect_messages = NULL;
 
         /* World of Warplanes hides the window by removing WS_VISIBLE and expects Reset() to show it again. */
         device_style = GetWindowLongA(device_window, GWL_STYLE);
@@ -3208,6 +3212,7 @@ static void test_wndproc(void)
         flush_events();
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
+        expect_messages = NULL;
 
         if (!(tests[i].create_flags & CREATE_DEVICE_NOWINDOWCHANGES))
         {
@@ -3244,6 +3249,7 @@ static void test_wndproc(void)
 
 done:
         filter_messages = NULL;
+        expect_messages = NULL;
         DestroyWindow(device_window);
         DestroyWindow(focus_window);
         SetEvent(thread_params.test_finished);
@@ -3269,6 +3275,9 @@ static void test_wndproc_windowed(void)
     ULONG ref;
     DWORD res, tid;
     HWND tmp;
+
+    filter_messages = NULL;
+    expect_messages = NULL;
 
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "d3d9_test_wndproc_wc";
