@@ -36,7 +36,6 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winioctl.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"
@@ -196,7 +195,7 @@ static int find_drive_rootW( LPCWSTR *ppath )
     if (!DIR_get_drives_info( info )) return -1;
 
     /* strip off trailing slashes */
-    lenW = strlenW(path);
+    lenW = wcslen(path);
     while (lenW > 1 && IS_SEPARATOR(path[lenW - 1])) lenW--;
 
     /* convert path to Unix encoding */
@@ -356,7 +355,7 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
     if (!memcmp(dos_path, global_prefix, sizeof(global_prefix)) ||
         (!memcmp(dos_path, global_prefix2, sizeof(global_prefix2)) && dos_path[4]))
     {
-        ntpath->Length = strlenW(dos_path) * sizeof(WCHAR);
+        ntpath->Length = wcslen(dos_path) * sizeof(WCHAR);
         ntpath->MaximumLength = ntpath->Length + sizeof(WCHAR);
         ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, ntpath->MaximumLength);
         if (!ntpath->Buffer) return STATUS_NO_MEMORY;
@@ -410,10 +409,10 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
     }
 
     wcscat(ntpath->Buffer, ptr + offset);
-    ntpath->Length = strlenW(ntpath->Buffer) * sizeof(WCHAR);
+    ntpath->Length = wcslen(ntpath->Buffer) * sizeof(WCHAR);
 
     if (file_part && *file_part)
-        *file_part = ntpath->Buffer + ntpath->Length / sizeof(WCHAR) - strlenW(*file_part);
+        *file_part = ntpath->Buffer + ntpath->Length / sizeof(WCHAR) - wcslen(*file_part);
 
     /* FIXME: cd filling */
 
@@ -485,11 +484,11 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
         ULONG allocated = 0, needed, filelen;
         WCHAR *name = NULL;
 
-        filelen = 1 /* for \ */ + strlenW(search) + 1 /* \0 */;
+        filelen = 1 /* for \ */ + wcslen(search) + 1 /* \0 */;
 
         /* Windows only checks for '.' without worrying about path components */
         if (wcschr( search, '.' )) ext = NULL;
-        if (ext != NULL) filelen += strlenW(ext);
+        if (ext != NULL) filelen += wcslen(ext);
 
         while (*paths)
         {
@@ -560,7 +559,7 @@ static inline void collapse_path( WCHAR *path, UINT mark )
             {
             case '\\': /* .\ component */
                 next = p + 2;
-                memmove( p, next, (strlenW(next) + 1) * sizeof(WCHAR) );
+                memmove( p, next, (wcslen(next) + 1) * sizeof(WCHAR) );
                 continue;
             case 0:  /* final . */
                 if (p > path + mark) p--;
@@ -575,7 +574,7 @@ static inline void collapse_path( WCHAR *path, UINT mark )
                         p--;
                         while (p > path + mark && p[-1] != '\\') p--;
                     }
-                    memmove( p, next, (strlenW(next) + 1) * sizeof(WCHAR) );
+                    memmove( p, next, (wcslen(next) + 1) * sizeof(WCHAR) );
                     continue;
                 }
                 else if (!p[2])  /* final .. */
@@ -597,7 +596,7 @@ static inline void collapse_path( WCHAR *path, UINT mark )
         if (*p == '\\')
         {
             /* remove last dot in previous dir name */
-            if (p > path + mark && p[-1] == '.') memmove( p-1, p, (strlenW(p) + 1) * sizeof(WCHAR) );
+            if (p > path + mark && p[-1] == '.') memmove( p-1, p, (wcslen(p) + 1) * sizeof(WCHAR) );
             else p++;
         }
     }
@@ -778,7 +777,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     }
 
     /* enough space ? */
-    deplen = strlenW(name + dep) * sizeof(WCHAR);
+    deplen = wcslen(name + dep) * sizeof(WCHAR);
     if (reqsize + deplen + sizeof(WCHAR) > size)
     {
         /* not enough space, return need size (including terminating '\0') */
@@ -793,7 +792,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         RtlFreeHeap(GetProcessHeap(), 0, ins_str);
 
     collapse_path( buffer, mark );
-    reqsize = strlenW(buffer) * sizeof(WCHAR);
+    reqsize = wcslen(buffer) * sizeof(WCHAR);
 
 done:
     RtlReleasePebLock();

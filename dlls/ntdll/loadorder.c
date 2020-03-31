@@ -255,7 +255,7 @@ static void init_load_order(void)
         if (!*entry) break;
         next = wcschr( entry, ';' );
         if (next) *next++ = 0;
-        else next = entry + strlenW(entry);
+        else next = entry + wcslen(entry);
         add_load_order_set( entry );
         entry = next;
     }
@@ -341,7 +341,7 @@ static HANDLE get_app_key( const WCHAR *app_name )
 
     str = RtlAllocateHeap( GetProcessHeap(), 0,
                            sizeof(AppDefaultsW) + sizeof(DllOverridesW) +
-                           strlenW(app_name) * sizeof(WCHAR) );
+                           wcslen(app_name) * sizeof(WCHAR) );
     if (!str) return 0;
     wcscpy( str, AppDefaultsW );
     wcscat( str, app_name );
@@ -445,14 +445,14 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
 
     /* Strip path information if the module resides in the system directory
      */
-    if (!wcsnicmp( system_dir, path, strlenW( system_dir )))
+    if (!wcsnicmp( system_dir, path, wcslen( system_dir )))
     {
-        const WCHAR *p = path + strlenW( system_dir );
+        const WCHAR *p = path + wcslen( system_dir );
         while (*p == '\\' || *p == '/') p++;
         if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
     }
 
-    if (!(len = strlenW(path))) return ret;
+    if (!(len = wcslen(path))) return ret;
     if (!(module = RtlAllocateHeap( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR) ))) return ret;
     wcscpy( module+1, path );  /* reserve module[0] for the wildcard char */
     remove_dll_ext( module + 1 );

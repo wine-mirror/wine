@@ -38,7 +38,6 @@
 
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/server.h"
@@ -1772,7 +1771,7 @@ static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING 
     }
 
     if (!(fullname = RtlAllocateHeap( GetProcessHeap(), 0,
-                                      (strlenW(system_dir) + len + 5) * sizeof(WCHAR) )))
+                                      (wcslen(system_dir) + len + 5) * sizeof(WCHAR) )))
         return FALSE;
     wcscpy( fullname, nt_prefixW );
     wcscat( fullname, system_dir );
@@ -2116,7 +2115,7 @@ static inline const WCHAR *get_module_path_end( const WCHAR *module )
  */
 static inline WCHAR *append_path( WCHAR *p, const WCHAR *str, int len )
 {
-    if (len == -1) len = strlenW(str);
+    if (len == -1) len = wcslen(str);
     if (!len) return p;
     memcpy( p, str, len * sizeof(WCHAR) );
     p[len] = ';';
@@ -2149,7 +2148,7 @@ static NTSTATUS get_dll_load_path( LPCWSTR module, LPCWSTR dll_dir, ULONG safe_m
     if (RtlQueryEnvironmentVariable_U( NULL, &name, &value ) == STATUS_BUFFER_TOO_SMALL)
         path_len = value.Length;
 
-    if (dll_dir) len += strlenW( dll_dir ) + 1;
+    if (dll_dir) len += wcslen( dll_dir ) + 1;
     else len += 2;  /* current directory */
     if (!(p = ret = RtlAllocateHeap( GetProcessHeap(), 0, path_len + len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
@@ -2219,11 +2218,11 @@ static NTSTATUS get_dll_load_path_search_flags( LPCWSTR module, DWORD flags, WCH
     if (flags & LOAD_LIBRARY_SEARCH_USER_DIRS)
     {
         LIST_FOR_EACH_ENTRY( dir, &dll_dir_list, struct dll_dir_entry, entry )
-            len += strlenW( dir->dir + 4 /* \??\ */ ) + 1;
+            len += wcslen( dir->dir + 4 /* \??\ */ ) + 1;
         if (dll_directory.Length) len += dll_directory.Length / sizeof(WCHAR) + 1;
     }
 
-    if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) len += strlenW( system_dir );
+    if (flags & LOAD_LIBRARY_SEARCH_SYSTEM32) len += wcslen( system_dir );
 
     if ((p = ret = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
     {
@@ -2529,7 +2528,7 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
 
-    len = strlenW( name );
+    len = wcslen( name );
     if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
     for (i = 0; (path = wine_dll_enum_load_path( i )); i++) maxlen = max( maxlen, strlen(path)+1 );
     maxlen += len + sizeof(".so");
@@ -2765,7 +2764,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
     {
         DWORD len, dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
         p++;
-        len = strlenW( p );
+        len = wcslen( p );
         if (!dirlen || len <= dirlen ||
             RtlCompareUnicodeStrings( p, dirlen, info->lpAssemblyDirectoryName, dirlen, TRUE ) ||
             wcsicmp( p + dirlen, dotManifestW ))
@@ -2792,7 +2791,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         goto done;
     }
 
-    needed = (strlenW(user_shared_data->NtSystemRoot) * sizeof(WCHAR) +
+    needed = (wcslen(user_shared_data->NtSystemRoot) * sizeof(WCHAR) +
               sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength + nameW.Length + 2*sizeof(WCHAR));
 
     if (!(*fullname = p = RtlAllocateHeap( GetProcessHeap(), 0, needed )))
@@ -2801,7 +2800,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         goto done;
     }
     wcscpy( p, user_shared_data->NtSystemRoot );
-    p += strlenW(p);
+    p += wcslen(p);
     memcpy( p, winsxsW, sizeof(winsxsW) );
     p += ARRAY_SIZE( winsxsW );
     memcpy( p, info->lpAssemblyDirectoryName, info->ulAssemblyDirectoryNameLength );
@@ -2827,10 +2826,10 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
     WCHAR *name;
     BOOL found_image = FALSE;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
-    ULONG len = strlenW( paths );
+    ULONG len = wcslen( paths );
 
-    if (len < strlenW( system_dir )) len = strlenW( system_dir );
-    len += strlenW( search ) + 2;
+    if (len < wcslen( system_dir )) len = wcslen( system_dir );
+    len += wcslen( search ) + 2;
 
     if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
@@ -2893,7 +2892,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
         if (!(ext = wcsrchr( libname, '.')) || wcschr( ext, '/' ) || wcschr( ext, '\\'))
         {
             if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
-                                             (strlenW(libname)+strlenW(default_ext)+1) * sizeof(WCHAR))))
+                                             (wcslen(libname)+wcslen(default_ext)+1) * sizeof(WCHAR))))
                 return STATUS_NO_MEMORY;
             wcscpy( dllname, libname );
             wcscat( dllname, default_ext );

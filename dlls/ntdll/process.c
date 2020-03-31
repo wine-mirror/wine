@@ -1436,11 +1436,11 @@ static ULONG get_env_size( const RTL_USER_PROCESS_PARAMETERS *params, char **win
         static const WCHAR WINEDEBUG[] = {'W','I','N','E','D','E','B','U','G','=',0};
         if (!*winedebug && !strncmpW( ptr, WINEDEBUG, ARRAY_SIZE( WINEDEBUG ) - 1 ))
         {
-            DWORD len = strlenW(ptr) * 3 + 1;
+            DWORD len = wcslen(ptr) * 3 + 1;
             if ((*winedebug = RtlAllocateHeap( GetProcessHeap(), 0, len )))
-                ntdll_wcstoumbs( ptr, strlenW(ptr) + 1, *winedebug, len, FALSE );
+                ntdll_wcstoumbs( ptr, wcslen(ptr) + 1, *winedebug, len, FALSE );
         }
-        ptr += strlenW(ptr) + 1;
+        ptr += wcslen(ptr) + 1;
     }
     ptr++;
     return (ptr - params->Environment) * sizeof(WCHAR);
@@ -1601,9 +1601,9 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     case STATUS_INVALID_IMAGE_NE_FORMAT:
     case STATUS_INVALID_IMAGE_PROTECT:
         cmdline = RtlAllocateHeap( GetProcessHeap(), 0,
-                                   (strlenW(system_dir) + strlenW(winevdm) + 16 +
-                                    strlenW(params->ImagePathName.Buffer) +
-                                    strlenW(params->CommandLine.Buffer)) * sizeof(WCHAR));
+                                   (wcslen(system_dir) + wcslen(winevdm) + 16 +
+                                    wcslen(params->ImagePathName.Buffer) +
+                                    wcslen(params->CommandLine.Buffer)) * sizeof(WCHAR));
         if (!cmdline) return STATUS_NO_MEMORY;
         NTDLL_swprintf( cmdline, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
                   winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );

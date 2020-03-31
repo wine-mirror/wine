@@ -33,7 +33,6 @@
 #include "winternl.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
@@ -111,7 +110,7 @@ static const WCHAR **build_list( const WCHAR *buffer )
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
     if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
-                                (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
+                                (count+1) * sizeof(WCHAR*) + (wcslen(buffer)+1) * sizeof(WCHAR) )))
     {
         WCHAR *str = (WCHAR *)(ret + count + 1);
         WCHAR *q = str;
@@ -284,7 +283,7 @@ static BOOL check_from_module( const WCHAR **includelist, const WCHAR **excludel
         int len;
 
         if (!wcsicmp( *listitem, module )) return !show;
-        len = strlenW( *listitem );
+        len = wcslen( *listitem );
         if (!wcsnicmp( *listitem, module, len ) && !wcsicmp( module + len, dllW ))
             return !show;
     }

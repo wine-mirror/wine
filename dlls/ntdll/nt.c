@@ -71,7 +71,6 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
@@ -2676,7 +2675,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                         if ((exename = wcsrchr(procname, '\\')) != NULL) exename++;
                         else exename = procname;
 
-                        wlen = (strlenW(exename) + 1) * sizeof(WCHAR);
+                        wlen = (wcslen(exename) + 1) * sizeof(WCHAR);
 
                         procstructlen = sizeof(*spi) + wlen + ((reply->threads - 1) * sizeof(SYSTEM_THREAD_INFORMATION));
 

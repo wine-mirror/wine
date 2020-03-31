@@ -145,7 +145,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
 
     if (IS_INTRESOURCE(name)) return find_entry_by_id( dir, LOWORD(name), root, want_dir );
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    namelen = strlenW(name);
+    namelen = wcslen(name);
     min = 0;
     max = dir->NumberOfNamedEntries - 1;
     while (min <= max)

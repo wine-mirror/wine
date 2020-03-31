@@ -32,7 +32,6 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -71,7 +70,7 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
     SIZE_T space = out->len - out->used;
 
     if( len < 0 )
-        len = strlenW( str );
+        len = wcslen( str );
     if( out->unicode )
     {
         LPWSTR p = out->buf.W + out->used;
@@ -213,7 +212,7 @@ static inline int pf_output_format_W( pf_output *out, LPCWSTR str,
     int r = 0;
 
     if( len < 0 )
-        len = strlenW( str );
+        len = wcslen( str );
 
     if (flags->Precision >= 0 && flags->Precision < len)
         len = flags->Precision;

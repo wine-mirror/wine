@@ -654,7 +654,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 
     /* try to open file in system dir */
 
-    valueW.MaximumLength = (strlenW(name) + strlenW(dir) + 5) * sizeof(WCHAR);
+    valueW.MaximumLength = (wcslen(name) + wcslen(dir) + 5) * sizeof(WCHAR);
     if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
         return STATUS_NO_MEMORY;
     valueW.Length = NTDLL_swprintf( valueW.Buffer, pathfmtW, dir, name ) * sizeof(WCHAR);
@@ -674,14 +674,14 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
         if (RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ) != STATUS_BUFFER_TOO_SMALL)
             return status;
     }
-    valueW.MaximumLength = valueW.Length + sizeof(dataprefixW) + strlenW(name) * sizeof(WCHAR);
+    valueW.MaximumLength = valueW.Length + sizeof(dataprefixW) + wcslen(name) * sizeof(WCHAR);
     if (!(valueW.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, valueW.MaximumLength )))
         return STATUS_NO_MEMORY;
     if (!RtlQueryEnvironmentVariable_U( NULL, &nameW, &valueW ))
     {
         wcscat( valueW.Buffer, dataprefixW );
         wcscat( valueW.Buffer, name );
-        valueW.Length = strlenW(valueW.Buffer) * sizeof(WCHAR);
+        valueW.Length = wcslen(valueW.Buffer) * sizeof(WCHAR);
         InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
         status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
         if (!status) TRACE( "found %s\n", debugstr_w( valueW.Buffer ));
@@ -883,7 +883,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     }
     if (country)
     {
-        p = win_name + strlenW(win_name);
+        p = win_name + wcslen(win_name);
         *p++ = '-';
         wcscpy( p, country );
     }
@@ -1671,7 +1671,7 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
         *lcid = LANG_INVARIANT;
         goto found;
     }
-    if (strlenW( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
+    if (wcslen( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
     wcscpy( lang, name );
 
     if ((p = wcspbrk( lang, sepW )) && *p == '-')
@@ -1687,7 +1687,7 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
         }
         if (p) *p = 0;  /* FIXME: modifier is ignored */
         /* second value can be script or country, check length to resolve the ambiguity */
-        if (!script && strlenW( country ) == 4)
+        if (!script && wcslen( country ) == 4)
         {
             script = country;
             country = NULL;
@@ -1717,7 +1717,7 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
 
         if (script)
         {
-            unsigned int len = strlenW( script );
+            unsigned int len = wcslen( script );
             if (load_string( LOCALE_SSCRIPTS, id, buf, ARRAY_SIZE(buf) )) continue;
             p = buf;
             while (*p)
@@ -1981,7 +1981,7 @@ NTSTATUS WINAPI RtlIsNormalizedString( ULONG form, const WCHAR *str, INT len, BO
 
     if ((status = load_norm_table( form, &info ))) return status;
 
-    if (len == -1) len = strlenW( str );
+    if (len == -1) len = wcslen( str );
 
     for (i = 0; i < len && result; i += r)
     {
@@ -2054,7 +2054,7 @@ NTSTATUS WINAPI RtlNormalizeString( ULONG form, const WCHAR *src, INT src_len, W
 
     if ((status = load_norm_table( form, &info ))) return status;
 
-    if (src_len == -1) src_len = strlenW(src) + 1;
+    if (src_len == -1) src_len = wcslen(src) + 1;
 
     if (!*dst_len)
     {
@@ -2258,7 +2258,7 @@ NTSTATUS WINAPI RtlIdnToNameprepUnicode( DWORD flags, const WCHAR *src, INT srcl
 
     if ((status = load_norm_table( 13, &info ))) return status;
 
-    if (srclen == -1) srclen = strlenW(src) + 1;
+    if (srclen == -1) srclen = wcslen(src) + 1;
 
     for (i = 0; i < srclen; i++) if (src[i] < 0x20 || src[i] >= 0x7f) break;
 
@@ -2325,7 +2325,7 @@ NTSTATUS WINAPI RtlIdnToUnicode( DWORD flags, const WCHAR *src, INT srclen, WCHA
     WCHAR ch;
 
     if (!src || srclen < -1) return STATUS_INVALID_PARAMETER;
-    if (srclen == -1) srclen = strlenW( src ) + 1;
+    if (srclen == -1) srclen = wcslen( src ) + 1;
 
     TRACE( "%x %s %p %d\n", flags, debugstr_wn(src, srclen), dst, *dstlen );
 

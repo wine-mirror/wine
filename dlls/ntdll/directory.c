@@ -347,7 +347,7 @@ static const char *add_dir_data_nameA( struct dir_data *data, const char *name )
 /* add a Unicode string to the directory data buffer */
 static const WCHAR *add_dir_data_nameW( struct dir_data *data, const WCHAR *name )
 {
-    WCHAR *ptr = get_dir_data_space( data, (strlenW( name ) + 1) * sizeof(WCHAR) );
+    WCHAR *ptr = get_dir_data_space( data, (wcslen( name ) + 1) * sizeof(WCHAR) );
     if (ptr) wcscpy( ptr, name );
     return ptr;
 }
@@ -1522,7 +1522,7 @@ static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, I
     if (start + dir_size > max_length) return STATUS_MORE_ENTRIES;
 
     max_length -= start + dir_size;
-    name_len = strlenW( names->long_name ) * sizeof(WCHAR);
+    name_len = wcslen( names->long_name ) * sizeof(WCHAR);
     /* if this is not the first entry, fail; the first entry is always returned (but truncated) */
     if (*last_info && name_len > max_length) return STATUS_MORE_ENTRIES;
 
@@ -1560,14 +1560,14 @@ static NTSTATUS get_dir_data_entry( struct dir_data *dir_data, void *info_ptr, I
 
     case FileBothDirectoryInformation:
         info->both.EaSize = 0; /* FIXME */
-        info->both.ShortNameLength = strlenW( names->short_name ) * sizeof(WCHAR);
+        info->both.ShortNameLength = wcslen( names->short_name ) * sizeof(WCHAR);
         memcpy( info->both.ShortName, names->short_name, info->both.ShortNameLength );
         info->both.FileNameLength = name_len;
         break;
 
     case FileIdBothDirectoryInformation:
         info->id_both.EaSize = 0; /* FIXME */
-        info->id_both.ShortNameLength = strlenW( names->short_name ) * sizeof(WCHAR);
+        info->id_both.ShortNameLength = wcslen( names->short_name ) * sizeof(WCHAR);
         memcpy( info->id_both.ShortName, names->short_name, info->id_both.ShortNameLength );
         info->id_both.FileNameLength = name_len;
         break;
@@ -1818,8 +1818,8 @@ static int name_compare( const void *a, const void *b )
 {
     const struct dir_data_names *file_a = (const struct dir_data_names *)a;
     const struct dir_data_names *file_b = (const struct dir_data_names *)b;
-    int ret = RtlCompareUnicodeStrings( file_a->long_name, strlenW(file_a->long_name),
-                                        file_b->long_name, strlenW(file_b->long_name), TRUE );
+    int ret = RtlCompareUnicodeStrings( file_a->long_name, wcslen(file_a->long_name),
+                                        file_b->long_name, wcslen(file_b->long_name), TRUE );
     if (!ret) ret = strcmpW( file_a->long_name, file_b->long_name );
     return ret;
 }
