@@ -675,18 +675,45 @@ TOOLBAR_DrawPattern (const RECT *lpRect, const NMTBCUSTOMDRAW *tbcd)
 
 static void TOOLBAR_DrawMasked(HIMAGELIST himl, int index, HDC hdc, INT x, INT y, UINT draw_flags)
 {
+    IMAGELISTDRAWPARAMS draw_params = { 0 };
     INT cx, cy;
     HBITMAP hbmMask, hbmImage;
     HDC hdcMask, hdcImage;
 
     ImageList_GetIconSize(himl, &cx, &cy);
 
+    draw_params.cbSize = sizeof(draw_params);
+    draw_params.himl = himl;
+    draw_params.i = index;
+    draw_params.hdcDst = hdc;
+    draw_params.x = x;
+    draw_params.y = y;
+    draw_params.cx = cx;
+    draw_params.cy = cy;
+    draw_params.rgbBk = CLR_NONE;
+    draw_params.rgbFg = CLR_NONE;
+    draw_params.fStyle = draw_flags;
+    draw_params.fState = ILS_NORMAL;
+
+    /* 32bpp image with alpha channel is converted to grayscale */
+    if (imagelist_has_alpha(himl, index))
+    {
+        draw_params.fState = ILS_SATURATE;
+        ImageList_DrawIndirect(&draw_params);
+        return;
+    }
+
     /* Create src image */
     hdcImage = CreateCompatibleDC(hdc);
     hbmImage = CreateCompatibleBitmap(hdc, cx, cy);
     SelectObject(hdcImage, hbmImage);
-    ImageList_DrawEx(himl, index, hdcImage, 0, 0, cx, cy,
-                     RGB(0xff, 0xff, 0xff), RGB(0,0,0), draw_flags);
+
+    draw_params.x = 0;
+    draw_params.y = 0;
+    draw_params.rgbBk = RGB(0xff, 0xff, 0xff);
+    draw_params.rgbFg = RGB(0,0,0);
+    draw_params.hdcDst = hdcImage;
+    ImageList_DrawIndirect(&draw_params);
 
     /* Create Mask */
     hdcMask = CreateCompatibleDC(0);
@@ -694,8 +721,9 @@ static void TOOLBAR_DrawMasked(HIMAGELIST himl, int index, HDC hdc, INT x, INT y
     SelectObject(hdcMask, hbmMask);
 
     /* Remove the background and all white pixels */
-    ImageList_DrawEx(himl, index, hdcMask, 0, 0, cx, cy,
-                     RGB(0xff, 0xff, 0xff), RGB(0,0,0), ILD_MASK);
+    draw_params.fStyle = ILD_MASK;
+    draw_params.hdcDst = hdcMask;
+    ImageList_DrawIndirect(&draw_params);
     SetBkColor(hdcImage, RGB(0xff, 0xff, 0xff));
     BitBlt(hdcMask, 0, 0, cx, cy, hdcImage, 0, 0, NOTSRCERASE);
 

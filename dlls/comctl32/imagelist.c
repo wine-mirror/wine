@@ -143,6 +143,11 @@ static BOOL is_valid(HIMAGELIST himl);
 
 #define TILE_COUNT 4
 
+BOOL imagelist_has_alpha( HIMAGELIST himl, UINT index )
+{
+    return himl->item_flags[index] & ILIF_ALPHA;
+}
+
 static inline UINT imagelist_height( UINT count )
 {
     return ((count + TILE_COUNT - 1)/TILE_COUNT);
