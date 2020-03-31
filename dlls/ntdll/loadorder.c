@@ -144,7 +144,7 @@ static enum loadorder parse_load_order( const WCHAR *order )
             else if (ret == LO_NATIVE) return LO_NATIVE_BUILTIN;
             break;
         }
-        order += strcspnW( order, separatorsW );
+        order += wcscspn( order, separatorsW );
     }
     return ret;
 }
@@ -208,7 +208,7 @@ static void add_load_order_set( WCHAR *entry )
     while (*entry)
     {
         entry += strspnW( entry, separatorsW );
-        end = entry + strcspnW( entry, separatorsW );
+        end = entry + wcscspn( entry, separatorsW );
         if (*end) *end++ = 0;
         if (*entry)
         {

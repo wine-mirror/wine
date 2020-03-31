@@ -309,6 +309,7 @@ int    WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... );
 #define wcsrchr(s,c) NTDLL_wcsrchr(s,c)
 #define wcstoul(s,e,b) NTDLL_wcstoul(s,e,b)
 #define wcslen(s) NTDLL_wcslen(s)
+#define wcscspn(s,r) NTDLL_wcscspn(s,r)
 
 /* convert from straight ASCII to Unicode without depending on the current codepage */
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
