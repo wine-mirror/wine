@@ -36,8 +36,6 @@ static const struct attribute_type *find_schema_type(const WCHAR *name, const st
 
     for (i = 0; i < count; i++)
     {
-        if (!at[i].name) continue;
-
         off = 0;
 
         for (n = 0; n < at[i].name_count; n++)
@@ -357,6 +355,12 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_count)
                 if (!parse_attribute_type(types[i], &at[count]))
                 {
                     WARN("parse_attribute_type failed\n");
+                    continue;
+                }
+
+                if (!at[count].name)
+                {
+                    free_attribute_type(&at[count]);
                     continue;
                 }
 
