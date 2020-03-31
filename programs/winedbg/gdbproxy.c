@@ -1746,95 +1746,88 @@ static struct packet_entry packet_entries[] =
 
 static BOOL extract_packets(struct gdb_context* gdbctx)
 {
-    char*               end;
-    int                 plen;
-    unsigned char       in_cksum, loc_cksum;
-    char*               ptr;
-    enum packet_return  ret = packet_error;
-    int                 num_packet = 0;
+    char *ptr, *sum = gdbctx->in_buf, *end = gdbctx->in_buf + gdbctx->in_len;
+    enum packet_return ret = packet_error;
+    unsigned int cksum;
+    int i, len;
 
-    while ((ret & packet_last_f) == 0)
+    /* ptr points to the beginning ('$') of the current packet
+     * sum points to the beginning ('#') of the current packet checksum ("#xx")
+     * len is the length of the current packet data (sum - ptr - 1)
+     * end points to the end of the received data buffer
+     */
+
+    while ((ptr = memchr(sum, '$', end - sum)) &&
+           (sum = memchr(ptr, '#', end - ptr)) &&
+           (end - sum >= 3) && sscanf(sum, "#%02x", &cksum) == 1)
     {
-        TRACE("Packet: %s\n", debugstr_an(gdbctx->in_buf, gdbctx->in_len));
-        ptr = memchr(gdbctx->in_buf, '$', gdbctx->in_len);
-        if (ptr == NULL) return FALSE;
-        if (ptr != gdbctx->in_buf)
+        len = sum - ptr - 1;
+        sum += 3;
+
+        if (cksum == checksum(ptr + 1, len))
         {
-            int glen = ptr - gdbctx->in_buf; /* garbage len */
-            WARN("Removing garbage: %s\n", debugstr_an(gdbctx->in_buf, glen));
-            gdbctx->in_len -= glen;
-            memmove(gdbctx->in_buf, ptr, gdbctx->in_len);
-        }
-        end = memchr(gdbctx->in_buf + 1, '#', gdbctx->in_len);
-        if (end == NULL) return FALSE;
-        /* no checksum yet */
-        if (end + 3 > gdbctx->in_buf + gdbctx->in_len) return FALSE;
-        plen = end - gdbctx->in_buf - 1;
-        hex_from(&in_cksum, end + 1, 1);
-        loc_cksum = checksum(gdbctx->in_buf + 1, plen);
-        if (loc_cksum == in_cksum)
-        {
-            if (num_packet == 0) {
-                int                 i;
-                
-                ret = packet_error;
-                
-                write(gdbctx->sock, "+", 1);
-                assert(plen);
-                
-                /* FIXME: should use bsearch if packet_entries was sorted */
-                for (i = 0; i < ARRAY_SIZE(packet_entries); i++)
-                {
-                    if (packet_entries[i].key == gdbctx->in_buf[1]) break;
-                }
-                if (i == ARRAY_SIZE(packet_entries))
-                    WARN("Unhandled packet %s\n", debugstr_an(&gdbctx->in_buf[1], plen));
-                else
-                {
-                    gdbctx->in_packet = gdbctx->in_buf + 2;
-                    gdbctx->in_packet_len = plen - 1;
-                    gdbctx->in_packet[gdbctx->in_packet_len] = '\0';
-                    ret = (packet_entries[i].handler)(gdbctx);
-                }
-                switch (ret & ~packet_last_f)
-                {
-                case packet_error:  packet_reply(gdbctx, ""); break;
-                case packet_ok:     packet_reply(gdbctx, "OK"); break;
-                case packet_done:   break;
-                }
-                TRACE("Reply: %s\n", debugstr_an(gdbctx->out_buf, gdbctx->out_len));
-                i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
-                assert(i == gdbctx->out_len);
-                /* if this fails, we'll have to use POLLOUT...
-                 */
-                gdbctx->out_len = 0;
-                num_packet++;
-            }
-            else 
-            {
-                /* FIXME: If we have more than one packet in our input buffer,
-                 * it's very likely that we took too long to answer to a given packet
-                 * and gdb is sending us the same packet again.
-                 * So we simply drop the second packet. This will lower the risk of error,
-                 * but there are still some race conditions here.
-                 * A better fix (yet not perfect) would be to have two threads:
-                 * - one managing the packets for gdb
-                 * - the second one managing the commands...
-                 * This would allow us to send the reply with the '+' character (Ack of
-                 * the command) way sooner than we do now.
-                 */
-                ERR("Dropping packet; I was too slow to respond\n");
-            }
+            TRACE("Acking: %s\n", debugstr_an(ptr, sum - ptr));
+            write(gdbctx->sock, "+", 1);
         }
         else
         {
-            write(gdbctx->sock, "+", 1);
-            ERR("Dropping packet; invalid checksum %d <> %d\n", in_cksum, loc_cksum);
+            ERR("Nacking: %s (checksum: %d != %d)\n", debugstr_an(ptr, sum - ptr),
+                cksum, checksum(ptr + 1, len));
+            write(gdbctx->sock, "-", 1);
         }
-        gdbctx->in_len -= plen + 4;
-        memmove(gdbctx->in_buf, end + 3, gdbctx->in_len);
     }
-    return TRUE;
+
+    while ((ret & packet_last_f) == 0 &&
+           (ptr = memchr(gdbctx->in_buf, '$', gdbctx->in_len)) &&
+           (sum = memchr(ptr, '#', end - ptr)) &&
+           (end - sum >= 3) && sscanf(sum, "#%02x", &cksum) == 1)
+    {
+        if (ptr != gdbctx->in_buf)
+            WARN("Ignoring: %s\n", debugstr_an(gdbctx->in_buf, ptr - gdbctx->in_buf));
+
+        len = sum - ptr - 1;
+        sum += 3;
+
+        if (cksum == checksum(ptr + 1, len))
+        {
+            TRACE("Handling: %s\n", debugstr_an(ptr, sum - ptr));
+
+            ret = packet_error;
+            gdbctx->in_packet = ptr + 2;
+            gdbctx->in_packet_len = len - 1;
+            gdbctx->in_packet[gdbctx->in_packet_len] = '\0';
+
+            for (i = 0; i < ARRAY_SIZE(packet_entries); i++)
+                if (packet_entries[i].key == ptr[1])
+                    break;
+
+            if (i == ARRAY_SIZE(packet_entries))
+                WARN("Unhandled: %s\n", debugstr_an(ptr + 1, len));
+            else if (((ret = (packet_entries[i].handler)(gdbctx)) & ~packet_last_f) == packet_error)
+                WARN("Failed: %s\n", debugstr_an(ptr + 1, len));
+
+            switch (ret & ~packet_last_f)
+            {
+            case packet_error:  packet_reply(gdbctx, ""); break;
+            case packet_ok:     packet_reply(gdbctx, "OK"); break;
+            case packet_done:   break;
+            }
+
+            TRACE("Reply: %s\n", debugstr_an(gdbctx->out_buf, gdbctx->out_len));
+            i = write(gdbctx->sock, gdbctx->out_buf, gdbctx->out_len);
+            assert(i == gdbctx->out_len);
+            gdbctx->out_len = 0;
+        }
+        else
+            WARN("Ignoring: %s (checksum: %d != %d)\n", debugstr_an(ptr, sum - ptr),
+                cksum, checksum(ptr + 1, len));
+
+        gdbctx->in_len = end - sum;
+        memmove(gdbctx->in_buf, sum, end - sum);
+        end = gdbctx->in_buf + gdbctx->in_len;
+    }
+
+    return (ret & packet_last_f);
 }
 
 static int fetch_data(struct gdb_context* gdbctx)
