@@ -23,6 +23,6 @@
 27 stub ConvertSecDescriptorToVariant
 28 stub ConvertSecurityDescriptorToSecDes
 #@ stub DllCanUnloadNow
-#@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 #@ stub DllRegisterServer
 #@ stub DllUnregisterServer

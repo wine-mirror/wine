@@ -814,6 +814,30 @@ interface IADsOpenDSObject : IDispatch
 }
 
 /*****************************************************************************
+ *   IADsPathname interface
+ */
+[
+    odl,
+    uuid(d592aed4-f420-11d0-a36e-00c04fb950dc),
+    dual,
+    oleautomation
+]
+interface IADsPathname : IDispatch
+{
+    HRESULT Set(BSTR path, long type);
+    HRESULT SetDisplayType(long type);
+    HRESULT Retrieve(long type, BSTR *path);
+    HRESULT GetNumElements(long *count);
+    HRESULT GetElement(long index, BSTR *element);
+    HRESULT AddLeafElement(BSTR element);
+    HRESULT RemoveLeafElement(void);
+    HRESULT CopyPath(IDispatch **path);
+    HRESULT GetEscapedElement(long reserved, BSTR element, BSTR *str);
+    HRESULT get_EscapedMode(long *mode);
+    HRESULT put_EscapedMode(long mode);
+}
+
+/*****************************************************************************
  *    IADsADSystemInfo interface
  */
 [

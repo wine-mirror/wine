@@ -1,7 +1,12 @@
 MODULE    = activeds.dll
 IMPORTLIB = activeds
-IMPORTS   = advapi32 ole32 oleaut32
+IMPORTS   = advapi32 ole32 oleaut32 uuid
 
 EXTRADLLFLAGS = -mno-cygwin
 
-C_SRCS = activeds_main.c
+C_SRCS = \
+	activeds_main.c \
+	pathname.c
+
+IDL_SRCS = \
+	activeds.idl
