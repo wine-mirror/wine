@@ -1070,8 +1070,9 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
         return packet_verbose_cont(gdbctx);
     }
 
-    WARN("Unhandled verbose packet %s\n",
-        debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
+    if (gdbctx->in_packet_len == 14 && !memcmp(gdbctx->in_packet, "MustReplyEmpty", 14))
+        return packet_reply(gdbctx, "");
+
     return packet_error;
 }
 
