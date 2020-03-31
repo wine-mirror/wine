@@ -814,7 +814,7 @@
 @ stub _o___stdio_common_vfprintf_p
 @ stub _o___stdio_common_vfprintf_s
 @ stub _o___stdio_common_vfscanf
-@ stub _o___stdio_common_vfwprintf
+@ cdecl _o___stdio_common_vfwprintf(int64 ptr wstr ptr ptr) MSVCRT__stdio_common_vfwprintf
 @ stub _o___stdio_common_vfwprintf_p
 @ stub _o___stdio_common_vfwprintf_s
 @ stub _o___stdio_common_vfwscanf
@@ -824,7 +824,7 @@
 @ stub _o___stdio_common_vsprintf_p
 @ cdecl _o___stdio_common_vsprintf_s(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_s
 @ stub _o___stdio_common_vsscanf
-@ stub _o___stdio_common_vswprintf
+@ cdecl _o___stdio_common_vswprintf(int64 ptr long wstr ptr ptr) MSVCRT__stdio_common_vswprintf
 @ stub _o___stdio_common_vswprintf_p
 @ stub _o___stdio_common_vswprintf_s
 @ stub _o___stdio_common_vswscanf
