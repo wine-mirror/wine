@@ -1848,12 +1848,14 @@ static int fetch_data(struct gdb_context* gdbctx)
         if (gdbctx->in_len + STEP > gdbctx->in_buf_alloc)
             gdbctx->in_buf = packet_realloc(gdbctx->in_buf, gdbctx->in_buf_alloc += STEP);
 #undef STEP
-        len = read(gdbctx->sock, gdbctx->in_buf + gdbctx->in_len, gdbctx->in_buf_alloc - gdbctx->in_len);
+        len = read(gdbctx->sock, gdbctx->in_buf + gdbctx->in_len, gdbctx->in_buf_alloc - gdbctx->in_len - 1);
         if (len <= 0) break;
         gdbctx->in_len += len;
         assert(gdbctx->in_len <= gdbctx->in_buf_alloc);
         if (len < gdbctx->in_buf_alloc - gdbctx->in_len) break;
     }
+
+    gdbctx->in_buf[gdbctx->in_len] = '\0';
     return gdbctx->in_len - in_len;
 }
 
