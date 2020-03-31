@@ -1839,7 +1839,6 @@ static void test_cursor(void)
             expected_hr = D3D_OK;
         else
             expected_hr = D3DERR_INVALIDCALL;
-        todo_wine_if(expected_hr == D3DERR_INVALIDCALL)
         ok(hr == expected_hr, "Test %u: Expect SetCursorProperties return %#x, got %#x.\n",
                 test_idx, expected_hr, hr);
         IDirect3DSurface9_Release(cursor);
