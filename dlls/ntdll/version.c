@@ -31,7 +31,6 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 #include "ddk/wdm.h"
@@ -458,7 +457,7 @@ static BOOL parse_win_version( HANDLE hkey )
 
     for (i = 0; i < ARRAY_SIZE(version_names); i++)
     {
-        if (strcmpW( version_names[i].name, name )) continue;
+        if (wcscmp( version_names[i].name, name )) continue;
         current_version = &VersionData[version_names[i].ver];
         TRACE( "got win version %s\n", debugstr_w(version_names[i].name) );
         return TRUE;

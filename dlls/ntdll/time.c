@@ -47,7 +47,6 @@
 #include "windef.h"
 #include "winternl.h"
 #include "wine/exception.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
@@ -662,7 +661,7 @@ static int compare_tz_key(const void *a, const void *b)
     const struct tz_name_map *map_a, *map_b;
     map_a = (const struct tz_name_map *)a;
     map_b = (const struct tz_name_map *)b;
-    return strcmpW(map_a->key_name, map_b->key_name);
+    return wcscmp(map_a->key_name, map_b->key_name);
 }
 
 static BOOL match_tz_name(const char* tz_name,

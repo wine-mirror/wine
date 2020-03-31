@@ -847,7 +847,7 @@ static LCID unix_locale_to_lcid( const char *unix_name )
 
     if (!(p = wcspbrk( buffer, sepW )))
     {
-        if (!strcmpW( buffer, posixW ) || !strcmpW( buffer, cW ))
+        if (!wcscmp( buffer, posixW ) || !wcscmp( buffer, cW ))
             return MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
         wcscpy( win_name, buffer );
     }
@@ -877,8 +877,8 @@ static LCID unix_locale_to_lcid( const char *unix_name )
     wcscpy( win_name, buffer );
     if (modifier)
     {
-        if (!strcmpW( modifier, latinW )) wcscat( win_name, latnW );
-        else if (!strcmpW( modifier, euroW )) {} /* ignore */
+        if (!wcscmp( modifier, latinW )) wcscat( win_name, latnW );
+        else if (!wcscmp( modifier, euroW )) {} /* ignore */
         else return 0;
     }
     if (country)

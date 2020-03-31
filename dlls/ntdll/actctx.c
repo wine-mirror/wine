@@ -779,12 +779,12 @@ static inline BOOL xml_elem_cmp(const struct xml_elem *elem, const WCHAR *str, c
 {
     if (!xmlstr_cmp( &elem->name, str )) return FALSE;
     if (xmlstr_cmp( &elem->ns, namespace )) return TRUE;
-    if (!strcmpW( namespace, asmv1W ))
+    if (!wcscmp( namespace, asmv1W ))
     {
         if (xmlstr_cmp( &elem->ns, asmv2W )) return TRUE;
         if (xmlstr_cmp( &elem->ns, asmv3W )) return TRUE;
     }
-    else if (!strcmpW( namespace, asmv2W ))
+    else if (!wcscmp( namespace, asmv2W ))
     {
         if (xmlstr_cmp( &elem->ns, asmv3W )) return TRUE;
     }
@@ -1014,7 +1014,7 @@ static BOOL is_matching_identity( const struct assembly_identity *id1,
 
     if (id1->language && id2->language && !is_matching_string( id1->language, id2->language ))
     {
-        if (strcmpW( wildcardW, id1->language ) && strcmpW( wildcardW, id2->language ))
+        if (wcscmp( wildcardW, id1->language ) && wcscmp( wildcardW, id2->language ))
             return FALSE;
     }
     if (id1->version.major != id2->version.major) return FALSE;
@@ -2235,7 +2235,7 @@ static void parse_dependent_assembly_elem( xmlbuf_t *xmlbuf, struct actctx_loade
         {
             parse_assembly_identity_elem(xmlbuf, acl->actctx, &ai, &elem);
             /* store the newly found identity for later loading */
-            if (ai.arch && !strcmpW(ai.arch, wildcardW)) ai.arch = strdupW( current_archW );
+            if (ai.arch && !wcscmp(ai.arch, wildcardW)) ai.arch = strdupW( current_archW );
             TRACE( "adding name=%s version=%s arch=%s\n",
                    debugstr_w(ai.name), debugstr_version(&ai.version), debugstr_w(ai.arch) );
             if (!add_dependent_assembly_id(acl, &ai)) set_error( xmlbuf );
@@ -4926,8 +4926,8 @@ static const WCHAR *find_app_settings( ACTIVATION_CONTEXT *actctx, const WCHAR *
         {
             struct entity *entity = &assembly->entities.base[j];
             if (entity->kind == ACTIVATION_CONTEXT_SECTION_APPLICATION_SETTINGS &&
-                !strcmpW( entity->u.settings.name, settings ) &&
-                !strcmpW( entity->u.settings.ns, ns ))
+                !wcscmp( entity->u.settings.name, settings ) &&
+                !wcscmp( entity->u.settings.ns, ns ))
                 return entity->u.settings.value;
         }
     }
@@ -5589,10 +5589,10 @@ NTSTATUS WINAPI RtlQueryActivationContextApplicationSettings( DWORD flags, HANDL
 
     if (ns)
     {
-        if (strcmpW( ns, windowsSettings2005NSW ) &&
-            strcmpW( ns, windowsSettings2011NSW ) &&
-            strcmpW( ns, windowsSettings2016NSW ) &&
-            strcmpW( ns, windowsSettings2017NSW ))
+        if (wcscmp( ns, windowsSettings2005NSW ) &&
+            wcscmp( ns, windowsSettings2011NSW ) &&
+            wcscmp( ns, windowsSettings2016NSW ) &&
+            wcscmp( ns, windowsSettings2017NSW ))
             return STATUS_INVALID_PARAMETER;
     }
     else ns = windowsSettings2005NSW;

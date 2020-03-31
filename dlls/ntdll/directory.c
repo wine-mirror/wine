@@ -1820,7 +1820,7 @@ static int name_compare( const void *a, const void *b )
     const struct dir_data_names *file_b = (const struct dir_data_names *)b;
     int ret = RtlCompareUnicodeStrings( file_a->long_name, wcslen(file_a->long_name),
                                         file_b->long_name, wcslen(file_b->long_name), TRUE );
-    if (!ret) ret = strcmpW( file_a->long_name, file_b->long_name );
+    if (!ret) ret = wcscmp( file_a->long_name, file_b->long_name );
     return ret;
 }
 
