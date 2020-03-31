@@ -3319,7 +3319,7 @@ static NTSTATUS query_dword_option( HANDLE hkey, LPCWSTR name, ULONG *value )
     if (info->Type != REG_DWORD)
     {
         buffer[size / sizeof(WCHAR)] = 0;
-        *value = strtoulW( (WCHAR *)info->Data, 0, 16 );
+        *value = wcstoul( (WCHAR *)info->Data, 0, 16 );
     }
     else memcpy( value, info->Data, sizeof(*value) );
     return status;
