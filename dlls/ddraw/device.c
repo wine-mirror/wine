@@ -72,6 +72,13 @@ static inline WORD d3d_fpu_setup(void)
     return oldcw;
 }
 
+static enum wined3d_render_state wined3d_render_state_from_ddraw(D3DRENDERSTATETYPE state)
+{
+    if (state == D3DRENDERSTATE_ZBIAS)
+        return WINED3D_RS_DEPTHBIAS;
+    return (enum wined3d_render_state)state;
+}
+
 static inline struct d3d_device *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d_device, IUnknown_inner);
@@ -2396,10 +2403,6 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
             hr = DDERR_INVALIDPARAMS;
             break;
 
-        case D3DRENDERSTATE_ZBIAS:
-            *value = device_state->rs[WINED3D_RS_DEPTHBIAS];
-            break;
-
         default:
             if (state >= D3DRENDERSTATE_STIPPLEPATTERN00
                     && state <= D3DRENDERSTATE_STIPPLEPATTERN31)
@@ -2408,7 +2411,7 @@ static HRESULT d3d_device7_GetRenderState(IDirect3DDevice7 *iface,
                 hr = E_NOTIMPL;
                 break;
             }
-            *value = device_state->rs[state];
+            *value = device_state->rs[wined3d_render_state_from_ddraw(state)];
     }
     wined3d_mutex_unlock();
 
@@ -2622,10 +2625,6 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
             hr = DDERR_INVALIDPARAMS;
             break;
 
-        case D3DRENDERSTATE_ZBIAS:
-            wined3d_stateblock_set_render_state(device->update_state, WINED3D_RS_DEPTHBIAS, value);
-            break;
-
         default:
             if (state >= D3DRENDERSTATE_STIPPLEPATTERN00
                     && state <= D3DRENDERSTATE_STIPPLEPATTERN31)
@@ -2635,7 +2634,7 @@ static HRESULT d3d_device7_SetRenderState(IDirect3DDevice7 *iface,
                 break;
             }
 
-            wined3d_stateblock_set_render_state(device->update_state, state, value);
+            wined3d_stateblock_set_render_state(device->update_state, wined3d_render_state_from_ddraw(state), value);
             break;
     }
     wined3d_mutex_unlock();
