@@ -1001,11 +1001,26 @@ static void source_reader_release_responses(struct source_reader *reader, struct
 static void source_reader_flush_stream(struct source_reader *reader, DWORD stream_index)
 {
     struct media_stream *stream = stream_index == MF_SOURCE_READER_ALL_STREAMS ? NULL : &reader->streams[stream_index];
+    unsigned int i;
 
     source_reader_release_responses(reader, stream);
-    if (stream->decoder)
-        IMFTransform_ProcessMessage(stream->decoder, MFT_MESSAGE_COMMAND_FLUSH, 0);
-    stream->requests = 0;
+    if (stream)
+    {
+        if (stream->decoder)
+            IMFTransform_ProcessMessage(stream->decoder, MFT_MESSAGE_COMMAND_FLUSH, 0);
+
+        stream->requests = 0;
+    }
+    else
+    {
+        for (i = 0; i < reader->stream_count; i++)
+        {
+            if (reader->streams[i].decoder)
+                IMFTransform_ProcessMessage(reader->streams[i].decoder, MFT_MESSAGE_COMMAND_FLUSH, 0);
+
+            reader->streams[i].requests = 0;
+        }
+    }
 }
 
 static HRESULT source_reader_flush(struct source_reader *reader, unsigned int index)
