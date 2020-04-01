@@ -1492,6 +1492,9 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_range *range;
 
+    TRACE("buffer %p, context %p, data %p, data_offset %u, range_count %u, ranges %p.\n",
+            buffer, context, data, data_offset, range_count, ranges);
+
     wined3d_buffer_gl_bind(buffer_gl, context_gl);
 
     while (range_count--)
