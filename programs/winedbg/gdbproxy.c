@@ -268,14 +268,14 @@ static struct dbg_thread* dbg_thread_from_tid(struct gdb_context* gdbctx, int ti
 
     if (!process) return NULL;
 
-    if (tid == 0) return dbg_curr_thread;
+    if (tid == 0) tid = gdbctx->de.dwThreadId;
     LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
     {
         if (tid > 0 && thread->tid != tid) continue;
         return thread;
     }
 
-    return dbg_curr_thread;
+    return NULL;
 }
 
 static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
@@ -357,7 +357,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         SIZE_T read;
 
         if (threadname->dwThreadID == -1)
-            thread = dbg_curr_thread;
+            thread = dbg_get_thread(gdbctx->process, gdbctx->de.dwThreadId);
         else
             thread = dbg_get_thread(gdbctx->process, threadname->dwThreadID);
         if (thread)
@@ -394,7 +394,6 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         WCHAR               buffer[256];
     } u;
 
-    dbg_curr_thread = dbg_get_thread(gdbctx->process, de->dwThreadId);
     gdbctx->exec_tid = de->dwThreadId;
     gdbctx->other_tid = de->dwThreadId;
     gdbctx->de_reply = DBG_REPLY_LATER;
@@ -426,14 +425,12 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         fprintf(stderr, "%04x:%04x: create thread I @%p\n", de->dwProcessId,
             de->dwThreadId, de->u.CreateProcessInfo.lpStartAddress);
 
-        assert(dbg_curr_thread == NULL); /* shouldn't be there */
         dbg_add_thread(gdbctx->process, de->dwThreadId,
                        de->u.CreateProcessInfo.hThread,
                        de->u.CreateProcessInfo.lpThreadLocalBase);
         break;
 
     case LOAD_DLL_DEBUG_EVENT:
-        assert(dbg_curr_thread);
         memory_get_string_indirect(gdbctx->process,
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
@@ -456,7 +453,6 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         break;
 
     case EXCEPTION_DEBUG_EVENT:
-        assert(dbg_curr_thread);
         TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
@@ -476,9 +472,8 @@ static void handle_debug_event(struct gdb_context* gdbctx)
     case EXIT_THREAD_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: exit thread (%u)\n",
                 de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
-
-        assert(dbg_curr_thread);
-        dbg_del_thread(dbg_curr_thread);
+        if ((thread = dbg_get_thread(gdbctx->process, de->dwThreadId)))
+            dbg_del_thread(thread);
         break;
 
     case EXIT_PROCESS_DEBUG_EVENT:
@@ -493,7 +488,6 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         break;
 
     case OUTPUT_DEBUG_STRING_EVENT:
-        assert(dbg_curr_thread);
         memory_get_string(gdbctx->process,
                           de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
@@ -525,7 +519,7 @@ static void handle_step_or_continue(struct gdb_context* gdbctx, int tid, BOOL st
     struct dbg_process *process = gdbctx->process;
     struct dbg_thread *thread;
 
-    if (tid == 0) tid = dbg_curr_thread->tid;
+    if (tid == 0) tid = gdbctx->de.dwThreadId;
     LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
     {
         if (tid != -1 && thread->tid != tid) continue;
@@ -596,7 +590,6 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
         assert(!gdbctx->process ||
                gdbctx->process->pid == 0 ||
                gdbctx->de.dwProcessId == gdbctx->process->pid);
-        assert(!dbg_curr_thread || gdbctx->de.dwThreadId == dbg_curr_thread->tid);
         if (gdbctx->in_trap) break;
         ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
@@ -828,6 +821,7 @@ static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_
 static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 {
     struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
     struct backend_cpu *backend;
     dbg_ctx_t ctx;
     size_t i;
@@ -838,7 +832,8 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 
         if (!(backend = process->be_cpu)) return packet_error;
 
-        if (!backend->get_context(dbg_curr_thread->handle, &ctx))
+        if (!(thread = dbg_get_thread(process, gdbctx->de.dwThreadId)) ||
+            !backend->get_context(thread->handle, &ctx))
             return packet_error;
 
         packet_reply_open(gdbctx);
@@ -846,7 +841,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         sig = gdbctx->last_sig;
         packet_reply_val(gdbctx, sig, 1);
         packet_reply_add(gdbctx, "thread:");
-        packet_reply_val(gdbctx, dbg_curr_thread->tid, 4);
+        packet_reply_val(gdbctx, gdbctx->de.dwThreadId, 4);
         packet_reply_add(gdbctx, ";");
 
         for (i = 0; i < backend->gdb_num_regs; i++)
