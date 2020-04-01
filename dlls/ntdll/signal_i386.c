@@ -2306,6 +2306,13 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 #define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
 #define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated */
 
+struct ldt_copy
+{
+    void         *base[LDT_SIZE];
+    unsigned int  limit[LDT_SIZE];
+    unsigned char flags[LDT_SIZE];
+} __wine_ldt_copy;
+
 static WORD gdt_fs_sel;
 
 static RTL_CRITICAL_SECTION ldt_section;
@@ -2417,11 +2424,11 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
     exit(1);
 #endif
 
-    wine_ldt_copy.base[index]  = ldt_get_base( entry );
-    wine_ldt_copy.limit[index] = ldt_get_limit( entry );
-    wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
-                                  (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
-                                  LDT_FLAGS_ALLOCATED);
+    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
+    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
+    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
+                                    LDT_FLAGS_ALLOCATED);
 }
 
 static void ldt_init(void)
@@ -2464,7 +2471,7 @@ WORD ldt_alloc_fs( TEB *teb, int first_thread )
         ldt_lock();
         for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
         {
-            if (wine_ldt_copy.flags[idx]) continue;
+            if (__wine_ldt_copy.flags[idx]) continue;
             ldt_set_entry( (idx << 3) | 7, entry );
             break;
         }
@@ -2479,7 +2486,7 @@ static void ldt_free_fs( WORD sel )
     if (sel == gdt_fs_sel) return;
 
     ldt_lock();
-    wine_ldt_copy.flags[sel >> 3] = 0;
+    __wine_ldt_copy.flags[sel >> 3] = 0;
     ldt_unlock();
 }
 

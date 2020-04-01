@@ -1558,6 +1558,7 @@
 @ cdecl wine_server_release_fd(long long)
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
+@ extern -arch=i386 __wine_ldt_copy
 
 # Debugging
 @ cdecl -norelay __wine_dbg_get_channel_flags(ptr)

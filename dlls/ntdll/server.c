@@ -1448,6 +1448,9 @@ void server_init_process(void)
  */
 void server_init_process_done(void)
 {
+#ifdef __i386__
+    extern struct ldt_copy __wine_ldt_copy;
+#endif
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
     void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
@@ -1471,7 +1474,7 @@ void server_init_process_done(void)
     {
         req->module   = wine_server_client_ptr( peb->ImageBaseAddress );
 #ifdef __i386__
-        req->ldt_copy = wine_server_client_ptr( &wine_ldt_copy );
+        req->ldt_copy = wine_server_client_ptr( &__wine_ldt_copy );
 #endif
         req->entry    = wine_server_client_ptr( entry );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
