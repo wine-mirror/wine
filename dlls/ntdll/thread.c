@@ -980,80 +980,10 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             }
         }
         return status;
+
     case ThreadDescriptorTableEntry:
-        {
-#ifdef __i386__
-            THREAD_DESCRIPTOR_INFORMATION*      tdi = data;
-            if (length < sizeof(*tdi))
-                status = STATUS_INFO_LENGTH_MISMATCH;
-            else if (!(tdi->Selector & 4))  /* GDT selector */
-            {
-                unsigned sel = LOWORD(tdi->Selector) & ~3;  /* ignore RPL */
-                status = STATUS_SUCCESS;
-                if (!sel)  /* null selector */
-                    memset( &tdi->Entry, 0, sizeof(tdi->Entry) );
-                else
-                {
-                    tdi->Entry.BaseLow                   = 0;
-                    tdi->Entry.HighWord.Bits.BaseMid     = 0;
-                    tdi->Entry.HighWord.Bits.BaseHi      = 0;
-                    tdi->Entry.LimitLow                  = 0xffff;
-                    tdi->Entry.HighWord.Bits.LimitHi     = 0xf;
-                    tdi->Entry.HighWord.Bits.Dpl         = 3;
-                    tdi->Entry.HighWord.Bits.Sys         = 0;
-                    tdi->Entry.HighWord.Bits.Pres        = 1;
-                    tdi->Entry.HighWord.Bits.Granularity = 1;
-                    tdi->Entry.HighWord.Bits.Default_Big = 1;
-                    tdi->Entry.HighWord.Bits.Type        = 0x12;
-                    tdi->Entry.HighWord.Bits.Reserved_0  = 0;
-                    /* it has to be one of the system GDT selectors */
-                    if (sel != (wine_get_ds() & ~3) && sel != (wine_get_ss() & ~3))
-                    {
-                        if (sel == (wine_get_cs() & ~3))
-                            tdi->Entry.HighWord.Bits.Type |= 8;  /* code segment */
-                        else if (sel == (wine_get_fs() & ~3))
-                        {
-                            ULONG_PTR fs_base = (ULONG_PTR)NtCurrentTeb();
-                            tdi->Entry.BaseLow                   = fs_base & 0xffff;
-                            tdi->Entry.HighWord.Bits.BaseMid     = (fs_base >> 16) & 0xff;
-                            tdi->Entry.HighWord.Bits.BaseHi      = (fs_base >> 24) & 0xff;
-                            tdi->Entry.LimitLow                  = 0x0fff;
-                            tdi->Entry.HighWord.Bits.LimitHi     = 0;
-                            tdi->Entry.HighWord.Bits.Granularity = 0;
-                        }
-                        else status = STATUS_ACCESS_DENIED;
-                    }
-                }
-            }
-            else
-            {
-                SERVER_START_REQ( get_selector_entry )
-                {
-                    req->handle = wine_server_obj_handle( handle );
-                    req->entry = LOWORD(tdi->Selector) >> 3;
-                    status = wine_server_call( req );
-                    if (!status)
-                    {
-                        if (!(reply->flags & WINE_LDT_FLAGS_ALLOCATED))
-                            status = STATUS_ACCESS_VIOLATION;
-                        else
-                        {
-                            wine_ldt_set_base ( &tdi->Entry, (void *)reply->base );
-                            wine_ldt_set_limit( &tdi->Entry, reply->limit );
-                            wine_ldt_set_flags( &tdi->Entry, reply->flags );
-                        }
-                    }
-                }
-                SERVER_END_REQ;
-            }
-            if (status == STATUS_SUCCESS && ret_len)
-                /* yes, that's a bit strange, but it's the way it is */
-                *ret_len = sizeof(LDT_ENTRY);
-#else
-            status = STATUS_NOT_IMPLEMENTED;
-#endif
-            return status;
-        }
+        return get_thread_ldt_entry( handle, data, length, ret_len );
+
     case ThreadAmILastThread:
         {
             SERVER_START_REQ(get_thread_info)

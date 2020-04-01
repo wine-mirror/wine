@@ -523,6 +523,14 @@ extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler );
 
 /***********************************************************************
+ *           is_gdt_sel
+ */
+static inline int is_gdt_sel( WORD sel )
+{
+    return !(sel & 4);
+}
+
+/***********************************************************************
  *           dispatch_signal
  */
 static inline int dispatch_signal(unsigned int sig)
@@ -2242,7 +2250,7 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /***********************************************************************
- *           locking for LDT routines
+ *           LDT support
  */
 static RTL_CRITICAL_SECTION ldt_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -2253,6 +2261,8 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 static sigset_t ldt_sigset;
+
+static const LDT_ENTRY null_entry;
 
 static void ldt_lock(void)
 {
@@ -2274,6 +2284,63 @@ static void ldt_unlock(void)
     else RtlLeaveCriticalSection( &ldt_section );
 }
 
+static LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char flags )
+{
+    LDT_ENTRY entry;
+
+    wine_ldt_set_base( &entry, base );
+    wine_ldt_set_limit( &entry, limit );
+    wine_ldt_set_flags( &entry, flags );
+    return entry;
+}
+
+/**********************************************************************
+ *           get_thread_ldt_entry
+ */
+NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
+{
+    THREAD_DESCRIPTOR_INFORMATION *info = data;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (len < sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+    if (info->Selector >> 16) return STATUS_UNSUCCESSFUL;
+
+    if (is_gdt_sel( info->Selector ))
+    {
+        if (!(info->Selector & ~3))
+            info->Entry = null_entry;
+        else if ((info->Selector | 3) == wine_get_cs())
+            info->Entry = ldt_make_entry( 0, ~0u, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+        else if ((info->Selector | 3) == wine_get_ds())
+            info->Entry = ldt_make_entry( 0, ~0u, WINE_LDT_FLAGS_DATA | WINE_LDT_FLAGS_32BIT );
+        else if ((info->Selector | 3) == wine_get_fs())
+            info->Entry = ldt_make_entry( NtCurrentTeb(), 0xfff, WINE_LDT_FLAGS_DATA | WINE_LDT_FLAGS_32BIT );
+        else
+            return STATUS_UNSUCCESSFUL;
+    }
+    else
+    {
+        SERVER_START_REQ( get_selector_entry )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->entry = info->Selector >> 3;
+            status = wine_server_call( req );
+            if (!status)
+            {
+                if (reply->flags)
+                    info->Entry = ldt_make_entry( (void *)reply->base, reply->limit, reply->flags );
+                else
+                    status = STATUS_UNSUCCESSFUL;
+            }
+        }
+        SERVER_END_REQ;
+    }
+    if (status == STATUS_SUCCESS && ret_len)
+        /* yes, that's a bit strange, but it's the way it is */
+        *ret_len = sizeof(info->Entry);
+
+    return status;
+}
 
 /**********************************************************************
  *		signal_alloc_thread
