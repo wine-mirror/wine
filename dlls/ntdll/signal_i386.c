@@ -185,6 +185,30 @@ __ASM_GLOBAL_FUNC( rt_sigreturn,
                    "int $0x80" );
 #endif
 
+struct modify_ldt_s
+{
+    unsigned int  entry_number;
+    void         *base_addr;
+    unsigned int  limit;
+    unsigned int  seg_32bit : 1;
+    unsigned int  contents : 2;
+    unsigned int  read_exec_only : 1;
+    unsigned int  limit_in_pages : 1;
+    unsigned int  seg_not_present : 1;
+    unsigned int  usable : 1;
+    unsigned int  garbage : 25;
+};
+
+static inline int modify_ldt( int func, struct modify_ldt_s *ptr, unsigned long count )
+{
+    return syscall( 123 /* SYS_modify_ldt */, func, ptr, count );
+}
+
+static inline int set_thread_area( struct modify_ldt_s *ptr )
+{
+    return syscall( 243 /* SYS_set_thread_area */, ptr );
+}
+
 #elif defined (__BSDI__)
 
 #include <machine/frame.h>
@@ -214,6 +238,8 @@ typedef struct trapframe ucontext_t;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 
 #include <machine/trap.h>
+#include <machine/segments.h>
+#include <machine/sysarch.h>
 
 #define EAX_sig(context)     ((context)->uc_mcontext.mc_eax)
 #define EBX_sig(context)     ((context)->uc_mcontext.mc_ebx)
@@ -241,6 +267,9 @@ typedef struct trapframe ucontext_t;
 #define FPUX_sig(context)    NULL  /* FIXME */
 
 #elif defined (__OpenBSD__)
+
+#include <machine/segments.h>
+#include <machine/sysarch.h>
 
 #define EAX_sig(context)     ((context)->sc_eax)
 #define EBX_sig(context)     ((context)->sc_ebx)
@@ -318,6 +347,8 @@ typedef struct trapframe ucontext_t;
 
 #elif defined (__APPLE__)
 
+#include <i386/user_ldt.h>
+
 /* work around silly renaming of struct members in OS X 10.5 */
 #if __DARWIN_UNIX03 && defined(_STRUCT_X86_EXCEPTION_STATE32)
 #define EAX_sig(context)     ((context)->uc_mcontext->__ss.__eax)
@@ -365,6 +396,9 @@ typedef struct trapframe ucontext_t;
 
 #elif defined(__NetBSD__)
 
+#include <machine/segments.h>
+#include <machine/sysarch.h>
+
 #define EAX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EAX])
 #define EBX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_EBX])
 #define ECX_sig(context)       ((context)->uc_mcontext.__gregs[_REG_ECX])
@@ -393,6 +427,9 @@ typedef struct trapframe ucontext_t;
 #define T_XMMFLT T_XMM
 
 #elif defined(__GNU__)
+
+#include <mach/i386/mach_i386.h>
+#include <mach/mach_traps.h>
 
 #define EAX_sig(context)     ((context)->uc_mcontext.gregs[REG_EAX])
 #define EBX_sig(context)     ((context)->uc_mcontext.gregs[REG_EBX])
@@ -439,6 +476,8 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 static const size_t teb_size = 4096;  /* we reserve one page for the TEB */
 static size_t signal_stack_mask;
 static size_t signal_stack_size;
+
+static ULONG first_ldt_entry = 32;
 
 static wine_signal_handler handlers[256];
 
@@ -2294,6 +2333,58 @@ static LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char f
     return entry;
 }
 
+static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+{
+    int index = sel >> 3;
+
+#ifdef linux
+    struct modify_ldt_s ldt_info = { index };
+
+    ldt_info.base_addr       = wine_ldt_get_base( &entry );
+    ldt_info.limit           = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
+    ldt_info.seg_32bit       = entry.HighWord.Bits.Default_Big;
+    ldt_info.contents        = (entry.HighWord.Bits.Type >> 2) & 3;
+    ldt_info.read_exec_only  = !(entry.HighWord.Bits.Type & 2);
+    ldt_info.limit_in_pages  = entry.HighWord.Bits.Granularity;
+    ldt_info.seg_not_present = !entry.HighWord.Bits.Pres;
+    ldt_info.usable          = entry.HighWord.Bits.Sys;
+    if (modify_ldt( 0x11, &ldt_info, sizeof(ldt_info) ) < 0) perror( "modify_ldt" );
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
+    /* The kernel will only let us set LDTs with user priority level */
+    if (entry.HighWord.Bits.Pres && entry.HighWord.Bits.Dpl != 3) entry.HighWord.Bits.Dpl = 3;
+    if (i386_set_ldt(index, (union descriptor *)&entry, 1) < 0)
+    {
+        perror("i386_set_ldt");
+        fprintf( stderr, "Did you reconfigure the kernel with \"options USER_LDT\"?\n" );
+        exit(1);
+    }
+#elif defined(__svr4__) || defined(_SCO_DS)
+    struct ssd ldt_mod;
+
+    ldt_mod.sel  = sel;
+    ldt_mod.bo   = (unsigned long)wine_ldt_get_base(&entry);
+    ldt_mod.ls   = entry.LimitLow | (entry.HighWord.Bits.LimitHi << 16);
+    ldt_mod.acc1 = entry.HighWord.Bytes.Flags1;
+    ldt_mod.acc2 = entry.HighWord.Bytes.Flags2 >> 4;
+    if (sysi86(SI86DSCR, &ldt_mod) == -1) perror("sysi86");
+#elif defined(__APPLE__)
+    if (i386_set_ldt(index, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
+#elif defined(__GNU__)
+    if (i386_set_ldt(mach_thread_self(), sel, (descriptor_list_t)&entry, 1) != KERN_SUCCESS)
+        perror("i386_set_ldt");
+#else
+    fprintf( stderr, "No LDT support on this platform\n" );
+    exit(1);
+#endif
+
+    wine_ldt_copy.base[index]  = wine_ldt_get_base( &entry );
+    wine_ldt_copy.limit[index] = wine_ldt_get_limit( &entry );
+    wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                  (entry.HighWord.Bits.Default_Big ? WINE_LDT_FLAGS_32BIT : 0) |
+                                  WINE_LDT_FLAGS_ALLOCATED);
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */
@@ -2341,6 +2432,25 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
 
     return status;
 }
+
+
+/******************************************************************************
+ *           NtSetLdtEntries   (NTDLL.@)
+ *           ZwSetLdtEntries   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
+{
+    if (sel1 >> 16 || sel2 >> 16) return STATUS_INVALID_LDT_DESCRIPTOR;
+    if (sel1 && (sel1 >> 3) < first_ldt_entry) return STATUS_INVALID_LDT_DESCRIPTOR;
+    if (sel2 && (sel2 >> 3) < first_ldt_entry) return STATUS_INVALID_LDT_DESCRIPTOR;
+
+    ldt_lock();
+    if (sel1) ldt_set_entry( sel1, entry1 );
+    if (sel2) ldt_set_entry( sel2, entry2 );
+    ldt_unlock();
+   return STATUS_SUCCESS;
+}
+
 
 /**********************************************************************
  *		signal_alloc_thread

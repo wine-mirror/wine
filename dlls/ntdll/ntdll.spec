@@ -380,7 +380,7 @@
 @ stdcall NtSetInformationToken(long long ptr long)
 @ stdcall NtSetIntervalProfile(long long)
 @ stdcall NtSetIoCompletion(ptr long long long long)
-@ stdcall NtSetLdtEntries(long long long long long long)
+@ stdcall NtSetLdtEntries(long int64 long int64)
 @ stub NtSetLowEventPair
 @ stub NtSetLowWaitHighEventPair
 @ stub NtSetLowWaitHighThread
