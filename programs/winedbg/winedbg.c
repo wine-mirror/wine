@@ -500,6 +500,7 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->num_frames = 0;
     t->curr_frame = -1;
     t->addr_mode = AddrModeFlat;
+    t->suspended = FALSE;
 
     snprintf(t->name, sizeof(t->name), "%04x", tid);
 

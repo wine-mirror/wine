@@ -88,6 +88,7 @@ struct gdb_context
     int                         other_tid; /* tid to be used in any other operation */
     /* current Win32 trap env */
     DEBUG_EVENT                 de;
+    DWORD                       de_reply;
     unsigned                    last_sig;
     BOOL                        in_trap;
     /* Win32 information */
@@ -135,17 +136,6 @@ static inline unsigned char hex_to0(int x)
 {
     assert(x >= 0 && x < 16);
     return "0123456789abcdef"[x];
-}
-
-static int hex_to_int(const char* src, size_t len)
-{
-    unsigned int returnval = 0;
-    while (len--)
-    {
-        returnval <<= 4;
-        returnval |= hex_from0(*src++);
-    }
-    return returnval;
 }
 
 static void hex_from(void* dst, const char* src, size_t len)
@@ -397,6 +387,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
 static void handle_debug_event(struct gdb_context* gdbctx)
 {
     DEBUG_EVENT *de = &gdbctx->de;
+    struct dbg_thread *thread;
 
     union {
         char                bufferA[256];
@@ -406,6 +397,7 @@ static void handle_debug_event(struct gdb_context* gdbctx)
     dbg_curr_thread = dbg_get_thread(gdbctx->process, de->dwThreadId);
     gdbctx->exec_tid = de->dwThreadId;
     gdbctx->other_tid = de->dwThreadId;
+    gdbctx->de_reply = DBG_REPLY_LATER;
 
     switch (de->dwDebugEventCode)
     {
@@ -518,35 +510,34 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         FIXME("%08x:%08x: unknown event (%u)\n",
             de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
+
+    if (!gdbctx->in_trap || !gdbctx->process) return;
+
+    LIST_FOR_EACH_ENTRY(thread, &gdbctx->process->threads, struct dbg_thread, entry)
+    {
+        if (!thread->suspended) SuspendThread(thread->handle);
+        thread->suspended = TRUE;
+    }
 }
 
-static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
+static void handle_step_or_continue(struct gdb_context* gdbctx, int tid, BOOL step, int sig)
 {
-    if (dbg_curr_thread)
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+
+    if (tid == 0) tid = dbg_curr_thread->tid;
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
     {
-        if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
-            ERR("Failed to continue thread %04x, error %u\n",
-                dbg_curr_thread->tid, GetLastError());
+        if (tid != -1 && thread->tid != tid) continue;
+        if (!thread->suspended) continue;
+        thread->suspended = FALSE;
+
+        if (process->pid == gdbctx->de.dwProcessId && thread->tid == gdbctx->de.dwThreadId)
+            gdbctx->de_reply = (sig == -1 ? DBG_CONTINUE : DBG_EXCEPTION_NOT_HANDLED);
+
+        dbg_thread_set_single_step(thread, step);
+        ResumeThread(thread->handle);
     }
-    else
-        ERR("Cannot find last thread\n");
-}
-
-
-static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsigned int threadid)
-{
-
-    if (dbg_curr_thread)
-    {
-        if(dbg_curr_thread->tid  == threadid){
-            /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
-            if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
-                ERR("Failed to continue thread %04x, error %u\n",
-                    dbg_curr_thread->tid, GetLastError());
-        }
-    }
-    else
-        ERR("Cannot find last thread\n");
 }
 
 static BOOL	check_for_interrupt(struct gdb_context* gdbctx)
@@ -578,6 +569,9 @@ static BOOL	check_for_interrupt(struct gdb_context* gdbctx)
 
 static void    wait_for_debuggee(struct gdb_context* gdbctx)
 {
+    if (gdbctx->de.dwDebugEventCode)
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, gdbctx->de_reply);
+
     gdbctx->in_trap = FALSE;
     for (;;)
     {
@@ -610,9 +604,11 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 
 static void detach_debuggee(struct gdb_context* gdbctx, BOOL kill)
 {
-    assert(gdbctx->process->be_cpu);
-    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, FALSE);
-    resume_debuggee(gdbctx, DBG_CONTINUE);
+    handle_step_or_continue(gdbctx, -1, FALSE, -1);
+
+    if (gdbctx->de.dwDebugEventCode)
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
+
     if (!kill)
         DebugActiveProcessStop(gdbctx->process->pid);
     dbg_del_process(gdbctx->process);
@@ -881,51 +877,25 @@ static enum packet_return packet_last_signal(struct gdb_context* gdbctx)
 
 static enum packet_return packet_continue(struct gdb_context* gdbctx)
 {
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 0);
-    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
-        FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_tid, dbg_curr_thread->tid);
-    resume_debuggee(gdbctx, DBG_CONTINUE);
+    void *addr;
+
+    if (sscanf(gdbctx->in_packet, "%p", &addr) == 1)
+        FIXME("Continue at address %p not supported\n", addr);
+
+    handle_step_or_continue(gdbctx, gdbctx->exec_tid, FALSE, -1);
+
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
 }
 
 static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
 {
-    int i;
-    int defaultAction = -1; /* magic non action */
-    unsigned char sig;
-    int actions =0;
-    int actionIndex[20]; /* allow for up to 20 actions */
-    int threadIndex[20];
-    int threadCount = 0;
-    unsigned int threadIDs[100]; /* TODO: Should make this dynamic */
-    unsigned int threadID = 0;
-    struct dbg_thread*  thd;
+    char *buf = gdbctx->in_packet, *end = gdbctx->in_packet + gdbctx->in_packet_len;
 
-    /* OK we have vCont followed by..
-    * ? for query
-    * c for packet_continue
-    * Csig for packet_continue_signal
-    * s for step
-    * Ssig  for step signal
-    * and then an optional thread ID at the end..
-    * *******************************************/
-
-    /* Query */
     if (gdbctx->in_packet[4] == '?')
     {
-        /*
-          Reply:
-          `vCont[;action]...'
-          The vCont packet is supported. Each action is a supported command in the vCont packet.
-          `'
-          The vCont packet is not supported.  (this didn't seem to be obeyed!)
-        */
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "vCont");
-        /* add all the supported actions to the reply (all of them for now) */
         packet_reply_add(gdbctx, ";c");
         packet_reply_add(gdbctx, ";C");
         packet_reply_add(gdbctx, ";s");
@@ -934,141 +904,37 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
         return packet_done;
     }
 
-    /* go through the packet and identify where all the actions start at */
-    for (i = 4; i < gdbctx->in_packet_len - 1; i++)
+    while (buf < end && (buf = memchr(buf + 1, ';', end - buf - 1)))
     {
-        if (gdbctx->in_packet[i] == ';')
-        {
-            threadIndex[actions] = 0;
-            actionIndex[actions++] = i;
-        }
-        else if (gdbctx->in_packet[i] == ':')
-        {
-            threadIndex[actions - 1] = i;
-        }
-    }
+        int tid = -1, sig = -1;
+        int action, n;
 
-    /* now look up the default action */
-    for (i = 0 ; i < actions; i++)
-    {
-        if (threadIndex[i] == 0)
+        switch ((action = buf[1]))
         {
-            if (defaultAction != -1)
-            {
-                fprintf(stderr,"Too many default actions specified\n");
+        default:
+            return packet_error;
+        case 'c':
+        case 's':
+            buf += 2;
+            break;
+        case 'C':
+        case 'S':
+            if (sscanf(buf, ";%*c%2x", &sig) <= 0 ||
+                sig != gdbctx->last_sig)
                 return packet_error;
-            }
-            defaultAction = i;
-        }
-    }
-
-    /* Now, I have this default action thing that needs to be applied to all non counted threads */
-
-    /* go through all the threads and stick their ids in the to be done list. */
-    LIST_FOR_EACH_ENTRY(thd, &gdbctx->process->threads, struct dbg_thread, entry)
-    {
-        threadIDs[threadCount++] = thd->tid;
-        /* check to see if we have more threads than I counted on, and tell the user what to do
-         * (they're running winedbg, so I'm sure they can fix the problem from the error message!) */
-        if (threadCount == 100)
-        {
-            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programs/winedbg/gdbproxy.c to be higher\n");
+            buf += 4;
             break;
         }
+
+        if (buf > end)
+            return packet_error;
+        if (buf < end && *buf == ':' && (n = sscanf(buf, ":%x", &tid)) <= 0)
+            return packet_error;
+
+        handle_step_or_continue(gdbctx, tid, action == 's' || action == 'S', sig);
     }
 
-    /* Ok, now we have... actionIndex full of actions and we know what threads there are, so all
-     * that remains is to apply the actions to the threads and the default action to any threads
-     * left */
-    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
-        FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_tid, dbg_curr_thread->tid);
-
-    /* deal with the threaded stuff first */
-    for (i = 0; i < actions ; i++)
-    {
-        if (threadIndex[i] != 0)
-        {
-            int j, idLength = 0;
-            if (i < actions - 1)
-            {
-                idLength = (actionIndex[i+1] - threadIndex[i]) - 1;
-            }
-            else
-            {
-                idLength = (gdbctx->in_packet_len - threadIndex[i]) - 1;
-            }
-
-            threadID = hex_to_int(gdbctx->in_packet + threadIndex[i] + 1 , idLength);
-            /* process the action */
-            switch (gdbctx->in_packet[actionIndex[i] + 1])
-            {
-            case 's': /* step */
-                if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
-                /* fall through*/
-            case 'c': /* continue */
-                resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
-                break;
-            case 'S': /* step Sig, */
-                if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
-                /* fall through */
-            case 'C': /* continue sig */
-                hex_from(&sig, gdbctx->in_packet + actionIndex[i] + 2, 1);
-                /* cannot change signals on the fly */
-                TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
-                if (sig != gdbctx->last_sig)
-                    return packet_error;
-                resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
-                break;
-            }
-            for (j = 0 ; j < threadCount; j++)
-            {
-                if (threadIDs[j] == threadID)
-                {
-                    threadIDs[j] = 0;
-                    break;
-                }
-            }
-        }
-    } /* for i=0 ; i< actions */
-
-    /* now we have manage the default action */
-    if (defaultAction >= 0)
-    {
-        for (i = 0 ; i< threadCount; i++)
-        {
-            /* check to see if we've already done something to the thread*/
-            if (threadIDs[i] != 0)
-            {
-                /* if not apply the default action*/
-                threadID = threadIDs[i];
-                /* process the action (yes this is almost identical to the one above!) */
-                switch (gdbctx->in_packet[actionIndex[defaultAction] + 1])
-                {
-                case 's': /* step */
-                    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
-                    /* fall through */
-                case 'c': /* continue */
-                    resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
-                    break;
-                case 'S':
-                    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
-                     /* fall through */
-                case 'C': /* continue sig */
-                    hex_from(&sig, gdbctx->in_packet + actionIndex[defaultAction] + 2, 1);
-                    /* cannot change signals on the fly */
-                    TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
-                    if (sig != gdbctx->last_sig)
-                        return packet_error;
-                    resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
-                    break;
-                }
-            }
-        }
-    } /* if(defaultAction >=0) */
-
     wait_for_debuggee(gdbctx);
-    if (gdbctx->process && dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, FALSE);
     return packet_reply_status(gdbctx);
 }
 
@@ -1087,19 +953,21 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
 
 static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 {
-    unsigned char sig;
+    void *addr;
+    int sig, n;
 
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 2);
-    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
-        FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_tid, dbg_curr_thread->tid);
-    hex_from(&sig, gdbctx->in_packet, 1);
-    /* cannot change signals on the fly */
-    TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
+    if ((n = sscanf(gdbctx->in_packet, "%x;%p", &sig, &addr)) == 2)
+        FIXME("Continue at address %p not supported\n", addr);
+    if (n < 1) return packet_error;
+
     if (sig != gdbctx->last_sig)
+    {
+        ERR("Changing signals is not supported.\n");
         return packet_error;
-    resume_debuggee(gdbctx, DBG_EXCEPTION_NOT_HANDLED);
+    }
+
+    handle_step_or_continue(gdbctx, gdbctx->exec_tid, FALSE, sig);
+
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
 }
@@ -1674,15 +1542,14 @@ static enum packet_return packet_set(struct gdb_context* gdbctx)
 
 static enum packet_return packet_step(struct gdb_context* gdbctx)
 {
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 0);
-    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
-        FIXME("Can't single-step thread %04x while on thread %04x\n",
-            gdbctx->exec_tid, dbg_curr_thread->tid);
-    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
-    resume_debuggee(gdbctx, DBG_CONTINUE);
+    void *addr;
+
+    if (sscanf(gdbctx->in_packet, "%p", &addr) == 1)
+        FIXME("Continue at address %p not supported\n", addr);
+
+    handle_step_or_continue(gdbctx, gdbctx->exec_tid, TRUE, -1);
+
     wait_for_debuggee(gdbctx);
-    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, FALSE);
     return packet_reply_status(gdbctx);
 }
 
