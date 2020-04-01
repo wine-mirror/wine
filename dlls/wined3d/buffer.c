@@ -1198,6 +1198,9 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
     struct wined3d_context *context;
     DWORD dst_location;
 
+    TRACE("dst_buffer %p, dst_offset %u, src_buffer %p, src_offset %u, size %u.\n",
+            dst_buffer, dst_offset, src_buffer, src_offset, size);
+
     buffer_mark_used(dst_buffer);
     buffer_mark_used(src_buffer);
 
