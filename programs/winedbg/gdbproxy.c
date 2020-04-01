@@ -84,8 +84,8 @@ struct gdb_context
     int                         out_len;
     int                         out_curr_packet;
     /* generic GDB thread information */
-    struct dbg_thread*          exec_thread;    /* thread used in step & continue */
-    struct dbg_thread*          other_thread;   /* thread to be used in any other operation */
+    int                         exec_tid; /* tid used in step & continue */
+    int                         other_tid; /* tid to be used in any other operation */
     /* current Win32 trap env */
     unsigned                    last_sig;
     BOOL                        in_trap;
@@ -270,6 +270,23 @@ static inline void cpu_register_hex_from(struct gdb_context *gdbctx,
  * =============================================== *
  */
 
+static struct dbg_thread* dbg_thread_from_tid(struct gdb_context* gdbctx, int tid)
+{
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+
+    if (!process) return NULL;
+
+    if (tid == 0) return dbg_curr_thread;
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        if (tid > 0 && thread->tid != tid) continue;
+        return thread;
+    }
+
+    return dbg_curr_thread;
+}
+
 static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
 {
     struct backend_cpu *backend;
@@ -384,6 +401,8 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     } u;
 
     dbg_curr_thread = dbg_get_thread(gdbctx->process, de->dwThreadId);
+    gdbctx->exec_tid = de->dwThreadId;
+    gdbctx->other_tid = de->dwThreadId;
 
     switch (de->dwDebugEventCode)
     {
@@ -464,8 +483,6 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                 de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
 
         assert(dbg_curr_thread);
-        if (dbg_curr_thread == gdbctx->exec_thread) gdbctx->exec_thread = NULL;
-        if (dbg_curr_thread == gdbctx->other_thread) gdbctx->other_thread = NULL;
         dbg_del_thread(dbg_curr_thread);
         break;
 
@@ -865,9 +882,9 @@ static enum packet_return packet_continue(struct gdb_context* gdbctx)
 {
     /* FIXME: add support for address in packet */
     assert(gdbctx->in_packet_len == 0);
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
+    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
         FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
+            gdbctx->exec_tid, dbg_curr_thread->tid);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
@@ -962,9 +979,9 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
     /* Ok, now we have... actionIndex full of actions and we know what threads there are, so all
      * that remains is to apply the actions to the threads and the default action to any threads
      * left */
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
+    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
         FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
+            gdbctx->exec_tid, dbg_curr_thread->tid);
 
     /* deal with the threaded stuff first */
     for (i = 0; i < actions ; i++)
@@ -1073,9 +1090,9 @@ static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 
     /* FIXME: add support for address in packet */
     assert(gdbctx->in_packet_len == 2);
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
+    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
         FIXME("Can't continue thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
+            gdbctx->exec_tid, dbg_curr_thread->tid);
     hex_from(&sig, gdbctx->in_packet, 1);
     /* cannot change signals on the fly */
     TRACE("sigs: %u %u\n", sig, gdbctx->last_sig);
@@ -1094,7 +1111,7 @@ static enum packet_return packet_detach(struct gdb_context* gdbctx)
 
 static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 {
-    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
     struct backend_cpu *backend;
     dbg_ctx_t ctx;
     size_t i;
@@ -1118,7 +1135,7 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 
 static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 {
-    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
     struct backend_cpu *backend;
     dbg_ctx_t ctx;
     const char *ptr;
@@ -1157,28 +1174,16 @@ static enum packet_return packet_kill(struct gdb_context* gdbctx)
 
 static enum packet_return packet_thread(struct gdb_context* gdbctx)
 {
-    char* end;
-    unsigned thread;
-
     switch (gdbctx->in_packet[0])
     {
     case 'c':
+        if (sscanf(gdbctx->in_packet, "c%x", &gdbctx->exec_tid) == 1)
+            return packet_ok;
+        return packet_error;
     case 'g':
-        if (gdbctx->in_packet[1] == '-')
-            thread = -strtol(gdbctx->in_packet + 2, &end, 16);
-        else
-            thread = strtol(gdbctx->in_packet + 1, &end, 16);
-        if (end == NULL || end > gdbctx->in_packet + gdbctx->in_packet_len)
-        {
-            ERR("Failed to parse %s\n",
-                debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
-            return packet_error;
-        }
-        if (gdbctx->in_packet[0] == 'c')
-            gdbctx->exec_thread = dbg_get_thread(gdbctx->process, thread);
-        else
-            gdbctx->other_thread = dbg_get_thread(gdbctx->process, thread);
-        return packet_ok;
+        if (sscanf(gdbctx->in_packet, "g%x", &gdbctx->other_tid) == 1)
+            return packet_ok;
+        return packet_error;
     default:
         FIXME("Unknown thread sub-command %c\n", gdbctx->in_packet[0]);
         return packet_error;
@@ -1259,7 +1264,7 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
 
 static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 {
-    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
     struct backend_cpu *backend;
     dbg_ctx_t ctx;
     size_t reg;
@@ -1291,7 +1296,7 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 
 static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 {
-    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct dbg_thread *thread = dbg_thread_from_tid(gdbctx, gdbctx->other_tid);
     struct backend_cpu *backend;
     dbg_ctx_t ctx;
     size_t reg;
@@ -1670,9 +1675,9 @@ static enum packet_return packet_step(struct gdb_context* gdbctx)
 {
     /* FIXME: add support for address in packet */
     assert(gdbctx->in_packet_len == 0);
-    if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
+    if (gdbctx->exec_tid > 0 && dbg_curr_thread->tid != gdbctx->exec_tid)
         FIXME("Can't single-step thread %04x while on thread %04x\n",
-            gdbctx->exec_thread->tid, dbg_curr_thread->tid);
+            gdbctx->exec_tid, dbg_curr_thread->tid);
     if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
@@ -1976,7 +1981,8 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->out_len = 0;
     gdbctx->out_curr_packet = -1;
 
-    gdbctx->exec_thread = gdbctx->other_thread = NULL;
+    gdbctx->exec_tid = -1;
+    gdbctx->other_tid = -1;
     gdbctx->last_sig = 0;
     gdbctx->in_trap = FALSE;
     gdbctx->process = NULL;
