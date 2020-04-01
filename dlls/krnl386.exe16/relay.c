@@ -59,37 +59,22 @@ typedef struct {
 } RELAY_Stack16;
 
 
-static const WCHAR **debug_relay_excludelist;
-static const WCHAR **debug_relay_includelist;
-static const WCHAR **debug_snoop_excludelist;
-static const WCHAR **debug_snoop_includelist;
+static const char **debug_relay_excludelist;
+static const char **debug_relay_includelist;
+static const char **debug_snoop_excludelist;
+static const char **debug_snoop_includelist;
 
-/* compare an ASCII and a Unicode string without depending on the current codepage */
-static inline int strcmpiAW( const char *strA, const WCHAR *strW )
-{
-    while (*strA && (toupperW((unsigned char)*strA) == toupperW(*strW))) { strA++; strW++; }
-    return toupperW((unsigned char)*strA) - toupperW(*strW);
-}
-
-/* compare an ASCII and a Unicode string without depending on the current codepage */
-static inline int strncmpiAW( const char *strA, const WCHAR *strW, int n )
-{
-    int ret = 0;
-    for ( ; n > 0; n--, strA++, strW++)
-        if ((ret = toupperW((unsigned char)*strA) - toupperW(*strW)) || !*strA) break;
-    return ret;
-}
 
 /***********************************************************************
  *           build_list
  *
  * Build a function list from a ';'-separated string.
  */
-static const WCHAR **build_list( const WCHAR *buffer )
+static const char **build_list( const WCHAR *buffer )
 {
     int count = 1;
     const WCHAR *p = buffer;
-    const WCHAR **ret;
+    const char **ret;
 
     while ((p = strchrW( p, ';' )))
     {
@@ -98,17 +83,17 @@ static const WCHAR **build_list( const WCHAR *buffer )
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
     if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
-                                (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
+                                (count + 1) * sizeof(char *) + (strlenW(buffer) + 1) )))
     {
-        WCHAR *str = (WCHAR *)(ret + count + 1);
-        WCHAR *p = str;
+        char *str = (char *)(ret + count + 1);
+        char *p = str;
 
-        strcpyW( str, buffer );
+        while ((*str++ = *buffer++));
         count = 0;
         for (;;)
         {
             ret[count++] = p;
-            if (!(p = strchrW( p, ';' ))) break;
+            if (!(p = strchr( p, ';' ))) break;
             *p++ = 0;
         }
         ret[count++] = NULL;
@@ -185,25 +170,25 @@ void RELAY16_InitDebugLists(void)
  *
  * Check if a given module and function is in the list.
  */
-static BOOL check_list( const char *module, int ordinal, const char *func, const WCHAR **list )
+static BOOL check_list( const char *module, int ordinal, const char *func, const char **list )
 {
     char ord_str[10];
 
     sprintf( ord_str, "%d", ordinal );
     for(; *list; list++)
     {
-        const WCHAR *p = strrchrW( *list, '.' );
+        const char *p = strrchr( *list, '.' );
         if (p && p > *list)  /* check module and function */
         {
             int len = p - *list;
-            if (strncmpiAW( module, *list, len-1 ) || module[len]) continue;
+            if (_strnicmp( module, *list, len-1 ) || module[len]) continue;
             if (p[1] == '*' && !p[2]) return TRUE;
-            if (!strcmpiAW( ord_str, p + 1 )) return TRUE;
-            if (func && !strcmpiAW( func, p + 1 )) return TRUE;
+            if (!strcmp( ord_str, p + 1 )) return TRUE;
+            if (func && !_strnicmp( func, p + 1, -1 )) return TRUE;
         }
         else  /* function only */
         {
-            if (func && !strcmpiAW( func, *list )) return TRUE;
+            if (func && !_strnicmp( func, *list, -1 )) return TRUE;
         }
     }
     return FALSE;

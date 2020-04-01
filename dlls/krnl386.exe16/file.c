@@ -461,10 +461,13 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 UINT WINAPI GetTempDrive( BYTE ignored )
 {
     WCHAR buffer[MAX_PATH];
-    BYTE ret;
+    BYTE ret = 'C';
 
-    if (GetTempPathW( MAX_PATH, buffer )) ret = (BYTE)toupperW(buffer[0]);
-    else ret = 'C';
+    if (GetTempPathW( MAX_PATH, buffer ))
+    {
+        ret = buffer[0];
+        if (ret >= 'a' && ret <= 'z') ret += 'A' - 'a';
+    }
     return MAKELONG( ret | (':' << 8), 1 );
 }
 
