@@ -502,7 +502,7 @@ static void dsound_render_destroy(struct strmbase_renderer *iface)
     filter->dsound = NULL;
 
     strmbase_renderer_cleanup(&filter->renderer);
-    CoTaskMemFree(filter);
+    free(filter);
 
     InterlockedDecrement(&object_locks);
 }
@@ -821,9 +821,8 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
     DSoundRenderImpl *object;
     HRESULT hr;
 
-    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
-    memset(object, 0, sizeof(*object));
 
     strmbase_renderer_init(&object->renderer, outer,
             &CLSID_DSoundRender, L"Audio Input pin (rendered)", &renderer_ops);
@@ -831,7 +830,7 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
     if (FAILED(hr = system_clock_create(&object->renderer.filter.IUnknown_inner, &object->system_clock)))
     {
         strmbase_renderer_cleanup(&object->renderer);
-        CoTaskMemFree(object);
+        free(object);
         return hr;
     }
 
@@ -842,7 +841,7 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
     {
         IUnknown_Release(object->system_clock);
         strmbase_renderer_cleanup(&object->renderer);
-        CoTaskMemFree(object);
+        free(object);
         return hr;
     }
 
@@ -852,7 +851,7 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
         IDirectSound8_Release(object->dsound);
         IUnknown_Release(object->system_clock);
         strmbase_renderer_cleanup(&object->renderer);
-        CoTaskMemFree(object);
+        free(object);
         return hr;
     }
 
