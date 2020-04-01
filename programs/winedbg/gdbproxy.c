@@ -786,16 +786,16 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
     return packet_done;
 }
 
-static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, unsigned idx)
+static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_ctx_t* ctx, unsigned idx)
 {
     const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
 
     if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, &gdbctx->context, idx),
+        packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, ctx, idx),
                             cpu_register_map[idx].gdb_length);
     else
     {
-        DWORD64     val = cpu_register(gdbctx, &gdbctx->context, idx);
+        DWORD64     val = cpu_register(gdbctx, ctx, idx);
         unsigned    i;
 
         for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
@@ -829,12 +829,9 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 
         for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
         {
-            /* FIXME: this call will also grow the buffer...
-             * unneeded, but not harmful
-             */
             packet_reply_val(gdbctx, i, 1);
             packet_reply_add(gdbctx, ":");
-            packet_reply_register_hex_to(gdbctx, i);
+            packet_reply_register_hex_to(gdbctx, &gdbctx->context, i);
             packet_reply_add(gdbctx, ";");
         }
 
@@ -1090,20 +1087,24 @@ static enum packet_return packet_detach(struct gdb_context* gdbctx)
 
 static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 {
-    int                 i;
+    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
+    size_t i;
 
     assert(gdbctx->in_trap);
 
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
-    {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, &ctx))
-            return packet_error;
-    }
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
+
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+    if (thread == dbg_curr_thread) ctx = gdbctx->context;
 
     packet_reply_open(gdbctx);
-    for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
-        packet_reply_register_hex_to(gdbctx, i);
+    for (i = 0; i < backend->gdb_num_regs; i++)
+        packet_reply_register_hex_to(gdbctx, &ctx, i);
 
     packet_reply_close(gdbctx);
     return packet_done;
@@ -1111,31 +1112,36 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 
 static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 {
-    const size_t cpu_num_regs = gdbctx->process->be_cpu->gdb_num_regs;
-    unsigned    i;
+    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
-    dbg_ctx_t *pctx = &gdbctx->context;
-    const char* ptr;
+    const char *ptr;
+    size_t i;
 
     assert(gdbctx->in_trap);
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
-    {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
-            return packet_error;
-    }
-    if (gdbctx->in_packet_len < cpu_num_regs * 2) return packet_error;
+
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
+
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+    if (thread == dbg_curr_thread) ctx = gdbctx->context;
+
+    if (gdbctx->in_packet_len < backend->gdb_num_regs * 2)
+        return packet_error;
 
     ptr = gdbctx->in_packet;
-    for (i = 0; i < cpu_num_regs; i++)
-        cpu_register_hex_from(gdbctx, pctx, i, &ptr);
+    for (i = 0; i < backend->gdb_num_regs; i++)
+        cpu_register_hex_from(gdbctx, &ctx, i, &ptr);
 
-    if (pctx != &gdbctx->context &&
-        !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
+    if (!backend->set_context(thread->handle, &ctx))
     {
-        ERR("Failed to set context for tid %04x, error %u\n",
-            gdbctx->other_thread->tid, GetLastError());
+        ERR("Failed to set context for tid %04x, error %u\n", thread->tid, GetLastError());
         return packet_error;
     }
+
+    if (thread == dbg_curr_thread) gdbctx->context = ctx;
     return packet_ok;
 }
 
@@ -1249,69 +1255,80 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
 
 static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 {
-    unsigned            reg;
+    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
-    dbg_ctx_t *pctx = &gdbctx->context;
+    size_t reg;
 
     assert(gdbctx->in_trap);
-    reg = hex_to_int(gdbctx->in_packet, gdbctx->in_packet_len);
-    if (reg >= gdbctx->process->be_cpu->gdb_num_regs)
+
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
+
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+    if (thread == dbg_curr_thread) ctx = gdbctx->context;
+
+    if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
+        return packet_error;
+    if (reg >= backend->gdb_num_regs)
     {
-        WARN("Unhandled register %u\n", reg);
+        WARN("Unhandled register %zu\n", reg);
         return packet_error;
     }
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
-    {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
-            return packet_error;
-    }
 
-    TRACE("%u => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, pctx, reg)));
+    TRACE("%zu => %s\n", reg, wine_dbgstr_longlong(cpu_register(gdbctx, &ctx, reg)));
 
     packet_reply_open(gdbctx);
-    packet_reply_register_hex_to(gdbctx, reg);
+    packet_reply_register_hex_to(gdbctx, &ctx, reg);
     packet_reply_close(gdbctx);
     return packet_done;
 }
 
 static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 {
-    unsigned            reg;
-    char*               ptr;
+    struct dbg_thread *thread = gdbctx->other_thread ? gdbctx->other_thread : dbg_curr_thread;
+    struct backend_cpu *backend;
     dbg_ctx_t ctx;
-    dbg_ctx_t *pctx = &gdbctx->context;
+    size_t reg;
+    char *ptr;
 
     assert(gdbctx->in_trap);
 
-    reg = strtoul(gdbctx->in_packet, &ptr, 16);
-    if (ptr == NULL || reg >= gdbctx->process->be_cpu->gdb_num_regs || *ptr++ != '=')
+    if (!thread) return packet_error;
+    if (!thread->process) return packet_error;
+    if (!(backend = thread->process->be_cpu)) return packet_error;
+
+    if (!backend->get_context(thread->handle, &ctx))
+        return packet_error;
+    if (thread == dbg_curr_thread) ctx = gdbctx->context;
+
+    if (!(ptr = strchr(gdbctx->in_packet, '=')))
+        return packet_error;
+    *ptr++ = '\0';
+
+    if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
+        return packet_error;
+    if (reg >= backend->gdb_num_regs)
     {
-        WARN("Unhandled register %s\n",
-            debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
         /* FIXME: if just the reg is above cpu_num_regs, don't tell gdb
          *        it wouldn't matter too much, and it fakes our support for all regs
          */
-        return (ptr == NULL) ? packet_error : packet_ok;
+        WARN("Unhandled register %zu\n", reg);
+        return packet_ok;
     }
 
-    TRACE("%u <= %s\n", reg,
-        debugstr_an(ptr, (int)(gdbctx->in_packet_len - (ptr - gdbctx->in_packet))));
+    TRACE("%zu <= %s\n", reg, debugstr_an(ptr, (int)(gdbctx->in_packet_len - (ptr - gdbctx->in_packet))));
 
-    if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
+    cpu_register_hex_from(gdbctx, &ctx, reg, (const char**)&ptr);
+    if (!backend->set_context(thread->handle, &ctx))
     {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
-            return packet_error;
-    }
-
-    cpu_register_hex_from(gdbctx, pctx, reg, (const char**)&ptr);
-    if (pctx != &gdbctx->context &&
-        !gdbctx->process->be_cpu->set_context(gdbctx->other_thread->handle, pctx))
-    {
-        ERR("Failed to set context for tid %04x, error %u\n",
-            gdbctx->other_thread->tid, GetLastError());
+        ERR("Failed to set context for tid %04x, error %u\n", thread->tid, GetLastError());
         return packet_error;
     }
 
+    if (thread == dbg_curr_thread) gdbctx->context = ctx;
     return packet_ok;
 }
 
