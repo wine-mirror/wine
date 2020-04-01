@@ -418,8 +418,8 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
 
         if (*szLineStart == '[')  /* section start */
         {
-            const WCHAR * szSectionEnd;
-            if (!(szSectionEnd = memrchrW( szLineStart, ']', szLineEnd - szLineStart )))
+            for (len = szLineEnd - szLineStart; len > 0; len--) if (szLineStart[len - 1] == ']') break;
+            if (!len)
             {
                 WARN("Invalid section header at line %d: %s\n",
                     line, debugstr_wn(szLineStart, (int)(szLineEnd - szLineStart)) );
@@ -427,7 +427,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             else
             {
                 szLineStart++;
-                len = (int)(szSectionEnd - szLineStart);
+                len -= 2;
                 /* no need to allocate +1 for NULL terminating character as
                  * already included in structure */
                 if (!(section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) + len * sizeof(WCHAR) )))
