@@ -6212,10 +6212,8 @@ static void test_rt_caps(void)
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
         hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-        todo_wine_if(i == 10 || i == 11)
         ok(SUCCEEDED(hr), "Test %u: Failed to create surface with caps %#x and caps2 %#x, hr %#x.\n",
            i, test_data[i].caps_in, test_data[i].caps2_in, hr);
-        if (FAILED(hr)) continue;
 
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
