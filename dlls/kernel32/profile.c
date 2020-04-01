@@ -270,8 +270,8 @@ static void PROFILE_Free( PROFILESECTION *section )
 /* returns TRUE if a whitespace character, else FALSE */
 static inline BOOL PROFILE_isspaceW(WCHAR c)
 {
-	/* ^Z (DOS EOF) is a space too  (found on CD-ROMs) */
-	return isspaceW(c) || c == 0x1a;
+    /* ^Z (DOS EOF) is a space too  (found on CD-ROMs) */
+    return (c >= 0x09 && c <= 0x0d) || c == 0x1a || c == 0x20;
 }
 
 static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len)

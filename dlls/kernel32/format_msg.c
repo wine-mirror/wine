@@ -184,7 +184,7 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
         }
         else *p++ = *format++;
     }
-    while (isdigitW(*format)) *p++ = *format++;
+    while (*format >= '0' && *format <= '9') *p++ = *format++;
 
     if (*format == '.')
     {
@@ -196,7 +196,7 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
             format++;
         }
         else
-            while (isdigitW(*format)) *p++ = *format++;
+            while (*format >= '0' && *format <= '9') *p++ = *format++;
     }
 
     /* replicate MS bug: drop an argument when using va_list with width/precision */

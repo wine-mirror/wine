@@ -362,7 +362,10 @@ static void WCEL_SaveYank(WCEL_Context* ctx, int beg, int end)
  */
 static inline BOOL WCEL_iswalnum(WCHAR wc)
 {
-    return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
+    WORD type;
+
+    GetStringTypeW( CT_CTYPE1, &wc, 1, &type );
+    return type & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 static int WCEL_GetLeftWordTransition(WCEL_Context* ctx, int ofs)
