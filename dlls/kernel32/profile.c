@@ -1600,6 +1600,23 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
     return ret;
 }
 
+static int get_hex_byte( const WCHAR *p )
+{
+    int val;
+
+    if (*p >= '0' && *p <= '9') val = *p - '0';
+    else if (*p >= 'A' && *p <= 'Z') val = *p - 'A' + 10;
+    else if (*p >= 'a' && *p <= 'z') val = *p - 'a' + 10;
+    else return -1;
+    val <<= 4;
+    p++;
+    if (*p >= '0' && *p <= '9') val += *p - '0';
+    else if (*p >= 'A' && *p <= 'Z') val += *p - 'A' + 10;
+    else if (*p >= 'a' && *p <= 'z') val += *p - 'a' + 10;
+    else return -1;
+    return val;
+}
+
 /***********************************************************************
  *           GetPrivateProfileStructW (KERNEL32.@)
  *
@@ -1608,70 +1625,29 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
 BOOL WINAPI GetPrivateProfileStructW (LPCWSTR section, LPCWSTR key,
                                       LPVOID buf, UINT len, LPCWSTR filename)
 {
-    BOOL	ret = FALSE;
+    BOOL ret = FALSE;
+    LPBYTE data = buf;
+    BYTE chksum = 0;
+    int val;
+    WCHAR *p, *buffer;
 
-    RtlEnterCriticalSection( &PROFILE_CritSect );
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (2 * len + 3) * sizeof(WCHAR) ))) return FALSE;
 
-    if (PROFILE_Open( filename, FALSE )) {
-        PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE, FALSE);
-	if (k) {
-	    TRACE("value (at %p): %s\n", k->value, debugstr_w(k->value));
-	    if (((strlenW(k->value) - 2) / 2) == len)
-	    {
-		LPWSTR end, p;
-		BOOL valid = TRUE;
-		WCHAR c;
-		DWORD chksum = 0;
+    if (GetPrivateProfileStringW( section, key, NULL, buffer, 2 * len + 3, filename ) != 2 * len + 2)
+        goto done;
 
-	        end  = k->value + strlenW(k->value); /* -> '\0' */
-	        /* check for invalid chars in ASCII coded hex string */
-	        for (p=k->value; p < end; p++)
-		{
-                    if (!isxdigitW(*p))
-		    {
-			WARN("invalid char '%x' in file %s->[%s]->%s !\n",
-                             *p, debugstr_w(filename), debugstr_w(section), debugstr_w(key));
-		        valid = FALSE;
-		        break;
-		    }
-		}
-		if (valid)
-		{
-		    BOOL highnibble = TRUE;
-		    BYTE b = 0, val;
-                    LPBYTE binbuf = buf;
-
-	            end -= 2; /* don't include checksum in output data */
-	            /* translate ASCII hex format into binary data */
-                    for (p=k->value; p < end; p++)
-            	    {
-	        	c = toupperW(*p);
-			val = (c > '9') ?
-				(c - 'A' + 10) : (c - '0');
-
-			if (highnibble)
-		    	    b = val << 4;
-			else
-			{
-		    	    b += val;
-		    	    *binbuf++ = b; /* feed binary data into output */
-		    	    chksum += b; /* calculate checksum */
-			}
-			highnibble ^= 1; /* toggle */
-            	    }
-		    /* retrieve stored checksum value */
-		    c = toupperW(*p++);
-		    b = ( (c > '9') ? (c - 'A' + 10) : (c - '0') ) << 4;
-		    c = toupperW(*p);
-		    b +=  (c > '9') ? (c - 'A' + 10) : (c - '0');
-	            if (b == (chksum & 0xff)) /* checksums match ? */
-                        ret = TRUE;
-                }
-            }
-	}
+    for (p = buffer; len; p += 2, len--)
+    {
+        if ((val = get_hex_byte( p )) == -1) goto done;
+        *data++ = val;
+        chksum += val;
     }
-    RtlLeaveCriticalSection( &PROFILE_CritSect );
+    /* retrieve stored checksum value */
+    if ((val = get_hex_byte( p )) == -1) goto done;
+    ret = ((BYTE)val == chksum);
 
+done:
+    HeapFree( GetProcessHeap(), 0, buffer );
     return ret;
 }
 
@@ -1730,17 +1706,8 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
     *p++ = hex[sum & 0xf];
     *p++ = '\0';
 
-    RtlEnterCriticalSection( &PROFILE_CritSect );
-
-    if (PROFILE_Open( filename, TRUE )) {
-        ret = PROFILE_SetString( section, key, outstring, FALSE);
-        if (ret) ret = PROFILE_FlushFile();
-    }
-
-    RtlLeaveCriticalSection( &PROFILE_CritSect );
-
+    ret = WritePrivateProfileStringW( section, key, outstring, filename );
     HeapFree( GetProcessHeap(), 0, outstring );
-
     return ret;
 }
 
