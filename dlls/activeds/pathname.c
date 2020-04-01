@@ -39,6 +39,7 @@ typedef struct
 {
     IADsPathname IADsPathname_iface;
     LONG ref;
+    BSTR adspath;
 } Pathname;
 
 static inline Pathname *impl_from_IADsPathname(IADsPathname *iface)
@@ -112,10 +113,16 @@ static HRESULT WINAPI path_Invoke(IADsPathname *iface, DISPID dispid, REFIID rii
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR path, LONG type)
+static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
 {
-    FIXME("%p,%s,%d: stub\n", iface, debugstr_w(path), type);
-    return E_NOTIMPL;
+    Pathname *path = impl_from_IADsPathname(iface);
+
+    FIXME("%p,%s,%d: stub\n", iface, debugstr_w(adspath), type);
+
+    if (!adspath) return E_INVALIDARG;
+
+    path->adspath = SysAllocString(adspath);
+    return path->adspath ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI path_SetDisplayType(IADsPathname *iface, LONG type)
@@ -124,10 +131,16 @@ static HRESULT WINAPI path_SetDisplayType(IADsPathname *iface, LONG type)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *path)
+static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspath)
 {
-    FIXME("%p,%d,%p: stub\n", iface, type, path);
-    return E_NOTIMPL;
+    Pathname *path = impl_from_IADsPathname(iface);
+
+    FIXME("%p,%d,%p: stub\n", iface, type, adspath);
+
+    if (!adspath) return E_INVALIDARG;
+
+    *adspath = SysAllocString(path->adspath);
+    return *adspath ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)
@@ -210,6 +223,7 @@ static HRESULT Pathname_create(REFIID riid, void **obj)
 
     path->IADsPathname_iface.lpVtbl = &IADsPathname_vtbl;
     path->ref = 1;
+    path->adspath = NULL;
 
     hr = IADsPathname_QueryInterface(&path->IADsPathname_iface, riid, obj);
     IADsPathname_Release(&path->IADsPathname_iface);
