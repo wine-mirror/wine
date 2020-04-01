@@ -5132,8 +5132,16 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     unsigned int i, idx_size = 0;
     const void *idx_data = NULL;
 
+    TRACE("device %p, state %p, parameters %p.\n", device, state, parameters);
+
     if (!parameters->indirect && !parameters->u.direct.index_count)
         return;
+
+    if (!parameters->indirect)
+        TRACE("base_vertex_idx %d, start_idx %u, index_count %u, start_instance %u, instance_count %u.\n",
+                parameters->u.direct.base_vertex_idx, parameters->u.direct.start_idx,
+                parameters->u.direct.index_count, parameters->u.direct.start_instance,
+                parameters->u.direct.instance_count);
 
     if (!(rtv = fb->render_targets[0]))
         rtv = fb->depth_stencil;
@@ -5367,6 +5375,8 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         wined3d_fence_issue(context->buffer_fences[i], device);
 
     context_release(context);
+
+    TRACE("Draw completed.\n");
 }
 
 void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *context_gl)
