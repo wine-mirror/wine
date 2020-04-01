@@ -29,6 +29,7 @@
 #include "wine/windef16.h"
 #include "winbase.h"
 #include "winnt.h"     /* for PCONTEXT */
+#include "kernel16_private.h"
 
 #define MAX_DOS_DRIVES  26
 
@@ -64,7 +65,7 @@ extern WORD relay_data_sel DECLSPEC_HIDDEN;
  *       segmented mode is recognized by checking whether 'seg' is 32-bit
  *       selector which is neither system selector nor zero.
  */
-#define CTX_SEG_OFF_TO_LIN(context,seg,off) (wine_ldt_get_ptr((seg),(off)))
+#define CTX_SEG_OFF_TO_LIN(context,seg,off) (ldt_get_ptr((seg),(off)))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \

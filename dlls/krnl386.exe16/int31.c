@@ -242,9 +242,8 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         TRACE( "get selector base address (0x%04x)\n", BX_reg(context) );
         {
             LDT_ENTRY entry;
-            WORD sel = BX_reg(context);
-            wine_ldt_get_entry( sel, &entry );
-            if (wine_ldt_is_empty(&entry))
+
+            if (!ldt_get_entry( BX_reg(context), &entry ) || wine_ldt_is_empty(&entry))
             {
                 context->Eax = 0x8022;  /* invalid selector */
                 SET_CFLAG(context);
@@ -301,7 +300,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         {
             LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
                                                    context->Edi );
-            wine_ldt_get_entry( BX_reg(context), entry );
+            ldt_get_entry( BX_reg(context), entry );
         }
         break;
 
@@ -310,7 +309,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         {
             LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
                                                    context->Edi );
-            wine_ldt_set_entry( BX_reg(context), entry );
+            if (!ldt_is_system( BX_reg(context) )) ldt_set_entry( BX_reg(context), *entry );
         }
         break;
 

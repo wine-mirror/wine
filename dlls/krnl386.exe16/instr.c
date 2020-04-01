@@ -53,14 +53,14 @@ static inline void add_stack( CONTEXT *context, int offset )
 
 static inline void *make_ptr( CONTEXT *context, DWORD seg, DWORD off, int long_addr )
 {
-    if (wine_ldt_is_system(seg)) return (void *)off;
+    if (ldt_is_system(seg)) return (void *)off;
     if (!long_addr) off = LOWORD(off);
     return (char *) MapSL( MAKESEGPTR( seg, 0 ) ) + off;
 }
 
 static inline void *get_stack( CONTEXT *context )
 {
-    return wine_ldt_get_ptr( context->SegSs, context->Esp );
+    return ldt_get_ptr( context->SegSs, context->Esp );
 }
 
 #include "pshpack1.h"
@@ -315,9 +315,9 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
     if (segprefix != -1) seg = segprefix;
 
     /* Make sure the segment and offset are valid */
-    if (wine_ldt_is_system(seg)) return (BYTE *)(base + (index << ss));
+    if (ldt_is_system(seg)) return (BYTE *)(base + (index << ss));
     if ((seg & 7) != 7) return NULL;
-    wine_ldt_get_entry( seg, &entry );
+    if (!ldt_get_entry( seg, &entry )) return NULL;
     if (wine_ldt_is_empty( &entry )) return NULL;
     if (wine_ldt_get_limit(&entry) < (base + (index << ss))) return NULL;
     return (BYTE *)wine_ldt_get_base(&entry) + base + (index << ss);
@@ -790,7 +790,7 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             break;  /* Unable to emulate it */
 
         case 0xcf: /* iret */
-            if (wine_ldt_is_system(context->SegCs)) break;  /* don't emulate it in 32-bit code */
+            if (ldt_is_system(context->SegCs)) break;  /* don't emulate it in 32-bit code */
             if (long_op)
             {
                 DWORD *stack = get_stack( context );
@@ -884,7 +884,7 @@ LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs )
     EXCEPTION_RECORD *record = ptrs->ExceptionRecord;
     CONTEXT *context = ptrs->ContextRecord;
 
-    if (wine_ldt_is_system(context->SegCs) &&
+    if (ldt_is_system(context->SegCs) &&
         (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
          record->ExceptionCode == EXCEPTION_PRIV_INSTRUCTION))
     {

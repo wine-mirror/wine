@@ -232,11 +232,16 @@ extern void NE_DllProcessAttach( HMODULE16 hModule ) DECLSPEC_HIDDEN;
 extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code ) DECLSPEC_HIDDEN;
 
 /* selector.c */
+extern void init_selectors(void) DECLSPEC_HIDDEN;
+extern BOOL ldt_is_system( WORD sel ) DECLSPEC_HIDDEN;
+extern void *ldt_get_ptr( WORD sel, DWORD offset ) DECLSPEC_HIDDEN;
+extern BOOL ldt_get_entry( WORD sel, LDT_ENTRY *entry ) DECLSPEC_HIDDEN;
+extern void ldt_set_entry( WORD sel, LDT_ENTRY entry ) DECLSPEC_HIDDEN;
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags ) DECLSPEC_HIDDEN;
 extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size ) DECLSPEC_HIDDEN;
 extern void SELECTOR_FreeBlock( WORD sel ) DECLSPEC_HIDDEN;
 #define IS_SELECTOR_32BIT(sel) \
-   (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
+   (ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 
 /* relay16.c */
 extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context ) DECLSPEC_HIDDEN;

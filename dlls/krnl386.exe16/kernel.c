@@ -71,6 +71,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        init_selectors();
         if (LoadLibrary16( "krnl386.exe" ) < 32) return FALSE;
         /* fall through */
     case DLL_THREAD_ATTACH:
