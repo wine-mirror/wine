@@ -850,14 +850,6 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
     }
 }
 
-#if 0
-static enum packet_return packet_extended(struct gdb_context* gdbctx)
-{
-    gdbctx->extended = 1;
-    return packet_ok;
-}
-#endif
-
 static enum packet_return packet_last_signal(struct gdb_context* gdbctx)
 {
     assert(gdbctx->in_packet_len == 0);
@@ -1150,10 +1142,6 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 static enum packet_return packet_kill(struct gdb_context* gdbctx)
 {
     detach_debuggee(gdbctx, TRUE);
-#if 0
-    if (!gdbctx->extended)
-        /* dunno whether GDB cares or not */
-#endif
     return packet_ok | packet_last_f;
 }
 
@@ -1674,29 +1662,6 @@ static enum packet_return packet_step(struct gdb_context* gdbctx)
     return packet_reply_status(gdbctx);
 }
 
-#if 0
-static enum packet_return packet_step_signal(struct gdb_context* gdbctx)
-{
-    unsigned char sig;
-
-    /* FIXME: add support for address in packet */
-    assert(gdbctx->in_packet_len == 2);
-    if (dbg_curr_thread->tid != gdbctx->exec_thread && gdbctx->exec_thread)
-        if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR)
-            fprintf(stderr, "NIY: step/sig on %u, while last thread is %u\n",
-                    gdbctx->exec_thread, DEBUG_CurrThread->tid);
-    hex_from(&sig, gdbctx->in_packet, 1);
-    /* cannot change signals on the fly */
-    if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "sigs: %u %u\n", sig, gdbctx->last_sig);
-    if (sig != gdbctx->last_sig)
-        return packet_error;
-    resume_debuggee(gdbctx, DBG_EXCEPTION_NOT_HANDLED);
-    wait_for_debuggee(gdbctx);
-    return packet_reply_status(gdbctx);
-}
-#endif
-
 static enum packet_return packet_thread_alive(struct gdb_context* gdbctx)
 {
     char*       end;
@@ -1723,7 +1688,6 @@ struct packet_entry
 
 static struct packet_entry packet_entries[] =
 {
-        /*{'!', packet_extended}, */
         {'?', packet_last_signal},
         {'c', packet_continue},
         {'C', packet_continue_signal},
@@ -1738,9 +1702,7 @@ static struct packet_entry packet_entries[] =
         {'P', packet_write_register},
         {'q', packet_query},
         {'Q', packet_set},
-        /* {'R', packet,restart}, only in extended mode ! */
         {'s', packet_step},        
-        /*{'S', packet_step_signal}, hard(er) to implement */
         {'T', packet_thread_alive},
         {'v', packet_verbose},
 };
