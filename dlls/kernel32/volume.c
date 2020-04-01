@@ -674,7 +674,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     IO_STATUS_BLOCK io;
     OBJECT_ATTRIBUTES attr;
     FILE_FS_DEVICE_INFORMATION info;
-    WCHAR *p;
+    unsigned int i;
     enum fs_type type = FS_UNKNOWN;
     BOOL ret = FALSE;
 
@@ -685,8 +685,8 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         return FALSE;
     }
     /* there must be exactly one backslash in the name, at the end */
-    p = memchrW( nt_name.Buffer + 4, '\\', (nt_name.Length - 4) / sizeof(WCHAR) );
-    if (p != nt_name.Buffer + nt_name.Length / sizeof(WCHAR) - 1)
+    for (i = 4; i < nt_name.Length / sizeof(WCHAR); i++) if (nt_name.Buffer[i] == '\\') break;
+    if (i != nt_name.Length / sizeof(WCHAR) - 1)
     {
         /* check if root contains an explicit subdir */
         if (root[0] && root[1] == ':') root += 2;

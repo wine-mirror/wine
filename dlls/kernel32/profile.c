@@ -311,7 +311,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     WCHAR * szFile;
     const WCHAR *szLineStart, *szLineEnd;
     const WCHAR *szValueStart, *szEnd, *next_line;
-    int line = 0, len;
+    int len;
     PROFILESECTION *section, *first_section;
     PROFILESECTION **next_section;
     PROFILEKEY *key, *prev_key, **next_key;
@@ -402,13 +402,9 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     while (next_line < szEnd)
     {
         szLineStart = next_line;
-        next_line = memchrW(szLineStart, '\n', szEnd - szLineStart);
-        if (!next_line) next_line = memchrW(szLineStart, '\r', szEnd - szLineStart);
-        if (!next_line) next_line = szEnd;
-        else next_line++;
+        while (next_line < szEnd && *next_line != '\n' && *next_line != '\r') next_line++;
+        while (next_line < szEnd && (*next_line == '\n' || *next_line == '\r')) next_line++;
         szLineEnd = next_line;
-
-        line++;
 
         /* get rid of white space */
         while (szLineStart < szLineEnd && PROFILE_isspaceW(*szLineStart)) szLineStart++;
@@ -421,8 +417,8 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             for (len = szLineEnd - szLineStart; len > 0; len--) if (szLineStart[len - 1] == ']') break;
             if (!len)
             {
-                WARN("Invalid section header at line %d: %s\n",
-                    line, debugstr_wn(szLineStart, (int)(szLineEnd - szLineStart)) );
+                WARN("Invalid section header: %s\n",
+                    debugstr_wn(szLineStart, (int)(szLineEnd - szLineStart)) );
             }
             else
             {
@@ -450,7 +446,8 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         /* get rid of white space after the name and before the start
          * of the value */
         len = szLineEnd - szLineStart;
-        if ((szValueStart = memchrW( szLineStart, '=', szLineEnd - szLineStart )) != NULL)
+        for (szValueStart = szLineStart; szValueStart < szLineEnd; szValueStart++) if (*szValueStart == '=') break;
+        if (szValueStart < szLineEnd)
         {
             const WCHAR *szNameEnd = szValueStart;
             while ((szNameEnd > szLineStart) && PROFILE_isspaceW(szNameEnd[-1])) szNameEnd--;
@@ -458,6 +455,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             szValueStart++;
             while (szValueStart < szLineEnd && PROFILE_isspaceW(*szValueStart)) szValueStart++;
         }
+        else szValueStart = NULL;
 
         if (len || !prev_key || *prev_key->name)
         {
