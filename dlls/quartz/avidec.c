@@ -470,26 +470,26 @@ static struct avi_decompressor *impl_from_source_IQualityControl(IQualityControl
     return CONTAINING_RECORD(iface, struct avi_decompressor, source_IQualityControl_iface);
 }
 
-static HRESULT WINAPI acm_wrapper_source_qc_QueryInterface(IQualityControl *iface,
+static HRESULT WINAPI avi_decompressor_source_qc_QueryInterface(IQualityControl *iface,
         REFIID iid, void **out)
 {
     struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
     return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
 }
 
-static ULONG WINAPI acm_wrapper_source_qc_AddRef(IQualityControl *iface)
+static ULONG WINAPI avi_decompressor_source_qc_AddRef(IQualityControl *iface)
 {
     struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
     return IPin_AddRef(&filter->source.pin.IPin_iface);
 }
 
-static ULONG WINAPI acm_wrapper_source_qc_Release(IQualityControl *iface)
+static ULONG WINAPI avi_decompressor_source_qc_Release(IQualityControl *iface)
 {
     struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
     return IPin_Release(&filter->source.pin.IPin_iface);
 }
 
-static HRESULT WINAPI acm_wrapper_source_qc_Notify(IQualityControl *iface,
+static HRESULT WINAPI avi_decompressor_source_qc_Notify(IQualityControl *iface,
         IBaseFilter *sender, Quality q)
 {
     struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
@@ -506,7 +506,7 @@ static HRESULT WINAPI acm_wrapper_source_qc_Notify(IQualityControl *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI acm_wrapper_source_qc_SetSink(IQualityControl *iface, IQualityControl *sink)
+static HRESULT WINAPI avi_decompressor_source_qc_SetSink(IQualityControl *iface, IQualityControl *sink)
 {
     struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
 
@@ -517,11 +517,11 @@ static HRESULT WINAPI acm_wrapper_source_qc_SetSink(IQualityControl *iface, IQua
 
 static const IQualityControlVtbl source_qc_vtbl =
 {
-    acm_wrapper_source_qc_QueryInterface,
-    acm_wrapper_source_qc_AddRef,
-    acm_wrapper_source_qc_Release,
-    acm_wrapper_source_qc_Notify,
-    acm_wrapper_source_qc_SetSink,
+    avi_decompressor_source_qc_QueryInterface,
+    avi_decompressor_source_qc_AddRef,
+    avi_decompressor_source_qc_Release,
+    avi_decompressor_source_qc_Notify,
+    avi_decompressor_source_qc_SetSink,
 };
 
 static struct strmbase_pin *avi_decompressor_get_pin(struct strmbase_filter *iface, unsigned int index)
