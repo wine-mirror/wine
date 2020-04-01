@@ -344,6 +344,24 @@ typedef struct ads_search_column
     HANDLE hReserved;
 } ADS_SEARCH_COLUMN, *PADS_SEARCH_COLUMN;
 
+typedef struct _ads_object_info
+{
+    LPWSTR pszRDN;
+    LPWSTR pszObjectDN;
+    LPWSTR pszParentDN;
+    LPWSTR pszSchemaDN;
+    LPWSTR pszClassName;
+} ADS_OBJECT_INFO, *PADS_OBJECT_INFO;
+
+typedef struct _ads_attr_info
+{
+    LPWSTR pszAttrName;
+    DWORD dwControlCode;
+    ADSTYPE dwADsType;
+    PADSVALUE pADsValues;
+    DWORD dwNumValues;
+} ADS_ATTR_INFO, *PADS_ATTR_INFO;
+
 /*****************************************************************************
  *    IADsContainer interface
  */
@@ -797,6 +815,23 @@ interface IDirectorySearch : IUnknown
                     [out] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT FreeColumn([in] PADS_SEARCH_COLUMN pSearchColumn);
     HRESULT CloseSearchHandle([in] ADS_SEARCH_HANDLE hSearchResult);
+}
+
+/*****************************************************************************
+ *    IDirectoryObject interface
+ */
+[
+    odl,
+    local,
+    uuid(e798de2c-22e4-11d0-84fe-00c04fd8d503)
+]
+interface IDirectoryObject : IUnknown
+{
+    HRESULT GetObjectInformation(PADS_OBJECT_INFO *info);
+    HRESULT GetObjectAttributes(LPWSTR *names, DWORD count, PADS_ATTR_INFO *attrs, DWORD *count_returned);
+    HRESULT SetObjectAttributes(PADS_ATTR_INFO attrs, DWORD count, DWORD *count_set);
+    HRESULT CreateDSObject(LPWSTR name, PADS_ATTR_INFO attrs, DWORD count, IDispatch **obj);
+    HRESULT DeleteDSObject(LPWSTR name);
 }
 
 /*****************************************************************************

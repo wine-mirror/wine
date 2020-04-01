@@ -383,6 +383,7 @@ typedef struct
     IADs IADs_iface;
     IADsOpenDSObject IADsOpenDSObject_iface;
     IDirectorySearch IDirectorySearch_iface;
+    IDirectoryObject IDirectoryObject_iface;
     LONG ref;
     LDAP *ld;
     BSTR host;
@@ -442,6 +443,13 @@ static HRESULT WINAPI ldapns_QueryInterface(IADs *iface, REFIID riid, void **obj
 
         IADs_AddRef(iface);
         *obj = &ldap->IDirectorySearch_iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_IDirectoryObject))
+    {
+        IADs_AddRef(iface);
+        *obj = &ldap->IDirectoryObject_iface;
         return S_OK;
     }
 
@@ -1558,6 +1566,86 @@ static const IDirectorySearchVtbl IDirectorySearch_vtbl =
     search_CloseSearchHandle
 };
 
+static inline LDAP_namespace *impl_from_IDirectoryObject(IDirectoryObject *iface)
+{
+    return CONTAINING_RECORD(iface, LDAP_namespace, IDirectoryObject_iface);
+}
+
+static HRESULT WINAPI dirobj_QueryInterface(IDirectoryObject *iface, REFIID riid, void **obj)
+{
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (!riid || !obj) return E_INVALIDARG;
+
+    if (IsEqualGUID(riid, &IID_IDirectoryObject) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IDirectoryObject_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dirobj_AddRef(IDirectoryObject *iface)
+{
+    LDAP_namespace *ldap = impl_from_IDirectoryObject(iface);
+    return IADs_AddRef(&ldap->IADs_iface);
+}
+
+static ULONG WINAPI dirobj_Release(IDirectoryObject *iface)
+{
+    LDAP_namespace *ldap = impl_from_IDirectoryObject(iface);
+    return IADs_Release(&ldap->IADs_iface);
+}
+
+static HRESULT WINAPI dirobj_GetObjectInformation(IDirectoryObject *iface, PADS_OBJECT_INFO *info)
+{
+    FIXME("%p,%p: stub\n", iface, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dirobj_GetObjectAttributes(IDirectoryObject *iface, LPWSTR *names,
+                                                 DWORD count, PADS_ATTR_INFO *attrs, DWORD *count_returned)
+{
+    FIXME("%p,%p,%u,%p,%p: stub\n", iface, names, count, attrs, count_returned);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dirobj_SetObjectAttributes(IDirectoryObject *iface, PADS_ATTR_INFO attrs,
+                                                 DWORD count, DWORD *count_set)
+{
+    FIXME("%p,%p,%u,%p: stub\n", iface, attrs, count, count_set);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dirobj_CreateDSObject(IDirectoryObject *iface, LPWSTR name,
+                                            PADS_ATTR_INFO attrs, DWORD count, IDispatch **obj)
+{
+    FIXME("%p,%s,%p,%u,%p: stub\n", iface, debugstr_w(name), attrs, count, obj);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dirobj_DeleteDSObject(IDirectoryObject *iface, LPWSTR name)
+{
+    FIXME("%p,%s: stub\n", iface, debugstr_w(name));
+    return E_NOTIMPL;
+}
+
+static const IDirectoryObjectVtbl IDirectoryObject_vtbl =
+{
+    dirobj_QueryInterface,
+    dirobj_AddRef,
+    dirobj_Release,
+    dirobj_GetObjectInformation,
+    dirobj_GetObjectAttributes,
+    dirobj_SetObjectAttributes,
+    dirobj_CreateDSObject,
+    dirobj_DeleteDSObject
+};
+
 static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
 {
     LDAP_namespace *ldap;
@@ -1569,6 +1657,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->IADs_iface.lpVtbl = &IADs_vtbl;
     ldap->IADsOpenDSObject_iface.lpVtbl = &IADsOpenDSObject_vtbl;
     ldap->IDirectorySearch_iface.lpVtbl = &IDirectorySearch_vtbl;
+    ldap->IDirectoryObject_iface.lpVtbl = &IDirectoryObject_vtbl;
     ldap->ref = 1;
     ldap->ld = NULL;
     ldap->host = NULL;
