@@ -87,6 +87,7 @@ struct gdb_context
     int                         exec_tid; /* tid used in step & continue */
     int                         other_tid; /* tid to be used in any other operation */
     /* current Win32 trap env */
+    DEBUG_EVENT                 de;
     unsigned                    last_sig;
     BOOL                        in_trap;
     /* Win32 information */
@@ -393,8 +394,10 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     return ret;
 }
 
-static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
+static void handle_debug_event(struct gdb_context* gdbctx)
 {
+    DEBUG_EVENT *de = &gdbctx->de;
+
     union {
         char                bufferA[256];
         WCHAR               buffer[256];
@@ -575,12 +578,10 @@ static BOOL	check_for_interrupt(struct gdb_context* gdbctx)
 
 static void    wait_for_debuggee(struct gdb_context* gdbctx)
 {
-    DEBUG_EVENT         de;
-
     gdbctx->in_trap = FALSE;
     for (;;)
     {
-		if (!WaitForDebugEvent(&de, 10))
+		if (!WaitForDebugEvent(&gdbctx->de, 10))
 		{
 			if (GetLastError() == ERROR_SEM_TIMEOUT)
 			{
@@ -589,7 +590,7 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 						ERR("Failed to break into debuggee\n");
 						break;
 					}
-					WaitForDebugEvent(&de, INFINITE);	
+					WaitForDebugEvent(&gdbctx->de, INFINITE);
 				} else {
 					continue;
 				} 
@@ -597,13 +598,13 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 				break;
 			} 
 		}
-        handle_debug_event(gdbctx, &de);
+        handle_debug_event(gdbctx);
         assert(!gdbctx->process ||
                gdbctx->process->pid == 0 ||
-               de.dwProcessId == gdbctx->process->pid);
-        assert(!dbg_curr_thread || de.dwThreadId == dbg_curr_thread->tid);
+               gdbctx->de.dwProcessId == gdbctx->process->pid);
+        assert(!dbg_curr_thread || gdbctx->de.dwThreadId == dbg_curr_thread->tid);
         if (gdbctx->in_trap) break;
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
 }
 
@@ -1880,7 +1881,7 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     return TRUE;
 }
 
-static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned flags, unsigned port)
+static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned port)
 {
     int                 sock;
     struct sockaddr_in  s_addrs = {0};
@@ -1906,7 +1907,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         goto cleanup;
 
     /* step 2: do the process internal creation */
-    handle_debug_event(gdbctx, de);
+    handle_debug_event(gdbctx);
 
     /* step3: get the wine loader name */
     if (!dbg_get_debuggee_info(gdbctx->process->handle, &imh_mod))
@@ -1969,7 +1970,6 @@ cleanup:
 
 static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigned port)
 {
-    DEBUG_EVENT         de;
     int                 i;
 
     gdbctx->sock = -1;
@@ -1991,23 +1991,23 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
         gdbctx->wine_segs[i] = 0;
 
     /* wait for first trap */
-    while (WaitForDebugEvent(&de, INFINITE))
+    while (WaitForDebugEvent(&gdbctx->de, INFINITE))
     {
-        if (de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
+        if (gdbctx->de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
         {
             /* this should be the first event we get,
              * and the only one of this type  */
-            assert(gdbctx->process == NULL && de.dwProcessId == dbg_curr_pid);
+            assert(gdbctx->process == NULL && gdbctx->de.dwProcessId == dbg_curr_pid);
             /* gdbctx->dwProcessId = pid; */
-            if (!gdb_startup(gdbctx, &de, flags, port)) return FALSE;
+            if (!gdb_startup(gdbctx, flags, port)) return FALSE;
             assert(!gdbctx->in_trap);
         }
         else
         {
-            handle_debug_event(gdbctx, &de);
+            handle_debug_event(gdbctx);
             if (gdbctx->in_trap) break;
         }
-        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
     return TRUE;
 }
