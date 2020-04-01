@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-typedef struct AVIDecImpl
+struct avi_decompressor
 {
     struct strmbase_filter filter;
     CRITICAL_SECTION stream_cs;
@@ -50,16 +50,16 @@ typedef struct AVIDecImpl
     HIC hvid;
     BITMAPINFOHEADER* pBihIn;
     REFERENCE_TIME late;
-} AVIDecImpl;
+};
 
-static AVIDecImpl *impl_from_strmbase_filter(struct strmbase_filter *iface)
+static struct avi_decompressor *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
-    return CONTAINING_RECORD(iface, AVIDecImpl, filter);
+    return CONTAINING_RECORD(iface, struct avi_decompressor, filter);
 }
 
 static HRESULT avi_decompressor_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
 
     if (IsEqualGUID(iid, &IID_IMemInputPin))
         *out = &filter->sink.IMemInputPin_iface;
@@ -77,14 +77,15 @@ static HRESULT avi_decompressor_sink_query_accept(struct strmbase_pin *iface, co
 
 static HRESULT avi_decompressor_sink_end_flush(struct strmbase_sink *iface)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->pin.filter);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->pin.filter);
     filter->late = -1;
     if (filter->source.pin.peer)
         return IPin_EndFlush(filter->source.pin.peer);
     return S_OK;
 }
 
-static int AVIDec_DropSample(AVIDecImpl *This, REFERENCE_TIME tStart) {
+static int AVIDec_DropSample(struct avi_decompressor *This, REFERENCE_TIME tStart)
+{
     if (This->late < 0)
         return 0;
 
@@ -98,7 +99,7 @@ static int AVIDec_DropSample(AVIDecImpl *This, REFERENCE_TIME tStart) {
 
 static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface, IMediaSample *pSample)
 {
-    AVIDecImpl *This = impl_from_strmbase_filter(iface->pin.filter);
+    struct avi_decompressor *This = impl_from_strmbase_filter(iface->pin.filter);
     VIDEOINFOHEADER *source_format;
     HRESULT hr;
     DWORD res;
@@ -219,7 +220,7 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
 
 static HRESULT avi_decompressor_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
 {
-    AVIDecImpl *This = impl_from_strmbase_filter(iface->pin.filter);
+    struct avi_decompressor *This = impl_from_strmbase_filter(iface->pin.filter);
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
 
     /* Check root (GUID w/o FOURCC) */
@@ -273,7 +274,7 @@ failed:
 
 static void avi_decompressor_sink_disconnect(struct strmbase_sink *iface)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->pin.filter);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->pin.filter);
 
     if (filter->hvid)
         ICClose(filter->hvid);
@@ -295,7 +296,7 @@ static const struct strmbase_sink_ops sink_ops =
 
 static HRESULT avi_decompressor_source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
 
     if (IsEqualGUID(iid, &IID_IQualityControl))
         *out = &filter->source_IQualityControl_iface;
@@ -310,7 +311,7 @@ static HRESULT avi_decompressor_source_query_interface(struct strmbase_pin *ifac
 
 static HRESULT avi_decompressor_source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
     VIDEOINFOHEADER *sink_format, *format;
 
     if (!filter->sink.pin.peer || !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
@@ -346,7 +347,7 @@ static HRESULT avi_decompressor_source_get_media_type(struct strmbase_pin *iface
         {&MEDIASUBTYPE_RGB8, BI_RGB, 8},
     };
 
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface->filter);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface->filter);
     const VIDEOINFOHEADER *sink_format;
     VIDEOINFO *format;
 
@@ -464,34 +465,34 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideBufferSize = avi_decompressor_source_DecideBufferSize,
 };
 
-static AVIDecImpl *impl_from_source_IQualityControl(IQualityControl *iface)
+static struct avi_decompressor *impl_from_source_IQualityControl(IQualityControl *iface)
 {
-    return CONTAINING_RECORD(iface, AVIDecImpl, source_IQualityControl_iface);
+    return CONTAINING_RECORD(iface, struct avi_decompressor, source_IQualityControl_iface);
 }
 
 static HRESULT WINAPI acm_wrapper_source_qc_QueryInterface(IQualityControl *iface,
         REFIID iid, void **out)
 {
-    AVIDecImpl *filter = impl_from_source_IQualityControl(iface);
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
     return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
 }
 
 static ULONG WINAPI acm_wrapper_source_qc_AddRef(IQualityControl *iface)
 {
-    AVIDecImpl *filter = impl_from_source_IQualityControl(iface);
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
     return IPin_AddRef(&filter->source.pin.IPin_iface);
 }
 
 static ULONG WINAPI acm_wrapper_source_qc_Release(IQualityControl *iface)
 {
-    AVIDecImpl *filter = impl_from_source_IQualityControl(iface);
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
     return IPin_Release(&filter->source.pin.IPin_iface);
 }
 
 static HRESULT WINAPI acm_wrapper_source_qc_Notify(IQualityControl *iface,
         IBaseFilter *sender, Quality q)
 {
-    AVIDecImpl *filter = impl_from_source_IQualityControl(iface);
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
 
     TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
             filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
@@ -507,7 +508,7 @@ static HRESULT WINAPI acm_wrapper_source_qc_Notify(IQualityControl *iface,
 
 static HRESULT WINAPI acm_wrapper_source_qc_SetSink(IQualityControl *iface, IQualityControl *sink)
 {
-    AVIDecImpl *filter = impl_from_source_IQualityControl(iface);
+    struct avi_decompressor *filter = impl_from_source_IQualityControl(iface);
 
     TRACE("filter %p, sink %p.\n", filter, sink);
 
@@ -525,7 +526,7 @@ static const IQualityControlVtbl source_qc_vtbl =
 
 static struct strmbase_pin *avi_decompressor_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
 
     if (index == 0)
         return &filter->sink.pin;
@@ -536,7 +537,7 @@ static struct strmbase_pin *avi_decompressor_get_pin(struct strmbase_filter *ifa
 
 static void avi_decompressor_destroy(struct strmbase_filter *iface)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
 
     if (filter->sink.pin.peer)
         IPin_Disconnect(filter->sink.pin.peer);
@@ -560,7 +561,7 @@ static void avi_decompressor_destroy(struct strmbase_filter *iface)
 
 static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
     VIDEOINFOHEADER *source_format;
     LRESULT res;
 
@@ -579,7 +580,7 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
 
 static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
 {
-    AVIDecImpl *filter = impl_from_strmbase_filter(iface);
+    struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
     LRESULT res;
 
     if (filter->hvid && (res = ICDecompressEnd(filter->hvid)))
@@ -602,7 +603,7 @@ static const struct strmbase_filter_ops filter_ops =
 
 HRESULT avi_dec_create(IUnknown *outer, IUnknown **out)
 {
-    AVIDecImpl *object;
+    struct avi_decompressor *object;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
