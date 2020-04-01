@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
+#include "winuser.h"
 #include "wine/unicode.h"
 #include "winnls.h"
 #include "wine/debug.h"
@@ -598,9 +599,7 @@ static void WCEL_LowerCaseWord(WCEL_Context* ctx)
     unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
-	unsigned int	i;
-	for (i = ctx->ofs; i <= new_ofs; i++)
-	    ctx->line[i] = tolowerW(ctx->line[i]);
+        CharLowerBuffW( ctx->line + ctx->ofs, new_ofs - ctx->ofs + 1 );
         WCEL_Update(ctx, ctx->ofs, new_ofs - ctx->ofs + 1);
 	ctx->ofs = new_ofs;
     }
@@ -611,9 +610,7 @@ static void WCEL_UpperCaseWord(WCEL_Context* ctx)
     unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
-	unsigned int	i;
-	for (i = ctx->ofs; i <= new_ofs; i++)
-	    ctx->line[i] = toupperW(ctx->line[i]);
+        CharUpperBuffW( ctx->line + ctx->ofs, new_ofs - ctx->ofs + 1 );
 	WCEL_Update(ctx, ctx->ofs, new_ofs - ctx->ofs + 1);
 	ctx->ofs = new_ofs;
     }
@@ -624,11 +621,8 @@ static void WCEL_CapitalizeWord(WCEL_Context* ctx)
     unsigned int	new_ofs = WCEL_GetRightWordTransition(ctx, ctx->ofs);
     if (new_ofs != ctx->ofs)
     {
-	unsigned int	i;
-
-	ctx->line[ctx->ofs] = toupperW(ctx->line[ctx->ofs]);
-	for (i = ctx->ofs + 1; i <= new_ofs; i++)
-	    ctx->line[i] = tolowerW(ctx->line[i]);
+        CharUpperBuffW( ctx->line + ctx->ofs, 1 );
+        CharLowerBuffW( ctx->line + ctx->ofs + 1, new_ofs - ctx->ofs );
 	WCEL_Update(ctx, ctx->ofs, new_ofs - ctx->ofs + 1);
 	ctx->ofs = new_ofs;
     }
