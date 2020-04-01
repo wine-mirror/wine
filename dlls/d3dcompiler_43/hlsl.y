@@ -915,6 +915,22 @@ static const struct hlsl_ir_function_decl *get_overloaded_func(struct wine_rb_tr
     return NULL;
 }
 
+static struct hlsl_ir_function_decl *get_func_entry(const char *name)
+{
+    struct hlsl_ir_function_decl *decl;
+    struct hlsl_ir_function *func;
+    struct wine_rb_entry *entry;
+
+    if ((entry = wine_rb_get(&hlsl_ctx.functions, name)))
+    {
+        func = WINE_RB_ENTRY_VALUE(entry, struct hlsl_ir_function, entry);
+        WINE_RB_FOR_EACH_ENTRY(decl, &func->overloads, struct hlsl_ir_function_decl, entry)
+            return decl;
+    }
+
+    return NULL;
+}
+
 static struct list *append_unop(struct list *list, struct hlsl_ir_node *node)
 {
     list_add_tail(list, &node->entry);
@@ -2545,9 +2561,37 @@ static void dump_function(struct wine_rb_entry *entry, void *context)
     wine_rb_for_each_entry(&func->overloads, dump_function_decl, NULL);
 }
 
+/* Allocate a unique, ordered index to each instruction, which will be used for
+ * computing liveness ranges. */
+static unsigned int index_instructions(struct list *instrs, unsigned int index)
+{
+    struct hlsl_ir_node *instr;
+
+    LIST_FOR_EACH_ENTRY(instr, instrs, struct hlsl_ir_node, entry)
+    {
+        instr->index = index++;
+
+        if (instr->type == HLSL_IR_IF)
+        {
+            struct hlsl_ir_if *iff = if_from_node(instr);
+            index = index_instructions(iff->then_instrs, index);
+            if (iff->else_instrs)
+                index = index_instructions(iff->else_instrs, index);
+        }
+        else if (instr->type == HLSL_IR_LOOP)
+        {
+            index = index_instructions(loop_from_node(instr)->body, index);
+            loop_from_node(instr)->next_index = index;
+        }
+    }
+
+    return index;
+}
+
 struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
         const char *entrypoint, char **messages)
 {
+    struct hlsl_ir_function_decl *entry_func;
     struct hlsl_scope *scope, *next_scope;
     struct hlsl_type *hlsl_type, *next_type;
     struct hlsl_ir_var *var, *next_var;
@@ -2573,12 +2617,6 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
 
     hlsl_parse();
 
-    if (TRACE_ON(hlsl_parser))
-    {
-        TRACE("IR dump.\n");
-        wine_rb_for_each_entry(&hlsl_ctx.functions, dump_function, NULL);
-    }
-
     TRACE("Compilation status = %d\n", hlsl_ctx.status);
     if (messages)
     {
@@ -2597,6 +2635,24 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
         d3dcompiler_free((void *)hlsl_ctx.source_files[i]);
     d3dcompiler_free(hlsl_ctx.source_files);
 
+    if (hlsl_ctx.status == PARSE_ERR)
+        goto out;
+
+    if (!(entry_func = get_func_entry(entrypoint)))
+    {
+        hlsl_message("error: entry point %s is not defined\n", debugstr_a(entrypoint));
+        goto out;
+    }
+
+    index_instructions(entry_func->body, 1);
+
+    if (TRACE_ON(hlsl_parser))
+    {
+        TRACE("IR dump.\n");
+        wine_rb_for_each_entry(&hlsl_ctx.functions, dump_function, NULL);
+    }
+
+out:
     TRACE("Freeing functions IR.\n");
     wine_rb_destroy(&hlsl_ctx.functions, free_function_rb, NULL);
 

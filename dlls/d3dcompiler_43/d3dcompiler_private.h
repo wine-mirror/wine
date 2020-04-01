@@ -658,6 +658,7 @@ struct hlsl_ir_node
 {
     struct list entry;
     enum hlsl_ir_node_type type;
+    unsigned int index; /* for liveness ranges */
     struct hlsl_type *data_type;
 
     struct source_location loc;
@@ -734,6 +735,7 @@ struct hlsl_ir_loop
     struct hlsl_ir_node node;
     /* loop condition is stored in the body (as "if (!condition) break;") */
     struct list *body;
+    unsigned int next_index; /* liveness index of the end of the loop */
 };
 
 enum hlsl_ir_expr_op {

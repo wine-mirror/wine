@@ -2156,7 +2156,7 @@ static void debug_dump_ir_loop(const struct hlsl_ir_loop *loop)
 
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
-    wine_dbg_printf("%p: ", instr);
+    wine_dbg_printf("%4u: %p: ", instr->index, instr);
     switch (instr->type)
     {
         case HLSL_IR_EXPR:
