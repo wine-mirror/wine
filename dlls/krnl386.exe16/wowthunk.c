@@ -59,7 +59,7 @@ BOOL WOWTHUNK_Init(void)
     /* allocate the code selector for CallTo16 routines */
     WORD codesel = SELECTOR_AllocBlock( __wine_call16_start,
                                         (BYTE *)(&CallTo16_TebSelector + 1) - __wine_call16_start,
-                                        WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+                                        LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */

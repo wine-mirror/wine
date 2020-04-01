@@ -921,7 +921,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     }
 
     patch_code_segment( pModule );
-    *(void **)mz_header->e_res2 = &wine_ldt_copy;
+    *(const void **)mz_header->e_res2 = ldt_copy->base;
 
     return hInstance;
 }

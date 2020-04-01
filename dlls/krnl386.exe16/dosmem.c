@@ -319,7 +319,7 @@ static void DOSMEM_InitSegments(void)
     /*
      * PM / offset N*5: Interrupt N in 16-bit protected mode.
      */
-    int16_sel = GLOBAL_Alloc( GMEM_FIXED, 5 * 256, 0, WINE_LDT_FLAGS_CODE );
+    int16_sel = GLOBAL_Alloc( GMEM_FIXED, 5 * 256, 0, LDT_FLAGS_CODE );
     ptr = GlobalLock16( int16_sel );
     for(i=0; i<256; i++) {
         /*
@@ -340,7 +340,7 @@ static void DOSMEM_InitSegments(void)
      * PM / offset 3: Stub which swaps back to 32-bit application code/stack.
      * PM / offset 5: Stub which enables interrupts
      */
-    relay_code_sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(relay), 0, WINE_LDT_FLAGS_CODE );
+    relay_code_sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(relay), 0, LDT_FLAGS_CODE );
     ptr = GlobalLock16( relay_code_sel );
     memcpy( ptr, relay, sizeof(relay) );
     GlobalUnlock16( relay_code_sel );
@@ -472,11 +472,11 @@ BOOL DOSMEM_Init(void)
 
     vectored_handler = AddVectoredExceptionHandler(FALSE, dosmem_handler);
     DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
-                                       DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
+                                       DOSMEM_64KB, 0, LDT_FLAGS_DATA );
     DOSMEM_BiosDataSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem + 0x400,
-                                             0x100, 0, WINE_LDT_FLAGS_DATA );
+                                             0x100, 0, LDT_FLAGS_DATA );
     DOSMEM_BiosSysSeg = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem + 0xf0000,
-                                            DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
+                                            DOSMEM_64KB, 0, LDT_FLAGS_DATA );
 
     return TRUE;
 }

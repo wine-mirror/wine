@@ -174,7 +174,6 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
                                    int long_addr, int segprefix, int *len )
 {
     int mod, rm, base = 0, index = 0, ss = 0, seg = 0, off;
-    LDT_ENTRY entry;
 
 #define GET_VAL(val,type) \
     { *val = *(type *)instr; instr += sizeof(type); *len += sizeof(type); }
@@ -317,10 +316,9 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
     /* Make sure the segment and offset are valid */
     if (ldt_is_system(seg)) return (BYTE *)(base + (index << ss));
     if ((seg & 7) != 7) return NULL;
-    if (!ldt_get_entry( seg, &entry )) return NULL;
-    if (wine_ldt_is_empty( &entry )) return NULL;
-    if (wine_ldt_get_limit(&entry) < (base + (index << ss))) return NULL;
-    return (BYTE *)wine_ldt_get_base(&entry) + base + (index << ss);
+    if (!ldt_is_valid( seg )) return NULL;
+    if (ldt_get_limit( seg ) < (base + (index << ss))) return NULL;
+    return (BYTE *)ldt_get_base( seg ) + base + (index << ss);
 #undef GET_VAL
 }
 

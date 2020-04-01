@@ -144,7 +144,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
     pArena->flags = flags & GA_MOVEABLE;
     if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
     if (flags & GMEM_DDESHARE) pArena->flags |= GA_IPCSHARE;
-    if (!(selflags & (WINE_LDT_FLAGS_CODE^WINE_LDT_FLAGS_DATA))) pArena->flags |= GA_DGROUP;
+    if (!(selflags & (LDT_FLAGS_CODE ^ LDT_FLAGS_DATA))) pArena->flags |= GA_DGROUP;
     pArena->selCount = selcount;
     if (selcount > 1)  /* clear the next arena blocks */
         memset( pArena + 1, 0, (selcount - 1) * sizeof(GLOBALARENA) );
@@ -260,7 +260,7 @@ HGLOBAL16 WINAPI GlobalAlloc16(
         STACK16FRAME *frame = CURRENT_STACK16;
         owner = GetExePtr( frame->cs );
     }
-    return GLOBAL_Alloc( flags, size, owner, WINE_LDT_FLAGS_DATA );
+    return GLOBAL_Alloc( flags, size, owner, LDT_FLAGS_DATA );
 }
 
 
@@ -785,7 +785,7 @@ DWORD WINAPI GlobalDOSAlloc16(
        WORD	 wSelector;
        GLOBALARENA *pArena;
 
-       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, WINE_LDT_FLAGS_DATA );
+       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, LDT_FLAGS_DATA );
        pArena = GET_ARENA_PTR(wSelector);
        pArena->flags |= GA_DOSMEM;
        return MAKELONG(wSelector,uParagraph);

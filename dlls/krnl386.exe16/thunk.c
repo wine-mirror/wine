@@ -1075,7 +1075,7 @@ AllocSLCallback(
 
 	*(DWORD*)(thunk+18) = GetCurrentProcessId();
 
-	sel = SELECTOR_AllocBlock( thunk, 32, WINE_LDT_FLAGS_CODE );
+	sel = SELECTOR_AllocBlock( thunk, 32, LDT_FLAGS_CODE );
 	return (sel<<16)|0;
 }
 
@@ -1617,7 +1617,7 @@ static BOOL THUNK_Init(void)
     ThunkletHeap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0x10000, 0x10000 );
     if (!ThunkletHeap) return FALSE;
 
-    ThunkletCodeSel = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, WINE_LDT_FLAGS_CODE );
+    ThunkletCodeSel = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, LDT_FLAGS_CODE );
 
     thunk = HeapAlloc( ThunkletHeap, 0, 5 );
     if (!thunk) return FALSE;
@@ -2048,8 +2048,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
     if (!code_sel32)
     {
         if (!ThunkletHeap) THUNK_Init();
-        code_sel32 = SELECTOR_AllocBlock( ThunkletHeap, 0x10000,
-                                          WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+        code_sel32 = SELECTOR_AllocBlock( ThunkletHeap, 0x10000, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
         if (!code_sel32) return 0;
     }
     if (!(thunk = HeapAlloc( ThunkletHeap, 0, 32 ))) return 0;

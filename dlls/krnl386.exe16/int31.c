@@ -240,20 +240,16 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
 
     case 0x0006:  /* Get selector base address */
         TRACE( "get selector base address (0x%04x)\n", BX_reg(context) );
+        if (!ldt_is_valid( BX_reg(context) ))
         {
-            LDT_ENTRY entry;
-
-            if (!ldt_get_entry( BX_reg(context), &entry ) || wine_ldt_is_empty(&entry))
-            {
-                context->Eax = 0x8022;  /* invalid selector */
-                SET_CFLAG(context);
-            }
-            else
-            {
-                void *base = wine_ldt_get_base(&entry);
-                SET_CX( context, HIWORD(base) );
-                SET_DX( context, LOWORD(base) );
-            }
+            context->Eax = 0x8022;  /* invalid selector */
+            SET_CFLAG(context);
+        }
+        else
+        {
+            void *base = ldt_get_base( BX_reg(context) );
+            SET_CX( context, HIWORD(base) );
+            SET_DX( context, LOWORD(base) );
         }
         break;
 

@@ -1018,8 +1018,8 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
     if ( segnum == SELECTOROF(pModule->ne_sssp) ) minsize += pModule->ne_stack;
     if ( segnum == pModule->ne_autodata ) minsize += pModule->ne_heap;
 
-    selflags = (pSeg->flags & NE_SEGFLAGS_DATA) ? WINE_LDT_FLAGS_DATA : WINE_LDT_FLAGS_CODE;
-    if (pSeg->flags & NE_SEGFLAGS_32BIT) selflags |= WINE_LDT_FLAGS_32BIT;
+    selflags = (pSeg->flags & NE_SEGFLAGS_DATA) ? LDT_FLAGS_DATA : LDT_FLAGS_CODE;
+    if (pSeg->flags & NE_SEGFLAGS_32BIT) selflags |= LDT_FLAGS_32BIT;
     pSeg->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSeg->flags), minsize, pModule->self, selflags );
     if (!pSeg->hSeg) return FALSE;
 
