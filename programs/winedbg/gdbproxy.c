@@ -89,7 +89,6 @@ struct gdb_context
     /* current Win32 trap env */
     unsigned                    last_sig;
     BOOL                        in_trap;
-    dbg_ctx_t                   context;
     /* Win32 information */
     struct dbg_process*         process;
     /* Unix environment */
@@ -271,14 +270,23 @@ static inline void cpu_register_hex_from(struct gdb_context *gdbctx,
  * =============================================== *
  */
 
-static BOOL fetch_context(struct gdb_context *gdbctx, HANDLE h, dbg_ctx_t *ctx)
+static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
 {
-    if (!gdbctx->process->be_cpu->get_context(h, ctx))
+    struct backend_cpu *backend;
+    dbg_ctx_t ctx;
+
+    if (!thread) return;
+    if (!thread->process) return;
+    if (!(backend = thread->process->be_cpu)) return;
+
+    if (!backend->get_context(thread->handle, &ctx))
     {
-        ERR("Failed to get context, error %u\n", GetLastError());
-        return FALSE;
+        ERR("get_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
+        return;
     }
-    return TRUE;
+    backend->single_step(&ctx, enable);
+    if (!backend->set_context(thread->handle, &ctx))
+        ERR("set_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
 }
 
 static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
@@ -438,10 +446,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
-        if (fetch_context(gdbctx, dbg_curr_thread->handle, &gdbctx->context))
-        {
-            gdbctx->in_trap = handle_exception(gdbctx, &de->u.Exception);
-        }
+        gdbctx->in_trap = handle_exception(gdbctx, &de->u.Exception);
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
@@ -499,9 +504,6 @@ static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
 {
     if (dbg_curr_thread)
     {
-        if (!gdbctx->process->be_cpu->set_context(dbg_curr_thread->handle, &gdbctx->context))
-            ERR("Failed to set context for thread %04x, error %u\n",
-                dbg_curr_thread->tid, GetLastError());
         if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
             ERR("Failed to continue thread %04x, error %u\n",
                 dbg_curr_thread->tid, GetLastError());
@@ -518,9 +520,6 @@ static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsig
     {
         if(dbg_curr_thread->tid  == threadid){
             /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
-            if (!gdbctx->process->be_cpu->set_context(dbg_curr_thread->handle, &gdbctx->context))
-                ERR("Failed to set context for thread %04x, error %u\n",
-                    dbg_curr_thread->tid, GetLastError());
             if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
                 ERR("Failed to continue thread %04x, error %u\n",
                     dbg_curr_thread->tid, GetLastError());
@@ -594,7 +593,7 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 static void detach_debuggee(struct gdb_context* gdbctx, BOOL kill)
 {
     assert(gdbctx->process->be_cpu);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
+    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, FALSE);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     if (!kill)
         DebugActiveProcessStop(gdbctx->process->pid);
@@ -814,10 +813,19 @@ static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_
 
 static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 {
-    if (gdbctx->process != NULL)
+    struct dbg_process *process = gdbctx->process;
+    struct backend_cpu *backend;
+    dbg_ctx_t ctx;
+    size_t i;
+
+    if (process != NULL)
     {
         unsigned char           sig;
-        unsigned                i;
+
+        if (!(backend = process->be_cpu)) return packet_error;
+
+        if (!backend->get_context(dbg_curr_thread->handle, &ctx))
+            return packet_error;
 
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "T");
@@ -827,11 +835,11 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         packet_reply_val(gdbctx, dbg_curr_thread->tid, 4);
         packet_reply_add(gdbctx, ";");
 
-        for (i = 0; i < gdbctx->process->be_cpu->gdb_num_regs; i++)
+        for (i = 0; i < backend->gdb_num_regs; i++)
         {
             packet_reply_val(gdbctx, i, 1);
             packet_reply_add(gdbctx, ":");
-            packet_reply_register_hex_to(gdbctx, &gdbctx->context, i);
+            packet_reply_register_hex_to(gdbctx, &ctx, i);
             packet_reply_add(gdbctx, ";");
         }
 
@@ -978,13 +986,13 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
             switch (gdbctx->in_packet[actionIndex[i] + 1])
             {
             case 's': /* step */
-                gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
+                if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
                 /* fall through*/
             case 'c': /* continue */
                 resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
                 break;
             case 'S': /* step Sig, */
-                gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
+                if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
                 /* fall through */
             case 'C': /* continue sig */
                 hex_from(&sig, gdbctx->in_packet + actionIndex[i] + 2, 1);
@@ -1020,13 +1028,13 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
                 switch (gdbctx->in_packet[actionIndex[defaultAction] + 1])
                 {
                 case 's': /* step */
-                    gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
+                    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
                     /* fall through */
                 case 'c': /* continue */
                     resume_debuggee_thread(gdbctx, DBG_CONTINUE, threadID);
                     break;
                 case 'S':
-                     gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
+                    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
                      /* fall through */
                 case 'C': /* continue sig */
                     hex_from(&sig, gdbctx->in_packet + actionIndex[defaultAction] + 2, 1);
@@ -1042,8 +1050,7 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
     } /* if(defaultAction >=0) */
 
     wait_for_debuggee(gdbctx);
-    if (gdbctx->process)
-        gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
+    if (gdbctx->process && dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, FALSE);
     return packet_reply_status(gdbctx);
 }
 
@@ -1100,7 +1107,6 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 
     if (!backend->get_context(thread->handle, &ctx))
         return packet_error;
-    if (thread == dbg_curr_thread) ctx = gdbctx->context;
 
     packet_reply_open(gdbctx);
     for (i = 0; i < backend->gdb_num_regs; i++)
@@ -1126,7 +1132,6 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
 
     if (!backend->get_context(thread->handle, &ctx))
         return packet_error;
-    if (thread == dbg_curr_thread) ctx = gdbctx->context;
 
     if (gdbctx->in_packet_len < backend->gdb_num_regs * 2)
         return packet_error;
@@ -1141,7 +1146,6 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
         return packet_error;
     }
 
-    if (thread == dbg_curr_thread) gdbctx->context = ctx;
     return packet_ok;
 }
 
@@ -1268,7 +1272,6 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
 
     if (!backend->get_context(thread->handle, &ctx))
         return packet_error;
-    if (thread == dbg_curr_thread) ctx = gdbctx->context;
 
     if (sscanf(gdbctx->in_packet, "%zx", &reg) != 1)
         return packet_error;
@@ -1302,7 +1305,6 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
 
     if (!backend->get_context(thread->handle, &ctx))
         return packet_error;
-    if (thread == dbg_curr_thread) ctx = gdbctx->context;
 
     if (!(ptr = strchr(gdbctx->in_packet, '=')))
         return packet_error;
@@ -1328,7 +1330,6 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
         return packet_error;
     }
 
-    if (thread == dbg_curr_thread) gdbctx->context = ctx;
     return packet_ok;
 }
 
@@ -1672,10 +1673,10 @@ static enum packet_return packet_step(struct gdb_context* gdbctx)
     if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
         FIXME("Can't single-step thread %04x while on thread %04x\n",
             gdbctx->exec_thread->tid, dbg_curr_thread->tid);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, TRUE);
+    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, TRUE);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
-    gdbctx->process->be_cpu->single_step(&gdbctx->context, FALSE);
+    if (dbg_curr_thread) dbg_thread_set_single_step(dbg_curr_thread, FALSE);
     return packet_reply_status(gdbctx);
 }
 
