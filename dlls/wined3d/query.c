@@ -456,9 +456,6 @@ HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
     TRACE("query %p, data %p, data_size %u, flags %#x.\n",
             query, data, data_size, flags);
 
-    if (flags)
-        WARN("Ignoring flags %#x.\n", flags);
-
     if (query->state == QUERY_BUILDING)
     {
         WARN("Query is building, returning S_FALSE.\n");
