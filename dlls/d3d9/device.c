@@ -566,6 +566,11 @@ static enum wined3d_render_state wined3d_render_state_from_d3d(D3DRENDERSTATETYP
     return (enum wined3d_render_state)type;
 }
 
+static enum wined3d_sampler_state wined3d_sampler_state_from_d3d(D3DSAMPLERSTATETYPE type)
+{
+    return (enum wined3d_sampler_state)type;
+}
+
 static void device_reset_viewport_state(struct d3d9_device *device)
 {
     struct wined3d_viewport vp;
@@ -2755,7 +2760,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_SetSamplerState(IDirect3DDev
         sampler -= D3DVERTEXTEXTURESAMPLER0 - WINED3D_VERTEX_SAMPLER_OFFSET;
 
     wined3d_mutex_lock();
-    wined3d_stateblock_set_sampler_state(device->update_state, sampler, state, value);
+    wined3d_stateblock_set_sampler_state(device->update_state, sampler, wined3d_sampler_state_from_d3d(state), value);
     wined3d_mutex_unlock();
 
     return D3D_OK;
