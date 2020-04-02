@@ -1077,6 +1077,13 @@ static path_test_t widenline_dash_path[] = {
     {45.0, 10.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0}, /*7*/
     };
 
+static path_test_t widenline_unit_path[] = {
+    {5.0, 9.5,   PathPointTypeStart, 0, 1}, /*0*/
+    {50.0, 9.5,  PathPointTypeLine,  0, 1}, /*1*/
+    {50.0, 10.5, PathPointTypeLine,  0, 1}, /*2*/
+    {5.0, 10.5,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 1} /*3*/
+    };
+
 static void test_widen(void)
 {
     GpStatus status;
@@ -1240,6 +1247,23 @@ static void test_widen(void)
     status = GdipGetPointCount(path, &count);
     expect(Ok, status);
     todo_wine expect(0, count);
+
+    /* pen width = 0 pixels, UnitWorld - result is a path 1 unit wide */
+    GdipDeletePen(pen);
+    status = GdipCreatePen1(0xffffffff, 0.0, UnitWorld, &pen);
+    expect(Ok, status);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+    ok_path_fudge(path, widenline_unit_path, ARRAY_SIZE(widenline_unit_path), FALSE, 0.000005);
 
     GdipDeleteMatrix(m);
     GdipDeletePen(pen);
