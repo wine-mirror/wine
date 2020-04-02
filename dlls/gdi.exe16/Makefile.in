@@ -1,7 +1,7 @@
 MODULE    = gdi.exe16
 IMPORTS   = user32 advapi32 gdi32
 
-EXTRADLLFLAGS = -m16 -mno-cygwin -Wb,--main-module,gdi32.dll,--heap,65520
+EXTRADLLFLAGS = -m16 -Wb,--main-module,gdi32.dll,--heap,65520
 
 C_SRCS = \
 	bidi.c \

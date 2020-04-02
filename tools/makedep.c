@@ -4204,12 +4204,12 @@ static void load_sources( struct makefile *make )
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
-    if ((make->module && make->staticlib) || make->testdll)
-        strarray_add( &make->extradllflags, "-mno-cygwin" );
+    make->is_win16 = strarray_exists( &make->extradllflags, "-m16" );
+    if ((make->module && make->staticlib) || make->testdll || make->is_win16)
+        strarray_add_uniq( &make->extradllflags, "-mno-cygwin" );
 
     strarray_addall( &make->extradllflags, get_expanded_make_var_array( make, "APPMODE" ));
     make->disabled   = make->base_dir && strarray_exists( &disabled_dirs, make->base_dir );
-    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
     make->use_msvcrt = strarray_exists( &make->extradllflags, "-mno-cygwin" );
     make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
                        strarray_exists( &make->extradllflags, "-mwindows" );

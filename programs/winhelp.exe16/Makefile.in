@@ -1,5 +1,5 @@
 MODULE    = winhelp.exe16
 
-EXTRADLLFLAGS = -mconsole -m16 -mno-cygwin
+EXTRADLLFLAGS = -mconsole -m16
 
 C_SRCS = winhelp.c
