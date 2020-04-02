@@ -597,7 +597,7 @@ static void vmr_destroy(struct strmbase_renderer *iface)
     FreeLibrary(filter->hD3d9);
     BaseControlWindow_Destroy(&filter->baseControlWindow);
     strmbase_renderer_cleanup(&filter->renderer);
-    CoTaskMemFree(filter);
+    free(filter);
 
     InterlockedDecrement(&object_locks);
 }
@@ -2291,69 +2291,57 @@ static const IOverlayVtbl overlay_vtbl =
 
 static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
 {
+    struct quartz_vmr *object;
     HRESULT hr;
-    struct quartz_vmr* pVMR;
 
-    *out = NULL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    pVMR = CoTaskMemAlloc(sizeof(struct quartz_vmr));
-
-    pVMR->hD3d9 = LoadLibraryA("d3d9.dll");
-    if (!pVMR->hD3d9 )
+    object->hD3d9 = LoadLibraryA("d3d9.dll");
+    if (!object->hD3d9)
     {
         WARN("Could not load d3d9.dll\n");
-        CoTaskMemFree(pVMR);
+        free(object);
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
 
-    pVMR->IAMCertifiedOutputProtection_iface.lpVtbl = &IAMCertifiedOutputProtection_Vtbl;
-    pVMR->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+    strmbase_renderer_init(&object->renderer, outer, clsid, L"VMR Input0", &renderer_ops);
+    object->IAMCertifiedOutputProtection_iface.lpVtbl = &IAMCertifiedOutputProtection_Vtbl;
+    object->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+    object->IVMRFilterConfig_iface.lpVtbl = &VMR7_FilterConfig_Vtbl;
+    object->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
+    object->IVMRMonitorConfig_iface.lpVtbl = &VMR7_MonitorConfig_Vtbl;
+    object->IVMRMonitorConfig9_iface.lpVtbl = &VMR9_MonitorConfig_Vtbl;
+    object->IVMRSurfaceAllocatorNotify_iface.lpVtbl = &VMR7_SurfaceAllocatorNotify_Vtbl;
+    object->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &VMR9_SurfaceAllocatorNotify_Vtbl;
+    object->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
+    object->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
+    object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    pVMR->mode = 0;
-    pVMR->allocator_d3d9_dev = NULL;
-    pVMR->allocator_mon= NULL;
-    pVMR->num_surfaces = pVMR->cur_surface = 0;
-    pVMR->allocator = NULL;
-    pVMR->presenter = NULL;
-    pVMR->hWndClippingWindow = NULL;
-    pVMR->IVMRFilterConfig_iface.lpVtbl = &VMR7_FilterConfig_Vtbl;
-    pVMR->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
-    pVMR->IVMRMonitorConfig_iface.lpVtbl = &VMR7_MonitorConfig_Vtbl;
-    pVMR->IVMRMonitorConfig9_iface.lpVtbl = &VMR9_MonitorConfig_Vtbl;
-    pVMR->IVMRSurfaceAllocatorNotify_iface.lpVtbl = &VMR7_SurfaceAllocatorNotify_Vtbl;
-    pVMR->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &VMR9_SurfaceAllocatorNotify_Vtbl;
-    pVMR->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
-    pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
-    pVMR->IOverlay_iface.lpVtbl = &overlay_vtbl;
-
-    strmbase_renderer_init(&pVMR->renderer, outer, clsid, L"VMR Input0", &renderer_ops);
-
-    hr = video_window_init(&pVMR->baseControlWindow, &IVideoWindow_VTable,
-            &pVMR->renderer.filter, &pVMR->renderer.sink.pin, &renderer_BaseWindowFuncTable);
+    hr = video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
+            &object->renderer.filter, &object->renderer.sink.pin, &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    if (FAILED(hr = BaseWindowImpl_PrepareWindow(&pVMR->baseControlWindow.baseWindow)))
+    if (FAILED(hr = BaseWindowImpl_PrepareWindow(&object->baseControlWindow.baseWindow)))
         goto fail;
 
-    hr = basic_video_init(&pVMR->baseControlVideo, &pVMR->renderer.filter,
-            &pVMR->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
+    hr = basic_video_init(&object->baseControlVideo, &object->renderer.filter,
+            &object->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    pVMR->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    *out = &pVMR->renderer.filter.IUnknown_inner;
-    ZeroMemory(&pVMR->source_rect, sizeof(RECT));
-    ZeroMemory(&pVMR->target_rect, sizeof(RECT));
-    TRACE("Created at %p\n", pVMR);
+    TRACE("Created VMR %p.\n", object);
+    *out = &object->renderer.filter.IUnknown_inner;
     return hr;
 
 fail:
-    BaseWindowImpl_DoneWithWindow(&pVMR->baseControlWindow.baseWindow);
-    strmbase_renderer_cleanup(&pVMR->renderer);
-    FreeLibrary(pVMR->hD3d9);
-    CoTaskMemFree(pVMR);
+    BaseWindowImpl_DoneWithWindow(&object->baseControlWindow.baseWindow);
+    strmbase_renderer_cleanup(&object->renderer);
+    FreeLibrary(object->hD3d9);
+    free(object);
     return hr;
 }
 
@@ -2423,7 +2411,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
                 IDirect3DSurface9_Release(surface);
         }
 
-        CoTaskMemFree(This->d3d9_surfaces);
+        free(This->d3d9_surfaces);
         This->d3d9_surfaces = NULL;
         This->num_surfaces = 0;
         if (This->d3d9_vertex)
@@ -2431,7 +2419,7 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
             IDirect3DVertexBuffer9_Release(This->d3d9_vertex);
             This->d3d9_vertex = NULL;
         }
-        CoTaskMemFree(This);
+        free(This);
         return 0;
     }
     return refCount;
@@ -2699,8 +2687,8 @@ static BOOL CreateRenderingWindow(VMR9DefaultAllocatorPresenterImpl *This, VMR9A
     }
     IVMRSurfaceAllocatorNotify9_SetD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
 
-    This->d3d9_surfaces = CoTaskMemAlloc(*numbuffers * sizeof(IDirect3DSurface9 *));
-    ZeroMemory(This->d3d9_surfaces, *numbuffers * sizeof(IDirect3DSurface9 *));
+    if (!(This->d3d9_surfaces = calloc(*numbuffers, sizeof(IDirect3DSurface9 *))))
+        return FALSE;
 
     hr = VMR9_SurfaceAllocator_SetAllocationSettings(This, info);
     if (FAILED(hr))
@@ -2915,19 +2903,18 @@ static IDirect3D9 *init_d3d9(HMODULE d3d9_handle)
 
 static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv)
 {
+    VMR9DefaultAllocatorPresenterImpl *object;
     HRESULT hr = S_OK;
     int i;
-    VMR9DefaultAllocatorPresenterImpl* This;
 
-    This = CoTaskMemAlloc(sizeof(VMR9DefaultAllocatorPresenterImpl));
-    if (!This)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    This->d3d9_ptr = init_d3d9(parent->hD3d9);
-    if (!This->d3d9_ptr)
+    object->d3d9_ptr = init_d3d9(parent->hD3d9);
+    if (!object->d3d9_ptr)
     {
         WARN("Could not initialize d3d9.dll\n");
-        CoTaskMemFree(This);
+        free(object);
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
 
@@ -2936,7 +2923,7 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     {
         D3DDISPLAYMODE mode;
 
-        hr = IDirect3D9_EnumAdapterModes(This->d3d9_ptr, i++, D3DFMT_X8R8G8B8, 0, &mode);
+        hr = IDirect3D9_EnumAdapterModes(object->d3d9_ptr, i++, D3DFMT_X8R8G8B8, 0, &mode);
 	if (hr == D3DERR_INVALIDCALL) break; /* out of adapters */
     } while (FAILED(hr));
     if (FAILED(hr))
@@ -2944,24 +2931,18 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     if (hr == D3DERR_NOTAVAILABLE)
     {
         ERR("Format not supported\n");
-        IDirect3D9_Release(This->d3d9_ptr);
-        CoTaskMemFree(This);
+        IDirect3D9_Release(object->d3d9_ptr);
+        free(object);
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
 
-    This->IVMRImagePresenter9_iface.lpVtbl = &VMR9_ImagePresenter;
-    This->IVMRSurfaceAllocatorEx9_iface.lpVtbl = &VMR9_SurfaceAllocator;
+    object->IVMRImagePresenter9_iface.lpVtbl = &VMR9_ImagePresenter;
+    object->IVMRSurfaceAllocatorEx9_iface.lpVtbl = &VMR9_SurfaceAllocator;
 
-    This->refCount = 1;
-    This->pVMR9 = parent;
-    This->d3d9_surfaces = NULL;
-    This->d3d9_dev = NULL;
-    This->hMon = 0;
-    This->d3d9_vertex = NULL;
-    This->num_surfaces = 0;
-    This->SurfaceAllocatorNotify = NULL;
-    This->reset = FALSE;
+    object->refCount = 1;
+    object->pVMR9 = parent;
 
-    *ppv = &This->IVMRImagePresenter9_iface;
+    TRACE("Created default presenter %p.\n", object);
+    *ppv = &object->IVMRImagePresenter9_iface;
     return S_OK;
 }
