@@ -20,16 +20,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <string.h>
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -39,7 +33,6 @@
 #include "wine/winbase16.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "kernel16_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);

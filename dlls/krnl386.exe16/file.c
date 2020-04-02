@@ -23,11 +23,9 @@
  *    Right now, they simply call the CopyFile method.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include "winerror.h"
@@ -36,7 +34,6 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel16_private.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);

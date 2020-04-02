@@ -18,18 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <ctype.h>
 
 #include "windef.h"
@@ -398,7 +392,6 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
     ET_BUNDLE *bundle;
 
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->ne_enttab);
     while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
@@ -452,7 +445,6 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
     int i;
 
     if (!(pModule = NE_GetPtr( hModule ))) return FALSE;
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->ne_enttab);
     while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
@@ -693,7 +685,6 @@ static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR 
     ofs->fFixedDisk = 1;
     strcpy( ofs->szPathName, path );
     pData += ofs->cBytes + 1;
-    assert( (BYTE *)pModule + size <= pData );
 
     /* Get the non-resident names table */
 
@@ -1938,7 +1929,6 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     /* Module name */
     pStr = (char *)pSegment;
     pModule->ne_restab = pStr - (char *)pModule;
-    assert(len<256);
     *pStr = len;
     lstrcpynA( pStr+1, basename, len+1 );
     pStr += len+2;

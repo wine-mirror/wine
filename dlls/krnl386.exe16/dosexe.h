@@ -25,7 +25,6 @@
 #include <sys/types.h>
 
 #include "windef.h"
-#include "wine/library.h"
 #include "wine/windef16.h"
 #include "winbase.h"
 #include "winnt.h"     /* for PCONTEXT */

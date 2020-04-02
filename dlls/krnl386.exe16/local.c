@@ -27,10 +27,7 @@
  * parameter than usual.
  */
 
-#include "config.h"
-
 #define NONAMELESSUNION
-
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"

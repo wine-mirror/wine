@@ -1,8 +1,8 @@
 MODULE    = krnl386.exe16
 IMPORTLIB = kernel
-IMPORTS   = winecrt0 kernel32 ntdll
+IMPORTS   = kernel32 ntdll winecrt0
 DELAYIMPORTS = user32
-EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
+EXTRADLLFLAGS = -m16 -mno-cygwin -nodefaultlibs -Wb,--dll-name,kernel
 
 C_SRCS = \
 	atom.c \

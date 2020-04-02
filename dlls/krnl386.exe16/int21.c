@@ -23,17 +23,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <string.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -45,7 +37,6 @@
 #include "dosexe.h"
 #include "winerror.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
@@ -3358,7 +3349,7 @@ static BOOL INT21_CreateTempFile( CONTEXT *context )
 
     for (;;)
     {
-        sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
+        sprintf( p, "wine%04x.%03d", GetCurrentThreadId(), counter );
         counter = (counter + 1) % 1000;
 
         SET_AX( context, 
@@ -3423,7 +3414,7 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (strchrW( invalid_chars, *p )) return FALSE;
+            if (wcschr( invalid_chars, *p )) return FALSE;
             buffer[i] = *p++;
             break;
         }
@@ -3459,13 +3450,13 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (strchrW( invalid_chars, *p )) return FALSE;
+            if (wcschr( invalid_chars, *p )) return FALSE;
             buffer[i] = *p++;
             break;
         }
     }
     buffer[11] = '\0';
-    struprW( buffer );
+    wcsupr( buffer );
 
     /* at most 3 character of the extension are processed
      * is something behind this ?
@@ -3491,8 +3482,8 @@ static BOOL INT21_FindFirst( CONTEXT *context )
     path = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     MultiByteToWideChar(CP_OEMCP, 0, path, -1, pathW, MAX_PATH);
 
-    p = strrchrW( pathW, '\\');
-    q = strrchrW( pathW, '/');
+    p = wcsrchr( pathW, '\\');
+    q = wcsrchr( pathW, '/');
     if (q>p) p = q;
     if (!p)
     {

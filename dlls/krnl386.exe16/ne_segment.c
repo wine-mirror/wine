@@ -19,24 +19,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <ctype.h>
 #include <string.h>
 
 #include "wine/winbase16.h"
 #include "wownt32.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "kernel16_private.h"
 #include "wine/debug.h"
 
@@ -625,13 +617,10 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
         {
             /* Not SINGLEDATA */
             ERR_(dll)("Library is not marked SINGLEDATA\n");
-            exit(1);
         }
-        else  /* DATA NONE DLL */
-        {
-            *ds = 0;
-            *heap = 0;
-        }
+        /* DATA NONE DLL */
+        *ds = 0;
+        *heap = 0;
     }
     else  /* DATA SINGLE DLL */
     {
@@ -715,7 +704,6 @@ void NE_InitializeDLLs( HMODULE16 hModule )
     HMODULE16 *pDLL;
 
     if (!(pModule = NE_GetPtr( hModule ))) return;
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     if (pModule->dlls_to_init)
     {
@@ -879,7 +867,6 @@ static void fill_init_list( struct ne_init_list *list, HMODULE16 hModule )
     int i;
 
     if (!(pModule = NE_GetPtr( hModule ))) return;
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     /* Never add a module twice */
     for ( i = 0; i < list->count; i++ )
@@ -1002,8 +989,6 @@ BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum )
     SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + segnum - 1;
     int minsize;
     unsigned char selflags;
-
-    assert( !(pModule->ne_flags & NE_FFLAGS_WIN32) );
 
     if ( segnum < 1 || segnum > pModule->ne_cseg )
         return FALSE;

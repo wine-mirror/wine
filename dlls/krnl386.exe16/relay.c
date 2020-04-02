@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,8 +30,6 @@
 #include "winternl.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
-#include "wine/unicode.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
@@ -76,14 +71,14 @@ static const char **build_list( const WCHAR *buffer )
     const WCHAR *p = buffer;
     const char **ret;
 
-    while ((p = strchrW( p, ';' )))
+    while ((p = wcschr( p, ';' )))
     {
         count++;
         p++;
     }
     /* allocate count+1 pointers, plus the space for a copy of the string */
     if ((ret = RtlAllocateHeap( GetProcessHeap(), 0,
-                                (count + 1) * sizeof(char *) + (strlenW(buffer) + 1) )))
+                                (count + 1) * sizeof(char *) + (lstrlenW(buffer) + 1) )))
     {
         char *str = (char *)(ret + count + 1);
         char *p = str;

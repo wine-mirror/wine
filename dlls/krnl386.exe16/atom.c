@@ -25,9 +25,6 @@
  * have to be changed.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -39,7 +36,6 @@
 #include "winerror.h"
 #include "winternl.h"
 
-#include "wine/unicode.h"
 #include "wine/winbase16.h"
 #include "kernel16_private.h"
 

@@ -20,17 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/types.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
 #include <string.h>
 #include <stdarg.h>
 
@@ -44,8 +35,6 @@
 #include "winioctl.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
-#include "wine/library.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -156,17 +145,17 @@ HANDLE __wine_vxd_open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa
 
     /* normalize the filename */
 
-    if (strlenW( filenameW ) >= ARRAY_SIZE(name) - 4 ||
-        strchrW( filenameW, '/' ) || strchrW( filenameW, '\\' ))
+    if (lstrlenW( filenameW ) >= ARRAY_SIZE(name) - 4 ||
+        wcschr( filenameW, '/' ) || wcschr( filenameW, '\\' ))
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
     }
-    strcpyW( name, filenameW );
-    strlwrW( name );
-    p = strchrW( name, '.' );
-    if (!p) strcatW( name, dotVxDW );
-    else if (strcmpiW( p, dotVxDW ))  /* existing extension has to be .vxd */
+    lstrcpyW( name, filenameW );
+    wcslwr( name );
+    p = wcschr( name, '.' );
+    if (!p) lstrcatW( name, dotVxDW );
+    else if (wcsicmp( p, dotVxDW ))  /* existing extension has to be .vxd */
     {
         SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;

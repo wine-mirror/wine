@@ -26,14 +26,9 @@
      fix that, I guess.
 */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -42,7 +37,6 @@
 #include "winternl.h"
 #include "kernel16_private.h"
 #include "dosexe.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);

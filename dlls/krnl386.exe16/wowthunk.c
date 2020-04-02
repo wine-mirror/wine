@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#include <assert.h>
 #include <stdarg.h>
 #include <errno.h>
 
@@ -423,8 +419,6 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                            (WORD)context->Ebp, (WORD)context->SegDs, (WORD)context->SegEs );
             SYSLEVEL_CheckNotLevel( 2 );
         }
-
-        assert( !(context->EFlags & 0x00020000) ); /* vm86 mode no longer supported */
 
         /* push return address */
         if (dwFlags & WCB16_REGS_LONG)

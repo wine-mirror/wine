@@ -19,23 +19,11 @@
  */
 /* 0xffff sometimes seems to mean: CURRENT_DS */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <sys/types.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <string.h>
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_SYSCTL_H
-#include <sys/sysctl.h>
-#endif
 
 #include "wine/winbase16.h"
 #include "winternl.h"

@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <string.h>
 #include <stdarg.h>
@@ -30,7 +27,6 @@
 #include "winnt.h"
 #include "wine/winbase16.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "kernel16_private.h"
 #include "wine/debug.h"
 

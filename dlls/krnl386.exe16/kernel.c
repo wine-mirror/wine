@@ -35,6 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 extern DWORD WINAPI GetProcessFlags( DWORD processid );
 
+void *dummy = RaiseException;  /* force importing it from kernel32 */
+
 static DWORD process_dword;
 
 /***********************************************************************
