@@ -720,6 +720,13 @@ static BOOL add_struct_field(struct list *fields, struct hlsl_struct_field *fiel
     return TRUE;
 }
 
+BOOL is_row_major(const struct hlsl_type *type)
+{
+    /* Default to column-major if the majority isn't explicitly set, which can
+     * happen for anonymous nodes. */
+    return !!(type->modifiers & HLSL_MODIFIER_ROW_MAJOR);
+}
+
 static struct hlsl_type *apply_type_modifiers(struct hlsl_type *type,
         unsigned int *modifiers, struct source_location loc)
 {
@@ -750,6 +757,9 @@ static struct hlsl_type *apply_type_modifiers(struct hlsl_type *type,
 
     new_type->modifiers = add_modifiers(new_type->modifiers, *modifiers, loc);
     *modifiers &= ~HLSL_TYPE_MODIFIERS_MASK;
+
+    if (new_type->type == HLSL_CLASS_MATRIX)
+        new_type->reg_size = is_row_major(new_type) ? new_type->dimy : new_type->dimx;
     return new_type;
 }
 
@@ -798,6 +808,8 @@ static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, s
 static struct hlsl_type *new_struct_type(const char *name, struct list *fields)
 {
     struct hlsl_type *type = d3dcompiler_alloc(sizeof(*type));
+    struct hlsl_struct_field *field;
+    unsigned int reg_size = 0;
 
     if (!type)
     {
@@ -808,6 +820,13 @@ static struct hlsl_type *new_struct_type(const char *name, struct list *fields)
     type->name = name;
     type->dimx = type->dimy = 1;
     type->e.elements = fields;
+
+    LIST_FOR_EACH_ENTRY(field, fields, struct hlsl_struct_field, entry)
+    {
+        field->reg_offset = reg_size;
+        reg_size += field->type->reg_size;
+    }
+    type->reg_size = reg_size;
 
     list_add_tail(&hlsl_ctx.types, &type->entry);
 
@@ -837,6 +856,8 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 
         if (type->type != HLSL_CLASS_MATRIX)
             check_invalid_matrix_modifiers(type->modifiers, v->loc);
+        else
+            type->reg_size = is_row_major(type) ? type->dimy : type->dimx;
 
         if ((type->modifiers & HLSL_MODIFIER_COLUMN_MAJOR)
                 && (type->modifiers & HLSL_MODIFIER_ROW_MAJOR))
