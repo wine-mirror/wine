@@ -379,9 +379,10 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
 static void BuildCallTo16Core( int reg_func )
 {
     const char *name = reg_func ? "wine_call_to_16_regs" : "wine_call_to_16";
+    const char *func_name = (target_platform == PLATFORM_WINDOWS ? strmake( "%s@12", name ) : name);
 
     /* Function header */
-    function_header( name );
+    function_header( func_name );
 
     /* Function entry sequence */
     output_cfi( ".cfi_startproc" );
@@ -523,7 +524,7 @@ static void BuildCallTo16Core( int reg_func )
     output( "\tlret\n" );
 
     /* Function footer */
-    output_function_size( name );
+    output_function_size( func_name );
 }
 
 
