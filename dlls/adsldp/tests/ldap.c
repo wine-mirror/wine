@@ -459,6 +459,37 @@ todo_wine
     do_search(&scientists_subtree);
 }
 
+static void test_DirectoryObject(void)
+{
+    HRESULT hr;
+    IDirectoryObject *dirobj;
+    IUnknown *unk;
+    IDirectorySearch *ds;
+
+    hr = ADsGetObject(L"LDAP://ldap.forumsys.com/OU=scientists,DC=example,DC=com", &IID_IDirectoryObject, (void **)&dirobj);
+    if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+    {
+        skip("server is down\n");
+        return;
+    }
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    hr = IDirectoryObject_QueryInterface(dirobj, &IID_IADsOpenDSObject, (void **)&unk);
+todo_wine
+    ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+    hr = IDirectoryObject_QueryInterface(dirobj, &IID_IDispatch, (void **)&unk);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IUnknown_Release(unk);
+    hr = IDirectoryObject_QueryInterface(dirobj, &IID_IADs, (void **)&unk);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IUnknown_Release(unk);
+    hr = IDirectoryObject_QueryInterface(dirobj, &IID_IDirectorySearch, (void **)&ds);
+    ok(hr == S_OK, "got %#x\n", hr);
+    IDirectorySearch_Release(ds);
+
+    IDirectoryObject_Release(dirobj);
+}
+
 START_TEST(ldap)
 {
     HRESULT hr;
@@ -469,6 +500,7 @@ START_TEST(ldap)
     test_LDAP();
     test_ParseDisplayName();
     test_DirectorySearch();
+    test_DirectoryObject();
 
     CoUninitialize();
 }

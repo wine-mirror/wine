@@ -1573,6 +1573,8 @@ static inline LDAP_namespace *impl_from_IDirectoryObject(IDirectoryObject *iface
 
 static HRESULT WINAPI dirobj_QueryInterface(IDirectoryObject *iface, REFIID riid, void **obj)
 {
+    LDAP_namespace *ldap = impl_from_IDirectoryObject(iface);
+
     TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
 
     if (!riid || !obj) return E_INVALIDARG;
@@ -1585,8 +1587,7 @@ static HRESULT WINAPI dirobj_QueryInterface(IDirectoryObject *iface, REFIID riid
         return S_OK;
     }
 
-    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    return IADs_QueryInterface(&ldap->IADs_iface, riid, obj);
 }
 
 static ULONG WINAPI dirobj_AddRef(IDirectoryObject *iface)
