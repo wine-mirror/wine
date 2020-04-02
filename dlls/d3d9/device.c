@@ -551,6 +551,11 @@ void d3d9_caps_from_wined3dcaps(const struct d3d9 *d3d9, unsigned int adapter_or
     }
 }
 
+static enum wined3d_texture_filter_type wined3d_texture_filter_type_from_d3d(D3DTEXTUREFILTERTYPE type)
+{
+    return (enum wined3d_texture_filter_type)type;
+}
+
 static void device_reset_viewport_state(struct d3d9_device *device)
 {
     struct wined3d_viewport vp;
@@ -1829,8 +1834,8 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
         }
     }
 
-    hr = wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, dst_rect,
-            src->wined3d_texture, src->sub_resource_idx, src_rect, 0, NULL, filter);
+    hr = wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, dst_rect, src->wined3d_texture,
+            src->sub_resource_idx, src_rect, 0, NULL, wined3d_texture_filter_type_from_d3d(filter));
     if (hr == WINEDDERR_INVALIDRECT)
         hr = D3DERR_INVALIDCALL;
     if (SUCCEEDED(hr) && dst->texture)
