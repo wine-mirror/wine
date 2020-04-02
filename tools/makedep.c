@@ -2236,7 +2236,6 @@ static struct strarray get_default_imports( const struct makefile *make )
     struct strarray ret = empty_strarray;
 
     if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) return ret;
-    if (make->use_msvcrt) strarray_add( &ret, "msvcrt" );
     strarray_add( &ret, "winecrt0" );
     if (make->is_win16) strarray_add( &ret, "kernel" );
     strarray_add( &ret, "kernel32" );
@@ -4270,12 +4269,8 @@ static void load_sources( struct makefile *make )
         }
         if (!crt_dll && !strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
         {
-            if (make->use_msvcrt && !make->testdll && !make->staticlib)
-            {
-                strarray_add( &make->imports, "ucrtbase" );
-                crt_dll = "ucrtbase";
-            }
-            else crt_dll = "msvcrt";
+            crt_dll = !make->testdll && !make->staticlib ? "ucrtbase" : "msvcrt";
+            strarray_add( &make->imports, crt_dll );
         }
         if (crt_dll && !strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
     }
@@ -4289,7 +4284,6 @@ static void load_sources( struct makefile *make )
     {
         for (i = 0; i < make->imports.count; i++)
             strarray_add_uniq( &cross_import_libs, make->imports.str[i] );
-        if (crt_dll) strarray_add_uniq( &cross_import_libs, crt_dll );
         if (make->is_win16) strarray_add_uniq( &cross_import_libs, "kernel" );
         strarray_add_uniq( &cross_import_libs, "winecrt0" );
         strarray_add_uniq( &cross_import_libs, "kernel32" );
