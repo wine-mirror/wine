@@ -1078,10 +1078,10 @@ static path_test_t widenline_dash_path[] = {
     };
 
 static path_test_t widenline_unit_path[] = {
-    {5.0, 9.5,   PathPointTypeStart, 0, 1}, /*0*/
-    {50.0, 9.5,  PathPointTypeLine,  0, 1}, /*1*/
-    {50.0, 10.5, PathPointTypeLine,  0, 1}, /*2*/
-    {5.0, 10.5,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 1} /*3*/
+    {5.0, 9.5,   PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 9.5,  PathPointTypeLine,  0, 0}, /*1*/
+    {50.0, 10.5, PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 10.5,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0} /*3*/
     };
 
 static void test_widen(void)

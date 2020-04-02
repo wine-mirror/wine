@@ -2337,6 +2337,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     if (status == Ok)
     {
         REAL anchor_pen_width = max(pen->width, 2.0);
+        REAL pen_width = (pen->unit == UnitWorld) ? max(pen->width, 1.0) : pen->width;
         BYTE *types = flat_path->pathdata.Types;
 
         last_point = points;
@@ -2364,17 +2365,17 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
             if ((types[i]&PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
             {
                 if (pen->dash != DashStyleSolid)
-                    widen_dashed_figure(flat_path, subpath_start, i, 1, pen, pen->width, &last_point);
+                    widen_dashed_figure(flat_path, subpath_start, i, 1, pen, pen_width, &last_point);
                 else
-                    widen_closed_figure(flat_path, subpath_start, i, pen, pen->width, &last_point);
+                    widen_closed_figure(flat_path, subpath_start, i, pen, pen_width, &last_point);
             }
             else if (i == flat_path->pathdata.Count-1 ||
                 (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
             {
                 if (pen->dash != DashStyleSolid)
-                    widen_dashed_figure(flat_path, subpath_start, i, 0, pen, pen->width, &last_point);
+                    widen_dashed_figure(flat_path, subpath_start, i, 0, pen, pen_width, &last_point);
                 else
-                    widen_open_figure(flat_path->pathdata.Points, subpath_start, i, pen, pen->width, pen->startcap, pen->customstart, pen->endcap, pen->customend, &last_point);
+                    widen_open_figure(flat_path->pathdata.Points, subpath_start, i, pen, pen_width, pen->startcap, pen->customstart, pen->endcap, pen->customend, &last_point);
             }
         }
 
