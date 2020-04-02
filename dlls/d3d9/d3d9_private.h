@@ -399,6 +399,11 @@ static inline enum wined3d_multisample_type wined3d_multisample_type_from_d3d(D3
     return (enum wined3d_multisample_type)type;
 }
 
+static inline enum wined3d_device_type wined3d_device_type_from_d3d(D3DDEVTYPE type)
+{
+    return (enum wined3d_device_type)type;
+}
+
 static inline enum wined3d_scanline_ordering wined3d_scanline_ordering_from_d3d(D3DSCANLINEORDERING ordering)
 {
     return (enum wined3d_scanline_ordering)ordering;
