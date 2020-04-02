@@ -576,6 +576,9 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
     BOOL ret, local = TRUE;
     struct list *statements_list = d3dcompiler_alloc(sizeof(*statements_list));
 
+    if (basic_type->type == HLSL_CLASS_MATRIX)
+        assert(basic_type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK);
+
     if (!statements_list)
     {
         ERR("Out of memory.\n");
@@ -717,14 +720,32 @@ static BOOL add_struct_field(struct list *fields, struct hlsl_struct_field *fiel
     return TRUE;
 }
 
-static struct hlsl_type *apply_type_modifiers(struct hlsl_type *type, DWORD *modifiers, struct source_location loc)
+static struct hlsl_type *apply_type_modifiers(struct hlsl_type *type,
+        unsigned int *modifiers, struct source_location loc)
 {
+    unsigned int default_majority = 0;
     struct hlsl_type *new_type;
 
-    if (!(*modifiers & HLSL_TYPE_MODIFIERS_MASK))
+    /* This function is only used for declarations (i.e. variables and struct
+     * fields), which should inherit the matrix majority. We only explicitly set
+     * the default majority for declarations—typedefs depend on this—but we
+     * want to always set it, so that an hlsl_type object is never used to
+     * represent two different majorities (and thus can be used to store its
+     * register size, etc.) */
+    if (!(*modifiers & HLSL_MODIFIERS_MAJORITY_MASK)
+            && !(type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK)
+            && type->type == HLSL_CLASS_MATRIX)
+    {
+        if (hlsl_ctx.matrix_majority == HLSL_COLUMN_MAJOR)
+            default_majority = HLSL_MODIFIER_COLUMN_MAJOR;
+        else
+            default_majority = HLSL_MODIFIER_ROW_MAJOR;
+    }
+
+    if (!default_majority && !(*modifiers & HLSL_TYPE_MODIFIERS_MASK))
         return type;
 
-    if (!(new_type = clone_hlsl_type(type)))
+    if (!(new_type = clone_hlsl_type(type, default_majority)))
         return NULL;
 
     new_type->modifiers = add_modifiers(new_type->modifiers, *modifiers, loc);
@@ -737,6 +758,9 @@ static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, s
     struct parse_variable_def *v, *v_next;
     struct hlsl_struct_field *field;
     struct list *list;
+
+    if (type->type == HLSL_CLASS_MATRIX)
+        assert(type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK);
 
     list = d3dcompiler_alloc(sizeof(*list));
     if (!list)
@@ -801,7 +825,7 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
         if (v->array_size)
             type = new_array_type(orig_type, v->array_size);
         else
-            type = clone_hlsl_type(orig_type);
+            type = clone_hlsl_type(orig_type, 0);
         if (!type)
         {
             ERR("Out of memory\n");
@@ -833,6 +857,9 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 static BOOL add_func_parameter(struct list *list, struct parse_parameter *param, const struct source_location loc)
 {
     struct hlsl_ir_var *decl = d3dcompiler_alloc(sizeof(*decl));
+
+    if (param->type->type == HLSL_CLASS_MATRIX)
+        assert(param->type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK);
 
     if (!decl)
     {
@@ -2066,7 +2093,7 @@ postfix_expr:             primary_expr
                                 }
                                 inc = new_unary_expr(HLSL_IR_UNOP_POSTINC, node_from_list($1), loc);
                                 /* Post increment/decrement expressions are considered const */
-                                inc->data_type = clone_hlsl_type(inc->data_type);
+                                inc->data_type = clone_hlsl_type(inc->data_type, 0);
                                 inc->data_type->modifiers |= HLSL_MODIFIER_CONST;
                                 $$ = append_unop($1, inc);
                             }
@@ -2083,7 +2110,7 @@ postfix_expr:             primary_expr
                                 }
                                 inc = new_unary_expr(HLSL_IR_UNOP_POSTDEC, node_from_list($1), loc);
                                 /* Post increment/decrement expressions are considered const */
-                                inc->data_type = clone_hlsl_type(inc->data_type);
+                                inc->data_type = clone_hlsl_type(inc->data_type, 0);
                                 inc->data_type->modifiers |= HLSL_MODIFIER_CONST;
                                 $$ = append_unop($1, inc);
                             }

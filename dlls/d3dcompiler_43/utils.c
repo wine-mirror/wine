@@ -927,7 +927,7 @@ BOOL compare_hlsl_types(const struct hlsl_type *t1, const struct hlsl_type *t2)
     return TRUE;
 }
 
-struct hlsl_type *clone_hlsl_type(struct hlsl_type *old)
+struct hlsl_type *clone_hlsl_type(struct hlsl_type *old, unsigned int default_majority)
 {
     struct hlsl_type *type;
     struct hlsl_struct_field *old_field, *field;
@@ -952,11 +952,13 @@ struct hlsl_type *clone_hlsl_type(struct hlsl_type *old)
     type->dimx = old->dimx;
     type->dimy = old->dimy;
     type->modifiers = old->modifiers;
+    if (!(type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK))
+        type->modifiers |= default_majority;
     type->sampler_dim = old->sampler_dim;
     switch (old->type)
     {
         case HLSL_CLASS_ARRAY:
-            type->e.array.type = old->e.array.type;
+            type->e.array.type = clone_hlsl_type(old->e.array.type, default_majority);
             type->e.array.elements_count = old->e.array.elements_count;
             break;
         case HLSL_CLASS_STRUCT:
@@ -984,7 +986,7 @@ struct hlsl_type *clone_hlsl_type(struct hlsl_type *old)
                     d3dcompiler_free(type);
                     return NULL;
                 }
-                field->type = clone_hlsl_type(old_field->type);
+                field->type = clone_hlsl_type(old_field->type, default_majority);
                 field->name = d3dcompiler_strdup(old_field->name);
                 if (old_field->semantic)
                     field->semantic = d3dcompiler_strdup(old_field->semantic);
