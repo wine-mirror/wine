@@ -104,6 +104,8 @@ typedef enum {
 #define LDAP_SCOPE_ONELEVEL     0x01
 #define LDAP_SCOPE_SUBTREE      0x02
 
+#define LBER_USE_DER            0x01
+
 typedef struct berelement
 {
     PCHAR opaque;

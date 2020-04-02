@@ -45,6 +45,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
 
+#ifndef LDAP_OPT_SERVER_CONTROLS
+#define LDAP_OPT_SERVER_CONTROLS 0x0012
+#endif
+
 DEFINE_GUID(CLSID_LDAP,0x228d9a81,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 DEFINE_GUID(CLSID_LDAPNamespace,0x228d9a82,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 
@@ -1127,6 +1131,7 @@ static ULONG WINAPI search_Release(IDirectorySearch *iface)
 static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_SEARCHPREF_INFO prefs, DWORD count)
 {
     LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
+    HRESULT hr = S_OK;
     DWORD i;
 
     TRACE("%p,%p,%u\n", iface, prefs, count);
@@ -1159,6 +1164,56 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
             }
             break;
 
+        case ADS_SEARCHPREF_SECURITY_MASK:
+        {
+            int security_mask;
+            ULONG err;
+            BerElement *ber;
+            struct berval *berval;
+            LDAPControlW *ctrls[2], mask;
+
+            if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
+            {
+                FIXME("ADS_SEARCHPREF_SECURITY_MASK: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+
+            TRACE("SECURITY_MASK: %08x\n", prefs[i].vValue.u.Integer);
+            security_mask = prefs[i].vValue.u.Integer;
+            if (!security_mask)
+                security_mask = ADS_SECURITY_INFO_OWNER;
+
+            ber = ber_alloc_t(LBER_USE_DER);
+            if (!ber || ber_printf(ber, (char *)"{i}", security_mask) == -1 || ber_flatten(ber, &berval) == -1)
+            {
+                ber_free(ber, 1);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
+                break;
+            }
+            TRACE("ber: %s\n", debugstr_an(berval->bv_val, berval->bv_len));
+
+            mask.ldctl_oid = (WCHAR *)L"1.2.840.113556.1.4.801";
+            mask.ldctl_iscritical = TRUE;
+            mask.ldctl_value.bv_val = berval->bv_val;
+            mask.ldctl_value.bv_len = berval->bv_len;
+            ctrls[0] = &mask;
+            ctrls[1] = NULL;
+            err = ldap_set_optionW(ldap->ld, LDAP_OPT_SERVER_CONTROLS, ctrls);
+            if (err != LDAP_SUCCESS)
+            {
+                TRACE("ldap_set_option error %#x\n", err);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
+                hr = S_ADS_ERRORSOCCURRED;
+            }
+            else
+                prefs[i].dwStatus = ADS_STATUS_S_OK;
+
+            ber_bvfree(berval);
+            ber_free(ber, 1);
+            break;
+        }
+
         default:
             FIXME("pref %d, type %u: stub\n", prefs[i].dwSearchPref, prefs[i].vValue.dwType);
             prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
@@ -1166,7 +1221,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         }
     }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filter, LPWSTR *names,

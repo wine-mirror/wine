@@ -362,6 +362,14 @@ typedef struct _ads_attr_info
     DWORD dwNumValues;
 } ADS_ATTR_INFO, *PADS_ATTR_INFO;
 
+typedef enum
+{
+    ADS_SECURITY_INFO_OWNER = 0x1,
+    ADS_SECURITY_INFO_GROUP = 0x2,
+    ADS_SECURITY_INFO_DACL  = 0x4,
+    ADS_SECURITY_INFO_SACL  = 0x8
+} ADS_SECURITY_INFO_ENUM;
+
 /*****************************************************************************
  *    IADsContainer interface
  */
