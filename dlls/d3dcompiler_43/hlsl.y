@@ -814,6 +814,10 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
         if (type->type != HLSL_CLASS_MATRIX)
             check_invalid_matrix_modifiers(type->modifiers, v->loc);
 
+        if ((type->modifiers & HLSL_MODIFIER_COLUMN_MAJOR)
+                && (type->modifiers & HLSL_MODIFIER_ROW_MAJOR))
+            hlsl_report_message(v->loc, HLSL_LEVEL_ERROR, "more than one matrix majority keyword");
+
         ret = add_type_to_scope(hlsl_ctx.cur_scope, type);
         if (!ret)
         {
