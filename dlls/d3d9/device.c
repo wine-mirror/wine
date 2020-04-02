@@ -561,6 +561,11 @@ static enum wined3d_transform_state wined3d_transform_state_from_d3d(D3DTRANSFOR
     return (enum wined3d_transform_state)type;
 }
 
+static enum wined3d_render_state wined3d_render_state_from_d3d(D3DRENDERSTATETYPE type)
+{
+    return (enum wined3d_render_state)type;
+}
+
 static void device_reset_viewport_state(struct d3d9_device *device)
 {
     struct wined3d_viewport vp;
@@ -2404,7 +2409,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_SetRenderState(IDirect3DDevi
     TRACE("iface %p, state %#x, value %#x.\n", iface, state, value);
 
     wined3d_mutex_lock();
-    wined3d_stateblock_set_render_state(device->update_state, state, value);
+    wined3d_stateblock_set_render_state(device->update_state, wined3d_render_state_from_d3d(state), value);
     if (state == D3DRS_POINTSIZE && value == D3D9_RESZ_CODE)
         resolve_depth_buffer(device);
     wined3d_mutex_unlock();
