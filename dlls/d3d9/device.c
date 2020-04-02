@@ -556,6 +556,11 @@ static enum wined3d_texture_filter_type wined3d_texture_filter_type_from_d3d(D3D
     return (enum wined3d_texture_filter_type)type;
 }
 
+static enum wined3d_transform_state wined3d_transform_state_from_d3d(D3DTRANSFORMSTATETYPE type)
+{
+    return (enum wined3d_transform_state)type;
+}
+
 static void device_reset_viewport_state(struct d3d9_device *device)
 {
     struct wined3d_viewport vp;
@@ -2164,7 +2169,8 @@ static HRESULT WINAPI d3d9_device_SetTransform(IDirect3DDevice9Ex *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    wined3d_stateblock_set_transform(device->update_state, state, (const struct wined3d_matrix *)matrix);
+    wined3d_stateblock_set_transform(device->update_state,
+            wined3d_transform_state_from_d3d(state), (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -2194,7 +2200,8 @@ static HRESULT WINAPI d3d9_device_MultiplyTransform(IDirect3DDevice9Ex *iface,
 
     /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    wined3d_stateblock_multiply_transform(device->state, state, (const struct wined3d_matrix *)matrix);
+    wined3d_stateblock_multiply_transform(device->state,
+            wined3d_transform_state_from_d3d(state), (const struct wined3d_matrix *)matrix);
     wined3d_mutex_unlock();
 
     return D3D_OK;
