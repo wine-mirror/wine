@@ -261,6 +261,11 @@ extern void SELECTOR_FreeBlock( WORD sel ) DECLSPEC_HIDDEN;
 #define IS_SELECTOR_32BIT(sel) \
    (ldt_is_system(sel) || (ldt_copy->flags[LOWORD(sel) >> 3] & LDT_FLAGS_32BIT))
 
+static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
+static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }
+static inline WORD get_fs(void) { WORD res; __asm__( "movw %%fs,%0" : "=r" (res) ); return res; }
+static inline WORD get_gs(void) { WORD res; __asm__( "movw %%gs,%0" : "=r" (res) ); return res; }
+
 /* relay16.c */
 extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT *context ) DECLSPEC_HIDDEN;
 extern void RELAY16_InitDebugLists(void) DECLSPEC_HIDDEN;

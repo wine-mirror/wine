@@ -1168,7 +1168,7 @@ DEFINE_REGS_ENTRYPOINT( FreeMappedBuffer )
  */
 void WINAPI GetTEBSelectorFS16(void)
 {
-    CURRENT_STACK16->fs = wine_get_fs();
+    CURRENT_STACK16->fs = get_fs();
 }
 
 /**********************************************************************
@@ -1421,8 +1421,6 @@ UINT WINAPI ThunkConnect16(
 void WINAPI C16ThkSL(CONTEXT *context)
 {
     LPBYTE stub = MapSL(context->Eax), x = stub;
-    WORD cs = wine_get_cs();
-    WORD ds = wine_get_ds();
 
     /* We produce the following code:
      *
@@ -1437,7 +1435,7 @@ void WINAPI C16ThkSL(CONTEXT *context)
      *   call __FLATCS:__wine_call_from_16_thunk
      */
 
-    *x++ = 0xB8; *(WORD *)x = ds; x += sizeof(WORD);
+    *x++ = 0xB8; *(WORD *)x = get_ds(); x += sizeof(WORD);
     *x++ = 0x8E; *x++ = 0xC0;
     *x++ = 0x66; *x++ = 0x0F; *x++ = 0xB7; *x++ = 0xC9;
     *x++ = 0x67; *x++ = 0x66; *x++ = 0x26; *x++ = 0x8B;
@@ -1449,7 +1447,7 @@ void WINAPI C16ThkSL(CONTEXT *context)
     *x++ = 0x66; *x++ = 0x52;
     *x++ = 0x66; *x++ = 0x9A;
     *(void **)x = __wine_call_from_16_thunk; x += sizeof(void *);
-    *(WORD *)x = cs; x += sizeof(WORD);
+    *(WORD *)x = get_cs(); x += sizeof(WORD);
 
     /* Jump to the stub code just created */
     context->Eip = LOWORD(context->Eax);
@@ -1474,7 +1472,6 @@ void WINAPI C16ThkSL01(CONTEXT *context)
         struct ThunkDataSL *td = SL16->fpData;
 
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), (LPCSTR)631);
-        WORD cs = wine_get_cs();
 
         if (!td)
         {
@@ -1507,7 +1504,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
         *x++ = 0x66; *x++ = 0x52;
         *x++ = 0x66; *x++ = 0x9A;
         *(void **)x = __wine_call_from_16_thunk; x += sizeof(void *);
-        *(WORD *)x = cs; x += sizeof(WORD);
+        *(WORD *)x = get_cs(); x += sizeof(WORD);
 
         /* Jump to the stub code just created */
         context->Eip = LOWORD(context->Eax);
@@ -1979,7 +1976,7 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
     SEGPTR stack = stack16_push( 12 );
     LPWORD stackLin = MapSL(stack);
     /* stackLin[0] and stackLin[1] reserved for the 32-bit stack ptr */
-    stackLin[2] = wine_get_ss();
+    stackLin[2] = get_ds();
     stackLin[3] = 0;
     stackLin[4] = OFFSETOF(stack) + 12;
     stackLin[5] = SELECTOROF(stack);
@@ -2007,10 +2004,10 @@ void WINAPI CBClientThunkSLEx( CONTEXT *context )
     stackLin = MapSL(stack);
     stackLin[0] = OFFSETOF(stack) + 4;
     stackLin[1] = SELECTOROF(stack);
-    stackLin[2] = wine_get_ds();
+    stackLin[2] = get_ds();
     stackLin[5] = OFFSETOF(stack) + 24;
     /* stackLin[6] and stackLin[7] reserved for the 32-bit stack ptr */
-    stackLin[8] = wine_get_ss();
+    stackLin[8] = get_ds();
     stackLin[9] = 0;
     stackLin[10] = OFFSETOF(CALL32_CBClientEx_RetAddr);
     stackLin[11] = SELECTOROF(CALL32_CBClientEx_RetAddr);
@@ -2065,7 +2062,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR func_name)
     *thunk++ = 0xea;
     *(void **)thunk = QT_Thunk;
     thunk += sizeof(FARPROC16);
-    *(WORD *)thunk = wine_get_cs();
+    *(WORD *)thunk = get_cs();
 
     return MAKESEGPTR( code_sel32, (char *)thunk - (char *)ThunkletHeap );
 }

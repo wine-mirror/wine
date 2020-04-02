@@ -725,6 +725,6 @@ void DOSVM_BuildCallFrame( CONTEXT *context, DOSRELAY relay, LPVOID data )
     /*
      * Adjust code pointer.
      */
-    context->SegCs = wine_get_cs();
+    context->SegCs = get_cs();
     context->Eip = (DWORD)__wine_call_from_16_regs;
 }

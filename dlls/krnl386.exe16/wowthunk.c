@@ -64,7 +64,7 @@ BOOL WOWTHUNK_Init(void)
 
       /* Patch the return addresses for CallTo16 routines */
 
-    CallTo16_DataSelector = wine_get_ds();
+    CallTo16_DataSelector = get_ds();
     call16_ret_addr = MAKESEGPTR( codesel, (BYTE *)__wine_call_to_16_ret - __wine_call16_start );
     CALL32_CBClient_RetAddr =
         MAKESEGPTR( codesel, (BYTE *)CALL32_CBClient_Ret - __wine_call16_start );

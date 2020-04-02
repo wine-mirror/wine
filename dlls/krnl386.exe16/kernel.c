@@ -113,8 +113,8 @@ BOOL WINAPI KERNEL_DllEntryPoint( DWORD reasion, HINSTANCE16 inst, WORD ds,
 
     NE_SetEntryPoint( inst, 178, GetWinFlags16() );
 
-    NE_SetEntryPoint( inst, 454, wine_get_cs() );
-    NE_SetEntryPoint( inst, 455, wine_get_ds() );
+    NE_SetEntryPoint( inst, 454, get_cs() );
+    NE_SetEntryPoint( inst, 455, get_ds() );
 
     NE_SetEntryPoint( inst, 183, DOSMEM_0000H );       /* KERNEL.183: __0000H */
     NE_SetEntryPoint( inst, 173, DOSMEM_BiosSysSeg );  /* KERNEL.173: __ROMBIOS */

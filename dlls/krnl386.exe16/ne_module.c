@@ -95,7 +95,7 @@ static inline void patch_code_segment( NE_MODULE *pModule )
             call[i].glue = __wine_call_from_16_regs;
         else
             call[i].glue = __wine_call_from_16;
-        call[i].flatcs = wine_get_cs();
+        call[i].flatcs = get_cs();
     }
 
     if (TRACE_ON(relay))  /* patch relay functions to all point to relay_call_from_16 */

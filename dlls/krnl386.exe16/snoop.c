@@ -116,7 +116,7 @@ SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 		snr[0].realfun	= (DWORD)SNOOP16_Entry;
 		snr[0].lcall 	= 0x9a;
 		snr[0].callfromregs = (DWORD)__wine_call_from_16_regs;
-		snr[0].seg      = wine_get_cs();
+		snr[0].seg      = get_cs();
 		snr[0].lret     = 0xcb66;
 
 		snr[1].pushbp	= 0x5566;
@@ -126,7 +126,7 @@ SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 		snr[1].realfun	= (DWORD)SNOOP16_Return;
 		snr[1].lcall 	= 0x9a;
 		snr[1].callfromregs = (DWORD)__wine_call_from_16_regs;
-		snr[1].seg      = wine_get_cs();
+		snr[1].seg      = get_cs();
 		snr[1].lret     = 0xcb66;
 	}
 	while (*dll) {
