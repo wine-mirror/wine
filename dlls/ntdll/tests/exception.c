@@ -3410,21 +3410,20 @@ static void test_suspend_process(void)
 static void test_unload_trace(void)
 {
     static const WCHAR imageW[] = {'m','s','x','m','l','3','.','d','l','l',0};
-    RTL_UNLOAD_EVENT_TRACE *unload_trace, *ptr;
+    RTL_UNLOAD_EVENT_TRACE *unload_trace, **unload_trace_ex = NULL, *ptr;
     ULONG *element_size, *element_count, size;
-    BOOL found = FALSE;
     HMODULE hmod;
+    BOOL found;
 
     unload_trace = pRtlGetUnloadEventTrace();
     ok(unload_trace != NULL, "Failed to get unload events pointer.\n");
 
     if (pRtlGetUnloadEventTraceEx)
     {
-        ptr = NULL;
-        pRtlGetUnloadEventTraceEx(&element_size, &element_count, (void **)&ptr);
+        pRtlGetUnloadEventTraceEx(&element_size, &element_count, (void **)&unload_trace_ex);
         ok(*element_size >= sizeof(*ptr), "Unexpected element size.\n");
         ok(*element_count == RTL_UNLOAD_EVENT_TRACE_NUMBER, "Unexpected trace element count %u.\n", *element_count);
-        ok(ptr != NULL, "Unexpected pointer %p.\n", ptr);
+        ok(unload_trace_ex != NULL, "Unexpected pointer %p.\n", unload_trace_ex);
         size = *element_size;
     }
     else
@@ -3434,6 +3433,7 @@ static void test_unload_trace(void)
     ok(hmod != NULL, "Failed to load library.\n");
     FreeLibrary(hmod);
 
+    found = FALSE;
     ptr = unload_trace;
     while (ptr->BaseAddress != NULL)
     {
@@ -3445,6 +3445,22 @@ static void test_unload_trace(void)
         ptr = (RTL_UNLOAD_EVENT_TRACE *)((char *)ptr + size);
     }
     ok(found, "Unloaded module wasn't found.\n");
+
+    if (unload_trace_ex)
+    {
+        found = FALSE;
+        ptr = *unload_trace_ex;
+        while (ptr->BaseAddress != NULL)
+        {
+            if (!lstrcmpW(imageW, ptr->ImageName))
+            {
+                found = TRUE;
+                break;
+            }
+            ptr = (RTL_UNLOAD_EVENT_TRACE *)((char *)ptr + size);
+        }
+        ok(found, "Unloaded module wasn't found.\n");
+    }
 }
 
 START_TEST(exception)

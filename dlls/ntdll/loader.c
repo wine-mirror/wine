@@ -197,6 +197,7 @@ typedef struct _RTL_UNLOAD_EVENT_TRACE
 } RTL_UNLOAD_EVENT_TRACE, *PRTL_UNLOAD_EVENT_TRACE;
 
 static RTL_UNLOAD_EVENT_TRACE unload_traces[RTL_UNLOAD_EVENT_TRACE_NUMBER];
+static RTL_UNLOAD_EVENT_TRACE *unload_trace_ptr;
 static unsigned int unload_trace_seq;
 
 static void module_push_unload_trace( const LDR_MODULE *ldr )
@@ -213,6 +214,7 @@ static void module_push_unload_trace( const LDR_MODULE *ldr )
     ptr->ImageName[len / sizeof(*ptr->ImageName)] = 0;
 
     unload_trace_seq = (unload_trace_seq + 1) % ARRAY_SIZE(unload_traces);
+    unload_trace_ptr = unload_traces;
 }
 
 /*********************************************************************
@@ -233,7 +235,7 @@ void WINAPI RtlGetUnloadEventTraceEx(ULONG **size, ULONG **count, void **trace)
 
     *size = &element_size;
     *count = &element_count;
-    *trace = unload_traces;
+    *trace = &unload_trace_ptr;
 }
 
 /*************************************************************************
