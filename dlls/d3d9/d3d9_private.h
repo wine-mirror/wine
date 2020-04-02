@@ -341,6 +341,11 @@ static inline D3DMULTISAMPLE_TYPE d3dmultisample_type_from_wined3d(enum wined3d_
     return (D3DMULTISAMPLE_TYPE)type;
 }
 
+static inline D3DSCANLINEORDERING d3dscanlineordering_from_wined3d(enum wined3d_scanline_ordering ordering)
+{
+    return (D3DSCANLINEORDERING)ordering;
+}
+
 static inline unsigned int map_access_from_usage(unsigned int usage)
 {
     if (usage & D3DUSAGE_WRITEONLY)
@@ -392,6 +397,11 @@ static inline DWORD wined3dusage_from_d3dusage(unsigned int usage)
 static inline enum wined3d_multisample_type wined3d_multisample_type_from_d3d(D3DMULTISAMPLE_TYPE type)
 {
     return (enum wined3d_multisample_type)type;
+}
+
+static inline enum wined3d_scanline_ordering wined3d_scanline_ordering_from_d3d(D3DSCANLINEORDERING ordering)
+{
+    return (enum wined3d_scanline_ordering)ordering;
 }
 
 #endif /* __WINE_D3D9_PRIVATE_H */

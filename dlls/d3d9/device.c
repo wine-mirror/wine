@@ -1030,7 +1030,7 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
         wined3d_mode.height = mode->Height;
         wined3d_mode.refresh_rate = mode->RefreshRate;
         wined3d_mode.format_id = wined3dformat_from_d3dformat(mode->Format);
-        wined3d_mode.scanline_ordering = mode->ScanLineOrdering;
+        wined3d_mode.scanline_ordering = wined3d_scanline_ordering_from_d3d(mode->ScanLineOrdering);
     }
 
     if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters, extended))
@@ -4370,7 +4370,7 @@ static HRESULT WINAPI d3d9_device_GetDisplayModeEx(IDirect3DDevice9Ex *iface,
         mode->Height = wined3d_mode.height;
         mode->RefreshRate = wined3d_mode.refresh_rate;
         mode->Format = d3dformat_from_wined3dformat(wined3d_mode.format_id);
-        mode->ScanLineOrdering = wined3d_mode.scanline_ordering;
+        mode->ScanLineOrdering = d3dscanlineordering_from_wined3d(wined3d_mode.scanline_ordering);
     }
 
     return hr;
