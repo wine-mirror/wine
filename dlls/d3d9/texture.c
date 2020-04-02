@@ -367,7 +367,7 @@ static HRESULT WINAPI d3d9_texture_2d_GetLevelDesc(IDirect3DTexture9 *iface, UIN
         desc->Type = D3DRTYPE_SURFACE;
         desc->Usage = texture->usage;
         desc->Pool = d3dpool_from_wined3daccess(wined3d_desc.access, wined3d_desc.usage);
-        desc->MultiSampleType = wined3d_desc.multisample_type;
+        desc->MultiSampleType = d3dmultisample_type_from_wined3d(wined3d_desc.multisample_type);
         desc->MultiSampleQuality = wined3d_desc.multisample_quality;
         desc->Width = wined3d_desc.width;
         desc->Height = wined3d_desc.height;
@@ -774,7 +774,7 @@ static HRESULT WINAPI d3d9_texture_cube_GetLevelDesc(IDirect3DCubeTexture9 *ifac
         desc->Type = D3DRTYPE_SURFACE;
         desc->Usage = texture->usage;
         desc->Pool = d3dpool_from_wined3daccess(wined3d_desc.access, wined3d_desc.usage);
-        desc->MultiSampleType = wined3d_desc.multisample_type;
+        desc->MultiSampleType = d3dmultisample_type_from_wined3d(wined3d_desc.multisample_type);
         desc->MultiSampleQuality = wined3d_desc.multisample_quality;
         desc->Width = wined3d_desc.width;
         desc->Height = wined3d_desc.height;

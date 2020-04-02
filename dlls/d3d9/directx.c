@@ -368,8 +368,8 @@ static HRESULT WINAPI d3d9_CheckDeviceMultiSampleType(IDirect3D9Ex *iface, UINT 
 
     wined3d_mutex_lock();
     wined3d_adapter = wined3d_output_get_adapter(d3d9->wined3d_outputs[output_idx]);
-    hr = wined3d_check_device_multisample_type(wined3d_adapter, device_type,
-            wined3dformat_from_d3dformat(format), windowed, multisample_type, levels);
+    hr = wined3d_check_device_multisample_type(wined3d_adapter, device_type, wined3dformat_from_d3dformat(format),
+            windowed, wined3d_multisample_type_from_d3d(multisample_type), levels);
     wined3d_mutex_unlock();
     if (hr == WINED3DERR_NOTAVAILABLE && levels)
         *levels = 1;
