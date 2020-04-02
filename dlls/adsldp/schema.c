@@ -99,6 +99,8 @@ ADSTYPEENUM get_schema_type(const WCHAR *name, const struct attribute_type *at, 
         return ADSTYPE_CASE_IGNORE_STRING;
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.40"))
         return ADSTYPE_OCTET_STRING;
+    if (!wcscmp(type->syntax, L"1.2.840.113556.1.4.907"))
+        return ADSTYPE_NT_SECURITY_DESCRIPTOR;
 
     FIXME("not handled type syntax %s for %s\n", debugstr_w(type->syntax), debugstr_w(name));
     return ADSTYPE_CASE_IGNORE_STRING;

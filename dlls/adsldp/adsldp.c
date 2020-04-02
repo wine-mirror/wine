@@ -1484,6 +1484,7 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
     }
 
     case ADSTYPE_OCTET_STRING:
+    case ADSTYPE_NT_SECURITY_DESCRIPTOR:
     {
         struct berval **values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
         if (!values)
