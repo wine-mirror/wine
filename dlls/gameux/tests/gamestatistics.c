@@ -295,17 +295,17 @@ static void test_gamestatisticsmgr( void )
         /* verify values with these which we stored before*/
         hr = IGameStatistics_GetCategoryTitle(gs, 0, &lpName);
         ok(hr == S_OK, "getting category title failed\n");
-        ok(lstrcmpW(lpName, sCategory0)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        ok(lstrcmpW(lpName, sCategory0)==0, "getting category title returned invalid string %s\n", wine_dbgstr_w(lpName));
         CoTaskMemFree(lpName);
 
         hr = IGameStatistics_GetCategoryTitle(gs, 1, &lpName);
         ok(hr == S_OK, "getting category title failed\n");
-        ok(lstrcmpW(lpName, sCategory1)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        ok(lstrcmpW(lpName, sCategory1)==0, "getting category title returned invalid string %s\n", wine_dbgstr_w(lpName));
         CoTaskMemFree(lpName);
 
         hr = IGameStatistics_GetCategoryTitle(gs, 2, &lpName);
         ok(hr == S_OK, "getting category title failed\n");
-        ok(lstrcmpW(lpName, sCategory2)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        ok(lstrcmpW(lpName, sCategory2)==0, "getting category title returned invalid string %s\n", wine_dbgstr_w(lpName));
         CoTaskMemFree(lpName);
 
         /* check result if category doesn't exists */
