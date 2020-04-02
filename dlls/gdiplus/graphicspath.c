@@ -2104,7 +2104,7 @@ static void widen_open_figure(const GpPointF *points, int start, int end,
     int i;
     path_list_node_t *prev_point;
 
-    if (end <= start)
+    if (end <= start || pen_width == 0.0)
         return;
 
     prev_point = *last_point;
@@ -2136,7 +2136,7 @@ static void widen_closed_figure(GpPath *path, int start, int end,
     int i;
     path_list_node_t *prev_point;
 
-    if (end <= start)
+    if (end <= start || pen_width == 0.0)
         return;
 
     /* left outline */
@@ -2190,7 +2190,7 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
     int draw_start_cap=0;
     static const REAL dash_dot_dot[6] = { 3.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
 
-    if (end <= start)
+    if (end <= start || pen_width == 0.0)
         return;
 
     switch (pen->dash)

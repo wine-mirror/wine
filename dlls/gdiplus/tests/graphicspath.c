@@ -1246,7 +1246,7 @@ static void test_widen(void)
 
     status = GdipGetPointCount(path, &count);
     expect(Ok, status);
-    todo_wine expect(0, count);
+    expect(0, count);
 
     /* pen width = 0 pixels, UnitWorld - result is a path 1 unit wide */
     GdipDeletePen(pen);
@@ -1389,7 +1389,7 @@ static path_test_t widenline_caparrowanchor_path[] = {
     };
 
 static path_test_t widenline_capsquareanchor_thin_path[] = {
-    {6.414213, 8.585786,   PathPointTypeStart, 4, 0}, /*0*/
+    {6.414213, 8.585786,   PathPointTypeStart, 0, 0}, /*0*/
     {6.414213, 11.414213,  PathPointTypeLine,  0, 0}, /*1*/
     {3.585786, 11.414213,  PathPointTypeLine,  0, 0}, /*2*/
     {3.585786, 8.585786,   PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
@@ -1477,7 +1477,7 @@ static void test_widen_cap(void)
         { LineCapArrowAnchor, 10.0, widenline_caparrowanchor_path,
                 ARRAY_SIZE(widenline_caparrowanchor_path), FALSE, TRUE },
         { LineCapSquareAnchor, 0.0, widenline_capsquareanchor_thin_path,
-                ARRAY_SIZE(widenline_capsquareanchor_thin_path), FALSE, TRUE },
+                ARRAY_SIZE(widenline_capsquareanchor_thin_path) },
         { LineCapSquareAnchor, 10.0, widenline_capsquareanchor_dashed_path,
                 ARRAY_SIZE(widenline_capsquareanchor_dashed_path), TRUE },
     };
