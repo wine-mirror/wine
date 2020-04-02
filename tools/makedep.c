@@ -2148,9 +2148,12 @@ static struct strarray add_default_libraries( const struct makefile *make, struc
     struct strarray all_libs = empty_strarray;
     unsigned int i, j;
 
-    if (!make->use_msvcrt) strarray_add( &all_libs, "-lwine_port" );
-    strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-    strarray_addall( &all_libs, libs );
+    if (!make->use_msvcrt)
+    {
+        strarray_add( &all_libs, "-lwine_port" );
+        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+        strarray_addall( &all_libs, libs );
+    }
 
     for (i = 0; i < all_libs.count; i++)
     {
@@ -2999,7 +3002,6 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     if (!dll_flags.count) dll_flags = make->extradllflags;
     all_libs = add_import_libs( make, &dep_libs, imports, 0 );
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 ); /* dependencies only */
-    strarray_addall( &all_libs, libs );
     dll_name = strmake( "%s.dll%s", obj, make->is_cross ? "" : dll_ext );
     obj_name = strmake( "%s%s", obj_dir_path( make, obj ), make->is_cross ? ".cross.o" : ".o" );
 
@@ -3446,7 +3448,6 @@ static void output_test_module( struct makefile *make )
     const char *parent_ext = parent && parent->is_cross ? "" : dll_ext;
 
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 ); /* dependencies only */
-    strarray_addall( &all_libs, libs );
     strarray_add( &make->all_targets, strmake( "%s%s", testmodule, ext ));
     strarray_add( &make->clean_files, strmake( "%s%s", stripped, ext ));
     output( "%s%s:\n", obj_dir_path( make, testmodule ), ext );
