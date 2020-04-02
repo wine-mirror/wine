@@ -247,7 +247,7 @@ static void video_renderer_destroy(struct strmbase_renderer *iface)
     BaseControlVideo_Destroy(&filter->baseControlVideo);
     CloseHandle(filter->run_event);
     strmbase_renderer_cleanup(&filter->renderer);
-    CoTaskMemFree(filter);
+    free(filter);
 
     InterlockedDecrement(&object_locks);
 }
@@ -701,46 +701,38 @@ static const IOverlayVtbl overlay_vtbl =
 
 HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
 {
+    VideoRendererImpl *object;
     HRESULT hr;
-    VideoRendererImpl * pVideoRenderer;
 
-    *out = NULL;
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    pVideoRenderer = CoTaskMemAlloc(sizeof(VideoRendererImpl));
+    strmbase_renderer_init(&object->renderer, outer, &CLSID_VideoRenderer, L"In", &renderer_ops);
+    object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    pVideoRenderer->init = FALSE;
-    ZeroMemory(&pVideoRenderer->SourceRect, sizeof(RECT));
-    ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
-    ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
-    pVideoRenderer->FullScreenMode = OAFALSE;
-
-    pVideoRenderer->IOverlay_iface.lpVtbl = &overlay_vtbl;
-
-    strmbase_renderer_init(&pVideoRenderer->renderer, outer,
-            &CLSID_VideoRenderer, L"In", &renderer_ops);
-
-    hr = video_window_init(&pVideoRenderer->baseControlWindow, &IVideoWindow_VTable,
-            &pVideoRenderer->renderer.filter, &pVideoRenderer->renderer.sink.pin,
+    hr = video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
+            &object->renderer.filter, &object->renderer.sink.pin,
             &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    hr = basic_video_init(&pVideoRenderer->baseControlVideo, &pVideoRenderer->renderer.filter,
-            &pVideoRenderer->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
+    hr = basic_video_init(&object->baseControlVideo, &object->renderer.filter,
+            &object->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    if (FAILED(hr = BaseWindowImpl_PrepareWindow(&pVideoRenderer->baseControlWindow.baseWindow)))
+    if (FAILED(hr = BaseWindowImpl_PrepareWindow(&object->baseControlWindow.baseWindow)))
         goto fail;
 
-    pVideoRenderer->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    *out = &pVideoRenderer->renderer.filter.IUnknown_inner;
+    TRACE("Created video renderer %p.\n", object);
+    *out = &object->renderer.filter.IUnknown_inner;
     return S_OK;
 
 fail:
-    strmbase_renderer_cleanup(&pVideoRenderer->renderer);
-    CoTaskMemFree(pVideoRenderer);
+    strmbase_renderer_cleanup(&object->renderer);
+    free(object);
     return hr;
 }
 
