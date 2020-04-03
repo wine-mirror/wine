@@ -26,6 +26,7 @@ struct gdb_register
 {
     const char *feature;
     const char *name;
+    const char *type;
     size_t      ctx_offset;
     size_t      ctx_length;
     size_t      gdb_length;
