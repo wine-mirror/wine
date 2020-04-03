@@ -93,21 +93,21 @@ typedef struct tagBaseWindow
     LONG Width;
     LONG Height;
 
-    const struct BaseWindowFuncTable* pFuncsTable;
+    const struct video_window_ops *pFuncsTable;
 } BaseWindow;
 
 typedef RECT (WINAPI *BaseWindow_GetDefaultRect)(BaseWindow *This);
 typedef BOOL (WINAPI *BaseWindow_OnSize)(BaseWindow *This, LONG Height, LONG Width);
 
-typedef struct BaseWindowFuncTable
+struct video_window_ops
 {
     /* Required */
     BaseWindow_GetDefaultRect pfnGetDefaultRect;
     /* Optional, WinProc Related */
     BaseWindow_OnSize pfnOnSize;
-} BaseWindowFuncTable;
+};
 
-HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const BaseWindowFuncTable* pFuncsTable) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const struct video_window_ops *pFuncsTable) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This) DECLSPEC_HIDDEN;
@@ -126,7 +126,7 @@ struct video_window
 };
 
 HRESULT video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
-        struct strmbase_filter *filter, struct strmbase_pin *pin, const BaseWindowFuncTable *func_table) DECLSPEC_HIDDEN;
+        struct strmbase_filter *filter, struct strmbase_pin *pin, const struct video_window_ops *ops) DECLSPEC_HIDDEN;
 void video_window_unregister_class(void) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseControlWindow_Destroy(struct video_window *window) DECLSPEC_HIDDEN;
 

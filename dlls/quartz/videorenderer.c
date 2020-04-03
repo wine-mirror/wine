@@ -344,7 +344,8 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_pin_query_interface = video_renderer_pin_query_interface,
 };
 
-static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
+static const struct video_window_ops window_ops =
+{
     VideoRenderer_GetDefaultRect,
     VideoRenderer_OnSize
 };
@@ -710,8 +711,7 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     hr = video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
-            &object->renderer.filter, &object->renderer.sink.pin,
-            &renderer_BaseWindowFuncTable);
+            &object->renderer.filter, &object->renderer.sink.pin, &window_ops);
     if (FAILED(hr))
         goto fail;
 

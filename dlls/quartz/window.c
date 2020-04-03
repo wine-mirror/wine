@@ -84,7 +84,7 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
     return DefWindowProcW(hwnd, message, wparam, lparam);
 }
 
-HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const BaseWindowFuncTable* pFuncsTable)
+HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const struct video_window_ops *pFuncsTable)
 {
     if (!pFuncsTable)
         return E_INVALIDARG;
@@ -153,7 +153,7 @@ HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This)
 
 HRESULT video_window_init(struct video_window *pControlWindow,
         const IVideoWindowVtbl *lpVtbl, struct strmbase_filter *owner,
-        struct strmbase_pin *pPin, const BaseWindowFuncTable *pFuncsTable)
+        struct strmbase_pin *pPin, const struct video_window_ops *pFuncsTable)
 {
     HRESULT hr;
 

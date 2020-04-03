@@ -689,7 +689,8 @@ static BOOL WINAPI VMR9_OnSize(BaseWindow *This, LONG Width, LONG Height)
     return TRUE;
 }
 
-static const BaseWindowFuncTable renderer_BaseWindowFuncTable = {
+static const struct video_window_ops window_ops =
+{
     VMR9_GetDefaultRect,
     VMR9_OnSize,
 };
@@ -2319,7 +2320,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     hr = video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
-            &object->renderer.filter, &object->renderer.sink.pin, &renderer_BaseWindowFuncTable);
+            &object->renderer.filter, &object->renderer.sink.pin, &window_ops);
     if (FAILED(hr))
         goto fail;
 
