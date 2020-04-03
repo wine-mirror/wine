@@ -550,6 +550,13 @@ static inline struct x86_thread_data *x86_thread_data(void)
     return (struct x86_thread_data *)NtCurrentTeb()->SystemReserved2;
 }
 
+static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
+static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }
+static inline WORD get_fs(void) { WORD res; __asm__( "movw %%fs,%0" : "=r" (res) ); return res; }
+static inline WORD get_gs(void) { WORD res; __asm__( "movw %%gs,%0" : "=r" (res) ); return res; }
+static inline void set_fs( WORD val ) { __asm__( "mov %0,%%fs" :: "r" (val)); }
+static inline void set_gs( WORD val ) { __asm__( "mov %0,%%gs" :: "r" (val)); }
+
 /* Exception record for handling exceptions happening inside exception handlers */
 typedef struct
 {
@@ -836,8 +843,8 @@ static void wine_sigacthandler( int signal, siginfo_t *siginfo, void *sigcontext
     __asm__ __volatile__("mov %ss,%ax; mov %ax,%ds; mov %ax,%es");
 
     thread_data = (struct x86_thread_data *)get_current_teb()->SystemReserved2;
-    wine_set_fs( thread_data->fs );
-    wine_set_gs( thread_data->gs );
+    set_fs( thread_data->fs );
+    set_gs( thread_data->gs );
 
     libc_sigacthandler( signal, siginfo, sigcontext );
 }
@@ -885,19 +892,19 @@ static inline void *init_handler( const ucontext_t *sigcontext, WORD *fs, WORD *
 #ifdef FS_sig
     *fs = LOWORD(FS_sig(sigcontext));
 #else
-    *fs = wine_get_fs();
+    *fs = get_fs();
 #endif
 #ifdef GS_sig
     *gs = LOWORD(GS_sig(sigcontext));
 #else
-    *gs = wine_get_gs();
+    *gs = get_gs();
 #endif
 
 #ifndef __sun  /* see above for Solaris handling */
     {
         struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
-        wine_set_fs( thread_data->fs );
-        wine_set_gs( thread_data->gs );
+        set_fs( thread_data->fs );
+        set_gs( thread_data->gs );
     }
 #endif
 
@@ -1133,12 +1140,12 @@ static inline void restore_context( const CONTEXT *context, ucontext_t *sigconte
 #ifdef GS_sig
     GS_sig(sigcontext)  = context->SegGs;
 #else
-    wine_set_gs( context->SegGs );
+    set_gs( context->SegGs );
 #endif
 #ifdef FS_sig
     FS_sig(sigcontext)  = context->SegFs;
 #else
-    wine_set_fs( context->SegFs );
+    set_fs( context->SegFs );
 #endif
 
     if (fpu) *fpu = context->FloatSave;
@@ -1266,10 +1273,10 @@ void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
         else
         {
             CONTEXT newcontext = *context;
-            newcontext.SegDs = wine_get_ds();
-            newcontext.SegEs = wine_get_es();
-            newcontext.SegFs = wine_get_fs();
-            newcontext.SegGs = wine_get_gs();
+            newcontext.SegDs = get_ds();
+            newcontext.SegEs = get_ds();
+            newcontext.SegFs = get_fs();
+            newcontext.SegGs = get_gs();
             set_full_cpu_context( &newcontext );
         }
     }
@@ -1513,17 +1520,17 @@ NTSTATUS CDECL DECLSPEC_HIDDEN __regs_NtGetContextThread( DWORD edi, DWORD esi, 
             context->Ebp    = ebp;
             context->Esp    = (DWORD)&retaddr;
             context->Eip    = *(&edi - 1);
-            context->SegCs  = wine_get_cs();
-            context->SegSs  = wine_get_ss();
+            context->SegCs  = get_cs();
+            context->SegSs  = get_ds();
             context->EFlags = eflags;
             context->ContextFlags |= CONTEXT_CONTROL;
         }
         if (needed_flags & CONTEXT_SEGMENTS)
         {
-            context->SegDs = wine_get_ds();
-            context->SegEs = wine_get_es();
-            context->SegFs = wine_get_fs();
-            context->SegGs = wine_get_gs();
+            context->SegDs = get_ds();
+            context->SegEs = get_ds();
+            context->SegFs = get_fs();
+            context->SegGs = get_gs();
             context->ContextFlags |= CONTEXT_SEGMENTS;
         }
         if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
@@ -1937,12 +1944,12 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     EIP_sig(sigcontext) = (DWORD)raise_generic_exception;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
-    CS_sig(sigcontext)  = wine_get_cs();
-    DS_sig(sigcontext)  = wine_get_ds();
-    ES_sig(sigcontext)  = wine_get_es();
-    FS_sig(sigcontext)  = wine_get_fs();
-    GS_sig(sigcontext)  = wine_get_gs();
-    SS_sig(sigcontext)  = wine_get_ss();
+    CS_sig(sigcontext)  = get_cs();
+    DS_sig(sigcontext)  = get_ds();
+    ES_sig(sigcontext)  = get_ds();
+    FS_sig(sigcontext)  = get_fs();
+    GS_sig(sigcontext)  = get_gs();
+    SS_sig(sigcontext)  = get_ds();
     stack->ret_addr     = (void *)0xdeadbabe;  /* raise_generic_exception must not return */
     stack->rec_ptr      = &stack->rec;         /* arguments for raise_generic_exception */
     stack->context_ptr  = &stack->context;
@@ -2435,7 +2442,7 @@ static void ldt_init(void)
 {
 #ifdef __linux__
     /* the preloader may have allocated it already */
-    gdt_fs_sel = wine_get_fs();
+    gdt_fs_sel = get_fs();
     if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
     {
         struct modify_ldt_s ldt_info = { -1 };
@@ -2462,7 +2469,7 @@ WORD ldt_alloc_fs( TEB *teb, int first_thread )
     if (first_thread)  /* no locking for first thread */
     {
         /* leave some space if libc is using the LDT for %gs */
-        if (!is_gdt_sel( wine_get_gs() )) first_ldt_entry = 512;
+        if (!is_gdt_sel( get_gs() )) first_ldt_entry = 512;
         idx = first_ldt_entry;
         ldt_set_entry( (idx << 3) | 7, entry );
     }
@@ -2505,7 +2512,7 @@ static void ldt_set_fs( WORD sel, TEB *teb )
         i386_set_fsbase( teb );
 #endif
     }
-    wine_set_fs( sel );
+    set_fs( sel );
 }
 
 
@@ -2524,11 +2531,11 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
     {
         if (!(info->Selector & ~3))
             info->Entry = null_entry;
-        else if ((info->Selector | 3) == wine_get_cs())
+        else if ((info->Selector | 3) == get_cs())
             info->Entry = ldt_make_entry( 0, ~0u, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
-        else if ((info->Selector | 3) == wine_get_ds())
+        else if ((info->Selector | 3) == get_ds())
             info->Entry = ldt_make_entry( 0, ~0u, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
-        else if ((info->Selector | 3) == wine_get_fs())
+        else if ((info->Selector | 3) == get_fs())
             info->Entry = ldt_make_entry( NtCurrentTeb(), 0xfff, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
         else
             return STATUS_UNSUCCESSFUL;
@@ -2654,7 +2661,7 @@ void signal_init_thread( TEB *teb )
     if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 
     ldt_set_fs( thread_data->fs, teb );
-    thread_data->gs = wine_get_gs();
+    thread_data->gs = get_gs();
 
 #ifdef __GNUC__
     __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
@@ -3000,12 +3007,12 @@ void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
  */
 static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
 {
-    context->SegCs  = wine_get_cs();
-    context->SegDs  = wine_get_ds();
-    context->SegEs  = wine_get_es();
-    context->SegFs  = wine_get_fs();
-    context->SegGs  = wine_get_gs();
-    context->SegSs  = wine_get_ss();
+    context->SegCs  = get_cs();
+    context->SegDs  = get_ds();
+    context->SegEs  = get_ds();
+    context->SegFs  = get_fs();
+    context->SegGs  = get_gs();
+    context->SegSs  = get_ds();
     context->EFlags = 0x202;
     context->Eax    = (DWORD)entry;
     context->Ebx    = (DWORD)arg;
