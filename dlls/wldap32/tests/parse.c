@@ -31,6 +31,10 @@
 #define LDAP_AUTH_SIMPLE 0x80
 #endif
 
+#ifndef LDAP_OPT_SERVER_CONTROLS
+#define LDAP_OPT_SERVER_CONTROLS 0x0012
+#endif
+
 static void test_ldap_parse_sort_control( LDAP *ld )
 {
     ULONG ret, result;
@@ -164,10 +168,57 @@ static void test_ldap_bind_sA( void )
     ldap_unbind( ld );
 }
 
+static void test_ldap_server_control( void )
+{
+    /* SEQUENCE  { INTEGER :: 0x07 } */
+    static char mask_ber[5] = {0x30,0x03,0x02,0x01,0x07};
+    LDAP *ld;
+    ULONG ret;
+    int version;
+    LDAPControlW *ctrls[2], mask;
+    LDAPMessage *res;
+
+    ld = ldap_initA( (char *)"ldap.forumsys.com", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    ret = ldap_connect( ld, NULL );
+    ok( !ret, "ldap_connect failed 0x%08x\n", ret );
+
+    /* test setting a not supported server control */
+    mask.ldctl_oid = (WCHAR *)L"1.2.840.113556.1.4.801";
+    mask.ldctl_iscritical = TRUE;
+    mask.ldctl_value.bv_val = mask_ber;
+    mask.ldctl_value.bv_len = sizeof(mask_ber);
+    ctrls[0] = &mask;
+    ctrls[1] = NULL;
+    ret = ldap_set_optionW(ld, LDAP_OPT_SERVER_CONTROLS, ctrls);
+todo_wine
+    ok( ret == LDAP_PARAM_ERROR, "ldap_set_optionW should fail: 0x%x\n", ret );
+
+    res = NULL;
+    ret = ldap_search_sA( ld, (char *)"OU=scientists,DC=example,DC=com", LDAP_SCOPE_BASE, (char *)"(objectclass=*)", NULL, FALSE, &res );
+todo_wine
+    ok( !ret, "ldap_search_sA failed 0x%x\n", ret );
+    ok( res != NULL, "expected res != NULL\n" );
+
+    ldap_msgfree( res );
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
 
+    test_ldap_server_control();
     test_ldap_bind_sA();
 
     ld = ldap_initA((char *)"ldap.itd.umich.edu", 389 );
