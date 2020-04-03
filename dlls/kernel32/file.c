@@ -43,6 +43,7 @@
 #include "ddk/ntddk.h"
 #include "kernel_private.h"
 #include "fileapi.h"
+#include "shlwapi.h"
 
 #include "wine/exception.h"
 #include "wine/unicode.h"
@@ -502,8 +503,9 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
         static const WCHAR prefixW[] = {'r','f',0};
         WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH];
 
-        if (!GetTempPathW( ARRAY_SIZE(temp_path), temp_path )
-                || !GetTempFileNameW( temp_path, prefixW, 0, temp_file )
+        lstrcpynW( temp_path, lpReplacedFileName, ARRAY_SIZE( temp_path ) );
+        PathRemoveFileSpecW( temp_path );
+        if (!GetTempFileNameW( temp_path, prefixW, 0, temp_file )
                 || !MoveFileExW( lpReplacedFileName, temp_file, MOVEFILE_REPLACE_EXISTING ))
             return FALSE;
 
