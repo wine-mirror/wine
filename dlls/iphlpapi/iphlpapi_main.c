@@ -1248,6 +1248,8 @@ static void sockaddr_in_to_WS_storage( SOCKADDR_STORAGE *dst, const struct socka
             sizeof(SOCKADDR_STORAGE) - FIELD_OFFSET( SOCKADDR_IN, sin_zero) );
 }
 
+#if defined(HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6) || \
+    (defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS))
 static void sockaddr_in6_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sockaddr_in6 *src )
 {
     SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)dst;
@@ -1260,6 +1262,7 @@ static void sockaddr_in6_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sock
     memset( (char *)s + sizeof(SOCKADDR_IN6), 0,
                     sizeof(SOCKADDR_STORAGE) - sizeof(SOCKADDR_IN6) );
 }
+#endif
 
 #ifdef HAVE_STRUCT___RES_STATE
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
