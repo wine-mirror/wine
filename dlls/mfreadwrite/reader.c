@@ -1658,29 +1658,46 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
     return hr;
 }
 
+static HRESULT source_reader_read_sample_async(struct source_reader *reader, unsigned int index, unsigned int flags,
+        unsigned int *actual_index, unsigned int *stream_flags, LONGLONG *timestamp, IMFSample **sample)
+{
+    struct source_reader_async_command *command;
+    HRESULT hr;
+
+    if (actual_index || stream_flags || timestamp || sample)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&reader->cs);
+
+    if (reader->flags & SOURCE_READER_FLUSHING)
+        hr = MF_E_NOTACCEPTING;
+    else
+    {
+        if (SUCCEEDED(hr = source_reader_create_async_op(SOURCE_READER_ASYNC_READ, &command)))
+        {
+            command->stream_index = index;
+            command->flags = flags;
+
+            hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
+            IUnknown_Release(&command->IUnknown_iface);
+        }
+    }
+
+    LeaveCriticalSection(&reader->cs);
+
+    return hr;
+}
+
 static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index, DWORD flags, DWORD *actual_index,
         DWORD *stream_flags, LONGLONG *timestamp, IMFSample **sample)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
-    struct source_reader_async_command *command;
     HRESULT hr;
 
     TRACE("%p, %#x, %#x, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
 
     if (reader->async_callback)
-    {
-        if (actual_index || stream_flags || timestamp || sample)
-            return E_INVALIDARG;
-
-        if (FAILED(hr = source_reader_create_async_op(SOURCE_READER_ASYNC_READ, &command)))
-            return hr;
-
-        command->stream_index = index;
-        command->flags = flags;
-
-        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
-        IUnknown_Release(&command->IUnknown_iface);
-    }
+        hr = source_reader_read_sample_async(reader, index, flags, actual_index, stream_flags, timestamp, sample);
     else
         hr = source_reader_read_sample(reader, index, flags, actual_index, stream_flags, timestamp, sample);
 
