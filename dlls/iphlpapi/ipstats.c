@@ -2744,7 +2744,6 @@ DWORD build_tcp6_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
                         DWORD *size )
 {
     MIB_TCP6TABLE *table;
-    MIB_TCP6ROW_OWNER_MODULE row;
     DWORD ret = NO_ERROR, count = 16, table_size, row_size;
 
     if (!(table_size = get_tcp6_table_sizes( class, count, &row_size )))
@@ -2757,6 +2756,7 @@ DWORD build_tcp6_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
 
 #ifdef __linux__
     {
+        MIB_TCP6ROW_OWNER_MODULE row;
         FILE *fp;
 
         if ((fp = fopen( "/proc/net/tcp6", "r" )))
