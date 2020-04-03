@@ -767,6 +767,35 @@ static void packet_reply_close(struct gdb_context* gdbctx)
     gdbctx->out_curr_packet = -1;
 }
 
+static void packet_reply_open_xfer(struct gdb_context* gdbctx)
+{
+    packet_reply_open(gdbctx);
+    packet_reply_add(gdbctx, "m");
+}
+
+static void packet_reply_close_xfer(struct gdb_context* gdbctx, int off, int len)
+{
+    int begin = gdbctx->out_curr_packet + 1;
+    int plen;
+
+    if (begin + off < gdbctx->out_len)
+    {
+        gdbctx->out_len -= off;
+        memmove(gdbctx->out_buf + begin, gdbctx->out_buf + begin + off, gdbctx->out_len);
+    }
+    else
+    {
+        gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
+        gdbctx->out_len = gdbctx->out_curr_packet + 1;
+    }
+
+    plen = gdbctx->out_len - begin;
+    if (len >= 0 && plen > len) gdbctx->out_len -= (plen - len);
+    else gdbctx->out_buf[gdbctx->out_curr_packet] = 'l';
+
+    packet_reply_close(gdbctx);
+}
+
 static enum packet_return packet_reply(struct gdb_context* gdbctx, const char* packet)
 {
     packet_reply_open(gdbctx);
@@ -1396,8 +1425,107 @@ static enum packet_return packet_query_remote_command(struct gdb_context* gdbctx
     return packet_reply_error(gdbctx, EINVAL);
 }
 
+static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
+{
+    struct gdb_context* gdbctx = ctx;
+    MEMORY_BASIC_INFORMATION mbi;
+    IMAGE_SECTION_HEADER *sec;
+    IMAGE_DOS_HEADER *dos = NULL;
+    IMAGE_NT_HEADERS *nth = NULL;
+    IMAGEHLP_MODULE64 mod;
+    SIZE_T size, i;
+    BOOL is_wow64;
+    char buffer[0x400];
+
+    mod.SizeOfStruct = sizeof(mod);
+    SymGetModuleInfo64(gdbctx->process->handle, base, &mod);
+
+    packet_reply_add(gdbctx, "<library name=\"");
+    if (strcmp(mod.LoadedImageName, "[vdso].so") == 0)
+        packet_reply_add(gdbctx, "linux-vdso.so.1");
+    else if (mod.LoadedImageName[0] == '/')
+        packet_reply_add(gdbctx, mod.LoadedImageName);
+    else
+    {
+        UNICODE_STRING nt_name;
+        ANSI_STRING ansi_name;
+        char *unix_path, *tmp;
+
+        RtlInitAnsiString(&ansi_name, mod.LoadedImageName);
+        RtlAnsiStringToUnicodeString(&nt_name, &ansi_name, TRUE);
+
+        if ((unix_path = wine_get_unix_file_name(nt_name.Buffer)))
+        {
+            if (IsWow64Process(gdbctx->process->handle, &is_wow64) &&
+                is_wow64 && (tmp = strstr(unix_path, "system32")))
+                memcpy(tmp, "syswow64", 8);
+            packet_reply_add(gdbctx, unix_path);
+        }
+        else
+            packet_reply_add(gdbctx, mod.LoadedImageName);
+
+        HeapFree(GetProcessHeap(), 0, unix_path);
+        RtlFreeUnicodeString(&nt_name);
+    }
+    packet_reply_add(gdbctx, "\">");
+
+    size = sizeof(buffer);
+    if (VirtualQueryEx(gdbctx->process->handle, (void *)(UINT_PTR)mod.BaseOfImage, &mbi, sizeof(mbi)) >= sizeof(mbi) &&
+        mbi.Type == MEM_IMAGE && mbi.State != MEM_FREE)
+    {
+        if (ReadProcessMemory(gdbctx->process->handle, (void *)(UINT_PTR)mod.BaseOfImage, buffer, size, &size) &&
+            size >= sizeof(IMAGE_DOS_HEADER))
+            dos = (IMAGE_DOS_HEADER *)buffer;
+
+        if (dos && dos->e_magic == IMAGE_DOS_SIGNATURE && dos->e_lfanew < size)
+            nth = (IMAGE_NT_HEADERS *)(buffer + dos->e_lfanew);
+
+        if (nth && memcmp(&nth->Signature, "PE\0\0", 4))
+            nth = NULL;
+    }
+
+    if (!nth) memset(buffer, 0, sizeof(buffer));
+
+    /* if the module is not PE we have cleared buffer with 0, this makes
+     * the following computation valid in all cases. */
+    dos = (IMAGE_DOS_HEADER *)buffer;
+    nth = (IMAGE_NT_HEADERS *)(buffer + dos->e_lfanew);
+    if (IsWow64Process(gdbctx->process->handle, &is_wow64) && is_wow64)
+        sec = IMAGE_FIRST_SECTION((IMAGE_NT_HEADERS32 *)nth);
+    else
+        sec = IMAGE_FIRST_SECTION((IMAGE_NT_HEADERS64 *)nth);
+
+    for (i = 0; i < max(nth->FileHeader.NumberOfSections, 1); ++i)
+    {
+        if ((char *)(sec + i) >= buffer + size) break;
+        packet_reply_add(gdbctx, "<segment address=\"0x");
+        packet_reply_val(gdbctx, mod.BaseOfImage + sec[i].VirtualAddress, sizeof(unsigned long));
+        packet_reply_add(gdbctx, "\"/>");
+    }
+
+    packet_reply_add(gdbctx, "</library>");
+
+    return TRUE;
+}
+
+static void packet_query_libraries(struct gdb_context* gdbctx)
+{
+    BOOL opt;
+
+    /* this will resynchronize builtin dbghelp's internal ELF module list */
+    SymLoadModule(gdbctx->process->handle, 0, 0, 0, 0, 0);
+
+    packet_reply_add(gdbctx, "<library-list>");
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+    SymEnumerateModules64(gdbctx->process->handle, packet_query_libraries_cb, gdbctx);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
+    packet_reply_add(gdbctx, "</library-list>");
+}
+
 static enum packet_return packet_query(struct gdb_context* gdbctx)
 {
+    int off, len;
+
     switch (gdbctx->in_packet[0])
     {
     case 'f':
@@ -1485,6 +1613,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         {
             packet_reply_open(gdbctx);
             packet_reply_add(gdbctx, "QStartNoAckMode+;");
+            packet_reply_add(gdbctx, "qXfer:libraries:read+;");
             if (*target_xml) packet_reply_add(gdbctx, "PacketSize=400;qXfer:features:read+");
             packet_reply_close(gdbctx);
             return packet_done;
@@ -1516,6 +1645,16 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
         }
         break;
     case 'X':
+        if (sscanf(gdbctx->in_packet, "Xfer:libraries:read::%x,%x", &off, &len) == 2)
+        {
+            if (!gdbctx->process) return packet_error;
+
+            packet_reply_open_xfer(gdbctx);
+            packet_query_libraries(gdbctx);
+            packet_reply_close_xfer(gdbctx, off, len);
+            return packet_done;
+        }
+
         if (*target_xml && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
             return packet_reply(gdbctx, target_xml);
         break;
