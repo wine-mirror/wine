@@ -172,13 +172,13 @@ static inline void* cpu_register_ptr(struct gdb_context *gdbctx,
     dbg_ctx_t *ctx, unsigned idx)
 {
     assert(idx < gdbctx->process->be_cpu->gdb_num_regs);
-    return (char*)ctx + gdbctx->process->be_cpu->gdb_register_map[idx].ctx_offset;
+    return (char*)ctx + gdbctx->process->be_cpu->gdb_register_map[idx].offset;
 }
 
 static inline DWORD64 cpu_register(struct gdb_context *gdbctx,
     dbg_ctx_t *ctx, unsigned idx)
 {
-    switch (gdbctx->process->be_cpu->gdb_register_map[idx].ctx_length)
+    switch (gdbctx->process->be_cpu->gdb_register_map[idx].length)
     {
     case 1: return *(BYTE*)cpu_register_ptr(gdbctx, ctx, idx);
     case 2: return *(WORD*)cpu_register_ptr(gdbctx, ctx, idx);
@@ -186,7 +186,7 @@ static inline DWORD64 cpu_register(struct gdb_context *gdbctx,
     case 8: return *(DWORD64*)cpu_register_ptr(gdbctx, ctx, idx);
     default:
         ERR("got unexpected size: %u\n",
-            (unsigned)gdbctx->process->be_cpu->gdb_register_map[idx].ctx_length);
+            (unsigned)gdbctx->process->be_cpu->gdb_register_map[idx].length);
         assert(0);
         return 0;
     }
@@ -196,30 +196,7 @@ static inline void cpu_register_hex_from(struct gdb_context *gdbctx,
     dbg_ctx_t* ctx, unsigned idx, const char **phex)
 {
     const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
-
-    if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        hex_from(cpu_register_ptr(gdbctx, ctx, idx), *phex, cpu_register_map[idx].gdb_length);
-    else
-    {
-        DWORD64     val = 0;
-        unsigned    i;
-        BYTE        b;
-
-        for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
-        {
-            hex_from(&b, *phex, 1);
-            *phex += 2;
-            val += (DWORD64)b << (8 * i);
-        }
-        switch (cpu_register_map[idx].ctx_length)
-        {
-        case 1: *(BYTE*)cpu_register_ptr(gdbctx, ctx, idx) = (BYTE)val; break;
-        case 2: *(WORD*)cpu_register_ptr(gdbctx, ctx, idx) = (WORD)val; break;
-        case 4: *(DWORD*)cpu_register_ptr(gdbctx, ctx, idx) = (DWORD)val; break;
-        case 8: *(DWORD64*)cpu_register_ptr(gdbctx, ctx, idx) = val; break;
-        default: assert(0);
-        }
-    }
+    hex_from(cpu_register_ptr(gdbctx, ctx, idx), *phex, cpu_register_map[idx].length);
 }
 
 /* =============================================== *
@@ -790,22 +767,7 @@ static enum packet_return packet_reply_error(struct gdb_context* gdbctx, int err
 static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_ctx_t* ctx, unsigned idx)
 {
     const struct gdb_register *cpu_register_map = gdbctx->process->be_cpu->gdb_register_map;
-
-    if (cpu_register_map[idx].gdb_length == cpu_register_map[idx].ctx_length)
-        packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, ctx, idx),
-                            cpu_register_map[idx].gdb_length);
-    else
-    {
-        DWORD64     val = cpu_register(gdbctx, ctx, idx);
-        unsigned    i;
-
-        for (i = 0; i < cpu_register_map[idx].gdb_length; i++)
-        {
-            BYTE    b = val;
-            packet_reply_hex_to(gdbctx, &b, 1);
-            val >>= 8;
-        }
-    }
+    packet_reply_hex_to(gdbctx, cpu_register_ptr(gdbctx, ctx, idx), cpu_register_map[idx].length);
 }
 
 /* =============================================== *
@@ -1608,7 +1570,7 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
         }
 
         snprintf(buffer, ARRAY_SIZE(buffer), "<reg name=\"%s\" bitsize=\"%zu\"",
-                 cpu->gdb_register_map[i].name, 8 * cpu->gdb_register_map[i].gdb_length);
+                 cpu->gdb_register_map[i].name, 8 * cpu->gdb_register_map[i].length);
         packet_reply_add(gdbctx, buffer);
 
         if (cpu->gdb_register_map[i].type)
