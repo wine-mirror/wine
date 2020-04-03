@@ -1522,6 +1522,24 @@ static void packet_query_libraries(struct gdb_context* gdbctx)
     packet_reply_add(gdbctx, "</library-list>");
 }
 
+static void packet_query_threads(struct gdb_context* gdbctx)
+{
+    struct dbg_process* process = gdbctx->process;
+    struct dbg_thread* thread;
+
+    packet_reply_add(gdbctx, "<threads>");
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        packet_reply_add(gdbctx, "<thread ");
+        packet_reply_add(gdbctx, "id=\"");
+        packet_reply_val(gdbctx, thread->tid, 4);
+        packet_reply_add(gdbctx, "\" name=\"");
+        packet_reply_add(gdbctx, thread->name);
+        packet_reply_add(gdbctx, "\"/>");
+    }
+    packet_reply_add(gdbctx, "</threads>");
+}
+
 static enum packet_return packet_query(struct gdb_context* gdbctx)
 {
     int off, len;
@@ -1614,6 +1632,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             packet_reply_open(gdbctx);
             packet_reply_add(gdbctx, "QStartNoAckMode+;");
             packet_reply_add(gdbctx, "qXfer:libraries:read+;");
+            packet_reply_add(gdbctx, "qXfer:threads:read+;");
             if (*target_xml) packet_reply_add(gdbctx, "PacketSize=400;qXfer:features:read+");
             packet_reply_close(gdbctx);
             return packet_done;
@@ -1651,6 +1670,16 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
 
             packet_reply_open_xfer(gdbctx);
             packet_query_libraries(gdbctx);
+            packet_reply_close_xfer(gdbctx, off, len);
+            return packet_done;
+        }
+
+        if (sscanf(gdbctx->in_packet, "Xfer:threads:read::%x,%x", &off, &len) == 2)
+        {
+            if (!gdbctx->process) return packet_error;
+
+            packet_reply_open_xfer(gdbctx);
+            packet_query_threads(gdbctx);
             packet_reply_close_xfer(gdbctx, off, len);
             return packet_done;
         }
