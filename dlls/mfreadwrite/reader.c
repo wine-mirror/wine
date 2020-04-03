@@ -1710,6 +1710,9 @@ static HRESULT source_reader_flush_async(struct source_reader *reader, unsigned 
     unsigned int stream_index;
     HRESULT hr;
 
+    if (reader->flags & SOURCE_READER_FLUSHING)
+        return MF_E_INVALIDREQUEST;
+
     switch (index)
     {
         case MF_SOURCE_READER_FIRST_VIDEO_STREAM:

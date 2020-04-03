@@ -951,6 +951,13 @@ todo_wine
     hr = IMFSourceReader_ReadSample(reader, 0, 0, NULL, NULL, NULL, &sample);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    /* Flush() arguments validation. */
+    hr = IMFSourceReader_Flush(reader, 123);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, NULL, NULL, NULL, NULL);
+    ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
+
     IMFSourceReader_Release(reader);
 }
 
