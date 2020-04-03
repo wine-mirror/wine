@@ -440,12 +440,14 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     vis = pglXChooseVisual(gdi_display, screen, attribList);
     if (vis) {
 #ifdef __i386__
-        WORD old_fs = wine_get_fs();
+        WORD old_fs, new_fs;
+        __asm__( "mov %%fs,%0" : "=r" (old_fs) );
         /* Create a GLX Context. Without one we can't query GL information */
         ctx = pglXCreateContext(gdi_display, vis, None, GL_TRUE);
-        if (wine_get_fs() != old_fs)
+        __asm__( "mov %%fs,%0" : "=r" (new_fs) );
+        __asm__( "mov %0,%%fs" :: "r" (old_fs) );
+        if (old_fs != new_fs)
         {
-            wine_set_fs( old_fs );
             ERR( "%%fs register corrupted, probably broken ATI driver, disabling OpenGL.\n" );
             ERR( "You need to set the \"UseFastTls\" option to \"2\" in your X config file.\n" );
             goto done;
