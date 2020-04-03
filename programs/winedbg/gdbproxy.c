@@ -168,40 +168,6 @@ static unsigned char checksum(const char* ptr, int len)
     return cksum;
 }
 
-#ifdef __i386__
-static const char target_xml[] = "";
-#elif defined(__powerpc__)
-static const char target_xml[] = "";
-#elif defined(__x86_64__)
-static const char target_xml[] = "";
-#elif defined(__arm__)
-static const char target_xml[] =
-    "l <target><architecture>arm</architecture>\n"
-    "<feature name=\"org.gnu.gdb.arm.core\">\n"
-    "    <reg name=\"r0\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r1\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r2\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r3\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r4\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r5\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r6\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r7\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r8\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r9\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r10\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r11\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"r12\" bitsize=\"32\" type=\"uint32\"/>\n"
-    "    <reg name=\"sp\" bitsize=\"32\" type=\"data_ptr\"/>\n"
-    "    <reg name=\"lr\" bitsize=\"32\"/>\n"
-    "    <reg name=\"pc\" bitsize=\"32\" type=\"code_ptr\"/>\n"
-    "    <reg name=\"cpsr\" bitsize=\"32\"/>\n"
-    "</feature></target>\n";
-#elif defined(__aarch64__)
-static const char target_xml[] = "";
-#else
-# error Define the registers map for your CPU
-#endif
-
 static inline void* cpu_register_ptr(struct gdb_context *gdbctx,
     dbg_ctx_t *ctx, unsigned idx)
 {
@@ -1540,9 +1506,129 @@ static void packet_query_threads(struct gdb_context* gdbctx)
     packet_reply_add(gdbctx, "</threads>");
 }
 
+static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_cpu* cpu)
+{
+    const char* feature_prefix = NULL;
+    const char* feature = NULL;
+    char buffer[256];
+    int i;
+
+    packet_reply_add(gdbctx, "<target>");
+    switch (cpu->machine)
+    {
+    case IMAGE_FILE_MACHINE_AMD64:
+        packet_reply_add(gdbctx, "<architecture>i386:x86-64</architecture>");
+        feature_prefix = "org.gnu.gdb.i386.";
+        break;
+    case IMAGE_FILE_MACHINE_I386:
+        packet_reply_add(gdbctx, "<architecture>i386</architecture>");
+        feature_prefix = "org.gnu.gdb.i386.";
+        break;
+    case IMAGE_FILE_MACHINE_POWERPC:
+        packet_reply_add(gdbctx, "<architecture>powerpc:common</architecture>");
+        feature_prefix = "org.gnu.gdb.power.";
+        break;
+    case IMAGE_FILE_MACHINE_ARMNT:
+        packet_reply_add(gdbctx, "<architecture>arm</architecture>");
+        feature_prefix = "org.gnu.gdb.arm.";
+        break;
+    case IMAGE_FILE_MACHINE_ARM64:
+        packet_reply_add(gdbctx, "<architecture>aarch64</architecture>");
+        feature_prefix = "org.gnu.gdb.aarch64.";
+        break;
+    }
+
+    for (i = 0; i < cpu->gdb_num_regs; ++i)
+    {
+        if (cpu->gdb_register_map[i].feature)
+        {
+            if (feature) packet_reply_add(gdbctx, "</feature>");
+            feature = cpu->gdb_register_map[i].feature;
+
+            packet_reply_add(gdbctx, "<feature name=\"");
+            if (feature_prefix) packet_reply_add(gdbctx, feature_prefix);
+            packet_reply_add(gdbctx, feature);
+            packet_reply_add(gdbctx, "\">");
+
+            if (strcmp(feature_prefix, "org.gnu.gdb.i386.") == 0 &&
+                strcmp(feature, "core") == 0)
+                packet_reply_add(gdbctx, "<flags id=\"i386_eflags\" size=\"4\">"
+                                         "<field name=\"CF\" start=\"0\" end=\"0\"/>"
+                                         "<field name=\"\" start=\"1\" end=\"1\"/>"
+                                         "<field name=\"PF\" start=\"2\" end=\"2\"/>"
+                                         "<field name=\"AF\" start=\"4\" end=\"4\"/>"
+                                         "<field name=\"ZF\" start=\"6\" end=\"6\"/>"
+                                         "<field name=\"SF\" start=\"7\" end=\"7\"/>"
+                                         "<field name=\"TF\" start=\"8\" end=\"8\"/>"
+                                         "<field name=\"IF\" start=\"9\" end=\"9\"/>"
+                                         "<field name=\"DF\" start=\"10\" end=\"10\"/>"
+                                         "<field name=\"OF\" start=\"11\" end=\"11\"/>"
+                                         "<field name=\"NT\" start=\"14\" end=\"14\"/>"
+                                         "<field name=\"RF\" start=\"16\" end=\"16\"/>"
+                                         "<field name=\"VM\" start=\"17\" end=\"17\"/>"
+                                         "<field name=\"AC\" start=\"18\" end=\"18\"/>"
+                                         "<field name=\"VIF\" start=\"19\" end=\"19\"/>"
+                                         "<field name=\"VIP\" start=\"20\" end=\"20\"/>"
+                                         "<field name=\"ID\" start=\"21\" end=\"21\"/>"
+                                         "</flags>");
+
+            if (strcmp(feature_prefix, "org.gnu.gdb.i386.") == 0 &&
+                strcmp(feature, "sse") == 0)
+                packet_reply_add(gdbctx, "<vector id=\"v4f\" type=\"ieee_single\" count=\"4\"/>"
+                                         "<vector id=\"v2d\" type=\"ieee_double\" count=\"2\"/>"
+                                         "<vector id=\"v16i8\" type=\"int8\" count=\"16\"/>"
+                                         "<vector id=\"v8i16\" type=\"int16\" count=\"8\"/>"
+                                         "<vector id=\"v4i32\" type=\"int32\" count=\"4\"/>"
+                                         "<vector id=\"v2i64\" type=\"int64\" count=\"2\"/>"
+                                         "<union id=\"vec128\">"
+                                         "<field name=\"v4_float\" type=\"v4f\"/>"
+                                         "<field name=\"v2_double\" type=\"v2d\"/>"
+                                         "<field name=\"v16_int8\" type=\"v16i8\"/>"
+                                         "<field name=\"v8_int16\" type=\"v8i16\"/>"
+                                         "<field name=\"v4_int32\" type=\"v4i32\"/>"
+                                         "<field name=\"v2_int64\" type=\"v2i64\"/>"
+                                         "<field name=\"uint128\" type=\"uint128\"/>"
+                                         "</union>"
+                                         "<flags id=\"i386_mxcsr\" size=\"4\">"
+                                         "<field name=\"IE\" start=\"0\" end=\"0\"/>"
+                                         "<field name=\"DE\" start=\"1\" end=\"1\"/>"
+                                         "<field name=\"ZE\" start=\"2\" end=\"2\"/>"
+                                         "<field name=\"OE\" start=\"3\" end=\"3\"/>"
+                                         "<field name=\"UE\" start=\"4\" end=\"4\"/>"
+                                         "<field name=\"PE\" start=\"5\" end=\"5\"/>"
+                                         "<field name=\"DAZ\" start=\"6\" end=\"6\"/>"
+                                         "<field name=\"IM\" start=\"7\" end=\"7\"/>"
+                                         "<field name=\"DM\" start=\"8\" end=\"8\"/>"
+                                         "<field name=\"ZM\" start=\"9\" end=\"9\"/>"
+                                         "<field name=\"OM\" start=\"10\" end=\"10\"/>"
+                                         "<field name=\"UM\" start=\"11\" end=\"11\"/>"
+                                         "<field name=\"PM\" start=\"12\" end=\"12\"/>"
+                                         "<field name=\"FZ\" start=\"15\" end=\"15\"/>"
+                                         "</flags>");
+        }
+
+        snprintf(buffer, ARRAY_SIZE(buffer), "<reg name=\"%s\" bitsize=\"%zu\"",
+                 cpu->gdb_register_map[i].name, 8 * cpu->gdb_register_map[i].gdb_length);
+        packet_reply_add(gdbctx, buffer);
+
+        if (cpu->gdb_register_map[i].type)
+        {
+            packet_reply_add(gdbctx, " type=\"");
+            packet_reply_add(gdbctx, cpu->gdb_register_map[i].type);
+            packet_reply_add(gdbctx, "\"");
+        }
+
+        packet_reply_add(gdbctx, "/>");
+    }
+
+    if (feature) packet_reply_add(gdbctx, "</feature>");
+    packet_reply_add(gdbctx, "</target>");
+}
+
 static enum packet_return packet_query(struct gdb_context* gdbctx)
 {
     int off, len;
+    struct backend_cpu *cpu;
 
     switch (gdbctx->in_packet[0])
     {
@@ -1633,7 +1719,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             packet_reply_add(gdbctx, "QStartNoAckMode+;");
             packet_reply_add(gdbctx, "qXfer:libraries:read+;");
             packet_reply_add(gdbctx, "qXfer:threads:read+;");
-            if (*target_xml) packet_reply_add(gdbctx, "PacketSize=400;qXfer:features:read+");
+            packet_reply_add(gdbctx, "qXfer:features:read+;");
             packet_reply_close(gdbctx);
             return packet_done;
         }
@@ -1684,8 +1770,16 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_done;
         }
 
-        if (*target_xml && strncmp(gdbctx->in_packet, "Xfer:features:read:target.xml", 29) == 0)
-            return packet_reply(gdbctx, target_xml);
+        if (sscanf(gdbctx->in_packet, "Xfer:features:read:target.xml:%x,%x", &off, &len) == 2)
+        {
+            if (!gdbctx->process) return packet_error;
+            if (!(cpu = gdbctx->process->be_cpu)) return packet_error;
+
+            packet_reply_open_xfer(gdbctx);
+            packet_query_target_xml(gdbctx, cpu);
+            packet_reply_close_xfer(gdbctx, off, len);
+            return packet_done;
+        }
         break;
     }
     ERR("Unhandled query %s\n", debugstr_an(gdbctx->in_packet, gdbctx->in_packet_len));
