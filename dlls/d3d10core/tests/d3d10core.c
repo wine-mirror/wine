@@ -814,7 +814,7 @@ static void check_readback_data_u8_(unsigned int line, struct resource_readback 
         for (x = rect->left; x < rect->right; ++x)
         {
             value = get_readback_u8(rb, x, y);
-            if (abs((int)value - (int)expected_value) > max_diff)
+            if (!compare_uint(value, expected_value, max_diff))
                 goto done;
         }
     }
@@ -846,7 +846,7 @@ static void check_readback_data_u16_(unsigned int line, struct resource_readback
         for (x = rect->left; x < rect->right; ++x)
         {
             value = get_readback_u16(rb, x, y);
-            if (abs((int)value - (int)expected_value) > max_diff)
+            if (!compare_uint(value, expected_value, max_diff))
                 goto done;
         }
     }
@@ -878,7 +878,7 @@ static void check_readback_data_u24_(unsigned int line, struct resource_readback
         for (x = rect->left; x < rect->right; ++x)
         {
             value = get_readback_u32(rb, x, y) >> shift;
-            if (abs((int)value - (int)expected_value) > max_diff)
+            if (!compare_uint(value, expected_value, max_diff))
                 goto done;
         }
     }
@@ -15855,7 +15855,7 @@ static void test_depth_bias(void)
                                 u32 = get_readback_data(&rb, 0, y, sizeof(*u32));
                                 u32_value = *u32 >> shift;
                                 expected_value = depth * 16777215.0f + 0.5f;
-                                all_match = abs(u32_value - expected_value) <= 3;
+                                all_match = compare_uint(u32_value, expected_value, 3);
                                 ok(all_match,
                                         "Got value %#x (%.8e), expected %#x (%.8e).\n",
                                         u32_value, u32_value / 16777215.0f,
@@ -15864,7 +15864,7 @@ static void test_depth_bias(void)
                             case DXGI_FORMAT_D16_UNORM:
                                 u16 = get_readback_data(&rb, 0, y, sizeof(*u16));
                                 expected_value = depth * 65535.0f + 0.5f;
-                                all_match = abs(*u16 - expected_value) <= 1;
+                                all_match = compare_uint(*u16, expected_value, 1);
                                 ok(all_match,
                                         "Got value %#x (%.8e), expected %#x (%.8e).\n",
                                         *u16, *u16 / 65535.0f, expected_value, expected_value / 65535.0f);
