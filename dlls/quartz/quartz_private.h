@@ -87,50 +87,33 @@ extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 
 BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID *source_clsid) DECLSPEC_HIDDEN;
 
-typedef struct tagBaseWindow
-{
-    HWND hWnd;
-    LONG Width;
-    LONG Height;
-
-    const struct video_window_ops *pFuncsTable;
-} BaseWindow;
-
-typedef RECT (WINAPI *BaseWindow_GetDefaultRect)(BaseWindow *This);
-typedef BOOL (WINAPI *BaseWindow_OnSize)(BaseWindow *This, LONG Height, LONG Width);
-
-struct video_window_ops
-{
-    /* Required */
-    BaseWindow_GetDefaultRect pfnGetDefaultRect;
-    /* Optional, WinProc Related */
-    BaseWindow_OnSize pfnOnSize;
-};
-
-HRESULT WINAPI BaseWindow_Init(BaseWindow *pBaseWindow, const struct video_window_ops *pFuncsTable) DECLSPEC_HIDDEN;
-HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow) DECLSPEC_HIDDEN;
-
-HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This) DECLSPEC_HIDDEN;
-HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This) DECLSPEC_HIDDEN;
-
 struct video_window
 {
-    BaseWindow baseWindow;
     IVideoWindow IVideoWindow_iface;
 
+    HWND hwnd;
+    LONG width, height;
     BOOL AutoShow;
     HWND hwndDrain;
     HWND hwndOwner;
     struct strmbase_filter *pFilter;
     struct strmbase_pin *pPin;
+    const struct video_window_ops *ops;
 };
 
+struct video_window_ops
+{
+    /* Required */
+    RECT (*get_default_rect)(struct video_window *window);
+    /* Optional, WinProc Related */
+    BOOL (*resize)(struct video_window *window, LONG height, LONG width);
+};
+
+void video_window_cleanup(struct video_window *window) DECLSPEC_HIDDEN;
+HRESULT video_window_create_window(struct video_window *window) DECLSPEC_HIDDEN;
 HRESULT video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
         struct strmbase_filter *filter, struct strmbase_pin *pin, const struct video_window_ops *ops) DECLSPEC_HIDDEN;
 void video_window_unregister_class(void) DECLSPEC_HIDDEN;
-HRESULT WINAPI BaseControlWindow_Destroy(struct video_window *window) DECLSPEC_HIDDEN;
-
-BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI BaseControlWindowImpl_QueryInterface(IVideoWindow *iface, REFIID iid, void **out) DECLSPEC_HIDDEN;
 ULONG WINAPI BaseControlWindowImpl_AddRef(IVideoWindow *iface) DECLSPEC_HIDDEN;
