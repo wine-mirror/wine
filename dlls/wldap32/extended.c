@@ -158,7 +158,7 @@ ULONG CDECL ldap_extended_operationW( WLDAP32_LDAP *ld, PWCHAR oid, struct WLDAP
         if (!clientctrlsU) goto exit;
     }
 
-    ret = map_error( ldap_extended_operation( ld, oid ? oidU : "", (struct berval *)data,
+    ret = map_error( ldap_extended_operation( ld->ld, oid ? oidU : "", (struct berval *)data,
                                               serverctrlsU, clientctrlsU, (int *)message ));
 
 exit:
@@ -275,7 +275,7 @@ ULONG CDECL ldap_extended_operation_sW( WLDAP32_LDAP *ld, PWCHAR oid, struct WLD
         if (!clientctrlsU) goto exit;
     }
 
-    ret = map_error( ldap_extended_operation_s( ld, oid ? oidU : "", (struct berval *)data, serverctrlsU,
+    ret = map_error( ldap_extended_operation_s( ld->ld, oid ? oidU : "", (struct berval *)data, serverctrlsU,
                                                 clientctrlsU, &retoidU, (struct berval **)retdata ));
 
     if (retoid && retoidU) {

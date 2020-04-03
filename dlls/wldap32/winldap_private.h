@@ -103,8 +103,11 @@ typedef struct berelement
 
 #define WLDAP32_LDAP_AUTH_NEGOTIATE             0x486
 
-typedef struct ldap
+typedef struct wldap32
 {
+#ifdef HAVE_LDAP
+    LDAP *ld;
+#endif
     struct
     {
         UINT_PTR sb_sd;

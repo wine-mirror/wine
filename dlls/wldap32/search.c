@@ -132,7 +132,7 @@ ULONG CDECL ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR fil
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_search_ext( ld, baseU, scope, filterU, attrsU, attrsonly,
+    ret = ldap_search_ext( ld->ld, baseU, scope, filterU, attrsU, attrsonly,
                            NULL, NULL, NULL, 0, &msg );
 
     if (ret == LDAP_SUCCESS)
@@ -281,7 +281,7 @@ ULONG CDECL ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
         tvp = &tv;
     }
 
-    ret = map_error( ldap_search_ext( ld, baseU, scope, filterU, attrsU, attrsonly,
+    ret = map_error( ldap_search_ext( ld->ld, baseU, scope, filterU, attrsU, attrsonly,
                                       serverctrlsU, clientctrlsU, tvp, sizelimit, (int *)message ));
 
 exit:
@@ -416,7 +416,7 @@ ULONG CDECL ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
         if (!clientctrlsU) goto exit;
     }
 
-    ret = map_error( ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+    ret = map_error( ldap_search_ext_s( ld->ld, baseU, scope, filterU, attrsU, attrsonly,
                                         serverctrlsU, clientctrlsU, (struct timeval *)timeout,
                                         sizelimit, res ));
 
@@ -523,7 +523,7 @@ ULONG CDECL ldap_search_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR f
         if (!attrsU) goto exit;
     }
 
-    ret = map_error( ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+    ret = map_error( ldap_search_ext_s( ld->ld, baseU, scope, filterU, attrsU, attrsonly,
                                         NULL, NULL, NULL, 0, res ));
 
 exit:
@@ -633,7 +633,7 @@ ULONG CDECL ldap_search_stW( WLDAP32_LDAP *ld, const PWCHAR base, ULONG scope,
         if (!attrsU) goto exit;
     }
 
-    ret = map_error( ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+    ret = map_error( ldap_search_ext_s( ld->ld, baseU, scope, filterU, attrsU, attrsonly,
                                         NULL, NULL, (struct timeval *)timeout, 0, res ));
 
 exit:

@@ -120,7 +120,7 @@ ULONG CDECL ldap_addW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
         if (!attrsU) goto exit;
     }
 
-    ret = ldap_add_ext( ld, dn ? dnU : "", attrs ? attrsU : nullattrs, NULL, NULL, &msg );
+    ret = ldap_add_ext( ld->ld, dn ? dnU : "", attrs ? attrsU : nullattrs, NULL, NULL, &msg );
 
     if (ret == LDAP_SUCCESS)
         ret = msg;
@@ -242,7 +242,7 @@ ULONG CDECL ldap_add_extW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
         if (!clientctrlsU) goto exit;
     }
 
-    ret = map_error( ldap_add_ext( ld, dn ? dnU : "", attrs ? attrsU : nullattrs, serverctrlsU,
+    ret = map_error( ldap_add_ext( ld->ld, dn ? dnU : "", attrs ? attrsU : nullattrs, serverctrlsU,
                                    clientctrlsU, message ? (int *)message : &dummy ));
 
 exit:
@@ -359,7 +359,7 @@ ULONG CDECL ldap_add_ext_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[],
         if (!clientctrlsU) goto exit;
     }
 
-    ret = map_error( ldap_add_ext_s( ld, dn ? dnU : "", attrs ? attrsU : nullattrs,
+    ret = map_error( ldap_add_ext_s( ld->ld, dn ? dnU : "", attrs ? attrsU : nullattrs,
                                      serverctrlsU, clientctrlsU ));
 
 exit:
@@ -446,7 +446,7 @@ ULONG CDECL ldap_add_sW( WLDAP32_LDAP *ld, PWCHAR dn, LDAPModW *attrs[] )
         if (!attrsU) goto exit;
     }
 
-    ret = map_error( ldap_add_ext_s( ld, dn ? dnU : "", attrs ? attrsU : nullattrs, NULL, NULL ));
+    ret = map_error( ldap_add_ext_s( ld->ld, dn ? dnU : "", attrs ? attrsU : nullattrs, NULL, NULL ));
 
 exit:
     strfreeU( dnU );
