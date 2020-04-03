@@ -1514,7 +1514,7 @@ static void test_clear_different_size_surfaces(void)
             depth = (WORD *)((BYTE *)lr.pBits + y * lr.Pitch);
             for (x = 0; x < 4; ++x)
             {
-                ok(abs(depth[x] - 0x7fff) <= 2, "Got depth 0x%04x at %u, %u.\n", depth[x], x, y);
+                ok(compare_uint(depth[x], 0x7fff, 2), "Got depth 0x%04x at %u, %u.\n", depth[x], x, y);
             }
         }
         hr = IDirect3DSurface9_UnlockRect(ds);
@@ -1729,7 +1729,7 @@ static void color_fill_test(void)
             /* Windows drivers disagree on how to promote the 8 bit per channel
              * input argument to 16 bit for D3DFMT_G16R16. */
             ok(color_match(surface_data[0], formats[i].fill_value, 2) &&
-                    abs((expected_a) - (fill_a)) < 3,
+                    compare_uint(expected_a, fill_a, 2),
                     "Expected clear value 0x%08x, got 0x%08x, fmt=%s.\n",
                     formats[i].fill_value, surface_data[0], formats[i].name);
             hr = IDirect3DSurface9_UnlockRect(surface);
