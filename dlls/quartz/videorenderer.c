@@ -244,7 +244,6 @@ static void video_renderer_destroy(struct strmbase_renderer *iface)
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
 
     BaseControlWindow_Destroy(&filter->baseControlWindow);
-    BaseControlVideo_Destroy(&filter->baseControlVideo);
     CloseHandle(filter->run_event);
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);

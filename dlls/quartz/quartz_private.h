@@ -216,6 +216,5 @@ typedef struct BaseControlVideoFuncTable
 
 void basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
         struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table) DECLSPEC_HIDDEN;
-HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo) DECLSPEC_HIDDEN;
 
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

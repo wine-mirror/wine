@@ -27,11 +27,6 @@ static inline BaseControlVideo *impl_from_IBasicVideo(IBasicVideo *iface)
     return CONTAINING_RECORD(iface, BaseControlVideo, IBasicVideo_iface);
 }
 
-HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo)
-{
-    return S_OK;
-}
-
 static HRESULT BaseControlVideoImpl_CheckSourceRect(BaseControlVideo *This, RECT *pSourceRect)
 {
     LONG VideoWidth, VideoHeight;
