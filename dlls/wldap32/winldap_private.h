@@ -131,6 +131,7 @@ typedef struct wldap32
     ULONG ld_cldaptimeout;
     ULONG ld_refhoplimit;
     ULONG ld_options;
+    struct berval **ld_server_ctrls;
 } WLDAP32_LDAP, *WLDAP32_PLDAP;
 
 typedef struct ldapmodA {

@@ -398,6 +398,58 @@ ULONG CDECL ldap_set_optionA( WLDAP32_LDAP *ld, int option, void *value )
     return ret;
 }
 
+#ifdef HAVE_LDAP
+
+static BOOL query_supported_server_ctrls( WLDAP32_LDAP *ld )
+{
+    char *attrs[] = { (char *)"supportedControl", NULL };
+    LDAPMessage *res, *entry;
+
+    if ( ld->ld_server_ctrls ) return TRUE;
+
+    if (ldap_search_ext_s( ld->ld, (char *)"", LDAP_SCOPE_BASE, (char *)"(objectClass=*)", attrs, FALSE,
+                           NULL, NULL, NULL, 0, &res ) != LDAP_SUCCESS)
+        return FALSE;
+
+    entry = ldap_first_entry( ld->ld, res );
+    if (entry)
+    {
+        ULONG count, i;
+
+        ld->ld_server_ctrls = ldap_get_values_len( ld->ld, entry, attrs[0] );
+        count = ldap_count_values_len( ld->ld_server_ctrls );
+        for (i = 0; i < count; i++)
+            TRACE("%u: %s\n", i, debugstr_an( ld->ld_server_ctrls[i]->bv_val, ld->ld_server_ctrls[i]->bv_len ));
+    }
+
+    ldap_msgfree( res );
+
+    return ld->ld_server_ctrls != NULL;
+}
+
+static BOOL is_supported_server_ctrls( WLDAP32_LDAP *ld, LDAPControl **ctrls )
+{
+    ULONG user_count, server_count, i, n, supported = 0;
+
+    if (!query_supported_server_ctrls( ld ))
+        return TRUE; /* can't verify, let the server handle it on next query */
+
+    user_count = controlarraylenU( ctrls );
+    server_count = ldap_count_values_len( ld->ld_server_ctrls );
+
+    for (n = 0; n < user_count; n++)
+    {
+        for (i = 0; i < server_count; i++)
+        {
+            if (!strncmp( ctrls[n]->ldctl_oid, ld->ld_server_ctrls[i]->bv_val, ld->ld_server_ctrls[i]->bv_len))
+                supported++;
+        }
+    }
+
+    return supported == user_count;
+}
+#endif
+
 /***********************************************************************
  *      ldap_set_optionW     (WLDAP32.@)
  *
@@ -433,7 +485,10 @@ ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
         ctrlsU = controlarrayWtoU( value );
         if (!ctrlsU) return WLDAP32_LDAP_NO_MEMORY;
 
-        ret = map_error( ldap_set_option( ld->ld, option, ctrlsU ));
+        if (!is_supported_server_ctrls( ld, ctrlsU ))
+            ret = WLDAP32_LDAP_PARAM_ERROR;
+        else
+            ret = map_error( ldap_set_option( ld->ld, option, ctrlsU ));
         controlarrayfreeU( ctrlsU );
         return ret;
     }

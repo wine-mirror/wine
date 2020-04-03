@@ -201,12 +201,10 @@ static void test_ldap_server_control( void )
     ctrls[0] = &mask;
     ctrls[1] = NULL;
     ret = ldap_set_optionW(ld, LDAP_OPT_SERVER_CONTROLS, ctrls);
-todo_wine
     ok( ret == LDAP_PARAM_ERROR, "ldap_set_optionW should fail: 0x%x\n", ret );
 
     res = NULL;
     ret = ldap_search_sA( ld, (char *)"OU=scientists,DC=example,DC=com", LDAP_SCOPE_BASE, (char *)"(objectclass=*)", NULL, FALSE, &res );
-todo_wine
     ok( !ret, "ldap_search_sA failed 0x%x\n", ret );
     ok( res != NULL, "expected res != NULL\n" );
 

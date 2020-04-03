@@ -498,15 +498,12 @@ todo_wine
     pref[1].vValue.Integer = ADS_SECURITY_INFO_OWNER | ADS_SECURITY_INFO_GROUP | ADS_SECURITY_INFO_DACL;
     pref[1].dwStatus = 0xdeadbeef;
     hr = IDirectorySearch_SetSearchPreference(ds, pref, ARRAY_SIZE(pref));
-todo_wine
     ok(hr == S_ADS_ERRORSOCCURRED, "got %#x\n", hr);
     ok(pref[0].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[0].dwStatus);
     /* ldap.forumsys.com doesn't support NT security, real ADs DC - does  */
-todo_wine
     ok(pref[1].dwStatus == ADS_STATUS_INVALID_SEARCHPREF, "got %d\n", pref[1].dwStatus);
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
     if (hr != S_OK) goto fail;
 

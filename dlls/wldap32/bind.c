@@ -766,6 +766,8 @@ ULONG CDECL WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
     if (ld)
     {
         ret = map_error( ldap_unbind_ext( ld->ld, NULL, NULL ));
+        if ( ld->ld_server_ctrls )
+            ldap_value_free_len( ld->ld_server_ctrls );
         heap_free( ld );
     }
     else
@@ -797,6 +799,8 @@ ULONG CDECL WLDAP32_ldap_unbind_s( WLDAP32_LDAP *ld )
     if (ld)
     {
         ret = map_error( ldap_unbind_ext_s( ld->ld, NULL, NULL ));
+        if ( ld->ld_server_ctrls )
+            ldap_value_free_len( ld->ld_server_ctrls );
         heap_free( ld );
     }
     else
