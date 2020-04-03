@@ -113,7 +113,7 @@ HRESULT WINAPI BaseWindow_Destroy(BaseWindow *pBaseWindow) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseWindowImpl_PrepareWindow(BaseWindow *This) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseWindowImpl_DoneWithWindow(BaseWindow *This) DECLSPEC_HIDDEN;
 
-typedef struct tagBaseControlWindow
+struct video_window
 {
     BaseWindow baseWindow;
     IVideoWindow IVideoWindow_iface;
@@ -123,12 +123,12 @@ typedef struct tagBaseControlWindow
     HWND hwndOwner;
     struct strmbase_filter *pFilter;
     struct strmbase_pin *pPin;
-} BaseControlWindow;
+};
 
-HRESULT video_window_init(BaseControlWindow *window, const IVideoWindowVtbl *vtbl,
+HRESULT video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
         struct strmbase_filter *filter, struct strmbase_pin *pin, const BaseWindowFuncTable *func_table) DECLSPEC_HIDDEN;
 void video_window_unregister_class(void) DECLSPEC_HIDDEN;
-HRESULT WINAPI BaseControlWindow_Destroy(BaseControlWindow *pControlWindow) DECLSPEC_HIDDEN;
+HRESULT WINAPI BaseControlWindow_Destroy(struct video_window *window) DECLSPEC_HIDDEN;
 
 BOOL WINAPI BaseControlWindowImpl_PossiblyEatMessage(BaseWindow *This, UINT uMsg, WPARAM wParam, LPARAM lParam) DECLSPEC_HIDDEN;
 

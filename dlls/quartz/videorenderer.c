@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 struct video_renderer
 {
     struct strmbase_renderer renderer;
-    BaseControlWindow baseControlWindow;
+    struct video_window baseControlWindow;
     BaseControlVideo baseControlVideo;
 
     IOverlay IOverlay_iface;

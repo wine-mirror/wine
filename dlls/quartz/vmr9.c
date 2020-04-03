@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 struct quartz_vmr
 {
     struct strmbase_renderer renderer;
-    BaseControlWindow baseControlWindow;
+    struct video_window baseControlWindow;
     BaseControlVideo baseControlVideo;
 
     IAMCertifiedOutputProtection IAMCertifiedOutputProtection_iface;
