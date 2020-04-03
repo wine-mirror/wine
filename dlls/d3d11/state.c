@@ -308,6 +308,11 @@ static enum wined3d_blend wined3d_blend_from_d3d11(D3D11_BLEND factor)
     return (enum wined3d_blend)factor;
 }
 
+static enum wined3d_blend_op wined3d_blend_op_from_d3d11(D3D11_BLEND_OP op)
+{
+    return (enum wined3d_blend_op)op;
+}
+
 HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC *desc,
         struct d3d_blend_state **state)
 {
@@ -392,10 +397,10 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
         wined3d_desc.rt[i].enable = desc->RenderTarget[i].BlendEnable;
         wined3d_desc.rt[i].src = wined3d_blend_from_d3d11(desc->RenderTarget[i].SrcBlend);
         wined3d_desc.rt[i].dst = wined3d_blend_from_d3d11(desc->RenderTarget[i].DestBlend);
-        wined3d_desc.rt[i].op = desc->RenderTarget[i].BlendOp;
+        wined3d_desc.rt[i].op = wined3d_blend_op_from_d3d11(desc->RenderTarget[i].BlendOp);
         wined3d_desc.rt[i].src_alpha = wined3d_blend_from_d3d11(desc->RenderTarget[i].SrcBlendAlpha);
         wined3d_desc.rt[i].dst_alpha = wined3d_blend_from_d3d11(desc->RenderTarget[i].DestBlendAlpha);
-        wined3d_desc.rt[i].op_alpha = desc->RenderTarget[i].BlendOpAlpha;
+        wined3d_desc.rt[i].op_alpha = wined3d_blend_op_from_d3d11(desc->RenderTarget[i].BlendOpAlpha);
         wined3d_desc.rt[i].writemask = desc->RenderTarget[i].RenderTargetWriteMask;
     }
 
