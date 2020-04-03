@@ -1071,6 +1071,11 @@ static const struct wined3d_parent_ops d3d_rasterizer_state_wined3d_parent_ops =
     d3d_rasterizer_state_wined3d_object_destroyed,
 };
 
+static enum wined3d_fill_mode wined3d_fill_mode_from_d3d11(D3D11_FILL_MODE mode)
+{
+    return (enum wined3d_fill_mode)mode;
+}
+
 static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
         const D3D11_RASTERIZER_DESC *desc)
 {
@@ -1090,7 +1095,7 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
         return E_FAIL;
     }
 
-    wined3d_desc.fill_mode = desc->FillMode;
+    wined3d_desc.fill_mode = wined3d_fill_mode_from_d3d11(desc->FillMode);
     wined3d_desc.cull_mode = desc->CullMode;
     wined3d_desc.front_ccw = desc->FrontCounterClockwise;
     wined3d_desc.depth_bias = desc->DepthBias;
