@@ -382,7 +382,7 @@ unsigned short wine_ldt_alloc_fs(void)
         int ret;
 
         /* the preloader may have allocated it already */
-        global_fs_sel = wine_get_fs();
+        __asm__( "mov %%fs,%0" : "=r" (global_fs_sel) );
         if (global_fs_sel && is_gdt_sel(global_fs_sel)) return global_fs_sel;
 
         memset( &ldt_info, 0, sizeof(ldt_info) );
@@ -431,7 +431,7 @@ void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
     {
         internal_set_entry( sel, entry );
     }
-    wine_set_fs( sel );
+    __asm__( "mov %0,%%fs" :: "r" (sel) );
 }
 
 
@@ -442,11 +442,14 @@ void wine_ldt_init_fs( unsigned short sel, const LDT_ENTRY *entry )
  */
 void wine_ldt_free_fs( unsigned short sel )
 {
+    WORD fs;
+
     if (is_gdt_sel(sel)) return;  /* nothing to do */
-    if (!((wine_get_fs() ^ sel) & ~3))
+    __asm__( "mov %%fs,%0" : "=r" (fs) );
+    if (!((fs ^ sel) & ~3))
     {
         /* FIXME: if freeing current %fs we cannot acquire locks */
-        wine_set_fs( 0 );
+        __asm__( "mov %0,%%fs" :: "r" (0) );
         internal_set_entry( sel, &null_entry );
         wine_ldt_copy.flags[sel >> 3] = 0;
     }
