@@ -2652,6 +2652,7 @@ static int compare_udp6_rows(const void *a, const void *b)
     return rowA->dwLocalPort - rowB->dwLocalPort;
 }
 
+#ifdef __linux__
 struct ipv6_addr_scope
 {
     IN6_ADDR addr;
@@ -2662,56 +2663,48 @@ static struct ipv6_addr_scope *get_ipv6_addr_scope_table(unsigned int *size)
 {
     struct ipv6_addr_scope *table = NULL;
     unsigned int table_size = 0;
+    char buf[512], *ptr;
+    FILE *fp;
 
     if (!(table = HeapAlloc( GetProcessHeap(), 0, sizeof(table[0]) )))
         return NULL;
 
-#ifdef __linux__
+    if (!(fp = fopen( "/proc/net/if_inet6", "r" )))
+        goto failed;
+
+    while ((ptr = fgets( buf, sizeof(buf), fp )))
     {
-        FILE *fp;
-        char buf[512], *ptr;
+        WORD a[8];
+        DWORD scope;
+        struct ipv6_addr_scope *new_table;
+        struct ipv6_addr_scope *entry;
+        unsigned int i;
 
-        if (!(fp = fopen( "/proc/net/if_inet6", "r" )))
-            goto failed;
+        if (sscanf( ptr, "%4hx%4hx%4hx%4hx%4hx%4hx%4hx%4hx %*s %*s %x",
+            &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7], &scope ) != 9)
+            continue;
 
-        while ((ptr = fgets( buf, sizeof(buf), fp )))
+        table_size++;
+        if (!(new_table = HeapReAlloc( GetProcessHeap(), 0, table, table_size * sizeof(table[0]) )))
         {
-            WORD a[8];
-            DWORD scope;
-            struct ipv6_addr_scope *new_table;
-            struct ipv6_addr_scope *entry;
-            unsigned int i;
-
-            if (sscanf( ptr, "%4hx%4hx%4hx%4hx%4hx%4hx%4hx%4hx %*s %*s %x",
-                &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7], &scope ) != 9)
-                continue;
-
-            table_size++;
-            if (!(new_table = HeapReAlloc( GetProcessHeap(), 0, table, table_size * sizeof(table[0]) )))
-            {
-                fclose(fp);
-                goto failed;
-            }
-
-            table = new_table;
-            entry = &table[table_size - 1];
-
-            i = 0;
-            while (i < 8)
-            {
-                entry->addr.u.Word[i] = htons(a[i]);
-                i++;
-            }
-
-            entry->scope = htons(scope);
+            fclose(fp);
+            goto failed;
         }
 
-        fclose(fp);
+        table = new_table;
+        entry = &table[table_size - 1];
+
+        i = 0;
+        while (i < 8)
+        {
+            entry->addr.u.Word[i] = htons(a[i]);
+            i++;
+        }
+
+        entry->scope = htons(scope);
     }
-#else
-    FIXME( "not implemented\n" );
-    goto failed;
-#endif
+
+    fclose(fp);
 
     *size = table_size;
     return table;
@@ -2745,6 +2738,7 @@ static DWORD find_ipv6_addr_scope(const IN6_ADDR *addr, const struct ipv6_addr_s
 
     return -1;
 }
+#endif
 
 DWORD build_tcp6_table( TCP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE heap, DWORD flags,
                         DWORD *size )
