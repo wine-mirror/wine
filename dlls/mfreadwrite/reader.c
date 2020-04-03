@@ -1715,8 +1715,7 @@ static HRESULT source_reader_flush_async(struct source_reader *reader, unsigned 
 
     command->stream_index = stream_index;
 
-    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_MULTITHREADED, &reader->async_commands_callback,
-            &command->IUnknown_iface);
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
     IUnknown_Release(&command->IUnknown_iface);
 
     return hr;
