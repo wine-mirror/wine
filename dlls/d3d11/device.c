@@ -5428,6 +5428,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
     return S_OK;
 }
 
+static D3D11_DSV_DIMENSION d3d11_dsv_dimension_from_d3d10(D3D10_DSV_DIMENSION dim)
+{
+    return (D3D11_DSV_DIMENSION)dim;
+}
+
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Device1 *iface,
         ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D10DepthStencilView **view)
 {
@@ -5442,7 +5447,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
     if (desc)
     {
         d3d11_desc.Format = desc->Format;
-        d3d11_desc.ViewDimension = desc->ViewDimension;
+        d3d11_desc.ViewDimension = d3d11_dsv_dimension_from_d3d10(desc->ViewDimension);
         d3d11_desc.Flags = 0;
         memcpy(&d3d11_desc.u, &desc->u, sizeof(d3d11_desc.u));
     }
