@@ -38,6 +38,11 @@ static struct wined3d_shader_signature_element *shader_find_signature_element(co
     return NULL;
 }
 
+static enum wined3d_input_classification wined3d_input_classification_from_d3d11(D3D11_INPUT_CLASSIFICATION slot_class)
+{
+    return (enum wined3d_input_classification)slot_class;
+}
+
 static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEMENT_DESC *element_descs,
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
         struct wined3d_vertex_element **wined3d_elements)
@@ -69,7 +74,7 @@ static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEME
         e->input_slot = f->InputSlot;
         e->offset = f->AlignedByteOffset;
         e->output_slot = WINED3D_OUTPUT_SLOT_UNUSED;
-        e->input_slot_class = f->InputSlotClass;
+        e->input_slot_class = wined3d_input_classification_from_d3d11(f->InputSlotClass);
         e->instance_data_step_rate = f->InstanceDataStepRate;
         e->method = WINED3D_DECL_METHOD_DEFAULT;
         e->usage = 0;
