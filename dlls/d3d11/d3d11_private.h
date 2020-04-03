@@ -69,6 +69,7 @@ DWORD wined3d_usage_from_d3d11(enum D3D11_USAGE usage) DECLSPEC_HIDDEN;
 struct wined3d_resource *wined3d_resource_from_d3d11_resource(ID3D11Resource *resource) DECLSPEC_HIDDEN;
 struct wined3d_resource *wined3d_resource_from_d3d10_resource(ID3D10Resource *resource) DECLSPEC_HIDDEN;
 DWORD wined3d_map_flags_from_d3d11_map_type(D3D11_MAP map_type) DECLSPEC_HIDDEN;
+DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type) DECLSPEC_HIDDEN;
 DWORD wined3d_clear_flags_from_d3d11_clear_flags(UINT clear_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_access_from_d3d11(D3D11_USAGE usage, UINT cpu_access) DECLSPEC_HIDDEN;
 

@@ -756,6 +756,11 @@ DWORD wined3d_map_flags_from_d3d11_map_type(D3D11_MAP map_type)
     }
 }
 
+DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type)
+{
+    return wined3d_map_flags_from_d3d11_map_type((D3D11_MAP)map_type);
+}
+
 DWORD wined3d_clear_flags_from_d3d11_clear_flags(UINT clear_flags)
 {
     DWORD wined3d_clear_flags = 0;
