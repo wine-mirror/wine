@@ -1076,6 +1076,11 @@ static enum wined3d_fill_mode wined3d_fill_mode_from_d3d11(D3D11_FILL_MODE mode)
     return (enum wined3d_fill_mode)mode;
 }
 
+static enum wined3d_cull wined3d_cull_from_d3d11(D3D11_CULL_MODE mode)
+{
+    return (enum wined3d_cull)mode;
+}
+
 static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
         const D3D11_RASTERIZER_DESC *desc)
 {
@@ -1096,7 +1101,7 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     }
 
     wined3d_desc.fill_mode = wined3d_fill_mode_from_d3d11(desc->FillMode);
-    wined3d_desc.cull_mode = desc->CullMode;
+    wined3d_desc.cull_mode = wined3d_cull_from_d3d11(desc->CullMode);
     wined3d_desc.front_ccw = desc->FrontCounterClockwise;
     wined3d_desc.depth_bias = desc->DepthBias;
     wined3d_desc.depth_bias_clamp = desc->DepthBiasClamp;
