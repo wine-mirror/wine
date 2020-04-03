@@ -1900,26 +1900,26 @@ static BOOL be_arm_set_context(HANDLE thread, const dbg_ctx_t *ctx)
     return SetThreadContext(thread, &ctx->ctx);
 }
 
-#define REG(r,gs)  {FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
+#define REG(f,r,gs)  {f, FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
 
 static struct gdb_register be_arm_gdb_register_map[] = {
-    REG(R0, 4),
-    REG(R1, 4),
-    REG(R2, 4),
-    REG(R3, 4),
-    REG(R4, 4),
-    REG(R5, 4),
-    REG(R6, 4),
-    REG(R7, 4),
-    REG(R8, 4),
-    REG(R9, 4),
-    REG(R10, 4),
-    REG(R11, 4),
-    REG(R12, 4),
-    REG(Sp, 4),
-    REG(Lr, 4),
-    REG(Pc, 4),
-    REG(Cpsr, 4),
+    REG("core", R0, 4),
+    REG(NULL,   R1, 4),
+    REG(NULL,   R2, 4),
+    REG(NULL,   R3, 4),
+    REG(NULL,   R4, 4),
+    REG(NULL,   R5, 4),
+    REG(NULL,   R6, 4),
+    REG(NULL,   R7, 4),
+    REG(NULL,   R8, 4),
+    REG(NULL,   R9, 4),
+    REG(NULL,   R10, 4),
+    REG(NULL,   R11, 4),
+    REG(NULL,   R12, 4),
+    REG(NULL,   Sp, 4),
+    REG(NULL,   Lr, 4),
+    REG(NULL,   Pc, 4),
+    REG(NULL,   Cpsr, 4),
 };
 
 struct backend_cpu be_arm =
