@@ -647,13 +647,11 @@ static const IBasicVideoVtbl basic_video_vtbl =
     basic_video_IsUsingDefaultDestination
 };
 
-HRESULT basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
+void basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
         struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table)
 {
     video->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;
     video->pFilter = filter;
     video->pPin = pin;
     video->pFuncsTable = func_table;
-
-    return S_OK;
 }

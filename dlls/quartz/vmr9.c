@@ -2326,10 +2326,8 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     if (FAILED(hr = BaseWindowImpl_PrepareWindow(&object->baseControlWindow.baseWindow)))
         goto fail;
 
-    hr = basic_video_init(&object->baseControlVideo, &object->renderer.filter,
+    basic_video_init(&object->baseControlVideo, &object->renderer.filter,
             &object->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
-    if (FAILED(hr))
-        goto fail;
 
     object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 

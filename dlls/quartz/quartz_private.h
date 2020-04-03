@@ -214,7 +214,7 @@ typedef struct BaseControlVideoFuncTable
     BaseControlVideo_SetTargetRect pfnSetTargetRect;
 } BaseControlVideoFuncTable;
 
-HRESULT basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
+void basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
         struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseControlVideo_Destroy(BaseControlVideo *pControlVideo) DECLSPEC_HIDDEN;
 
