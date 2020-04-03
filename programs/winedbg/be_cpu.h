@@ -25,6 +25,7 @@ enum be_xpoint_type {be_xpoint_break, be_xpoint_watch_exec, be_xpoint_watch_read
 struct gdb_register
 {
     const char *feature;
+    const char *name;
     size_t      ctx_offset;
     size_t      ctx_length;
     size_t      gdb_length;

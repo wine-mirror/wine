@@ -1900,26 +1900,26 @@ static BOOL be_arm_set_context(HANDLE thread, const dbg_ctx_t *ctx)
     return SetThreadContext(thread, &ctx->ctx);
 }
 
-#define REG(f,r,gs)  {f, FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
+#define REG(f,n,r,gs)  {f, n, FIELD_OFFSET(CONTEXT, r), sizeof(((CONTEXT*)NULL)->r), gs}
 
 static struct gdb_register be_arm_gdb_register_map[] = {
-    REG("core", R0, 4),
-    REG(NULL,   R1, 4),
-    REG(NULL,   R2, 4),
-    REG(NULL,   R3, 4),
-    REG(NULL,   R4, 4),
-    REG(NULL,   R5, 4),
-    REG(NULL,   R6, 4),
-    REG(NULL,   R7, 4),
-    REG(NULL,   R8, 4),
-    REG(NULL,   R9, 4),
-    REG(NULL,   R10, 4),
-    REG(NULL,   R11, 4),
-    REG(NULL,   R12, 4),
-    REG(NULL,   Sp, 4),
-    REG(NULL,   Lr, 4),
-    REG(NULL,   Pc, 4),
-    REG(NULL,   Cpsr, 4),
+    REG("core", "r0",   R0, 4),
+    REG(NULL,   "r1",   R1, 4),
+    REG(NULL,   "r2",   R2, 4),
+    REG(NULL,   "r3",   R3, 4),
+    REG(NULL,   "r4",   R4, 4),
+    REG(NULL,   "r5",   R5, 4),
+    REG(NULL,   "r6",   R6, 4),
+    REG(NULL,   "r7",   R7, 4),
+    REG(NULL,   "r8",   R8, 4),
+    REG(NULL,   "r9",   R9, 4),
+    REG(NULL,   "r10",  R10, 4),
+    REG(NULL,   "r11",  R11, 4),
+    REG(NULL,   "r12",  R12, 4),
+    REG(NULL,   "sp",   Sp, 4),
+    REG(NULL,   "lr",   Lr, 4),
+    REG(NULL,   "pc",   Pc, 4),
+    REG(NULL,   "cpsr", Cpsr, 4),
 };
 
 struct backend_cpu be_arm =
