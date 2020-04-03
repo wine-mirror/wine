@@ -635,7 +635,8 @@ static BOOL process_attach(void)
     if ((java_vm = wine_get_java_vm()))  /* running under Java */
     {
 #ifdef __i386__
-        WORD old_fs = wine_get_fs();
+        WORD old_fs;
+        __asm__( "mov %%fs,%0" : "=r" (old_fs) );
 #endif
         load_android_libs();
         (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
@@ -643,7 +644,8 @@ static BOOL process_attach(void)
         (*jni_env)->RegisterNatives( jni_env, class, methods, ARRAY_SIZE( methods ));
         (*jni_env)->DeleteLocalRef( jni_env, class );
 #ifdef __i386__
-        wine_set_fs( old_fs );  /* the Java VM hijacks %fs for its own purposes, restore it */
+        /* the Java VM hijacks %fs for its own purposes, restore it */
+        __asm__( "mov %0,%%fs" :: "r" (old_fs) );
 #endif
     }
     return TRUE;
