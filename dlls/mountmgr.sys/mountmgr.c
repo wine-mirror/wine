@@ -18,6 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifdef __APPLE__
+#include <CoreFoundation/CFString.h>
+#define LoadResource mac_LoadResource
+#define GetCurrentThread mac_GetCurrentThread
+#include <CoreServices/CoreServices.h>
+#undef LoadResource
+#undef GetCurrentThread
+#endif
+
 #include <stdarg.h>
 #include <unistd.h>
 
@@ -391,6 +400,96 @@ static NTSTATUS query_dhcp_request_params( void *buff, SIZE_T insize,
     return STATUS_SUCCESS;
 }
 
+/* implementation of Wine extension to use host APIs to find symbol file by GUID */
+#ifdef __APPLE__
+static void WINAPI query_symbol_file( TP_CALLBACK_INSTANCE *instance, void *context )
+{
+    IRP *irp = context;
+    MOUNTMGR_TARGET_NAME *result;
+    CFStringRef query_cfstring;
+    WCHAR *unix_buf = NULL;
+    ANSI_STRING unix_path;
+    UNICODE_STRING path;
+    MDQueryRef mdquery;
+    const GUID *id;
+    size_t size;
+    NTSTATUS status = STATUS_NO_MEMORY;
+
+    static const WCHAR formatW[] = { 'c','o','m','_','a','p','p','l','e','_','x','c','o','d','e',
+                                     '_','d','s','y','m','_','u','u','i','d','s',' ','=','=',' ',
+                                     '"','%','0','8','X','-','%','0','4','X','-',
+                                     '%','0','4','X','-','%','0','2','X','%','0','2','X','-',
+                                     '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
+                                     '%','0','2','X','%','0','2','X','"',0 };
+    WCHAR query_string[ARRAY_SIZE(formatW)];
+
+    id = irp->AssociatedIrp.SystemBuffer;
+    sprintfW( query_string, formatW, id->Data1, id->Data2, id->Data3,
+              id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+              id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    if (!(query_cfstring = CFStringCreateWithCharacters(NULL, query_string, lstrlenW(query_string)))) goto done;
+
+    mdquery = MDQueryCreate(NULL, query_cfstring, NULL, NULL);
+    CFRelease(query_cfstring);
+    if (!mdquery) goto done;
+
+    MDQuerySetMaxCount(mdquery, 1);
+    TRACE("Executing %s\n", debugstr_w(query_string));
+    if (MDQueryExecute(mdquery, kMDQuerySynchronous))
+    {
+        if (MDQueryGetResultCount(mdquery) >= 1)
+        {
+            MDItemRef item = (MDItemRef)MDQueryGetResultAtIndex(mdquery, 0);
+            CFStringRef item_path = MDItemCopyAttribute(item, kMDItemPath);
+
+            if (item_path)
+            {
+                CFIndex item_path_len = CFStringGetLength(item_path);
+                if ((unix_buf = HeapAlloc(GetProcessHeap(), 0, (item_path_len + 1) * sizeof(WCHAR))))
+                {
+                    CFStringGetCharacters(item_path, CFRangeMake(0, item_path_len), unix_buf);
+                    unix_buf[item_path_len] = 0;
+                    TRACE("found %s\n", debugstr_w(unix_buf));
+                }
+                CFRelease(item_path);
+            }
+        }
+        else status = STATUS_NO_MORE_ENTRIES;
+    }
+    CFRelease(mdquery);
+    if (!unix_buf) goto done;
+
+    RtlInitUnicodeString( &path, unix_buf );
+    status = RtlUnicodeStringToAnsiString( &unix_path, &path, TRUE );
+    HeapFree( GetProcessHeap(), 0, unix_buf );
+    if (status) goto done;
+
+    status = wine_unix_to_nt_file_name( &unix_path, &path );
+    RtlFreeAnsiString( &unix_path );
+    if (status) goto done;
+
+    result = irp->AssociatedIrp.SystemBuffer;
+    result->DeviceNameLength = path.Length;
+    size = FIELD_OFFSET(MOUNTMGR_TARGET_NAME, DeviceName[path.Length / sizeof(WCHAR)]);
+    if (size <= IoGetCurrentIrpStackLocation(irp)->Parameters.DeviceIoControl.OutputBufferLength)
+    {
+        memcpy( result->DeviceName, path.Buffer, path.Length );
+        irp->IoStatus.Information = size;
+        status = STATUS_SUCCESS;
+    }
+    else
+    {
+        irp->IoStatus.Information = sizeof(*result);
+        status = STATUS_BUFFER_OVERFLOW;
+    }
+    RtlFreeUnicodeString( &path );
+
+done:
+    irp->IoStatus.u.Status = status;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+}
+#endif /* __APPLE__ */
+
 /* handler for ioctls on the mount manager device */
 static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -446,6 +545,18 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
                                                             irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                             &irp->IoStatus );
         break;
+#ifdef __APPLE__
+    case IOCTL_MOUNTMGR_QUERY_SYMBOL_FILE:
+        if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(GUID)
+            || irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(MOUNTMGR_TARGET_NAME))
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        if (TrySubmitThreadpoolCallback( query_symbol_file, irp, NULL )) return STATUS_PENDING;
+        irp->IoStatus.u.Status = STATUS_NO_MEMORY;
+        break;
+#endif
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;

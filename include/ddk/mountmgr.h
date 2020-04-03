@@ -82,6 +82,8 @@ struct mountmgr_dhcp_request_params
     struct mountmgr_dhcp_request_param params[1];
 };
 
+#define IOCTL_MOUNTMGR_QUERY_SYMBOL_FILE CTL_CODE(MOUNTMGRCONTROLTYPE, 80, METHOD_BUFFERED, FILE_READ_ACCESS)
+
 #endif
 
 typedef struct _MOUNTMGR_CREATE_POINT_INPUT
