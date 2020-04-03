@@ -134,6 +134,7 @@ struct source_reader_async_command
 enum source_reader_flags
 {
     SOURCE_READER_FLUSHING = 0x1,
+    SOURCE_READER_SHUTDOWN_ON_RELEASE = 0x2,
 };
 
 struct source_reader
@@ -148,7 +149,6 @@ struct source_reader
     DWORD first_audio_stream_index;
     DWORD first_video_stream_index;
     IMFSourceReaderCallback *async_callback;
-    BOOL shutdown_on_release;
     unsigned int flags;
     enum media_source_state source_state;
     struct media_stream *streams;
@@ -1186,7 +1186,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
     {
         if (reader->async_callback)
             IMFSourceReaderCallback_Release(reader->async_callback);
-        if (reader->shutdown_on_release)
+        if (reader->flags & SOURCE_READER_SHUTDOWN_ON_RELEASE)
             IMFMediaSource_Shutdown(reader->source);
         if (reader->descriptor)
             IMFPresentationDescriptor_Release(reader->descriptor);
@@ -1917,6 +1917,8 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     object->async_commands_callback.lpVtbl = &async_commands_callback_vtbl;
     object->refcount = 1;
     list_init(&object->responses);
+    if (shutdown_on_release)
+        object->flags |= SOURCE_READER_SHUTDOWN_ON_RELEASE;
     object->source = source;
     IMFMediaSource_AddRef(object->source);
     InitializeCriticalSection(&object->cs);
