@@ -6078,6 +6078,11 @@ static inline struct d3d_device *device_from_wined3d_device_parent(struct wined3
     return CONTAINING_RECORD(device_parent, struct d3d_device, device_parent);
 }
 
+static D3D_FEATURE_LEVEL d3d_feature_level_from_wined3d(enum wined3d_feature_level level)
+{
+    return (D3D_FEATURE_LEVEL)level;
+}
+
 static void CDECL device_parent_wined3d_device_created(struct wined3d_device_parent *device_parent,
         struct wined3d_device *wined3d_device)
 {
@@ -6088,7 +6093,7 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     wined3d_device_incref(wined3d_device);
     device->wined3d_device = wined3d_device;
 
-    device->feature_level = wined3d_device_get_feature_level(wined3d_device);
+    device->feature_level = d3d_feature_level_from_wined3d(wined3d_device_get_feature_level(wined3d_device));
 
     set_default_depth_stencil_state(wined3d_device);
 }
