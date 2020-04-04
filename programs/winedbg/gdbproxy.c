@@ -101,7 +101,6 @@ struct gdb_context
     /* current Win32 trap env */
     DEBUG_EVENT                 de;
     DWORD                       de_reply;
-    unsigned                    last_sig;
     /* Win32 information */
     struct dbg_process*         process;
     /* Unix environment */
@@ -309,26 +308,28 @@ static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
         ERR("set_context failed for thread %04x:%04x\n", thread->process->pid, thread->tid);
 }
 
-static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
+static unsigned char signal_from_debug_event(DEBUG_EVENT* de)
 {
-    EXCEPTION_RECORD* rec = &exc->ExceptionRecord;
+    DWORD ec;
 
-    switch (rec->ExceptionCode)
+    if (de->dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+        return SIGTERM;
+    if (de->dwDebugEventCode != EXCEPTION_DEBUG_EVENT)
+        return SIGTRAP;
+
+    ec = de->u.Exception.ExceptionRecord.ExceptionCode;
+    switch (ec)
     {
     case EXCEPTION_ACCESS_VIOLATION:
     case EXCEPTION_PRIV_INSTRUCTION:
     case EXCEPTION_STACK_OVERFLOW:
     case EXCEPTION_GUARD_PAGE:
-        gdbctx->last_sig = SIGSEGV;
-        return FALSE;
+        return SIGSEGV;
     case EXCEPTION_DATATYPE_MISALIGNMENT:
-        gdbctx->last_sig = SIGBUS;
-        return FALSE;
+        return SIGBUS;
     case EXCEPTION_SINGLE_STEP:
-        /* fall through */
     case EXCEPTION_BREAKPOINT:
-        gdbctx->last_sig = SIGTRAP;
-        return FALSE;
+        return SIGTRAP;
     case EXCEPTION_FLT_DENORMAL_OPERAND:
     case EXCEPTION_FLT_DIVIDE_BY_ZERO:
     case EXCEPTION_FLT_INEXACT_RESULT:
@@ -336,22 +337,32 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     case EXCEPTION_FLT_OVERFLOW:
     case EXCEPTION_FLT_STACK_CHECK:
     case EXCEPTION_FLT_UNDERFLOW:
-        gdbctx->last_sig = SIGFPE;
-        return FALSE;
+        return SIGFPE;
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
     case EXCEPTION_INT_OVERFLOW:
-        gdbctx->last_sig = SIGFPE;
-        return FALSE;
+        return SIGFPE;
     case EXCEPTION_ILLEGAL_INSTRUCTION:
-        gdbctx->last_sig = SIGILL;
-        return FALSE;
+        return SIGILL;
     case CONTROL_C_EXIT:
-        gdbctx->last_sig = SIGINT;
-        return FALSE;
+        return SIGINT;
     case STATUS_POSSIBLE_DEADLOCK:
-        /* FIXME: we could also add here a O packet with additional information */
-        gdbctx->last_sig = SIGALRM;
-        return FALSE;
+        return SIGALRM;
+    /* should not be here */
+    case EXCEPTION_INVALID_HANDLE:
+    case EXCEPTION_NAME_THREAD:
+        return SIGTRAP;
+    default:
+        ERR("Unknown exception code 0x%08x\n", ec);
+        return SIGABRT;
+    }
+}
+
+static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
+{
+    EXCEPTION_RECORD* rec = &exc->ExceptionRecord;
+
+    switch (rec->ExceptionCode)
+    {
     case EXCEPTION_NAME_THREAD:
     {
         const THREADNAME_INFO *threadname = (const THREADNAME_INFO *)rec->ExceptionInformation;
@@ -379,8 +390,6 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     case EXCEPTION_INVALID_HANDLE:
         return TRUE;
     default:
-        fprintf(stderr, "Unhandled exception code 0x%08x\n", rec->ExceptionCode);
-        gdbctx->last_sig = SIGABRT;
         return FALSE;
     }
 }
@@ -486,8 +495,6 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
 
         dbg_del_process(gdbctx->process);
         gdbctx->process = NULL;
-        /* now signal gdb that we're done */
-        gdbctx->last_sig = SIGTERM;
         return FALSE;
 
     case OUTPUT_DEBUG_STRING_EVENT:
@@ -869,8 +876,6 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 
     if (process != NULL)
     {
-        unsigned char           sig;
-
         if (!(backend = process->be_cpu)) return packet_error;
 
         if (!(thread = dbg_get_thread(process, gdbctx->de.dwThreadId)) ||
@@ -879,8 +884,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "T");
-        sig = gdbctx->last_sig;
-        packet_reply_val(gdbctx, sig, 1);
+        packet_reply_val(gdbctx, signal_from_debug_event(&gdbctx->de), 1);
         packet_reply_add(gdbctx, "thread:");
         packet_reply_val(gdbctx, gdbctx->de.dwThreadId, 4);
         packet_reply_add(gdbctx, ";");
@@ -957,7 +961,7 @@ static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
         case 'C':
         case 'S':
             if (sscanf(buf, ";%*c%2x", &sig) <= 0 ||
-                sig != gdbctx->last_sig)
+                sig != signal_from_debug_event(&gdbctx->de))
                 return packet_error;
             buf += 4;
             break;
@@ -997,7 +1001,7 @@ static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
         FIXME("Continue at address %p not supported\n", addr);
     if (n < 1) return packet_error;
 
-    if (sig != gdbctx->last_sig)
+    if (sig != signal_from_debug_event(&gdbctx->de))
     {
         ERR("Changing signals is not supported.\n");
         return packet_error;
@@ -2231,7 +2235,6 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->exec_tid = -1;
     gdbctx->other_tid = -1;
     list_init(&gdbctx->xpoint_list);
-    gdbctx->last_sig = 0;
     gdbctx->process = NULL;
     gdbctx->no_ack_mode = FALSE;
     for (i = 0; i < ARRAY_SIZE(gdbctx->wine_segs); i++)
