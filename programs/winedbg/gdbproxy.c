@@ -67,6 +67,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
+struct gdb_xpoint
+{
+    struct list entry;
+    int pid;
+    int tid;
+    enum be_xpoint_type type;
+    void *addr;
+    int size;
+    unsigned long value;
+};
+
 struct gdb_context
 {
     /* gdb information */
@@ -86,6 +97,7 @@ struct gdb_context
     /* generic GDB thread information */
     int                         exec_tid; /* tid used in step & continue */
     int                         other_tid; /* tid to be used in any other operation */
+    struct list                 xpoint_list;
     /* current Win32 trap env */
     DEBUG_EVENT                 de;
     DWORD                       de_reply;
@@ -97,6 +109,64 @@ struct gdb_context
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
     BOOL                        no_ack_mode;
 };
+
+static void gdbctx_delete_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
+                                 dbg_ctx_t *ctx, struct gdb_xpoint *x)
+{
+    struct dbg_process *process = thread->process;
+    struct backend_cpu *cpu = process->be_cpu;
+
+    if (!cpu->remove_Xpoint(process->handle, process->process_io, ctx, x->type, x->addr, x->value, x->size))
+        ERR("%04x:%04x: Couldn't remove breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, x->addr, x->size, x->type);
+
+    list_remove(&x->entry);
+    HeapFree(GetProcessHeap(), 0, x);
+}
+
+static void gdbctx_insert_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
+                                 dbg_ctx_t *ctx, enum be_xpoint_type type, void *addr, int size)
+{
+    struct dbg_process *process = thread->process;
+    struct backend_cpu *cpu = process->be_cpu;
+    struct gdb_xpoint *x;
+    unsigned long value;
+
+    if (!cpu->insert_Xpoint(process->handle, process->process_io, ctx, type, addr, &value, size))
+    {
+        ERR("%04x:%04x: Couldn't insert breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
+        return;
+    }
+
+    if (!(x = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gdb_xpoint))))
+    {
+        ERR("%04x:%04x: Couldn't allocate memory for breakpoint at:%p/%x type:%d\n", process->pid, thread->tid, addr, size, type);
+        return;
+    }
+
+    x->pid = process->pid;
+    x->tid = thread->tid;
+    x->type = type;
+    x->addr = addr;
+    x->size = size;
+    x->value = value;
+    list_add_head(&gdbctx->xpoint_list, &x->entry);
+}
+
+static struct gdb_xpoint *gdb_find_xpoint(struct gdb_context *gdbctx, struct dbg_thread *thread,
+                                          enum be_xpoint_type type, void *addr, int size)
+{
+    struct gdb_xpoint *x;
+
+    LIST_FOR_EACH_ENTRY(x, &gdbctx->xpoint_list, struct gdb_xpoint, entry)
+    {
+        if (thread && (x->pid != thread->process->pid || x->tid != thread->tid))
+            continue;
+        if (x->type == type && x->addr == addr && x->size == size)
+            return x;
+    }
+
+    return NULL;
+}
 
 static BOOL tgt_process_gdbproxy_read(HANDLE hProcess, const void* addr,
                                       void* buffer, SIZE_T len, SIZE_T* rlen)
@@ -775,6 +845,34 @@ static inline void packet_reply_register_hex_to(struct gdb_context* gdbctx, dbg_
  * =============================================== *
  */
 
+static void packet_reply_status_xpoints(struct gdb_context* gdbctx, struct dbg_thread *thread,
+                                        dbg_ctx_t *ctx)
+{
+    struct dbg_process *process = thread->process;
+    struct backend_cpu *cpu = process->be_cpu;
+    struct gdb_xpoint *x;
+
+    LIST_FOR_EACH_ENTRY(x, &gdbctx->xpoint_list, struct gdb_xpoint, entry)
+    {
+        if (x->pid != process->pid || x->tid != thread->tid)
+            continue;
+        if (!cpu->is_watchpoint_set(ctx, x->value))
+            continue;
+        if (x->type == be_xpoint_watch_write)
+        {
+            packet_reply_add(gdbctx, "watch:");
+            packet_reply_val(gdbctx, (unsigned long)x->addr, sizeof(x->addr));
+            packet_reply_add(gdbctx, ";");
+        }
+        if (x->type == be_xpoint_watch_read)
+        {
+            packet_reply_add(gdbctx, "rwatch:");
+            packet_reply_val(gdbctx, (unsigned long)x->addr, sizeof(x->addr));
+            packet_reply_add(gdbctx, ";");
+        }
+    }
+}
+
 static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 {
     struct dbg_process *process = gdbctx->process;
@@ -800,6 +898,7 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         packet_reply_add(gdbctx, "thread:");
         packet_reply_val(gdbctx, gdbctx->de.dwThreadId, 4);
         packet_reply_add(gdbctx, ";");
+        packet_reply_status_xpoints(gdbctx, thread, &ctx);
 
         for (i = 0; i < backend->gdb_num_regs; i++)
         {
@@ -922,6 +1021,90 @@ static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 
     wait_for_debuggee(gdbctx);
     return packet_reply_status(gdbctx);
+}
+
+static enum packet_return packet_delete_breakpoint(struct gdb_context* gdbctx)
+{
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+    struct backend_cpu *cpu;
+    struct gdb_xpoint *x;
+    dbg_ctx_t ctx;
+    char type;
+    void *addr;
+    int size;
+
+    if (!process) return packet_error;
+    if (!(cpu = process->be_cpu)) return packet_error;
+
+    if (sscanf(gdbctx->in_packet, "%c,%p,%x", &type, &addr, &size) < 3)
+        return packet_error;
+
+    if (type == '0')
+        return packet_error;
+
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        if (!cpu->get_context(thread->handle, &ctx))
+            continue;
+        if ((type == '1') && (x = gdb_find_xpoint(gdbctx, thread, be_xpoint_watch_exec, addr, size)))
+            gdbctx_delete_xpoint(gdbctx, thread, &ctx, x);
+        if ((type == '2' || type == '4') && (x = gdb_find_xpoint(gdbctx, thread, be_xpoint_watch_read, addr, size)))
+            gdbctx_delete_xpoint(gdbctx, thread, &ctx, x);
+        if ((type == '3' || type == '4') && (x = gdb_find_xpoint(gdbctx, thread, be_xpoint_watch_write, addr, size)))
+            gdbctx_delete_xpoint(gdbctx, thread, &ctx, x);
+        cpu->set_context(thread->handle, &ctx);
+    }
+
+    while ((type == '1') && (x = gdb_find_xpoint(gdbctx, NULL, be_xpoint_watch_exec, addr, size)))
+        gdbctx_delete_xpoint(gdbctx, NULL, NULL, x);
+    while ((type == '2' || type == '4') && (x = gdb_find_xpoint(gdbctx, NULL, be_xpoint_watch_read, addr, size)))
+        gdbctx_delete_xpoint(gdbctx, NULL, NULL, x);
+    while ((type == '3' || type == '4') && (x = gdb_find_xpoint(gdbctx, NULL, be_xpoint_watch_write, addr, size)))
+        gdbctx_delete_xpoint(gdbctx, NULL, NULL, x);
+
+    return packet_ok;
+}
+
+static enum packet_return packet_insert_breakpoint(struct gdb_context* gdbctx)
+{
+    struct dbg_process *process = gdbctx->process;
+    struct dbg_thread *thread;
+    struct backend_cpu *cpu;
+    dbg_ctx_t ctx;
+    char type;
+    void *addr;
+    int size;
+
+    if (!process) return packet_error;
+    if (!(cpu = process->be_cpu)) return packet_error;
+
+    if (memchr(gdbctx->in_packet, ';', gdbctx->in_packet_len))
+    {
+        FIXME("breakpoint commands not supported\n");
+        return packet_error;
+    }
+
+    if (sscanf(gdbctx->in_packet, "%c,%p,%x", &type, &addr, &size) < 3)
+        return packet_error;
+
+    if (type == '0')
+        return packet_error;
+
+    LIST_FOR_EACH_ENTRY(thread, &process->threads, struct dbg_thread, entry)
+    {
+        if (!cpu->get_context(thread->handle, &ctx))
+            continue;
+        if (type == '1')
+            gdbctx_insert_xpoint(gdbctx, thread, &ctx, be_xpoint_watch_exec, addr, size);
+        if (type == '2' || type == '4')
+            gdbctx_insert_xpoint(gdbctx, thread, &ctx, be_xpoint_watch_read, addr, size);
+        if (type == '3' || type == '4')
+            gdbctx_insert_xpoint(gdbctx, thread, &ctx, be_xpoint_watch_write, addr, size);
+        cpu->set_context(thread->handle, &ctx);
+    }
+
+    return packet_ok;
 }
 
 static enum packet_return packet_detach(struct gdb_context* gdbctx)
@@ -1815,6 +1998,8 @@ static struct packet_entry packet_entries[] =
         {'s', packet_step},        
         {'T', packet_thread_alive},
         {'v', packet_verbose},
+        {'z', packet_delete_breakpoint},
+        {'Z', packet_insert_breakpoint},
 };
 
 static BOOL extract_packets(struct gdb_context* gdbctx)
@@ -2069,6 +2254,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
 
     gdbctx->exec_tid = -1;
     gdbctx->other_tid = -1;
+    list_init(&gdbctx->xpoint_list);
     gdbctx->last_sig = 0;
     gdbctx->in_trap = FALSE;
     gdbctx->process = NULL;
