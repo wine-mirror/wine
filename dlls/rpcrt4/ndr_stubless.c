@@ -210,6 +210,12 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
             pStubMsg->MaxCount = 0;
         size *= pStubMsg->MaxCount;
         break;
+    case FC_NON_ENCAPSULATED_UNION:
+    {
+        DWORD offset = *(const WORD *)(pFormat + 6 + pStubMsg->CorrDespIncrement);
+        size = *(const WORD *)(pFormat + 8 + pStubMsg->CorrDespIncrement + offset);
+        break;
+    }
     default:
         FIXME("Unhandled type %02x\n", *pFormat);
         /* fallthrough */
