@@ -102,7 +102,6 @@ struct gdb_context
     DEBUG_EVENT                 de;
     DWORD                       de_reply;
     unsigned                    last_sig;
-    BOOL                        in_trap;
     /* Win32 information */
     struct dbg_process*         process;
     /* Unix environment */
@@ -386,7 +385,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     }
 }
 
-static void handle_debug_event(struct gdb_context* gdbctx)
+static BOOL handle_debug_event(struct gdb_context* gdbctx)
 {
     DEBUG_EVENT *de = &gdbctx->de;
     struct dbg_thread *thread;
@@ -405,7 +404,9 @@ static void handle_debug_event(struct gdb_context* gdbctx)
     case CREATE_PROCESS_DEBUG_EVENT:
         gdbctx->process = dbg_add_process(&be_process_gdbproxy_io, de->dwProcessId,
                                           de->u.CreateProcessInfo.hProcess);
-        if (!gdbctx->process) break;
+        if (!gdbctx->process)
+            return TRUE;
+
         memory_get_string_indirect(gdbctx->process,
                                    de->u.CreateProcessInfo.lpImageName,
                                    de->u.CreateProcessInfo.fUnicode,
@@ -430,7 +431,7 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         dbg_add_thread(gdbctx->process, de->dwThreadId,
                        de->u.CreateProcessInfo.hThread,
                        de->u.CreateProcessInfo.lpThreadLocalBase);
-        break;
+        return TRUE;
 
     case LOAD_DLL_DEBUG_EVENT:
         memory_get_string_indirect(gdbctx->process,
@@ -445,20 +446,21 @@ static void handle_debug_event(struct gdb_context* gdbctx)
                 de->u.LoadDll.nDebugInfoSize);
         dbg_load_module(gdbctx->process->handle, de->u.LoadDll.hFile, u.buffer,
                         (DWORD_PTR)de->u.LoadDll.lpBaseOfDll, 0);
-        break;
+        return TRUE;
 
     case UNLOAD_DLL_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: unload DLL @%p\n",
                 de->dwProcessId, de->dwThreadId, de->u.UnloadDll.lpBaseOfDll);
         SymUnloadModule(gdbctx->process->handle,
                         (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
-        break;
+        return TRUE;
 
     case EXCEPTION_DEBUG_EVENT:
         TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
-        gdbctx->in_trap = !handle_exception(gdbctx, &de->u.Exception);
+        if (handle_exception(gdbctx, &de->u.Exception))
+            return TRUE;
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
@@ -469,14 +471,14 @@ static void handle_debug_event(struct gdb_context* gdbctx)
                        de->dwThreadId,
                        de->u.CreateThread.hThread,
                        de->u.CreateThread.lpThreadLocalBase);
-        break;
+        return TRUE;
 
     case EXIT_THREAD_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: exit thread (%u)\n",
                 de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
         if ((thread = dbg_get_thread(gdbctx->process, de->dwThreadId)))
             dbg_del_thread(thread);
-        break;
+        return TRUE;
 
     case EXIT_PROCESS_DEBUG_EVENT:
         fprintf(stderr, "%08x:%08x: exit process (%u)\n",
@@ -486,8 +488,7 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         gdbctx->process = NULL;
         /* now signal gdb that we're done */
         gdbctx->last_sig = SIGTERM;
-        gdbctx->in_trap = TRUE;
-        break;
+        return FALSE;
 
     case OUTPUT_DEBUG_STRING_EVENT:
         memory_get_string(gdbctx->process,
@@ -495,25 +496,25 @@ static void handle_debug_event(struct gdb_context* gdbctx)
                           de->u.DebugString.fUnicode, u.bufferA, sizeof(u.bufferA));
         fprintf(stderr, "%08x:%08x: output debug string (%s)\n",
             de->dwProcessId, de->dwThreadId, debugstr_a(u.bufferA));
-        break;
+        return TRUE;
 
     case RIP_EVENT:
         fprintf(stderr, "%08x:%08x: rip error=%u type=%u\n", de->dwProcessId,
             de->dwThreadId, de->u.RipInfo.dwError, de->u.RipInfo.dwType);
-        break;
+        return TRUE;
 
     default:
         FIXME("%08x:%08x: unknown event (%u)\n",
             de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
 
-    if (!gdbctx->in_trap || !gdbctx->process) return;
-
     LIST_FOR_EACH_ENTRY(thread, &gdbctx->process->threads, struct dbg_thread, entry)
     {
         if (!thread->suspended) SuspendThread(thread->handle);
         thread->suspended = TRUE;
     }
+
+    return FALSE;
 }
 
 static void handle_step_or_continue(struct gdb_context* gdbctx, int tid, BOOL step, int sig)
@@ -568,7 +569,6 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
     if (gdbctx->de.dwDebugEventCode)
         ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, gdbctx->de_reply);
 
-    gdbctx->in_trap = FALSE;
     for (;;)
     {
 		if (!WaitForDebugEvent(&gdbctx->de, 10))
@@ -588,11 +588,8 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 				break;
 			} 
 		}
-        handle_debug_event(gdbctx);
-        assert(!gdbctx->process ||
-               gdbctx->process->pid == 0 ||
-               gdbctx->de.dwProcessId == gdbctx->process->pid);
-        if (gdbctx->in_trap) break;
+        if (!handle_debug_event(gdbctx))
+            break;
         ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
 }
@@ -1109,8 +1106,6 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
     dbg_ctx_t ctx;
     size_t i;
 
-    assert(gdbctx->in_trap);
-
     if (!thread) return packet_error;
     if (!thread->process) return packet_error;
     if (!(backend = thread->process->be_cpu)) return packet_error;
@@ -1133,8 +1128,6 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     dbg_ctx_t ctx;
     const char *ptr;
     size_t i;
-
-    assert(gdbctx->in_trap);
 
     if (!thread) return packet_error;
     if (!thread->process) return packet_error;
@@ -1190,7 +1183,6 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     char                buffer[32];
     SIZE_T              r = 0;
 
-    assert(gdbctx->in_trap);
     if (sscanf(gdbctx->in_packet, "%p,%x", &addr, &len) != 2) return packet_error;
     if (len <= 0) return packet_error;
     TRACE("Read %u bytes at %p\n", len, addr);
@@ -1220,7 +1212,6 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     char                buffer[32];
     SIZE_T              w;
 
-    assert(gdbctx->in_trap);
     ptr = memchr(gdbctx->in_packet, ':', gdbctx->in_packet_len);
     if (ptr == NULL)
     {
@@ -1262,8 +1253,6 @@ static enum packet_return packet_read_register(struct gdb_context* gdbctx)
     dbg_ctx_t ctx;
     size_t reg;
 
-    assert(gdbctx->in_trap);
-
     if (!thread) return packet_error;
     if (!thread->process) return packet_error;
     if (!(backend = thread->process->be_cpu)) return packet_error;
@@ -1294,8 +1283,6 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     dbg_ctx_t ctx;
     size_t reg;
     char *ptr;
-
-    assert(gdbctx->in_trap);
 
     if (!thread) return packet_error;
     if (!thread->process) return packet_error;
@@ -2245,7 +2232,6 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
     gdbctx->other_tid = -1;
     list_init(&gdbctx->xpoint_list);
     gdbctx->last_sig = 0;
-    gdbctx->in_trap = FALSE;
     gdbctx->process = NULL;
     gdbctx->no_ack_mode = FALSE;
     for (i = 0; i < ARRAY_SIZE(gdbctx->wine_segs); i++)
@@ -2261,13 +2247,9 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
             assert(gdbctx->process == NULL && gdbctx->de.dwProcessId == dbg_curr_pid);
             /* gdbctx->dwProcessId = pid; */
             if (!gdb_startup(gdbctx, flags, port)) return FALSE;
-            assert(!gdbctx->in_trap);
         }
-        else
-        {
-            handle_debug_event(gdbctx);
-            if (gdbctx->in_trap) break;
-        }
+        else if (!handle_debug_event(gdbctx))
+            break;
         ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
     return TRUE;
