@@ -128,6 +128,7 @@
 @ stdcall NdrClearOutParameters(ptr ptr ptr)
 @ varargs NdrClientCall2(ptr ptr)
 @ varargs -arch=i386 NdrClientCall(ptr ptr) NdrClientCall2
+@ varargs -arch=win64 NdrClientCall3(ptr long ptr)
 @ stdcall NdrClientContextMarshall(ptr ptr long)
 @ stdcall NdrClientContextUnmarshall(ptr ptr ptr)
 @ stub NdrClientInitialize

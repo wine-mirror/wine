@@ -664,9 +664,11 @@ RPCRTAPI unsigned char* RPC_ENTRY
   NdrUserMarshalSimpleTypeConvert( ULONG *pFlags, unsigned char *pBuffer, unsigned char FormatChar );
 
 CLIENT_CALL_RETURN RPC_VAR_ENTRY
+  NdrClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
+CLIENT_CALL_RETURN RPC_VAR_ENTRY
   NdrClientCall2( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
 CLIENT_CALL_RETURN RPC_VAR_ENTRY
-  NdrClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
+  NdrClientCall3( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... );
 CLIENT_CALL_RETURN RPC_VAR_ENTRY
   NdrAsyncClientCall( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
 CLIENT_CALL_RETURN RPC_VAR_ENTRY
