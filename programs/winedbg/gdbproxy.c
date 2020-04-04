@@ -312,8 +312,7 @@ static void dbg_thread_set_single_step(struct dbg_thread *thread, BOOL enable)
 
 static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* exc)
 {
-    EXCEPTION_RECORD*   rec = &exc->ExceptionRecord;
-    BOOL                ret = FALSE;
+    EXCEPTION_RECORD* rec = &exc->ExceptionRecord;
 
     switch (rec->ExceptionCode)
     {
@@ -322,18 +321,15 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     case EXCEPTION_STACK_OVERFLOW:
     case EXCEPTION_GUARD_PAGE:
         gdbctx->last_sig = SIGSEGV;
-        ret = TRUE;
-        break;
+        return FALSE;
     case EXCEPTION_DATATYPE_MISALIGNMENT:
         gdbctx->last_sig = SIGBUS;
-        ret = TRUE;
-        break;
+        return FALSE;
     case EXCEPTION_SINGLE_STEP:
         /* fall through */
     case EXCEPTION_BREAKPOINT:
         gdbctx->last_sig = SIGTRAP;
-        ret = TRUE;
-        break;
+        return FALSE;
     case EXCEPTION_FLT_DENORMAL_OPERAND:
     case EXCEPTION_FLT_DIVIDE_BY_ZERO:
     case EXCEPTION_FLT_INEXACT_RESULT:
@@ -342,26 +338,21 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     case EXCEPTION_FLT_STACK_CHECK:
     case EXCEPTION_FLT_UNDERFLOW:
         gdbctx->last_sig = SIGFPE;
-        ret = TRUE;
-        break;
+        return FALSE;
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
     case EXCEPTION_INT_OVERFLOW:
         gdbctx->last_sig = SIGFPE;
-        ret = TRUE;
-        break;
+        return FALSE;
     case EXCEPTION_ILLEGAL_INSTRUCTION:
         gdbctx->last_sig = SIGILL;
-        ret = TRUE;
-        break;
+        return FALSE;
     case CONTROL_C_EXIT:
         gdbctx->last_sig = SIGINT;
-        ret = TRUE;
-        break;
+        return FALSE;
     case STATUS_POSSIBLE_DEADLOCK:
-        gdbctx->last_sig = SIGALRM;
-        ret = TRUE;
         /* FIXME: we could also add here a O packet with additional information */
-        break;
+        gdbctx->last_sig = SIGALRM;
+        return FALSE;
     case EXCEPTION_NAME_THREAD:
     {
         const THREADNAME_INFO *threadname = (const THREADNAME_INFO *)rec->ExceptionInformation;
@@ -384,17 +375,15 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         }
         else
             ERR("Cannot set name of thread %04x\n", threadname->dwThreadID);
-        return DBG_CONTINUE;
+        return TRUE;
     }
     case EXCEPTION_INVALID_HANDLE:
-        return DBG_CONTINUE;
+        return TRUE;
     default:
         fprintf(stderr, "Unhandled exception code 0x%08x\n", rec->ExceptionCode);
         gdbctx->last_sig = SIGABRT;
-        ret = TRUE;
-        break;
+        return FALSE;
     }
-    return ret;
 }
 
 static void handle_debug_event(struct gdb_context* gdbctx)
@@ -469,7 +458,7 @@ static void handle_debug_event(struct gdb_context* gdbctx)
         TRACE("%08x:%08x: exception code=0x%08x\n", de->dwProcessId,
             de->dwThreadId, de->u.Exception.ExceptionRecord.ExceptionCode);
 
-        gdbctx->in_trap = handle_exception(gdbctx, &de->u.Exception);
+        gdbctx->in_trap = !handle_exception(gdbctx, &de->u.Exception);
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
