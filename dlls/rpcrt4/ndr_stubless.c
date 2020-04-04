@@ -1614,7 +1614,7 @@ static void do_ndr_async_client_call( const MIDL_STUB_DESC *pStubDesc, PFORMAT_S
     RPC_STATUS status;
 
     /* Later NDR language versions probably won't be backwards compatible */
-    if (pStubDesc->Version > 0x50002)
+    if (pStubDesc->Version > 0x60001)
     {
         FIXME("Incompatible stub description version: 0x%x\n", pStubDesc->Version);
         RpcRaiseException(RPC_X_WRONG_STUB_VERSION);
