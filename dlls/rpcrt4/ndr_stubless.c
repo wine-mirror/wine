@@ -2273,3 +2273,63 @@ CLIENT_CALL_RETURN WINAPIV NdrClientCall3( MIDL_STUBLESS_PROXY_INFO *info, ULONG
 }
 
 #endif
+
+LONG_PTR CDECL DECLSPEC_HIDDEN ndr64_async_client_call( MIDL_STUBLESS_PROXY_INFO *info,
+        ULONG proc, void *retval, void **stack_top, void **fpu_stack )
+{
+    ULONG_PTR i;
+
+    TRACE("info %p, proc %u, retval %p, stack_top %p, fpu_stack %p\n",
+            info, proc, retval, stack_top, fpu_stack);
+
+    for (i = 0; i < info->nCount; ++i)
+    {
+        const MIDL_SYNTAX_INFO *syntax_info = &info->pSyntaxInfo[i];
+        const RPC_SYNTAX_IDENTIFIER *id = &syntax_info->TransferSyntax;
+
+        TRACE("Found syntax %s, version %u.%u.\n", debugstr_guid(&id->SyntaxGUID),
+                id->SyntaxVersion.MajorVersion, id->SyntaxVersion.MinorVersion);
+        if (!memcmp(id, &ndr_syntax_id, sizeof(RPC_SYNTAX_IDENTIFIER)))
+        {
+            if (retval)
+                FIXME("Complex return types are not supported.\n");
+
+            return ndr_async_client_call( info->pStubDesc,
+                    syntax_info->ProcString + syntax_info->FmtStringOffset[proc], stack_top );
+        }
+    }
+
+    FIXME("NDR64 syntax is not supported.\n");
+    return 0;
+}
+
+#ifdef __x86_64__
+
+__ASM_GLOBAL_FUNC( Ndr64AsyncClientCall,
+                   "movq %r9,0x20(%rsp)\n\t"
+                   "leaq 0x20(%rsp),%r9\n\t"
+                   "pushq $0\n\t"
+                   "subq $0x20,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x28\n\t")
+                   "call " __ASM_NAME("ndr64_async_client_call") "\n\t"
+                   "addq $0x28,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -0x28\n\t")
+                   "ret" );
+
+#elif defined(_WIN64)
+
+/***********************************************************************
+ *            Ndr64AsyncClientCall [RPCRT4.@]
+ */
+CLIENT_CALL_RETURN WINAPIV Ndr64AsyncClientCall( MIDL_STUBLESS_PROXY_INFO *info, ULONG proc, void *retval, ... )
+{
+    __ms_va_list args;
+    LONG_PTR ret;
+
+    __ms_va_start( args, retval );
+    ret = ndr64_async_client_call( info, proc, retval, va_arg( args, void ** ), NULL );
+    __ms_va_end( args );
+    return *(CLIENT_CALL_RETURN *)&ret;
+}
+
+#endif

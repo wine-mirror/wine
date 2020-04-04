@@ -115,6 +115,7 @@
 @ stdcall NDRSContextUnmarshall(ptr long)
 @ stdcall NDRSContextUnmarshallEx(ptr ptr long)
 @ stub NDRcopy
+@ varargs -arch=win64 Ndr64AsyncClientCall(ptr long ptr)
 @ stdcall NdrAllocate(ptr long)
 @ varargs NdrAsyncClientCall(ptr ptr)
 @ stdcall NdrAsyncServerCall(ptr)
