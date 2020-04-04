@@ -268,12 +268,12 @@ BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
 
 BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, WCHAR* buffer, int size)
 {
-    void*       ad;
+    void*       ad = 0;
     SIZE_T	sz;
 
     buffer[0] = 0;
     if (addr &&
-        pcs->process_io->read(pcs->handle, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
+        pcs->process_io->read(pcs->handle, addr, &ad, pcs->be_cpu->pointer_size, &sz) && sz == pcs->be_cpu->pointer_size && ad)
     {
         LPSTR buff;
         BOOL ret;
