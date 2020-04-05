@@ -3070,6 +3070,105 @@ DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
         }
         else ret = ERROR_NOT_SUPPORTED;
     }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
+    {
+        static const char zero[sizeof(IN6_ADDR)] = {0};
+
+        size_t len = 0;
+        char *buf = NULL;
+        struct xinpgen *xig, *orig_xig;
+        struct pid_map *map = NULL;
+        unsigned num_entries;
+        struct ipv6_addr_scope *addr_scopes = NULL;
+        unsigned int addr_scopes_size = 0;
+
+        if (sysctlbyname( "net.inet.udp.pcblist", NULL, &len, NULL, 0 ) < 0)
+        {
+            ERR( "Failure to read net.inet.udp.pcblist via sysctlbyname!\n" );
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        buf = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!buf)
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        if (sysctlbyname( "net.inet.udp.pcblist", buf, &len, NULL, 0 ) < 0)
+        {
+            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
+        if (!addr_scopes)
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        if (class >= UDP_TABLE_OWNER_PID) map = get_pid_map( &num_entries );
+
+        /* Might be nothing here; first entry is just a header it seems */
+        if (len <= sizeof (struct xinpgen)) goto done;
+
+        orig_xig = (struct xinpgen *)buf;
+        xig = orig_xig;
+
+        for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
+             xig->xig_len > sizeof (struct xinpgen);
+             xig = (struct xinpgen *)((char *)xig + xig->xig_len))
+        {
+#if __FreeBSD_version >= 1200026
+            struct xinpcb *in = (struct xinpcb *)xig;
+            struct xsocket *sock = &in->xi_socket;
+#else
+            struct inpcb *in = &((struct xinpcb *)xig)->xi_inp;
+            struct xsocket *sock = &((struct xinpcb *)xig)->xi_socket;
+#endif
+
+            /* Ignore sockets for other protocols */
+            if (sock->xso_protocol != IPPROTO_UDP)
+                continue;
+
+            /* Ignore PCBs that were freed while generating the data */
+            if (in->inp_gencnt > orig_xig->xig_gen)
+                continue;
+
+            /* we're only interested in IPv6 addresses */
+            if (!(in->inp_vflag & INP_IPV6) ||
+                (in->inp_vflag & INP_IPV4))
+                continue;
+
+            /* If all 0's, skip it */
+            if (!memcmp( &in->in6p_laddr.s6_addr, zero, sizeof(zero) ) && !in->inp_lport)
+                continue;
+
+            /* Fill in structure details */
+            memcpy(row.ucLocalAddr, &in->in6p_laddr.s6_addr, sizeof(row.ucLocalAddr));
+            row.dwLocalPort = in->inp_lport;
+            row.dwLocalScopeId = find_ipv6_addr_scope((const IN6_ADDR *)&row.ucLocalAddr, addr_scopes, addr_scopes_size);
+            if (class >= UDP_TABLE_OWNER_PID)
+                row.dwOwningPid = find_owning_pid( map, num_entries, (UINT_PTR)sock->so_pcb );
+            if (class >= UDP_TABLE_OWNER_MODULE)
+            {
+                row.liCreateTimestamp.QuadPart = 0; /* FIXME */
+                row.u.dwFlags = 0;
+                row.u.SpecificPortBind = !(in->inp_flags & INP_ANONPORT);
+                memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
+            }
+            if (!(table = append_table_row( heap, flags, table, &table_size, &count, &row, row_size )))
+                break;
+        }
+
+    done:
+        HeapFree( GetProcessHeap(), 0, map );
+        HeapFree( GetProcessHeap(), 0, buf );
+        HeapFree( GetProcessHeap(), 0, addr_scopes );
+    }
 #else
     FIXME( "not implemented\n" );
     ret = ERROR_NOT_SUPPORTED;
