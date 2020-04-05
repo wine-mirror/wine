@@ -1249,7 +1249,8 @@ static void sockaddr_in_to_WS_storage( SOCKADDR_STORAGE *dst, const struct socka
 }
 
 #if defined(HAVE_STRUCT___RES_STATE__U__EXT_NSCOUNT6) || \
-    (defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS))
+    (defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS)) || \
+    defined(HAVE_RES_GETSERVERS)
 static void sockaddr_in6_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sockaddr_in6 *src )
 {
     SOCKADDR_IN6 *s = (SOCKADDR_IN6 *)dst;
@@ -1283,6 +1284,47 @@ static void initialise_resolver(void)
         res_init();
     LeaveCriticalSection(&res_init_cs);
 }
+
+#ifdef HAVE_RES_GETSERVERS
+static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
+{
+    struct __res_state *state = &_res;
+    int i, found = 0, total;
+    SOCKADDR_STORAGE *addr = servers;
+    union res_sockaddr_union *buf;
+
+    initialise_resolver();
+
+    total = res_getservers( state, NULL, 0 );
+
+    if ((!servers || !num) && !ip4_only) return total;
+
+    buf = HeapAlloc( GetProcessHeap(), 0, total * sizeof(union res_sockaddr_union) );
+    total = res_getservers( state, buf, total );
+
+    for (i = 0; i < total; i++)
+    {
+        if (buf[i].sin6.sin6_family == AF_INET6 && ip4_only) continue;
+        if (buf[i].sin.sin_family != AF_INET && buf[i].sin6.sin6_family != AF_INET6) continue;
+
+        found++;
+        if (!servers || !num) continue;
+
+        if (buf[i].sin6.sin6_family == AF_INET6)
+        {
+            sockaddr_in6_to_WS_storage( addr, &buf[i].sin6 );
+        }
+        else
+        {
+            sockaddr_in_to_WS_storage( addr, &buf[i].sin );
+        }
+        if (++addr >= servers + num) break;
+    }
+
+    HeapFree( GetProcessHeap(), 0, buf );
+    return found;
+}
+#else
 
 static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
 {
@@ -1319,6 +1361,7 @@ static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
     }
     return addr - servers;
 }
+#endif
 #elif defined(HAVE___RES_GET_STATE) && defined(HAVE___RES_GETSERVERS)
 
 static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )

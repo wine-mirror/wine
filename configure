@@ -14203,6 +14203,45 @@ $as_echo "#define HAVE_RESOLV 1" >>confdefs.h
         RESOLV_LIBS=$ac_cv_have_resolv
  ;;
     esac
+
+    if test "x$ac_cv_have_resolv" != "xnot found"
+    then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for res_getservers" >&5
+$as_echo_n "checking for res_getservers... " >&6; }
+if ${ac_cv_have_res_getservers+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_LIBS="$LIBS"
+                        LIBS="$RESOLV_LIBS $LIBS"
+                        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <resolv.h>
+int
+main ()
+{
+res_getservers(NULL, NULL, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_have_res_getservers=yes
+else
+  ac_cv_have_res_getservers=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	                 LIBS="$ac_save_LIBS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_res_getservers" >&5
+$as_echo "$ac_cv_have_res_getservers" >&6; }
+        if test "$ac_cv_have_res_getservers" = "yes"
+        then
+
+$as_echo "#define HAVE_RES_GETSERVERS 1" >>confdefs.h
+
+        fi
+    fi
 fi
 
 if test "x$with_cms" != "xno"

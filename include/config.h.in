@@ -761,6 +761,9 @@
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
 
+/* Define to 1 if you have the `res_getservers' function. */
+#undef HAVE_RES_GETSERVERS
+
 /* Define to 1 if you have the `rint' function. */
 #undef HAVE_RINT
 

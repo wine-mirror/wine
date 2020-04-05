@@ -1535,6 +1535,20 @@ then
         AC_DEFINE(HAVE_RESOLV, 1)
         AC_SUBST(RESOLV_LIBS,$ac_cv_have_resolv) ;;
     esac
+
+    if test "x$ac_cv_have_resolv" != "xnot found"
+    then
+        AC_CACHE_CHECK([for res_getservers], ac_cv_have_res_getservers,
+                       [ac_save_LIBS="$LIBS"
+                        LIBS="$RESOLV_LIBS $LIBS"
+                        AC_LINK_IFELSE([AC_LANG_PROGRAM(
+        [[#include <resolv.h>]],[[res_getservers(NULL, NULL, 0);]])],[ac_cv_have_res_getservers=yes],[ac_cv_have_res_getservers=no])
+	                 LIBS="$ac_save_LIBS"])
+        if test "$ac_cv_have_res_getservers" = "yes"
+        then
+          AC_DEFINE(HAVE_RES_GETSERVERS, 1, [Define to 1 if you have the `res_getservers' function.])
+        fi
+    fi
 fi
 
 dnl **** Check for LittleCMS ***
