@@ -365,7 +365,11 @@ int spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 
     if (verbose)
     {
-	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
+	for(i = 0; argv[i]; i++)
+	{
+	    if (strpbrk(argv[i], " \t\n\r")) printf("\"%s\" ", argv[i]);
+	    else printf("%s ", argv[i]);
+	}
 	printf("\n");
     }
 
