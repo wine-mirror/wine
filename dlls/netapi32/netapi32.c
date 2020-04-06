@@ -57,7 +57,6 @@
 #include "dsgetdc.h"
 #include "davclnt.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "initguid.h"
@@ -134,19 +133,17 @@ static BOOL init_context(void)
 
 static BOOL libnetapi_init(void)
 {
-    char buf[200];
-
     if (libnetapi_handle) return TRUE;
-    if (!(libnetapi_handle = wine_dlopen( SONAME_LIBNETAPI, RTLD_NOW, buf, sizeof(buf) )))
+    if (!(libnetapi_handle = dlopen( SONAME_LIBNETAPI, RTLD_NOW )))
     {
-        WARN( "Failed to load libnetapi: %s\n", buf );
+        WARN( "Failed to load libnetapi: %s\n", dlerror() );
         return FALSE;
     }
 
 #define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym( libnetapi_handle, #f, buf, sizeof(buf) ))) \
+    if (!(p##f = dlsym( libnetapi_handle, #f ))) \
     { \
-        ERR( "Failed to load %s: %s\n", #f, buf ); \
+        ERR( "Failed to load %s: %s\n", #f, dlerror() ); \
         goto error; \
     }
 
@@ -167,7 +164,7 @@ static BOOL libnetapi_init(void)
     if (init_context()) return TRUE;
 
 error:
-    wine_dlclose( libnetapi_handle, NULL, 0 );
+    dlclose( libnetapi_handle );
     libnetapi_handle = NULL;
     return FALSE;
 }
