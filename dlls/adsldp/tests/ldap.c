@@ -505,7 +505,6 @@ todo_wine
 
     hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
     ok(hr == S_OK, "got %#x\n", hr);
-    if (hr != S_OK) goto fail;
 
     hr = IDirectorySearch_GetNextRow(ds, sh);
     ok(hr == S_OK, "got %#x\n", hr);
@@ -517,7 +516,6 @@ todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
 
     IDirectorySearch_Release(ds);
-fail:
     IDirectoryObject_Release(dirobj);
 }
 
