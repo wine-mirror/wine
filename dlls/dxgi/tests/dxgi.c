@@ -2123,7 +2123,7 @@ static void test_get_containing_output(void)
                 {-49, -50}, {-50, -50}, {-51, -50},
                 {-49, -51}, {-50, -51}, {-51, -51},
             };
-            unsigned int x, y;
+            unsigned int x = 0, y = 0;
 
             switch (i)
             {
