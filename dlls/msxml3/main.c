@@ -55,7 +55,6 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 #include "msxml_private.h"
 
@@ -190,12 +189,12 @@ static void init_libxslt(void)
 #ifdef SONAME_LIBXSLT
     void (*pxsltInit)(void); /* Missing in libxslt <= 1.1.14 */
 
-    libxslt_handle = wine_dlopen(SONAME_LIBXSLT, RTLD_NOW, NULL, 0);
+    libxslt_handle = dlopen(SONAME_LIBXSLT, RTLD_NOW);
     if (!libxslt_handle)
         return;
 
 #define LOAD_FUNCPTR(f, needed) \
-    if ((p##f = wine_dlsym(libxslt_handle, #f, NULL, 0)) == NULL) \
+    if ((p##f = dlsym(libxslt_handle, #f)) == NULL) \
         if (needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
     LOAD_FUNCPTR(xsltInit, 0);
     LOAD_FUNCPTR(xsltApplyStylesheet, 1);
@@ -225,7 +224,7 @@ static void init_libxslt(void)
     return;
 
  sym_not_found:
-    wine_dlclose(libxslt_handle, NULL, 0);
+    dlclose(libxslt_handle);
     libxslt_handle = NULL;
 #endif
 }
@@ -435,7 +434,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
         if (libxslt_handle)
         {
             pxsltCleanupGlobals();
-            wine_dlclose(libxslt_handle, NULL, 0);
+            dlclose(libxslt_handle);
         }
 #endif
         /* Restore default Callbacks */
