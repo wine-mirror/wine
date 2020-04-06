@@ -1317,7 +1317,7 @@ static HRESULT WINAPI search_GetNextRow(IDirectorySearch *iface, ADS_SEARCH_HAND
         if (ldap_ctx->pos >= ldap_ctx->count)
             return S_ADS_NOMORE_ROWS;
 
-        ldap_ctx->entry = ldap_next_entry(ldap->ld, ldap_ctx->res);
+        ldap_ctx->entry = ldap_next_entry(ldap->ld, ldap_ctx->entry);
     }
 
     if (!ldap_ctx->entry)
