@@ -75,6 +75,14 @@ static int get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
+static void get_virtual_rect(RECT *rect)
+{
+    rect->left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    rect->top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    rect->right = rect->left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    rect->bottom = rect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -10086,6 +10094,82 @@ static void test_creation_parameters(void)
     DestroyWindow(window);
 }
 
+static void test_cursor_clipping(void)
+{
+    unsigned int adapter_idx, adapter_count, mode_idx;
+    D3DDISPLAYMODE mode, current_mode;
+    struct device_desc device_desc;
+    RECT virtual_rect, clip_rect;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    device_desc.device_window = window;
+    device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+
+    adapter_count = IDirect3D8_GetAdapterCount(d3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        hr = IDirect3D8_GetAdapterDisplayMode(d3d, adapter_idx, &current_mode);
+        ok(hr == D3D_OK, "Adapter %u: GetAdapterDisplayMode failed, hr %#x.\n", adapter_idx, hr);
+        for (mode_idx = 0; SUCCEEDED(IDirect3D8_EnumAdapterModes(d3d, adapter_idx, mode_idx, &mode));
+                ++mode_idx)
+        {
+            if (mode.Format != D3DFMT_X8R8G8B8)
+                continue;
+            if (mode.Width < 640 || mode.Height < 480)
+                continue;
+            if (mode.Width != current_mode.Width && mode.Height != current_mode.Height)
+                break;
+        }
+        ok(mode.Width != current_mode.Width && mode.Height != current_mode.Height,
+                "Adapter %u: Failed to find a different mode than %ux%u.\n", adapter_idx,
+                current_mode.Width, current_mode.Height);
+
+        ok(ClipCursor(NULL), "Adapter %u: ClipCursor failed, error %#x.\n", adapter_idx,
+                GetLastError());
+        get_virtual_rect(&virtual_rect);
+        ok(GetClipCursor(&clip_rect), "Adapter %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                GetLastError());
+        ok(EqualRect(&clip_rect, &virtual_rect), "Adapter %u: Expect clip rect %s, got %s.\n",
+                adapter_idx, wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+
+        device_desc.adapter_ordinal = adapter_idx;
+        device_desc.width = mode.Width;
+        device_desc.height = mode.Height;
+        if (!(device = create_device(d3d, window, &device_desc)))
+        {
+            skip("Adapter %u: Failed to create a D3D device.\n", adapter_idx);
+            break;
+        }
+        flush_events();
+        get_virtual_rect(&virtual_rect);
+        ok(GetClipCursor(&clip_rect), "Adapter %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                GetLastError());
+        todo_wine_if(!EqualRect(&clip_rect, &virtual_rect))
+        ok(EqualRect(&clip_rect, &virtual_rect), "Adapter %u: Expect clip rect %s, got %s.\n",
+                adapter_idx, wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+
+        IDirect3DDevice8_Release(device);
+        flush_events();
+        get_virtual_rect(&virtual_rect);
+        ok(GetClipCursor(&clip_rect), "Adapter %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                GetLastError());
+        todo_wine_if(!EqualRect(&clip_rect, &virtual_rect))
+        ok(EqualRect(&clip_rect, &virtual_rect), "Adapter %u: Expect clip rect %s, got %s.\n",
+                adapter_idx, wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+    }
+
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -10204,6 +10288,7 @@ START_TEST(device)
     test_get_display_mode();
     test_multi_adapter();
     test_creation_parameters();
+    test_cursor_clipping();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
