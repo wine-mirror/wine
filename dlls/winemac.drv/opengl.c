@@ -27,7 +27,6 @@
 #include "winuser.h"
 #include "winternl.h"
 #include "winnt.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
@@ -4247,7 +4246,6 @@ static BOOL init_opengl(void)
 {
     static BOOL init_done = FALSE;
     unsigned int i;
-    char buffer[200];
 
     if (init_done) return (opengl_handle != NULL);
     init_done = TRUE;
@@ -4261,17 +4259,17 @@ static BOOL init_opengl(void)
         return FALSE;
     }
 
-    opengl_handle = wine_dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD, buffer, sizeof(buffer));
+    opengl_handle = dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD);
     if (!opengl_handle)
     {
-        ERR("Failed to load OpenGL: %s\n", buffer);
+        ERR("Failed to load OpenGL: %s\n", dlerror());
         ERR("OpenGL support is disabled.\n");
         return FALSE;
     }
 
     for (i = 0; i < ARRAY_SIZE(opengl_func_names); i++)
     {
-        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym(opengl_handle, opengl_func_names[i], NULL, 0)))
+        if (!(((void **)&opengl_funcs.gl)[i] = dlsym(opengl_handle, opengl_func_names[i])))
         {
             ERR("%s not found in OpenGL, disabling.\n", opengl_func_names[i]);
             goto failed;
@@ -4296,12 +4294,12 @@ static BOOL init_opengl(void)
 
     /* redirect some OpenGL extension functions */
 #define REDIRECT(func) \
-    do { if ((p##func = wine_dlsym(opengl_handle, #func, NULL, 0))) { opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
+    do { if ((p##func = dlsym(opengl_handle, #func))) { opengl_funcs.ext.p_##func = macdrv_##func; } } while(0)
     REDIRECT(glCopyColorTable);
 #undef REDIRECT
 
     if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
-        pglFlushRenderAPPLE = wine_dlsym(opengl_handle, "glFlushRenderAPPLE", NULL, 0);
+        pglFlushRenderAPPLE = dlsym(opengl_handle, "glFlushRenderAPPLE");
 
     load_extensions();
     if (!init_pixel_formats())
@@ -4310,7 +4308,7 @@ static BOOL init_opengl(void)
     return TRUE;
 
 failed:
-    wine_dlclose(opengl_handle, NULL, 0);
+    dlclose(opengl_handle);
     opengl_handle = NULL;
     return FALSE;
 }
@@ -4479,7 +4477,7 @@ static PROC macdrv_wglGetProcAddress(const char *proc)
     void *ret;
 
     if (!strncmp(proc, "wgl", 3)) return NULL;
-    ret = wine_dlsym(opengl_handle, proc, NULL, 0);
+    ret = dlsym(opengl_handle, proc);
     if (ret)
     {
         if (TRACE_ON(wgl))

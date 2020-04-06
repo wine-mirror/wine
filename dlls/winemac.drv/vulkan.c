@@ -33,7 +33,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 
 #define VK_NO_PROTOTYPES
 #define WINE_VK_HOST
@@ -107,13 +106,13 @@ static void *vulkan_handle;
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    if (!(vulkan_handle = wine_dlopen(SONAME_LIBMOLTENVK, RTLD_NOW, NULL, 0)))
+    if (!(vulkan_handle = dlopen(SONAME_LIBMOLTENVK, RTLD_NOW)))
     {
         ERR("Failed to load %s\n", SONAME_LIBMOLTENVK);
         return TRUE;
     }
 
-#define LOAD_FUNCPTR(f) if ((p##f = wine_dlsym(vulkan_handle, #f, NULL, 0)) == NULL) goto fail;
+#define LOAD_FUNCPTR(f) if ((p##f = dlsym(vulkan_handle, #f)) == NULL) goto fail;
     LOAD_FUNCPTR(vkCreateInstance)
     LOAD_FUNCPTR(vkCreateSwapchainKHR)
     LOAD_FUNCPTR(vkCreateMacOSSurfaceMVK)
@@ -137,7 +136,7 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
     return TRUE;
 
 fail:
-    wine_dlclose(vulkan_handle, NULL, 0);
+    dlclose(vulkan_handle);
     vulkan_handle = NULL;
     return TRUE;
 }
