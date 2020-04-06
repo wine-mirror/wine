@@ -119,6 +119,7 @@ struct media_stream
 enum source_reader_async_op
 {
     SOURCE_READER_ASYNC_READ,
+    SOURCE_READER_ASYNC_SEEK,
     SOURCE_READER_ASYNC_FLUSH,
     SOURCE_READER_ASYNC_SAMPLE_READY,
 };
@@ -128,14 +129,34 @@ struct source_reader_async_command
     IUnknown IUnknown_iface;
     LONG refcount;
     enum source_reader_async_op op;
-    unsigned int flags;
-    unsigned int stream_index;
+    union
+    {
+        struct
+        {
+            unsigned int flags;
+            unsigned int stream_index;
+        } read;
+        struct
+        {
+            GUID format;
+            PROPVARIANT position;
+        } seek;
+        struct
+        {
+            unsigned int stream_index;
+        } flush;
+        struct
+        {
+            unsigned int stream_index;
+        } sample;
+    } u;
 };
 
 enum source_reader_flags
 {
     SOURCE_READER_FLUSHING = 0x1,
-    SOURCE_READER_SHUTDOWN_ON_RELEASE = 0x2,
+    SOURCE_READER_SEEKING = 0x2,
+    SOURCE_READER_SHUTDOWN_ON_RELEASE = 0x4,
 };
 
 struct source_reader
@@ -157,6 +178,7 @@ struct source_reader
     struct list responses;
     CRITICAL_SECTION cs;
     CONDITION_VARIABLE sample_event;
+    CONDITION_VARIABLE state_event;
 };
 
 static inline struct source_reader *impl_from_IMFSourceReader(IMFSourceReader *iface)
@@ -210,7 +232,11 @@ static ULONG WINAPI source_reader_async_command_Release(IUnknown *iface)
     ULONG refcount = InterlockedIncrement(&command->refcount);
 
     if (!refcount)
+    {
+        if (command->op == SOURCE_READER_ASYNC_SEEK)
+            PropVariantClear(&command->u.seek.position);
         heap_free(command);
+    }
 
     return refcount;
 }
@@ -341,7 +367,7 @@ static void source_reader_queue_response(struct source_reader *reader, struct me
         {
             if (SUCCEEDED(source_reader_create_async_op(SOURCE_READER_ASYNC_SAMPLE_READY, &command)))
             {
-                command->stream_index = stream->index;
+                command->u.sample.stream_index = stream->index;
                 if (FAILED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback,
                         &command->IUnknown_iface)))
                     WARN("Failed to submit async result, hr %#x.\n", hr);
@@ -429,24 +455,26 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
 
 static HRESULT source_reader_source_state_handler(struct source_reader *reader, MediaEventType event_type)
 {
-    enum media_source_state state;
+    EnterCriticalSection(&reader->cs);
 
     switch (event_type)
     {
         case MESourceStarted:
-            state = SOURCE_STATE_STARTED;
+            reader->source_state = SOURCE_STATE_STARTED;
             break;
         case MESourceStopped:
-            state = SOURCE_STATE_STOPPED;
+            reader->source_state = SOURCE_STATE_STOPPED;
+            break;
+        case MESourceSeeked:
+            reader->flags &= ~SOURCE_READER_SEEKING;
             break;
         default:
-            WARN("Unhandled state %d.\n", event_type);
-            return E_FAIL;
+            WARN("Unhandled event %d.\n", event_type);
     }
 
-    EnterCriticalSection(&reader->cs);
-    reader->source_state = state;
     LeaveCriticalSection(&reader->cs);
+
+    WakeAllConditionVariable(&reader->state_event);
 
     return S_OK;
 }
@@ -478,6 +506,7 @@ static HRESULT WINAPI source_reader_source_events_callback_Invoke(IMFAsyncCallba
         case MESourceStarted:
         case MESourcePaused:
         case MESourceStopped:
+        case MESourceSeeked:
             hr = source_reader_source_state_handler(reader, event_type);
             break;
         case MEBufferingStarted:
@@ -1089,12 +1118,12 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
 
             if (SUCCEEDED(hr = source_reader_start_source(reader)))
             {
-                if (SUCCEEDED(hr = source_reader_get_stream_read_index(reader, command->stream_index, &stream_index)))
+                if (SUCCEEDED(hr = source_reader_get_stream_read_index(reader, command->u.read.stream_index, &stream_index)))
                 {
                     stream = &reader->streams[stream_index];
 
-                    if (!(report_sample = source_reader_get_read_result(reader, stream, command->flags, &status, &stream_index,
-                            &stream_flags, &timestamp, &sample)))
+                    if (!(report_sample = source_reader_get_read_result(reader, stream, command->u.read.flags, &status,
+                            &stream_index, &stream_flags, &timestamp, &sample)))
                     {
                         stream->requests++;
                         source_reader_request_sample(reader, stream);
@@ -1103,7 +1132,7 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
                 }
                 else
                 {
-                    stub_stream.index = command->stream_index;
+                    stub_stream.index = command->u.read.stream_index;
                     source_reader_queue_response(reader, &stub_stream, hr, MF_SOURCE_READERF_ERROR, 0, NULL);
                 }
             }
@@ -1116,6 +1145,18 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
 
             if (sample)
                 IMFSample_Release(sample);
+
+            break;
+
+        case SOURCE_READER_ASYNC_SEEK:
+
+            EnterCriticalSection(&reader->cs);
+            if (SUCCEEDED(IMFMediaSource_Start(reader->source, reader->descriptor, &command->u.seek.format,
+                    &command->u.seek.position)))
+            {
+                reader->flags |= SOURCE_READER_SEEKING;
+            }
+            LeaveCriticalSection(&reader->cs);
 
             break;
 
@@ -1135,11 +1176,11 @@ static HRESULT WINAPI source_reader_async_commands_callback_Invoke(IMFAsyncCallb
             break;
         case SOURCE_READER_ASYNC_FLUSH:
             EnterCriticalSection(&reader->cs);
-            source_reader_flush(reader, command->stream_index);
+            source_reader_flush(reader, command->u.flush.stream_index);
             reader->flags &= ~SOURCE_READER_FLUSHING;
             LeaveCriticalSection(&reader->cs);
 
-            IMFSourceReaderCallback_OnFlush(reader->async_callback, command->stream_index);
+            IMFSourceReaderCallback_OnFlush(reader->async_callback, command->u.flush.stream_index);
             break;
         default:
             ;
@@ -1620,12 +1661,11 @@ static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWO
 static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFGUID format, REFPROPVARIANT position)
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
-    DWORD flags;
+    struct source_reader_async_command *command;
+    unsigned int i, flags;
     HRESULT hr;
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(format), position);
-
-    /* FIXME: fail if we got pending samples. */
 
     if (FAILED(hr = IMFMediaSource_GetCharacteristics(reader->source, &flags)))
         return hr;
@@ -1633,7 +1673,48 @@ static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFG
     if (!(flags & MFMEDIASOURCE_CAN_SEEK))
         return MF_E_INVALIDREQUEST;
 
-    return IMFMediaSource_Start(reader->source, reader->descriptor, format, position);
+    EnterCriticalSection(&reader->cs);
+
+    /* Check if we got pending requests. */
+    for (i = 0; i < reader->stream_count; ++i)
+    {
+        if (reader->streams[i].requests)
+        {
+            hr = MF_E_INVALIDREQUEST;
+            break;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        if (reader->async_callback)
+        {
+            if (SUCCEEDED(hr = source_reader_create_async_op(SOURCE_READER_ASYNC_SEEK, &command)))
+            {
+                command->u.seek.format = *format;
+                PropVariantCopy(&command->u.seek.position, position);
+
+                hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_MULTITHREADED, &reader->async_commands_callback,
+                        &command->IUnknown_iface);
+                IUnknown_Release(&command->IUnknown_iface);
+            }
+        }
+        else
+        {
+            if (SUCCEEDED(IMFMediaSource_Start(reader->source, reader->descriptor, format, position)))
+            {
+                reader->flags |= SOURCE_READER_SEEKING;
+                while (reader->flags & SOURCE_READER_SEEKING)
+                {
+                    SleepConditionVariableCS(&reader->state_event, &reader->cs, INFINITE);
+                }
+            }
+        }
+    }
+
+    LeaveCriticalSection(&reader->cs);
+
+    return hr;
 }
 
 static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD index, DWORD flags, DWORD *actual_index,
@@ -1655,8 +1736,6 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
 
     if (!actual_index)
         actual_index = &actual_index_tmp;
-
-    EnterCriticalSection(&reader->cs);
 
     if (SUCCEEDED(hr = source_reader_start_source(reader)))
     {
@@ -1689,8 +1768,6 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
         }
     }
 
-    LeaveCriticalSection(&reader->cs);
-
     TRACE("Stream %u, got sample %p, flags %#x.\n", *actual_index, *sample, *stream_flags);
 
     return hr;
@@ -1705,23 +1782,19 @@ static HRESULT source_reader_read_sample_async(struct source_reader *reader, uns
     if (actual_index || stream_flags || timestamp || sample)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&reader->cs);
-
     if (reader->flags & SOURCE_READER_FLUSHING)
         hr = MF_E_NOTACCEPTING;
     else
     {
         if (SUCCEEDED(hr = source_reader_create_async_op(SOURCE_READER_ASYNC_READ, &command)))
         {
-            command->stream_index = index;
-            command->flags = flags;
+            command->u.read.stream_index = index;
+            command->u.read.flags = flags;
 
             hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
             IUnknown_Release(&command->IUnknown_iface);
         }
     }
-
-    LeaveCriticalSection(&reader->cs);
 
     return hr;
 }
@@ -1734,10 +1807,19 @@ static HRESULT WINAPI src_reader_ReadSample(IMFSourceReader *iface, DWORD index,
 
     TRACE("%p, %#x, %#x, %p, %p, %p, %p\n", iface, index, flags, actual_index, stream_flags, timestamp, sample);
 
+    EnterCriticalSection(&reader->cs);
+
+    while (reader->flags & SOURCE_READER_SEEKING)
+    {
+        SleepConditionVariableCS(&reader->state_event, &reader->cs, INFINITE);
+    }
+
     if (reader->async_callback)
         hr = source_reader_read_sample_async(reader, index, flags, actual_index, stream_flags, timestamp, sample);
     else
         hr = source_reader_read_sample(reader, index, flags, actual_index, stream_flags, timestamp, sample);
+
+    LeaveCriticalSection(&reader->cs);
 
     return hr;
 }
@@ -1771,7 +1853,7 @@ static HRESULT source_reader_flush_async(struct source_reader *reader, unsigned 
     if (FAILED(hr = source_reader_create_async_op(SOURCE_READER_ASYNC_FLUSH, &command)))
         return hr;
 
-    command->stream_index = stream_index;
+    command->u.flush.stream_index = stream_index;
 
     hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
     IUnknown_Release(&command->IUnknown_iface);
@@ -1964,6 +2046,7 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     IMFMediaSource_AddRef(object->source);
     InitializeCriticalSection(&object->cs);
     InitializeConditionVariable(&object->sample_event);
+    InitializeConditionVariable(&object->state_event);
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(object->source, &object->descriptor)))
         goto failed;
