@@ -44,7 +44,6 @@
 #include "ip2string.h"
 #include "dhcpcsdk.h"
 
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -116,20 +115,19 @@ HAL_FUNCS;
 static BOOL load_hal_functions(void)
 {
     void *hal_handle;
-    char error[128];
 
     /* Load libhal with RTLD_GLOBAL so that the dbus symbols are available.
      * We can't load libdbus directly since libhal may have been built against a
      * different version but with the same soname. Binary compatibility is for wimps. */
 
-    if (!(hal_handle = wine_dlopen(SONAME_LIBHAL, RTLD_NOW|RTLD_GLOBAL, error, sizeof(error))))
+    if (!(hal_handle = dlopen( SONAME_LIBHAL, RTLD_NOW | RTLD_GLOBAL )))
         goto failed;
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( RTLD_DEFAULT, #f, error, sizeof(error) ))) goto failed
+#define DO_FUNC(f) if (!(p_##f = dlsym( RTLD_DEFAULT, #f ))) goto failed
     DBUS_FUNCS;
 #undef DO_FUNC
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( hal_handle, #f, error, sizeof(error) ))) goto failed
+#define DO_FUNC(f) if (!(p_##f = dlsym( hal_handle, #f ))) goto failed
     HAL_FUNCS;
 #undef DO_FUNC
 
@@ -137,7 +135,7 @@ static BOOL load_hal_functions(void)
     return TRUE;
 
 failed:
-    WARN( "failed to load HAL support: %s\n", error );
+    WARN( "failed to load HAL support: %s\n", dlerror() );
     return FALSE;
 }
 
@@ -185,18 +183,17 @@ static GUID *parse_uuid( GUID *guid, const char *str )
 static BOOL load_dbus_functions(void)
 {
     void *handle;
-    char error[128];
 
-    if (!(handle = wine_dlopen(SONAME_LIBDBUS_1, RTLD_NOW, error, sizeof(error))))
+    if (!(handle = dlopen( SONAME_LIBDBUS_1, RTLD_NOW )))
         goto failed;
 
-#define DO_FUNC(f) if (!(p_##f = wine_dlsym( handle, #f, error, sizeof(error) ))) goto failed
+#define DO_FUNC(f) if (!(p_##f = dlsym( handle, #f ))) goto failed
     DBUS_FUNCS;
 #undef DO_FUNC
     return TRUE;
 
 failed:
-    WARN( "failed to load DBUS support: %s\n", error );
+    WARN( "failed to load DBUS support: %s\n", dlerror() );
     return FALSE;
 }
 

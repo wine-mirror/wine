@@ -34,7 +34,6 @@
 
 #include "mountmgr.h"
 #include "winreg.h"
-#include "wine/library.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
