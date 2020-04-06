@@ -136,7 +136,10 @@ errno_t       __cdecl _get_errno(int*);
 errno_t       __cdecl _set_doserrno(int);
 errno_t       __cdecl _set_errno(int);
 
+#ifndef _CRT_ONEXIT_T_DEFINED
+#define _CRT_ONEXIT_T_DEFINED
 typedef int (__cdecl *_onexit_t)(void);
+#endif
 
 
 int           __cdecl _atodbl(_CRT_DOUBLE*,char*);

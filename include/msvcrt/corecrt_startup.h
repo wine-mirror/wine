@@ -32,7 +32,10 @@ typedef struct _onexit_table_t {
     _PVFV *_end;
 } _onexit_table_t;
 
+#ifndef _CRT_ONEXIT_T_DEFINED
+#define _CRT_ONEXIT_T_DEFINED
 typedef int (__cdecl *_onexit_t)(void);
+#endif
 
 struct _exception;
 typedef int (__cdecl *_UserMathErrorFunctionPointer)(struct _exception *);
