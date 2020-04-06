@@ -111,7 +111,7 @@ struct video_window_ops
 
 void video_window_cleanup(struct video_window *window) DECLSPEC_HIDDEN;
 HRESULT video_window_create_window(struct video_window *window) DECLSPEC_HIDDEN;
-HRESULT video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
+void video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
         struct strmbase_filter *filter, struct strmbase_pin *pin, const struct video_window_ops *ops) DECLSPEC_HIDDEN;
 void video_window_unregister_class(void) DECLSPEC_HIDDEN;
 

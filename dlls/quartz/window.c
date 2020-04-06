@@ -662,7 +662,7 @@ void video_window_unregister_class(void)
         ERR("Failed to unregister class, error %u.\n", GetLastError());
 }
 
-HRESULT video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
+void video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl,
         struct strmbase_filter *owner, struct strmbase_pin *pin, const struct video_window_ops *ops)
 {
     memset(window, 0, sizeof(*window));
@@ -671,7 +671,6 @@ HRESULT video_window_init(struct video_window *window, const IVideoWindowVtbl *v
     window->AutoShow = OATRUE;
     window->pFilter = owner;
     window->pPin = pin;
-    return S_OK;
 }
 
 void video_window_cleanup(struct video_window *window)

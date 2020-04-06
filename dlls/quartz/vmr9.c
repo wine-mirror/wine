@@ -2318,13 +2318,17 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     object->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
+    video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
             &object->renderer.filter, &object->renderer.sink.pin, &window_ops);
-    if (FAILED(hr))
-        goto fail;
 
     if (FAILED(hr = video_window_create_window(&object->baseControlWindow)))
-        goto fail;
+    {
+        video_window_cleanup(&object->baseControlWindow);
+        strmbase_renderer_cleanup(&object->renderer);
+        FreeLibrary(object->hD3d9);
+        free(object);
+        return hr;
+    }
 
     basic_video_init(&object->baseControlVideo, &object->renderer.filter,
             &object->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
@@ -2333,13 +2337,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
 
     TRACE("Created VMR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
-    return hr;
-
-fail:
-    strmbase_renderer_cleanup(&object->renderer);
-    FreeLibrary(object->hD3d9);
-    free(object);
-    return hr;
+    return S_OK;
 }
 
 HRESULT vmr7_create(IUnknown *outer, IUnknown **out)

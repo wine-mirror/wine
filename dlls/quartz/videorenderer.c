@@ -714,27 +714,24 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
     strmbase_renderer_init(&object->renderer, outer, &CLSID_VideoRenderer, L"In", &renderer_ops);
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    hr = video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
+    video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
             &object->renderer.filter, &object->renderer.sink.pin, &window_ops);
-    if (FAILED(hr))
-        goto fail;
-
     basic_video_init(&object->baseControlVideo, &object->renderer.filter,
             &object->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
 
     if (FAILED(hr = video_window_create_window(&object->baseControlWindow)))
-        goto fail;
+    {
+        video_window_cleanup(&object->baseControlWindow);
+        strmbase_renderer_cleanup(&object->renderer);
+        free(object);
+        return hr;
+    }
 
     object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     TRACE("Created video renderer %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
     return S_OK;
-
-fail:
-    strmbase_renderer_cleanup(&object->renderer);
-    free(object);
-    return hr;
 }
 
 HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out)
