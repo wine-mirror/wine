@@ -40,7 +40,6 @@
 #include "secur32_priv.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 #if defined(SONAME_LIBGNUTLS) && !defined(HAVE_SECURITY_SECURITY_H)
@@ -873,7 +872,7 @@ BOOL schan_imp_init(void)
 {
     int ret;
 
-    libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
+    libgnutls_handle = dlopen(SONAME_LIBGNUTLS, RTLD_NOW);
     if (!libgnutls_handle)
     {
         ERR_(winediag)("Failed to load libgnutls, secure connections will not be available.\n");
@@ -881,7 +880,7 @@ BOOL schan_imp_init(void)
     }
 
 #define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym(libgnutls_handle, #f, NULL, 0))) \
+    if (!(p##f = dlsym(libgnutls_handle, #f))) \
     { \
         ERR("Failed to load %s\n", #f); \
         goto fail; \
@@ -926,17 +925,17 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_x509_privkey_deinit)
 #undef LOAD_FUNCPTR
 
-    if (!(pgnutls_cipher_get_block_size = wine_dlsym(libgnutls_handle, "gnutls_cipher_get_block_size", NULL, 0)))
+    if (!(pgnutls_cipher_get_block_size = dlsym(libgnutls_handle, "gnutls_cipher_get_block_size")))
     {
         WARN("gnutls_cipher_get_block_size not found\n");
         pgnutls_cipher_get_block_size = compat_cipher_get_block_size;
     }
-    if (!(pgnutls_privkey_export_x509 = wine_dlsym(libgnutls_handle, "gnutls_privkey_export_x509", NULL, 0)))
+    if (!(pgnutls_privkey_export_x509 = dlsym(libgnutls_handle, "gnutls_privkey_export_x509")))
     {
         WARN("gnutls_privkey_export_x509 not found\n");
         pgnutls_privkey_export_x509 = compat_gnutls_privkey_export_x509;
     }
-    if (!(pgnutls_privkey_import_rsa_raw = wine_dlsym(libgnutls_handle, "gnutls_privkey_import_rsa_raw", NULL, 0)))
+    if (!(pgnutls_privkey_import_rsa_raw = dlsym(libgnutls_handle, "gnutls_privkey_import_rsa_raw")))
     {
         WARN("gnutls_privkey_import_rsa_raw not found\n");
         pgnutls_privkey_import_rsa_raw = compat_gnutls_privkey_import_rsa_raw;
@@ -959,7 +958,7 @@ BOOL schan_imp_init(void)
     return TRUE;
 
 fail:
-    wine_dlclose(libgnutls_handle, NULL, 0);
+    dlclose(libgnutls_handle);
     libgnutls_handle = NULL;
     return FALSE;
 }
@@ -967,7 +966,7 @@ fail:
 void schan_imp_deinit(void)
 {
     pgnutls_global_deinit();
-    wine_dlclose(libgnutls_handle, NULL, 0);
+    dlclose(libgnutls_handle);
     libgnutls_handle = NULL;
 }
 

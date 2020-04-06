@@ -38,7 +38,6 @@
 #include "schannel.h"
 #include "secur32_priv.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 #ifdef HAVE_SECURITY_SECURITY_H
 
