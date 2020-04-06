@@ -673,8 +673,6 @@ GSTREAMER_CFLAGS
 PULSE_LIBS
 PULSE_CFLAGS
 GETTEXTPO_LIBS
-Z_LIBS
-Z_CFLAGS
 FREETYPE_LIBS
 FREETYPE_CFLAGS
 LCMS2_LIBS
@@ -898,7 +896,6 @@ with_xshape
 with_xshm
 with_xslt
 with_xxf86vm
-with_zlib
 with_wine_tools
 with_wine64
 enable_largefile
@@ -1866,8 +1863,6 @@ LCMS2_CFLAGS
 LCMS2_LIBS
 FREETYPE_CFLAGS
 FREETYPE_LIBS
-Z_CFLAGS
-Z_LIBS
 PULSE_CFLAGS
 PULSE_LIBS
 GSTREAMER_CFLAGS
@@ -2602,7 +2597,6 @@ Optional Packages:
   --without-xshm          do not use XShm (shared memory extension)
   --without-xslt          do not use XSLT
   --without-xxf86vm       do not use XFree video mode extension
-  --without-zlib          do not use Zlib (data compression)
   --with-wine-tools=DIR   use Wine tools from directory DIR
   --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
   --with-x                use the X Window System
@@ -2654,8 +2648,6 @@ Some influential environment variables:
               C compiler flags for freetype2, overriding pkg-config
   FREETYPE_LIBS
               Linker flags for freetype2, overriding pkg-config
-  Z_CFLAGS    C compiler flags for libz, overriding pkg-config
-  Z_LIBS      Linker flags for libz, overriding pkg-config
   PULSE_CFLAGS
               C compiler flags for libpulse, overriding pkg-config
   PULSE_LIBS  Linker flags for libpulse, overriding pkg-config
@@ -4209,12 +4201,6 @@ fi
 # Check whether --with-xxf86vm was given.
 if test "${with_xxf86vm+set}" = set; then :
   withval=$with_xxf86vm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi
-fi
-
-
-# Check whether --with-zlib was given.
-if test "${with_zlib+set}" = set; then :
-  withval=$with_zlib;
 fi
 
 
@@ -14477,97 +14463,6 @@ done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
 
-if test "x$with_zlib" != "xno"
-then
-    if ${Z_CFLAGS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  Z_CFLAGS=`$PKG_CONFIG --cflags libz 2>/dev/null`
-fi
-fi
-
-if ${Z_LIBS:+false} :; then :
-  if ${PKG_CONFIG+:} false; then :
-  Z_LIBS=`$PKG_CONFIG --libs libz 2>/dev/null`
-fi
-fi
-
-Z_LIBS=${Z_LIBS:-"-lz"}
-$as_echo "$as_me:${as_lineno-$LINENO}: libz cflags: $Z_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libz libs: $Z_LIBS" >&5
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $Z_CFLAGS"
-for ac_header in zlib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_zlib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_ZLIB_H 1
-_ACEOF
- { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inflate in -lz" >&5
-$as_echo_n "checking for inflate in -lz... " >&6; }
-if ${ac_cv_lib_z_inflate+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lz $Z_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char inflate ();
-int
-main ()
-{
-return inflate ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_z_inflate=yes
-else
-  ac_cv_lib_z_inflate=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_z_inflate" >&5
-$as_echo "$ac_cv_lib_z_inflate" >&6; }
-if test "x$ac_cv_lib_z_inflate" = xyes; then :
-
-$as_echo "#define HAVE_ZLIB 1" >>confdefs.h
-
-else
-  Z_LIBS=""
-fi
-
-else
-  Z_LIBS=""
-fi
-
-done
-
-CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$Z_CFLAGS" || Z_CFLAGS=`echo " $Z_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$Z_LIBS" || Z_LIBS=`echo " $Z_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
-
-fi
-if test "x$Z_LIBS" = "x"; then :
-  case "x$with_zlib" in
-  x)   as_fn_append wine_notices "|libz ${notice_platform}development files not found, data compression won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libz ${notice_platform}development files not found, data compression won't be supported.
-This is an error since --with-zlib was requested." "$LINENO" 5 ;;
-esac
-
-fi
-
 if test "x$enable_tools" != xno -a "x$with_gettextpo" = xyes
 then
     if test "$ac_cv_header_gettext_po_h" = "yes"
@@ -20011,8 +19906,6 @@ LCMS2_CFLAGS = $LCMS2_CFLAGS
 LCMS2_LIBS = $LCMS2_LIBS
 FREETYPE_CFLAGS = $FREETYPE_CFLAGS
 FREETYPE_LIBS = $FREETYPE_LIBS
-Z_CFLAGS = $Z_CFLAGS
-Z_LIBS = $Z_LIBS
 GETTEXTPO_LIBS = $GETTEXTPO_LIBS
 PULSE_CFLAGS = $PULSE_CFLAGS
 PULSE_LIBS = $PULSE_LIBS

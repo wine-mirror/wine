@@ -111,7 +111,6 @@ AC_ARG_WITH(xshm,      AS_HELP_STRING([--without-xshm],[do not use XShm (shared 
 AC_ARG_WITH(xslt,      AS_HELP_STRING([--without-xslt],[do not use XSLT]))
 AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree video mode extension]),
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi])
-AC_ARG_WITH(zlib,      AS_HELP_STRING([--without-zlib],[do not use Zlib (data compression)]))
 
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
 AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
@@ -1595,18 +1594,6 @@ dnl **** Check for pthread functions ****
 WINE_CHECK_LIB_FUNCS(\
         pthread_getthreadid_np,
         [$PTHREAD_LIBS])
-
-dnl **** Check for zlib ****
-if test "x$with_zlib" != "xno"
-then
-    WINE_PACKAGE_FLAGS(Z,[libz],[-lz],,,
-        [AC_CHECK_HEADERS(zlib.h,
-            [AC_CHECK_LIB(z,inflate,
-                          [AC_DEFINE(HAVE_ZLIB,1,[Define to 1 if you have the `z' library (-lz).])],
-                          [Z_LIBS=""],[$Z_LIBS])],
-            [Z_LIBS=""])])
-fi
-WINE_NOTICE_WITH(zlib,[test "x$Z_LIBS" = "x"],[libz ${notice_platform}development files not found, data compression won't be supported.])
 
 dnl **** Check for gettextpo ****
 if test "x$enable_tools" != xno -a "x$with_gettextpo" = xyes

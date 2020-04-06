@@ -1291,12 +1291,6 @@
 /* Define to 1 if you have the `yn' function. */
 #undef HAVE_YN
 
-/* Define to 1 if you have the `z' library (-lz). */
-#undef HAVE_ZLIB
-
-/* Define to 1 if you have the <zlib.h> header file. */
-#undef HAVE_ZLIB_H
-
 /* Define to 1 if you have the `_spawnvp' function. */
 #undef HAVE__SPAWNVP
 
