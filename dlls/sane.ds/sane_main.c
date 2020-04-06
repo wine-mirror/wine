@@ -26,7 +26,6 @@
 
 #include "sane_i.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
@@ -59,22 +58,22 @@ static void *libsane_handle;
 static void close_libsane(void *h)
 {
     if (h)
-        wine_dlclose(h, NULL, 0);
+        dlclose(h);
 }
 
 static void *open_libsane(void)
 {
     void *h;
 
-    h = wine_dlopen(SONAME_LIBSANE, RTLD_GLOBAL | RTLD_NOW, NULL, 0);
+    h = dlopen(SONAME_LIBSANE, RTLD_GLOBAL | RTLD_NOW);
     if (!h)
     {
-        WARN("dlopen(%s) failed\n", SONAME_LIBSANE);
+        WARN("failed to load %s; %s\n", SONAME_LIBSANE, dlerror());
         return NULL;
     }
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(h, #f, NULL, 0)) == NULL) { \
+    if((p##f = dlsym(h, #f)) == NULL) { \
         close_libsane(h); \
         ERR("Could not dlsym %s\n", #f); \
         return NULL; \
