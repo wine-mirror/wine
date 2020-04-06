@@ -400,6 +400,7 @@ typedef struct
     struct
     {
         ADS_SCOPEENUM scope;
+        int pagesize;
     } search;
 } LDAP_namespace;
 
@@ -1214,6 +1215,19 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
             break;
         }
 
+        case ADS_SEARCHPREF_PAGESIZE:
+            if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
+            {
+                FIXME("ADS_SEARCHPREF_PAGESIZE: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+
+            TRACE("PAGESIZE: %d\n", prefs[i].vValue.u.Integer);
+            ldap->search.pagesize = prefs[i].vValue.u.Integer;
+            prefs[i].dwStatus = ADS_STATUS_S_OK;
+            break;
+
         default:
             FIXME("pref %d, type %u: stub\n", prefs[i].dwSearchPref, prefs[i].vValue.dwType);
             prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
@@ -1713,6 +1727,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->attrs_count_allocated = 0;
     ldap->attrs = NULL;
     ldap->search.scope = ADS_SCOPE_SUBTREE;
+    ldap->search.pagesize = 0;
     ldap->at = NULL;
     ldap->at_single_count = 0;
     ldap->at_multiple_count = 0;
