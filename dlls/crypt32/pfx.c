@@ -31,7 +31,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -72,14 +71,14 @@ BOOL gnutls_initialize(void)
 {
     int ret;
 
-    if (!(libgnutls_handle = wine_dlopen( SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0 )))
+    if (!(libgnutls_handle = dlopen( SONAME_LIBGNUTLS, RTLD_NOW )))
     {
         ERR_(winediag)( "failed to load libgnutls, no support for pfx import/export\n" );
         return FALSE;
     }
 
 #define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym( libgnutls_handle, #f, NULL, 0 ))) \
+    if (!(p##f = dlsym( libgnutls_handle, #f ))) \
     { \
         ERR( "failed to load %s\n", #f ); \
         goto fail; \
@@ -114,7 +113,7 @@ BOOL gnutls_initialize(void)
     return TRUE;
 
 fail:
-    wine_dlclose( libgnutls_handle, NULL, 0 );
+    dlclose( libgnutls_handle );
     libgnutls_handle = NULL;
     return FALSE;
 }
@@ -122,7 +121,7 @@ fail:
 void gnutls_uninitialize(void)
 {
     pgnutls_global_deinit();
-    wine_dlclose( libgnutls_handle, NULL, 0 );
+    dlclose( libgnutls_handle );
     libgnutls_handle = NULL;
 }
 
