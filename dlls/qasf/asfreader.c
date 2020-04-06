@@ -125,9 +125,28 @@ static HRESULT WINAPI filesourcefilter_GetCurFile(IFileSourceFilter *iface, LPOL
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
-    FIXME("filter %p, filename %p, type %p, stub!\n", filter, filename, type);
+    TRACE("filter %p, filename %p, type %p.\n", filter, filename, type);
 
-    return E_NOTIMPL;
+    if (!filename)
+        return E_POINTER;
+    *filename = NULL;
+
+    if (type)
+    {
+        type->majortype = filter->type.majortype;
+        type->subtype = filter->type.subtype;
+        type->lSampleSize = filter->type.lSampleSize;
+        type->pUnk = filter->type.pUnk;
+        type->cbFormat = filter->type.cbFormat;
+    }
+
+    if (filter->filename)
+    {
+        *filename = CoTaskMemAlloc((wcslen(filter->filename) + 1) * sizeof(WCHAR));
+        wcscpy(*filename, filter->filename);
+    }
+
+    return S_OK;
 }
 
 static const IFileSourceFilterVtbl filesourcefilter_vtbl =
