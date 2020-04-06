@@ -41,7 +41,6 @@
 #include <winnls.h>
 #include <wincon.h>
 #include "console_private.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
@@ -175,17 +174,17 @@ static BOOL TERM_bind_libcurses(void)
     static const char ncname[] = SONAME_LIBCURSES;
 #endif
 
-    if (!(nc_handle = wine_dlopen(ncname, RTLD_NOW, NULL, 0)))
+    if (!(nc_handle = dlopen(ncname, RTLD_NOW)))
     {
         MESSAGE("Wine cannot find the " CURSES_NAME " library (%s).\n", ncname);
         return FALSE;
     }
 
-#define LOAD_FUNCPTR(f)                                      \
-    if((p_##f = wine_dlsym(nc_handle, #f, NULL, 0)) == NULL) \
-    {                                                        \
-        WARN("Can't find symbol %s\n", #f);                  \
-        goto sym_not_found;                                  \
+#define LOAD_FUNCPTR(f)                        \
+    if((p_##f = dlsym(nc_handle, #f)) == NULL) \
+    {                                          \
+        WARN("Can't find symbol %s\n", #f);    \
+        goto sym_not_found;                    \
     }
 
     LOAD_FUNCPTR(putp)
@@ -202,7 +201,7 @@ sym_not_found:
       "Wine cannot find certain functions that it needs inside the "
        CURSES_NAME "\nlibrary.  To enable Wine to use " CURSES_NAME
       " please upgrade your " CURSES_NAME "\nlibraries\n");
-    wine_dlclose(nc_handle, NULL, 0);
+    dlclose(nc_handle);
     nc_handle = NULL;
     return FALSE;
 }
