@@ -387,6 +387,10 @@ static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
     unsigned int i;
     GstCaps *caps;
 
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
+            || mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
+        return NULL;
+
     for (i = 0; i < ARRAY_SIZE(format_map); ++i)
     {
         if (IsEqualGUID(&mt->subtype, format_map[i].subtype))
@@ -424,6 +428,10 @@ static GstCaps *amt_to_gst_caps_audio(const AM_MEDIA_TYPE *mt)
     const WAVEFORMATEX *wfx = (WAVEFORMATEX *)mt->pbFormat;
     GstAudioFormat format = GST_AUDIO_FORMAT_UNKNOWN;
     GstAudioInfo info;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
+            || mt->cbFormat < sizeof(WAVEFORMATEX) || !mt->pbFormat)
+        return NULL;
 
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM))
         format = gst_audio_format_build_integer(wfx->wBitsPerSample != 8,
