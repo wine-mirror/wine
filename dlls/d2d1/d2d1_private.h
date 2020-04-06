@@ -634,6 +634,11 @@ static inline void d2d_rect_expand(D2D1_RECT_F *dst, const D2D1_POINT_2F *point)
         dst->bottom = point->y;
 }
 
+static inline D2D1_INTERPOLATION_MODE d2d1_1_interp_mode_from_d2d1(D2D1_BITMAP_INTERPOLATION_MODE mode)
+{
+    return (D2D1_INTERPOLATION_MODE)mode;
+}
+
 static inline const char *debug_d2d_point_2f(const D2D1_POINT_2F *point)
 {
     if (!point)

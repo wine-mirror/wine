@@ -1143,7 +1143,8 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
         return;
     }
 
-    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect, NULL);
+    d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, d2d1_1_interp_mode_from_d2d1(interpolation_mode),
+            src_rect, NULL);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext *iface,

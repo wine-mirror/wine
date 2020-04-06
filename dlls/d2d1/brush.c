@@ -962,7 +962,7 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode(ID2D1BitmapB
             return;
     }
 
-    brush->u.bitmap.interpolation_mode = mode;
+    brush->u.bitmap.interpolation_mode = d2d1_1_interp_mode_from_d2d1(mode);
     if (brush->u.bitmap.sampler_state)
     {
         ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
