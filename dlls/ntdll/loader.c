@@ -2596,7 +2596,6 @@ done:
 static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
                              const char *so_name, WINE_MODREF** pwm )
 {
-    char error[256];
     void *handle;
     struct builtin_load_info info, *prev_info;
     ANSI_STRING unix_name;
@@ -2620,7 +2619,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
 
     prev_info = builtin_load_info;
     builtin_load_info = &info;
-    handle = wine_dlopen( so_name ? so_name : unix_name.Buffer, RTLD_NOW, error, sizeof(error) );
+    handle = dlopen( so_name ? so_name : unix_name.Buffer, RTLD_NOW );
     builtin_load_info = prev_info;
     RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
 
@@ -2628,10 +2627,10 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     {
         if (so_name)
         {
-            ERR("failed to load .so lib %s: %s\n", debugstr_a(so_name), error );
+            ERR("failed to load .so lib %s: %s\n", debugstr_a(so_name), dlerror() );
             return STATUS_PROCEDURE_NOT_FOUND;
         }
-        WARN( "failed to load .so lib %s: %s\n", debugstr_us(nt_name), error );
+        WARN( "failed to load .so lib %s: %s\n", debugstr_us(nt_name), dlerror() );
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
@@ -2651,7 +2650,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
                debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress,
                debugstr_us(nt_name) );
         if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
-        wine_dlclose( handle, NULL, 0 ); /* release the libdl refcount */
+        dlclose( handle ); /* release the libdl refcount */
     }
     else
     {
@@ -2664,7 +2663,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     return STATUS_SUCCESS;
 
 failed:
-    wine_dlclose( handle, NULL, 0 );
+    dlclose( handle );
     return info.status;
 }
 
@@ -3588,8 +3587,7 @@ static void free_modref( WINE_MODREF *wm )
 
     free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
-    if ((wm->ldr.Flags & LDR_WINE_INTERNAL) && wm->ldr.SectionHandle)
-        wine_dlclose( wm->ldr.SectionHandle, NULL, 0 );
+    if ((wm->ldr.Flags & LDR_WINE_INTERNAL) && wm->ldr.SectionHandle) dlclose( wm->ldr.SectionHandle );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
     if (cached_modref == wm) cached_modref = NULL;
     RtlFreeUnicodeString( &wm->ldr.FullDllName );
