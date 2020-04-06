@@ -3352,17 +3352,6 @@ static void test_OpenFile(void)
             ofs.szPathName );
     }
 
-    length = GetCurrentDirectoryA(MAX_PATH, buff) + sizeof(filename);
-
-    if (length >= MAX_PATH) 
-    {
-        trace("Buffer too small, requested length = %d, but MAX_PATH = %d.  Skipping test.\n", length, MAX_PATH);
-        return;
-    }
-    p = buff + strlen(buff);
-    if (p > buff && p[-1] != '\\') *p++ = '\\';
-    strcpy( p, filename );
-
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
     /* Create an empty file */
@@ -3389,8 +3378,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
     ret = _lclose(hFile);
     ok( !ret, "_lclose() returns %d\n", ret );
 
@@ -3404,8 +3393,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
     ret = _lclose(hFile);
     ok( !ret, "_lclose() returns %d\n", ret );
 
@@ -3419,8 +3408,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
     ret = _lclose(hFile);
     ok( !ret, "_lclose() returns %d\n", ret );
 
@@ -3434,8 +3423,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
 
     memset(&ofs, 0xA5, sizeof(ofs));
     SetLastError(0xfaceabee);
@@ -3447,8 +3436,8 @@ static void test_OpenFile(void)
     ok( ofs.cBytes == sizeof(OFSTRUCT), "OpenFile set ofs.cBytes to %d\n", ofs.cBytes );
     ok( ofs.nErrCode == ERROR_SUCCESS || broken(ofs.nErrCode != ERROR_SUCCESS) /* win9x */,
         "OpenFile set ofs.nErrCode to %d\n", ofs.nErrCode );
-    ok( lstrcmpiA(ofs.szPathName, buff) == 0,
-        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, buff );
+    ok( lstrcmpiA(ofs.szPathName, filename) == 0,
+        "OpenFile returned '%s', but was expected to return '%s'\n", ofs.szPathName, filename );
 
     retval = GetFileAttributesA(filename);
     ok( retval == INVALID_FILE_ATTRIBUTES, "GetFileAttributesA succeeded on deleted file\n" );
