@@ -439,10 +439,15 @@ static BOOL is_supported_server_ctrls( WLDAP32_LDAP *ld, LDAPControl **ctrls )
 
     for (n = 0; n < user_count; n++)
     {
+        TRACE("looking for %s\n", debugstr_a(ctrls[n]->ldctl_oid));
+
         for (i = 0; i < server_count; i++)
         {
             if (!strncmp( ctrls[n]->ldctl_oid, ld->ld_server_ctrls[i]->bv_val, ld->ld_server_ctrls[i]->bv_len))
+            {
                 supported++;
+                break;
+            }
         }
     }
 
