@@ -1010,8 +1010,8 @@ static D2D1_BITMAP_INTERPOLATION_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetInte
     switch (brush->u.bitmap.interpolation_mode)
     {
         case D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR:
+            return D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
         case D2D1_INTERPOLATION_MODE_LINEAR:
-            return brush->u.bitmap.interpolation_mode;
         default:
             return D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
     }
