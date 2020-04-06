@@ -718,7 +718,7 @@ compute_location(const struct module *module, dwarf2_traverse_context_t* ctx, st
         case DW_OP_pick:        stack[stk + 1] = stack[stk - dwarf2_parse_byte(ctx)]; stk++; break;
         case DW_OP_swap:        tmp = stack[stk]; stack[stk] = stack[stk-1]; stack[stk-1] = tmp; break;
         case DW_OP_rot:         tmp = stack[stk]; stack[stk] = stack[stk-1]; stack[stk-1] = stack[stk-2]; stack[stk-2] = tmp; break;
-        case DW_OP_abs:         stack[stk] = labs(stack[stk]); break;
+        case DW_OP_abs:         stack[stk] = sizeof(stack[stk]) == 8 ? llabs((INT64)stack[stk]) : abs((INT32)stack[stk]); break;
         case DW_OP_neg:         stack[stk] = -stack[stk]; break;
         case DW_OP_not:         stack[stk] = ~stack[stk]; break;
         case DW_OP_and:         stack[stk-1] &= stack[stk]; stk--; break;
@@ -3119,7 +3119,7 @@ static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_w
         case DW_OP_pick:        stack[sp + 1] = stack[sp - dwarf2_parse_byte(&ctx)]; sp++; break;
         case DW_OP_swap:        tmp = stack[sp]; stack[sp] = stack[sp-1]; stack[sp-1] = tmp; break;
         case DW_OP_rot:         tmp = stack[sp]; stack[sp] = stack[sp-1]; stack[sp-1] = stack[sp-2]; stack[sp-2] = tmp; break;
-        case DW_OP_abs:         stack[sp] = labs(stack[sp]); break;
+        case DW_OP_abs:         stack[sp] = sizeof(stack[sp]) == 8 ? llabs((INT64)stack[sp]) : abs((INT32)stack[sp]); break;
         case DW_OP_neg:         stack[sp] = -stack[sp]; break;
         case DW_OP_not:         stack[sp] = ~stack[sp]; break;
         case DW_OP_and:         stack[sp-1] &= stack[sp]; sp--; break;
