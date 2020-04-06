@@ -38,7 +38,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 #if defined(HAVE_COMMONCRYPTO_COMMONCRYPTOR_H) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1080 && !defined(HAVE_GNUTLS_CIPHER_INIT)
