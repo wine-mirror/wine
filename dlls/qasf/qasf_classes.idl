@@ -25,3 +25,10 @@
     uuid(94297043-bd82-4dfd-b0de-8177739c6d20),
 ]
 coclass DMOWrapperFilter {}
+
+[
+    helpstring("WM ASF Reader"),
+    threading(both),
+    uuid(187463a0-5bb7-11d3-acbe-0080c75e246e),
+]
+coclass WMAsfReader {}
