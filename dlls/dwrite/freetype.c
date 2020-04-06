@@ -32,7 +32,6 @@
 #endif /* HAVE_FT2BUILD_H */
 
 #include "windef.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 #include "dwrite_private.h"
@@ -179,13 +178,13 @@ BOOL init_freetype(void)
 {
     FT_Version_t FT_Version;
 
-    ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
+    ft_handle = dlopen(SONAME_LIBFREETYPE, RTLD_NOW);
     if (!ft_handle) {
         WINE_MESSAGE("Wine cannot find the FreeType font library.\n");
 	return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(ft_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
     LOAD_FUNCPTR(FT_Done_FreeType)
     LOAD_FUNCPTR(FT_Done_Glyph)
     LOAD_FUNCPTR(FT_Get_First_Char)
@@ -217,11 +216,11 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FTC_Manager_LookupSize)
     LOAD_FUNCPTR(FTC_Manager_RemoveFaceID)
 #undef LOAD_FUNCPTR
-    pFT_Outline_EmboldenXY = wine_dlsym(ft_handle, "FT_Outline_EmboldenXY", NULL, 0);
+    pFT_Outline_EmboldenXY = dlsym(ft_handle, "FT_Outline_EmboldenXY");
 
     if (pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
-	wine_dlclose(ft_handle, NULL, 0);
+	dlclose(ft_handle);
         ft_handle = NULL;
 	return FALSE;
     }
@@ -235,7 +234,7 @@ BOOL init_freetype(void)
         ERR("Failed to init FreeType cache\n");
         pFTC_Manager_Done(cache_manager);
         pFT_Done_FreeType(library);
-        wine_dlclose(ft_handle, NULL, 0);
+        dlclose(ft_handle);
         ft_handle = NULL;
         return FALSE;
     }
@@ -245,7 +244,7 @@ BOOL init_freetype(void)
 
 sym_not_found:
     WINE_MESSAGE("Wine cannot find certain functions that it needs from FreeType library.\n");
-    wine_dlclose(ft_handle, NULL, 0);
+    dlclose(ft_handle);
     ft_handle = NULL;
     return FALSE;
 }
