@@ -30,7 +30,6 @@
 #ifndef USE_WIN32_VULKAN
 #define WINE_VK_HOST
 #endif
-#include "wine/library.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 #include <vkd3d.h>
@@ -952,18 +951,18 @@ static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
 
 static void *load_library(const char *name)
 {
-    return wine_dlopen(name, RTLD_NOW, NULL, 0);
+    return dlopen(name, RTLD_NOW);
 }
 
 static void *get_library_proc(void *handle, const char *name)
 {
-    return wine_dlsym(handle, name, NULL, 0);
+    return dlsym(handle, name);
 }
 
 static void close_library(void *handle)
 {
     if (handle)
-        wine_dlclose(handle, NULL, 0);
+        dlclose(handle);
 }
 
 static PFN_vkGetInstanceProcAddr load_vulkan(void **vulkan_handle)
