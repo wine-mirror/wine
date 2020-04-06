@@ -2787,7 +2787,7 @@ static UINT parse_aa_pattern( FcPattern *pattern )
 
 static void init_fontconfig(void)
 {
-    void *fc_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0);
+    void *fc_handle = dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW);
 
     if (!fc_handle)
     {
@@ -2795,7 +2795,7 @@ static void init_fontconfig(void)
         return;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(fc_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); return;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(fc_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); return;}
     LOAD_FUNCPTR(FcConfigSubstitute);
     LOAD_FUNCPTR(FcDefaultSubstitute);
     LOAD_FUNCPTR(FcFontList);
@@ -4151,7 +4151,7 @@ static void update_font_info(void)
 
 static BOOL init_freetype(void)
 {
-    ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
+    ft_handle = dlopen(SONAME_LIBFREETYPE, RTLD_NOW);
     if(!ft_handle) {
         WINE_MESSAGE(
       "Wine cannot find the FreeType font library.  To enable Wine to\n"
@@ -4161,7 +4161,7 @@ static BOOL init_freetype(void)
 	return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(ft_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
 
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
@@ -4193,16 +4193,16 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Vector_Unit)
 #undef LOAD_FUNCPTR
     /* Don't warn if these ones are missing */
-    pFT_Outline_Embolden = wine_dlsym(ft_handle, "FT_Outline_Embolden", NULL, 0);
-    pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
+    pFT_Outline_Embolden = dlsym(ft_handle, "FT_Outline_Embolden");
+    pFT_Get_TrueType_Engine_Type = dlsym(ft_handle, "FT_Get_TrueType_Engine_Type");
 #ifdef FT_LCD_FILTER_H
-    pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
+    pFT_Library_SetLcdFilter = dlsym(ft_handle, "FT_Library_SetLcdFilter");
 #endif
-    pFT_Property_Set = wine_dlsym(ft_handle, "FT_Property_Set", NULL, 0);
+    pFT_Property_Set = dlsym(ft_handle, "FT_Property_Set");
 
     if(pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
-	wine_dlclose(ft_handle, NULL, 0);
+	dlclose(ft_handle);
         ft_handle = NULL;
 	return FALSE;
     }
@@ -4229,7 +4229,7 @@ sym_not_found:
       "font library.  To enable Wine to use TrueType fonts please upgrade\n"
       "FreeType to at least version 2.1.4.\n"
       "http://www.freetype.org\n");
-    wine_dlclose(ft_handle, NULL, 0);
+    dlclose(ft_handle);
     ft_handle = NULL;
     return FALSE;
 }

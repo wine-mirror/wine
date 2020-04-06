@@ -24,7 +24,6 @@
 #include "gdi_private.h"
 #include "dibdrv.h"
 
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
@@ -99,22 +98,21 @@ static BOOL init_opengl(void)
 {
     static BOOL init_done = FALSE;
     static void *osmesa_handle;
-    char buffer[200];
     unsigned int i;
 
     if (init_done) return (osmesa_handle != NULL);
     init_done = TRUE;
 
-    osmesa_handle = wine_dlopen( SONAME_LIBOSMESA, RTLD_NOW, buffer, sizeof(buffer) );
+    osmesa_handle = dlopen( SONAME_LIBOSMESA, RTLD_NOW );
     if (osmesa_handle == NULL)
     {
-        ERR( "Failed to load OSMesa: %s\n", buffer );
+        ERR( "Failed to load OSMesa: %s\n", dlerror() );
         return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) do if (!(p##f = wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
+#define LOAD_FUNCPTR(f) do if (!(p##f = dlsym( osmesa_handle, #f ))) \
     { \
-        ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, buffer ); \
+        ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, dlerror() ); \
         goto failed; \
     } while(0)
 
@@ -137,7 +135,7 @@ static BOOL init_opengl(void)
     return TRUE;
 
 failed:
-    wine_dlclose( osmesa_handle, NULL, 0 );
+    dlclose( osmesa_handle );
     osmesa_handle = NULL;
     return FALSE;
 }
