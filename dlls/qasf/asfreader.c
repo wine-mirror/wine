@@ -26,6 +26,9 @@ struct asf_reader
 {
     struct strmbase_filter filter;
     IFileSourceFilter IFileSourceFilter_iface;
+
+    AM_MEDIA_TYPE type;
+    WCHAR *filename;
 };
 
 static inline struct asf_reader *impl_reader_from_strmbase_filter(struct strmbase_filter *iface)
@@ -41,6 +44,9 @@ static struct strmbase_pin *asf_reader_get_pin(struct strmbase_filter *iface, un
 static void asf_reader_destroy(struct strmbase_filter *iface)
 {
     struct asf_reader *filter = impl_reader_from_strmbase_filter(iface);
+
+    free(filter->filename);
+    FreeMediaType(&filter->type);
 
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -97,10 +103,22 @@ static HRESULT WINAPI filesourcefilter_Load(IFileSourceFilter *iface, LPCOLESTR 
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
-    FIXME("filter %p, filename %s, type %p, stub!\n", filter, debugstr_w(filename), type);
+    TRACE("filter %p, filename %s, type %p.\n", filter, debugstr_w(filename), type);
     strmbase_dump_media_type(type);
 
-    return E_NOTIMPL;
+    if (!filename)
+        return E_POINTER;
+
+    if (filter->filename)
+        return E_FAIL;
+
+    if (!(filter->filename = wcsdup(filename)))
+        return E_OUTOFMEMORY;
+
+    if (type)
+        CopyMediaType(&filter->type, type);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filesourcefilter_GetCurFile(IFileSourceFilter *iface, LPOLESTR *filename, AM_MEDIA_TYPE *type)

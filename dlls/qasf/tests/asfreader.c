@@ -27,6 +27,8 @@
 
 #include "initguid.h"
 
+static const GUID testguid = {0x22222222, 0x2222, 0x2222, {0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22}};
+
 DEFINE_GUID(IID_IWMHeaderInfo,      0x96406bda, 0x2b2b, 0x11d3, 0xb3, 0x6b, 0x00, 0xc0, 0x4f, 0x61, 0x08, 0xff);
 DEFINE_GUID(IID_IWMReaderAdvanced,  0x96406bea, 0x2b2b, 0x11d3, 0xb3, 0x6b, 0x00, 0xc0, 0x4f, 0x61, 0x08, 0xff);
 DEFINE_GUID(IID_IWMReaderAdvanced2, 0xae14a945, 0xb90c, 0x4d0d, 0x91, 0x27, 0x80, 0xd6, 0x65, 0xf7, 0xd7, 0x3e);
@@ -181,12 +183,132 @@ static void test_aggregation(void)
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
+static void test_filesourcefilter(void)
+{
+    IBaseFilter *filter = create_asf_reader();
+    IFileSourceFilter *filesource;
+    IFilterGraph2 *graph;
+    IEnumPins *enumpins;
+    AM_MEDIA_TYPE type;
+    LPOLESTR olepath;
+    IPin *pins[4];
+    HRESULT hr;
+    ULONG ref;
+    BYTE *ptr;
+
+    ref = get_refcount(filter);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+    hr = IBaseFilter_QueryInterface(filter, &IID_IFileSourceFilter, (void **)&filesource);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(filesource);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(filter);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IFileSourceFilter_Load(filesource, NULL, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    olepath = (void *)0xdeadbeef;
+    memset(&type, 0x22, sizeof(type));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!olepath, "Got %s.\n", wine_dbgstr_w(olepath));
+    todo_wine ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
+            wine_dbgstr_guid(&type.majortype));
+    todo_wine ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
+            wine_dbgstr_guid(&type.subtype));
+    ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
+    ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
+    todo_wine ok(!type.lSampleSize, "Got sample size %u.\n", type.lSampleSize);
+    ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
+    todo_wine ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
+    todo_wine ok(!type.cbFormat, "Got format size %u.\n", type.cbFormat);
+    memset(&ptr, 0x22, sizeof(ptr));
+    ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+
+    hr = IFileSourceFilter_Load(filesource, L"nonexistent.wmv", NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFileSourceFilter_GetCurFile(filesource, NULL, NULL);
+    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IFileSourceFilter_Load(filesource, L"nonexistent2.wmv", NULL);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    olepath = (void *)0xdeadbeef;
+    memset(&type, 0x22, sizeof(type));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(!wcscmp(olepath, L"nonexistent.wmv"), "Expected path %s, got %s.\n",
+                wine_dbgstr_w(L"nonexistent.wmv"), wine_dbgstr_w(olepath));
+        ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
+                wine_dbgstr_guid(&type.majortype));
+        ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
+                wine_dbgstr_guid(&type.subtype));
+        ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
+        ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
+        ok(!type.lSampleSize, "Got sample size %u.\n", type.lSampleSize);
+        ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
+        ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
+        ok(!type.cbFormat, "Got format size %u.\n", type.cbFormat);
+        ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+        CoTaskMemFree(olepath);
+    }
+
+    hr = IBaseFilter_EnumPins(filter, &enumpins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enumpins, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    IEnumPins_Release(enumpins);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_AddFilter(graph, filter, NULL);
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
+            || broken(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) /* win2008 */,
+            "Got hr %#x.\n", hr);
+
+    hr = IFileSourceFilter_Load(filesource, L"nonexistent2.wmv", NULL);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    olepath = (void *)0xdeadbeef;
+    memset(&type, 0x22, sizeof(type));
+    hr = IFileSourceFilter_GetCurFile(filesource, &olepath, &type);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(!wcscmp(olepath, L"nonexistent.wmv"), "Expected path %s, got %s.\n",
+                wine_dbgstr_w(L"nonexistent.wmv"), wine_dbgstr_w(olepath));
+        ok(IsEqualGUID(&type.majortype, &MEDIATYPE_NULL), "Got majortype %s.\n",
+                wine_dbgstr_guid(&type.majortype));
+        ok(IsEqualGUID(&type.subtype, &MEDIASUBTYPE_NULL), "Got subtype %s.\n",
+                wine_dbgstr_guid(&type.subtype));
+        ok(type.bFixedSizeSamples == 0x22222222, "Got fixed size %d.\n", type.bFixedSizeSamples);
+        ok(type.bTemporalCompression == 0x22222222, "Got temporal compression %d.\n", type.bTemporalCompression);
+        ok(!type.lSampleSize, "Got sample size %u.\n", type.lSampleSize);
+        ok(IsEqualGUID(&type.formattype, &testguid), "Got format type %s.\n", wine_dbgstr_guid(&type.formattype));
+        ok(!type.pUnk, "Got pUnk %p.\n", type.pUnk);
+        ok(!type.cbFormat, "Got format size %u.\n", type.cbFormat);
+        ok(type.pbFormat == ptr, "Got format block %p.\n", type.pbFormat);
+        CoTaskMemFree(olepath);
+    }
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IBaseFilter_Release(filter);
+    ref = IFileSourceFilter_Release(filesource);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(asfreader)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     test_interfaces();
     test_aggregation();
+    test_filesourcefilter();
 
     CoUninitialize();
 }
