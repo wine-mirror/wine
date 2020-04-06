@@ -20,6 +20,8 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winternl.h"
+#include "winuser.h"
 
 
 static void test_timer(void)
@@ -66,7 +68,193 @@ static void test_timer(void)
     CloseHandle( handle );
 }
 
+#define TICKSPERSEC       10000000
+
+static BOOL adjust_system_time(int sec)
+{
+    ULARGE_INTEGER uli;
+    SYSTEMTIME st;
+    FILETIME ft;
+
+    GetSystemTimeAsFileTime(&ft);
+    uli.u.LowPart = ft.dwLowDateTime;
+    uli.u.HighPart = ft.dwHighDateTime;
+    uli.QuadPart += (LONGLONG)sec * TICKSPERSEC;
+    ft.dwLowDateTime = uli.u.LowPart;
+    ft.dwHighDateTime = uli.u.HighPart;
+    if (!FileTimeToSystemTime(&ft, &st))
+        return FALSE;
+    return SetSystemTime(&st);
+}
+
+static DWORD WINAPI thread_WaitForSingleObject(void *arg)
+{
+    HANDLE event;
+    DWORD t, r;
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+    t = GetTickCount();
+    r = WaitForSingleObject(event, 3000);
+    ok(r == WAIT_TIMEOUT, "WiatForSingleObject returned %x\n", r);
+    CloseHandle(event);
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %d\n", t);
+    return 0;
+}
+
+static DWORD WINAPI thread_Sleep(void *arg)
+{
+    DWORD t = GetTickCount();
+
+    Sleep(3000);
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %d\n", t);
+    return 0;
+}
+
+static DWORD WINAPI thread_SleepEx(void *arg)
+{
+    DWORD t = GetTickCount();
+
+    SleepEx(3000, TRUE);
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %d\n", t);
+    return 0;
+}
+
+static DWORD WINAPI thread_WaitableTimer_rel(void *arg)
+{
+    LARGE_INTEGER li;
+    HANDLE timer;
+    DWORD t, r;
+
+    li.QuadPart = -3 * TICKSPERSEC;
+
+    timer = CreateWaitableTimerA(NULL, TRUE, NULL);
+    ok(timer != NULL, "CreateWaitableTimer failed\n");
+
+    t = GetTickCount();
+    r = SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE);
+    ok(r, "SetWaitableTimer failed\n");
+
+    r = WaitForSingleObject(timer, INFINITE);
+    ok(r == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", r);
+    CloseHandle(timer);
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %d\n", t);
+    return 0;
+}
+
+static DWORD WINAPI thread_WaitableTimer_abs(void *arg)
+{
+    LARGE_INTEGER li;
+    HANDLE timer;
+    FILETIME ft;
+    DWORD t, r;
+
+    GetSystemTimeAsFileTime(&ft);
+    li.u.LowPart = ft.dwLowDateTime;
+    li.u.HighPart = ft.dwHighDateTime;
+    li.QuadPart += 3 * TICKSPERSEC;
+
+    timer = CreateWaitableTimerA(NULL, TRUE, NULL);
+    ok(timer != NULL, "CreateWaitableTimer failed\n");
+
+    t = GetTickCount();
+    r = SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE);
+    ok(r, "SetWaitableTimer failed\n");
+
+    r = WaitForSingleObject(timer, INFINITE);
+    ok(r == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", r);
+    CloseHandle(timer);
+    t = GetTickCount() - t;
+    ok(t < 2000, "t = %d\n", t);
+    return 0;
+}
+
+static DWORD WINAPI thread_WaitableTimer_period(void *arg)
+{
+    LARGE_INTEGER li;
+    HANDLE timer;
+    DWORD t, r;
+
+    li.QuadPart = -1;
+
+    timer = CreateWaitableTimerA(NULL, FALSE, NULL);
+    ok(timer != NULL, "CreateWaitableTimer failed\n");
+
+    t = GetTickCount();
+    r = SetWaitableTimer(timer, &li, 3000, NULL, NULL, FALSE);
+    ok(r, "SetWaitableTimer failed\n");
+
+    r = WaitForSingleObject(timer, INFINITE);
+    ok(r == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", r);
+
+    r = WaitForSingleObject(timer, INFINITE);
+    ok(r == WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", r);
+    CloseHandle(timer);
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %d\n", t);
+    return 0;
+}
+
+static DWORD WINAPI thread_SetTimer(void *arg)
+{
+    DWORD t = GetTickCount();
+    UINT_PTR timer;
+    MSG msg;
+
+    timer = SetTimer(NULL, 0, 3000, NULL);
+    ok(timer, "SetTimer failed (%d)\n", GetLastError());
+
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        DispatchMessageW(&msg);
+        if (msg.message == WM_TIMER) break;
+    }
+
+    t = GetTickCount() - t;
+    ok(t > 2000, "t = %d\n", t);
+    KillTimer(NULL, timer);
+    return 0;
+}
+
+static void test_timeouts(void)
+{
+    HANDLE threads[7];
+    DWORD i;
+
+    if (!adjust_system_time(1))
+    {
+        skip("can't adjust system clock (%d)\n", GetLastError());
+        return;
+    }
+
+
+    threads[0] = CreateThread(NULL, 0, thread_WaitForSingleObject, NULL, 0, NULL);
+    threads[1] = CreateThread(NULL, 0, thread_Sleep, NULL, 0, NULL);
+    threads[2] = CreateThread(NULL, 0, thread_SleepEx, NULL, 0, NULL);
+    threads[3] = CreateThread(NULL, 0, thread_WaitableTimer_rel, NULL, 0, NULL);
+    threads[4] = CreateThread(NULL, 0, thread_WaitableTimer_abs, NULL, 0, NULL);
+    threads[5] = CreateThread(NULL, 0, thread_WaitableTimer_period, NULL, 0, NULL);
+    threads[6] = CreateThread(NULL, 0, thread_SetTimer, NULL, 0, NULL);
+    for(i=0; i<ARRAY_SIZE(threads); i++)
+        ok(threads[i] != NULL, "CreateThread failed\n");
+
+    Sleep(500);
+    adjust_system_time(10);
+
+    for (i=0; i<ARRAY_SIZE(threads); i++)
+    {
+        WaitForSingleObject(threads[i], INFINITE);
+        CloseHandle(threads[i]);
+    }
+    adjust_system_time(-11);
+}
+
 START_TEST(timer)
 {
     test_timer();
+    test_timeouts();
 }
