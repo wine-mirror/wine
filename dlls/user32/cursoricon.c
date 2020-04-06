@@ -48,7 +48,6 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
@@ -148,13 +147,13 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 static BOOL WINAPI load_libpng( INIT_ONCE *once, void *param, void **context )
 {
-    if (!(libpng_handle = wine_dlopen(SONAME_LIBPNG, RTLD_NOW, NULL, 0)))
+    if (!(libpng_handle = dlopen( SONAME_LIBPNG, RTLD_NOW )))
     {
         WARN( "failed to load %s\n", SONAME_LIBPNG );
         return TRUE;
     }
 #define LOAD_FUNCPTR(f) \
-    if ((p##f = wine_dlsym(libpng_handle, #f, NULL, 0)) == NULL) \
+    if ((p##f = dlsym(libpng_handle, #f)) == NULL) \
     { \
         WARN( "%s not found in %s\n", #f, SONAME_LIBPNG ); \
         libpng_handle = NULL; \
