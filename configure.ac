@@ -2132,7 +2132,6 @@ AC_CHECK_FUNCS(\
         __res_get_state \
         __res_getservers \
 	_spawnvp \
-	dlopen \
 	epoll_create \
 	ffs \
 	finitef \
@@ -2180,10 +2179,7 @@ AC_CHECK_FUNCS(\
 CFLAGS="$ac_save_CFLAGS"
 
 dnl Check for -ldl
-if test "$ac_cv_func_dlopen" = no
-then
-    AC_CHECK_LIB(dl,dlopen,[AC_DEFINE(HAVE_DLOPEN,1) AC_SUBST(DL_LIBS,"-ldl")])
-fi
+AC_SEARCH_LIBS(dlopen, dl)
 WINE_CHECK_LIB_FUNCS(dladdr,[$DL_LIBS])
 
 dnl Check for -lpoll for Mac OS X/Darwin

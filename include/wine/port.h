@@ -55,6 +55,11 @@
 
 #define mkdir(path,mode) mkdir(path)
 
+static inline void *dlopen(const char *name, int flags) { return NULL; }
+static inline void *dlsym(void *handle, const char *name) { return NULL; }
+static inline int dlclose(void *handle) { return 0; }
+static inline const char *dlerror(void) { return "No dlopen support on Windows"; }
+
 #ifdef _MSC_VER
 
 #define ftruncate chsize
