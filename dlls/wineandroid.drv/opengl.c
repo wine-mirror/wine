@@ -42,7 +42,6 @@
 #include "wine/wgl.h"
 #undef GLAPIENTRY
 #include "wine/wgl_driver.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
@@ -655,11 +654,11 @@ static void init_extensions(void)
 
     /* load standard functions and extensions exported from the OpenGL library */
 
-#define USE_GL_FUNC(func) if ((ptr = wine_dlsym( opengl_handle, #func, NULL, 0 ))) egl_funcs.gl.p_##func = ptr;
+#define USE_GL_FUNC(func) if ((ptr = dlsym( opengl_handle, #func ))) egl_funcs.gl.p_##func = ptr;
     ALL_WGL_FUNCS
 #undef USE_GL_FUNC
 
-#define LOAD_FUNCPTR(func) egl_funcs.ext.p_##func = wine_dlsym( opengl_handle, #func, NULL, 0 )
+#define LOAD_FUNCPTR(func) egl_funcs.ext.p_##func = dlsym( opengl_handle, #func )
     LOAD_FUNCPTR( glActiveShaderProgram );
     LOAD_FUNCPTR( glActiveTexture );
     LOAD_FUNCPTR( glAttachShader );
@@ -949,24 +948,23 @@ static BOOL egl_init(void)
     static int retval = -1;
     EGLConfig *configs;
     EGLint major, minor, count, i, pass;
-    char buffer[200];
 
     if (retval != -1) return retval;
     retval = 0;
 
-    if (!(egl_handle = wine_dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL, buffer, sizeof(buffer) )))
+    if (!(egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL )))
     {
-        ERR( "failed to load %s: %s\n", SONAME_LIBEGL, buffer );
+        ERR( "failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
         return FALSE;
     }
-    if (!(opengl_handle = wine_dlopen( SONAME_LIBGLESV2, RTLD_NOW|RTLD_GLOBAL, buffer, sizeof(buffer) )))
+    if (!(opengl_handle = dlopen( SONAME_LIBGLESV2, RTLD_NOW|RTLD_GLOBAL )))
     {
-        ERR( "failed to load %s: %s\n", SONAME_LIBGLESV2, buffer );
+        ERR( "failed to load %s: %s\n", SONAME_LIBGLESV2, dlerror() );
         return FALSE;
     }
 
 #define LOAD_FUNCPTR(func) do { \
-        if (!(p_##func = wine_dlsym( egl_handle, #func, NULL, 0 ))) \
+        if (!(p_##func = dlsym( egl_handle, #func ))) \
         { ERR( "can't find symbol %s\n", #func); return FALSE; }    \
     } while(0)
     LOAD_FUNCPTR( eglCreateContext );
