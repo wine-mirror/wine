@@ -5833,13 +5833,18 @@ static void STDMETHODCALLTYPE d3d10_device_GetTextFilterSize(ID3D10Device1 *ifac
     FIXME("iface %p, width %p, height %p stub!\n", iface, width, height);
 }
 
+static D3D10_FEATURE_LEVEL1 d3d10_feature_level1_from_d3d_feature_level(D3D_FEATURE_LEVEL level)
+{
+    return (D3D10_FEATURE_LEVEL1)level;
+}
+
 static D3D10_FEATURE_LEVEL1 STDMETHODCALLTYPE d3d10_device_GetFeatureLevel(ID3D10Device1 *iface)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
 
     TRACE("iface %p.\n", iface);
 
-    return device->feature_level;
+    return d3d10_feature_level1_from_d3d_feature_level(device->feature_level);
 }
 
 static const struct ID3D10Device1Vtbl d3d10_device1_vtbl =
