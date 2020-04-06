@@ -129,10 +129,16 @@ static inline struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get
 
 struct timeout_user;
 extern timeout_t current_time;
+extern timeout_t monotonic_time;
 
 #define TICKS_PER_SEC 10000000
 
 typedef void (*timeout_callback)( void *private );
+
+static inline abstime_t timeout_to_abstime( timeout_t timeout )
+{
+    return timeout > 0 ? timeout : timeout - monotonic_time;
+}
 
 extern void set_current_time( void );
 extern struct timeout_user *add_timeout_user( timeout_t when, timeout_callback func, void *private );

@@ -214,6 +214,9 @@ struct wake_up_reply
 typedef __int64 timeout_t;
 #define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
+/* absolute timeout, negative means that monotonic clock is used */
+typedef __int64 abstime_t;
+
 /* structure for process startup info */
 typedef struct
 {

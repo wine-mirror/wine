@@ -364,13 +364,15 @@ static file_pos_t max_unix_offset = OFF_T_MAX;
 struct timeout_user
 {
     struct list           entry;      /* entry in sorted timeout list */
-    timeout_t             when;       /* timeout expiry (absolute time) */
+    abstime_t             when;       /* timeout expiry */
     timeout_callback      callback;   /* callback function */
     void                 *private;    /* callback private data */
 };
 
-static struct list timeout_list = LIST_INIT(timeout_list);   /* sorted timeouts list */
+static struct list abs_timeout_list = LIST_INIT(abs_timeout_list); /* sorted absolute timeouts list */
+static struct list rel_timeout_list = LIST_INIT(rel_timeout_list); /* sorted relative timeouts list */
 timeout_t current_time;
+timeout_t monotonic_time;
 
 void set_current_time(void)
 {
@@ -378,6 +380,7 @@ void set_current_time(void)
     struct timeval now;
     gettimeofday( &now, NULL );
     current_time = (timeout_t)now.tv_sec * TICKS_PER_SEC + now.tv_usec * 10 + ticks_1601_to_1970;
+    monotonic_time = monotonic_counter();
 }
 
 /* add a timeout user */
@@ -387,16 +390,27 @@ struct timeout_user *add_timeout_user( timeout_t when, timeout_callback func, vo
     struct list *ptr;
 
     if (!(user = mem_alloc( sizeof(*user) ))) return NULL;
-    user->when     = (when > 0) ? when : current_time - when;
+    user->when     = timeout_to_abstime( when );
     user->callback = func;
     user->private  = private;
 
     /* Now insert it in the linked list */
 
-    LIST_FOR_EACH( ptr, &timeout_list )
+    if (user->when > 0)
     {
-        struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
-        if (timeout->when >= user->when) break;
+        LIST_FOR_EACH( ptr, &abs_timeout_list )
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+            if (timeout->when >= user->when) break;
+        }
+    }
+    else
+    {
+        LIST_FOR_EACH( ptr, &rel_timeout_list )
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+            if (timeout->when <= user->when) break;
+        }
     }
     list_add_before( ptr, &user->entry );
     return user;
@@ -851,18 +865,30 @@ static void remove_poll_user( struct fd *fd, int user )
 /* process pending timeouts and return the time until the next timeout, in milliseconds */
 static int get_next_timeout(void)
 {
-    if (!list_empty( &timeout_list ))
+    if (!list_empty( &abs_timeout_list ) || !list_empty( &rel_timeout_list ))
     {
         struct list expired_list, *ptr;
+        int ret = -1;
 
         /* first remove all expired timers from the list */
 
         list_init( &expired_list );
-        while ((ptr = list_head( &timeout_list )) != NULL)
+        while ((ptr = list_head( &abs_timeout_list )) != NULL)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
 
             if (timeout->when <= current_time)
+            {
+                list_remove( &timeout->entry );
+                list_add_tail( &expired_list, &timeout->entry );
+            }
+            else break;
+        }
+        while ((ptr = list_head( &rel_timeout_list )) != NULL)
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+
+            if (-timeout->when <= monotonic_time)
             {
                 list_remove( &timeout->entry );
                 list_add_tail( &expired_list, &timeout->entry );
@@ -880,13 +906,22 @@ static int get_next_timeout(void)
             free( timeout );
         }
 
-        if ((ptr = list_head( &timeout_list )) != NULL)
+        if ((ptr = list_head( &abs_timeout_list )) != NULL)
         {
             struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
             int diff = (timeout->when - current_time + 9999) / 10000;
             if (diff < 0) diff = 0;
-            return diff;
+            ret = diff;
         }
+
+        if ((ptr = list_head( &rel_timeout_list )) != NULL)
+        {
+            struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+            int diff = (-timeout->when - monotonic_time + 9999) / 10000;
+            if (diff < 0) diff = 0;
+            if (ret == -1 || diff < ret) ret = diff;
+        }
+        return ret;
     }
     return -1;  /* no pending timeouts */
 }

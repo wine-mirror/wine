@@ -199,6 +199,9 @@ typedef __int64 timeout_t;
 #define TIMEOUT_INFINITE (((timeout_t)0x7fffffff) << 32 | 0xffffffff)
 
 
+typedef __int64 abstime_t;
+
+
 typedef struct
 {
     unsigned int debug_flags;
