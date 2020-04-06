@@ -52,7 +52,6 @@
 
 #include "wine/heap.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -86,10 +85,10 @@ MAKE_FUNCPTR(jpeg_write_scanlines);
 
 static void *load_libjpeg(void)
 {
-    if((libjpeg_handle = wine_dlopen(SONAME_LIBJPEG, RTLD_NOW, NULL, 0)) != NULL) {
+    if((libjpeg_handle = dlopen(SONAME_LIBJPEG, RTLD_NOW)) != NULL) {
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libjpeg_handle, #f, NULL, 0)) == NULL) { \
+    if((p##f = dlsym(libjpeg_handle, #f)) == NULL) { \
         libjpeg_handle = NULL; \
         return NULL; \
     }

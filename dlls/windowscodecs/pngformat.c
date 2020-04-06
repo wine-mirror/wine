@@ -36,7 +36,6 @@
 #include "wincodecs_private.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -360,10 +359,10 @@ static void *load_libpng(void)
 
     EnterCriticalSection(&init_png_cs);
 
-    if(!libpng_handle && (libpng_handle = wine_dlopen(SONAME_LIBPNG, RTLD_NOW, NULL, 0)) != NULL) {
+    if(!libpng_handle && (libpng_handle = dlopen(SONAME_LIBPNG, RTLD_NOW)) != NULL) {
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libpng_handle, #f, NULL, 0)) == NULL) { \
+    if((p##f = dlsym(libpng_handle, #f)) == NULL) { \
         libpng_handle = NULL; \
         LeaveCriticalSection(&init_png_cs); \
         return NULL; \

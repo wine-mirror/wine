@@ -37,7 +37,6 @@
 #include "wincodecs_private.h"
 
 #include "wine/debug.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -90,13 +89,13 @@ static void *load_libtiff(void)
     EnterCriticalSection(&init_tiff_cs);
 
     if (!libtiff_handle &&
-        (libtiff_handle = wine_dlopen(SONAME_LIBTIFF, RTLD_NOW, NULL, 0)) != NULL)
+        (libtiff_handle = dlopen(SONAME_LIBTIFF, RTLD_NOW)) != NULL)
     {
         void * (*pTIFFSetWarningHandler)(void *);
         void * (*pTIFFSetWarningHandlerExt)(void *);
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(libtiff_handle, #f, NULL, 0)) == NULL) { \
+    if((p##f = dlsym(libtiff_handle, #f)) == NULL) { \
         ERR("failed to load symbol %s\n", #f); \
         libtiff_handle = NULL; \
         LeaveCriticalSection(&init_tiff_cs); \
@@ -117,9 +116,9 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFWriteScanline);
 #undef LOAD_FUNCPTR
 
-        if ((pTIFFSetWarningHandler = wine_dlsym(libtiff_handle, "TIFFSetWarningHandler", NULL, 0)))
+        if ((pTIFFSetWarningHandler = dlsym(libtiff_handle, "TIFFSetWarningHandler")))
             pTIFFSetWarningHandler(NULL);
-        if ((pTIFFSetWarningHandlerExt = wine_dlsym(libtiff_handle, "TIFFSetWarningHandlerExt", NULL, 0)))
+        if ((pTIFFSetWarningHandlerExt = dlsym(libtiff_handle, "TIFFSetWarningHandlerExt")))
             pTIFFSetWarningHandlerExt(NULL);
     }
 
