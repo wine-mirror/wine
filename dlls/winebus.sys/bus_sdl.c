@@ -42,7 +42,6 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ddk/hidtypes.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "hidusage.h"
@@ -1101,7 +1100,7 @@ void sdl_driver_unload( void )
 
     WaitForSingleObject(deviceloop_handle, INFINITE);
     CloseHandle(deviceloop_handle);
-    wine_dlclose(sdl_handle, NULL, 0);
+    dlclose(sdl_handle);
 }
 
 NTSTATUS sdl_driver_init(void)
@@ -1114,12 +1113,12 @@ NTSTATUS sdl_driver_init(void)
 
     if (sdl_handle == NULL)
     {
-        sdl_handle = wine_dlopen(SONAME_LIBSDL2, RTLD_NOW, NULL, 0);
+        sdl_handle = dlopen(SONAME_LIBSDL2, RTLD_NOW);
         if (!sdl_handle) {
             WARN("could not load %s\n", SONAME_LIBSDL2);
             return STATUS_UNSUCCESSFUL;
         }
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(sdl_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(sdl_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
         LOAD_FUNCPTR(SDL_GetError);
         LOAD_FUNCPTR(SDL_Init);
         LOAD_FUNCPTR(SDL_JoystickClose);
@@ -1159,9 +1158,9 @@ NTSTATUS sdl_driver_init(void)
         LOAD_FUNCPTR(SDL_RegisterEvents);
         LOAD_FUNCPTR(SDL_PushEvent);
 #undef LOAD_FUNCPTR
-        pSDL_JoystickGetProduct = wine_dlsym(sdl_handle, "SDL_JoystickGetProduct", NULL, 0);
-        pSDL_JoystickGetProductVersion = wine_dlsym(sdl_handle, "SDL_JoystickGetProductVersion", NULL, 0);
-        pSDL_JoystickGetVendor = wine_dlsym(sdl_handle, "SDL_JoystickGetVendor", NULL, 0);
+        pSDL_JoystickGetProduct = dlsym(sdl_handle, "SDL_JoystickGetProduct");
+        pSDL_JoystickGetProductVersion = dlsym(sdl_handle, "SDL_JoystickGetProductVersion");
+        pSDL_JoystickGetVendor = dlsym(sdl_handle, "SDL_JoystickGetVendor");
     }
 
     map_controllers = check_bus_option(&controller_mode, 1);
@@ -1189,7 +1188,7 @@ NTSTATUS sdl_driver_init(void)
     CloseHandle(events[1]);
 
 sym_not_found:
-    wine_dlclose(sdl_handle, NULL, 0);
+    dlclose(sdl_handle);
     sdl_handle = NULL;
     return STATUS_UNSUCCESSFUL;
 }
