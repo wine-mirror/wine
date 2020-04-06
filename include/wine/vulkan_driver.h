@@ -39,7 +39,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 7
+#define WINE_VULKAN_DRIVER_VERSION 8
 
 struct vulkan_funcs
 {
@@ -58,7 +58,9 @@ struct vulkan_funcs
     void * (*p_vkGetDeviceProcAddr)(VkDevice, const char *);
     void * (*p_vkGetInstanceProcAddr)(VkInstance, const char *);
     VkResult (*p_vkGetPhysicalDevicePresentRectanglesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkRect2D *);
+    VkResult (*p_vkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *);
+    VkResult (*p_vkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkPresentModeKHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
@@ -116,8 +118,12 @@ static inline void *get_vulkan_driver_instance_proc_addr(
         return vulkan_funcs->p_vkGetInstanceProcAddr;
     if (!strcmp(name, "GetPhysicalDevicePresentRectanglesKHR"))
         return vulkan_funcs->p_vkGetPhysicalDevicePresentRectanglesKHR;
+    if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilities2KHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceCapabilities2KHR;
     if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilitiesKHR"))
         return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    if (!strcmp(name, "GetPhysicalDeviceSurfaceFormats2KHR"))
+        return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceFormats2KHR;
     if (!strcmp(name, "GetPhysicalDeviceSurfaceFormatsKHR"))
         return vulkan_funcs->p_vkGetPhysicalDeviceSurfaceFormatsKHR;
     if (!strcmp(name, "GetPhysicalDeviceSurfacePresentModesKHR"))

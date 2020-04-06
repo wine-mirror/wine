@@ -795,6 +795,14 @@ typedef struct VkPhysicalDeviceProperties2_host
 
 typedef VkPhysicalDeviceProperties2 VkPhysicalDeviceProperties2KHR;
 
+typedef struct VkPhysicalDeviceSurfaceInfo2KHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSurfaceKHR surface;
+} VkPhysicalDeviceSurfaceInfo2KHR_host;
+
+
 typedef struct VkPipelineExecutableInfoKHR_host
 {
     VkStructureType sType;
@@ -1472,7 +1480,17 @@ struct vulkan_instance_funcs
     void (*p_vkGetPhysicalDeviceSparseImageFormatProperties2)(VkPhysicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2 *, uint32_t *, VkSparseImageFormatProperties2 *);
     void (*p_vkGetPhysicalDeviceSparseImageFormatProperties2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2 *, uint32_t *, VkSparseImageFormatProperties2 *);
     VkResult (*p_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV)(VkPhysicalDevice, uint32_t *, VkFramebufferMixedSamplesCombinationNV *);
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR_host *, VkSurfaceCapabilities2KHR *);
+#else
+    VkResult (*p_vkGetPhysicalDeviceSurfaceCapabilities2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, VkSurfaceCapabilities2KHR *);
+#endif
     VkResult (*p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *);
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR_host *, uint32_t *, VkSurfaceFormat2KHR *);
+#else
+    VkResult (*p_vkGetPhysicalDeviceSurfaceFormats2KHR)(VkPhysicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *, uint32_t *, VkSurfaceFormat2KHR *);
+#endif
     VkResult (*p_vkGetPhysicalDeviceSurfaceFormatsKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkSurfaceFormatKHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfacePresentModesKHR)(VkPhysicalDevice, VkSurfaceKHR, uint32_t *, VkPresentModeKHR *);
     VkResult (*p_vkGetPhysicalDeviceSurfaceSupportKHR)(VkPhysicalDevice, uint32_t, VkSurfaceKHR, VkBool32 *);
@@ -1763,7 +1781,9 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties2) \
     USE_VK_FUNC(vkGetPhysicalDeviceSparseImageFormatProperties2KHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV) \
+    USE_VK_FUNC(vkGetPhysicalDeviceSurfaceCapabilities2KHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceSurfaceCapabilitiesKHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceSurfaceFormats2KHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceSurfaceFormatsKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceSurfacePresentModesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceSurfaceSupportKHR) \

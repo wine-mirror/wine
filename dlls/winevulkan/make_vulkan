@@ -96,7 +96,6 @@ BLACKLISTED_EXTENSIONS = [
     "VK_EXT_validation_features",
     "VK_EXT_validation_flags",
     "VK_KHR_display", # Needs WSI work.
-    "VK_KHR_get_surface_capabilities2",
     "VK_KHR_surface_protected_capabilities",
 
     # Device extensions
@@ -139,7 +138,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 7
+DRIVER_VERSION = 8
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -185,6 +184,10 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDeviceSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+
+    # VK_KHR_get_surface_capabilities2
+    "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_win32_surface
     "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
