@@ -140,6 +140,12 @@ static inline abstime_t timeout_to_abstime( timeout_t timeout )
     return timeout > 0 ? timeout : timeout - monotonic_time;
 }
 
+static inline timeout_t abstime_to_timeout( abstime_t abstime )
+{
+    if (abstime > 0) return abstime;
+    return -abstime < monotonic_time ? 0 : abstime + monotonic_time;
+}
+
 extern void set_current_time( void );
 extern struct timeout_user *add_timeout_user( timeout_t when, timeout_callback func, void *private );
 extern void remove_timeout_user( struct timeout_user *user );
