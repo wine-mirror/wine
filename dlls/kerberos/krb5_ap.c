@@ -44,7 +44,6 @@
 #include "ntsecpkg.h"
 #include "winternl.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -119,14 +118,14 @@ MAKE_FUNCPTR(krb5_unparse_name_flags);
 
 static void load_krb5(void)
 {
-    if (!(libkrb5_handle = wine_dlopen(SONAME_LIBKRB5, RTLD_NOW, NULL, 0)))
+    if (!(libkrb5_handle = dlopen(SONAME_LIBKRB5, RTLD_NOW)))
     {
         WARN("Failed to load %s, Kerberos support will be disabled\n", SONAME_LIBKRB5);
         return;
     }
 
 #define LOAD_FUNCPTR(f) \
-    if (!(p_##f = wine_dlsym(libkrb5_handle, #f, NULL, 0))) \
+    if (!(p_##f = dlsym(libkrb5_handle, #f))) \
     { \
         ERR("Failed to load %s\n", #f); \
         goto fail; \
@@ -161,7 +160,7 @@ static void load_krb5(void)
     return;
 
 fail:
-    wine_dlclose(libkrb5_handle, NULL, 0);
+    dlclose(libkrb5_handle);
     libkrb5_handle = NULL;
 }
 
@@ -623,14 +622,14 @@ MAKE_FUNCPTR(gss_wrap_iov);
 
 static BOOL load_gssapi_krb5(void)
 {
-    if (!(libgssapi_krb5_handle = wine_dlopen( SONAME_LIBGSSAPI_KRB5, RTLD_NOW, NULL, 0 )))
+    if (!(libgssapi_krb5_handle = dlopen( SONAME_LIBGSSAPI_KRB5, RTLD_NOW )))
     {
         ERR_(winediag)( "Failed to load libgssapi_krb5, Kerberos SSP support will not be available.\n" );
         return FALSE;
     }
 
 #define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym( libgssapi_krb5_handle, #f, NULL, 0 ))) \
+    if (!(p##f = dlsym( libgssapi_krb5_handle, #f ))) \
     { \
         ERR( "Failed to load %s\n", #f ); \
         goto fail; \
@@ -658,14 +657,14 @@ static BOOL load_gssapi_krb5(void)
     return TRUE;
 
 fail:
-    wine_dlclose( libgssapi_krb5_handle, NULL, 0 );
+    dlclose( libgssapi_krb5_handle );
     libgssapi_krb5_handle = NULL;
     return FALSE;
 }
 
 static void unload_gssapi_krb5(void)
 {
-    wine_dlclose( libgssapi_krb5_handle, NULL, 0 );
+    dlclose( libgssapi_krb5_handle );
     libgssapi_krb5_handle = NULL;
 }
 
