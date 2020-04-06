@@ -32,6 +32,7 @@
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
 
+#define GL_SILENCE_DEPRECATION
 #define __gl_h_
 #define __gltypes_h_
 #include <OpenGL/OpenGL.h>
