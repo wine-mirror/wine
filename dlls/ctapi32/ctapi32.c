@@ -21,7 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 #include <string.h>
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "windef.h"
 #include "winreg.h"
@@ -72,7 +71,7 @@ static BOOL load_functions(void) {
 	}
 
 	TRACE("Loading library '%s'\n", soname);
-	ctapi_handle = wine_dlopen(soname, RTLD_NOW, NULL, 0);
+	ctapi_handle = dlopen(soname, RTLD_NOW);
 	if (ctapi_handle) {
 		TRACE("Successfully loaded '%s'\n", soname);
 	}
@@ -83,7 +82,7 @@ static BOOL load_functions(void) {
                 return FALSE;
 	}
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ctapi_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); return FALSE;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(ctapi_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); return FALSE;}
 LOAD_FUNCPTR(CT_init);
 LOAD_FUNCPTR(CT_data);
 LOAD_FUNCPTR(CT_close);
@@ -134,7 +133,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             break;
         case DLL_PROCESS_DETACH:
             if (lpvReserved) break;
-            if (ctapi_handle) wine_dlclose(ctapi_handle, NULL, 0);
+            if (ctapi_handle) dlclose(ctapi_handle);
             break;
     }
 
