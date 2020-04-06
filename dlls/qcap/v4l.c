@@ -58,7 +58,6 @@
 #include "vfwmsgs.h"
 #include "amvideo.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 
 #include "qcap_main.h"
 #include "capture.h"
@@ -81,12 +80,12 @@ static BOOL video_init(void)
 
     if (video_lib)
         return TRUE;
-    if (!(video_lib = wine_dlopen(SONAME_LIBV4L2, RTLD_NOW, NULL, 0)))
+    if (!(video_lib = dlopen(SONAME_LIBV4L2, RTLD_NOW)))
         return FALSE;
-    video_open = wine_dlsym(video_lib, "v4l2_open", NULL, 0);
-    video_close = wine_dlsym(video_lib, "v4l2_close", NULL, 0);
-    video_ioctl = wine_dlsym(video_lib, "v4l2_ioctl", NULL, 0);
-    video_read = wine_dlsym(video_lib, "v4l2_read", NULL, 0);
+    video_open = dlsym(video_lib, "v4l2_open");
+    video_close = dlsym(video_lib, "v4l2_close");
+    video_ioctl = dlsym(video_lib, "v4l2_ioctl");
+    video_read = dlsym(video_lib, "v4l2_read");
 
     return TRUE;
 #else
