@@ -2463,7 +2463,7 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
     obj_handle_t apc_handle = 0;
     apc_call_t call;
     apc_result_t result;
-    timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+    abstime_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
     sigset_t old_set;
 
     if (size != 1 && size != 2 && size != 4 && size != 8)
@@ -2477,6 +2477,14 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
     select_op.keyed_event.key    = wine_server_client_ptr( addr );
 
     memset( &result, 0, sizeof(result) );
+
+    if (abs_timeout < 0)
+    {
+        LARGE_INTEGER now;
+
+        RtlQueryPerformanceCounter(&now);
+        abs_timeout -= now.QuadPart;
+    }
 
     do
     {
@@ -2499,7 +2507,6 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
                 wine_server_add_data( req, &result, sizeof(result) );
                 wine_server_add_data( req, &select_op, sizeof(select_op.keyed_event) );
                 ret = server_call_unlocked( req );
-                abs_timeout = reply->timeout;
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
             }

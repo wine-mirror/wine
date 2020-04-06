@@ -600,10 +600,18 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     obj_handle_t apc_handle = 0;
     apc_call_t call;
     apc_result_t result;
-    timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+    abstime_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
     sigset_t old_set;
 
     memset( &result, 0, sizeof(result) );
+
+    if (abs_timeout < 0)
+    {
+        LARGE_INTEGER now;
+
+        RtlQueryPerformanceCounter(&now);
+        abs_timeout -= now.QuadPart;
+    }
 
     do
     {
@@ -619,7 +627,6 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 wine_server_add_data( req, &result, sizeof(result) );
                 wine_server_add_data( req, select_op, size );
                 ret = server_call_unlocked( req );
-                abs_timeout = reply->timeout;
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
             }

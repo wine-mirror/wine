@@ -88,6 +88,12 @@ static void dump_timeout( const char *prefix, const timeout_t *time )
     fprintf( stderr, "%s%s", prefix, get_timeout_str(*time) );
 }
 
+static void dump_abstime( const char *prefix, const abstime_t *when )
+{
+    timeout_t timeout = abstime_to_timeout( *when );
+    dump_timeout( prefix, &timeout );
+}
+
 static void dump_uint64( const char *prefix, const unsigned __int64 *val )
 {
     if ((unsigned int)*val != *val)
@@ -1581,7 +1587,7 @@ static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d", req->flags );
     dump_uint64( ", cookie=", &req->cookie );
-    dump_timeout( ", timeout=", &req->timeout );
+    dump_abstime( ", timeout=", &req->timeout );
     fprintf( stderr, ", prev_apc=%04x", req->prev_apc );
     dump_varargs_apc_result( ", result=", cur_size );
     dump_varargs_select_op( ", data=", cur_size );
@@ -1589,8 +1595,7 @@ static void dump_select_request( const struct select_request *req )
 
 static void dump_select_reply( const struct select_reply *req )
 {
-    dump_timeout( " timeout=", &req->timeout );
-    dump_apc_call( ", call=", &req->call );
+    dump_apc_call( " call=", &req->call );
     fprintf( stderr, ", apc_handle=%04x", req->apc_handle );
 }
 

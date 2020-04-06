@@ -79,7 +79,7 @@ struct thread_wait
     enum select_op          select;
     client_ptr_t            key;        /* wait key for keyed events */
     client_ptr_t            cookie;     /* magic cookie to return to client */
-    timeout_t               timeout;
+    abstime_t               when;
     struct timeout_user    *user;
     struct wait_queue_entry queues[1];
 };
@@ -687,7 +687,7 @@ static unsigned int end_wait( struct thread *thread, unsigned int status )
 
 /* build the thread wait structure */
 static int wait_on( const select_op_t *select_op, unsigned int count, struct object *objects[],
-                    int flags, timeout_t timeout )
+                    int flags, abstime_t when )
 {
     struct thread_wait *wait;
     struct wait_queue_entry *entry;
@@ -701,7 +701,7 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
     wait->select  = select_op->op;
     wait->cookie  = 0;
     wait->user    = NULL;
-    wait->timeout = timeout;
+    wait->when = when;
     wait->abandoned = 0;
     current->wait = wait;
 
@@ -720,7 +720,7 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
 }
 
 static int wait_on_handles( const select_op_t *select_op, unsigned int count, const obj_handle_t *handles,
-                            int flags, timeout_t timeout )
+                            int flags, abstime_t when )
 {
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
     unsigned int i;
@@ -732,7 +732,7 @@ static int wait_on_handles( const select_op_t *select_op, unsigned int count, co
         if (!(objects[i] = get_handle_obj( current->process, handles[i], SYNCHRONIZE, NULL )))
             break;
 
-    if (i == count) ret = wait_on( select_op, count, objects, flags, timeout );
+    if (i == count) ret = wait_on( select_op, count, objects, flags, when );
 
     while (i > 0) release_object( objects[--i] );
     return ret;
@@ -769,7 +769,8 @@ static int check_wait( struct thread *thread )
     }
 
     if ((wait->flags & SELECT_ALERTABLE) && !list_empty(&thread->user_apc)) return STATUS_USER_APC;
-    if (wait->timeout <= current_time) return STATUS_TIMEOUT;
+    if (wait->when >= 0 && wait->when <= current_time) return STATUS_TIMEOUT;
+    if (wait->when < 0 && -wait->when <= monotonic_time) return STATUS_TIMEOUT;
     return -1;
 }
 
@@ -875,19 +876,17 @@ static int signal_object( obj_handle_t handle )
 }
 
 /* select on a list of handles */
-static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, client_ptr_t cookie,
-                            int flags, timeout_t timeout )
+static void select_on( const select_op_t *select_op, data_size_t op_size, client_ptr_t cookie,
+                            int flags, abstime_t when )
 {
     int ret;
     unsigned int count;
     struct object *object;
 
-    if (timeout <= 0) timeout = current_time - timeout;
-
     switch (select_op->op)
     {
     case SELECT_NONE:
-        if (!wait_on( select_op, 0, NULL, flags, timeout )) return timeout;
+        if (!wait_on( select_op, 0, NULL, flags, when )) return;
         break;
 
     case SELECT_WAIT:
@@ -896,24 +895,24 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
         if (op_size < offsetof( select_op_t, wait.handles ) || count > MAXIMUM_WAIT_OBJECTS)
         {
             set_error( STATUS_INVALID_PARAMETER );
-            return 0;
+            return;
         }
-        if (!wait_on_handles( select_op, count, select_op->wait.handles, flags, timeout ))
-            return timeout;
+        if (!wait_on_handles( select_op, count, select_op->wait.handles, flags, when ))
+            return;
         break;
 
     case SELECT_SIGNAL_AND_WAIT:
-        if (!wait_on_handles( select_op, 1, &select_op->signal_and_wait.wait, flags, timeout ))
-            return timeout;
+        if (!wait_on_handles( select_op, 1, &select_op->signal_and_wait.wait, flags, when ))
+            return;
         if (select_op->signal_and_wait.signal)
         {
             if (!signal_object( select_op->signal_and_wait.signal ))
             {
                 end_wait( current, get_error() );
-                return timeout;
+                return;
             }
             /* check if we woke ourselves up */
-            if (!current->wait) return timeout;
+            if (!current->wait) return;
         }
         break;
 
@@ -921,38 +920,38 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
     case SELECT_KEYED_EVENT_RELEASE:
         object = (struct object *)get_keyed_event_obj( current->process, select_op->keyed_event.handle,
                          select_op->op == SELECT_KEYED_EVENT_WAIT ? KEYEDEVENT_WAIT : KEYEDEVENT_WAKE );
-        if (!object) return timeout;
-        ret = wait_on( select_op, 1, &object, flags, timeout );
+        if (!object) return;
+        ret = wait_on( select_op, 1, &object, flags, when );
         release_object( object );
-        if (!ret) return timeout;
+        if (!ret) return;
         current->wait->key = select_op->keyed_event.key;
         break;
 
     default:
         set_error( STATUS_INVALID_PARAMETER );
-        return 0;
+        return;
     }
 
     if ((ret = check_wait( current )) != -1)
     {
         /* condition is already satisfied */
         set_error( end_wait( current, ret ));
-        return timeout;
+        return;
     }
 
     /* now we need to wait */
-    if (current->wait->timeout != TIMEOUT_INFINITE)
+    if (current->wait->when != TIMEOUT_INFINITE)
     {
-        if (!(current->wait->user = add_timeout_user( current->wait->timeout,
+        if (!(current->wait->user = add_timeout_user( abstime_to_timeout(current->wait->when),
                                                       thread_timeout, current->wait )))
         {
             end_wait( current, get_error() );
-            return timeout;
+            return;
         }
     }
     current->wait->cookie = cookie;
     set_error( STATUS_PENDING );
-    return timeout;
+    return;
 }
 
 /* attempt to wake threads sleeping on the object wait queue */
@@ -1577,7 +1576,7 @@ DECL_HANDLER(select)
         release_object( apc );
     }
 
-    reply->timeout = select_on( &select_op, op_size, req->cookie, req->flags, req->timeout );
+    select_on( &select_op, op_size, req->cookie, req->flags, req->timeout );
 
     while (get_error() == STATUS_USER_APC)
     {

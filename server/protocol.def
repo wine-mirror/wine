@@ -1099,12 +1099,11 @@ struct rawinput_device
 @REQ(select)
     int          flags;        /* wait flags (see below) */
     client_ptr_t cookie;       /* magic cookie to return to client */
-    timeout_t    timeout;      /* timeout */
+    abstime_t    timeout;      /* timeout */
     obj_handle_t prev_apc;     /* handle to previous APC */
     VARARG(result,apc_result); /* result of previous APC */
     VARARG(data,select_op);    /* operation-specific data */
 @REPLY
-    timeout_t    timeout;      /* timeout converted to absolute */
     apc_call_t   call;         /* APC call arguments */
     obj_handle_t apc_handle;   /* handle to next APC */
 @END

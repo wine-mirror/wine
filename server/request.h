@@ -721,6 +721,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_resume_process,
 };
 
+C_ASSERT( sizeof(abstime_t) == 8 );
 C_ASSERT( sizeof(affinity_t) == 8 );
 C_ASSERT( sizeof(apc_call_t) == 40 );
 C_ASSERT( sizeof(apc_param_t) == 8 );
@@ -939,10 +940,9 @@ C_ASSERT( FIELD_OFFSET(struct select_request, cookie) == 16 );
 C_ASSERT( FIELD_OFFSET(struct select_request, timeout) == 24 );
 C_ASSERT( FIELD_OFFSET(struct select_request, prev_apc) == 32 );
 C_ASSERT( sizeof(struct select_request) == 40 );
-C_ASSERT( FIELD_OFFSET(struct select_reply, timeout) == 8 );
-C_ASSERT( FIELD_OFFSET(struct select_reply, call) == 16 );
-C_ASSERT( FIELD_OFFSET(struct select_reply, apc_handle) == 56 );
-C_ASSERT( sizeof(struct select_reply) == 64 );
+C_ASSERT( FIELD_OFFSET(struct select_reply, call) == 8 );
+C_ASSERT( FIELD_OFFSET(struct select_reply, apc_handle) == 48 );
+C_ASSERT( sizeof(struct select_reply) == 56 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, manual_reset) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, initial_state) == 20 );
