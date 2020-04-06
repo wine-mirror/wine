@@ -37,7 +37,6 @@
 #ifdef HAVE_CAPI20_H
 # include <capi20.h>
 #endif
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "cap20wxx.h"
 
@@ -61,12 +60,12 @@ static void load_functions(void) {
 
     if (pcapi20_register) /* loaded already */
 	return;
-    capi_handle = wine_dlopen(SONAME_LIBCAPI20, RTLD_NOW, NULL, 0);
+    capi_handle = dlopen(SONAME_LIBCAPI20, RTLD_NOW);
     if(!capi_handle) {
         FIXME("Wine cannot find the library %s, capi2032.dll not working.\n", SONAME_LIBCAPI20);
         return;
     }
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(capi_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); return;}
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(capi_handle, #f)) == NULL){WARN("Can't find symbol %s\n", #f); return;}
 LOAD_FUNCPTR(capi20_register);
 LOAD_FUNCPTR(capi20_release);
 LOAD_FUNCPTR(capi20_put_message);
