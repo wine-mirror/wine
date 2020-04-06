@@ -471,7 +471,7 @@ typedef union
         enum apc_type    type;
         int              __pad;
         client_ptr_t     func;
-        timeout_t        time;
+        abstime_t        time;
         client_ptr_t     arg;
     } timer;
     struct

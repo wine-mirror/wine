@@ -487,7 +487,7 @@ typedef union
         enum apc_type    type;     /* APC_TIMER */
         int              __pad;
         client_ptr_t     func;     /* void (__stdcall *func)(void*, unsigned int, unsigned int); */
-        timeout_t        time;     /* absolute time of expiration */
+        abstime_t        time;     /* time of expiration */
         client_ptr_t     arg;      /* user argument */
     } timer;
     struct

@@ -1025,8 +1025,15 @@ NTSTATUS WINAPI NtQueryTimer(
         }
         SERVER_END_REQ;
 
-        /* convert from absolute into relative time */
-        NtQuerySystemTime(&now);
+        /* convert into relative time */
+        if (basic_info->RemainingTime.QuadPart > 0)
+            NtQuerySystemTime(&now);
+        else
+        {
+            RtlQueryPerformanceCounter(&now);
+            basic_info->RemainingTime.QuadPart = -basic_info->RemainingTime.QuadPart;
+        }
+
         if (now.QuadPart > basic_info->RemainingTime.QuadPart)
             basic_info->RemainingTime.QuadPart = 0;
         else
