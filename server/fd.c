@@ -372,7 +372,7 @@ struct timeout_user
 static struct list timeout_list = LIST_INIT(timeout_list);   /* sorted timeouts list */
 timeout_t current_time;
 
-static inline void set_current_time(void)
+void set_current_time(void)
 {
     static const timeout_t ticks_1601_to_1970 = (timeout_t)86400 * (369 * 365 + 89) * TICKS_PER_SEC;
     struct timeval now;

@@ -134,6 +134,7 @@ extern timeout_t current_time;
 
 typedef void (*timeout_callback)( void *private );
 
+extern void set_current_time( void );
 extern struct timeout_user *add_timeout_user( timeout_t when, timeout_callback func, void *private );
 extern void remove_timeout_user( struct timeout_user *user );
 extern const char *get_timeout_str( timeout_t timeout );
