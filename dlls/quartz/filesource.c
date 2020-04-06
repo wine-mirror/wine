@@ -63,7 +63,6 @@ struct async_reader
 
     LPOLESTR pszFileName;
     AM_MEDIA_TYPE mt;
-    ALLOCATOR_PROPERTIES allocProps;
     HANDLE file, port, io_thread;
     CRITICAL_SECTION sample_cs;
     BOOL flushing;
@@ -550,11 +549,6 @@ static inline struct async_reader *impl_from_strmbase_pin(struct strmbase_pin *i
     return CONTAINING_RECORD(iface, struct async_reader, source.pin);
 }
 
-static inline struct async_reader *impl_from_strmbase_source(struct strmbase_source *iface)
-{
-    return CONTAINING_RECORD(iface, struct async_reader, source);
-}
-
 static inline struct async_reader *impl_from_IAsyncReader(IAsyncReader *iface)
 {
     return CONTAINING_RECORD(iface, struct async_reader, IAsyncReader_iface);
@@ -630,32 +624,12 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(struct strmbase_sourc
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(struct strmbase_source *iface,
-        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
-{
-    struct async_reader *This = impl_from_strmbase_source(iface);
-    ALLOCATOR_PROPERTIES actual;
-
-    if (ppropInputRequest->cbAlign && ppropInputRequest->cbAlign != This->allocProps.cbAlign)
-        FIXME("Requested Buffer cbAlign mismatch %i,%i\n",This->allocProps.cbAlign, ppropInputRequest->cbAlign);
-    if (ppropInputRequest->cbPrefix)
-        FIXME("Requested Buffer cbPrefix mismatch %i,%i\n",This->allocProps.cbPrefix, ppropInputRequest->cbPrefix);
-    if (ppropInputRequest->cbBuffer)
-        FIXME("Requested Buffer cbBuffer mismatch %i,%i\n",This->allocProps.cbBuffer, ppropInputRequest->cbBuffer);
-    if (ppropInputRequest->cBuffers)
-        FIXME("Requested Buffer cBuffers mismatch %i,%i\n",This->allocProps.cBuffers, ppropInputRequest->cBuffers);
-
-    return IMemAllocator_SetProperties(pAlloc, &This->allocProps, &actual);
-}
-
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = source_query_accept,
     .base.pin_get_media_type = source_get_media_type,
     .base.pin_query_interface = source_query_interface,
     .pfnAttemptConnection = FileAsyncReaderPin_AttemptConnection,
-    .pfnDecideBufferSize = FileAsyncReaderPin_DecideBufferSize,
-    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
 static HRESULT WINAPI FileAsyncReader_QueryInterface(IAsyncReader *iface, REFIID iid, void **out)
@@ -720,7 +694,6 @@ static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader *iface,
 
     for (i = 0; i < filter->max_requests; ++i)
         filter->requests[i].ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    filter->allocProps = *props;
 
     *ret_allocator = allocator;
     return S_OK;
