@@ -508,6 +508,128 @@ const char *wine_dll_enum_load_path( unsigned int index )
 
 #ifdef __ASM_OBSOLETE
 
+/*
+ * These functions provide wrappers around dlopen() and associated
+ * functions.  They work around a bug in glibc 2.1.x where calling
+ * a dl*() function after a previous dl*() function has failed
+ * without a dlerror() call between the two will cause a crash.
+ * They all take a pointer to a buffer that
+ * will receive the error description (from dlerror()).  This
+ * parameter may be NULL if the error description is not required.
+ */
+
+#ifndef RTLD_FIRST
+#define RTLD_FIRST 0
+#endif
+
+/***********************************************************************
+ *		wine_dlopen
+ */
+void *wine_dlopen_obsolete( const char *filename, int flag, char *error, size_t errorsize )
+{
+    void *ret;
+    const char *s;
+
+#ifdef __APPLE__
+    /* the Mac OS loader pretends to be able to load PE files, so avoid them here */
+    unsigned char magic[2];
+    int fd = open( filename, O_RDONLY );
+    if (fd != -1)
+    {
+        if (pread( fd, magic, 2, 0 ) == 2 && magic[0] == 'M' && magic[1] == 'Z')
+        {
+            if (error && errorsize)
+            {
+                static const char msg[] = "MZ format";
+                size_t len = min( errorsize, sizeof(msg) );
+                memcpy( error, msg, len );
+                error[len - 1] = 0;
+            }
+            close( fd );
+            return NULL;
+        }
+        close( fd );
+    }
+#endif
+    dlerror(); dlerror();
+#ifdef __sun
+    if (strchr( filename, ':' ))
+    {
+        char path[PATH_MAX];
+        /* Solaris' brain damaged dlopen() treats ':' as a path separator */
+        realpath( filename, path );
+        ret = dlopen( path, flag | RTLD_FIRST );
+    }
+    else
+#endif
+    ret = dlopen( filename, flag | RTLD_FIRST );
+    s = dlerror();
+    if (error && errorsize)
+    {
+        if (s)
+        {
+            size_t len = strlen(s);
+            if (len >= errorsize) len = errorsize - 1;
+            memcpy( error, s, len );
+            error[len] = 0;
+        }
+        else error[0] = 0;
+    }
+    dlerror();
+    return ret;
+}
+
+/***********************************************************************
+ *		wine_dlsym
+ */
+void *wine_dlsym_obsolete( void *handle, const char *symbol, char *error, size_t errorsize )
+{
+    void *ret;
+    const char *s;
+    dlerror(); dlerror();
+    ret = dlsym( handle, symbol );
+    s = dlerror();
+    if (error && errorsize)
+    {
+        if (s)
+        {
+            size_t len = strlen(s);
+            if (len >= errorsize) len = errorsize - 1;
+            memcpy( error, s, len );
+            error[len] = 0;
+        }
+        else error[0] = 0;
+    }
+    dlerror();
+    return ret;
+}
+
+/***********************************************************************
+ *		wine_dlclose
+ */
+int wine_dlclose_obsolete( void *handle, char *error, size_t errorsize )
+{
+    int ret;
+    const char *s;
+    dlerror(); dlerror();
+    ret = dlclose( handle );
+    s = dlerror();
+    if (error && errorsize)
+    {
+        if (s)
+        {
+            size_t len = strlen(s);
+            if (len >= errorsize) len = errorsize - 1;
+            memcpy( error, s, len );
+            error[len] = 0;
+        }
+        else error[0] = 0;
+    }
+    dlerror();
+    return ret;
+}
+
+
 /* check if the library is the correct architecture */
 /* only returns false for a valid library of the wrong arch */
 static int check_library_arch( int fd )
@@ -570,7 +692,7 @@ static void *dlopen_dll( const char *name, char *error, int errorsize,
     *exists = 0;
     for (path = first_dll_path( name, 0, &context ); path; path = next_dll_path( &context ))
     {
-        if (!test_only && (ret = wine_dlopen( path, RTLD_NOW, error, errorsize ))) break;
+        if (!test_only && (ret = wine_dlopen_obsolete( path, RTLD_NOW, error, errorsize ))) break;
         if ((*exists = file_exists( path ))) break; /* exists but cannot be loaded, return the error */
     }
     free_dll_path( &context );
@@ -616,7 +738,7 @@ void *wine_dll_load_obsolete( const char *filename, char *error, int errorsize, 
 void wine_dll_unload_obsolete( void *handle )
 {
     if (handle != (void *)1)
-	wine_dlclose( handle, NULL, 0 );
+	wine_dlclose_obsolete( handle, NULL, 0 );
 }
 
 
@@ -664,6 +786,9 @@ int wine_dll_get_owner_obsolete( const char *name, char *buffer, int size, int *
     return ret;
 }
 
+__ASM_OBSOLETE(wine_dlopen);
+__ASM_OBSOLETE(wine_dlsym);
+__ASM_OBSOLETE(wine_dlclose);
 __ASM_OBSOLETE(wine_dll_get_owner);
 __ASM_OBSOLETE(wine_dll_load);
 __ASM_OBSOLETE(wine_dll_load_main_exe);
@@ -983,7 +1108,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
 
     for (path = first_dll_path( "ntdll.dll", 0, &context ); path; path = next_dll_path( &context ))
     {
-        if ((ntdll = wine_dlopen( path, RTLD_NOW, error, error_size )))
+        if ((ntdll = dlopen( path, RTLD_NOW )))
         {
             /* if we didn't use the default dll dir, remove it from the search path */
             if (default_dlldir[0] && context.index < nb_dll_paths + 2) nb_dll_paths--;
@@ -992,133 +1117,23 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     }
     free_dll_path( &context );
 
-    if (!ntdll) return;
-    if (!(init_func = wine_dlsym( ntdll, "__wine_process_init", error, error_size ))) return;
+    if (!ntdll || !(init_func = dlsym( ntdll, "__wine_process_init" )))
+    {
+        if (error && error_size)
+        {
+            const char *s = dlerror();
+            if (s)
+            {
+                size_t len = min( strlen(s), error_size - 1 );
+                memcpy( error, s, len );
+                error[len] = 0;
+            }
+            else error[0] = 0;
+        }
+    }
 #ifdef __APPLE__
     apple_main_thread( init_func );
 #else
     init_func();
 #endif
-}
-
-
-/*
- * These functions provide wrappers around dlopen() and associated
- * functions.  They work around a bug in glibc 2.1.x where calling
- * a dl*() function after a previous dl*() function has failed
- * without a dlerror() call between the two will cause a crash.
- * They all take a pointer to a buffer that
- * will receive the error description (from dlerror()).  This
- * parameter may be NULL if the error description is not required.
- */
-
-#ifndef RTLD_FIRST
-#define RTLD_FIRST 0
-#endif
-
-/***********************************************************************
- *		wine_dlopen
- */
-void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize )
-{
-    void *ret;
-    const char *s;
-
-#ifdef __APPLE__
-    /* the Mac OS loader pretends to be able to load PE files, so avoid them here */
-    unsigned char magic[2];
-    int fd = open( filename, O_RDONLY );
-    if (fd != -1)
-    {
-        if (pread( fd, magic, 2, 0 ) == 2 && magic[0] == 'M' && magic[1] == 'Z')
-        {
-            if (error && errorsize)
-            {
-                static const char msg[] = "MZ format";
-                size_t len = min( errorsize, sizeof(msg) );
-                memcpy( error, msg, len );
-                error[len - 1] = 0;
-            }
-            close( fd );
-            return NULL;
-        }
-        close( fd );
-    }
-#endif
-    dlerror(); dlerror();
-#ifdef __sun
-    if (strchr( filename, ':' ))
-    {
-        char path[PATH_MAX];
-        /* Solaris' brain damaged dlopen() treats ':' as a path separator */
-        realpath( filename, path );
-        ret = dlopen( path, flag | RTLD_FIRST );
-    }
-    else
-#endif
-    ret = dlopen( filename, flag | RTLD_FIRST );
-    s = dlerror();
-    if (error && errorsize)
-    {
-        if (s)
-        {
-            size_t len = strlen(s);
-            if (len >= errorsize) len = errorsize - 1;
-            memcpy( error, s, len );
-            error[len] = 0;
-        }
-        else error[0] = 0;
-    }
-    dlerror();
-    return ret;
-}
-
-/***********************************************************************
- *		wine_dlsym
- */
-void *wine_dlsym( void *handle, const char *symbol, char *error, size_t errorsize )
-{
-    void *ret;
-    const char *s;
-    dlerror(); dlerror();
-    ret = dlsym( handle, symbol );
-    s = dlerror();
-    if (error && errorsize)
-    {
-        if (s)
-        {
-            size_t len = strlen(s);
-            if (len >= errorsize) len = errorsize - 1;
-            memcpy( error, s, len );
-            error[len] = 0;
-        }
-        else error[0] = 0;
-    }
-    dlerror();
-    return ret;
-}
-
-/***********************************************************************
- *		wine_dlclose
- */
-int wine_dlclose( void *handle, char *error, size_t errorsize )
-{
-    int ret;
-    const char *s;
-    dlerror(); dlerror();
-    ret = dlclose( handle );
-    s = dlerror();
-    if (error && errorsize)
-    {
-        if (s)
-        {
-            size_t len = strlen(s);
-            if (len >= errorsize) len = errorsize - 1;
-            memcpy( error, s, len );
-            error[len] = 0;
-        }
-        else error[0] = 0;
-    }
-    dlerror();
-    return ret;
 }

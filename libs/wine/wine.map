@@ -9,11 +9,8 @@ WINE_1.0
     wine_anon_mmap;
     wine_casemap_lower;
     wine_casemap_upper;
-    wine_dlclose;
     wine_dll_enum_load_path;
     wine_dll_set_callback;
-    wine_dlopen;
-    wine_dlsym;
     wine_exec_wine_binary;
     wine_get_build_dir;
     wine_get_build_id;
@@ -88,10 +85,13 @@ WINE_1.0
     wine_dbg_sprintf;
     wine_dbgstr_an;
     wine_dbgstr_wn;
+    wine_dlclose;
     wine_dll_get_owner;
     wine_dll_load;
     wine_dll_load_main_exe;
     wine_dll_unload;
+    wine_dlopen;
+    wine_dlsym;
     wine_fold_string;
     wine_get_cs;
     wine_get_ds;

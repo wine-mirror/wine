@@ -56,26 +56,4 @@ const char *wine_dll_enum_load_path( unsigned int index )
     return NULL;
 }
 
-void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize )
-{
-    if (error)
-    {
-        static const char msg[] = "no dlopen support on Windows";
-        size_t len = min( errorsize, sizeof(msg) );
-        memcpy( error, msg, len );
-        error[len - 1] = 0;
-    }
-    return NULL;
-}
-
-void *wine_dlsym( void *handle, const char *symbol, char *error, size_t errorsize )
-{
-    return NULL;
-}
-
-int wine_dlclose( void *handle, char *error, size_t errorsize )
-{
-    return 0;
-}
-
 #endif  /* _WIN32 */
