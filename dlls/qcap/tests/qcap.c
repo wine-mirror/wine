@@ -1433,7 +1433,7 @@ static void test_AviMux(char *arg)
             pin, &source_filter.IPin_iface);
 
     hr = IPin_Connect(avimux_out, &source_filter.IPin_iface, NULL);
-    todo_wine ok(hr == VFW_E_INVALID_DIRECTION, "Connect returned %x\n", hr);
+    ok(hr == VFW_E_INVALID_DIRECTION, "Connect returned %x\n", hr);
 
     hr = IBaseFilter_JoinFilterGraph(avimux, (IFilterGraph*)&GraphBuilder, NULL);
     ok(hr == S_OK, "JoinFilterGraph returned %x\n", hr);

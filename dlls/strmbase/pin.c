@@ -447,6 +447,7 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
     struct strmbase_source *pin = impl_source_from_IPin(iface);
     AM_MEDIA_TYPE candidate, *candidate_ptr;
     IEnumMediaTypes *enummt;
+    PIN_DIRECTION dir;
     unsigned int i;
     ULONG count;
     HRESULT hr;
@@ -458,10 +459,12 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
     if (!peer)
         return E_POINTER;
 
-    /* If we try to connect to ourselves, we will definitely deadlock.
-     * There are other cases where we could deadlock too, but this
-     * catches the obvious case */
-    assert(peer != iface);
+    IPin_QueryDirection(peer, &dir);
+    if (dir != PINDIR_INPUT)
+    {
+        WARN("Attempt to connect to another source pin, returning VFW_E_INVALID_DIRECTION.\n");
+        return VFW_E_INVALID_DIRECTION;
+    }
 
     EnterCriticalSection(&pin->pin.filter->csFilter);
 
