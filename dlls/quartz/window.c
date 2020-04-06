@@ -70,9 +70,6 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
     case WM_SIZE:
         if (window->ops->resize)
             return window->ops->resize(window, LOWORD(lparam), HIWORD(lparam));
-
-        window->width = LOWORD(lparam);
-        window->height = HIWORD(lparam);
     }
 
     return DefWindowProcW(hwnd, message, wparam, lparam);
@@ -370,24 +367,27 @@ HRESULT WINAPI BaseControlWindowImpl_get_Left(IVideoWindow *iface, LONG *left)
 HRESULT WINAPI BaseControlWindowImpl_put_Width(IVideoWindow *iface, LONG width)
 {
     struct video_window *window = impl_from_IVideoWindow(iface);
+    RECT rect;
 
     TRACE("window %p, width %d.\n", window, width);
 
-    if (!SetWindowPos(window->hwnd, NULL, 0, 0, width, window->height,
+    GetWindowRect(window->hwnd, &rect);
+    if (!SetWindowPos(window->hwnd, NULL, 0, 0, width, rect.bottom - rect.top,
             SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
         return E_FAIL;
 
-    window->width = width;
     return S_OK;
 }
 
 HRESULT WINAPI BaseControlWindowImpl_get_Width(IVideoWindow *iface, LONG *width)
 {
     struct video_window *window = impl_from_IVideoWindow(iface);
+    RECT rect;
 
     TRACE("window %p, width %p.\n", window, width);
 
-    *width = window->width;
+    GetWindowRect(window->hwnd, &rect);
+    *width = rect.right - rect.left;
     return S_OK;
 }
 
@@ -421,24 +421,27 @@ HRESULT WINAPI BaseControlWindowImpl_get_Top(IVideoWindow *iface, LONG *top)
 HRESULT WINAPI BaseControlWindowImpl_put_Height(IVideoWindow *iface, LONG height)
 {
     struct video_window *window = impl_from_IVideoWindow(iface);
+    RECT rect;
 
     TRACE("window %p, height %d.\n", window, height);
 
-    if (!SetWindowPos(window->hwnd, NULL, 0, 0, window->width,
+    GetWindowRect(window->hwnd, &rect);
+    if (!SetWindowPos(window->hwnd, NULL, 0, 0, rect.right - rect.left,
             height, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE))
         return E_FAIL;
 
-    window->height = height;
     return S_OK;
 }
 
 HRESULT WINAPI BaseControlWindowImpl_get_Height(IVideoWindow *iface, LONG *height)
 {
     struct video_window *window = impl_from_IVideoWindow(iface);
+    RECT rect;
 
     TRACE("window %p, height %p.\n", window, height);
 
-    *height = window->height;
+    GetWindowRect(window->hwnd, &rect);
+    *height = rect.bottom - rect.top;
     return S_OK;
 }
 
@@ -555,9 +558,6 @@ HRESULT WINAPI BaseControlWindowImpl_SetWindowPosition(IVideoWindow *iface,
 
     if (!SetWindowPos(window->hwnd, NULL, left, top, width, height, SWP_NOACTIVATE | SWP_NOZORDER))
         return E_FAIL;
-
-    window->width = width;
-    window->height = height;
     return S_OK;
 }
 
@@ -572,8 +572,8 @@ HRESULT WINAPI BaseControlWindowImpl_GetWindowPosition(IVideoWindow *iface,
     GetWindowRect(window->hwnd, &rect);
     *left = rect.left;
     *top = rect.top;
-    *width = window->width;
-    *height = window->height;
+    *width = rect.right - rect.left;
+    *height = rect.bottom - rect.top;
     return S_OK;
 }
 

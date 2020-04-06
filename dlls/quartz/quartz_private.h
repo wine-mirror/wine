@@ -92,7 +92,6 @@ struct video_window
     IVideoWindow IVideoWindow_iface;
 
     HWND hwnd;
-    LONG width, height;
     BOOL AutoShow;
     HWND hwndDrain;
     HWND hwndOwner;
