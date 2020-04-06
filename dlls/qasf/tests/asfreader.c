@@ -71,7 +71,7 @@ static void test_interfaces(void)
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
-    todo_wine check_interface(filter, &IID_IFileSourceFilter, TRUE);
+    check_interface(filter, &IID_IFileSourceFilter, TRUE);
     check_interface(filter, &IID_IPersist, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
 

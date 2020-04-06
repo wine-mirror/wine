@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qasf);
 struct asf_reader
 {
     struct strmbase_filter filter;
+    IFileSourceFilter IFileSourceFilter_iface;
 };
 
 static inline struct asf_reader *impl_reader_from_strmbase_filter(struct strmbase_filter *iface)
@@ -45,10 +46,79 @@ static void asf_reader_destroy(struct strmbase_filter *iface)
     free(filter);
 }
 
+static HRESULT asf_reader_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
+{
+    struct asf_reader *filter = impl_reader_from_strmbase_filter(iface);
+
+    if (IsEqualGUID(iid, &IID_IFileSourceFilter))
+    {
+        *out = &filter->IFileSourceFilter_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
 static struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = asf_reader_get_pin,
     .filter_destroy = asf_reader_destroy,
+    .filter_query_interface = asf_reader_query_interface,
+};
+
+static inline struct asf_reader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
+{
+    return CONTAINING_RECORD(iface, struct asf_reader, IFileSourceFilter_iface);
+}
+
+static HRESULT WINAPI filesourcefilter_QueryInterface(IFileSourceFilter *iface, REFIID iid, void **out)
+{
+    struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
+
+    return IBaseFilter_QueryInterface(&filter->filter.IBaseFilter_iface, iid, out);
+}
+
+static ULONG WINAPI filesourcefilter_AddRef(IFileSourceFilter *iface)
+{
+    struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
+
+    return IBaseFilter_AddRef(&filter->filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI filesourcefilter_Release(IFileSourceFilter *iface)
+{
+    struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
+
+    return IBaseFilter_Release(&filter->filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI filesourcefilter_Load(IFileSourceFilter *iface, LPCOLESTR filename, const AM_MEDIA_TYPE *type)
+{
+    struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
+
+    FIXME("filter %p, filename %s, type %p, stub!\n", filter, debugstr_w(filename), type);
+    strmbase_dump_media_type(type);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filesourcefilter_GetCurFile(IFileSourceFilter *iface, LPOLESTR *filename, AM_MEDIA_TYPE *type)
+{
+    struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
+
+    FIXME("filter %p, filename %p, type %p, stub!\n", filter, filename, type);
+
+    return E_NOTIMPL;
+}
+
+static const IFileSourceFilterVtbl filesourcefilter_vtbl =
+{
+    filesourcefilter_QueryInterface,
+    filesourcefilter_AddRef,
+    filesourcefilter_Release,
+    filesourcefilter_Load,
+    filesourcefilter_GetCurFile,
 };
 
 HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
@@ -59,6 +129,7 @@ HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WMAsfReader, &filter_ops);
+    object->IFileSourceFilter_iface.lpVtbl = &filesourcefilter_vtbl;
 
     TRACE("Created WM ASF reader %p.\n", object);
     *out = &object->filter.IUnknown_inner;
