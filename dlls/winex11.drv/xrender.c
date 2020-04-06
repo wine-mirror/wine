@@ -34,7 +34,6 @@
 #include "winbase.h"
 #include "x11drv.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -326,10 +325,10 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
     int event_base, i;
 
     if (!client_side_with_render) return NULL;
-    if (!(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0))) return NULL;
+    if (!(xrender_handle = dlopen(SONAME_LIBXRENDER, RTLD_NOW))) return NULL;
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) return NULL
-#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0)
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(xrender_handle, #f)) == NULL) return NULL
+#define LOAD_OPTIONAL_FUNCPTR(f) p##f = dlsym(xrender_handle, #f)
     LOAD_FUNCPTR(XRenderAddGlyphs);
     LOAD_FUNCPTR(XRenderChangePicture);
     LOAD_FUNCPTR(XRenderComposite);

@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "x11drv.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wintab.h"
@@ -327,18 +326,18 @@ MAKE_FUNCPTR(XFreeDeviceState)
 
 static INT X11DRV_XInput_Init(void)
 {
-    xinput_handle = wine_dlopen(SONAME_LIBXI, RTLD_NOW, NULL, 0);
+    xinput_handle = dlopen(SONAME_LIBXI, RTLD_NOW);
     if (xinput_handle)
     {
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xinput_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
-        LOAD_FUNCPTR(XListInputDevices)
-        LOAD_FUNCPTR(XFreeDeviceList)
-        LOAD_FUNCPTR(XOpenDevice)
-        LOAD_FUNCPTR(XGetDeviceButtonMapping)
-        LOAD_FUNCPTR(XCloseDevice)
-        LOAD_FUNCPTR(XSelectExtensionEvent)
-        LOAD_FUNCPTR(XQueryDeviceState)
-        LOAD_FUNCPTR(XFreeDeviceState)
+#define LOAD_FUNCPTR(f) if((p##f = dlsym(xinput_handle, #f)) == NULL) goto sym_not_found
+        LOAD_FUNCPTR(XListInputDevices);
+        LOAD_FUNCPTR(XFreeDeviceList);
+        LOAD_FUNCPTR(XOpenDevice);
+        LOAD_FUNCPTR(XGetDeviceButtonMapping);
+        LOAD_FUNCPTR(XCloseDevice);
+        LOAD_FUNCPTR(XSelectExtensionEvent);
+        LOAD_FUNCPTR(XQueryDeviceState);
+        LOAD_FUNCPTR(XFreeDeviceState);
 #undef LOAD_FUNCPTR
         return 1;
     }

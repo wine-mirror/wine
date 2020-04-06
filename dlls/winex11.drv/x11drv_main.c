@@ -53,7 +53,6 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "wine/list.h"
 #include "wine/heap.h"
 
@@ -461,7 +460,7 @@ static int xcomp_error_base;
 
 static void X11DRV_XComposite_Init(void)
 {
-    void *xcomposite_handle = wine_dlopen(SONAME_LIBXCOMPOSITE, RTLD_NOW, NULL, 0);
+    void *xcomposite_handle = dlopen(SONAME_LIBXCOMPOSITE, RTLD_NOW);
     if (!xcomposite_handle)
     {
         TRACE("Unable to open %s, XComposite disabled\n", SONAME_LIBXCOMPOSITE);
@@ -470,23 +469,22 @@ static void X11DRV_XComposite_Init(void)
     }
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(xcomposite_handle, #f, NULL, 0)) == NULL) \
-        goto sym_not_found;
-    LOAD_FUNCPTR(XCompositeQueryExtension)
-    LOAD_FUNCPTR(XCompositeQueryVersion)
-    LOAD_FUNCPTR(XCompositeVersion)
-    LOAD_FUNCPTR(XCompositeRedirectWindow)
-    LOAD_FUNCPTR(XCompositeRedirectSubwindows)
-    LOAD_FUNCPTR(XCompositeUnredirectWindow)
-    LOAD_FUNCPTR(XCompositeUnredirectSubwindows)
-    LOAD_FUNCPTR(XCompositeCreateRegionFromBorderClip)
-    LOAD_FUNCPTR(XCompositeNameWindowPixmap)
+    if((p##f = dlsym(xcomposite_handle, #f)) == NULL) goto sym_not_found
+    LOAD_FUNCPTR(XCompositeQueryExtension);
+    LOAD_FUNCPTR(XCompositeQueryVersion);
+    LOAD_FUNCPTR(XCompositeVersion);
+    LOAD_FUNCPTR(XCompositeRedirectWindow);
+    LOAD_FUNCPTR(XCompositeRedirectSubwindows);
+    LOAD_FUNCPTR(XCompositeUnredirectWindow);
+    LOAD_FUNCPTR(XCompositeUnredirectSubwindows);
+    LOAD_FUNCPTR(XCompositeCreateRegionFromBorderClip);
+    LOAD_FUNCPTR(XCompositeNameWindowPixmap);
 #undef LOAD_FUNCPTR
 
     if(!pXCompositeQueryExtension(gdi_display, &xcomp_event_base,
                                   &xcomp_error_base)) {
         TRACE("XComposite extension could not be queried; disabled\n");
-        wine_dlclose(xcomposite_handle, NULL, 0);
+        dlclose(xcomposite_handle);
         xcomposite_handle = NULL;
         usexcomposite = FALSE;
         return;
@@ -496,7 +494,7 @@ static void X11DRV_XComposite_Init(void)
 
 sym_not_found:
     TRACE("Unable to load function pointers from %s, XComposite disabled\n", SONAME_LIBXCOMPOSITE);
-    wine_dlclose(xcomposite_handle, NULL, 0);
+    dlclose(xcomposite_handle);
     xcomposite_handle = NULL;
     usexcomposite = FALSE;
 }
@@ -560,19 +558,18 @@ static void init_visuals( Display *display, int screen )
  */
 static BOOL process_attach(void)
 {
-    char error[1024];
     Display *display;
-    void *libx11 = wine_dlopen( SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, error, sizeof(error) );
+    void *libx11 = dlopen( SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL );
 
     if (!libx11)
     {
-        ERR( "failed to load %s: %s\n", SONAME_LIBX11, error );
+        ERR( "failed to load %s: %s\n", SONAME_LIBX11, dlerror() );
         return FALSE;
     }
-    pXGetEventData = wine_dlsym( libx11, "XGetEventData", NULL, 0 );
-    pXFreeEventData = wine_dlsym( libx11, "XFreeEventData", NULL, 0 );
+    pXGetEventData = dlsym( libx11, "XGetEventData" );
+    pXFreeEventData = dlsym( libx11, "XFreeEventData" );
 #ifdef SONAME_LIBXEXT
-    wine_dlopen( SONAME_LIBXEXT, RTLD_NOW|RTLD_GLOBAL, NULL, 0 );
+    dlopen( SONAME_LIBXEXT, RTLD_NOW|RTLD_GLOBAL );
 #endif
 
     setup_options();

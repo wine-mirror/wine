@@ -36,7 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #include "x11drv.h"
 
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 static void *xrandr_handle;
@@ -88,46 +87,45 @@ static int load_xrandr(void)
 {
     int r = 0;
 
-    if (wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
-        (xrandr_handle = wine_dlopen(SONAME_LIBXRANDR, RTLD_NOW, NULL, 0)))
+    if (dlopen(SONAME_LIBXRENDER, RTLD_NOW|RTLD_GLOBAL) &&
+        (xrandr_handle = dlopen(SONAME_LIBXRANDR, RTLD_NOW)))
     {
 
 #define LOAD_FUNCPTR(f) \
-        if((p##f = wine_dlsym(xrandr_handle, #f, NULL, 0)) == NULL) \
-            goto sym_not_found;
+        if((p##f = dlsym(xrandr_handle, #f)) == NULL) goto sym_not_found
 
-        LOAD_FUNCPTR(XRRConfigCurrentConfiguration)
-        LOAD_FUNCPTR(XRRConfigCurrentRate)
-        LOAD_FUNCPTR(XRRFreeScreenConfigInfo)
-        LOAD_FUNCPTR(XRRGetScreenInfo)
-        LOAD_FUNCPTR(XRRQueryExtension)
-        LOAD_FUNCPTR(XRRQueryVersion)
-        LOAD_FUNCPTR(XRRRates)
-        LOAD_FUNCPTR(XRRSetScreenConfig)
-        LOAD_FUNCPTR(XRRSetScreenConfigAndRate)
-        LOAD_FUNCPTR(XRRSizes)
+        LOAD_FUNCPTR(XRRConfigCurrentConfiguration);
+        LOAD_FUNCPTR(XRRConfigCurrentRate);
+        LOAD_FUNCPTR(XRRFreeScreenConfigInfo);
+        LOAD_FUNCPTR(XRRGetScreenInfo);
+        LOAD_FUNCPTR(XRRQueryExtension);
+        LOAD_FUNCPTR(XRRQueryVersion);
+        LOAD_FUNCPTR(XRRRates);
+        LOAD_FUNCPTR(XRRSetScreenConfig);
+        LOAD_FUNCPTR(XRRSetScreenConfigAndRate);
+        LOAD_FUNCPTR(XRRSizes);
         r = 1;
 
 #ifdef HAVE_XRRGETSCREENRESOURCES
-        LOAD_FUNCPTR(XRRFreeCrtcInfo)
-        LOAD_FUNCPTR(XRRFreeOutputInfo)
-        LOAD_FUNCPTR(XRRFreeScreenResources)
-        LOAD_FUNCPTR(XRRGetCrtcInfo)
-        LOAD_FUNCPTR(XRRGetOutputInfo)
-        LOAD_FUNCPTR(XRRGetScreenResources)
-        LOAD_FUNCPTR(XRRGetScreenSizeRange)
-        LOAD_FUNCPTR(XRRSetCrtcConfig)
-        LOAD_FUNCPTR(XRRSetScreenSize)
+        LOAD_FUNCPTR(XRRFreeCrtcInfo);
+        LOAD_FUNCPTR(XRRFreeOutputInfo);
+        LOAD_FUNCPTR(XRRFreeScreenResources);
+        LOAD_FUNCPTR(XRRGetCrtcInfo);
+        LOAD_FUNCPTR(XRRGetOutputInfo);
+        LOAD_FUNCPTR(XRRGetScreenResources);
+        LOAD_FUNCPTR(XRRGetScreenSizeRange);
+        LOAD_FUNCPTR(XRRSetCrtcConfig);
+        LOAD_FUNCPTR(XRRSetScreenSize);
         r = 2;
 #endif
 
 #ifdef HAVE_XRRGETPROVIDERRESOURCES
-        LOAD_FUNCPTR(XRRSelectInput)
-        LOAD_FUNCPTR(XRRGetOutputPrimary)
-        LOAD_FUNCPTR(XRRGetProviderResources)
-        LOAD_FUNCPTR(XRRFreeProviderResources)
-        LOAD_FUNCPTR(XRRGetProviderInfo)
-        LOAD_FUNCPTR(XRRFreeProviderInfo)
+        LOAD_FUNCPTR(XRRSelectInput);
+        LOAD_FUNCPTR(XRRGetOutputPrimary);
+        LOAD_FUNCPTR(XRRGetProviderResources);
+        LOAD_FUNCPTR(XRRFreeProviderResources);
+        LOAD_FUNCPTR(XRRGetProviderInfo);
+        LOAD_FUNCPTR(XRRFreeProviderInfo);
         r = 4;
 #endif
 
@@ -1120,7 +1118,7 @@ void X11DRV_XRandR_Init(void)
     if (ret >= 2 && (major > 1 || (major == 1 && minor >= 2)))
     {
         if (major > 1 || (major == 1 && minor >= 3))
-            pXRRGetScreenResourcesCurrent = wine_dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent", NULL, 0 );
+            pXRRGetScreenResourcesCurrent = dlsym( xrandr_handle, "XRRGetScreenResourcesCurrent" );
         if (!pXRRGetScreenResourcesCurrent)
             pXRRGetScreenResourcesCurrent = pXRRGetScreenResources;
     }

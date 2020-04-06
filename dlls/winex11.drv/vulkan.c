@@ -31,7 +31,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 #include "x11drv.h"
 
 #define VK_NO_PROTOTYPES
@@ -107,34 +106,34 @@ static void *vulkan_handle;
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    if (!(vulkan_handle = wine_dlopen(SONAME_LIBVULKAN, RTLD_NOW, NULL, 0)))
+    if (!(vulkan_handle = dlopen(SONAME_LIBVULKAN, RTLD_NOW)))
     {
         ERR("Failed to load %s.\n", SONAME_LIBVULKAN);
         return TRUE;
     }
 
-#define LOAD_FUNCPTR(f) if (!(p##f = wine_dlsym(vulkan_handle, #f, NULL, 0))) goto fail;
-#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(vulkan_handle, #f, NULL, 0);
-    LOAD_FUNCPTR(vkCreateInstance)
-    LOAD_FUNCPTR(vkCreateSwapchainKHR)
-    LOAD_FUNCPTR(vkCreateXlibSurfaceKHR)
-    LOAD_FUNCPTR(vkDestroyInstance)
-    LOAD_FUNCPTR(vkDestroySurfaceKHR)
-    LOAD_FUNCPTR(vkDestroySwapchainKHR)
-    LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties)
-    LOAD_FUNCPTR(vkGetDeviceProcAddr)
-    LOAD_FUNCPTR(vkGetInstanceProcAddr)
-    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilities2KHR)
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
-    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDeviceSurfaceFormats2KHR)
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR)
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR)
-    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR)
-    LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR)
-    LOAD_FUNCPTR(vkGetSwapchainImagesKHR)
-    LOAD_FUNCPTR(vkQueuePresentKHR)
-    LOAD_OPTIONAL_FUNCPTR(vkGetDeviceGroupSurfacePresentModesKHR)
-    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDevicePresentRectanglesKHR)
+#define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
+#define LOAD_OPTIONAL_FUNCPTR(f) p##f = dlsym(vulkan_handle, #f)
+    LOAD_FUNCPTR(vkCreateInstance);
+    LOAD_FUNCPTR(vkCreateSwapchainKHR);
+    LOAD_FUNCPTR(vkCreateXlibSurfaceKHR);
+    LOAD_FUNCPTR(vkDestroyInstance);
+    LOAD_FUNCPTR(vkDestroySurfaceKHR);
+    LOAD_FUNCPTR(vkDestroySwapchainKHR);
+    LOAD_FUNCPTR(vkEnumerateInstanceExtensionProperties);
+    LOAD_FUNCPTR(vkGetDeviceProcAddr);
+    LOAD_FUNCPTR(vkGetInstanceProcAddr);
+    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilities2KHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
+    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDeviceSurfaceFormats2KHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceFormatsKHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfacePresentModesKHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceSurfaceSupportKHR);
+    LOAD_FUNCPTR(vkGetPhysicalDeviceXlibPresentationSupportKHR);
+    LOAD_FUNCPTR(vkGetSwapchainImagesKHR);
+    LOAD_FUNCPTR(vkQueuePresentKHR);
+    LOAD_OPTIONAL_FUNCPTR(vkGetDeviceGroupSurfacePresentModesKHR);
+    LOAD_OPTIONAL_FUNCPTR(vkGetPhysicalDevicePresentRectanglesKHR);
 #undef LOAD_FUNCPTR
 #undef LOAD_OPTIONAL_FUNCPTR
 
@@ -143,7 +142,7 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
     return TRUE;
 
 fail:
-    wine_dlclose(vulkan_handle, NULL, 0);
+    dlclose(vulkan_handle);
     vulkan_handle = NULL;
     return TRUE;
 }

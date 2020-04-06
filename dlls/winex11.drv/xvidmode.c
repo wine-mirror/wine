@@ -38,7 +38,6 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xvidmode);
 
@@ -160,7 +159,7 @@ void X11DRV_XF86VM_Init(void)
 
   if (xf86vm_major) return; /* already initialized? */
 
-  xvidmode_handle = wine_dlopen(SONAME_LIBXXF86VM, RTLD_NOW, NULL, 0);
+  xvidmode_handle = dlopen(SONAME_LIBXXF86VM, RTLD_NOW);
   if (!xvidmode_handle)
   {
     TRACE("Unable to open %s, XVidMode disabled\n", SONAME_LIBXXF86VM);
@@ -169,23 +168,22 @@ void X11DRV_XF86VM_Init(void)
   }
 
 #define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(xvidmode_handle, #f, NULL, 0)) == NULL) \
-        goto sym_not_found;
-    LOAD_FUNCPTR(XF86VidModeGetAllModeLines)
-    LOAD_FUNCPTR(XF86VidModeGetModeLine)
-    LOAD_FUNCPTR(XF86VidModeLockModeSwitch)
-    LOAD_FUNCPTR(XF86VidModeQueryExtension)
-    LOAD_FUNCPTR(XF86VidModeQueryVersion)
-    LOAD_FUNCPTR(XF86VidModeSetViewPort)
-    LOAD_FUNCPTR(XF86VidModeSwitchToMode)
+    if((p##f = dlsym(xvidmode_handle, #f)) == NULL) goto sym_not_found
+    LOAD_FUNCPTR(XF86VidModeGetAllModeLines);
+    LOAD_FUNCPTR(XF86VidModeGetModeLine);
+    LOAD_FUNCPTR(XF86VidModeLockModeSwitch);
+    LOAD_FUNCPTR(XF86VidModeQueryExtension);
+    LOAD_FUNCPTR(XF86VidModeQueryVersion);
+    LOAD_FUNCPTR(XF86VidModeSetViewPort);
+    LOAD_FUNCPTR(XF86VidModeSwitchToMode);
 #ifdef X_XF86VidModeSetGamma
-    LOAD_FUNCPTR(XF86VidModeGetGamma)
-    LOAD_FUNCPTR(XF86VidModeSetGamma)
+    LOAD_FUNCPTR(XF86VidModeGetGamma);
+    LOAD_FUNCPTR(XF86VidModeSetGamma);
 #endif
 #ifdef X_XF86VidModeSetGammaRamp
-    LOAD_FUNCPTR(XF86VidModeGetGammaRamp)
-    LOAD_FUNCPTR(XF86VidModeGetGammaRampSize)
-    LOAD_FUNCPTR(XF86VidModeSetGammaRamp)
+    LOAD_FUNCPTR(XF86VidModeGetGammaRamp);
+    LOAD_FUNCPTR(XF86VidModeGetGammaRampSize);
+    LOAD_FUNCPTR(XF86VidModeSetGammaRamp);
 #endif
 #undef LOAD_FUNCPTR
 
@@ -242,7 +240,7 @@ void X11DRV_XF86VM_Init(void)
 
 sym_not_found:
     TRACE("Unable to load function pointers from %s, XVidMode disabled\n", SONAME_LIBXXF86VM);
-    wine_dlclose(xvidmode_handle, NULL, 0);
+    dlclose(xvidmode_handle);
     xvidmode_handle = NULL;
     usexvidmode = FALSE;
 }
