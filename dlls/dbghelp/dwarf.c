@@ -3363,7 +3363,6 @@ static void dwarf2_location_compute(struct process* pcs,
     }
 }
 
-#ifdef HAVE_ZLIB
 static void *zalloc(void *priv, uInt items, uInt sz)
 {
     return HeapAlloc(GetProcessHeap(), 0, items * sz);
@@ -3445,8 +3444,6 @@ out:
     return ret;
 }
 
-#endif
-
 static inline BOOL dwarf2_init_section(dwarf2_section_t* section, struct image_file_map* fmap,
                                        const char* sectname, const char* zsectname,
                                        struct image_section_map* ism)
@@ -3470,11 +3467,7 @@ static inline BOOL dwarf2_init_section(dwarf2_section_t* section, struct image_f
 
     if (zsectname && image_find_section(fmap, zsectname, ism))
     {
-#ifdef HAVE_ZLIB
         return dwarf2_init_zsection(section, zsectname, ism);
-#else
-        FIXME("dbghelp not built with zlib, but compressed section found\n" );
-#endif
     }
 
     return FALSE;
