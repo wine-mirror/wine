@@ -38,7 +38,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 
 #include "sql.h"
@@ -493,7 +492,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 
     case DLL_PROCESS_DETACH:
       if (reserved) break;
-      if (dmHandle) wine_dlclose(dmHandle,NULL,0);
+      if (dmHandle) dlclose(dmHandle);
     }
 
     return TRUE;
@@ -512,14 +511,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
 static BOOL ODBC_LoadDriverManager(void)
 {
    const char *s = getenv("LIB_ODBC_DRIVER_MANAGER");
-   char error[256];
 
 #ifdef SONAME_LIBODBC
    if (!s || !s[0]) s = SONAME_LIBODBC;
 #endif
    if (!s || !s[0]) goto failed;
 
-   dmHandle = wine_dlopen(s, RTLD_LAZY | RTLD_GLOBAL, error, sizeof(error));
+   dmHandle = dlopen( s, RTLD_LAZY | RTLD_GLOBAL );
 
    if (dmHandle != NULL)
    {
@@ -528,7 +526,7 @@ static BOOL ODBC_LoadDriverManager(void)
       return TRUE;
    }
 failed:
-   ERR_(winediag)("failed to open library %s: %s\n", debugstr_a(s), error);
+   ERR_(winediag)("failed to open library %s: %s\n", debugstr_a(s), dlerror());
    nErrorType = ERROR_LIBRARY_NOT_FOUND;
    return FALSE;
 }
@@ -546,14 +544,12 @@ failed:
 
 static BOOL ODBC_LoadDMFunctions(void)
 {
-    char error[256];
-
     if (dmHandle == NULL)
         return FALSE;
 
 #define LOAD_FUNC(name) \
-    if ((p##name = wine_dlsym( dmHandle, #name, error, sizeof(error) ))); \
-    else WARN( "Failed to load %s: %s\n", #name, error )
+    if ((p##name = dlsym( dmHandle, #name ))); \
+    else WARN( "Failed to load %s: %s\n", #name, dlerror() )
 
     LOAD_FUNC(SQLAllocConnect);
     LOAD_FUNC(SQLAllocEnv);
