@@ -1,5 +1,4 @@
 MODULE    = vcruntime140.dll
-IMPORTS   = ucrtbase
 
 EXTRADLLFLAGS = -mno-cygwin
 

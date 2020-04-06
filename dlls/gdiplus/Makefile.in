@@ -1,6 +1,6 @@
 MODULE    = gdiplus.dll
 IMPORTLIB = gdiplus
-IMPORTS   = uuid shlwapi ole32 user32 gdi32 ucrtbase
+IMPORTS   = uuid shlwapi ole32 user32 gdi32
 DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -mno-cygwin
