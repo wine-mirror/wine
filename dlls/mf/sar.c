@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 struct audio_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
+    IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
     LONG refcount;
     BOOL is_shut_down;
     CRITICAL_SECTION cs;
@@ -40,21 +41,36 @@ static struct audio_renderer *impl_from_IMFMediaSink(IMFMediaSink *iface)
     return CONTAINING_RECORD(iface, struct audio_renderer, IMFMediaSink_iface);
 }
 
+static struct audio_renderer *impl_from_IMFMediaSinkPreroll(IMFMediaSinkPreroll *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_renderer, IMFMediaSinkPreroll_iface);
+}
+
 static HRESULT WINAPI audio_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
 {
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFMediaSink) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFMediaSink_AddRef(iface);
-        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaSinkPreroll))
+    {
+        *obj = &renderer->IMFMediaSinkPreroll_iface;
+    }
+    else
+    {
+        WARN("Unsupported %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported %s.\n", debugstr_guid(riid));
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+
+    return S_OK;
 }
 
 static ULONG WINAPI audio_renderer_sink_AddRef(IMFMediaSink *iface)
@@ -186,6 +202,39 @@ static const IMFMediaSinkVtbl audio_renderer_sink_vtbl =
     audio_renderer_sink_Shutdown,
 };
 
+static HRESULT WINAPI audio_renderer_preroll_QueryInterface(IMFMediaSinkPreroll *iface, REFIID riid, void **obj)
+{
+    struct audio_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI audio_renderer_preroll_AddRef(IMFMediaSinkPreroll *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI audio_renderer_preroll_Release(IMFMediaSinkPreroll *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI audio_renderer_preroll_NotifyPreroll(IMFMediaSinkPreroll *iface, MFTIME start_time)
+{
+    FIXME("%p, %s.\n", iface, debugstr_time(start_time));
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaSinkPrerollVtbl audio_renderer_preroll_vtbl =
+{
+    audio_renderer_preroll_QueryInterface,
+    audio_renderer_preroll_AddRef,
+    audio_renderer_preroll_Release,
+    audio_renderer_preroll_NotifyPreroll,
+};
+
 static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct audio_renderer *renderer;
@@ -196,6 +245,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
         return E_OUTOFMEMORY;
 
     renderer->IMFMediaSink_iface.lpVtbl = &audio_renderer_sink_vtbl;
+    renderer->IMFMediaSinkPreroll_iface.lpVtbl = &audio_renderer_preroll_vtbl;
     renderer->refcount = 1;
     InitializeCriticalSection(&renderer->cs);
 
