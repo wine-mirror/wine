@@ -484,6 +484,10 @@ static DWORD read_ssl_chunk( struct netconn *conn, void *buf, SIZE_T buf_size, S
         case SEC_E_OK:
             break;
 
+        case SEC_I_RENEGOTIATE:
+            TRACE("renegotiate\n");
+            return ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED;
+
         case SEC_I_CONTEXT_EXPIRED:
             TRACE("context expired\n");
             *eof = TRUE;
