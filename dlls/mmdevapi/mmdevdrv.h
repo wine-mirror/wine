@@ -62,6 +62,7 @@ struct audio_client {
     IAudioCaptureClient IAudioCaptureClient_iface;
     IAudioClock IAudioClock_iface;
     IAudioClock2 IAudioClock2_iface;
+    IAudioClockAdjustment IAudioClockAdjustment_iface;
     IAudioStreamVolume IAudioStreamVolume_iface;
 
     LONG ref;

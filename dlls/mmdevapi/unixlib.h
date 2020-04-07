@@ -225,6 +225,13 @@ struct set_event_handle_params
     HRESULT result;
 };
 
+struct set_sample_rate_params
+{
+    stream_handle stream;
+    float rate;
+    HRESULT result;
+};
+
 struct test_connect_params
 {
     const WCHAR *name;
@@ -333,6 +340,7 @@ enum unix_funcs
     get_position,
     set_volumes,
     set_event_handle,
+    set_sample_rate,
     test_connect,
     is_started,
     get_prop_value,
