@@ -874,10 +874,11 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
     dbg_ctx_t ctx;
     size_t i;
 
-    if (process != NULL)
+    switch (gdbctx->de.dwDebugEventCode)
     {
+    default:
+        if (!process) return packet_error;
         if (!(backend = process->be_cpu)) return packet_error;
-
         if (!(thread = dbg_get_thread(process, gdbctx->de.dwThreadId)) ||
             !backend->get_context(thread->handle, &ctx))
             return packet_error;
@@ -900,13 +901,13 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
 
         packet_reply_close(gdbctx);
         return packet_done;
-    }
-    else
-    {
-        /* Try to put an exit code
-         * Cannot use GetExitCodeProcess, wouldn't fit in a 8 bit value, so
-         * just indicate the end of process and exit */
-        return packet_reply(gdbctx, "W00") | packet_last_f;
+
+    case EXIT_PROCESS_DEBUG_EVENT:
+        packet_reply_open(gdbctx);
+        packet_reply_add(gdbctx, "W");
+        packet_reply_val(gdbctx, gdbctx->de.u.ExitProcess.dwExitCode, 4);
+        packet_reply_close(gdbctx);
+        return packet_done | packet_last_f;
     }
 }
 
