@@ -2639,6 +2639,7 @@ static void test_sar(void)
     MFCLOCK_STATE state;
     DWORD flags, count;
     IMFClock *clock;
+    IUnknown *unk;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -2693,6 +2694,14 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(count == 1, "Unexpected count %u.\n", count);
 
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(flags == (MEDIASINK_FIXED_STREAMS | MEDIASINK_CAN_PREROLL), "Unexpected flags %#x.\n", flags);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaSinkPreroll, (void **)&unk);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     /* Shutdown */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
@@ -2712,6 +2721,9 @@ if (SUCCEEDED(hr))
     hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
     IMFMediaSink_Release(sink);
 
     /* Activation */
@@ -2727,7 +2739,6 @@ if (SUCCEEDED(hr))
     IMFMediaSink_Release(sink2);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
-todo_wine
     ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
 
     hr = IMFActivate_ShutdownObject(activate);

@@ -99,9 +99,16 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
 
 static HRESULT WINAPI audio_renderer_sink_GetCharacteristics(IMFMediaSink *iface, DWORD *flags)
 {
-    FIXME("%p, %p.\n", iface, flags);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, flags);
+
+    if (renderer->is_shut_down)
+        return MF_E_SHUTDOWN;
+
+    *flags = MEDIASINK_FIXED_STREAMS | MEDIASINK_CAN_PREROLL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWORD stream_sink_id,
