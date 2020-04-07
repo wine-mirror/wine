@@ -2650,15 +2650,14 @@ static void test_sar(void)
         CoUninitialize();
         return;
     }
-
-todo_wine
     ok(hr == S_OK, "Failed to create renderer, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFPresentationTimeSource, (void **)&time_source);
+todo_wine
+    ok(hr == S_OK, "Failed to get time source interface, hr %#x.\n", hr);
 
 if (SUCCEEDED(hr))
 {
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFPresentationTimeSource, (void **)&time_source);
-    ok(hr == S_OK, "Failed to get time source interface, hr %#x.\n", hr);
-
     hr = IMFPresentationTimeSource_GetUnderlyingClock(time_source, &clock);
     ok(hr == MF_E_NO_CLOCK, "Unexpected hr %#x.\n", hr);
 
@@ -2679,31 +2678,30 @@ if (SUCCEEDED(hr))
     IMFClockStateSink_Release(state_sink);
 
     IMFPresentationTimeSource_Release(time_source);
-
-    IMFMediaSink_Release(sink);
 }
+    IMFMediaSink_Release(sink);
+
     /* Activation */
     hr = MFCreateAudioRendererActivate(&activate);
     ok(hr == S_OK, "Failed to create activation object, hr %#x.\n", hr);
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
-todo_wine
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
 
-if (hr == S_OK)
-{
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink2);
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
     ok(sink == sink2, "Unexpected instance.\n");
     IMFMediaSink_Release(sink2);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+todo_wine
     ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFMediaSink_Release(sink);
@@ -2712,13 +2710,14 @@ if (hr == S_OK)
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFMediaSink_Release(sink);
 
     hr = IMFActivate_DetachObject(activate);
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
-}
+
     IMFActivate_Release(activate);
 
     CoUninitialize();
