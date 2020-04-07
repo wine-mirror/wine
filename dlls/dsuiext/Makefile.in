@@ -1,0 +1,10 @@
+MODULE  = dsuiext.dll
+IMPORTS = ole32 uuid
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	dsuiext.c
+
+IDL_SRCS = \
+	dsuiext.idl

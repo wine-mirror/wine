@@ -1263,6 +1263,7 @@ enable_dsdmo
 enable_dsound
 enable_dsquery
 enable_dssenh
+enable_dsuiext
 enable_dswave
 enable_dwmapi
 enable_dwrite
@@ -20406,6 +20407,7 @@ wine_fn_config_makefile dlls/dsound/tests enable_tests
 wine_fn_config_makefile dlls/dsquery enable_dsquery
 wine_fn_config_makefile dlls/dssenh enable_dssenh
 wine_fn_config_makefile dlls/dssenh/tests enable_tests
+wine_fn_config_makefile dlls/dsuiext enable_dsuiext
 wine_fn_config_makefile dlls/dswave enable_dswave
 wine_fn_config_makefile dlls/dswave/tests enable_tests
 wine_fn_config_makefile dlls/dwmapi enable_dwmapi
