@@ -3518,7 +3518,8 @@ static void output_programs( struct makefile *make )
         struct strarray symlinks = get_expanded_file_local_var( make, make->programs.str[i], "SYMLINKS" );
 
         if (!objs.count) objs = make->object_files;
-        strarray_addall( &all_libs, add_default_libraries( make, &deps ));
+        if (!strarray_exists( &all_libs, "-nodefaultlibs" ))
+            strarray_addall( &all_libs, add_default_libraries( make, &deps ));
 
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
