@@ -585,6 +585,11 @@ again:
 
         return SEC_I_CONTINUE_NEEDED;
     }
+    else if (ret == GNUTLS_E_REHANDSHAKE)
+    {
+        TRACE("Rehandshake requested\n");
+        return SEC_I_RENEGOTIATE;
+    }
     else
     {
         pgnutls_perror(ret);
