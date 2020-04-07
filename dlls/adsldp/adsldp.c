@@ -1478,26 +1478,37 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
     }
 
     case ADSTYPE_INTEGER:
+    case ADSTYPE_LARGE_INTEGER:
     {
-        WCHAR **values = ldap_get_valuesW(ldap->ld, ldap_ctx->entry, name);
+        struct berval **values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
         if (!values)
             return E_ADS_COLUMN_NOT_SET;
-        count = ldap_count_valuesW(values);
+        count = ldap_count_values_len(values);
 
         col->pADsValues = heap_alloc_zero(count * sizeof(col->pADsValues[0]));
         if (!col->pADsValues)
         {
-            ldap_value_freeW(values);
+            ldap_value_free_len(values);
             return E_OUTOFMEMORY;
         }
 
         for (i = 0; i < count; i++)
         {
-            col->pADsValues[i].u.Integer = wcstol(values[i], NULL, 10);
-            TRACE("%s => %d\n", debugstr_w(values[i]), col->pADsValues[i].u.Integer);
+            col->pADsValues[i].dwType = type;
+
+            if (type == ADSTYPE_LARGE_INTEGER)
+            {
+                col->pADsValues[i].u.LargeInteger.QuadPart = _atoi64(values[i]->bv_val);
+                TRACE("%s => %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len), wine_dbgstr_longlong(col->pADsValues[i].u.LargeInteger.QuadPart));
+            }
+            else
+            {
+                col->pADsValues[i].u.Integer = atol(values[i]->bv_val);
+                TRACE("%s => %d\n", debugstr_an(values[i]->bv_val, values[i]->bv_len), col->pADsValues[i].u.Integer);
+            }
         }
 
-        ldap_value_freeW(values);
+        ldap_value_free_len(values);
         col->hReserved = NULL;
         break;
     }
