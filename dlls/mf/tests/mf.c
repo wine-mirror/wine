@@ -2702,6 +2702,11 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
     IUnknown_Release(unk);
 
+    /* Events */
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&unk);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     /* Shutdown */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
