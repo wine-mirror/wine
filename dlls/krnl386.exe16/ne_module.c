@@ -1462,7 +1462,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!_strnicmp(loadedfn, s, -1))
+	if (!stricmp(loadedfn, s))
 	    return hModule;
     }
     return 0;
@@ -1782,7 +1782,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
             loadedfn--;
         }
         /* case insensitive compare ... */
-        if (!_strnicmp(loadedfn, s, -1))
+        if (!stricmp(loadedfn, s))
             return hModule;
     }
     /* If basename (without ext) matches the module name of a module:

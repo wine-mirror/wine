@@ -179,11 +179,11 @@ static BOOL check_list( const char *module, int ordinal, const char *func, const
             if (_strnicmp( module, *list, len-1 ) || module[len]) continue;
             if (p[1] == '*' && !p[2]) return TRUE;
             if (!strcmp( ord_str, p + 1 )) return TRUE;
-            if (func && !_strnicmp( func, p + 1, -1 )) return TRUE;
+            if (func && !stricmp( func, p + 1 )) return TRUE;
         }
         else  /* function only */
         {
-            if (func && !_strnicmp( func, *list, -1 )) return TRUE;
+            if (func && !stricmp( func, *list )) return TRUE;
         }
     }
     return FALSE;
