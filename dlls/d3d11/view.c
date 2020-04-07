@@ -1212,9 +1212,6 @@ static void wined3d_depth_stencil_view_desc_from_d3d11(struct wined3d_view_desc 
 {
     wined3d_desc->format_id = wined3dformat_from_dxgi_format(desc->Format);
 
-    if (desc->Flags)
-        FIXME("Unhandled depth stencil view flags %#x.\n", desc->Flags);
-
     wined3d_desc->flags = 0;
     if (desc->Flags & D3D11_DSV_READ_ONLY_DEPTH)
         wined3d_desc->flags |= WINED3D_VIEW_READ_ONLY_DEPTH;
