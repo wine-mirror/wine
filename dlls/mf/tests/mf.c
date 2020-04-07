@@ -2634,10 +2634,11 @@ static void test_sar(void)
     IMFPresentationTimeSource *time_source;
     IMFClockStateSink *state_sink;
     IMFMediaSink *sink, *sink2;
+    IMFStreamSink *stream_sink;
     IMFActivate *activate;
     MFCLOCK_STATE state;
+    DWORD flags, count;
     IMFClock *clock;
-    DWORD flags;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -2679,6 +2680,38 @@ if (SUCCEEDED(hr))
 
     IMFPresentationTimeSource_Release(time_source);
 }
+    hr = IMFMediaSink_AddStreamSink(sink, 123, NULL, &stream_sink);
+    ok(hr == MF_E_STREAMSINKS_FIXED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_RemoveStreamSink(sink, 0);
+    ok(hr == MF_E_STREAMSINKS_FIXED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    /* Shutdown */
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_AddStreamSink(sink, 123, NULL, &stream_sink);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_RemoveStreamSink(sink, 0);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkCount(sink, &count);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
     IMFMediaSink_Release(sink);
 
     /* Activation */

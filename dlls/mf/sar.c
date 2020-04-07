@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include "mfidl.h"
+#include "mferror.h"
 #include "mf_private.h"
 
 #include "wine/debug.h"
@@ -30,6 +31,8 @@ struct audio_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
     LONG refcount;
+    BOOL is_shut_down;
+    CRITICAL_SECTION cs;
 };
 
 static struct audio_renderer *impl_from_IMFMediaSink(IMFMediaSink *iface)
@@ -70,7 +73,10 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
+    }
 
     return refcount;
 }
@@ -85,23 +91,37 @@ static HRESULT WINAPI audio_renderer_sink_GetCharacteristics(IMFMediaSink *iface
 static HRESULT WINAPI audio_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWORD stream_sink_id,
     IMFMediaType *media_type, IMFStreamSink **stream_sink)
 {
-    FIXME("%p, %#x, %p, %p.\n", iface, stream_sink_id, media_type, stream_sink);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p, %p.\n", iface, stream_sink_id, media_type, stream_sink);
+
+    return renderer->is_shut_down ? MF_E_SHUTDOWN : MF_E_STREAMSINKS_FIXED;
 }
 
 static HRESULT WINAPI audio_renderer_sink_RemoveStreamSink(IMFMediaSink *iface, DWORD stream_sink_id)
 {
-    FIXME("%p, %#x.\n", iface, stream_sink_id);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, stream_sink_id);
+
+    return renderer->is_shut_down ? MF_E_SHUTDOWN : MF_E_STREAMSINKS_FIXED;
 }
 
 static HRESULT WINAPI audio_renderer_sink_GetStreamSinkCount(IMFMediaSink *iface, DWORD *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_POINTER;
+
+    if (renderer->is_shut_down)
+        return MF_E_SHUTDOWN;
+
+    *count = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_renderer_sink_GetStreamSinkByIndex(IMFMediaSink *iface, DWORD index,
@@ -136,9 +156,18 @@ static HRESULT WINAPI audio_renderer_sink_GetPresentationClock(IMFMediaSink *ifa
 
 static HRESULT WINAPI audio_renderer_sink_Shutdown(IMFMediaSink *iface)
 {
-    FIXME("%p.\n", iface);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (renderer->is_shut_down)
+        return MF_E_SHUTDOWN;
+
+    EnterCriticalSection(&renderer->cs);
+    renderer->is_shut_down = TRUE;
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static const IMFMediaSinkVtbl audio_renderer_sink_vtbl =
@@ -168,6 +197,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
 
     renderer->IMFMediaSink_iface.lpVtbl = &audio_renderer_sink_vtbl;
     renderer->refcount = 1;
+    InitializeCriticalSection(&renderer->cs);
 
     *obj = (IUnknown *)&renderer->IMFMediaSink_iface;
 
