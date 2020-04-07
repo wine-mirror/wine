@@ -1528,6 +1528,50 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
         col->hReserved = values;
         break;
     }
+
+    case ADSTYPE_UTC_TIME:
+    {
+        struct berval **values = ldap_get_values_lenW(ldap->ld, ldap_ctx->entry, name);
+        if (!values)
+            return E_ADS_COLUMN_NOT_SET;
+        count = ldap_count_values_len(values);
+
+        col->pADsValues = heap_alloc_zero(count * sizeof(col->pADsValues[0]));
+        if (!col->pADsValues)
+        {
+            ldap_value_free_len(values);
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < count; i++)
+        {
+            col->pADsValues[i].dwType = type;
+            if (values[i]->bv_len < 14 ||
+                _snscanf_l(values[i]->bv_val, values[i]->bv_len, "%04u%02u%02u%02u%02u%02u", NULL,
+                           &col->pADsValues[i].u.UTCTime.wYear, &col->pADsValues[i].u.UTCTime.wMonth,
+                           &col->pADsValues[i].u.UTCTime.wDay, &col->pADsValues[i].u.UTCTime.wHour,
+                           &col->pADsValues[i].u.UTCTime.wMinute, &col->pADsValues[i].u.UTCTime.wSecond) != 6)
+            {
+                FIXME("not recognized UTCTime: %s\n", debugstr_an(values[i]->bv_val, values[i]->bv_len));
+                memset(&col->pADsValues[i].u.UTCTime, 0, sizeof(col->pADsValues[i].u.UTCTime));
+                continue;
+            }
+
+            if ((values[i]->bv_val[14] != '.' && values[i]->bv_val[14] != ',') ||
+                values[i]->bv_val[15] != '0' || values[i]->bv_val[16] != 'Z')
+                    FIXME("not handled time zone: %s\n", debugstr_an(values[i]->bv_val + 14, values[i]->bv_len - 14));
+
+            TRACE("%s => %02u.%02u.%04u %02u:%02u:%02u\n", debugstr_an(values[i]->bv_val, values[i]->bv_len),
+                  col->pADsValues[i].u.UTCTime.wDay, col->pADsValues[i].u.UTCTime.wMonth,
+                  col->pADsValues[i].u.UTCTime.wYear, col->pADsValues[i].u.UTCTime.wHour,
+                  col->pADsValues[i].u.UTCTime.wMinute, col->pADsValues[i].u.UTCTime.wSecond);
+        }
+
+        ldap_value_free_len(values);
+        col->hReserved = NULL;
+        break;
+    }
+
     }
 
     col->dwADsType = type;

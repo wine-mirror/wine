@@ -93,6 +93,8 @@ ADSTYPEENUM get_schema_type(const WCHAR *name, const struct attribute_type *at, 
         return ADSTYPE_DN_STRING;
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.15"))
         return ADSTYPE_CASE_IGNORE_STRING;
+    if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.24"))
+        return ADSTYPE_UTC_TIME;
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.27"))
         return ADSTYPE_INTEGER;
     if (!wcscmp(type->syntax, L"1.3.6.1.4.1.1466.115.121.1.38"))
