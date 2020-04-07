@@ -1063,7 +1063,7 @@ static BOOL add_accept_types_header( struct request *request, const WCHAR **type
     if (!types) return TRUE;
     while (*types)
     {
-        if (!process_header( request, L"Accept", *types, flags, TRUE )) return FALSE;
+        if (process_header( request, L"Accept", *types, flags, TRUE )) return FALSE;
         types++;
     }
     return TRUE;

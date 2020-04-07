@@ -256,27 +256,27 @@ void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDD
 void close_connection( struct request * ) DECLSPEC_HIDDEN;
 
 void netconn_close( struct netconn * ) DECLSPEC_HIDDEN;
-struct netconn *netconn_create( struct hostdata *, const struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
+DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, struct netconn ** ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( struct netconn * ) DECLSPEC_HIDDEN;
-BOOL netconn_recv( struct netconn *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
-BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
-BOOL netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL ) DECLSPEC_HIDDEN;
-BOOL netconn_send( struct netconn *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
+DWORD netconn_recv( struct netconn *, void *, size_t, int, int * ) DECLSPEC_HIDDEN;
+DWORD netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_storage *, int ) DECLSPEC_HIDDEN;
+DWORD netconn_secure_connect( struct netconn *, WCHAR *, DWORD, CredHandle *, BOOL ) DECLSPEC_HIDDEN;
+DWORD netconn_send( struct netconn *, const void *, size_t, int * ) DECLSPEC_HIDDEN;
 DWORD netconn_set_timeout( struct netconn *, BOOL, int ) DECLSPEC_HIDDEN;
 BOOL netconn_is_alive( struct netconn * ) DECLSPEC_HIDDEN;
 const void *netconn_get_certificate( struct netconn * ) DECLSPEC_HIDDEN;
 int netconn_get_cipher_strength( struct netconn * ) DECLSPEC_HIDDEN;
 
 BOOL set_cookies( struct request *, const WCHAR * ) DECLSPEC_HIDDEN;
-BOOL add_cookie_headers( struct request * ) DECLSPEC_HIDDEN;
-BOOL add_request_headers( struct request *, const WCHAR *, DWORD, DWORD ) DECLSPEC_HIDDEN;
+DWORD add_cookie_headers( struct request * ) DECLSPEC_HIDDEN;
+DWORD add_request_headers( struct request *, const WCHAR *, DWORD, DWORD ) DECLSPEC_HIDDEN;
 void destroy_cookies( struct session * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( struct connect *, const WCHAR *, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
 void release_host( struct hostdata * ) DECLSPEC_HIDDEN;
-BOOL process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOOL ) DECLSPEC_HIDDEN;
+DWORD process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOOL ) DECLSPEC_HIDDEN;
 
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;
