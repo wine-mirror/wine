@@ -2094,7 +2094,7 @@ static int fetch_data(struct gdb_context* gdbctx)
 #define FLAG_NO_START   1
 #define FLAG_WITH_XTERM 2
 
-static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
+static BOOL gdb_exec(unsigned port, unsigned flags)
 {
     char            buf[MAX_PATH];
     int             fd;
@@ -2108,7 +2108,6 @@ static BOOL gdb_exec(const char* wine_path, unsigned port, unsigned flags)
     fd = mkstemps(buf, 0);
     if (fd == -1) return FALSE;
     if ((f = fdopen(fd, "w+")) == NULL) return FALSE;
-    fprintf(f, "file \"%s\"\n", wine_path);
     fprintf(f, "target remote localhost:%d\n", ntohs(port));
     fprintf(f, "set prompt Wine-gdb>\\ \n");
     /* gdb 5.1 seems to require it, won't hurt anyway */
@@ -2138,7 +2137,6 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
     struct sockaddr_in  s_addrs = {0};
     socklen_t           s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
-    IMAGEHLP_MODULE64   imh_mod;
     BOOL                ret = FALSE;
 
     /* step 1: create socket for gdb connection request */
@@ -2160,11 +2158,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
     /* step 2: do the process internal creation */
     handle_debug_event(gdbctx);
 
-    /* step3: get the wine loader name */
-    if (!dbg_get_debuggee_info(gdbctx->process->handle, &imh_mod))
-        goto cleanup;
-
-    /* step 4: fire up gdb (if requested) */
+    /* step 3: fire up gdb (if requested) */
     if (flags & FLAG_NO_START)
         fprintf(stderr, "target remote localhost:%d\n", ntohs(s_addrs.sin_port));
     else
@@ -2177,12 +2171,12 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
             signal(SIGINT, SIG_IGN);
             break;
         case 0: /* in child... and alive */
-            gdb_exec(imh_mod.LoadedImageName, s_addrs.sin_port, flags);
+            gdb_exec(s_addrs.sin_port, flags);
             /* if we're here, exec failed, so report failure */
             goto cleanup;
         }
 
-    /* step 5: wait for gdb to connect actually */
+    /* step 4: wait for gdb to connect actually */
     pollfd.fd = sock;
     pollfd.events = POLLIN;
     pollfd.revents = 0;
