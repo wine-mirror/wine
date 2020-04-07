@@ -232,6 +232,7 @@ SOURCES = \
 	dplobby8.h \
 	dpnathlp.h \
 	drmexternals.idl \
+	dsclient.h \
 	dsconf.h \
 	dsgetdc.h \
 	dshow.h \
