@@ -22,6 +22,8 @@
 #include "mfidl.h"
 #include "mferror.h"
 #include "mf_private.h"
+#include "initguid.h"
+#include "mmdeviceapi.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -447,9 +449,55 @@ static const IMFClockStateSinkVtbl audio_renderer_clock_sink_vtbl =
     audio_renderer_clock_sink_OnClockSetRate,
 };
 
+static HRESULT sar_create_mmdevice(IMFAttributes *attributes, IMMDevice **device)
+{
+    WCHAR *endpoint;
+    unsigned int length, role = eMultimedia;
+    IMMDeviceEnumerator *devenum;
+    HRESULT hr;
+
+    if (attributes)
+    {
+        /* Mutually exclusive attributes. */
+        if (SUCCEEDED(IMFAttributes_GetItem(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE, NULL)) &&
+                SUCCEEDED(IMFAttributes_GetItem(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, NULL)))
+        {
+            return E_INVALIDARG;
+        }
+    }
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator,
+            (void **)&devenum)))
+    {
+        return hr;
+    }
+
+    role = eMultimedia;
+    if (attributes && SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE, &role)))
+        TRACE("Specified role %d.\n", role);
+
+    if (attributes && SUCCEEDED(IMFAttributes_GetAllocatedString(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID,
+            &endpoint, &length)))
+    {
+        TRACE("Specified end point %s.\n", debugstr_w(endpoint));
+        hr = IMMDeviceEnumerator_GetDevice(devenum, endpoint, device);
+        CoTaskMemFree(endpoint);
+    }
+    else
+        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, role, device);
+
+    if (FAILED(hr))
+        hr = MF_E_NO_AUDIO_PLAYBACK_DEVICE;
+
+    IMMDeviceEnumerator_Release(devenum);
+
+    return hr;
+}
+
 static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct audio_renderer *renderer;
+    IMMDevice *device;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
@@ -466,6 +514,11 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
 
     if (FAILED(hr = MFCreateEventQueue(&renderer->event_queue)))
         goto failed;
+
+    if (FAILED(hr = sar_create_mmdevice(attributes, &device)))
+        goto failed;
+
+    IMMDevice_Release(device);
 
     *obj = (IUnknown *)&renderer->IMFMediaSink_iface;
 

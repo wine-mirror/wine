@@ -38,6 +38,7 @@ DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 
 #include "mfapi.h"
 #include "mferror.h"
 #include "mfidl.h"
+#include "mmdeviceapi.h"
 
 #include "wine/test.h"
 
@@ -2636,6 +2637,7 @@ static void test_sar(void)
     IMFClockStateSink *state_sink;
     IMFMediaSink *sink, *sink2;
     IMFStreamSink *stream_sink;
+    IMFAttributes *attributes;
     IMFActivate *activate;
     MFCLOCK_STATE state;
     DWORD flags, count;
@@ -2822,6 +2824,31 @@ todo_wine
 
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
+
+    /* SAR attributes */
+    hr = MFCreateAttributes(&attributes, 0);
+    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+
+    /* Specify role. */
+    hr = IMFAttributes_SetUINT32(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE, eMultimedia);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateAudioRenderer(attributes, &sink);
+    ok(hr == S_OK, "Failed to create a sink, hr %#x.\n", hr);
+    IMFMediaSink_Release(sink);
+
+    /* Invalid endpoint. */
+    hr = IMFAttributes_SetString(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, L"endpoint");
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateAudioRenderer(attributes, &sink);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_DeleteItem(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE);
+    ok(hr == S_OK, "Failed to remove attribute, hr %#x.\n", hr);
+
+    hr = MFCreateAudioRenderer(attributes, &sink);
+    ok(hr == MF_E_NO_AUDIO_PLAYBACK_DEVICE, "Failed to create a sink, hr %#x.\n", hr);
 
     CoUninitialize();
 }
