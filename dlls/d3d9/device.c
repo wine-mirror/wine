@@ -1571,7 +1571,7 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, unsigned i
 
     if (user_mem)
         wined3d_texture_update_desc(texture, width, height, desc.format,
-                wined3d_multisample_type_from_d3d(multisample_type), multisample_quality, user_mem, 0);
+                multisample_type, multisample_quality, user_mem, 0);
 
     wined3d_texture_decref(texture);
 
