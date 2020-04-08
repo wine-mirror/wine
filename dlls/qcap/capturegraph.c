@@ -540,9 +540,9 @@ static HRESULT find_unconnected_source_from_pin(CaptureGraphImpl *capture_graph,
 static HRESULT find_unconnected_source_from_filter(CaptureGraphImpl *capture_graph,
         const GUID *category, const GUID *majortype, IBaseFilter *filter, IPin **ret)
 {
+    IEnumPins *enumpins;
     IPin *pin, *peer;
     HRESULT hr;
-    int index;
 
     if (category && (IsEqualGUID(category, &PIN_CATEGORY_CAPTURE)
             || IsEqualGUID(category, &PIN_CATEGORY_PREVIEW)))
@@ -561,14 +561,20 @@ static HRESULT find_unconnected_source_from_filter(CaptureGraphImpl *capture_gra
         return E_INVALIDARG;
     }
 
-    for (index = 0; SUCCEEDED(ICaptureGraphBuilder2_FindPin(&capture_graph->ICaptureGraphBuilder2_iface,
-            (IUnknown *)filter, PINDIR_OUTPUT, category, majortype, FALSE, index, &pin)); ++index)
+    if (FAILED(hr = IBaseFilter_EnumPins(filter, &enumpins)))
+        return hr;
+
+    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
     {
-        hr = find_unconnected_source_from_pin(capture_graph, category, majortype, pin, ret);
-        IPin_Release(pin);
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr = find_unconnected_source_from_pin(capture_graph, category, majortype, pin, ret)))
+        {
+            IEnumPins_Release(enumpins);
+            IPin_Release(pin);
             return hr;
+        }
+        IPin_Release(pin);
     }
+    IEnumPins_Release(enumpins);
 
     return E_INVALIDARG;
 }
