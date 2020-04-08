@@ -1165,6 +1165,7 @@ struct testfilter
     ULONG misc_flags;
 
     IMediaSeeking IMediaSeeking_iface;
+    LONG seeking_ref;
     DWORD seek_caps;
     BOOL support_testguid;
     LONGLONG seek_duration, seek_current, seek_stop;
@@ -1525,12 +1526,14 @@ static HRESULT WINAPI testseek_QueryInterface(IMediaSeeking *iface, REFIID iid, 
 static ULONG WINAPI testseek_AddRef(IMediaSeeking *iface)
 {
     struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    InterlockedIncrement(&filter->seeking_ref);
     return InterlockedIncrement(&filter->ref);
 }
 
 static ULONG WINAPI testseek_Release(IMediaSeeking *iface)
 {
     struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    InterlockedDecrement(&filter->seeking_ref);
     return InterlockedDecrement(&filter->ref);
 }
 
@@ -3530,14 +3533,20 @@ static void test_ec_complete(void)
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+
     filter1_pin.dir = PINDIR_OUTPUT;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+
     filter1.IMediaSeeking_iface.lpVtbl = NULL;
     filter1_pin.dir = PINDIR_INPUT;
     filter1.pin_count = 1;
@@ -3769,6 +3778,8 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
@@ -4082,10 +4093,16 @@ static void test_graph_seeking(void)
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);
     IMediaSeeking_Release(seeking);
+
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
+
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", hr);
     ok(filter1.ref == 1, "Got outstanding refcount %d.\n", filter1.ref);
     ok(filter2.ref == 1, "Got outstanding refcount %d.\n", filter2.ref);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 }
 
 static void test_default_sync_source(void)
