@@ -121,7 +121,7 @@
 @ stub MFInitMediaTypeFromMPEG2VideoInfo
 @ stub MFInitMediaTypeFromVideoInfoHeader2
 @ stub MFInitMediaTypeFromVideoInfoHeader
-@ stub MFInitMediaTypeFromWaveFormatEx
+@ stdcall MFInitMediaTypeFromWaveFormatEx(ptr ptr long)
 @ stub MFInitVideoFormat
 @ stub MFInitVideoFormat_RGB
 @ stdcall MFInvokeCallback(ptr)

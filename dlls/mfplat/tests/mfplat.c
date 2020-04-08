@@ -5084,6 +5084,102 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     IMFMediaType_Release(media_type);
 }
 
+static void validate_media_type(IMFMediaType *mediatype, const WAVEFORMATEX *format)
+{
+    GUID guid, subtype;
+    UINT32 value;
+    HRESULT hr;
+
+    hr = IMFMediaType_GetMajorType(mediatype, &guid);
+    ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type %s.\n", wine_dbgstr_guid(&guid));
+
+    hr = IMFMediaType_GetGUID(mediatype, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Failed to get subtype, hr %#x.\n", hr);
+
+    if (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+    }
+    else
+    {
+        memcpy(&subtype, &MFAudioFormat_Base, sizeof(subtype));
+        subtype.Data1 = format->wFormatTag;
+        ok(IsEqualGUID(&guid, &subtype), "Unexpected subtype %s.\n", wine_dbgstr_guid(&guid));
+
+        if (format->nChannels)
+        {
+            hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value);
+            ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+            ok(value == format->nChannels, "Unexpected NUM_CHANNELS %u.\n", value);
+        }
+
+        if (format->nSamplesPerSec)
+        {
+            hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &value);
+            ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+            ok(value == format->nSamplesPerSec, "Unexpected SAMPLES_PER_SECOND %u.\n", value);
+        }
+
+        if (format->nAvgBytesPerSec)
+        {
+            hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &value);
+            ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+            ok(value == format->nAvgBytesPerSec, "Unexpected AVG_BYTES_PER_SECOND %u.\n", value);
+        }
+
+        if (format->nBlockAlign)
+        {
+            hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &value);
+            ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+            ok(value == format->nBlockAlign, "Unexpected BLOCK_ALIGNMENT %u.\n", value);
+        }
+
+        if (format->wBitsPerSample)
+        {
+            hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, &value);
+            ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+            ok(value == format->wBitsPerSample, "Unexpected BITS_PER_SAMPLE %u.\n", value);
+        }
+
+        hr = IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, &value);
+        ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+        ok(value, "Unexpected value.\n");
+    }
+
+    /* Only set for uncompressed formats. */
+    if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value)))
+        ok(value, "Unexpected ALL_SAMPLES_INDEPENDENT value.\n");
+}
+
+static void test_MFInitMediaTypeFromWaveFormatEx(void)
+{
+    static const WAVEFORMATEX waveformatex_tests[] =
+    {
+        { WAVE_FORMAT_PCM, 2, 44100, 0, 2, 8 },
+        { WAVE_FORMAT_PCM, 2, 44100, 1, 2, 8 },
+        { WAVE_FORMAT_PCM, 0, 44100, 0, 0, 0 },
+        { WAVE_FORMAT_PCM, 0,     0, 0, 0, 0 },
+        { 1234, 0,     0, 0, 0, 0 },
+        { WAVE_FORMAT_MPEGLAYER3, 0, 0, 0, 0, 0 },
+    };
+    IMFMediaType *mediatype;
+    unsigned int i;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create mediatype, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(waveformatex_tests); ++i)
+    {
+        hr = MFInitMediaTypeFromWaveFormatEx(mediatype, &waveformatex_tests[i], sizeof(waveformatex_tests[i]));
+        ok(hr == S_OK, "Failed to initialize media type, hr %#x.\n", hr);
+
+        validate_media_type(mediatype, &waveformatex_tests[i]);
+    }
+
+    IMFMediaType_Release(mediatype);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -5138,6 +5234,7 @@ START_TEST(mfplat)
     test_MFGetStrideForBitmapInfoHeader();
     test_MFCreate2DMediaBuffer();
     test_MFCreateMediaBufferFromMediaType();
+    test_MFInitMediaTypeFromWaveFormatEx();
 
     CoUninitialize();
 }

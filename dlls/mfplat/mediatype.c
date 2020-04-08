@@ -2089,3 +2089,74 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
 
     return S_OK;
 }
+
+static void mediatype_set_uint32(IMFMediaType *mediatype, const GUID *attr, unsigned int value, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetUINT32(mediatype, attr, value);
+}
+
+static void mediatype_set_guid(IMFMediaType *mediatype, const GUID *attr, const GUID *value, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetGUID(mediatype, attr, value);
+}
+
+/***********************************************************************
+ *      MFInitMediaTypeFromWaveFormatEx (mfplat.@)
+ */
+HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WAVEFORMATEX *format, UINT32 size)
+{
+    GUID subtype;
+    HRESULT hr;
+
+    TRACE("%p, %p, %u.\n", mediatype, format, size);
+
+    if (!mediatype || !format)
+        return E_POINTER;
+
+    if (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        FIXME("WAVE_FORMAT_EXTENSIBLE is not supported.\n");
+        return E_NOTIMPL;
+    }
+    else
+    {
+        hr = IMFMediaType_DeleteAllItems(mediatype);
+
+        mediatype_set_guid(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio, &hr);
+
+        memcpy(&subtype, &MFAudioFormat_Base, sizeof(subtype));
+        subtype.Data1 = format->wFormatTag;
+        mediatype_set_guid(mediatype, &MF_MT_SUBTYPE, &subtype, &hr);
+
+        if (format->nChannels)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, format->nChannels, &hr);
+
+        if (format->nSamplesPerSec)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_SAMPLES_PER_SECOND, format->nSamplesPerSec, &hr);
+
+        if (format->nAvgBytesPerSec)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, format->nAvgBytesPerSec, &hr);
+
+        if (format->nBlockAlign)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_BLOCK_ALIGNMENT, format->nBlockAlign, &hr);
+
+        if (format->wBitsPerSample)
+            mediatype_set_uint32(mediatype, &MF_MT_AUDIO_BITS_PER_SAMPLE, format->wBitsPerSample, &hr);
+
+        mediatype_set_uint32(mediatype, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1, &hr);
+    }
+
+    switch (subtype.Data1)
+    {
+        case WAVE_FORMAT_PCM:
+        case WAVE_FORMAT_IEEE_FLOAT:
+            mediatype_set_uint32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
+            break;
+        default:
+            FIXME("Unhandled type %d.\n", subtype.Data1);
+    }
+
+    return hr;
+}
