@@ -2635,10 +2635,10 @@ static void test_quality_manager(void)
 static void test_sar(void)
 {
     IMFPresentationClock *present_clock, *present_clock2;
+    IMFMediaTypeHandler *handler, *handler2;
     IMFPresentationTimeSource *time_source;
     IMFMediaType *mediatype, *mediatype2;
     IMFClockStateSink *state_sink;
-    IMFMediaTypeHandler *handler;
     IMFMediaSink *sink, *sink2;
     IMFStreamSink *stream_sink;
     IMFAttributes *attributes;
@@ -2765,19 +2765,26 @@ todo_wine
     IMFMediaSink_Release(sink2);
 
     hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &handler);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-if (SUCCEEDED(hr))
-{
+    hr = IMFStreamSink_QueryInterface(stream_sink, &IID_IMFMediaTypeHandler, (void **)&handler2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(handler2 == handler, "Unexpected instance.\n");
+    IMFMediaTypeHandler_Release(handler2);
+
     hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
     ok(hr == S_OK, "Failed to get major type, hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected type %s.\n", wine_dbgstr_guid(&guid));
 
+    count = 0;
     hr = IMFMediaTypeHandler_GetMediaTypeCount(handler, &count);
+todo_wine {
     ok(hr == S_OK, "Failed to get type count, hr %#x.\n", hr);
-    ok(count > 0, "Unexpected type count %u.\n", count);
+    ok(!!count, "Unexpected type count %u.\n", count);
+}
 
+if (SUCCEEDED(hr))
+{
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype);
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
