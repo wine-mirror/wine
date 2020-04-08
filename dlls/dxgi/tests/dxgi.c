@@ -121,6 +121,14 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
+static void get_virtual_rect(RECT *rect)
+{
+    rect->left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    rect->top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    rect->right = rect->left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    rect->bottom = rect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+}
+
 #define check_interface(a, b, c, d) check_interface_(__LINE__, a, b, c, d)
 static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid,
         BOOL supported, BOOL is_broken)
@@ -5994,6 +6002,156 @@ done:
     ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
 }
 
+static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
+{
+    unsigned int adapter_idx, output_idx, mode_idx, mode_count;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    DXGI_OUTPUT_DESC output_desc;
+    IDXGIAdapter *adapter = NULL;
+    RECT virtual_rect, clip_rect;
+    unsigned int width, height;
+    IDXGISwapChain *swapchain;
+    DXGI_MODE_DESC *modes;
+    IDXGIFactory *factory;
+    IDXGIOutput *output;
+    ULONG refcount;
+    HRESULT hr;
+
+    get_factory(device, is_d3d12, &factory);
+
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+    for (adapter_idx = 0; SUCCEEDED(IDXGIFactory_EnumAdapters(factory, adapter_idx, &adapter));
+            ++adapter_idx)
+    {
+        for (output_idx = 0; SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, output_idx, &output));
+                ++output_idx)
+        {
+            hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count,
+                    NULL);
+            ok(SUCCEEDED(hr) || broken(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE), /* Win 7 TestBots */
+                    "Adapter %u output %u: GetDisplayModeList failed, hr %#x.\n", adapter_idx,
+                    output_idx, hr);
+            if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+            {
+                win_skip("Adapter %u output %u: GetDisplayModeList() not supported.\n", adapter_idx,
+                        output_idx);
+                IDXGIOutput_Release(output);
+                continue;
+            }
+
+            modes = heap_calloc(mode_count, sizeof(*modes));
+            hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count,
+                    modes);
+            ok(hr == S_OK, "Adapter %u output %u: GetDisplayModeList failed, hr %#x.\n",
+                    adapter_idx, output_idx, hr);
+
+            hr = IDXGIOutput_GetDesc(output, &output_desc);
+            ok(hr == S_OK, "Adapter %u output %u: GetDesc failed, hr %#x.\n", adapter_idx,
+                    output_idx, hr);
+            width = output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left;
+            height = output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top;
+            for (mode_idx = 0; mode_idx < mode_count; ++mode_idx)
+            {
+                if (modes[mode_idx].Width != width && modes[mode_idx].Height != height)
+                    break;
+            }
+            ok(modes[mode_idx].Width != width && modes[mode_idx].Height != height,
+                    "Adapter %u output %u: Failed to find a different mode than %ux%u.\n",
+                    adapter_idx, output_idx, width, height);
+
+            ok(ClipCursor(NULL), "Adapter %u output %u: ClipCursor failed, error %#x.\n",
+                    adapter_idx, output_idx, GetLastError());
+            get_virtual_rect(&virtual_rect);
+            ok(GetClipCursor(&clip_rect),
+                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                    output_idx, GetLastError());
+            ok(EqualRect(&clip_rect, &virtual_rect),
+                    "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
+                    wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+
+            swapchain_desc.BufferDesc.Width = modes[mode_idx].Width;
+            swapchain_desc.BufferDesc.Height = modes[mode_idx].Height;
+            swapchain_desc.BufferDesc.RefreshRate = modes[mode_idx].RefreshRate;
+            swapchain_desc.BufferDesc.Format = modes[mode_idx].Format;
+            swapchain_desc.BufferDesc.ScanlineOrdering = modes[mode_idx].ScanlineOrdering;
+            swapchain_desc.BufferDesc.Scaling = modes[mode_idx].Scaling;
+            swapchain_desc.OutputWindow = create_window();
+            heap_free(modes);
+            hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc,
+                    &swapchain);
+            ok(hr == S_OK, "Adapter %u output %u: CreateSwapChain failed, hr %#x.\n",
+                    adapter_idx, output_idx, hr);
+
+            flush_events();
+            get_virtual_rect(&virtual_rect);
+            ok(GetClipCursor(&clip_rect),
+                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                    output_idx, GetLastError());
+            ok(EqualRect(&clip_rect, &virtual_rect),
+                    "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
+                    wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+            ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE ||
+                    broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
+                    "Adapter %u output %u: SetFullscreenState failed, hr %#x.\n", adapter_idx,
+                    output_idx, hr);
+            if (FAILED(hr))
+            {
+                skip("Adapter %u output %u: Could not change fullscreen state, hr %#x.\n",
+                        adapter_idx, output_idx, hr);
+                IDXGISwapChain_Release(swapchain);
+                IDXGIOutput_Release(output);
+                DestroyWindow(swapchain_desc.OutputWindow);
+                continue;
+            }
+
+            flush_events();
+            get_virtual_rect(&virtual_rect);
+            ok(GetClipCursor(&clip_rect),
+                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                    output_idx, GetLastError());
+            todo_wine_if(!EqualRect(&clip_rect, &virtual_rect))
+            ok(EqualRect(&clip_rect, &virtual_rect),
+                    "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
+                    wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#x.\n", adapter_idx,
+                    output_idx, hr);
+            refcount = IDXGISwapChain_Release(swapchain);
+            ok(!refcount, "Adapter %u output %u: IDXGISwapChain has %u references left.\n",
+                    adapter_idx, output_idx, refcount);
+            refcount = IDXGIOutput_Release(output);
+            ok(!refcount, "Adapter %u output %u: IDXGIOutput has %u references left.\n",
+                    adapter_idx, output_idx, refcount);
+            DestroyWindow(swapchain_desc.OutputWindow);
+
+            flush_events();
+            get_virtual_rect(&virtual_rect);
+            ok(GetClipCursor(&clip_rect),
+                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+                    output_idx, GetLastError());
+            todo_wine_if(!EqualRect(&clip_rect, &virtual_rect))
+            ok(EqualRect(&clip_rect, &virtual_rect),
+                    "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
+                    wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
+        }
+
+        IDXGIAdapter_Release(adapter);
+    }
+
+    refcount = IDXGIFactory_Release(factory);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -6105,6 +6263,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_swapchain_backbuffer_index);
     run_on_d3d10(test_swapchain_formats);
     run_on_d3d10(test_output_ownership);
+    run_on_d3d10(test_cursor_clipping);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -6128,6 +6287,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_swapchain_backbuffer_index);
     run_on_d3d12(test_swapchain_formats);
     run_on_d3d12(test_output_ownership);
+    run_on_d3d12(test_cursor_clipping);
 
     FreeLibrary(d3d12_module);
 }
