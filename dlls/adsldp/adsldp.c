@@ -402,6 +402,7 @@ typedef struct
         ADS_SCOPEENUM scope;
         int pagesize;
         BOOL cache_results;
+        BOOL attribtypes_only;
     } search;
 } LDAP_namespace;
 
@@ -1242,6 +1243,19 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
             prefs[i].dwStatus = ADS_STATUS_S_OK;
             break;
 
+        case ADS_SEARCHPREF_ATTRIBTYPES_ONLY:
+            if (prefs[i].vValue.dwType != ADSTYPE_BOOLEAN)
+            {
+                FIXME("ADS_SEARCHPREF_ATTRIBTYPES_ONLY: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
+                break;
+            }
+
+            TRACE("ATTRIBTYPES_ONLY: %d\n", prefs[i].vValue.u.Boolean);
+            ldap->search.attribtypes_only = prefs[i].vValue.u.Boolean;
+            prefs[i].dwStatus = ADS_STATUS_S_OK;
+            break;
+
         default:
             FIXME("pref %d, type %u: stub\n", prefs[i].dwSearchPref, prefs[i].vValue.dwType);
             prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREF;
@@ -1289,7 +1303,7 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
         props[count] = NULL;
     }
 
-    err = ldap_search_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props, FALSE, &ldap_ctx->res);
+    err = ldap_search_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props, ldap->search.attribtypes_only, &ldap_ctx->res);
     heap_free(props);
     if (err != LDAP_SUCCESS)
     {
@@ -1872,6 +1886,7 @@ static HRESULT LDAPNamespace_create(REFIID riid, void **obj)
     ldap->search.scope = ADS_SCOPE_SUBTREE;
     ldap->search.pagesize = 0;
     ldap->search.cache_results = TRUE;
+    ldap->search.attribtypes_only = FALSE;
     ldap->at = NULL;
     ldap->at_single_count = 0;
     ldap->at_multiple_count = 0;
