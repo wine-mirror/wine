@@ -1130,6 +1130,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
             }
             else error[0] = 0;
         }
+        return;
     }
 #ifdef __APPLE__
     apple_main_thread( init_func );
