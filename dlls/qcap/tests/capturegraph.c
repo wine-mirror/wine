@@ -929,12 +929,9 @@ static void test_render_stream(void)
     todo_wine ok(!transform.source1.pin.pin.peer, "Pin should not be connected.\n");
     todo_wine ok(!sink.sink1.pin.pin.peer, "Pin should not be connected.\n");
 
-    if (0)
-    {
-        hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
-                (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
-        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-    }
+    hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CC, NULL,
+            (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     disconnect_pins(graph, &source.source1);
 
@@ -983,12 +980,9 @@ static void test_render_stream(void)
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
 
-    if (0)
-    {
-        hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
-                (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-    }
+    hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
+            (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
@@ -1014,12 +1008,9 @@ static void test_render_stream(void)
     check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Preview");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
 
-    if (0)
-    {
-        hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
-                (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-        ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
-    }
+    hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_PREVIEW, NULL,
+            (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     disconnect_pins(graph, &source.source1);
     IGraphBuilder_RemoveFilter(graph, &transform.filter.IBaseFilter_iface);
@@ -1031,8 +1022,8 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
-    todo_wine check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
+    check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
+    check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     disconnect_pins(graph, &source.source1);
     IGraphBuilder_RemoveFilter(graph, &transform.filter.IBaseFilter_iface);
@@ -1062,8 +1053,8 @@ static void test_render_stream(void)
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             (IUnknown *)&source.source1.pin.pin.IPin_iface, NULL, &sink.filter.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
-    todo_wine check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
+    check_smart_tee_pin(source.source1.pin.pin.peer, L"Input");
+    check_smart_tee_pin(transform.sink1.pin.pin.peer, L"Capture");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     disconnect_pins(graph, &source.source1);
     disconnect_pins(graph, &transform.source1);
@@ -1075,9 +1066,9 @@ static void test_render_stream(void)
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&transform.filter.IBaseFilter_iface);
-    todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(&sink.filter.IBaseFilter_iface);
-    todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 START_TEST(capturegraph)
