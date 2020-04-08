@@ -1123,6 +1123,9 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
         }
     }
 
+    if (!volume->serial)
+        memcpy(&volume->serial, &volume->guid.Data4[4], sizeof(DWORD));
+
     if (!volume->mount)
         volume->mount = add_volume_mount_point( disk_device->dev_obj, &disk_device->name, &volume->guid );
     if (drive && !drive->mount)

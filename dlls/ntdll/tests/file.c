@@ -3908,7 +3908,7 @@ static void test_query_volume_information_file(void)
      io.Information);
 
     todo_wine ok(ffvi->VolumeCreationTime.QuadPart != 0, "Missing VolumeCreationTime\n");
-    todo_wine ok(ffvi->VolumeSerialNumber != 0, "Missing VolumeSerialNumber\n");
+    ok(ffvi->VolumeSerialNumber != 0, "Missing VolumeSerialNumber\n");
     ok(ffvi->SupportsObjects == 1,"expected 1, got %d\n", ffvi->SupportsObjects);
     ok(ffvi->VolumeLabelLength == lstrlenW(ffvi->VolumeLabel) * sizeof(WCHAR), "got %d\n", ffvi->VolumeLabelLength);
 
