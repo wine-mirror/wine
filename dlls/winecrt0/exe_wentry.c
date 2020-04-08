@@ -26,18 +26,82 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "crt0_private.h"
 
 extern int __cdecl wmain( int argc, WCHAR *argv[] );
 
+static WCHAR **build_argv( const WCHAR *src, int *ret_argc )
+{
+    WCHAR **argv, *arg, *dst;
+    int argc, in_quotes = 0, bcount = 0, len = lstrlenW(src) + 1;
+
+    argc = 2 + len / 2;
+    argv = HeapAlloc( GetProcessHeap(), 0, argc * sizeof(*argv) + len * sizeof(WCHAR) );
+    arg = dst = (WCHAR *)(argv + argc);
+    argc = 0;
+    while (*src)
+    {
+        if ((*src == ' ' || *src == '\t') && !in_quotes)
+        {
+            /* skip the remaining spaces */
+            while (*src == ' ' || *src == '\t') src++;
+            if (!*src) break;
+            /* close the argument and copy it */
+            *dst++ = 0;
+            argv[argc++] = arg;
+            /* start with a new argument */
+            arg = dst;
+            bcount = 0;
+        }
+        else if (*src == '\\')
+        {
+            *dst++ = *src++;
+            bcount++;
+        }
+        else if (*src == '"')
+        {
+            if ((bcount & 1) == 0)
+            {
+                /* Preceded by an even number of '\', this is half that
+                 * number of '\', plus a '"' which we discard.
+                 */
+                dst -= bcount / 2;
+                src++;
+                if (in_quotes && *src == '"') *dst++ = *src++;
+                else in_quotes = !in_quotes;
+            }
+            else
+            {
+                /* Preceded by an odd number of '\', this is half that
+                 * number of '\' followed by a '"'
+                 */
+                dst -= bcount / 2 + 1;
+                *dst++ = *src++;
+            }
+            bcount = 0;
+        }
+        else  /* a regular character */
+        {
+            *dst++ = *src++;
+            bcount = 0;
+        }
+    }
+    *dst = 0;
+    argv[argc++] = arg;
+    argv[argc] = NULL;
+    *ret_argc = argc;
+    return argv;
+}
+
 DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_wentry( PEB *peb )
 {
+    int argc;
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
+    WCHAR **argv = build_argv( GetCommandLineW(), &argc );
     DWORD ret;
 
     if (needs_init) _init( 0, NULL, NULL );
-    ret = wmain( __wine_main_argc, __wine_main_wargv );
+    ret = wmain( argc, argv );
     if (needs_init) _fini();
     ExitProcess( ret );
 }

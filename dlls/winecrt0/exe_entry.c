@@ -25,43 +25,83 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "crt0_private.h"
 
 extern int __cdecl main( int argc, char *argv[] );
 
-static char **build_argv( WCHAR **wargv )
+static char **build_argv( const char *src, int *ret_argc )
 {
-    int argc;
-    char *p, **argv;
-    DWORD total = 0;
+    char **argv, *arg, *dst;
+    int argc, in_quotes = 0, bcount = 0, len = strlen(src) + 1;
 
-    for (argc = 0; wargv[argc]; argc++)
-        total += WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, NULL, 0, NULL, NULL );
-
-    argv = HeapAlloc( GetProcessHeap(), 0, total + (argc + 1) * sizeof(*argv) );
-    p = (char *)(argv + argc + 1);
-    for (argc = 0; wargv[argc]; argc++)
+    argc = 2 + len / 2;
+    argv = HeapAlloc( GetProcessHeap(), 0, argc * sizeof(*argv) + len );
+    arg = dst = (char *)(argv + argc);
+    argc = 0;
+    while (*src)
     {
-        DWORD reslen = WideCharToMultiByte( CP_ACP, 0, wargv[argc], -1, p, total, NULL, NULL );
-        argv[argc] = p;
-        p += reslen;
-        total -= reslen;
+        if ((*src == ' ' || *src == '\t') && !in_quotes)
+        {
+            /* skip the remaining spaces */
+            while (*src == ' ' || *src == '\t') src++;
+            if (!*src) break;
+            /* close the argument and copy it */
+            *dst++ = 0;
+            argv[argc++] = arg;
+            /* start with a new argument */
+            arg = dst;
+            bcount = 0;
+        }
+        else if (*src == '\\')
+        {
+            *dst++ = *src++;
+            bcount++;
+        }
+        else if (*src == '"')
+        {
+            if ((bcount & 1) == 0)
+            {
+                /* Preceded by an even number of '\', this is half that
+                 * number of '\', plus a '"' which we discard.
+                 */
+                dst -= bcount / 2;
+                src++;
+                if (in_quotes && *src == '"') *dst++ = *src++;
+                else in_quotes = !in_quotes;
+            }
+            else
+            {
+                /* Preceded by an odd number of '\', this is half that
+                 * number of '\' followed by a '"'
+                 */
+                dst -= bcount / 2 + 1;
+                *dst++ = *src++;
+            }
+            bcount = 0;
+        }
+        else  /* a regular character */
+        {
+            *dst++ = *src++;
+            bcount = 0;
+        }
     }
+    *dst = 0;
+    argv[argc++] = arg;
     argv[argc] = NULL;
+    *ret_argc = argc;
     return argv;
 }
 
 DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_entry( PEB *peb )
 {
+    int argc;
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
-    char **argv = build_argv( __wine_main_wargv );
+    char **argv = build_argv( GetCommandLineA(), &argc );
     DWORD ret;
 
-    if (needs_init) _init( __wine_main_argc, argv, NULL );
-    ret = main( __wine_main_argc, argv );
+    if (needs_init) _init( argc, argv, NULL );
+    ret = main( argc, argv );
     if (needs_init) _fini();
     ExitProcess( ret );
 }
