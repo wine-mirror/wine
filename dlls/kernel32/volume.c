@@ -2117,21 +2117,58 @@ BOOL WINAPI SetVolumeMountPointW(LPCWSTR path, LPCWSTR volume)
 /***********************************************************************
  *           GetVolumeInformationByHandleW (KERNEL32.@)
  */
-BOOL WINAPI GetVolumeInformationByHandleW(HANDLE handle, WCHAR *volnamebuf, DWORD volnamesize, DWORD *volserial, DWORD *maxlength, DWORD *flags, WCHAR *fsnamebuf, DWORD fsnamesize)
+BOOL WINAPI GetVolumeInformationByHandleW( HANDLE handle, WCHAR *label, DWORD label_len,
+                                           DWORD *serial, DWORD *filename_len, DWORD *flags,
+                                           WCHAR *fsname, DWORD fsname_len )
 {
-    FIXME("%p %p %d %p %p %p %p %d\n", handle, volnamebuf, volnamesize, volserial, maxlength, flags, fsnamebuf, fsnamesize);
+    IO_STATUS_BLOCK io;
 
-    if(volnamebuf && volnamesize)
-        *volnamebuf = 0;
-    if(volserial)
-        *volserial = 0;
-    if(maxlength)
-        *maxlength = 0;
-    if(flags)
-        *flags = 0;
-    if(fsnamebuf && fsnamesize)
-        *fsnamebuf = 0;
+    TRACE( "%p\n", handle );
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    if (label || serial)
+    {
+        char buffer[sizeof(FILE_FS_VOLUME_INFORMATION) + MAX_PATH * sizeof(WCHAR)];
+        FILE_FS_VOLUME_INFORMATION *info = (FILE_FS_VOLUME_INFORMATION *)buffer;
+
+        if (!set_ntstatus( NtQueryVolumeInformationFile( handle, &io, info, sizeof(buffer),
+                                                         FileFsVolumeInformation ) ))
+            return FALSE;
+
+        if (label)
+        {
+            if (label_len < info->VolumeLabelLength / sizeof(WCHAR) + 1)
+            {
+                SetLastError( ERROR_BAD_LENGTH );
+                return FALSE;
+            }
+            memcpy( label, info->VolumeLabel, info->VolumeLabelLength );
+            label[info->VolumeLabelLength / sizeof(WCHAR)] = 0;
+        }
+        if (serial) *serial = info->VolumeSerialNumber;
+    }
+
+    if (filename_len || flags || fsname)
+    {
+        char buffer[sizeof(FILE_FS_ATTRIBUTE_INFORMATION) + MAX_PATH * sizeof(WCHAR)];
+        FILE_FS_ATTRIBUTE_INFORMATION *info = (FILE_FS_ATTRIBUTE_INFORMATION *)buffer;
+
+        if (!set_ntstatus( NtQueryVolumeInformationFile( handle, &io, info, sizeof(buffer),
+                                                         FileFsAttributeInformation ) ))
+            return FALSE;
+
+        if (fsname)
+        {
+            if (fsname_len < info->FileSystemNameLength / sizeof(WCHAR) + 1)
+            {
+                SetLastError( ERROR_BAD_LENGTH );
+                return FALSE;
+            }
+            memcpy( fsname, info->FileSystemName, info->FileSystemNameLength );
+            fsname[info->FileSystemNameLength / sizeof(WCHAR)] = 0;
+        }
+        if (filename_len) *filename_len = info->MaximumComponentNameLength;
+        if (flags) *flags = info->FileSystemAttributes;
+    }
+
+    return TRUE;
 }

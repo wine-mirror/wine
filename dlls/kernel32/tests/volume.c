@@ -60,6 +60,7 @@ static BOOL (WINAPI *pGetVolumePathNameA)(LPCSTR, LPSTR, DWORD);
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameA)(LPCSTR, LPSTR, DWORD, LPDWORD);
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameW)(LPCWSTR, LPWSTR, DWORD, LPDWORD);
 static BOOL (WINAPI *pCreateSymbolicLinkA)(const char *, const char *, DWORD);
+static BOOL (WINAPI *pGetVolumeInformationByHandleW)(HANDLE, WCHAR *, DWORD, DWORD *, DWORD *, DWORD *, WCHAR *, DWORD);
 
 /* ############################### */
 
@@ -1520,6 +1521,71 @@ static void test_mounted_folder(void)
     ok(ret, "got error %u\n", GetLastError());
 }
 
+static void test_GetVolumeInformationByHandle(void)
+{
+    char buffer[50] DECLSPEC_ALIGN(8);
+    FILE_FS_ATTRIBUTE_INFORMATION *attr_info = (void *)buffer;
+    FILE_FS_VOLUME_INFORMATION *volume_info = (void *)buffer;
+    DWORD serial, filename_len, flags;
+    WCHAR label[20], fsname[20];
+    IO_STATUS_BLOCK io;
+    HANDLE file;
+    NTSTATUS status;
+    BOOL ret;
+
+    if (!pGetVolumeInformationByHandleW)
+    {
+        win_skip("GetVolumeInformationByHandleW is not present.\n");
+        return;
+    }
+
+    file = CreateFileA( "C:/windows", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "failed to open file, error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pGetVolumeInformationByHandleW( INVALID_HANDLE_VALUE, label, ARRAY_SIZE(label), &serial,
+            &filename_len, &flags, fsname, ARRAY_SIZE(fsname) );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got error %u\n", GetLastError());
+
+    ret = pGetVolumeInformationByHandleW( file, NULL, 0, NULL, NULL, NULL, NULL, 0 );
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = pGetVolumeInformationByHandleW( file, label, ARRAY_SIZE(label), &serial,
+            &filename_len, &flags, fsname, ARRAY_SIZE(fsname) );
+    ok(ret, "got error %u\n", GetLastError());
+
+    memset(buffer, 0, sizeof(buffer));
+    status = NtQueryVolumeInformationFile( file, &io, buffer, sizeof(buffer), FileFsAttributeInformation );
+    ok(!status, "got status %#x\n", status);
+    ok(flags == attr_info->FileSystemAttributes, "expected flags %#x, got %#x\n",
+            attr_info->FileSystemAttributes, flags);
+    ok(filename_len == attr_info->MaximumComponentNameLength, "expected filename_len %u, got %u\n",
+            attr_info->MaximumComponentNameLength, filename_len);
+    ok(!wcscmp( fsname, attr_info->FileSystemName ), "expected fsname %s, got %s\n",
+            debugstr_w( attr_info->FileSystemName ), debugstr_w( fsname ));
+    ok(wcslen( fsname ) == attr_info->FileSystemNameLength / sizeof(WCHAR),
+            "expected fsname length %u, got %u\n", attr_info->FileSystemNameLength / sizeof(WCHAR), wcslen( fsname ));
+
+    SetLastError(0xdeadbeef);
+    ret = pGetVolumeInformationByHandleW( file, NULL, 0, NULL, &filename_len, &flags, fsname, 2 );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_BAD_LENGTH, "got error %u\n", GetLastError());
+
+    memset(buffer, 0, sizeof(buffer));
+    status = NtQueryVolumeInformationFile( file, &io, buffer, sizeof(buffer), FileFsVolumeInformation );
+    ok(!status, "got status %#x\n", status);
+    ok(serial == volume_info->VolumeSerialNumber, "expected serial %08x, got %08x\n",
+            volume_info->VolumeSerialNumber, serial);
+    ok(!wcscmp( label, volume_info->VolumeLabel ), "expected label %s, got %s\n",
+            debugstr_w( volume_info->VolumeLabel ), debugstr_w( label ));
+    ok(wcslen( label ) == volume_info->VolumeLabelLength / sizeof(WCHAR),
+            "expected label length %u, got %u\n", volume_info->VolumeLabelLength / sizeof(WCHAR), wcslen( label ));
+
+    CloseHandle( file );
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -1535,6 +1601,7 @@ START_TEST(volume)
     pGetVolumePathNamesForVolumeNameA = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameA");
     pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
     pCreateSymbolicLinkA = (void *) GetProcAddress(hdll, "CreateSymbolicLinkA");
+    pGetVolumeInformationByHandleW = (void *) GetProcAddress(hdll, "GetVolumeInformationByHandleW");
 
     test_query_dos_deviceA();
     test_dos_devices();
@@ -1553,4 +1620,5 @@ START_TEST(volume)
     test_GetVolumePathNamesForVolumeNameW();
     test_cdrom_ioctl();
     test_mounted_folder();
+    test_GetVolumeInformationByHandle();
 }
