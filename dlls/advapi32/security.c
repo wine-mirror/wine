@@ -3518,20 +3518,40 @@ static void DumpRights(DWORD mask, WCHAR **pwptr, ULONG *plen)
             DumpString(AceRightBitNames[i], -1, pwptr, plen);
 }
 
+static inline BOOL is_object_ace(BYTE AceType)
+{
+    switch (AceType)
+    {
+    case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
+    case ACCESS_DENIED_OBJECT_ACE_TYPE:
+    case ACCESS_AUDIT_OBJECT_ACE_TYPE:
+    case ACCESS_ALARM_OBJECT_ACE_TYPE:
+    case ACCESS_ALLOWED_CALLBACK_OBJECT_ACE_TYPE:
+    case ACCESS_DENIED_CALLBACK_OBJECT_ACE_TYPE:
+    case SYSTEM_AUDIT_CALLBACK_OBJECT_ACE_TYPE:
+    case SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE:
+        return TRUE;
+
+    default: return FALSE;
+    }
+}
+
 static BOOL DumpAce(LPVOID pace, WCHAR **pwptr, ULONG *plen)
 {
     ACCESS_ALLOWED_ACE *piace; /* all the supported ACEs have the same memory layout */
     static const WCHAR openbr = '(';
     static const WCHAR closebr = ')';
     static const WCHAR semicolon = ';';
+    DWORD *SidStart;
 
-    if (((PACE_HEADER)pace)->AceType > SYSTEM_ALARM_ACE_TYPE || ((PACE_HEADER)pace)->AceSize < sizeof(ACCESS_ALLOWED_ACE))
+    piace = pace;
+
+    if (piace->Header.AceType > ACCESS_MAX_MS_V5_ACE_TYPE || piace->Header.AceSize < sizeof(ACCESS_ALLOWED_ACE))
     {
         SetLastError(ERROR_INVALID_ACL);
         return FALSE;
     }
 
-    piace = pace;
     DumpString(&openbr, 1, pwptr, plen);
     switch (piace->Header.AceType)
     {
@@ -3567,11 +3587,22 @@ static BOOL DumpAce(LPVOID pace, WCHAR **pwptr, ULONG *plen)
     DumpString(&semicolon, 1, pwptr, plen);
     DumpRights(piace->Mask, pwptr, plen);
     DumpString(&semicolon, 1, pwptr, plen);
+    SidStart = &piace->SidStart;
+    if (is_object_ace(piace->Header.AceType))
+    {
+        ACCESS_ALLOWED_OBJECT_ACE *objace = pace;
+
+        SidStart++; /* Flags */
+        if (objace->Flags & ACE_OBJECT_TYPE_PRESENT)
+            SidStart += sizeof(GUID) / sizeof(*SidStart); /* ObjectType */
+        if (objace->Flags & ACE_INHERITED_OBJECT_TYPE_PRESENT)
+            SidStart += sizeof(GUID) / sizeof(*SidStart); /* InheritedObjectType */
+    }
     /* objects not supported */
     DumpString(&semicolon, 1, pwptr, plen);
     /* objects not supported */
     DumpString(&semicolon, 1, pwptr, plen);
-    if (!DumpSid(&piace->SidStart, pwptr, plen))
+    if (!DumpSid(SidStart, pwptr, plen))
         return FALSE;
     DumpString(&closebr, 1, pwptr, plen);
     return TRUE;
