@@ -3262,16 +3262,19 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
     return TRUE;
 }
 
-static BOOL color_match(DWORD c1, DWORD c2, BYTE max_diff)
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
-    return TRUE;
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static BOOL compare_colour(DWORD c1, DWORD c2, BYTE max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
 /* A context is provided by the caller */
@@ -3345,8 +3348,8 @@ static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
     gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, buffer);
     memset(readback, 0x7f, sizeof(readback));
     gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
-    if (color_match(readback[6], 0xffffffff, 5) || color_match(readback[6], 0x00000000, 5)
-            || color_match(readback[9], 0xffffffff, 5) || color_match(readback[9], 0x00000000, 5))
+    if (compare_colour(readback[6], 0xffffffff, 5) || compare_colour(readback[6], 0x00000000, 5)
+            || compare_colour(readback[9], 0xffffffff, 5) || compare_colour(readback[9], 0x00000000, 5))
     {
         TRACE("Read back colors 0x%08x and 0x%08x close to unfiltered color, assuming no filtering\n",
               readback[6], readback[9]);
