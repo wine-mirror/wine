@@ -1298,8 +1298,13 @@ static void test_output(void)
 
 static void test_find_closest_matching_mode(void)
 {
+    static const DXGI_MODE_SCALING scaling_tests[] =
+    {
+        DXGI_MODE_SCALING_CENTERED,
+        DXGI_MODE_SCALING_STRETCHED
+    };
     DXGI_MODE_DESC *modes, mode, matching_mode;
-    unsigned int i, mode_count;
+    unsigned int i, j, mode_count;
     IDXGIAdapter *adapter;
     IDXGIDevice *device;
     IDXGIOutput *output;
@@ -1451,23 +1456,25 @@ static void test_find_closest_matching_mode(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
 
-    memset(&mode, 0, sizeof(mode));
-    mode.Width = modes[0].Width;
-    mode.Height = modes[0].Height;
-    mode.Format = modes[0].Format;
-    mode.Scaling = DXGI_MODE_SCALING_CENTERED;
-    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+    for (i = 0; i < ARRAY_SIZE(scaling_tests); ++i)
+    {
+        for (j = 0; j < mode_count; ++j)
+        {
+            if (modes[j].Scaling != scaling_tests[i])
+                continue;
 
-    memset(&mode, 0, sizeof(mode));
-    mode.Width = modes[0].Width;
-    mode.Height = modes[0].Height;
-    mode.Format = modes[0].Format;
-    mode.Scaling = DXGI_MODE_SCALING_STRETCHED;
-    hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    check_mode_desc(&matching_mode, &modes[0], MODE_DESC_CHECK_RESOLUTION & MODE_DESC_CHECK_FORMAT);
+            memset(&mode, 0, sizeof(mode));
+            mode.Width = modes[j].Width;
+            mode.Height = modes[j].Height;
+            mode.Format = modes[j].Format;
+            mode.Scaling = modes[j].Scaling;
+            hr = IDXGIOutput_FindClosestMatchingMode(output, &mode, &matching_mode, NULL);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            check_mode_desc(&matching_mode, &modes[j],
+                    MODE_DESC_IGNORE_REFRESH_RATE | MODE_DESC_IGNORE_SCANLINE_ORDERING);
+            break;
+        }
+    }
 
     heap_free(modes);
 
