@@ -511,12 +511,17 @@ static HRESULT find_unconnected_source_from_pin(CaptureGraphImpl *capture_graph,
 
     if (category && (IsEqualGUID(category, &PIN_CATEGORY_CAPTURE)
             || IsEqualGUID(category, &PIN_CATEGORY_PREVIEW)))
-        hr = match_smart_tee_pin(capture_graph, category, majortype, (IUnknown *)pin, &pin);
+    {
+        if (FAILED(hr = match_smart_tee_pin(capture_graph, category, majortype, (IUnknown *)pin, &pin)))
+            return hr;
+    }
+    else if (pin_matches(pin, PINDIR_OUTPUT, category, majortype, FALSE))
+    {
+        IPin_AddRef(pin);
+        hr = S_OK;
+    }
     else
-        hr = ICaptureGraphBuilder2_FindPin(&capture_graph->ICaptureGraphBuilder2_iface,
-                (IUnknown *)pin, PINDIR_OUTPUT, category, majortype, FALSE, -1, &pin);
-    if (FAILED(hr))
-        return hr;
+        return E_FAIL;
 
     if (FAILED(IPin_ConnectedTo(pin, &peer)))
     {
