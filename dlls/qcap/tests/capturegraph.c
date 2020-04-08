@@ -35,13 +35,25 @@ static ICaptureGraphBuilder2 *create_capture_graph(void)
 
 static const GUID testiid = {0x11111111}, testtype = {0x22222222};
 
+struct testsource
+{
+    struct strmbase_source pin;
+    IKsPropertySet IKsPropertySet_iface;
+    BOOL has_iface;
+};
+
+struct testsink
+{
+    struct strmbase_sink pin;
+    BOOL has_iface;
+};
+
 struct testfilter
 {
     struct strmbase_filter filter;
-    struct strmbase_source source, source2;
-    struct strmbase_sink sink, sink2;
-    BOOL filter_has_iface, source_has_iface, source2_has_iface, sink_has_iface, sink2_has_iface;
-    IKsPropertySet IKsPropertySet_iface;
+    struct testsource source1, source2;
+    struct testsink sink1, sink2;
+    BOOL filter_has_iface;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -69,21 +81,23 @@ static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, un
     struct testfilter *filter = impl_from_strmbase_filter(iface);
 
     if (!index)
-        return &filter->source.pin;
+        return &filter->source1.pin.pin;
     else if (index == 1)
-        return &filter->sink.pin;
+        return &filter->sink1.pin.pin;
     else if (index == 2)
-        return &filter->source2.pin;
+        return &filter->source2.pin.pin;
     else if (index == 3)
-        return &filter->sink2.pin;
+        return &filter->sink2.pin.pin;
     return NULL;
 }
 
 static void testfilter_destroy(struct strmbase_filter *iface)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface);
-    strmbase_source_cleanup(&filter->source);
-    strmbase_sink_cleanup(&filter->sink);
+    strmbase_source_cleanup(&filter->source1.pin);
+    strmbase_source_cleanup(&filter->source2.pin);
+    strmbase_sink_cleanup(&filter->sink1.pin);
+    strmbase_sink_cleanup(&filter->sink2.pin);
     strmbase_filter_cleanup(&filter->filter);
 }
 
@@ -94,27 +108,27 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_destroy = testfilter_destroy,
 };
 
-static struct testfilter *impl_from_IKsPropertySet(IKsPropertySet *iface)
+static struct testsource *impl_from_IKsPropertySet(IKsPropertySet *iface)
 {
-    return CONTAINING_RECORD(iface, struct testfilter, IKsPropertySet_iface);
+    return CONTAINING_RECORD(iface, struct testsource, IKsPropertySet_iface);
 }
 
 static HRESULT WINAPI property_set_QueryInterface(IKsPropertySet *iface, REFIID iid, void **out)
 {
-    struct testfilter *filter = impl_from_IKsPropertySet(iface);
-    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+    struct testsource *pin = impl_from_IKsPropertySet(iface);
+    return IPin_QueryInterface(&pin->pin.pin.IPin_iface, iid, out);
 }
 
 static ULONG WINAPI property_set_AddRef(IKsPropertySet *iface)
 {
-    struct testfilter *filter = impl_from_IKsPropertySet(iface);
-    return IPin_AddRef(&filter->source.pin.IPin_iface);
+    struct testsource *pin = impl_from_IKsPropertySet(iface);
+    return IPin_AddRef(&pin->pin.pin.IPin_iface);
 }
 
 static ULONG WINAPI property_set_Release(IKsPropertySet *iface)
 {
-    struct testfilter *filter = impl_from_IKsPropertySet(iface);
-    return IPin_Release(&filter->source.pin.IPin_iface);
+    struct testsource *pin = impl_from_IKsPropertySet(iface);
+    return IPin_Release(&pin->pin.pin.IPin_iface);
 }
 
 static HRESULT WINAPI property_set_Set(IKsPropertySet *iface, REFGUID set, DWORD id,
@@ -155,17 +169,19 @@ static const IKsPropertySetVtbl property_set_vtbl =
     property_set_QuerySupported,
 };
 
+static struct testsource *impl_source_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct testsource, pin.pin);
+}
+
 static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+    struct testsource *pin = impl_source_from_strmbase_pin(iface);
 
-    if (iface == &filter->source.pin && filter->source_has_iface && IsEqualGUID(iid, &testiid))
-        *out = &iface->IPin_iface;
-    else if (iface == &filter->source2.pin && filter->source2_has_iface && IsEqualGUID(iid, &testiid))
-        *out = &iface->IPin_iface;
-    else if (iface == &filter->source.pin && filter->IKsPropertySet_iface.lpVtbl
-            && IsEqualGUID(iid, &IID_IKsPropertySet))
-        *out = &filter->IKsPropertySet_iface;
+    if (pin->has_iface && IsEqualGUID(iid, &testiid))
+        *out = &pin->pin.pin.IPin_iface;
+    else if (pin->IKsPropertySet_iface.lpVtbl && IsEqualGUID(iid, &IID_IKsPropertySet))
+        *out = &pin->IKsPropertySet_iface;
     else
         return E_NOINTERFACE;
 
@@ -204,18 +220,21 @@ static const struct strmbase_source_ops testsource_ops =
     .pfnDecideAllocator = testsource_DecideAllocator,
 };
 
+static struct testsink *impl_sink_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct testsink, pin.pin);
+}
+
 static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
-    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+    struct testsink *pin = impl_sink_from_strmbase_pin(iface);
 
     ok(!IsEqualGUID(iid, &IID_IKsPropertySet), "Unexpected query for IKsPropertySet.\n");
 
     if (IsEqualGUID(iid, &IID_IMemInputPin))
-        *out = &filter->sink.IMemInputPin_iface;
-    else if (iface == &filter->sink.pin && filter->sink_has_iface && IsEqualGUID(iid, &testiid))
-        *out = &iface->IPin_iface;
-    else if (iface == &filter->sink2.pin && filter->sink2_has_iface && IsEqualGUID(iid, &testiid))
-        *out = &iface->IPin_iface;
+        *out = &pin->pin.IMemInputPin_iface;
+    else if (pin->has_iface && IsEqualGUID(iid, &testiid))
+        *out = &pin->pin.pin.IPin_iface;
     else
         return E_NOINTERFACE;
 
@@ -237,8 +256,8 @@ static const struct strmbase_sink_ops testsink_ops =
 
 static void reset_interfaces(struct testfilter *filter)
 {
-    filter->filter_has_iface = filter->sink_has_iface = filter->sink2_has_iface = TRUE;
-    filter->source_has_iface = filter->source2_has_iface = TRUE;
+    filter->filter_has_iface = filter->sink1.has_iface = filter->sink2.has_iface = TRUE;
+    filter->source1.has_iface = filter->source2.has_iface = TRUE;
 }
 
 static void testfilter_init(struct testfilter *filter)
@@ -246,10 +265,10 @@ static void testfilter_init(struct testfilter *filter)
     static const GUID clsid = {0xabacab};
     memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
-    strmbase_source_init(&filter->source, &filter->filter, L"source", &testsource_ops);
-    strmbase_source_init(&filter->source2, &filter->filter, L"source2", &testsource_ops);
-    strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
-    strmbase_sink_init(&filter->sink2, &filter->filter, L"sink2", &testsink_ops, NULL);
+    strmbase_source_init(&filter->source1.pin, &filter->filter, L"source1", &testsource_ops);
+    strmbase_source_init(&filter->source2.pin, &filter->filter, L"source2", &testsource_ops);
+    strmbase_sink_init(&filter->sink1.pin, &filter->filter, L"sink1", &testsink_ops, NULL);
+    strmbase_sink_init(&filter->sink2.pin, &filter->filter, L"sink2", &testsink_ops, NULL);
     reset_interfaces(filter);
 }
 
@@ -285,60 +304,60 @@ static void test_find_interface(void)
     tests_from_filter2[] =
     {
         {&filter2.filter_has_iface,     &filter2.filter.IBaseFilter_iface},
-        {&filter2.source_has_iface,     &filter2.source.pin.IPin_iface},
-        {&filter3.sink_has_iface,       &filter3.sink.pin.IPin_iface},
+        {&filter2.source1.has_iface,    &filter2.source1.pin.pin.IPin_iface},
+        {&filter3.sink1.has_iface,      &filter3.sink1.pin.pin.IPin_iface},
         {&filter3.filter_has_iface,     &filter3.filter.IBaseFilter_iface},
-        {&filter3.source_has_iface,     &filter3.source.pin.IPin_iface},
-        {&filter3.source2_has_iface,    &filter3.source2.pin.IPin_iface},
-        {&filter2.source2_has_iface,    &filter2.source2.pin.IPin_iface},
-        {&filter2.sink_has_iface,       &filter2.sink.pin.IPin_iface},
-        {&filter1.source_has_iface,     &filter1.source.pin.IPin_iface},
+        {&filter3.source1.has_iface,    &filter3.source1.pin.pin.IPin_iface},
+        {&filter3.source2.has_iface,    &filter3.source2.pin.pin.IPin_iface},
+        {&filter2.source2.has_iface,    &filter2.source2.pin.pin.IPin_iface},
+        {&filter2.sink1.has_iface,      &filter2.sink1.pin.pin.IPin_iface},
+        {&filter1.source1.has_iface,    &filter1.source1.pin.pin.IPin_iface},
         {&filter1.filter_has_iface,     &filter1.filter.IBaseFilter_iface},
-        {&filter1.sink_has_iface,       &filter1.sink.pin.IPin_iface},
-        {&filter1.sink2_has_iface,      &filter1.sink2.pin.IPin_iface},
-        {&filter2.sink2_has_iface,      &filter2.sink2.pin.IPin_iface},
+        {&filter1.sink1.has_iface,      &filter1.sink1.pin.pin.IPin_iface},
+        {&filter1.sink2.has_iface,      &filter1.sink2.pin.pin.IPin_iface},
+        {&filter2.sink2.has_iface,      &filter2.sink2.pin.pin.IPin_iface},
     }, tests_from_filter1[] =
     {
         {&filter1.filter_has_iface,     &filter1.filter.IBaseFilter_iface},
-        {&filter1.source_has_iface,     &filter1.source.pin.IPin_iface},
-        {&filter2.sink_has_iface,       &filter2.sink.pin.IPin_iface},
+        {&filter1.source1.has_iface,    &filter1.source1.pin.pin.IPin_iface},
+        {&filter2.sink1.has_iface,      &filter2.sink1.pin.pin.IPin_iface},
         {&filter2.filter_has_iface,     &filter2.filter.IBaseFilter_iface},
-        {&filter2.source_has_iface,     &filter2.source.pin.IPin_iface},
-        {&filter3.sink_has_iface,       &filter3.sink.pin.IPin_iface},
+        {&filter2.source1.has_iface,    &filter2.source1.pin.pin.IPin_iface},
+        {&filter3.sink1.has_iface,      &filter3.sink1.pin.pin.IPin_iface},
         {&filter3.filter_has_iface,     &filter3.filter.IBaseFilter_iface},
-        {&filter3.source_has_iface,     &filter3.source.pin.IPin_iface},
-        {&filter3.source2_has_iface,    &filter3.source2.pin.IPin_iface},
-        {&filter2.source2_has_iface,    &filter2.source2.pin.IPin_iface},
-        {&filter1.source2_has_iface,    &filter1.source2.pin.IPin_iface},
-        {&filter1.sink_has_iface,       &filter1.sink.pin.IPin_iface},
-        {&filter1.sink2_has_iface,      &filter1.sink2.pin.IPin_iface},
+        {&filter3.source1.has_iface,    &filter3.source1.pin.pin.IPin_iface},
+        {&filter3.source2.has_iface,    &filter3.source2.pin.pin.IPin_iface},
+        {&filter2.source2.has_iface,    &filter2.source2.pin.pin.IPin_iface},
+        {&filter1.source2.has_iface,    &filter1.source2.pin.pin.IPin_iface},
+        {&filter1.sink1.has_iface,      &filter1.sink1.pin.pin.IPin_iface},
+        {&filter1.sink2.has_iface,      &filter1.sink2.pin.pin.IPin_iface},
     }, look_upstream_tests[] =
     {
-        {&filter2.sink_has_iface,       &filter2.sink.pin.IPin_iface},
-        {&filter1.source_has_iface,     &filter1.source.pin.IPin_iface},
+        {&filter2.sink1.has_iface,      &filter2.sink1.pin.pin.IPin_iface},
+        {&filter1.source1.has_iface,    &filter1.source1.pin.pin.IPin_iface},
         {&filter1.filter_has_iface,     &filter1.filter.IBaseFilter_iface},
-        {&filter1.sink_has_iface,       &filter1.sink.pin.IPin_iface},
-        {&filter1.sink2_has_iface,      &filter1.sink2.pin.IPin_iface},
-        {&filter2.sink2_has_iface,      &filter2.sink2.pin.IPin_iface},
+        {&filter1.sink1.has_iface,      &filter1.sink1.pin.pin.IPin_iface},
+        {&filter1.sink2.has_iface,      &filter1.sink2.pin.pin.IPin_iface},
+        {&filter2.sink2.has_iface,      &filter2.sink2.pin.pin.IPin_iface},
     }, look_downstream_tests[] =
     {
-        {&filter2.source_has_iface,     &filter2.source.pin.IPin_iface},
-        {&filter3.sink_has_iface,       &filter3.sink.pin.IPin_iface},
+        {&filter2.source1.has_iface,    &filter2.source1.pin.pin.IPin_iface},
+        {&filter3.sink1.has_iface,      &filter3.sink1.pin.pin.IPin_iface},
         {&filter3.filter_has_iface,     &filter3.filter.IBaseFilter_iface},
-        {&filter3.source_has_iface,     &filter3.source.pin.IPin_iface},
-        {&filter3.source2_has_iface,    &filter3.source2.pin.IPin_iface},
-        {&filter2.source2_has_iface,    &filter2.source2.pin.IPin_iface},
+        {&filter3.source1.has_iface,    &filter3.source1.pin.pin.IPin_iface},
+        {&filter3.source2.has_iface,    &filter3.source2.pin.pin.IPin_iface},
+        {&filter2.source2.has_iface,    &filter2.source2.pin.pin.IPin_iface},
     }, category_tests[] =
     {
         {&filter3.filter_has_iface,     &filter3.filter.IBaseFilter_iface},
-        {&filter3.source_has_iface,     &filter3.source.pin.IPin_iface},
-        {&filter3.source2_has_iface,    &filter3.source2.pin.IPin_iface},
-        {&filter2.sink_has_iface,       &filter2.sink.pin.IPin_iface},
-        {&filter1.source_has_iface,     &filter1.source.pin.IPin_iface},
+        {&filter3.source1.has_iface,    &filter3.source1.pin.pin.IPin_iface},
+        {&filter3.source2.has_iface,    &filter3.source2.pin.pin.IPin_iface},
+        {&filter2.sink1.has_iface,      &filter2.sink1.pin.pin.IPin_iface},
+        {&filter1.source1.has_iface,    &filter1.source1.pin.pin.IPin_iface},
         {&filter1.filter_has_iface,     &filter1.filter.IBaseFilter_iface},
-        {&filter1.sink_has_iface,       &filter1.sink.pin.IPin_iface},
-        {&filter1.sink2_has_iface,      &filter1.sink2.pin.IPin_iface},
-        {&filter2.sink2_has_iface,      &filter2.sink2.pin.IPin_iface},
+        {&filter1.sink1.has_iface,      &filter1.sink1.pin.pin.IPin_iface},
+        {&filter1.sink2.has_iface,      &filter1.sink2.pin.pin.IPin_iface},
+        {&filter2.sink2.has_iface,      &filter2.sink2.pin.pin.IPin_iface},
     };
 
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&graph);
@@ -352,9 +371,9 @@ static void test_find_interface(void)
     testfilter_init(&filter3);
     IGraphBuilder_AddFilter(graph, &filter3.filter.IBaseFilter_iface, L"filter3");
 
-    hr = IGraphBuilder_ConnectDirect(graph, &filter1.source.pin.IPin_iface, &filter2.sink.pin.IPin_iface, &mt1);
+    hr = IGraphBuilder_ConnectDirect(graph, &filter1.source1.pin.pin.IPin_iface, &filter2.sink1.pin.pin.IPin_iface, &mt1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IGraphBuilder_ConnectDirect(graph, &filter2.source.pin.IPin_iface, &filter3.sink.pin.IPin_iface, &mt2);
+    hr = IGraphBuilder_ConnectDirect(graph, &filter2.source1.pin.pin.IPin_iface, &filter3.sink1.pin.pin.IPin_iface, &mt2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test search order without any restrictions applied. */
@@ -446,17 +465,17 @@ static void test_find_interface(void)
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
     ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
 
-    filter2.IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
+    filter2.source1.IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, NULL,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(unk == (IUnknown *)&filter2.source.pin.IPin_iface, "Got wrong interface %p.\n", unk);
+    ok(unk == (IUnknown *)&filter2.source1.pin.pin.IPin_iface, "Got wrong interface %p.\n", unk);
     IUnknown_Release(unk);
-    filter2.source_has_iface = FALSE;
+    filter2.source1.has_iface = FALSE;
 
     /* Native returns the filter3 sink next, but suffers from a bug wherein it
      * releases a reference to the wrong pin. */
-    filter3.sink_has_iface = FALSE;
+    filter3.sink1.has_iface = FALSE;
 
     for (i = 0; i < ARRAY_SIZE(category_tests); ++i)
     {
@@ -496,11 +515,11 @@ static void test_find_interface(void)
     hr = ICaptureGraphBuilder2_FindInterface(capture_graph, &PIN_CATEGORY_CAPTURE, &testtype,
             &filter2.filter.IBaseFilter_iface, &testiid, (void **)&unk);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(unk == (IUnknown *)&filter2.source.pin.IPin_iface, "Got wrong interface %p.\n", unk);
+    ok(unk == (IUnknown *)&filter2.source1.pin.pin.IPin_iface, "Got wrong interface %p.\n", unk);
     IUnknown_Release(unk);
-    filter2.source_has_iface = FALSE;
+    filter2.source1.has_iface = FALSE;
 
-    filter3.sink_has_iface = FALSE;
+    filter3.sink1.has_iface = FALSE;
 
     for (i = 0; i < ARRAY_SIZE(category_tests); ++i)
     {
