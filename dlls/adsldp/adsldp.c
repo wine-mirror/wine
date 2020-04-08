@@ -1583,6 +1583,78 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
         break;
     }
 
+    case ADSTYPE_DN_WITH_BINARY:
+    {
+        static const BYTE hex2bin[] =
+        {
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x00 */
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x10 */
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x20 */
+            0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0,        /* 0x30 */
+            0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,  /* 0x40 */
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,        /* 0x50 */
+            0,10,11,12,13,14,15                     /* 0x60 */
+        };
+        ADS_DN_WITH_BINARY *dnb;
+        WCHAR **values = ldap_get_valuesW(ldap->ld, ldap_ctx->entry, name);
+        if (!values)
+            return E_ADS_COLUMN_NOT_SET;
+        count = ldap_count_valuesW(values);
+
+        col->pADsValues = heap_alloc_zero(count * (sizeof(col->pADsValues[0]) + sizeof(col->pADsValues[0].u.pDNWithBinary[0])));
+        if (!col->pADsValues)
+        {
+            ldap_value_freeW(values);
+            return E_OUTOFMEMORY;
+        }
+
+        dnb = (ADS_DN_WITH_BINARY *)(col->pADsValues + count);
+
+        for (i = 0; i < count; i++)
+        {
+            WCHAR *p = values[i];
+            DWORD n;
+
+            col->pADsValues[i].dwType = type;
+            col->pADsValues[i].u.pDNWithBinary = dnb++;
+
+            if ((p[0] != 'b' && p[0] != 'B') || p[1] != ':')
+                FIXME("wrong DN with binary tag '%c%c'\n", p[0], p[1]);
+            p += 2;
+
+            col->pADsValues[i].u.pDNWithBinary->dwLength = wcstol(p, &p, 10) / 2;
+            if (*p != ':')
+                FIXME("wrong DN with binary separator '%c'\n", *p);
+            p++;
+            col->pADsValues[i].u.pDNWithBinary->lpBinaryValue = (BYTE *)p;
+            /* decode values in-place */
+            for (n = 0; n < col->pADsValues[i].u.pDNWithBinary->dwLength; n++, p += 2)
+            {
+                BYTE b;
+
+                if (p[0] > 'f' || (p[0] != '0' && !hex2bin[p[0]]) ||
+                    p[1] > 'f' || (p[1] != '0' && !hex2bin[p[1]]))
+                {
+                    FIXME("bad hex encoding at %s\n", debugstr_w(p));
+                    continue;
+                }
+
+                b = (hex2bin[p[0]] << 4) | hex2bin[p[1]];
+                col->pADsValues[i].u.pDNWithBinary->lpBinaryValue[n] = b;
+            }
+            if (*p != ':')
+                FIXME("wrong DN with binary separator '%c'\n", *p);
+            col->pADsValues[i].u.pDNWithBinary->pszDNString = p + 1;
+
+            TRACE("%s => %u,%s,%s\n", debugstr_w(values[i]),
+                  col->pADsValues[i].u.pDNWithBinary->dwLength,
+                  debugstr_an((char *)col->pADsValues[i].u.pDNWithBinary->lpBinaryValue, col->pADsValues[i].u.pDNWithBinary->dwLength),
+                  debugstr_w(col->pADsValues[i].u.pDNWithBinary->pszDNString));
+        }
+
+        col->hReserved = values;
+        break;
+    }
     }
 
     col->dwADsType = type;
@@ -1654,6 +1726,8 @@ static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COL
     if (!col) return E_ADS_BAD_PARAMETER;
 
     heap_free(col->pADsValues);
+    heap_free(col->pszAttrName);
+
     if (col->hReserved)
     {
         if (col->dwADsType == ADSTYPE_OCTET_STRING)
