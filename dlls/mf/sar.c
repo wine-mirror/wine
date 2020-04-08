@@ -37,6 +37,7 @@ struct audio_renderer_stream
     IMFStreamSink IMFStreamSink_iface;
     LONG refcount;
     struct audio_renderer *sink;
+    IMFMediaEventQueue *event_queue;
     CRITICAL_SECTION cs;
 };
 
@@ -321,6 +322,7 @@ static HRESULT WINAPI audio_renderer_sink_Shutdown(IMFMediaSink *iface)
     IMFMediaSink_Release(&renderer->stream->sink->IMFMediaSink_iface);
     EnterCriticalSection(&renderer->stream->cs);
     renderer->stream->sink = NULL;
+    IMFMediaEventQueue_Shutdown(renderer->stream->event_queue);
     LeaveCriticalSection(&renderer->stream->cs);
 
     IMFStreamSink_Release(&renderer->stream->IMFStreamSink_iface);
@@ -600,6 +602,11 @@ static ULONG WINAPI audio_renderer_stream_Release(IMFStreamSink *iface)
     {
         if (stream->sink)
             IMFMediaSink_Release(&stream->sink->IMFMediaSink_iface);
+        if (stream->event_queue)
+        {
+            IMFMediaEventQueue_Shutdown(stream->event_queue);
+            IMFMediaEventQueue_Release(stream->event_queue);
+        }
         DeleteCriticalSection(&stream->cs);
         heap_free(stream);
     }
@@ -609,33 +616,53 @@ static ULONG WINAPI audio_renderer_stream_Release(IMFStreamSink *iface)
 
 static HRESULT WINAPI audio_renderer_stream_GetEvent(IMFStreamSink *iface, DWORD flags, IMFMediaEvent **event)
 {
-    FIXME("%p, %#x, %p.\n", iface, flags, event);
+    struct audio_renderer_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x, %p.\n", iface, flags, event);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    return IMFMediaEventQueue_GetEvent(stream->event_queue, flags, event);
 }
 
 static HRESULT WINAPI audio_renderer_stream_BeginGetEvent(IMFStreamSink *iface, IMFAsyncCallback *callback,
         IUnknown *state)
 {
-    FIXME("%p, %p, %p.\n", iface, callback, state);
+    struct audio_renderer_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, callback, state);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    return IMFMediaEventQueue_BeginGetEvent(stream->event_queue, callback, state);
 }
 
 static HRESULT WINAPI audio_renderer_stream_EndGetEvent(IMFStreamSink *iface, IMFAsyncResult *result,
         IMFMediaEvent **event)
 {
-    FIXME("%p, %p, %p.\n", iface, result, event);
+    struct audio_renderer_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, result, event);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    return IMFMediaEventQueue_EndGetEvent(stream->event_queue, result, event);
 }
 
 static HRESULT WINAPI audio_renderer_stream_QueueEvent(IMFStreamSink *iface, MediaEventType event_type,
         REFGUID ext_type, HRESULT hr, const PROPVARIANT *value)
 {
-    FIXME("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+    struct audio_renderer_stream *stream = impl_from_IMFStreamSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
+
+    if (!stream->sink)
+        return MF_E_STREAMSINK_REMOVED;
+
+    return IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, event_type, ext_type, hr, value);
 }
 
 static HRESULT WINAPI audio_renderer_stream_GetMediaSink(IMFStreamSink *iface, IMFMediaSink **sink)
@@ -716,6 +743,7 @@ static const IMFStreamSinkVtbl audio_renderer_stream_vtbl =
 static HRESULT audio_renderer_create_stream(struct audio_renderer *sink, struct audio_renderer_stream **stream)
 {
     struct audio_renderer_stream *object;
+    HRESULT hr;
 
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
@@ -727,9 +755,17 @@ static HRESULT audio_renderer_create_stream(struct audio_renderer *sink, struct 
     IMFMediaSink_AddRef(&object->sink->IMFMediaSink_iface);
     InitializeCriticalSection(&object->cs);
 
+    if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
+        goto failed;
+
     *stream = object;
 
     return S_OK;
+
+failed:
+    IMFStreamSink_Release(&object->IMFStreamSink_iface);
+
+    return hr;
 }
 
 static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
