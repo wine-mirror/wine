@@ -874,15 +874,15 @@ static void test_render_stream(void)
 
     hr = ICaptureGraphBuilder2_RenderStream(capture_graph, NULL, &sink1_type,
             (IUnknown *)&source.filter.IBaseFilter_iface, NULL, &sink.filter.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source.source1.pin.pin.peer == &transform.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(transform.source1.pin.pin.peer == &sink.sink1.pin.pin.IPin_iface, "Got wrong connection.\n");
-    todo_wine ok(transform.source2.pin.pin.peer == &sink.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
+    ok(transform.source2.pin.pin.peer == &sink.sink2.pin.pin.IPin_iface, "Got wrong connection.\n");
     ok(!source.source2.pin.pin.peer, "Pin should not be connected.\n");
 
     disconnect_pins(graph, &source.source1);
     disconnect_pins(graph, &transform.source1);
-    todo_wine disconnect_pins(graph, &transform.source2);
+    disconnect_pins(graph, &transform.source2);
 
     /* Test categories. */
 

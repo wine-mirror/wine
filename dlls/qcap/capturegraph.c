@@ -505,28 +505,38 @@ static HRESULT find_unconnected_source_from_filter(CaptureGraphImpl *capture_gra
 static HRESULT find_unconnected_source_from_pin(CaptureGraphImpl *capture_graph,
         const GUID *category, const GUID *majortype, IPin *pin, IPin **ret)
 {
+    PIN_DIRECTION dir;
     PIN_INFO info;
     HRESULT hr;
     IPin *peer;
+
+    IPin_QueryDirection(pin, &dir);
+    if (dir != PINDIR_OUTPUT)
+        return VFW_E_INVALID_DIRECTION;
 
     if (category && (IsEqualGUID(category, &PIN_CATEGORY_CAPTURE)
             || IsEqualGUID(category, &PIN_CATEGORY_PREVIEW)))
     {
         if (FAILED(hr = match_smart_tee_pin(capture_graph, category, majortype, (IUnknown *)pin, &pin)))
             return hr;
-    }
-    else if (pin_matches(pin, PINDIR_OUTPUT, category, majortype, FALSE))
-    {
-        IPin_AddRef(pin);
-        hr = S_OK;
+
+        if (FAILED(IPin_ConnectedTo(pin, &peer)))
+        {
+            *ret = pin;
+            return S_OK;
+        }
     }
     else
-        return E_FAIL;
-
-    if (FAILED(IPin_ConnectedTo(pin, &peer)))
     {
-        *ret = pin;
-        return hr;
+        if (FAILED(IPin_ConnectedTo(pin, &peer)))
+        {
+            if (!pin_matches(pin, PINDIR_OUTPUT, category, majortype, FALSE))
+                return E_FAIL;
+
+            IPin_AddRef(*ret = pin);
+            return S_OK;
+        }
+        IPin_AddRef(pin);
     }
 
     IPin_QueryPinInfo(peer, &info);
