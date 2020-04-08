@@ -257,21 +257,12 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath, DWORD shortlen
 
 static BOOL is_same_file(HANDLE h1, HANDLE h2)
 {
-    int fd1;
-    BOOL ret = FALSE;
-    if (wine_server_handle_to_fd(h1, 0, &fd1, NULL) == STATUS_SUCCESS)
-    {
-        int fd2;
-        if (wine_server_handle_to_fd(h2, 0, &fd2, NULL) == STATUS_SUCCESS)
-        {
-            struct stat stat1, stat2;
-            if (fstat(fd1, &stat1) == 0 && fstat(fd2, &stat2) == 0)
-                ret = (stat1.st_dev == stat2.st_dev && stat1.st_ino == stat2.st_ino);
-            wine_server_release_fd(h2, fd2);
-        }
-        wine_server_release_fd(h1, fd1);
-    }
-    return ret;
+    FILE_ID_INFORMATION id1, id2;
+    IO_STATUS_BLOCK io;
+
+    return !NtQueryInformationFile( h1, &io, &id1, sizeof(id1), FileIdInformation )
+            && !NtQueryInformationFile( h2, &io, &id2, sizeof(id2), FileIdInformation )
+            && !memcmp( &id1, &id2, sizeof(FILE_ID_INFORMATION) );
 }
 
 /**************************************************************************
