@@ -2201,6 +2201,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushFileBuffers( HANDLE file )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandle( HANDLE file, BY_HANDLE_FILE_INFORMATION *info )
 {
+    FILE_FS_VOLUME_INFORMATION volume_info;
     FILE_ALL_INFORMATION all_info;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
@@ -2216,12 +2217,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileInformationByHandle( HANDLE file, BY_HANDLE
     info->ftLastAccessTime.dwLowDateTime  = all_info.BasicInformation.LastAccessTime.u.LowPart;
     info->ftLastWriteTime.dwHighDateTime  = all_info.BasicInformation.LastWriteTime.u.HighPart;
     info->ftLastWriteTime.dwLowDateTime   = all_info.BasicInformation.LastWriteTime.u.LowPart;
-    info->dwVolumeSerialNumber            = 0;  /* FIXME */
+    info->dwVolumeSerialNumber            = 0;
     info->nFileSizeHigh                   = all_info.StandardInformation.EndOfFile.u.HighPart;
     info->nFileSizeLow                    = all_info.StandardInformation.EndOfFile.u.LowPart;
     info->nNumberOfLinks                  = all_info.StandardInformation.NumberOfLinks;
     info->nFileIndexHigh                  = all_info.InternalInformation.IndexNumber.u.HighPart;
     info->nFileIndexLow                   = all_info.InternalInformation.IndexNumber.u.LowPart;
+
+    status = NtQueryVolumeInformationFile( file, &io, &volume_info, sizeof(volume_info), FileFsVolumeInformation );
+    if (status == STATUS_SUCCESS || status == STATUS_BUFFER_OVERFLOW)
+        info->dwVolumeSerialNumber = volume_info.VolumeSerialNumber;
+
     return TRUE;
 }
 
