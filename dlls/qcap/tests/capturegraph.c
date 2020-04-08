@@ -547,11 +547,109 @@ static void test_find_interface(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    static const AM_MEDIA_TYPE mt =
+    {
+        .majortype = {0x111},
+        .subtype = {0x222},
+        .formattype = {0x333},
+    };
+
+    ICaptureGraphBuilder2 *capture_graph = create_capture_graph();
+    struct testfilter filter1, filter2;
+    IGraphBuilder *graph;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&graph);
+    hr = ICaptureGraphBuilder2_SetFiltergraph(capture_graph, graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testfilter_init(&filter1);
+    testfilter_init(&filter2);
+    IGraphBuilder_AddFilter(graph, &filter1.filter.IBaseFilter_iface, L"filter1");
+    IGraphBuilder_AddFilter(graph, &filter2.filter.IBaseFilter_iface, L"filter2");
+
+    hr = IGraphBuilder_ConnectDirect(graph, &filter1.source1.pin.pin.IPin_iface,
+            &filter2.sink1.pin.pin.IPin_iface, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_INPUT, NULL, NULL, FALSE, 0, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == &filter1.sink1.pin.pin.IPin_iface, "Got wrong pin.\n");
+    IPin_Release(pin);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_INPUT, NULL, NULL, FALSE, 1, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == &filter1.sink2.pin.pin.IPin_iface, "Got wrong pin.\n");
+    IPin_Release(pin);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_INPUT, NULL, NULL, FALSE, 2, &pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, NULL, NULL, FALSE, 0, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == &filter1.source1.pin.pin.IPin_iface, "Got wrong pin.\n");
+    IPin_Release(pin);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, NULL, NULL, FALSE, 1, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == &filter1.source2.pin.pin.IPin_iface, "Got wrong pin.\n");
+    IPin_Release(pin);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, NULL, NULL, FALSE, 2, &pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    /* Test the unconnected flag. */
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, NULL, NULL, TRUE, 0, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == &filter1.source2.pin.pin.IPin_iface, "Got wrong pin.\n");
+    IPin_Release(pin);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, NULL, NULL, TRUE, 1, &pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    /* Test categories. */
+
+    filter1.source1.IKsPropertySet_iface.lpVtbl = &property_set_vtbl;
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, NULL, FALSE, 0, &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == &filter1.source1.pin.pin.IPin_iface, "Got wrong pin.\n");
+    IPin_Release(pin);
+
+    hr = ICaptureGraphBuilder2_FindPin(capture_graph, (IUnknown *)&filter1.filter.IBaseFilter_iface,
+            PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, NULL, FALSE, 1, &pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    ref = ICaptureGraphBuilder2_Release(capture_graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&filter1.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&filter2.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(capturegraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     test_find_interface();
+    test_find_pin();
 
     CoUninitialize();
 }
