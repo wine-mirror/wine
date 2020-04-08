@@ -2237,6 +2237,124 @@ static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *
 
 }
 
+/* Find a DOS device which can act as the root of "path".
+ * Similar to find_drive_root(), but returns -1 instead of crossing volumes. */
+static int find_dos_device( const char *path )
+{
+    int len = strlen(path);
+    int drive;
+    char *buffer;
+    struct stat st;
+    struct drive_info info[MAX_DOS_DRIVES];
+    dev_t dev_id;
+
+    if (!DIR_get_drives_info( info )) return -1;
+
+    if (stat( path, &st ) < 0) return -1;
+    dev_id = st.st_dev;
+
+    /* strip off trailing slashes */
+    while (len > 1 && path[len - 1] == '/') len--;
+
+    /* make a copy of the path */
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return -1;
+    memcpy( buffer, path, len );
+    buffer[len] = 0;
+
+    for (;;)
+    {
+        if (!stat( buffer, &st ) && S_ISDIR( st.st_mode ))
+        {
+            if (st.st_dev != dev_id) break;
+
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+                if ((info[drive].dev == st.st_dev) && (info[drive].ino == st.st_ino))
+                {
+                    if (len == 1) len = 0;  /* preserve root slash in returned path */
+                    TRACE( "%s -> drive %c:, root=%s, name=%s\n",
+                           debugstr_a(path), 'A' + drive, debugstr_a(buffer), debugstr_a(path + len));
+                    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+                    return drive;
+                }
+            }
+        }
+        if (len <= 1) break;  /* reached root */
+        while (path[len - 1] != '/') len--;
+        while (path[len - 1] == '/') len--;
+        buffer[len] = 0;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return -1;
+}
+
+static struct mountmgr_unix_drive *get_mountmgr_fs_info( HANDLE handle, int fd )
+{
+    struct mountmgr_unix_drive *drive;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    ANSI_STRING unix_name;
+    IO_STATUS_BLOCK io;
+    HANDLE mountmgr;
+    NTSTATUS status;
+    int letter;
+
+    if (server_get_unix_name( handle, &unix_name ))
+        return NULL;
+
+    letter = find_dos_device( unix_name.Buffer );
+    RtlFreeAnsiString( &unix_name );
+
+    if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, 1024 )))
+        return NULL;
+
+    if (letter == -1)
+    {
+        struct stat st;
+
+        if (fstat( fd, &st ) == -1)
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, drive );
+            return NULL;
+        }
+
+        drive->unix_dev = st.st_dev;
+        drive->letter = 0;
+    }
+    else
+        drive->letter = 'a' + letter;
+
+    RtlInitUnicodeString( &string, MOUNTMGR_DEVICE_NAME );
+    InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
+    if (NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT ))
+        return NULL;
+
+    status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
+                                    drive, sizeof(*drive), drive, 1024 );
+    if (status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (!(drive = RtlReAllocateHeap( GetProcessHeap(), 0, drive, drive->size )))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, drive );
+            NtClose( mountmgr );
+            return NULL;
+        }
+        status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
+                                        drive, sizeof(*drive), drive, drive->size );
+    }
+    NtClose( mountmgr );
+
+    if (status)
+    {
+        WARN("failed to retrieve filesystem type from mountmgr, status %#x\n", status);
+        RtlFreeHeap( GetProcessHeap(), 0, drive );
+        return NULL;
+    }
+
+    return drive;
+}
+
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL.@]
  *  ZwQueryInformationFile		[NTDLL.@]
@@ -2507,8 +2625,15 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         if (fd_get_file_info( fd, options, &st, &attr ) == -1) io->u.Status = FILE_GetNtStatus();
         else
         {
+            struct mountmgr_unix_drive *drive;
             FILE_ID_INFORMATION *info = ptr;
-            info->VolumeSerialNumber = 0;  /* FIXME */
+
+            info->VolumeSerialNumber = 0;
+            if ((drive = get_mountmgr_fs_info( hFile, fd )))
+            {
+                info->VolumeSerialNumber = drive->serial;
+                RtlFreeHeap( GetProcessHeap(), 0, drive );
+            }
             memset( &info->FileId, 0, sizeof(info->FileId) );
             *(ULONGLONG *)&info->FileId = st.st_ino;
         }
@@ -3119,125 +3244,6 @@ static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
     }
     return STATUS_SUCCESS;
 }
-
-/* Find a DOS device which can act as the root of "path".
- * Similar to find_drive_root(), but returns -1 instead of crossing volumes. */
-static int find_dos_device( const char *path )
-{
-    int len = strlen(path);
-    int drive;
-    char *buffer;
-    struct stat st;
-    struct drive_info info[MAX_DOS_DRIVES];
-    dev_t dev_id;
-
-    if (!DIR_get_drives_info( info )) return -1;
-
-    if (stat( path, &st ) < 0) return -1;
-    dev_id = st.st_dev;
-
-    /* strip off trailing slashes */
-    while (len > 1 && path[len - 1] == '/') len--;
-
-    /* make a copy of the path */
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return -1;
-    memcpy( buffer, path, len );
-    buffer[len] = 0;
-
-    for (;;)
-    {
-        if (!stat( buffer, &st ) && S_ISDIR( st.st_mode ))
-        {
-            if (st.st_dev != dev_id) break;
-
-            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
-            {
-                if ((info[drive].dev == st.st_dev) && (info[drive].ino == st.st_ino))
-                {
-                    if (len == 1) len = 0;  /* preserve root slash in returned path */
-                    TRACE( "%s -> drive %c:, root=%s, name=%s\n",
-                           debugstr_a(path), 'A' + drive, debugstr_a(buffer), debugstr_a(path + len));
-                    RtlFreeHeap( GetProcessHeap(), 0, buffer );
-                    return drive;
-                }
-            }
-        }
-        if (len <= 1) break;  /* reached root */
-        while (path[len - 1] != '/') len--;
-        while (path[len - 1] == '/') len--;
-        buffer[len] = 0;
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, buffer );
-    return -1;
-}
-
-static struct mountmgr_unix_drive *get_mountmgr_fs_info( HANDLE handle, int fd )
-{
-    struct mountmgr_unix_drive *drive;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING string;
-    ANSI_STRING unix_name;
-    IO_STATUS_BLOCK io;
-    HANDLE mountmgr;
-    NTSTATUS status;
-    int letter;
-
-    if (server_get_unix_name( handle, &unix_name ))
-        return NULL;
-
-    letter = find_dos_device( unix_name.Buffer );
-    RtlFreeAnsiString( &unix_name );
-
-    if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, 1024 )))
-        return NULL;
-
-    if (letter == -1)
-    {
-        struct stat st;
-
-        if (fstat( fd, &st ) == -1)
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, drive );
-            return NULL;
-        }
-
-        drive->unix_dev = st.st_dev;
-        drive->letter = 0;
-    }
-    else
-        drive->letter = 'a' + letter;
-
-    RtlInitUnicodeString( &string, MOUNTMGR_DEVICE_NAME );
-    InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
-    if (NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
-                    FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT ))
-        return NULL;
-
-    status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
-                                    drive, sizeof(*drive), drive, 1024 );
-    if (status == STATUS_BUFFER_OVERFLOW)
-    {
-        if (!(drive = RtlReAllocateHeap( GetProcessHeap(), 0, drive, drive->size )))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, drive );
-            NtClose( mountmgr );
-            return NULL;
-        }
-        status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
-                                        drive, sizeof(*drive), drive, drive->size );
-    }
-    NtClose( mountmgr );
-
-    if (status)
-    {
-        WARN("failed to retrieve filesystem type from mountmgr, status %#x\n", status);
-        RtlFreeHeap( GetProcessHeap(), 0, drive );
-        return NULL;
-    }
-
-    return drive;
-}
-
 
 /******************************************************************************
  *  NtQueryVolumeInformationFile		[NTDLL.@]
