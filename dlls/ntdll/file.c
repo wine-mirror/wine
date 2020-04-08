@@ -3458,7 +3458,6 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
 
         if (!(drive = get_mountmgr_fs_info( handle, fd )))
         {
-            ERR_(winediag)("Failed to query volume information from mountmgr.\n");
             io->u.Status = STATUS_NOT_IMPLEMENTED;
             break;
         }
