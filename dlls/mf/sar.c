@@ -32,9 +32,11 @@ struct audio_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
     IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
+    IMFClockStateSink IMFClockStateSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
+    IMFPresentationClock *clock;
     BOOL is_shut_down;
     CRITICAL_SECTION cs;
 };
@@ -47,6 +49,11 @@ static struct audio_renderer *impl_from_IMFMediaSink(IMFMediaSink *iface)
 static struct audio_renderer *impl_from_IMFMediaSinkPreroll(IMFMediaSinkPreroll *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_renderer, IMFMediaSinkPreroll_iface);
+}
+
+static struct audio_renderer *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_renderer, IMFClockStateSink_iface);
 }
 
 static struct audio_renderer *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerator *iface)
@@ -68,6 +75,10 @@ static HRESULT WINAPI audio_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFMediaSinkPreroll))
     {
         *obj = &renderer->IMFMediaSinkPreroll_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFClockStateSink))
+    {
+        *obj = &renderer->IMFClockStateSink_iface;
     }
     else if (IsEqualIID(riid, &IID_IMFMediaEventGenerator))
     {
@@ -104,6 +115,8 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
     {
         if (renderer->event_queue)
             IMFMediaEventQueue_Release(renderer->event_queue);
+        if (renderer->clock)
+            IMFPresentationClock_Release(renderer->clock);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -179,16 +192,60 @@ static HRESULT WINAPI audio_renderer_sink_GetStreamSinkById(IMFMediaSink *iface,
 
 static HRESULT WINAPI audio_renderer_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (renderer->is_shut_down)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        if (renderer->clock)
+        {
+            IMFPresentationClock_RemoveClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
+            IMFPresentationClock_Release(renderer->clock);
+        }
+        renderer->clock = clock;
+        if (renderer->clock)
+        {
+            IMFPresentationClock_AddRef(renderer->clock);
+            IMFPresentationClock_AddClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
+        }
+    }
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_sink_GetPresentationClock(IMFMediaSink *iface, IMFPresentationClock **clock)
 {
-    FIXME("%p, %p.\n", iface, clock);
+    struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (renderer->is_shut_down)
+        hr = MF_E_SHUTDOWN;
+    else if (renderer->clock)
+    {
+        *clock = renderer->clock;
+        IMFPresentationClock_AddRef(*clock);
+    }
+    else
+        hr = MF_E_NO_CLOCK;
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_sink_Shutdown(IMFMediaSink *iface)
@@ -325,6 +382,71 @@ static const IMFMediaEventGeneratorVtbl audio_renderer_events_vtbl =
     audio_renderer_events_QueueEvent,
 };
 
+static HRESULT WINAPI audio_renderer_clock_sink_QueryInterface(IMFClockStateSink *iface, REFIID riid, void **obj)
+{
+    struct audio_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI audio_renderer_clock_sink_AddRef(IMFClockStateSink *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI audio_renderer_clock_sink_Release(IMFClockStateSink *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
+{
+    FIXME("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
+{
+    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
+{
+    FIXME("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFClockStateSinkVtbl audio_renderer_clock_sink_vtbl =
+{
+    audio_renderer_clock_sink_QueryInterface,
+    audio_renderer_clock_sink_AddRef,
+    audio_renderer_clock_sink_Release,
+    audio_renderer_clock_sink_OnClockStart,
+    audio_renderer_clock_sink_OnClockStop,
+    audio_renderer_clock_sink_OnClockPause,
+    audio_renderer_clock_sink_OnClockRestart,
+    audio_renderer_clock_sink_OnClockSetRate,
+};
+
 static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct audio_renderer *renderer;
@@ -337,6 +459,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
 
     renderer->IMFMediaSink_iface.lpVtbl = &audio_renderer_sink_vtbl;
     renderer->IMFMediaSinkPreroll_iface.lpVtbl = &audio_renderer_preroll_vtbl;
+    renderer->IMFClockStateSink_iface.lpVtbl = &audio_renderer_clock_sink_vtbl;
     renderer->IMFMediaEventGenerator_iface.lpVtbl = &audio_renderer_events_vtbl;
     renderer->refcount = 1;
     InitializeCriticalSection(&renderer->cs);

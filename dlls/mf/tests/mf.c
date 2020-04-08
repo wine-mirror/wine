@@ -2631,6 +2631,7 @@ static void test_quality_manager(void)
 
 static void test_sar(void)
 {
+    IMFPresentationClock *present_clock, *present_clock2;
     IMFPresentationTimeSource *time_source;
     IMFClockStateSink *state_sink;
     IMFMediaSink *sink, *sink2;
@@ -2653,6 +2654,12 @@ static void test_sar(void)
         return;
     }
     ok(hr == S_OK, "Failed to create renderer, hr %#x.\n", hr);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
+
+    hr = MFCreatePresentationClock(&present_clock);
+    ok(hr == S_OK, "Failed to create presentation clock, hr %#x.\n", hr);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFPresentationTimeSource, (void **)&time_source);
 todo_wine
@@ -2707,6 +2714,36 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
     IUnknown_Release(unk);
 
+    /* Clock */
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&unk);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, present_clock);
+todo_wine
+    ok(hr == MF_E_CLOCK_NO_TIME_SOURCE, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSystemTimeSource(&time_source);
+    ok(hr == S_OK, "Failed to create time source, hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_SetTimeSource(present_clock, time_source);
+    ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
+    IMFPresentationTimeSource_Release(time_source);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, present_clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetPresentationClock(sink, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetPresentationClock(sink, &present_clock2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(present_clock == present_clock2, "Unexpected instance.\n");
+    IMFPresentationClock_Release(present_clock2);
+
     /* Shutdown */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
@@ -2727,6 +2764,18 @@ if (SUCCEEDED(hr))
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, present_clock);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetPresentationClock(sink, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetPresentationClock(sink, &present_clock2);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFMediaSink_Release(sink);
@@ -2768,6 +2817,11 @@ todo_wine
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     IMFActivate_Release(activate);
+
+    IMFPresentationClock_Release(present_clock);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 
     CoUninitialize();
 }
