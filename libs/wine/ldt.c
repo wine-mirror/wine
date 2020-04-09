@@ -45,26 +45,9 @@ struct __wine_ldt_copy
     unsigned char flags[8192]; /* flags (defined below) */
 } wine_ldt_copy_obsolete = { { 0, 0, 0 } };
 
-#define WINE_LDT_FLAGS_DATA      0x13  /* Data segment */
-#define WINE_LDT_FLAGS_STACK     0x17  /* Stack segment */
-#define WINE_LDT_FLAGS_CODE      0x1b  /* Code segment */
-#define WINE_LDT_FLAGS_TYPE_MASK 0x1f  /* Mask for segment type */
 #define WINE_LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
 #define WINE_LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated (no longer free) */
 
-/* helper functions to manipulate the LDT_ENTRY structure */
-static inline void wine_ldt_set_base( LDT_ENTRY *ent, const void *base )
-{
-    ent->BaseLow               = (WORD)(ULONG_PTR)base;
-    ent->HighWord.Bits.BaseMid = (BYTE)((ULONG_PTR)base >> 16);
-    ent->HighWord.Bits.BaseHi  = (BYTE)((ULONG_PTR)base >> 24);
-}
-static inline void wine_ldt_set_limit( LDT_ENTRY *ent, unsigned int limit )
-{
-    if ((ent->HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
-    ent->LimitLow = (WORD)limit;
-    ent->HighWord.Bits.LimitHi = (limit >> 16);
-}
 static inline void *wine_ldt_get_base( const LDT_ENTRY *ent )
 {
     return (void *)(ent->BaseLow |
@@ -76,26 +59,6 @@ static inline unsigned int wine_ldt_get_limit( const LDT_ENTRY *ent )
     unsigned int limit = ent->LimitLow | (ent->HighWord.Bits.LimitHi << 16);
     if (ent->HighWord.Bits.Granularity) limit = (limit << 12) | 0xfff;
     return limit;
-}
-static inline void wine_ldt_set_flags( LDT_ENTRY *ent, unsigned char flags )
-{
-    ent->HighWord.Bits.Dpl         = 3;
-    ent->HighWord.Bits.Pres        = 1;
-    ent->HighWord.Bits.Type        = flags;
-    ent->HighWord.Bits.Sys         = 0;
-    ent->HighWord.Bits.Reserved_0  = 0;
-    ent->HighWord.Bits.Default_Big = (flags & WINE_LDT_FLAGS_32BIT) != 0;
-}
-static inline unsigned char wine_ldt_get_flags( const LDT_ENTRY *ent )
-{
-    unsigned char ret = ent->HighWord.Bits.Type;
-    if (ent->HighWord.Bits.Default_Big) ret |= WINE_LDT_FLAGS_32BIT;
-    return ret;
-}
-static inline int wine_ldt_is_empty( const LDT_ENTRY *ent )
-{
-    const DWORD *dw = (const DWORD *)ent;
-    return (dw[0] | dw[1]) == 0;
 }
 
 #ifdef __linux__
@@ -207,9 +170,21 @@ void wine_ldt_get_entry_obsolete( unsigned short sel, LDT_ENTRY *entry )
     lock_ldt();
     if (wine_ldt_copy_obsolete.flags[index] & WINE_LDT_FLAGS_ALLOCATED)
     {
-        wine_ldt_set_base(  entry, wine_ldt_copy_obsolete.base[index] );
-        wine_ldt_set_limit( entry, wine_ldt_copy_obsolete.limit[index] );
-        wine_ldt_set_flags( entry, wine_ldt_copy_obsolete.flags[index] );
+        ULONG_PTR base = (ULONG_PTR)wine_ldt_copy_obsolete.base[index];
+        ULONG limit = wine_ldt_copy_obsolete.limit[index];
+
+        entry->BaseLow                   = (WORD)base;
+        entry->HighWord.Bits.BaseMid     = (BYTE)(base >> 16);
+        entry->HighWord.Bits.BaseHi      = (BYTE)(base >> 24);
+        if ((entry->HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+        entry->LimitLow                  = (WORD)limit;
+        entry->HighWord.Bits.LimitHi     = (limit >> 16);
+        entry->HighWord.Bits.Dpl         = 3;
+        entry->HighWord.Bits.Pres        = 1;
+        entry->HighWord.Bits.Type        = wine_ldt_copy_obsolete.flags[index];
+        entry->HighWord.Bits.Sys         = 0;
+        entry->HighWord.Bits.Reserved_0  = 0;
+        entry->HighWord.Bits.Default_Big = !!(wine_ldt_copy_obsolete.flags[index] & WINE_LDT_FLAGS_32BIT);
     }
     else *entry = null_entry;
     unlock_ldt();
