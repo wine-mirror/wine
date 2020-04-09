@@ -8428,7 +8428,7 @@ msgstr "Valitse tarjoaja."
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
-msgstr ""
+msgstr "Tarjoajaa ei ole enää saatavilla. Varmista, että se on asennettu."
 
 #: version.rc:36
 msgid "Data Link Properties"
@@ -9876,16 +9876,12 @@ msgid "Argentina Daylight Time"
 msgstr "Argentiinan kesäaika"
 
 #: tzres.rc:142
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "Mauritiuksen normaaliaika"
+msgstr "Marquesassaarten normaaliaika"
 
 #: tzres.rc:143
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "Mauritiuksen kesäaika"
+msgstr "Marquesassaarten kesäaika"
 
 #: tzres.rc:156
 msgid "Myanmar Standard Time"
@@ -10260,16 +10256,12 @@ msgid "Venezuela Daylight Time"
 msgstr "Venezuelan kesäaika"
 
 #: tzres.rc:60
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "Kalliovuorten normaaliaika"
+msgstr "Bougainvillen normaaliaika"
 
 #: tzres.rc:61
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "Kalliovuorten kesäaika"
+msgstr "Bougainvillen kesäaika"
 
 #: tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10384,16 +10376,12 @@ msgid "Korea Daylight Time"
 msgstr "Korean kesäaika"
 
 #: tzres.rc:86
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "Pääsiäissaarten normaaliaika"
+msgstr "Chathamsaarten normaaliaika"
 
 #: tzres.rc:87
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Pääsiäissaarten kesäaika"
+msgstr "Chathamsaarten kesäaika"
 
 #: tzres.rc:92
 msgid "E. Africa Standard Time"
