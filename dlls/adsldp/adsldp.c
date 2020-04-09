@@ -1488,16 +1488,16 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
         {
             col->pADsValues[i].dwType = type;
 
-            if (wcsicmp(values[i], L"TRUE"))
+            if (!wcsicmp(values[i], L"TRUE"))
                 col->pADsValues[i].u.Boolean = 1;
-            else if (wcsicmp(values[i], L"FALSE"))
+            else if (!wcsicmp(values[i], L"FALSE"))
                 col->pADsValues[i].u.Boolean = 0;
             else
             {
                 FIXME("not recognized boolean value %s\n", debugstr_w(values[i]));
                 col->pADsValues[i].u.Boolean = 0;
             }
-            TRACE("=> %d\n", col->pADsValues[i].u.Boolean);
+            TRACE("%s => %d\n", debugstr_w(values[i]), col->pADsValues[i].u.Boolean);
         }
 
         ldap_value_freeW(values);
