@@ -1686,7 +1686,7 @@ static void test_GetRawInputDeviceList(void)
          * understand that; so use the \\?\ prefix instead */
         name[1] = '\\';
         file = CreateFileW(name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-        todo_wine_if(info.dwType != RIM_TYPEHID)
+        todo_wine_if(i == 0 || i == 1)
             ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %u\n", wine_dbgstr_w(name), GetLastError());
 
         sz = 0;
@@ -1716,8 +1716,7 @@ static void test_GetRawInputDeviceList(void)
             {
                 /* succeeds on hardware, fails in some VMs */
                 br = HidD_GetPreparsedData(file, &preparsed);
-                todo_wine
-                    ok(br == TRUE || broken(br == FALSE), "HidD_GetPreparsedData failed\n");
+                ok(br == TRUE || broken(br == FALSE), "HidD_GetPreparsedData failed\n");
             }
 
             if (br)

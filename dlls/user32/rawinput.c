@@ -37,13 +37,16 @@
 
 #include "user_private.h"
 
+#include "initguid.h"
+#include "ntddmou.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
 
 struct device
 {
     WCHAR *path;
     HANDLE file;
-    RID_DEVICE_INFO_HID info;
+    RID_DEVICE_INFO info;
     PHIDP_PREPARSED_DATA data;
 };
 
@@ -139,6 +142,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     device = &rawinput_devices[rawinput_devices_count++];
     device->path = path;
     device->file = file;
+    device->info.cbSize = sizeof(RID_DEVICE_INFO);
 
     return device;
 }
@@ -161,8 +165,6 @@ static void find_devices(void)
 
     HidD_GetHidGuid(&hid_guid);
 
-    set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-
     EnterCriticalSection(&rawinput_devices_cs);
 
     /* destroy previous list */
@@ -171,8 +173,10 @@ static void find_devices(void)
         CloseHandle(rawinput_devices[idx].file);
         heap_free(rawinput_devices[idx].path);
     }
-
     rawinput_devices_count = 0;
+
+    set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+
     for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &hid_guid, idx, &iface); ++idx)
     {
         if (!(device = add_device(set, &iface)))
@@ -181,9 +185,11 @@ static void find_devices(void)
         attr.Size = sizeof(HIDD_ATTRIBUTES);
         if (!HidD_GetAttributes(device->file, &attr))
             WARN("Failed to get attributes.\n");
-        device->info.dwVendorId = attr.VendorID;
-        device->info.dwProductId = attr.ProductID;
-        device->info.dwVersionNumber = attr.VersionNumber;
+
+        device->info.dwType = RIM_TYPEHID;
+        device->info.u.hid.dwVendorId = attr.VendorID;
+        device->info.u.hid.dwProductId = attr.ProductID;
+        device->info.u.hid.dwVersionNumber = attr.VersionNumber;
 
         if (!HidD_GetPreparsedData(device->file, &device->data))
             WARN("Failed to get preparsed data.\n");
@@ -191,12 +197,28 @@ static void find_devices(void)
         if (!HidP_GetCaps(device->data, &caps))
             WARN("Failed to get caps.\n");
 
-        device->info.usUsagePage = caps.UsagePage;
-        device->info.usUsage = caps.Usage;
+        device->info.u.hid.usUsagePage = caps.UsagePage;
+        device->info.u.hid.usUsage = caps.Usage;
     }
 
-    LeaveCriticalSection(&rawinput_devices_cs);
     SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_MOUSE, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+
+    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_MOUSE, idx, &iface); ++idx)
+    {
+        static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
+
+        if (!(device = add_device(set, &iface)))
+            continue;
+
+        device->info.dwType = RIM_TYPEMOUSE;
+        device->info.u.mouse = mouse_info;
+    }
+
+    SetupDiDestroyDeviceInfoList(set);
+
+    LeaveCriticalSection(&rawinput_devices_cs);
 }
 
 /***********************************************************************
@@ -243,7 +265,7 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
     for (i = 0; i < rawinput_devices_count; ++i)
     {
         devices[2 + i].hDevice = &rawinput_devices[i];
-        devices[2 + i].dwType = RIM_TYPEHID;
+        devices[2 + i].dwType = rawinput_devices[i].info.dwType;
     }
 
     return 2 + rawinput_devices_count;
@@ -461,8 +483,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         }
         else
         {
-            info.dwType = RIM_TYPEHID;
-            info.u.hid = device->info;
+            info = device->info;
         }
         to_copy_bytes = sizeof(info);
         *data_size = to_copy_bytes;
