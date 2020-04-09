@@ -6118,7 +6118,6 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
             ok(GetClipCursor(&clip_rect),
                     "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
-            todo_wine_if(!EqualRect(&clip_rect, &virtual_rect))
             ok(EqualRect(&clip_rect, &virtual_rect),
                     "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
                     wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));
@@ -6139,7 +6138,6 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
             ok(GetClipCursor(&clip_rect),
                     "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
-            todo_wine_if(!EqualRect(&clip_rect, &virtual_rect))
             ok(EqualRect(&clip_rect, &virtual_rect),
                     "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
                     wine_dbgstr_rect(&virtual_rect), wine_dbgstr_rect(&clip_rect));

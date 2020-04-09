@@ -1067,7 +1067,6 @@ err:
         if (!output || FAILED(wined3d_output_set_display_mode(output,
                 &swapchain->state.original_mode)))
             ERR("Failed to restore display mode.\n");
-        ClipCursor(NULL);
     }
 
     if (swapchain->back_buffers)

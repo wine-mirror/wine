@@ -665,6 +665,8 @@ static HRESULT ddraw_create_swapchain(struct ddraw *ddraw, HWND window, BOOL win
 static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+    struct wined3d_display_mode mode;
+    RECT clip_rect;
     HRESULT hr;
 
     TRACE("iface %p.\n", iface);
@@ -684,7 +686,15 @@ static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
     }
 
     if (SUCCEEDED(hr = wined3d_output_set_display_mode(ddraw->wined3d_output, NULL)))
+    {
         ddraw->flags &= ~DDRAW_RESTORE_MODE;
+        if (ddraw->cooperative_level & DDSCL_EXCLUSIVE &&
+                SUCCEEDED(hr = wined3d_output_get_display_mode(ddraw->wined3d_output, &mode, NULL)))
+        {
+            SetRect(&clip_rect, 0, 0, mode.width, mode.height);
+            ClipCursor(&clip_rect);
+        }
+    }
 
     InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_OK);
 
@@ -768,6 +778,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     struct wined3d_rendertarget_view *rtv = NULL, *dsv = NULL;
     struct wined3d_stateblock *stateblock;
     BOOL restore_state = FALSE;
+    RECT clip_rect;
     HRESULT hr;
 
     TRACE("ddraw %p, window %p, flags %#x, restore_mode_on_normal %x.\n", ddraw, window, cooplevel,
@@ -942,12 +953,11 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         wined3d_stateblock_decref(stateblock);
     }
 
-    if (!(cooplevel & DDSCL_EXCLUSIVE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
-            && restore_mode_on_normal)
+    if (!(cooplevel & DDSCL_EXCLUSIVE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
-        hr = ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface);
-        if (FAILED(hr))
+        if (restore_mode_on_normal && FAILED(ddraw7_RestoreDisplayMode(&ddraw->IDirectDraw7_iface)))
             ERR("RestoreDisplayMode failed\n");
+        ClipCursor(NULL);
     }
 
     if ((ddraw->cooperative_level & DDSCL_EXCLUSIVE)
@@ -963,6 +973,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
             goto done;
         }
+    }
+
+    if (cooplevel & DDSCL_EXCLUSIVE)
+    {
+        SetRect(&clip_rect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+        ClipCursor(&clip_rect);
     }
 
     /* Unhandled flags */
@@ -1059,6 +1075,7 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
     struct wined3d_display_mode mode;
     enum wined3d_format_id format;
+    RECT clip_rect;
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
@@ -1117,6 +1134,12 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
                 ddrawformat_from_wined3dformat(&ddraw->primary->surface_desc.u4.ddpfPixelFormat, mode.format_id);
         }
         ddraw->flags |= DDRAW_RESTORE_MODE;
+
+        if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
+        {
+            SetRect(&clip_rect, 0, 0, width, height);
+            ClipCursor(&clip_rect);
+        }
     }
 
     InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_OK);

@@ -1260,7 +1260,6 @@ HRESULT CDECL wined3d_output_set_display_mode(struct wined3d_output *output,
         const struct wined3d_display_mode *mode)
 {
     DEVMODEW new_mode, current_mode;
-    RECT clip_rc;
     LONG ret;
     enum wined3d_format_id new_format_id;
 
@@ -1340,10 +1339,6 @@ HRESULT CDECL wined3d_output_set_display_mode(struct wined3d_output *output,
 
     /* Store the new values. */
     output->screen_format = new_format_id;
-
-    /* And finally clip mouse to our screen. */
-    SetRect(&clip_rc, 0, 0, new_mode.dmPelsWidth, new_mode.dmPelsHeight);
-    ClipCursor(&clip_rc);
 
     return WINED3D_OK;
 }
