@@ -1586,7 +1586,7 @@ static HRESULT add_column_values(LDAP_namespace *ldap, struct ldap_search_contex
         {
             col->pADsValues[i].dwType = type;
             if (values[i]->bv_len < 14 ||
-                _snscanf_l(values[i]->bv_val, values[i]->bv_len, "%04u%02u%02u%02u%02u%02u", NULL,
+                _snscanf_l(values[i]->bv_val, values[i]->bv_len, "%04hu%02hu%02hu%02hu%02hu%02hu", NULL,
                            &col->pADsValues[i].u.UTCTime.wYear, &col->pADsValues[i].u.UTCTime.wMonth,
                            &col->pADsValues[i].u.UTCTime.wDay, &col->pADsValues[i].u.UTCTime.wHour,
                            &col->pADsValues[i].u.UTCTime.wMinute, &col->pADsValues[i].u.UTCTime.wSecond) != 6)
