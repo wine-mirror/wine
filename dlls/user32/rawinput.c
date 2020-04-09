@@ -47,17 +47,17 @@ struct device
     PHIDP_PREPARSED_DATA data;
 };
 
-static struct device *hid_devices;
-static unsigned int hid_devices_count, hid_devices_max;
+static struct device *rawinput_devices;
+static unsigned int rawinput_devices_count, rawinput_devices_max;
 
-static CRITICAL_SECTION hid_devices_cs;
-static CRITICAL_SECTION_DEBUG hid_devices_cs_debug =
+static CRITICAL_SECTION rawinput_devices_cs;
+static CRITICAL_SECTION_DEBUG rawinput_devices_cs_debug =
 {
-    0, 0, &hid_devices_cs,
-    { &hid_devices_cs_debug.ProcessLocksList, &hid_devices_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": hid_devices_cs") }
+    0, 0, &rawinput_devices_cs,
+    { &rawinput_devices_cs_debug.ProcessLocksList, &rawinput_devices_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": rawinput_devices_cs") }
 };
-static CRITICAL_SECTION hid_devices_cs = { &hid_devices_cs_debug, -1, 0, 0, 0, 0 };
+static CRITICAL_SECTION rawinput_devices_cs = { &rawinput_devices_cs_debug, -1, 0, 0, 0, 0 };
 
 static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
 {
@@ -127,7 +127,8 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         return NULL;
     }
 
-    if (!array_reserve((void **)&hid_devices, &hid_devices_max, hid_devices_count + 1, sizeof(*hid_devices)))
+    if (!array_reserve((void **)&rawinput_devices, &rawinput_devices_max,
+            rawinput_devices_count + 1, sizeof(*rawinput_devices)))
     {
         ERR("Failed to allocate memory.\n");
         CloseHandle(file);
@@ -135,14 +136,14 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         return NULL;
     }
 
-    device = &hid_devices[hid_devices_count++];
+    device = &rawinput_devices[rawinput_devices_count++];
     device->path = path;
     device->file = file;
 
     return device;
 }
 
-static void find_hid_devices(void)
+static void find_devices(void)
 {
     static ULONGLONG last_check;
 
@@ -162,16 +163,16 @@ static void find_hid_devices(void)
 
     set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 
-    EnterCriticalSection(&hid_devices_cs);
+    EnterCriticalSection(&rawinput_devices_cs);
 
     /* destroy previous list */
-    for (idx = 0; idx < hid_devices_count; ++idx)
+    for (idx = 0; idx < rawinput_devices_count; ++idx)
     {
-        CloseHandle(hid_devices[idx].file);
-        heap_free(hid_devices[idx].path);
+        CloseHandle(rawinput_devices[idx].file);
+        heap_free(rawinput_devices[idx].path);
     }
 
-    hid_devices_count = 0;
+    rawinput_devices_count = 0;
     for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &hid_guid, idx, &iface); ++idx)
     {
         if (!(device = add_device(set, &iface)))
@@ -194,7 +195,7 @@ static void find_hid_devices(void)
         device->info.usUsage = caps.Usage;
     }
 
-    LeaveCriticalSection(&hid_devices_cs);
+    LeaveCriticalSection(&rawinput_devices_cs);
     SetupDiDestroyDeviceInfoList(set);
 }
 
@@ -219,18 +220,18 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
         return ~0U;
     }
 
-    find_hid_devices();
+    find_devices();
 
     if (!devices)
     {
-        *device_count = 2 + hid_devices_count;
+        *device_count = 2 + rawinput_devices_count;
         return 0;
     }
 
-    if (*device_count < 2 + hid_devices_count)
+    if (*device_count < 2 + rawinput_devices_count)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        *device_count = 2 + hid_devices_count;
+        *device_count = 2 + rawinput_devices_count;
         return ~0U;
     }
 
@@ -239,13 +240,13 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
     devices[1].hDevice = WINE_KEYBOARD_HANDLE;
     devices[1].dwType = RIM_TYPEKEYBOARD;
 
-    for (i = 0; i < hid_devices_count; ++i)
+    for (i = 0; i < rawinput_devices_count; ++i)
     {
-        devices[2 + i].hDevice = &hid_devices[i];
+        devices[2 + i].hDevice = &rawinput_devices[i];
         devices[2 + i].dwType = RIM_TYPEHID;
     }
 
-    return 2 + hid_devices_count;
+    return 2 + rawinput_devices_count;
 }
 
 /***********************************************************************
