@@ -786,6 +786,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     struct schan_credentials *cred;
     SIZE_T expected_size = ~0UL;
     SECURITY_STATUS ret;
+    SecBuffer *buffer;
+    int idx;
 
     TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
@@ -842,6 +844,13 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
                 heap_free( target );
             }
         }
+
+        if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_APPLICATION_PROTOCOLS)) != -1)
+        {
+            buffer = &pInput->pBuffers[idx];
+            schan_imp_set_application_protocols(ctx->session, buffer->pvBuffer, buffer->cbBuffer);
+        }
+
         phNewContext->dwLower = handle;
         phNewContext->dwUpper = 0;
     }
@@ -849,8 +858,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     {
         SIZE_T record_size = 0;
         unsigned char *ptr;
-        SecBuffer *buffer;
-        int idx;
 
         if (!pInput)
             return SEC_E_INCOMPLETE_MESSAGE;
@@ -1003,6 +1010,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
 {
     struct schan_context *ctx;
+    SECURITY_STATUS status;
 
     TRACE("context_handle %p, attribute %#x, buffer %p\n",
             context_handle, attribute, buffer);
@@ -1015,7 +1023,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_STREAM_SIZES:
         {
             SecPkgContext_ConnectionInfo info;
-            SECURITY_STATUS status = schan_imp_get_connection_info(ctx->session, &info);
+            status = schan_imp_get_connection_info(ctx->session, &info);
             if (status == SEC_E_OK)
             {
                 SecPkgContext_StreamSizes *stream_sizes = buffer;
@@ -1039,7 +1047,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_KEY_INFO:
         {
             SecPkgContext_ConnectionInfo conn_info;
-            SECURITY_STATUS status = schan_imp_get_connection_info(ctx->session, &conn_info);
+            status = schan_imp_get_connection_info(ctx->session, &conn_info);
             if (status == SEC_E_OK)
             {
                 SecPkgContext_KeyInfoW *info = buffer;
@@ -1054,7 +1062,6 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
         {
             PCCERT_CONTEXT *cert = buffer;
-            SECURITY_STATUS status;
 
             status = ensure_remote_cert(ctx);
             if(status != SEC_E_OK)
@@ -1075,7 +1082,6 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             ALG_ID hash_alg = CALG_SHA_256;
             BYTE hash[1024];
             DWORD hash_size;
-            SECURITY_STATUS status;
             char *p;
             BOOL r;
 
@@ -1108,6 +1114,11 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             p += sizeof(prefix)-1;
             memcpy(p, hash, hash_size);
             return SEC_E_OK;
+        }
+        case SECPKG_ATTR_APPLICATION_PROTOCOL:
+        {
+            SecPkgContext_ApplicationProtocol *protocol = buffer;
+            return schan_imp_get_application_protocol(ctx->session, protocol);
         }
 
         default:
@@ -1142,6 +1153,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
         case SECPKG_ATTR_CONNECTION_INFO:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
         case SECPKG_ATTR_ENDPOINT_BINDINGS:
+            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        case SECPKG_ATTR_APPLICATION_PROTOCOL:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
 
         default:
