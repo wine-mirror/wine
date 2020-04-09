@@ -54,13 +54,8 @@ extern void wine_exec_wine_binary( const char *name, char **argv, const char *en
 /* dll loading */
 
 typedef void (*load_dll_callback_t)( void *, const char * );
-
 extern void wine_dll_set_callback( load_dll_callback_t load );
 extern const char *wine_dll_enum_load_path( unsigned int index );
-
-extern int __wine_main_argc;
-extern char **__wine_main_argv;
-extern WCHAR **__wine_main_wargv;
 extern void __wine_dll_register( const IMAGE_NT_HEADERS *header, const char *filename );
 extern void wine_init( int argc, char *argv[], char *error, int error_size );
 
