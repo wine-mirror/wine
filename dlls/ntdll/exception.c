@@ -183,7 +183,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *con
 
     select_op.wait.op = SELECT_WAIT;
     select_op.wait.handles[0] = handle;
-    server_wait( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, NULL );
+    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, NULL );
 
     SERVER_START_REQ( get_exception_status )
     {
