@@ -307,7 +307,7 @@ static void write_routinetable(type_t *iface)
     {
         var_t *func = stmt->u.var;
         if (is_local( func->attrs )) continue;
-        print_server( "(SERVER_ROUTINE)%s%s,\n", prefix_server, get_name(func));
+        print_server( "(void *)%s%s,\n", prefix_server, get_name(func));
     }
     indent--;
     print_server( "};\n\n" );
