@@ -88,6 +88,32 @@ static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
             && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
+static void get_virtual_rect(RECT *rect)
+{
+    rect->left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    rect->top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    rect->right = rect->left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    rect->bottom = rect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+}
+
+/* Try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    int diff = 200;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
 static BOOL ddraw_get_identifier(IDirectDraw *ddraw, DDDEVICEIDENTIFIER *identifier)
 {
     IDirectDraw4 *ddraw4;
@@ -13207,6 +13233,145 @@ static void test_d32_support(void)
     DestroyWindow(window);
 }
 
+struct find_different_mode_param
+{
+    unsigned int old_width;
+    unsigned int old_height;
+    unsigned int new_width;
+    unsigned int new_height;
+};
+
+static HRESULT CALLBACK find_different_mode_callback(DDSURFACEDESC *surface_desc, void *context)
+{
+    struct find_different_mode_param *param = context;
+
+    if (U1(U4(*surface_desc).ddpfPixelFormat).dwRGBBitCount != registry_mode.dmBitsPerPel)
+        return DDENUMRET_OK;
+
+    if (surface_desc->dwWidth != param->old_width && surface_desc->dwHeight != param->old_height)
+    {
+        param->new_width = surface_desc->dwWidth;
+        param->new_height = surface_desc->dwHeight;
+        return DDENUMRET_CANCEL;
+    }
+
+    return DDENUMRET_OK;
+}
+
+static void test_cursor_clipping(void)
+{
+    struct find_different_mode_param param;
+    DDSURFACEDESC surface_desc;
+    RECT rect, clip_rect;
+    IDirectDraw *ddraw;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+
+    memset(&param, 0, sizeof(param));
+    param.old_width = surface_desc.dwWidth;
+    param.old_height = surface_desc.dwHeight;
+    hr = IDirectDraw_EnumDisplayModes(ddraw, 0, NULL, &param, find_different_mode_callback);
+    ok(hr == DD_OK, "EnumDisplayModes failed, hr %#x.\n", hr);
+    if (!(param.new_width && param.new_height))
+    {
+        skip("Failed to find a different mode than %ux%u.\n", param.old_width, param.old_height);
+        goto done;
+    }
+
+    ok(ClipCursor(NULL), "ClipCursor failed, error %#x.\n", GetLastError());
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Set cooperative level to normal */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    hr = set_display_mode(ddraw, param.new_width, param.new_height);
+    ok(hr == DD_OK || hr == DDERR_UNSUPPORTED, "SetDisplayMode failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        win_skip("SetDisplayMode failed, hr %#x.\n", hr);
+        goto done;
+    }
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    todo_wine_if(!EqualRect(&clip_rect, &rect))
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    ok(hr == DD_OK, "RestoreDisplayMode failed, hr %#x.\n", hr);
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    todo_wine_if(GetSystemMetrics(SM_CMONITORS) > 1)
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Switch to full screen cooperative level */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    SetRect(&rect, 0, 0, param.old_width, param.old_height);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    hr = set_display_mode(ddraw, param.new_width, param.new_height);
+    ok(hr == DD_OK || hr == DDERR_UNSUPPORTED, "SetDisplayMode failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        win_skip("SetDisplayMode failed, hr %#x.\n", hr);
+        goto done;
+    }
+    flush_events();
+    SetRect(&rect, 0, 0, param.new_width, param.new_height);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Restore display mode */
+    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    ok(hr == DD_OK, "RestoreDisplayMode failed, hr %#x.\n", hr);
+    flush_events();
+    SetRect(&rect, 0, 0, param.old_width, param.old_height);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+    /* Switch to normal cooperative level */
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+    flush_events();
+    get_virtual_rect(&rect);
+    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    todo_wine_if(GetSystemMetrics(SM_CMONITORS) > 1)
+    ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
+            wine_dbgstr_rect(&clip_rect));
+
+done:
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -13319,4 +13484,5 @@ START_TEST(ddraw1)
     test_clipper_refcount();
     test_caps();
     test_d32_support();
+    test_cursor_clipping();
 }
