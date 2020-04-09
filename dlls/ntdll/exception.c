@@ -111,7 +111,6 @@ static ULONG remove_vectored_handler( struct list *handler_list, VECTORED_HANDLE
  */
 void wait_suspend( CONTEXT *context )
 {
-    LARGE_INTEGER timeout;
     int saved_errno = errno;
     context_t server_context;
     DWORD flags = context->ContextFlags;
@@ -127,8 +126,7 @@ void wait_suspend( CONTEXT *context )
     SERVER_END_REQ;
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    timeout.QuadPart = 0;
-    server_wait( NULL, 0, SELECT_INTERRUPTIBLE, &timeout );
+    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL );
 
     /* retrieve the new context */
     SERVER_START_REQ( get_suspend_context )
