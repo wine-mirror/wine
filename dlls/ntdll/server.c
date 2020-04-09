@@ -606,26 +606,16 @@ void invoke_apc( const apc_call_t *call, apc_result_t *result )
  *              server_select
  */
 unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                            const LARGE_INTEGER *timeout )
+                            timeout_t abs_timeout, user_apc_t *user_apc )
 {
     unsigned int ret;
     int cookie;
-    BOOL user_apc = FALSE;
     obj_handle_t apc_handle = 0;
     apc_call_t call;
     apc_result_t result;
-    abstime_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
     sigset_t old_set;
 
     memset( &result, 0, sizeof(result) );
-
-    if (abs_timeout < 0)
-    {
-        LARGE_INTEGER now;
-
-        RtlQueryPerformanceCounter(&now);
-        abs_timeout -= now.QuadPart;
-    }
 
     do
     {
@@ -646,28 +636,59 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             }
             SERVER_END_REQ;
 
+            if (ret != STATUS_KERNEL_APC) break;
+            invoke_apc( &call, &result );
+
             /* don't signal multiple times */
             if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
                 size = offsetof( select_op_t, signal_and_wait.signal );
-
-            if (ret != STATUS_KERNEL_APC) break;
-            invoke_apc( &call, &result );
         }
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
+        if (ret != STATUS_PENDING) break;
 
-        if (ret == STATUS_USER_APC)
-        {
-            invoke_apc( &call, &result );
-            /* if we ran a user apc we have to check once more if additional apcs are queued,
-             * but we don't want to wait */
-            abs_timeout = 0;
-            user_apc = TRUE;
-            size = 0;
-        }
-
-        if (ret == STATUS_PENDING) ret = wait_select_reply( &cookie );
+        ret = wait_select_reply( &cookie );
     }
     while (ret == STATUS_USER_APC || ret == STATUS_KERNEL_APC);
+
+    if (ret == STATUS_USER_APC) *user_apc = call.user;
+    return ret;
+}
+
+
+/***********************************************************************
+ *              server_wait
+ */
+unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
+                          const LARGE_INTEGER *timeout )
+{
+    timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+    BOOL user_apc = FALSE;
+    unsigned int ret;
+    user_apc_t apc;
+
+    if (abs_timeout < 0)
+    {
+        LARGE_INTEGER now;
+
+        RtlQueryPerformanceCounter(&now);
+        abs_timeout -= now.QuadPart;
+    }
+
+    for (;;)
+    {
+        ret = server_select( select_op, size, flags, abs_timeout, &apc );
+        if (ret != STATUS_USER_APC) break;
+        invoke_user_apc( &apc );
+
+        /* if we ran a user apc we have to check once more if additional apcs are queued,
+         * but we don't want to wait */
+        abs_timeout = 0;
+        user_apc = TRUE;
+        size = 0;
+        /* don't signal multiple times */
+        if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
+            size = offsetof( select_op_t, signal_and_wait.signal );
+    }
 
     if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
 

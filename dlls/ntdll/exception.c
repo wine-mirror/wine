@@ -128,7 +128,7 @@ void wait_suspend( CONTEXT *context )
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     timeout.QuadPart = 0;
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, &timeout );
+    server_wait( NULL, 0, SELECT_INTERRUPTIBLE, &timeout );
 
     /* retrieve the new context */
     SERVER_START_REQ( get_suspend_context )
@@ -185,7 +185,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *con
 
     select_op.wait.op = SELECT_WAIT;
     select_op.wait.handles[0] = handle;
-    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, NULL );
+    server_wait( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, NULL );
 
     SERVER_START_REQ( get_exception_status )
     {

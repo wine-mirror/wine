@@ -1091,7 +1091,7 @@ static NTSTATUS wait_objects( DWORD count, const HANDLE *handles,
     if (alertable) flags |= SELECT_ALERTABLE;
     select_op.wait.op = wait_any ? SELECT_WAIT : SELECT_WAIT_ALL;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
-    return server_select( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
+    return server_wait( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
 }
 
 
@@ -1130,7 +1130,7 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWa
     select_op.signal_and_wait.op = SELECT_SIGNAL_AND_WAIT;
     select_op.signal_and_wait.wait = wine_server_obj_handle( hWaitObject );
     select_op.signal_and_wait.signal = wine_server_obj_handle( hSignalObject );
-    return server_select( &select_op, sizeof(select_op.signal_and_wait), flags, timeout );
+    return server_wait( &select_op, sizeof(select_op.signal_and_wait), flags, timeout );
 }
 
 
@@ -1155,7 +1155,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
 {
     /* if alertable, we need to query the server */
     if (alertable)
-        return server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, timeout );
+        return server_wait( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, timeout );
 
     if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
     {
@@ -1254,7 +1254,7 @@ NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
     select_op.keyed_event.op     = SELECT_KEYED_EVENT_WAIT;
     select_op.keyed_event.handle = wine_server_obj_handle( handle );
     select_op.keyed_event.key    = wine_server_client_ptr( key );
-    return server_select( &select_op, sizeof(select_op.keyed_event), flags, timeout );
+    return server_wait( &select_op, sizeof(select_op.keyed_event), flags, timeout );
 }
 
 /******************************************************************************
@@ -1272,7 +1272,7 @@ NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
     select_op.keyed_event.op     = SELECT_KEYED_EVENT_RELEASE;
     select_op.keyed_event.handle = wine_server_obj_handle( handle );
     select_op.keyed_event.key    = wine_server_client_ptr( key );
-    return server_select( &select_op, sizeof(select_op.keyed_event), flags, timeout );
+    return server_wait( &select_op, sizeof(select_op.keyed_event), flags, timeout );
 }
 
 /******************************************************************
