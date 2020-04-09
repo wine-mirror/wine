@@ -56,7 +56,6 @@ static int option(int shortopt, const WCHAR *longopt)
     "                directory to the short format\n"
     "  -0            separate output with \\0 character, instead of a newline\n"
     "  -h, --help    output this help message and exit\n"
-    "  -v, --version output version information and exit\n"
     "\n"
     "If more than one option is given then the input paths are output in\n"
     "all formats specified, in the order long, short, Unix, Windows.\n"
@@ -66,9 +65,6 @@ static int option(int shortopt, const WCHAR *longopt)
         case 'h':
             printf("Usage: %s [OPTION] [PATH]...\n", progname);
             printf(helpmsg);
-            exit(0);
-        case 'v':
-            printf("%s version " PACKAGE_VERSION "\n", progname);
             exit(0);
         case 'l':
             return LONGFORMAT;
@@ -101,9 +97,8 @@ static int parse_options(WCHAR *argv[])
     static const WCHAR unixW[] = { 'u','n','i','x',0 };
     static const WCHAR windowsW[] = { 'w','i','n','d','o','w','s',0 };
     static const WCHAR helpW[] = { 'h','e','l','p',0 };
-    static const WCHAR versionW[] = { 'v','e','r','s','i','o','n',0 };
     static const WCHAR nullW[] = { 0 };
-    static const WCHAR *longopts[] = { longW, shortW, unixW, windowsW, helpW, versionW, nullW };
+    static const WCHAR *longopts[] = { longW, shortW, unixW, windowsW, helpW, nullW };
     int outputformats = 0;
     BOOL done = FALSE;
     int i, j;
