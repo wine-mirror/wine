@@ -597,8 +597,10 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
           context->u.s.X24, context->u.s.X25, context->u.s.X26, context->u.s.X27 );
     TRACE(" x28=%016lx  fp=%016lx  lr=%016lx  sp=%016lx\n",
           context->u.s.X28, context->u.s.Fp, context->u.s.Lr, context->Sp );
-#endif
     return STATUS_SUCCESS;
+#else
+    return STATUS_INVALID_DISPOSITION;
+#endif
 }
 
 
@@ -645,7 +647,11 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
             return STATUS_SUCCESS;
         }
     }
-    else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
+    else
+    {
+        WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
+        return STATUS_INVALID_DISPOSITION;
+    }
 
     dispatch->EstablisherFrame = context->u.s.Fp;
     dispatch->LanguageHandler = NULL;
