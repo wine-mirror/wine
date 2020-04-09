@@ -267,6 +267,23 @@ static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOI
     return TRUE;
 }
 
+const WCHAR *process_getenv(const struct process *process, const WCHAR *name)
+{
+    size_t name_len;
+    const WCHAR *iter;
+
+    if (!process->environment) return NULL;
+    name_len = lstrlenW(name);
+
+    for (iter = process->environment; *iter; iter += lstrlenW(iter) + 1)
+    {
+        if (!wcsnicmp(iter, name, name_len) && iter[name_len] == '=')
+            return iter + name_len + 1;
+    }
+
+    return NULL;
+}
+
 /******************************************************************
  *		check_live_target
  *
@@ -274,7 +291,7 @@ static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOI
 static BOOL check_live_target(struct process* pcs)
 {
     PROCESS_BASIC_INFORMATION pbi;
-    ULONG_PTR base = 0;
+    ULONG_PTR base = 0, env = 0;
 
     if (!GetProcessId(pcs->handle)) return FALSE;
     if (GetEnvironmentVariableA("DBGHELP_NOLIVE", NULL, 0)) return FALSE;
@@ -285,12 +302,57 @@ static BOOL check_live_target(struct process* pcs)
 
     if (!pcs->is_64bit)
     {
-        PEB32 *peb32 = (PEB32 *)pbi.PebBaseAddress;
-        DWORD base32 = 0;
-        ReadProcessMemory(pcs->handle, &peb32->Reserved[0], &base32, sizeof(base32), NULL);
-        base = base32;
+        DWORD env32;
+        PEB32 peb32;
+        C_ASSERT(sizeof(void*) != 4 || FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment) == 0x48);
+        if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb32, sizeof(peb32), NULL)) return FALSE;
+        base = peb32.Reserved[0];
+        if (read_process_memory(pcs, peb32.ProcessParameters + 0x48, &env32, sizeof(env32))) env = env32;
     }
-    else ReadProcessMemory(pcs->handle, &pbi.PebBaseAddress->Reserved[0], &base, sizeof(base), NULL);
+    else
+    {
+        PEB peb;
+        if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb, sizeof(peb), NULL)) return FALSE;
+        base = peb.Reserved[0];
+        ReadProcessMemory(pcs->handle, &peb.ProcessParameters->Environment, &env, sizeof(env), NULL);
+    }
+
+    /* read debuggee environment block */
+    if (env)
+    {
+        size_t buf_size = 0, i, last_null = -1;
+        WCHAR *buf = NULL;
+
+        do
+        {
+            size_t read_size = sysinfo.dwAllocationGranularity - (env & (sysinfo.dwAllocationGranularity - 1));
+            if (buf)
+            {
+                WCHAR *new_buf;
+                if (!(new_buf = realloc(buf, buf_size + read_size))) break;
+                buf = new_buf;
+            }
+            else if(!(buf = malloc(read_size))) break;
+
+            if (!read_process_memory(pcs, env, (char*)buf + buf_size, read_size)) break;
+            for (i = buf_size / sizeof(WCHAR); i < (buf_size + read_size) / sizeof(WCHAR); i++)
+            {
+                if (buf[i]) continue;
+                if (last_null + 1 == i)
+                {
+                    pcs->environment = realloc(buf, (i + 1) * sizeof(WCHAR));
+                    buf = NULL;
+                    break;
+                }
+                last_null = i;
+            }
+            env += read_size;
+            buf_size += read_size;
+        }
+        while (buf);
+        free(buf);
+    }
+
     if (!base) return FALSE;
 
     TRACE("got debug info address %#lx from PEB %p\n", base, pbi.PebBaseAddress);
@@ -448,6 +510,7 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
             while ((*ppcs)->lmodules) module_remove(*ppcs, (*ppcs)->lmodules);
 
             HeapFree(GetProcessHeap(), 0, (*ppcs)->search_path);
+            free((*ppcs)->environment);
             next = (*ppcs)->next;
             HeapFree(GetProcessHeap(), 0, *ppcs);
             *ppcs = next;
