@@ -16869,7 +16869,83 @@ if test "x${GCC}" = "xyes"
 then
   EXTRACFLAGS="-Wall -pipe"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fcf-protection=none" >&5
+      saved_CFLAGS=$CFLAGS
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5
+$as_echo_n "checking whether the compiler supports -Werror=unknown-warning-option... " >&6; }
+if ${ac_cv_cflags__Werror_unknown_warning_option+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Werror=unknown-warning-option"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Werror_unknown_warning_option=yes
+else
+  ac_cv_cflags__Werror_unknown_warning_option=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_unknown_warning_option" >&5
+$as_echo "$ac_cv_cflags__Werror_unknown_warning_option" >&6; }
+if test "x$ac_cv_cflags__Werror_unknown_warning_option" = xyes; then :
+  CFLAGS="$CFLAGS -Werror=unknown-warning-option"
+fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unused-command-line-argument" >&5
+$as_echo_n "checking whether the compiler supports -Werror=unused-command-line-argument... " >&6; }
+if ${ac_cv_cflags__Werror_unused_command_line_argument+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Werror_unused_command_line_argument=yes
+else
+  ac_cv_cflags__Werror_unused_command_line_argument=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_unused_command_line_argument" >&5
+$as_echo "$ac_cv_cflags__Werror_unused_command_line_argument" >&6; }
+if test "x$ac_cv_cflags__Werror_unused_command_line_argument" = xyes; then :
+  CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
+fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=ignored-optimization-argument" >&5
+$as_echo_n "checking whether the compiler supports -Werror=ignored-optimization-argument... " >&6; }
+if ${ac_cv_cflags__Werror_ignored_optimization_argument+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Werror_ignored_optimization_argument=yes
+else
+  ac_cv_cflags__Werror_ignored_optimization_argument=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_ignored_optimization_argument" >&5
+$as_echo "$ac_cv_cflags__Werror_ignored_optimization_argument" >&6; }
+if test "x$ac_cv_cflags__Werror_ignored_optimization_argument" = xyes; then :
+  CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
+fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fcf-protection=none" >&5
 $as_echo_n "checking whether the compiler supports -fcf-protection=none... " >&6; }
 if ${ac_cv_cflags__fcf_protection_none+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16969,57 +17045,6 @@ $as_echo "$ac_cv_cflags__fexcess_precision_standard" >&6; }
 if test "x$ac_cv_cflags__fexcess_precision_standard" = xyes; then :
   EXCESS_PRECISION_CFLAGS="-fexcess-precision=standard"
 
-fi
-    saved_CFLAGS=$CFLAGS
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unknown-warning-option" >&5
-$as_echo_n "checking whether the compiler supports -Werror=unknown-warning-option... " >&6; }
-if ${ac_cv_cflags__Werror_unknown_warning_option+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Werror=unknown-warning-option"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Werror_unknown_warning_option=yes
-else
-  ac_cv_cflags__Werror_unknown_warning_option=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_unknown_warning_option" >&5
-$as_echo "$ac_cv_cflags__Werror_unknown_warning_option" >&6; }
-if test "x$ac_cv_cflags__Werror_unknown_warning_option" = xyes; then :
-  CFLAGS="$CFLAGS -Werror=unknown-warning-option"
-fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror=unused-command-line-argument" >&5
-$as_echo_n "checking whether the compiler supports -Werror=unused-command-line-argument... " >&6; }
-if ${ac_cv_cflags__Werror_unused_command_line_argument+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Werror_unused_command_line_argument=yes
-else
-  ac_cv_cflags__Werror_unused_command_line_argument=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Werror_unused_command_line_argument" >&5
-$as_echo "$ac_cv_cflags__Werror_unused_command_line_argument" >&6; }
-if test "x$ac_cv_cflags__Werror_unused_command_line_argument" = xyes; then :
-  CFLAGS="$CFLAGS -Werror=unused-command-line-argument"
 fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether the compiler supports -Wdeclaration-after-statement... " >&6; }

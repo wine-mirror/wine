@@ -2004,14 +2004,15 @@ then
   EXTRACFLAGS="-Wall -pipe"
 
   dnl Check for some compiler flags
-  WINE_TRY_CFLAGS([-fcf-protection=none])
-  WINE_TRY_CFLAGS([-fno-stack-protector])
-  WINE_TRY_CFLAGS([-fno-strict-aliasing])
-  WINE_TRY_CFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
   dnl clang needs to be told to fail on unknown options
   saved_CFLAGS=$CFLAGS
   WINE_TRY_CFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])
   WINE_TRY_CFLAGS([-Werror=unused-command-line-argument],[CFLAGS="$CFLAGS -Werror=unused-command-line-argument"])
+  WINE_TRY_CFLAGS([-Werror=ignored-optimization-argument],[CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"])
+  WINE_TRY_CFLAGS([-fcf-protection=none])
+  WINE_TRY_CFLAGS([-fno-stack-protector])
+  WINE_TRY_CFLAGS([-fno-strict-aliasing])
+  WINE_TRY_CFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
   WINE_TRY_CFLAGS([-Wempty-body])
   WINE_TRY_CFLAGS([-Wignored-qualifiers])
