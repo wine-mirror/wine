@@ -46,8 +46,8 @@ msgstr "&Tukitiedot"
 msgid "&Modify..."
 msgstr "&Muokkaa..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "&Poista"
 
@@ -66,7 +66,7 @@ msgstr "Tukitietoja"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -148,8 +148,8 @@ msgstr "&Asenna"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -186,7 +186,7 @@ msgid ""
 "computer."
 msgstr "Voit asentaa uusia ohjelmia tai poistaa ohjelmia tietokoneeltasi."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "Sovellukset"
 
@@ -580,7 +580,7 @@ msgstr "&Fontti:"
 msgid "Font St&yle:"
 msgstr "Fontin t&yyli:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
 msgid "&Size:"
 msgstr "&Koko:"
 
@@ -596,7 +596,7 @@ msgstr "Yli&viivaus"
 msgid "&Underline"
 msgstr "A&lleviivaus"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:291
 msgid "&Color:"
 msgstr "&Väri:"
 
@@ -768,7 +768,7 @@ msgstr "Kopioiden &määrä:"
 msgid "C&ollate"
 msgstr "&Kokoa"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:299
 msgid "Si&ze:"
 msgstr "&Koko:"
 
@@ -2244,7 +2244,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Tiedostonimi:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
 msgid "B&rowse..."
 msgstr "&Selaa..."
 
@@ -3007,7 +3007,7 @@ msgstr "Nollaa"
 msgid "Player"
 msgstr "Soitin"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "Laite"
 
@@ -3554,7 +3554,7 @@ msgstr "Korkea"
 msgid "Joysticks"
 msgstr "Joystickit"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:39 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Poista käytöstä"
 
@@ -3810,6 +3810,7 @@ msgid "Wine kernel DLL"
 msgstr "Winen ydin-DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7270,7 +7271,7 @@ msgstr "Hyperlinkki"
 msgid "Hyperlink Information"
 msgstr "Tietoja hyperlinkistä"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:244
 msgid "&Type:"
 msgstr "&Tyyppi:"
 
@@ -8660,7 +8661,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -9154,7 +9155,7 @@ msgstr "Anna ohjelma, dokumentti tai Internet-osoite, niin Wine avaa sen."
 msgid "&Open:"
 msgstr "&Avaa:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Selaa..."
@@ -9243,7 +9244,7 @@ msgstr "Alkuperäinen sijainti"
 msgid "Date deleted"
 msgstr "Poistoaika"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Työpöytä"
@@ -9587,7 +9588,7 @@ msgstr "Winen lisenssi"
 msgid "Trash"
 msgstr "Roskakori"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "Virhe"
 
@@ -11604,7 +11605,7 @@ msgstr "&Analoginen"
 msgid "Digi&tal"
 msgstr "Di&gitaalinen"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Fontti..."
 
@@ -15391,7 +15392,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Winen asetuksia kohteessa %s päivitetään, ole hyvä ja odota..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15402,23 +15403,23 @@ msgstr ""
 "Foundationin GNU Lesser General Public License (LGPL) määrää joko lisenssin "
 "versiossa 2.1 tai (halutessasi) missä tahansa uudemmassa versiossa."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "Windowsin rekisteröintitiedot"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "&Omistaja:"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "Or&ganisaatio:"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "Sovellusten asetukset"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15428,55 +15429,55 @@ msgstr ""
 "välilehti toimii yhdessä Kirjastot- ja Grafiikka-välilehtien kanssa sallien "
 "järjestelmän laajuiset ja sovelluskohtaiset asetukset."
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "&Lisää sovellus..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "&Poista sovellus"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "&Windowsin versio:"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "Ikkuna-asetukset"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Kaappaa hiiri kokoruututilassa automaattisesti"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Salli ikkunointiohjelman määrätä ikkunoiden &tyyli"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "Salli ikkunointiohjelman &hallita ikkunoita"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "&Emuloi virtuaalista työpöytää"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "Työpöydän &koko:"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "Näytön resoluutio"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tämä on näyteteksti 10 pisteen Tahoma-fontilla"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL-tiedostojen ohitukset"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15486,261 +15487,261 @@ msgstr ""
 "sisäänrakennettua (Winen tarjoamaa) tai natiivia (Windows-asennuksesta "
 "otettua tai sovelluksen tarjoamaa) versiota."
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "&Uusi ohitus kirjastolle:"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "&Lisää"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "&Olemassaolevat ohitukset:"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "&Muokkaa..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "Muokkaa ohitusta"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "&Latausjärjestys"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "&Sisäinen (Wine)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "&Natiivi (Windows)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "S&isäinen, sitten natiivi"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "Na&tiivi, sitten sisäinen"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "Valitse aseman kirjain"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "Asemien asetukset"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr "Levyasemien hallintaan ei saatu yhteyttä. Asemia ei voi muokata."
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "&Lisää..."
 
-#: winecfg.rc:238
+#: winecfg.rc:237
 msgid "Aut&odetect"
 msgstr "&Hae automaattisesti"
 
-#: winecfg.rc:241
+#: winecfg.rc:240
 msgid "&Path:"
 msgstr "P&olku:"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:247 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "Näytä lisä&asetukset"
 
-#: winecfg.rc:249
+#: winecfg.rc:248
 msgid "De&vice:"
 msgstr "La&ite:"
 
-#: winecfg.rc:251
+#: winecfg.rc:250
 msgid "Bro&wse..."
 msgstr "S&elaa..."
 
-#: winecfg.rc:253
+#: winecfg.rc:252
 msgid "&Label:"
 msgstr "&Nimi:"
 
-#: winecfg.rc:255
+#: winecfg.rc:254
 msgid "S&erial:"
 msgstr "Sarjanumer&o:"
 
-#: winecfg.rc:258
+#: winecfg.rc:257
 msgid "&Show dot files"
 msgstr "N&äytä pistetiedostot"
 
-#: winecfg.rc:265
+#: winecfg.rc:264
 msgid "Driver diagnostics"
 msgstr "Ajurin diagnostiikka"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Defaults"
 msgstr "Oletukset"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Output device:"
 msgstr "Ulostulolaite:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Voice output device:"
 msgstr "Äänen ulostulolaite:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Input device:"
 msgstr "Sisääntulolaite:"
 
-#: winecfg.rc:271
+#: winecfg.rc:270
 msgid "Voice input device:"
 msgstr "Äänen sisääntulolaite:"
 
-#: winecfg.rc:276
+#: winecfg.rc:275
 msgid "&Test Sound"
 msgstr "&Testiääni"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:276 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Kaiutinasetukset"
 
-#: winecfg.rc:280
+#: winecfg.rc:279
 msgid "Speakers:"
 msgstr "Kaiuttimet:"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "Appearance"
 msgstr "Ulkonäkö"
 
-#: winecfg.rc:289
+#: winecfg.rc:288
 msgid "&Theme:"
 msgstr "&Teema:"
 
-#: winecfg.rc:291
+#: winecfg.rc:290
 msgid "&Install theme..."
 msgstr "&Asenna teema..."
 
-#: winecfg.rc:296
+#: winecfg.rc:295
 msgid "It&em:"
 msgstr "Ko&hta:"
 
-#: winecfg.rc:298
+#: winecfg.rc:297
 msgid "C&olor:"
 msgstr "&Väri:"
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "MIME types"
 msgstr "MIME-tyypit"
 
-#: winecfg.rc:305
+#: winecfg.rc:304
 msgid "Manage file &associations"
 msgstr "&Muokkaa tiedostosidoksia"
 
-#: winecfg.rc:308
+#: winecfg.rc:307
 msgid "Folders"
 msgstr "Kansiot"
 
-#: winecfg.rc:311
+#: winecfg.rc:310
 msgid "&Link to:"
 msgstr "&Linkitä kohteeseen:"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "Kirjastot"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "Asemat"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "Valitse unix-kohdekansio."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "Piilota lisä&asetukset"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(Ei teemaa)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "Grafiikka"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "Työpöytäintegraatio"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "Ääni"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "Tietoja"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "Winen asetukset"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Teematiedostot (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "Valitse teematiedosto"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "Kansio"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "Linkittää kohteeseen"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "Winen asetukset %s:lle"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "Valittu ajuri: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(Tyhjä)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "Äänitesti epäonnistui!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(Järjestelmän oletus)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "5.1 Surround"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "Neliääninen"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "Stereo"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "Mono"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15748,67 +15749,67 @@ msgstr ""
 "Tämän kirjaston lataamisjärjestyksen muuttamista ei suositella.\n"
 "Haluatko silti jatkaa?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "Varoitus: järjestelmäkirjasto"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "natiivi"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "sisäinen"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "natiivi, sisäinen"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "sisäinen, natiivi"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "ei käytössä"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "Oletusasetukset"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine-ohjelmat (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "Käytä globaaleja asetuksia"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "Valitse suoritettava tiedosto"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "Hae automaattisesti"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "Paikallinen kovalevy"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "Verkkojako"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "Levyke"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15818,11 +15819,11 @@ msgstr ""
 "\n"
 "Joka asemalla on oltava tunnus A:sta Z:aan, joten niitä voi olla enintään 26."
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "Järjestelmäasema"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15834,16 +15835,16 @@ msgstr ""
 "Monet Windows-ohjelmat olettavat, että C-asema on olemassa, ja saattavat "
 "kaatua oudosti, jos sitä ei ole. Jos jatkat, muista luoda uusi C-asema!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Kirjain"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "Kohdekansio"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15853,127 +15854,127 @@ msgstr ""
 "\n"
 "Muista painaa Asemat-välilehdellä 'Lisää' ja luoda se!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "Kontrollien tausta"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "Kontrollien teksti"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "Valikon tausta"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "Valikon teksti"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "Vierityspalkki"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "Valintojen tausta"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "Valintojen teksti"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "Työkaluvihjeen tausta"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "Työkaluvihjeen teksti"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "Ikkunan tausta"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "Ikkunan teksti"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "Aktiivinen otsikkopalkki"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "Aktiivinen otsikkoteksti"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "Epäaktiivinen otsikkopalkki"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "Epäaktiivinen otsikkoteksti"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "Viestilaatikon teksti"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "Ohjelmien työtila"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "Ikkunanreuna"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "Aktiivinen reunus"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "Epäaktiivinen reunus"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "Kontrollien varjo"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "Harmaa teksti"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "Kontrollien korostus"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "Kontrollien syvä varjo"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "Kontrollien valo"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "Kontrollien vaihtoehtotausta"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "Aktiivinen elementti"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "Aktiivisen otsikkopalkin liukuväri"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "Epäaktiivisen otsikkopalkin liukuväri"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "Valikon korostus"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "Valikkopalkki"
 

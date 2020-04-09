@@ -49,8 +49,8 @@ msgstr "&Priežiūros informacija"
 msgid "&Modify..."
 msgstr "&Modifikuoti..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "Pa&šalinti"
 
@@ -69,7 +69,7 @@ msgstr "Priežiūros informacija"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -152,8 +152,8 @@ msgstr "&Įdiegti"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -191,7 +191,7 @@ msgstr ""
 "Leidžia įdiegti naują programinę įrangą, ar pašalinti kompiuteryje jau "
 "įdiegtą."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "Programos"
 
@@ -585,7 +585,7 @@ msgstr "&Šriftas:"
 msgid "Font St&yle:"
 msgstr "Šrifto &stilius:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
 msgid "&Size:"
 msgstr "&Dydis:"
 
@@ -601,7 +601,7 @@ msgstr "Per&braukimas"
 msgid "&Underline"
 msgstr "&Pabraukimas"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:291
 msgid "&Color:"
 msgstr "&Spalva:"
 
@@ -773,7 +773,7 @@ msgstr "&Kopijų skaičius:"
 msgid "C&ollate"
 msgstr "Su&dėst."
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:299
 msgid "Si&ze:"
 msgstr "D&ydis:"
 
@@ -2254,7 +2254,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Failas:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
 msgid "B&rowse..."
 msgstr "Pari&nkti..."
 
@@ -3016,7 +3016,7 @@ msgstr "Atkurti"
 msgid "Player"
 msgstr "Žaidėjas"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr "Įtaisas"
 
@@ -3563,7 +3563,7 @@ msgstr "Aukštos"
 msgid "Joysticks"
 msgstr "Vairasvirtės"
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:39 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Išjungti"
 
@@ -3820,6 +3820,7 @@ msgid "Wine kernel DLL"
 msgstr "Wine branduolio DLL"
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7281,7 +7282,7 @@ msgstr "Saitas"
 msgid "Hyperlink Information"
 msgstr "Saito informacija"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:244
 msgid "&Type:"
 msgstr "&Tipas:"
 
@@ -8669,7 +8670,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "tašk./col."
@@ -9165,7 +9166,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Atverti:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Parinkti..."
@@ -9254,7 +9255,7 @@ msgstr "Originali vieta"
 msgid "Date deleted"
 msgstr "Pašalinimo data"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Darbalaukis"
@@ -9597,7 +9598,7 @@ msgstr "„Wine“ licencija"
 msgid "Trash"
 msgstr "Šiukšlinė"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "Klaida"
 
@@ -11616,7 +11617,7 @@ msgstr "Ana&loginis"
 msgid "Digi&tal"
 msgstr "Skai&tmeninis"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "Š&riftas..."
 
@@ -15416,7 +15417,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "„Wine“ konfigūracija (%s) atnaujinama, palaukite..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15428,23 +15429,23 @@ msgstr ""
 "kurios paskelbtos Laisvosios programinės įrangos fondo (FSF); 2.1-osios arba "
 "(Jūsų pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis."
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 msgid "Windows registration information"
 msgstr "„Windows“ registracijos informacija"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 msgid "&Owner:"
 msgstr "Savininkas:"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 msgid "Organi&zation:"
 msgstr "Organizacija:"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 msgid "Application settings"
 msgstr "Programų nuostatos"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -15455,55 +15456,55 @@ msgstr ""
 "galima keisti sistemines nuostatas ar kiekvienos programos nuostatas "
 "atskirai."
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 msgid "Add appli&cation..."
 msgstr "&Pridėti programą..."
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 msgid "&Remove application"
 msgstr "Pa&šalinti programą"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 msgid "&Windows Version:"
 msgstr "„Windows“ &versija:"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 msgid "Window settings"
 msgstr "Langų nuostatos"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Automatiškai &užvaldyti pelę viso ekrano languose"
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Leisti langų tvarkytuvei &dekoruoti langus"
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr "Leisti langų tvarkytuvei &kontroliuoti langus"
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr "&Emuliuoti virtualų darbalaukį"
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 msgid "Desktop &size:"
 msgstr "Darbalaukio d&ydis:"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr "Ekrano skiriamoji geba"
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma"
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 msgid "DLL overrides"
 msgstr "DLL nustelbimai"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -15512,55 +15513,55 @@ msgstr ""
 "Kiekviena dinaminė biblioteka gali būti įtaisyta (pateikta su „Wine“) ar "
 "sava (paimta iš „Windows“ ar pateikta programos)."
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr "&Naujas nustelbimas bibliotekai:"
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr "&Pridėti"
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr "Egzistuojantys n&ustelbimai:"
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 msgid "&Edit..."
 msgstr "&Redaguoti..."
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 msgid "Edit Override"
 msgstr "Redaguoti nustelbimą"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 msgid "Load order"
 msgstr "Įkėlimo tvarka"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 msgid "&Builtin (Wine)"
 msgstr "&Įtaisyta („Wine“)"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 msgid "&Native (Windows)"
 msgstr "&Sava („Windows“)"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr "Į&taisyta, po to sava"
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr "S&ava, po to įtaisyta"
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 msgid "Select Drive Letter"
 msgstr "Parinkite disko raidę"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 msgid "Drive configuration"
 msgstr "Diskų konfigūravimas"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -15568,207 +15569,207 @@ msgstr ""
 "Nepavyko prisijungti prie diskų tvarkytuvės, diskų konfigūracija negali būti "
 "redaguojama."
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr "Pri&dėti..."
 
-#: winecfg.rc:238
+#: winecfg.rc:237
 msgid "Aut&odetect"
 msgstr "&Automatiškai aptikti"
 
-#: winecfg.rc:241
+#: winecfg.rc:240
 msgid "&Path:"
 msgstr "&Kelias:"
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:247 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "Rodyti papild&omas"
 
-#: winecfg.rc:249
+#: winecfg.rc:248
 msgid "De&vice:"
 msgstr "Įtai&sas:"
 
-#: winecfg.rc:251
+#: winecfg.rc:250
 msgid "Bro&wse..."
 msgstr "Parinkti..."
 
-#: winecfg.rc:253
+#: winecfg.rc:252
 msgid "&Label:"
 msgstr "Va&rdas:"
 
-#: winecfg.rc:255
+#: winecfg.rc:254
 msgid "S&erial:"
 msgstr "N&umeris:"
 
-#: winecfg.rc:258
+#: winecfg.rc:257
 msgid "&Show dot files"
 msgstr "Rodyti &failus su tašku"
 
-#: winecfg.rc:265
+#: winecfg.rc:264
 msgid "Driver diagnostics"
 msgstr "Tvarkyklės diagnostika"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Defaults"
 msgstr "Numatytosios reikšmės"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Output device:"
 msgstr "Išvedimo įtaisas:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Voice output device:"
 msgstr "Balso išvedimo įtaisas:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Input device:"
 msgstr "Įvedimo įtaisas:"
 
-#: winecfg.rc:271
+#: winecfg.rc:270
 msgid "Voice input device:"
 msgstr "Balso įvedimo įtaisas:"
 
-#: winecfg.rc:276
+#: winecfg.rc:275
 msgid "&Test Sound"
 msgstr "&Testuoti garsą"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:276 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Garsiakalbių konfigūravimas"
 
-#: winecfg.rc:280
+#: winecfg.rc:279
 msgid "Speakers:"
 msgstr "Garsiakalbiai:"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "Appearance"
 msgstr "Išvaizda"
 
-#: winecfg.rc:289
+#: winecfg.rc:288
 msgid "&Theme:"
 msgstr "&Apipavidalinimas:"
 
-#: winecfg.rc:291
+#: winecfg.rc:290
 msgid "&Install theme..."
 msgstr "&Įdiegti apipavidalinimą..."
 
-#: winecfg.rc:296
+#: winecfg.rc:295
 msgid "It&em:"
 msgstr "&Elementas:"
 
-#: winecfg.rc:298
+#: winecfg.rc:297
 msgid "C&olor:"
 msgstr "S&palva:"
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "MIME types"
 msgstr "MIME tipai"
 
-#: winecfg.rc:305
+#: winecfg.rc:304
 msgid "Manage file &associations"
 msgstr "Valdyti failų susie&jimus"
 
-#: winecfg.rc:308
+#: winecfg.rc:307
 msgid "Folders"
 msgstr "Aplankai"
 
-#: winecfg.rc:311
+#: winecfg.rc:310
 msgid "&Link to:"
 msgstr "S&usieti su:"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr "Bibliotekos"
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr "Diskai"
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr "Išrinkite Unix paskirties aplanką."
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr "Slėpti papild&omas"
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr "(nėra apipavidalinimo)"
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 msgid "Graphics"
 msgstr "Grafika"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr "Darbalaukio integravimas"
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 msgid "Audio"
 msgstr "Garsas"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 msgid "About"
 msgstr "Apie"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 msgid "Wine configuration"
 msgstr "„Wine“ konfigūravimas"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr "Apipavidalinimo failai (*.msstyles; *.theme)"
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 msgid "Select a theme file"
 msgstr "Pasirinkite apipavidalinimo failą"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 msgid "Folder"
 msgstr "Aplankas"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 msgid "Links to"
 msgstr "Susietas su"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 msgid "Wine configuration for %s"
 msgstr "„Wine“ konfigūravimas: %s"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr "Parinkta tvarkyklė: %s"
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 msgid "(None)"
 msgstr "(jokia)"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr "Garso testas nepavyko!"
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 msgid "(System default)"
 msgstr "(Sistemos numatytasis)"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr "Erdviniai 5.1"
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 msgid "Quadraphonic"
 msgstr "Kvadrofoniniai"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr "Stereofoniniai"
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr "Monofoninis"
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
@@ -15776,67 +15777,67 @@ msgstr ""
 "Keisti šios bibliotekos įkėlimo tvarką nerekomenduojama.\n"
 "Ar tikrai norite tai padaryti?"
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr "Įspėjimas: sisteminė biblioteka"
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr "sava"
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr "įtaisyta"
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr "sava, įtaisyta"
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr "įtaisyta, sava"
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 msgid "disabled"
 msgstr "išjungta"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 msgid "Default Settings"
 msgstr "Numatytosios nuostatos"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "„Wine“ programos (*.exe; *.exe.so)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr "Naudoti globalias nuostatas"
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr "Pasirinkite vykdomąjį failą"
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr "Automatiškai aptikti"
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr "Vietinis standusis diskas"
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr "Tinklo diskas"
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr "Diskelis"
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -15847,11 +15848,11 @@ msgstr ""
 "Kiekvienas diskas turi turėti raidę, nuo A iki Z, todėl negalite turėti "
 "daugiau nei 26."
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr "Sisteminis diskas"
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -15863,16 +15864,16 @@ msgstr ""
 "Daugelis „Windows“ programų tikisi, kad „C“ diskas egzistuoja, ir neveikia, "
 "kai jis neegzistuoja. Jei tęsite, nepamirškite jo sukurti iš naujo!"
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr "Raidė"
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 msgid "Target folder"
 msgstr "Paskirties aplankas"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
@@ -15882,127 +15883,127 @@ msgstr ""
 "\n"
 "Nepamirškite paspausti „Pridėti“ diskų kortelėje, kad jį sukurtumėte!\n"
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 msgid "Controls Background"
 msgstr "Valdiklių fonas"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 msgid "Controls Text"
 msgstr "Valdiklių tekstas"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 msgid "Menu Background"
 msgstr "Meniu fonas"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr "Meniu tekstas"
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 msgid "Scrollbar"
 msgstr "Slankjuostė"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 msgid "Selection Background"
 msgstr "Žymėjimo fonas"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 msgid "Selection Text"
 msgstr "Žymėjimo tekstas"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 msgid "Tooltip Background"
 msgstr "Patarimo fonas"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr "Patarimo tekstas"
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 msgid "Window Background"
 msgstr "Lango fonas"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 msgid "Window Text"
 msgstr "Lango tekstas"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 msgid "Active Title Bar"
 msgstr "Aktyvi lango antraštės juosta"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr "Aktyvios lango antraštės tekstas"
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr "Neaktyvi lango antraštės juosta"
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr "Neaktyvios lango antraštės tekstas"
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr "Pranešimo lango tekstas"
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 msgid "Application Workspace"
 msgstr "Programos erdvė"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 msgid "Window Frame"
 msgstr "Lango rėmelis"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr "Aktyvi kraštinė"
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr "Neaktyvi kraštinė"
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 msgid "Controls Shadow"
 msgstr "Valdiklių šešėlis"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr "Pilkas tekstas"
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr "Valdiklių paryškinimas"
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr "Valdiklių tamsus šešėlis"
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 msgid "Controls Light"
 msgstr "Valdiklių šviesumas"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr "Valdiklių alternatyvus fonas"
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr "Sekamas elementas"
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr "Aktyvios lango antraštės gradientas"
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr "Neaktyvios lango antraštės gradientas"
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr "Meniu paryškinimas"
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 msgid "Menu Bar"
 msgstr "Meniu juosta"
 

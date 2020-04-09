@@ -47,8 +47,8 @@ msgstr "Подршка"
 msgid "&Modify..."
 msgstr "&Измени..."
 
-#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:200
-#: winecfg.rc:237 wordpad.rc:256
+#: appwiz.rc:69 appwiz.rc:45 cryptui.rc:351 msacm32.rc:40 winecfg.rc:199
+#: winecfg.rc:236 wordpad.rc:256
 msgid "&Remove"
 msgstr "&Уклони"
 
@@ -67,7 +67,7 @@ msgstr "Подршка"
 #: notepad.rc:117 oleview.rc:161 oleview.rc:174 progman.rc:106 progman.rc:124
 #: progman.rc:142 progman.rc:158 progman.rc:180 progman.rc:199 progman.rc:216
 #: regedit.rc:296 regedit.rc:307 regedit.rc:320 regedit.rc:336 regedit.rc:349
-#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224
+#: regedit.rc:362 taskmgr.rc:442 taskmgr.rc:517 winecfg.rc:213 winecfg.rc:223
 #: wineconsole.rc:135 winefile.rc:127 winefile.rc:150 winefile.rc:180
 #: winemine.rc:73 winemine.rc:84 winemine.rc:98 wordpad.rc:215 wordpad.rc:226
 #: wordpad.rc:244 wordpad.rc:257
@@ -150,8 +150,8 @@ msgstr "&Инсталирај"
 #: notepad.rc:118 oleview.rc:162 oleview.rc:175 progman.rc:107 progman.rc:125
 #: progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200 progman.rc:217
 #: regedit.rc:297 regedit.rc:308 regedit.rc:321 regedit.rc:337 regedit.rc:350
-#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:215
-#: winecfg.rc:225 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
+#: regedit.rc:363 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34 winecfg.rc:214
+#: winecfg.rc:224 wineconsole.rc:136 winefile.rc:128 winefile.rc:151
 #: winefile.rc:181 winemine.rc:99 wordpad.rc:216 wordpad.rc:227 wordpad.rc:245
 #: wordpad.rc:258
 msgid "Cancel"
@@ -191,7 +191,7 @@ msgid ""
 "computer."
 msgstr "Инсталирање новог програма или брисање постојећег."
 
-#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
+#: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:32
 msgid "Applications"
 msgstr "Програми"
 
@@ -596,7 +596,7 @@ msgstr "&Фонт:"
 msgid "Font St&yle:"
 msgstr "&Стил фонта:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:294
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
 msgid "&Size:"
 msgstr "&Величина:"
 
@@ -612,7 +612,7 @@ msgstr "&Прецртај"
 msgid "&Underline"
 msgstr "&Подвуци"
 
-#: comdlg32.rc:270 winecfg.rc:292
+#: comdlg32.rc:270 winecfg.rc:291
 msgid "&Color:"
 msgstr "&Боја:"
 
@@ -788,7 +788,7 @@ msgstr "Број &примерака:"
 msgid "C&ollate"
 msgstr "&Сложи"
 
-#: comdlg32.rc:414 winecfg.rc:300
+#: comdlg32.rc:414 winecfg.rc:299
 msgid "Si&ze:"
 msgstr "&Величина:"
 
@@ -2283,7 +2283,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&Датотека"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:313
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
 #, fuzzy
 msgid "B&rowse..."
 msgstr ""
@@ -3020,7 +3020,7 @@ msgstr ""
 msgid "Player"
 msgstr "Репродукуј"
 
-#: dinput.rc:43 winecfg.rc:89
+#: dinput.rc:43 winecfg.rc:88
 msgid "Device"
 msgstr ""
 
@@ -3608,7 +3608,7 @@ msgstr ""
 msgid "Joysticks"
 msgstr ""
 
-#: joy.rc:39 winecfg.rc:213
+#: joy.rc:39 winecfg.rc:212
 #, fuzzy
 msgid "&Disable"
 msgstr "табела"
@@ -3882,6 +3882,7 @@ msgid "Wine kernel DLL"
 msgstr ""
 
 #: ../../include/wine/wine_common_ver.rc:134 winemac.rc:32 wineboot.rc:42
+#: winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
 
@@ -7652,7 +7653,7 @@ msgstr "Хипервеза"
 msgid "Hyperlink Information"
 msgstr "Подаци о хипервези"
 
-#: mshtml.rc:43 winecfg.rc:245
+#: mshtml.rc:43 winecfg.rc:244
 msgid "&Type:"
 msgstr "&Врста:"
 
@@ -9149,7 +9150,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34 wineps.rc:49 winecfg.rc:183
+#: sane.rc:34 wineps.rc:49 winecfg.rc:182
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "тпи"
@@ -9660,7 +9661,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Отвори:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:243
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Разгледај..."
@@ -9761,7 +9762,7 @@ msgstr "Оригинална локација"
 msgid "Date deleted"
 msgstr "Датум брисања"
 
-#: shell32.rc:156 winecfg.rc:101 winefile.rc:99
+#: shell32.rc:156 winecfg.rc:100 winefile.rc:99
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10108,7 +10109,7 @@ msgstr "Wine лиценца"
 msgid "Trash"
 msgstr "Смеће"
 
-#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:87 winefile.rc:97
+#: shlwapi.rc:38 user32.rc:71 regedit.rc:204 winecfg.rc:86 winefile.rc:97
 msgid "Error"
 msgstr "Грешка"
 
@@ -12057,7 +12058,7 @@ msgstr "&Аналогни"
 msgid "Digi&tal"
 msgstr "&Дигитални"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:307 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Фонт..."
 
@@ -15712,7 +15713,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Wine поставке у %s се ажурирају. Молимо, сачекајте..."
 
-#: winecfg.rc:141
+#: winecfg.rc:140
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -15720,176 +15721,176 @@ msgid ""
 "option) any later version."
 msgstr ""
 
-#: winecfg.rc:143
+#: winecfg.rc:142
 #, fuzzy
 msgid "Windows registration information"
 msgstr "Подаци"
 
-#: winecfg.rc:144
+#: winecfg.rc:143
 #, fuzzy
 msgid "&Owner:"
 msgstr "Власник"
 
-#: winecfg.rc:146
+#: winecfg.rc:145
 #, fuzzy
 msgid "Organi&zation:"
 msgstr "анимација"
 
-#: winecfg.rc:154
+#: winecfg.rc:153
 #, fuzzy
 msgid "Application settings"
 msgstr "Програми"
 
-#: winecfg.rc:155
+#: winecfg.rc:154
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
 
-#: winecfg.rc:159
+#: winecfg.rc:158
 #, fuzzy
 msgid "Add appli&cation..."
 msgstr "програм"
 
-#: winecfg.rc:160
+#: winecfg.rc:159
 #, fuzzy
 msgid "&Remove application"
 msgstr "програм"
 
-#: winecfg.rc:161
+#: winecfg.rc:160
 #, fuzzy
 msgid "&Windows Version:"
 msgstr "&Прозор"
 
-#: winecfg.rc:169
+#: winecfg.rc:168
 #, fuzzy
 msgid "Window settings"
 msgstr "&Прозор"
 
-#: winecfg.rc:170
+#: winecfg.rc:169
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr ""
 
-#: winecfg.rc:171
+#: winecfg.rc:170
 msgid "Allow the window manager to &decorate the windows"
 msgstr ""
 
-#: winecfg.rc:172
+#: winecfg.rc:171
 msgid "Allow the &window manager to control the windows"
 msgstr ""
 
-#: winecfg.rc:173
+#: winecfg.rc:172
 msgid "&Emulate a virtual desktop"
 msgstr ""
 
-#: winecfg.rc:175
+#: winecfg.rc:174
 #, fuzzy
 msgid "Desktop &size:"
 msgstr "Радна површина"
 
-#: winecfg.rc:180
+#: winecfg.rc:179
 msgid "Screen resolution"
 msgstr ""
 
-#: winecfg.rc:184
+#: winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
-#: winecfg.rc:191
+#: winecfg.rc:190
 #, fuzzy
 msgid "DLL overrides"
 msgstr "&Уређивање"
 
-#: winecfg.rc:192
+#: winecfg.rc:191
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
 
-#: winecfg.rc:194
+#: winecfg.rc:193
 msgid "&New override for library:"
 msgstr ""
 
-#: winecfg.rc:196
+#: winecfg.rc:195
 msgid "A&dd"
 msgstr ""
 
-#: winecfg.rc:197
+#: winecfg.rc:196
 msgid "Existing &overrides:"
 msgstr ""
 
-#: winecfg.rc:199
+#: winecfg.rc:198
 #, fuzzy
 msgid "&Edit..."
 msgstr "&Уређивање"
 
-#: winecfg.rc:205
+#: winecfg.rc:204
 #, fuzzy
 msgid "Edit Override"
 msgstr "&Уређивање"
 
-#: winecfg.rc:208
+#: winecfg.rc:207
 #, fuzzy
 msgid "Load order"
 msgstr "граница"
 
-#: winecfg.rc:209
+#: winecfg.rc:208
 #, fuzzy
 msgid "&Builtin (Wine)"
 msgstr "&О Бележници"
 
-#: winecfg.rc:210
+#: winecfg.rc:209
 #, fuzzy
 msgid "&Native (Windows)"
 msgstr "&Прозор"
 
-#: winecfg.rc:211
+#: winecfg.rc:210
 msgid "Buil&tin then Native"
 msgstr ""
 
-#: winecfg.rc:212
+#: winecfg.rc:211
 msgid "Nati&ve then Builtin"
 msgstr ""
 
-#: winecfg.rc:220
+#: winecfg.rc:219
 #, fuzzy
 msgid "Select Drive Letter"
 msgstr "Изабери &све"
 
-#: winecfg.rc:232
+#: winecfg.rc:231
 #, fuzzy
 msgid "Drive configuration"
 msgstr "Подаци"
 
-#: winecfg.rc:233
+#: winecfg.rc:232
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
 msgstr ""
 
-#: winecfg.rc:236
+#: winecfg.rc:235
 msgid "A&dd..."
 msgstr ""
 
-#: winecfg.rc:238
+#: winecfg.rc:237
 msgid "Aut&odetect"
 msgstr ""
 
-#: winecfg.rc:241
+#: winecfg.rc:240
 msgid "&Path:"
 msgstr ""
 
-#: winecfg.rc:248 winecfg.rc:38
+#: winecfg.rc:247 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr ""
 
-#: winecfg.rc:249
+#: winecfg.rc:248
 msgid "De&vice:"
 msgstr ""
 
-#: winecfg.rc:251
+#: winecfg.rc:250
 #, fuzzy
 msgid "Bro&wse..."
 msgstr ""
@@ -15898,284 +15899,284 @@ msgstr ""
 "#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
 "Разгледај"
 
-#: winecfg.rc:253
+#: winecfg.rc:252
 msgid "&Label:"
 msgstr ""
 
-#: winecfg.rc:255
+#: winecfg.rc:254
 msgid "S&erial:"
 msgstr ""
 
-#: winecfg.rc:258
+#: winecfg.rc:257
 #, fuzzy
 msgid "&Show dot files"
 msgstr "&Детаљи"
 
-#: winecfg.rc:265
+#: winecfg.rc:264
 msgid "Driver diagnostics"
 msgstr ""
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 #, fuzzy
 msgid "Defaults"
 msgstr "Подразумевано"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 #, fuzzy
 msgid "Output device:"
 msgstr "&Назив одредишне датотеке:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Voice output device:"
 msgstr ""
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Input device:"
 msgstr ""
 
-#: winecfg.rc:271
+#: winecfg.rc:270
 msgid "Voice input device:"
 msgstr ""
 
-#: winecfg.rc:276
+#: winecfg.rc:275
 #, fuzzy
 msgid "&Test Sound"
 msgstr "звук"
 
-#: winecfg.rc:277 winecfg.rc:90
+#: winecfg.rc:276 winecfg.rc:89
 #, fuzzy
 msgid "Speaker configuration"
 msgstr "Подаци"
 
-#: winecfg.rc:280
+#: winecfg.rc:279
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "Appearance"
 msgstr ""
 
-#: winecfg.rc:289
+#: winecfg.rc:288
 msgid "&Theme:"
 msgstr ""
 
-#: winecfg.rc:291
+#: winecfg.rc:290
 #, fuzzy
 msgid "&Install theme..."
 msgstr "Инсталирање..."
 
-#: winecfg.rc:296
+#: winecfg.rc:295
 msgid "It&em:"
 msgstr ""
 
-#: winecfg.rc:298
+#: winecfg.rc:297
 #, fuzzy
 msgid "C&olor:"
 msgstr "&Колона"
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "MIME types"
 msgstr ""
 
-#: winecfg.rc:305
+#: winecfg.rc:304
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:308
+#: winecfg.rc:307
 #, fuzzy
 msgid "Folders"
 msgstr "Нова фасцикла"
 
-#: winecfg.rc:311
+#: winecfg.rc:310
 #, fuzzy
 msgid "&Link to:"
 msgstr "Везе"
 
-#: winecfg.rc:34
+#: winecfg.rc:33
 msgid "Libraries"
 msgstr ""
 
-#: winecfg.rc:35
+#: winecfg.rc:34
 msgid "Drives"
 msgstr ""
 
-#: winecfg.rc:36
+#: winecfg.rc:35
 msgid "Select the Unix target directory, please."
 msgstr ""
 
-#: winecfg.rc:37
+#: winecfg.rc:36
 msgid "Hide Advan&ced"
 msgstr ""
 
-#: winecfg.rc:39
+#: winecfg.rc:38
 msgid "(No Theme)"
 msgstr ""
 
-#: winecfg.rc:40
+#: winecfg.rc:39
 #, fuzzy
 msgid "Graphics"
 msgstr "графика"
 
-#: winecfg.rc:41
+#: winecfg.rc:40
 msgid "Desktop Integration"
 msgstr ""
 
-#: winecfg.rc:42
+#: winecfg.rc:41
 #, fuzzy
 msgid "Audio"
 msgstr "аудио запис"
 
-#: winecfg.rc:43
+#: winecfg.rc:42
 #, fuzzy
 msgid "About"
 msgstr "&О Бележници"
 
-#: winecfg.rc:44
+#: winecfg.rc:43
 #, fuzzy
 msgid "Wine configuration"
 msgstr "Подаци"
 
-#: winecfg.rc:46
+#: winecfg.rc:45
 msgid "Theme files (*.msstyles; *.theme)"
 msgstr ""
 
-#: winecfg.rc:47
+#: winecfg.rc:46
 #, fuzzy
 msgid "Select a theme file"
 msgstr "Изабери &све"
 
-#: winecfg.rc:48
+#: winecfg.rc:47
 #, fuzzy
 msgid "Folder"
 msgstr "Нова фасцикла"
 
-#: winecfg.rc:49
+#: winecfg.rc:48
 #, fuzzy
 msgid "Links to"
 msgstr "Везе"
 
-#: winecfg.rc:45
+#: winecfg.rc:44
 #, fuzzy
 msgid "Wine configuration for %s"
 msgstr "Грешка у радњама"
 
-#: winecfg.rc:84
+#: winecfg.rc:83
 msgid "Selected driver: %s"
 msgstr ""
 
-#: winecfg.rc:85
+#: winecfg.rc:84
 #, fuzzy
 msgid "(None)"
 msgstr "Ништа"
 
-#: winecfg.rc:86
+#: winecfg.rc:85
 msgid "Audio test failed!"
 msgstr ""
 
-#: winecfg.rc:88
+#: winecfg.rc:87
 #, fuzzy
 msgid "(System default)"
 msgstr "Системска путања"
 
-#: winecfg.rc:91
+#: winecfg.rc:90
 msgid "5.1 Surround"
 msgstr ""
 
-#: winecfg.rc:92
+#: winecfg.rc:91
 #, fuzzy
 #| msgid "graphic"
 msgid "Quadraphonic"
 msgstr "графика"
 
-#: winecfg.rc:93
+#: winecfg.rc:92
 msgid "Stereo"
 msgstr ""
 
-#: winecfg.rc:94
+#: winecfg.rc:93
 msgid "Mono"
 msgstr ""
 
-#: winecfg.rc:54
+#: winecfg.rc:53
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
 
-#: winecfg.rc:55
+#: winecfg.rc:54
 msgid "Warning: system library"
 msgstr ""
 
-#: winecfg.rc:56
+#: winecfg.rc:55
 msgid "native"
 msgstr ""
 
-#: winecfg.rc:57
+#: winecfg.rc:56
 msgid "builtin"
 msgstr ""
 
-#: winecfg.rc:58
+#: winecfg.rc:57
 msgid "native, builtin"
 msgstr ""
 
-#: winecfg.rc:59
+#: winecfg.rc:58
 msgid "builtin, native"
 msgstr ""
 
-#: winecfg.rc:60
+#: winecfg.rc:59
 #, fuzzy
 msgid "disabled"
 msgstr "табела"
 
-#: winecfg.rc:61
+#: winecfg.rc:60
 #, fuzzy
 msgid "Default Settings"
 msgstr "Поставке интернета"
 
-#: winecfg.rc:62
+#: winecfg.rc:61
 #, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Извршне датотеке (*.exe)"
 
-#: winecfg.rc:63
+#: winecfg.rc:62
 msgid "Use global settings"
 msgstr ""
 
-#: winecfg.rc:64
+#: winecfg.rc:63
 msgid "Select an executable file"
 msgstr ""
 
-#: winecfg.rc:69
+#: winecfg.rc:68
 msgid "Autodetect"
 msgstr ""
 
-#: winecfg.rc:70
+#: winecfg.rc:69
 msgid "Local hard disk"
 msgstr ""
 
-#: winecfg.rc:71
+#: winecfg.rc:70
 msgid "Network share"
 msgstr ""
 
-#: winecfg.rc:72
+#: winecfg.rc:71
 msgid "Floppy disk"
 msgstr ""
 
-#: winecfg.rc:73
+#: winecfg.rc:72
 msgid "CD-ROM"
 msgstr ""
 
-#: winecfg.rc:74
+#: winecfg.rc:73
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 
-#: winecfg.rc:75
+#: winecfg.rc:74
 msgid "System drive"
 msgstr ""
 
-#: winecfg.rc:76
+#: winecfg.rc:75
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -16183,159 +16184,159 @@ msgid ""
 "it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
 
-#: winecfg.rc:77
+#: winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
 msgstr ""
 
-#: winecfg.rc:78
+#: winecfg.rc:77
 #, fuzzy
 #| msgid "New Folder"
 msgid "Target folder"
 msgstr "Нова фасцикла"
 
-#: winecfg.rc:79
+#: winecfg.rc:78
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
 
-#: winecfg.rc:99
+#: winecfg.rc:98
 #, fuzzy
 msgid "Controls Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:100
+#: winecfg.rc:99
 #, fuzzy
 msgid "Controls Text"
 msgstr "Контрола"
 
-#: winecfg.rc:102
+#: winecfg.rc:101
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:103
+#: winecfg.rc:102
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:104
+#: winecfg.rc:103
 #, fuzzy
 msgid "Scrollbar"
 msgstr "трака за померање"
 
-#: winecfg.rc:105
+#: winecfg.rc:104
 #, fuzzy
 msgid "Selection Background"
 msgstr "Постави као позадину"
 
-#: winecfg.rc:106
+#: winecfg.rc:105
 #, fuzzy
 msgid "Selection Text"
 msgstr "Изабери &све"
 
-#: winecfg.rc:107
+#: winecfg.rc:106
 #, fuzzy
 msgid "Tooltip Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:108
+#: winecfg.rc:107
 msgid "Tooltip Text"
 msgstr ""
 
-#: winecfg.rc:109
+#: winecfg.rc:108
 #, fuzzy
 msgid "Window Background"
 msgstr "&Умножи позадину"
 
-#: winecfg.rc:110
+#: winecfg.rc:109
 #, fuzzy
 msgid "Window Text"
 msgstr "&Прозор"
 
-#: winecfg.rc:111
+#: winecfg.rc:110
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "насловна линија"
 
-#: winecfg.rc:112
+#: winecfg.rc:111
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:113
+#: winecfg.rc:112
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:114
+#: winecfg.rc:113
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:115
+#: winecfg.rc:114
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:116
+#: winecfg.rc:115
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Програми"
 
-#: winecfg.rc:117
+#: winecfg.rc:116
 #, fuzzy
 msgid "Window Frame"
 msgstr "&Прозор"
 
-#: winecfg.rc:118
+#: winecfg.rc:117
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:119
+#: winecfg.rc:118
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:120
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Управљачки панел"
 
-#: winecfg.rc:121
+#: winecfg.rc:120
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:121
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:122
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:124
+#: winecfg.rc:123
 #, fuzzy
 msgid "Controls Light"
 msgstr "Контрола"
 
-#: winecfg.rc:125
+#: winecfg.rc:124
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:126
+#: winecfg.rc:125
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:127
+#: winecfg.rc:126
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:128
+#: winecfg.rc:127
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:129
+#: winecfg.rc:128
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:130
+#: winecfg.rc:129
 #, fuzzy
 msgid "Menu Bar"
 msgstr "линија менија"
