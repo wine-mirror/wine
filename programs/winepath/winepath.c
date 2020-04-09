@@ -21,9 +21,6 @@
  */
 
 #define WIN32_LEAN_AND_MEAN
-
-#include "config.h"
-
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,13 +89,7 @@ static int option(int shortopt, const WCHAR *longopt)
  */
 static int parse_options(WCHAR *argv[])
 {
-    static const WCHAR longW[] = { 'l','o','n','g',0 };
-    static const WCHAR shortW[] = { 's','h','o','r','t',0 };
-    static const WCHAR unixW[] = { 'u','n','i','x',0 };
-    static const WCHAR windowsW[] = { 'w','i','n','d','o','w','s',0 };
-    static const WCHAR helpW[] = { 'h','e','l','p',0 };
-    static const WCHAR nullW[] = { 0 };
-    static const WCHAR *longopts[] = { longW, shortW, unixW, windowsW, helpW, nullW };
+    static const WCHAR *longopts[] = { L"long", L"short", L"unix", L"windows", L"help", NULL };
     int outputformats = 0;
     BOOL done = FALSE;
     int i, j;
@@ -117,10 +108,10 @@ static int parse_options(WCHAR *argv[])
                 done = TRUE;
             } else {
                 /* long option */
-                for (j = 0; longopts[j][0]; j++)
+                for (j = 0; longopts[j]; j++)
                     if (!lstrcmpiW(argv[i]+2, longopts[j]))
                         break;
-                outputformats |= option(longopts[j][0], argv[i]);
+                if (longopts[j]) outputformats |= option(longopts[j][0], argv[i]);
             }
         } else {
             /* short options */
