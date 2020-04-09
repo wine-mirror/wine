@@ -2820,6 +2820,12 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
     IUnknown_Release(unk);
 
+    hr = MFGetService((IUnknown *)sink, &MR_AUDIO_POLICY_SERVICE, &IID_IMFAudioPolicy, (void **)&unk);
+todo_wine
+    ok(hr == MF_E_NOT_INITIALIZED, "Failed to get interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+
     /* Shutdown */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

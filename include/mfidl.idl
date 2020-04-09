@@ -989,6 +989,21 @@ interface IMFAudioStreamVolume : IUnknown
         [out, size_is(count)] float *volumes);
 }
 
+[
+    object,
+    uuid(a0638c2b-6465-4395-9ae7-a321a9fd2856),
+    local
+]
+interface IMFAudioPolicy : IUnknown
+{
+    HRESULT SetGroupingParam([in] REFGUID param);
+    HRESULT GetGroupingParam([out] GUID *param);
+    HRESULT SetDisplayName([in] LPCWSTR name);
+    HRESULT GetDisplayName([out] LPWSTR *name);
+    HRESULT SetIconPath([in] LPCWSTR path);
+    HRESULT GetIconPath([out] LPWSTR *path);
+}
+
 cpp_quote("#ifdef __cplusplus")
 cpp_quote("static inline HRESULT MFSetAttributeSize(IMFAttributes *attributes, REFGUID key, UINT32 width, UINT32 height)")
 cpp_quote("{")
@@ -1092,6 +1107,7 @@ cpp_quote("EXTERN_C const GUID MF_SCRUBBING_SERVICE;")
 cpp_quote("EXTERN_GUID(MR_POLICY_VOLUME_SERVICE, 0x1abaa2ac, 0x9d3b, 0x47c6, 0xab, 0x48, 0xc5, 0x95, 0x06, 0xde, 0x78, 0x4d);")
 cpp_quote("EXTERN_GUID(MR_CAPTURE_POLICY_VOLUME_SERVICE, 0x24030acd, 0x107a, 0x4265, 0x97, 0x5c, 0x41, 0x4e, 0x33, 0xe6, 0x5f, 0x2a);")
 cpp_quote("EXTERN_GUID(MR_STREAM_VOLUME_SERVICE, 0xf8b5fa2f, 0x32ef, 0x46f5, 0xb1, 0x72, 0x13, 0x21, 0x21, 0x2f, 0xb2, 0xc4);")
+cpp_quote("EXTERN_GUID(MR_AUDIO_POLICY_SERVICE, 0x911fd737, 0x6775, 0x4ab0, 0xa6, 0x14, 0x29, 0x78, 0x62, 0xfd, 0xac, 0x88);")
 
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET, 0x62e3d776, 0x8100, 0x4e03, 0xa6, 0xe8, 0xbd, 0x38, 0x57, 0xac, 0x9c, 0x47);")
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, 0x0efda2c0, 0x2b69, 0x4e2e, 0xab, 0x8d, 0x46, 0xdc, 0xbf, 0xf7, 0xd2, 0x5d);")
