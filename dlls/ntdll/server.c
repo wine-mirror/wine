@@ -381,7 +381,7 @@ int wait_select_reply( void *cookie )
 }
 
 
-static void invoke_user_apc( const user_apc_t *apc )
+void invoke_apc( const user_apc_t *apc )
 {
     switch( apc->type )
     {
@@ -410,7 +410,7 @@ static void invoke_user_apc( const user_apc_t *apc )
  * Invoke a single APC.
  *
  */
-void invoke_apc( const apc_call_t *call, apc_result_t *result )
+static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
 {
     SIZE_T size;
     void *addr;
@@ -421,10 +421,6 @@ void invoke_apc( const apc_call_t *call, apc_result_t *result )
     switch (call->type)
     {
     case APC_NONE:
-        break;
-    case APC_USER:
-    case APC_TIMER:
-        invoke_user_apc( &call->user );
         break;
     case APC_ASYNC_IO:
     {
@@ -637,7 +633,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             SERVER_END_REQ;
 
             if (ret != STATUS_KERNEL_APC) break;
-            invoke_apc( &call, &result );
+            invoke_system_apc( &call, &result );
 
             /* don't signal multiple times */
             if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
@@ -678,7 +674,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
     {
         ret = server_select( select_op, size, flags, abs_timeout, &apc );
         if (ret != STATUS_USER_APC) break;
-        invoke_user_apc( &apc );
+        invoke_apc( &apc );
 
         /* if we ran a user apc we have to check once more if additional apcs are queued,
          * but we don't want to wait */
@@ -727,7 +723,7 @@ unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, a
 
         if (self)
         {
-            invoke_apc( call, result );
+            invoke_system_apc( call, result );
         }
         else
         {

@@ -116,6 +116,8 @@ extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
+extern unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
+                                   timeout_t abs_timeout, user_apc_t *user_apc ) DECLSPEC_HIDDEN;
 extern unsigned int server_wait( const select_op_t *select_op, data_size_t size,
                                  UINT flags, const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
@@ -127,7 +129,7 @@ extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct o
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
 extern NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;
 extern int wait_select_reply( void *cookie ) DECLSPEC_HIDDEN;
-extern void invoke_apc( const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
+extern void invoke_apc( const user_apc_t *apc ) DECLSPEC_HIDDEN;
 
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
