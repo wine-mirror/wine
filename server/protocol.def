@@ -490,6 +490,12 @@ typedef union
         abstime_t        time;     /* time of expiration */
         client_ptr_t     arg;      /* user argument */
     } timer;
+} user_apc_t;
+
+typedef union
+{
+    enum apc_type type;
+    user_apc_t    user;
     struct
     {
         enum apc_type    type;     /* APC_ASYNC_IO */

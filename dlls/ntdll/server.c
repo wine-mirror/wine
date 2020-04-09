@@ -381,6 +381,29 @@ int wait_select_reply( void *cookie )
 }
 
 
+static void invoke_user_apc( const user_apc_t *apc )
+{
+    switch( apc->type )
+    {
+    case APC_USER:
+    {
+        void (WINAPI *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR) = wine_server_get_ptr( apc->user.func );
+        func( apc->user.args[0], apc->user.args[1], apc->user.args[2] );
+        break;
+    }
+    case APC_TIMER:
+    {
+        void (WINAPI *func)(void*, unsigned int, unsigned int) = wine_server_get_ptr( apc->user.func );
+        func( wine_server_get_ptr( apc->user.args[1] ),
+              (DWORD)apc->timer.time, (DWORD)(apc->timer.time >> 32) );
+        break;
+    }
+    default:
+        server_protocol_error( "get_apc_request: bad type %d\n", apc->type );
+        break;
+    }
+}
+
 /***********************************************************************
  *              invoke_apc
  *
@@ -400,18 +423,9 @@ void invoke_apc( const apc_call_t *call, apc_result_t *result )
     case APC_NONE:
         break;
     case APC_USER:
-    {
-        void (WINAPI *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR) = wine_server_get_ptr( call->user.func );
-        func( call->user.args[0], call->user.args[1], call->user.args[2] );
-        break;
-    }
     case APC_TIMER:
-    {
-        void (WINAPI *func)(void*, unsigned int, unsigned int) = wine_server_get_ptr( call->timer.func );
-        func( wine_server_get_ptr( call->timer.arg ),
-              (DWORD)call->timer.time, (DWORD)(call->timer.time >> 32) );
+        invoke_user_apc( &call->user );
         break;
-    }
     case APC_ASYNC_IO:
     {
         IO_STATUS_BLOCK *iosb = wine_server_get_ptr( call->async_io.sb );

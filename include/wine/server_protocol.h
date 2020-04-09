@@ -474,6 +474,12 @@ typedef union
         abstime_t        time;
         client_ptr_t     arg;
     } timer;
+} user_apc_t;
+
+typedef union
+{
+    enum apc_type type;
+    user_apc_t    user;
     struct
     {
         enum apc_type    type;
@@ -6710,7 +6716,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 597
+#define SERVER_PROTOCOL_VERSION 598
 
 /* ### protocol_version end ### */
 

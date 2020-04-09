@@ -116,10 +116,10 @@ static void timer_callback( void *private )
         memset( &data, 0, sizeof(data) );
         if (timer->callback)
         {
-            data.type       = APC_TIMER;
-            data.timer.func = timer->callback;
-            data.timer.time = timer->when;
-            data.timer.arg  = timer->arg;
+            data.type            = APC_TIMER;
+            data.user.timer.func = timer->callback;
+            data.user.timer.time = timer->when;
+            data.user.timer.arg  = timer->arg;
         }
         else data.type = APC_NONE;  /* wake up only */
 

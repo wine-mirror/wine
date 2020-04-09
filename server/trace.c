@@ -159,15 +159,15 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         fprintf( stderr, "APC_NONE" );
         break;
     case APC_USER:
-        dump_uint64( "APC_USER,func=", &call->user.func );
-        dump_uint64( ",args={", &call->user.args[0] );
-        dump_uint64( ",", &call->user.args[1] );
-        dump_uint64( ",", &call->user.args[2] );
+        dump_uint64( "APC_USER,func=", &call->user.user.func );
+        dump_uint64( ",args={", &call->user.user.args[0] );
+        dump_uint64( ",", &call->user.user.args[1] );
+        dump_uint64( ",", &call->user.user.args[2] );
         fputc( '}', stderr );
         break;
     case APC_TIMER:
-        dump_timeout( "APC_TIMER,time=", &call->timer.time );
-        dump_uint64( ",arg=", &call->timer.arg );
+        dump_timeout( "APC_TIMER,time=", &call->user.timer.time );
+        dump_uint64( ",arg=", &call->user.timer.arg );
         break;
     case APC_ASYNC_IO:
         dump_uint64( "APC_ASYNC_IO,user=", &call->async_io.user );

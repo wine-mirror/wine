@@ -739,11 +739,11 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
         req->handle = wine_server_obj_handle( handle );
         if (func)
         {
-            req->call.type         = APC_USER;
-            req->call.user.func    = wine_server_client_ptr( func );
-            req->call.user.args[0] = arg1;
-            req->call.user.args[1] = arg2;
-            req->call.user.args[2] = arg3;
+            req->call.type              = APC_USER;
+            req->call.user.user.func    = wine_server_client_ptr( func );
+            req->call.user.user.args[0] = arg1;
+            req->call.user.user.args[1] = arg2;
+            req->call.user.user.args[2] = arg3;
         }
         else req->call.type = APC_NONE;  /* wake up only */
         ret = wine_server_call( req );
