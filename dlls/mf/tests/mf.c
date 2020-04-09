@@ -2811,6 +2811,15 @@ if (SUCCEEDED(hr))
 }
     IMFStreamSink_Release(stream_sink);
 
+    /* Volume control */
+    hr = MFGetService((IUnknown *)sink, &MR_POLICY_VOLUME_SERVICE, &IID_IMFSimpleAudioVolume, (void **)&unk);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = MFGetService((IUnknown *)sink, &MR_STREAM_VOLUME_SERVICE, &IID_IMFAudioStreamVolume, (void **)&unk);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     /* Shutdown */
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

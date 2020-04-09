@@ -956,6 +956,39 @@ enum
     MF_RESOLUTION_WRITE                                                 = 0x00020000,
 };
 
+[
+    object,
+    uuid(089edf13-cf71-4338-8d13-9e569dbdc319),
+]
+interface IMFSimpleAudioVolume : IUnknown
+{
+    HRESULT SetMasterVolume([in] float level);
+    HRESULT GetMasterVolume([out] float *level);
+    HRESULT SetMute([in] BOOL mute);
+    HRESULT GetMute([out] BOOL *mute);
+}
+
+[
+    object,
+    uuid(76b1bbdb-4ec8-4f36-b106-70a9316df593),
+]
+interface IMFAudioStreamVolume : IUnknown
+{
+    HRESULT GetChannelCount([out] UINT32 *count);
+    HRESULT SetChannelVolume(
+        [in] UINT32 index,
+        [in] const float level);
+    HRESULT GetChannelVolume(
+        [in] UINT32 index,
+        [out] float *level);
+    HRESULT SetAllVolumes(
+        [in] UINT32 count,
+        [in, size_is(count)] const float *volumes);
+    HRESULT GetAllVolumes(
+        [in] UINT32 count,
+        [out, size_is(count)] float *volumes);
+}
+
 cpp_quote("#ifdef __cplusplus")
 cpp_quote("static inline HRESULT MFSetAttributeSize(IMFAttributes *attributes, REFGUID key, UINT32 width, UINT32 height)")
 cpp_quote("{")
@@ -1056,6 +1089,9 @@ cpp_quote("EXTERN_GUID(MF_TOPOLOGY_STATIC_PLAYBACK_OPTIMIZATIONS, 0xb86cac42, 0x
 cpp_quote("EXTERN_GUID(MF_RATE_CONTROL_SERVICE, 0x866fa297, 0xb802, 0x4bf8, 0x9d, 0xc9, 0x5e, 0x3b, 0x6a, 0x9f, 0x53, 0xc9);")
 cpp_quote("EXTERN_GUID(MF_LOCAL_MFT_REGISTRATION_SERVICE, 0xddf5cf9c, 0x4506, 0x45aa, 0xab, 0xf0, 0x6d, 0x5d, 0x94, 0xdd, 0x1b, 0x4a);")
 cpp_quote("EXTERN_C const GUID MF_SCRUBBING_SERVICE;")
+cpp_quote("EXTERN_GUID(MR_POLICY_VOLUME_SERVICE, 0x1abaa2ac, 0x9d3b, 0x47c6, 0xab, 0x48, 0xc5, 0x95, 0x06, 0xde, 0x78, 0x4d);")
+cpp_quote("EXTERN_GUID(MR_CAPTURE_POLICY_VOLUME_SERVICE, 0x24030acd, 0x107a, 0x4265, 0x97, 0x5c, 0x41, 0x4e, 0x33, 0xe6, 0x5f, 0x2a);")
+cpp_quote("EXTERN_GUID(MR_STREAM_VOLUME_SERVICE, 0xf8b5fa2f, 0x32ef, 0x46f5, 0xb1, 0x72, 0x13, 0x21, 0x21, 0x2f, 0xb2, 0xc4);")
 
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET, 0x62e3d776, 0x8100, 0x4e03, 0xa6, 0xe8, 0xbd, 0x38, 0x57, 0xac, 0x9c, 0x47);")
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, 0x0efda2c0, 0x2b69, 0x4e2e, 0xab, 0x8d, 0x46, 0xdc, 0xbf, 0xf7, 0xd2, 0x5d);")

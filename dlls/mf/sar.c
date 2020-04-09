@@ -48,6 +48,9 @@ struct audio_renderer
     IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
     IMFClockStateSink IMFClockStateSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
+    IMFGetService IMFGetService_iface;
+    IMFSimpleAudioVolume IMFSimpleAudioVolume_iface;
+    IMFAudioStreamVolume IMFAudioStreamVolume_iface;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
     IMFPresentationClock *clock;
@@ -74,6 +77,21 @@ static struct audio_renderer *impl_from_IMFClockStateSink(IMFClockStateSink *ifa
 static struct audio_renderer *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerator *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_renderer, IMFMediaEventGenerator_iface);
+}
+
+static struct audio_renderer *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_renderer, IMFGetService_iface);
+}
+
+static struct audio_renderer *impl_from_IMFSimpleAudioVolume(IMFSimpleAudioVolume *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_renderer, IMFSimpleAudioVolume_iface);
+}
+
+static struct audio_renderer *impl_from_IMFAudioStreamVolume(IMFAudioStreamVolume *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_renderer, IMFAudioStreamVolume_iface);
 }
 
 static struct audio_renderer_stream *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -108,6 +126,10 @@ static HRESULT WINAPI audio_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFMediaEventGenerator))
     {
         *obj = &renderer->IMFMediaEventGenerator_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &renderer->IMFGetService_iface;
     }
     else
     {
@@ -521,6 +543,202 @@ static const IMFClockStateSinkVtbl audio_renderer_clock_sink_vtbl =
     audio_renderer_clock_sink_OnClockSetRate,
 };
 
+static HRESULT WINAPI audio_renderer_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct audio_renderer *renderer = impl_from_IMFGetService(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI audio_renderer_get_service_AddRef(IMFGetService *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFGetService(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI audio_renderer_get_service_Release(IMFGetService *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFGetService(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI audio_renderer_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    struct audio_renderer *renderer = impl_from_IMFGetService(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualGUID(service, &MR_POLICY_VOLUME_SERVICE) && IsEqualIID(riid, &IID_IMFSimpleAudioVolume))
+    {
+        *obj = &renderer->IMFSimpleAudioVolume_iface;
+    }
+    else if (IsEqualGUID(service, &MR_STREAM_VOLUME_SERVICE) && IsEqualIID(riid, &IID_IMFAudioStreamVolume))
+    {
+        *obj = &renderer->IMFAudioStreamVolume_iface;
+    }
+    else
+        FIXME("Unsupported service %s, interface %s.\n", debugstr_guid(service), debugstr_guid(riid));
+
+    if (*obj)
+        IUnknown_AddRef((IUnknown *)*obj);
+
+    return *obj ? S_OK : E_NOINTERFACE;
+}
+
+static const IMFGetServiceVtbl audio_renderer_get_service_vtbl =
+{
+    audio_renderer_get_service_QueryInterface,
+    audio_renderer_get_service_AddRef,
+    audio_renderer_get_service_Release,
+    audio_renderer_get_service_GetService,
+};
+
+static HRESULT WINAPI audio_renderer_simple_volume_QueryInterface(IMFSimpleAudioVolume *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFSimpleAudioVolume) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFSimpleAudioVolume_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI audio_renderer_simple_volume_AddRef(IMFSimpleAudioVolume *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFSimpleAudioVolume(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI audio_renderer_simple_volume_Release(IMFSimpleAudioVolume *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFSimpleAudioVolume(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI audio_renderer_simple_volume_SetMasterVolume(IMFSimpleAudioVolume *iface, float level)
+{
+    FIXME("%p, %f.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_simple_volume_GetMasterVolume(IMFSimpleAudioVolume *iface, float *level)
+{
+    FIXME("%p, %p.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_simple_volume_SetMute(IMFSimpleAudioVolume *iface, BOOL mute)
+{
+    FIXME("%p, %d.\n", iface, mute);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_simple_volume_GetMute(IMFSimpleAudioVolume *iface, BOOL *mute)
+{
+    FIXME("%p, %p.\n", iface, mute);
+
+    return E_NOTIMPL;
+}
+
+static const IMFSimpleAudioVolumeVtbl audio_renderer_simple_volume_vtbl =
+{
+    audio_renderer_simple_volume_QueryInterface,
+    audio_renderer_simple_volume_AddRef,
+    audio_renderer_simple_volume_Release,
+    audio_renderer_simple_volume_SetMasterVolume,
+    audio_renderer_simple_volume_GetMasterVolume,
+    audio_renderer_simple_volume_SetMute,
+    audio_renderer_simple_volume_GetMute,
+};
+
+static HRESULT WINAPI audio_renderer_stream_volume_QueryInterface(IMFAudioStreamVolume *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFAudioStreamVolume) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAudioStreamVolume_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI audio_renderer_stream_volume_AddRef(IMFAudioStreamVolume *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI audio_renderer_stream_volume_Release(IMFAudioStreamVolume *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI audio_renderer_stream_volume_GetChannelCount(IMFAudioStreamVolume *iface, UINT32 *count)
+{
+    FIXME("%p, %p.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_stream_volume_SetChannelVolume(IMFAudioStreamVolume *iface, UINT32 index, float level)
+{
+    FIXME("%p, %u, %f.\n", iface, index, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_stream_volume_GetChannelVolume(IMFAudioStreamVolume *iface, UINT32 index, float *level)
+{
+    FIXME("%p, %u, %p.\n", iface, index, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_stream_volume_SetAllVolumes(IMFAudioStreamVolume *iface, UINT32 count,
+        const float *volumes)
+{
+    FIXME("%p, %u, %p.\n", iface, count, volumes);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI audio_renderer_stream_volume_GetAllVolumes(IMFAudioStreamVolume *iface, UINT32 count, float *volumes)
+{
+    FIXME("%p, %u, %p.\n", iface, count, volumes);
+
+    return E_NOTIMPL;
+}
+
+static const IMFAudioStreamVolumeVtbl audio_renderer_stream_volume_vtbl =
+{
+    audio_renderer_stream_volume_QueryInterface,
+    audio_renderer_stream_volume_AddRef,
+    audio_renderer_stream_volume_Release,
+    audio_renderer_stream_volume_GetChannelCount,
+    audio_renderer_stream_volume_SetChannelVolume,
+    audio_renderer_stream_volume_GetChannelVolume,
+    audio_renderer_stream_volume_SetAllVolumes,
+    audio_renderer_stream_volume_GetAllVolumes,
+};
+
 static HRESULT sar_create_mmdevice(IMFAttributes *attributes, IMMDevice **device)
 {
     WCHAR *endpoint;
@@ -894,6 +1112,9 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
     renderer->IMFMediaSinkPreroll_iface.lpVtbl = &audio_renderer_preroll_vtbl;
     renderer->IMFClockStateSink_iface.lpVtbl = &audio_renderer_clock_sink_vtbl;
     renderer->IMFMediaEventGenerator_iface.lpVtbl = &audio_renderer_events_vtbl;
+    renderer->IMFGetService_iface.lpVtbl = &audio_renderer_get_service_vtbl;
+    renderer->IMFSimpleAudioVolume_iface.lpVtbl = &audio_renderer_simple_volume_vtbl;
+    renderer->IMFAudioStreamVolume_iface.lpVtbl = &audio_renderer_stream_volume_vtbl;
     renderer->refcount = 1;
     InitializeCriticalSection(&renderer->cs);
 
