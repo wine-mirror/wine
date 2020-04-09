@@ -1,6 +1,7 @@
 MODULE    = winver.exe
-APPMODE   = -mwindows
 IMPORTS   = shell32
+
+EXTRADLLFLAGS = -mwindows -mno-cygwin
 
 C_SRCS = winver.c
 
