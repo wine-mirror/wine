@@ -2798,14 +2798,57 @@ if (SUCCEEDED(hr))
     hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype, NULL);
     ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, mediatype);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
     hr = IMFMediaTypeHandler_GetMediaTypeByIndex(handler, 0, &mediatype2);
     ok(hr == S_OK, "Failed to get media type, hr %#x.\n", hr);
 
     hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, mediatype2, NULL);
     ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
 
-    IMFMediaType_Release(mediatype2);
     IMFMediaType_Release(mediatype);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, mediatype2);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(mediatype == mediatype2, "Unexpected instance.\n");
+    IMFMediaType_Release(mediatype);
+
+    IMFMediaType_Release(mediatype2);
+
+    /* Set partial type. */
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_GetGUID(mediatype2, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &guid);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, mediatype);
+    ok(hr == S_OK, "Failed to set current type, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(mediatype == mediatype2, "Unexpected instance.\n");
+    IMFMediaType_Release(mediatype2);
+
+    hr = IMFMediaType_GetCount(mediatype, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 2, "Unexpected attribute count %u.\n", count);
+
+    IMFMediaType_Release(mediatype);
+
+    /* Reset back to uninitialized state. */
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     IMFMediaTypeHandler_Release(handler);
 }
