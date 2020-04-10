@@ -252,7 +252,7 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
         if (path->dn) len += wcslen(path->dn);
 
         *adspath = SysAllocStringLen(NULL, len);
-        if (!*adspath) return E_OUTOFMEMORY;
+        if (!*adspath) break;
 
         wcscpy(*adspath, path->provider);
         wcscat(*adspath, L"://");
@@ -263,10 +263,22 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
         }
         if (path->dn) wcscat(*adspath, path->dn);
         break;
+
+    case ADS_FORMAT_PROVIDER:
+        *adspath = SysAllocString(path->provider);
+        break;
+
+    case ADS_FORMAT_SERVER:
+        *adspath = path->provider ? SysAllocString(path->server) : SysAllocStringLen(NULL, 0);
+        break;
+
+    case ADS_FORMAT_X500_DN:
+        *adspath = path->dn ? SysAllocString(path->dn) : SysAllocStringLen(NULL, 0);
+        break;
     }
 
     TRACE("=> %s\n", debugstr_w(*adspath));
-    return S_OK;
+    return *adspath ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)

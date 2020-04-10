@@ -151,13 +151,11 @@ todo_wine
 
     hr = IADsPathname_Retrieve(path, ADS_FORMAT_PROVIDER, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(!wcscmp(bstr, L"LDAP"), "got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     hr = IADsPathname_Retrieve(path, ADS_FORMAT_SERVER, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(!wcscmp(bstr, L"sample:123"), "got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
