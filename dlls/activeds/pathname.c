@@ -299,8 +299,35 @@ static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)
 
 static HRESULT WINAPI path_GetElement(IADsPathname *iface, LONG index, BSTR *element)
 {
-    FIXME("%p,%d,%p: stub\n", iface, index, element);
-    return E_NOTIMPL;
+    Pathname *path = impl_from_IADsPathname(iface);
+    HRESULT hr;
+    WCHAR *p, *end;
+    LONG count;
+
+    TRACE("%p,%d,%p\n", iface, index, element);
+
+    if (!element) return E_INVALIDARG;
+
+    count = 0;
+    hr = HRESULT_FROM_WIN32(ERROR_INVALID_INDEX);
+
+    p = path->dn;
+    while (p)
+    {
+        end = wcschr(p, ',');
+
+        if (index == count)
+        {
+            *element = end ? SysAllocStringLen(p, end - p) : SysAllocString(p);
+            hr = *element ? S_OK : E_OUTOFMEMORY;
+            break;
+        }
+
+        p = end ? end + 1 : NULL;
+        count++;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI path_AddLeafElement(IADsPathname *iface, BSTR element)

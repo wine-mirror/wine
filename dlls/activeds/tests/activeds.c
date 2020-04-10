@@ -121,7 +121,6 @@ todo_wine
     ok(count == 0, "got %d\n", count);
 
     hr = IADsPathname_GetElement(path, 0, &bstr);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_INDEX), "got %#x\n", hr);
     SysFreeString(bstr);
 
