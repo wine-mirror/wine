@@ -142,7 +142,7 @@ F:	dlls/hidclass.sys/
 F:	dlls/winehid.sys/
 
 HTTP server
-P:	Zebediah Figura <z.figura12@gmail.com>
+M:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/httpapi/
 F:	dlls/http.sys/
 
