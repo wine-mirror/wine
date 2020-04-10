@@ -37,6 +37,8 @@ enum wined3d_gl_extension
     APPLE_FENCE,
     APPLE_FLOAT_PIXELS,
     APPLE_FLUSH_BUFFER_RANGE,
+    APPLE_FLUSH_RENDER,
+    APPLE_RGB_422,
     APPLE_YCBCR_422,
     /* ARB */
     ARB_BASE_INSTANCE,

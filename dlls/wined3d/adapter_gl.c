@@ -53,6 +53,8 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_APPLE_fence",                      APPLE_FENCE                   },
     {"GL_APPLE_float_pixels",               APPLE_FLOAT_PIXELS            },
     {"GL_APPLE_flush_buffer_range",         APPLE_FLUSH_BUFFER_RANGE      },
+    {"GL_APPLE_flush_render",               APPLE_FLUSH_RENDER            },
+    {"GL_APPLE_rgb_422",                    APPLE_RGB_422                 },
     {"GL_APPLE_ycbcr_422",                  APPLE_YCBCR_422               },
 
     /* ARB */
@@ -1225,7 +1227,8 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_in
      * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
      * the chance that other implementations support them is rather small since Win32 QuickTime uses
      * DirectDraw, not OpenGL. */
-    if (gl_info->supported[APPLE_FENCE] && gl_info->supported[APPLE_YCBCR_422])
+    if (gl_info->supported[APPLE_FLUSH_RENDER]
+            && (gl_info->supported[APPLE_YCBCR_422] || gl_info->supported[APPLE_RGB_422]))
         return GL_VENDOR_APPLE;
 
     if (strstr(gl_vendor_string, "NVIDIA"))
