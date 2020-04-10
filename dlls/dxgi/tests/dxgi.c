@@ -6150,6 +6150,44 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
     ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
 }
 
+static void test_factory_check_feature_support(void)
+{
+    IDXGIFactory5 *factory;
+    ULONG ref_count;
+    HRESULT hr;
+    BOOL data;
+
+    if (FAILED(hr = CreateDXGIFactory(&IID_IDXGIFactory5, (void**)&factory)))
+    {
+        win_skip("IDXGIFactory5 is not available.\n");
+        return;
+    }
+
+    hr = IDXGIFactory5_CheckFeatureSupport(factory, 0x12345678, (void *)&data, sizeof(data));
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Crashes on Windows. */
+    if (0)
+    {
+        hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, NULL, sizeof(data));
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    }
+
+    hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &data, sizeof(data) - 1);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &data, sizeof(data) + 1);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    data = (BOOL)0xdeadbeef;
+    hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &data, sizeof(data));
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(data == TRUE || data == FALSE, "Got unexpected data %#x.\n", data);
+
+    ref_count = IDXGIFactory5_Release(factory);
+    ok(!ref_count, "Factory has %u references left.\n", ref_count);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -6242,6 +6280,7 @@ START_TEST(dxgi)
     queue_test(test_output_desc);
     queue_test(test_object_wrapping);
     queue_test(test_multi_adapter);
+    queue_test(test_factory_check_feature_support);
 
     run_queued_tests();
 
