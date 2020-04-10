@@ -139,7 +139,7 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
     CHECK_EXPECT(ReportResult);
 
     if(expect_hr_win32err) {
-        ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || expect_hrResult,
+        ok((hrResult&0xffff0000) == ((FACILITY_WIN32 << 16)|0x80000000) || hrResult == expect_hrResult,
                 "expected win32 err or %08x got: %08x\n", expect_hrResult, hrResult);
     }else {
         ok(hrResult == expect_hrResult || (expect_hrResult == E_INVALIDARG && hrResult == MK_E_SYNTAX)
