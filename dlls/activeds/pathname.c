@@ -275,6 +275,16 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
     case ADS_FORMAT_X500_DN:
         *adspath = path->dn ? SysAllocString(path->dn) : SysAllocStringLen(NULL, 0);
         break;
+
+    case ADS_FORMAT_LEAF:
+        if (!path->dn)
+            *adspath = SysAllocStringLen(NULL, 0);
+        else
+        {
+            WCHAR *p = wcschr(path->dn, ',');
+            *adspath = p ? SysAllocStringLen(path->dn, p - path->dn) : SysAllocString(path->dn);
+        }
+        break;
     }
 
     TRACE("=> %s\n", debugstr_w(*adspath));
