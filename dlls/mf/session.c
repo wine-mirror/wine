@@ -539,10 +539,18 @@ static void session_set_topo_status(struct media_session *session, HRESULT statu
     if (topo_status == MF_TOPOSTATUS_INVALID)
         return;
 
+    if (list_empty(&session->topologies))
+    {
+        FIXME("Unexpectedly empty topology queue.\n");
+        return;
+    }
+
     if (topo_status > session->presentation.topo_status)
     {
+        struct queued_topology *topology = LIST_ENTRY(list_head(&session->topologies), struct queued_topology, entry);
+
         param.vt = VT_UNKNOWN;
-        param.punkVal = (IUnknown *)session->presentation.current_topology;
+        param.punkVal = (IUnknown *)topology->topology;
 
         if (FAILED(MFCreateMediaEvent(MESessionTopologyStatus, &GUID_NULL, status, &param, &event)))
             return;
