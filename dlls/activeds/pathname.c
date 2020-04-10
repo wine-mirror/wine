@@ -184,8 +184,32 @@ static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
 
     if (!adspath) return E_INVALIDARG;
 
+    if (type == ADS_SETTYPE_PROVIDER)
+    {
+        SysFreeString(path->provider);
+        path->provider = SysAllocString(adspath);
+        return path->provider ? S_OK : E_OUTOFMEMORY;
+    }
+
+    if (type == ADS_SETTYPE_SERVER)
+    {
+        SysFreeString(path->server);
+        path->server = SysAllocString(adspath);
+        return path->server ? S_OK : E_OUTOFMEMORY;
+    }
+
+    if (type == ADS_SETTYPE_DN)
+    {
+        SysFreeString(path->dn);
+        path->dn = SysAllocString(adspath);
+        return path->dn ? S_OK : E_OUTOFMEMORY;
+    }
+
     if (type != ADS_SETTYPE_FULL)
+    {
         FIXME("type %d not implemented\n", type);
+        return E_INVALIDARG;
+    }
 
     hr = parse_path(adspath, &provider, &server, &dn);
     if (hr == S_OK)
