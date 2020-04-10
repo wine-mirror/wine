@@ -61,6 +61,11 @@ static const char *debug_d3d10_feature_level(D3D10_FEATURE_LEVEL1 feature_level)
 
 #undef WINE_D3D10_TO_STR
 
+static D3D_FEATURE_LEVEL d3d_feature_level_from_d3d10_1(D3D10_FEATURE_LEVEL1 level)
+{
+    return (D3D_FEATURE_LEVEL)level;
+}
+
 static HRESULT d3d10_create_device1(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type, HMODULE swrast,
         UINT flags, D3D10_FEATURE_LEVEL1 hw_level, UINT sdk_version, ID3D10Device1 **device)
 {
@@ -159,7 +164,8 @@ static HRESULT d3d10_create_device1(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE dri
         }
     }
 
-    hr = D3D10CoreCreateDevice(factory, adapter, flags, hw_level, (ID3D10Device **)device);
+    hr = D3D10CoreCreateDevice(factory, adapter, flags,
+            d3d_feature_level_from_d3d10_1(hw_level), (ID3D10Device **)device);
     IDXGIAdapter_Release(adapter);
     IDXGIFactory_Release(factory);
     if (FAILED(hr))
