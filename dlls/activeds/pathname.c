@@ -234,13 +234,39 @@ static HRESULT WINAPI path_SetDisplayType(IADsPathname *iface, LONG type)
 static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspath)
 {
     Pathname *path = impl_from_IADsPathname(iface);
+    int len;
 
-    FIXME("%p,%d,%p: stub\n", iface, type, adspath);
+    TRACE("%p,%d,%p\n", iface, type, adspath);
 
     if (!adspath) return E_INVALIDARG;
 
-    *adspath = SysAllocString(path->provider);
-    return *adspath ? S_OK : E_OUTOFMEMORY;
+    switch (type)
+    {
+    default:
+        FIXME("type %d not implemented\n", type);
+        /* fall through */
+
+    case ADS_FORMAT_X500:
+        len = wcslen(path->provider) + 3;
+        if (path->server) len += wcslen(path->server) + 1;
+        if (path->dn) len += wcslen(path->dn);
+
+        *adspath = SysAllocStringLen(NULL, len);
+        if (!*adspath) return E_OUTOFMEMORY;
+
+        wcscpy(*adspath, path->provider);
+        wcscat(*adspath, L"://");
+        if (path->server)
+        {
+            wcscat(*adspath, path->server);
+            wcscat(*adspath, L"/");
+        }
+        if (path->dn) wcscat(*adspath, path->dn);
+        break;
+    }
+
+    TRACE("=> %s\n", debugstr_w(*adspath));
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)
