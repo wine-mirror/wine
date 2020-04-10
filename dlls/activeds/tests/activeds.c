@@ -19,14 +19,19 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "initguid.h"
 #include "iads.h"
 #include "adshlp.h"
 #include "adserr.h"
 
 #include "wine/test.h"
+
+DEFINE_GUID(CLSID_Pathname,0x080d0d78,0xf421,0x11d0,0xa3,0x6e,0x00,0xc0,0x4f,0xb9,0x50,0xdc);
 
 static void test_ADsBuildVarArrayStr(void)
 {
@@ -79,7 +84,100 @@ static void test_ADsBuildVarArrayStr(void)
     VariantClear(&var);
 }
 
+static void test_Pathname(void)
+{
+    static const WCHAR * const elem[3] = { L"a=b",L"c=d",L"e=f" };
+    HRESULT hr;
+    IADsPathname *path;
+    BSTR bstr;
+    LONG count, i;
+
+    hr = CoCreateInstance(&CLSID_Pathname, 0, CLSCTX_INPROC_SERVER, &IID_IADsPathname, (void **)&path);
+    ok(hr == S_OK, "got %#x\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IADsPathname_GetNumElements(path, &count);
+todo_wine
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(count == 0, "got %d\n", count);
+
+    bstr = NULL;
+    hr = IADsPathname_Retrieve(path, ADS_FORMAT_X500, &bstr);
+todo_wine
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(bstr && !wcscmp(bstr, L"LDAP://"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"LDAP://sample");
+    hr = IADsPathname_Set(path, bstr, ADS_SETTYPE_FULL);
+    ok(hr == S_OK, "got %#x\n", hr);
+    SysFreeString(bstr);
+
+    count = 0xdeadbeef;
+    hr = IADsPathname_GetNumElements(path, &count);
+todo_wine
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(count == 0, "got %d\n", count);
+
+    hr = IADsPathname_GetElement(path, 0, &bstr);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_INDEX), "got %#x\n", hr);
+    SysFreeString(bstr);
+
+    bstr = SysAllocString(L"LDAP://sample:123/a=b,c=d,e=f");
+    hr = IADsPathname_Set(path, bstr, ADS_SETTYPE_FULL);
+    ok(hr == S_OK, "got %#x\n", hr);
+    SysFreeString(bstr);
+
+    count = 0xdeadbeef;
+    hr = IADsPathname_GetNumElements(path, &count);
+todo_wine
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(count == 3, "got %d\n", count);
+    for (i = 0; i < count; i++)
+    {
+        hr = IADsPathname_GetElement(path, i, &bstr);
+        ok(hr == S_OK, "got %#x\n", hr);
+        ok(!wcscmp(bstr, elem[i]), "%u: %s\n", i, wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+    }
+
+    hr = IADsPathname_Retrieve(path, ADS_FORMAT_X500, &bstr);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(!wcscmp(bstr, L"LDAP://sample:123/a=b,c=d,e=f"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = IADsPathname_Retrieve(path, ADS_FORMAT_PROVIDER, &bstr);
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(!wcscmp(bstr, L"LDAP"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = IADsPathname_Retrieve(path, ADS_FORMAT_SERVER, &bstr);
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(!wcscmp(bstr, L"sample:123"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = IADsPathname_Retrieve(path, ADS_FORMAT_LEAF, &bstr);
+    ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
+    ok(!wcscmp(bstr, L"a=b"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    IADsPathname_Release(path);
+}
+
 START_TEST(activeds)
 {
+    CoInitialize(NULL);
+
+    test_Pathname();
     test_ADsBuildVarArrayStr();
+
+    CoUninitialize();
 }

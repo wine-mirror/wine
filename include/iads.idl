@@ -370,6 +370,29 @@ typedef enum
     ADS_SECURITY_INFO_SACL  = 0x8
 } ADS_SECURITY_INFO_ENUM;
 
+typedef enum
+{
+    ADS_SETTYPE_FULL = 1,
+    ADS_SETTYPE_PROVIDER = 2,
+    ADS_SETTYPE_SERVER = 3,
+    ADS_SETTYPE_DN = 4
+} ADS_SETTYPE_ENUM;
+
+typedef enum
+{
+    ADS_FORMAT_WINDOWS = 1,
+    ADS_FORMAT_WINDOWS_NO_SERVER = 2,
+    ADS_FORMAT_WINDOWS_DN = 3,
+    ADS_FORMAT_WINDOWS_PARENT = 4,
+    ADS_FORMAT_X500 = 5,
+    ADS_FORMAT_X500_NO_SERVER = 6,
+    ADS_FORMAT_X500_DN = 7,
+    ADS_FORMAT_X500_PARENT = 8,
+    ADS_FORMAT_SERVER = 9,
+    ADS_FORMAT_PROVIDER = 10,
+    ADS_FORMAT_LEAF = 11
+} ADS_FORMAT_ENUM;
+
 /*****************************************************************************
  *    IADsContainer interface
  */
