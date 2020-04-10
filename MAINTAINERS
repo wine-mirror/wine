@@ -104,13 +104,15 @@ F:	dlls/dpwsockx/
 
 DirectShow
 P:	Andrew Eikum <aeikum@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/amstream/
 F:	dlls/mciqtz32/
+F:	dlls/qasf/
 F:	dlls/qcap/
 F:	dlls/qedit/
 F:	dlls/quartz/
 F:	dlls/strmbase/
-F:	dlls/winegstreamer/
+F:	dlls/winegstreamer/gstdemux.c
 F:	dlls/wineqtdecoder/
 
 DirectWrite
@@ -139,6 +141,11 @@ F:	dlls/hid/
 F:	dlls/hidclass.sys/
 F:	dlls/winehid.sys/
 
+HTTP server
+P:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/httpapi/
+F:	dlls/http.sys/
+
 Input methods
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/imm32/
@@ -162,6 +169,7 @@ F:	dlls/msvc*/
 
 MSI installers
 M:	Hans Leidekker <hans@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/msi/
 
 Netstat
@@ -205,6 +213,12 @@ P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
 
+Plug and Play
+P:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/newdev/
+F:	dlls/ntoskrnl.exe/pnp.c
+F:	dlls/setupapi/devinst.c
+
 Postscript Driver
 M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/wineps.drv/
@@ -222,6 +236,7 @@ F:	dlls/riched20
 
 RPC Runtime
 P:	Huw Davies <huw@codeweavers.com>
+P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/rpcrt4
 F:	tools/widl
 
