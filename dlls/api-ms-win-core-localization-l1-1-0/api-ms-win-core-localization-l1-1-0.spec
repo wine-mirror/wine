@@ -11,8 +11,8 @@
 @ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernel32.GetFileMUIPath
 @ stdcall GetLocaleInfoEx(wstr long ptr long) kernel32.GetLocaleInfoEx
 @ stdcall GetLocaleInfoW(long long ptr long) kernel32.GetLocaleInfoW
-@ stub GetNLSVersion
-@ stub GetNLSVersionEx
+@ stdcall GetNLSVersion(long long ptr) kernel32.GetNLSVersion
+@ stdcall GetNLSVersionEx(long wstr ptr) kernel32.GetNLSVersionEx
 @ stdcall GetOEMCP() kernel32.GetOEMCP
 @ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
 @ stdcall GetSystemDefaultLCID() kernel32.GetSystemDefaultLCID
