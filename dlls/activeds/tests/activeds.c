@@ -104,7 +104,6 @@ todo_wine
 
     bstr = NULL;
     hr = IADsPathname_Retrieve(path, ADS_FORMAT_X500, &bstr);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
 todo_wine
     ok(bstr && !wcscmp(bstr, L"LDAP://"), "got %s\n", wine_dbgstr_w(bstr));
@@ -148,12 +147,12 @@ todo_wine
 
     hr = IADsPathname_Retrieve(path, ADS_FORMAT_X500, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
+todo_wine
     ok(!wcscmp(bstr, L"LDAP://sample:123/a=b,c=d,e=f"), "got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     hr = IADsPathname_Retrieve(path, ADS_FORMAT_PROVIDER, &bstr);
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(!wcscmp(bstr, L"LDAP"), "got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 

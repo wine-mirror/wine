@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "iads.h"
+#include "adserr.h"
 
 #include "wine/heap.h"
 #include "wine/debug.h"
@@ -39,7 +40,7 @@ typedef struct
 {
     IADsPathname IADsPathname_iface;
     LONG ref;
-    BSTR adspath;
+    BSTR provider, server, dn;
 } Pathname;
 
 static inline Pathname *impl_from_IADsPathname(IADsPathname *iface)
@@ -80,6 +81,9 @@ static ULONG WINAPI path_Release(IADsPathname *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        SysFreeString(path->provider);
+        SysFreeString(path->server);
+        SysFreeString(path->dn);
         heap_free(path);
     }
 
@@ -113,16 +117,88 @@ static HRESULT WINAPI path_Invoke(IADsPathname *iface, DISPID dispid, REFIID rii
     return E_NOTIMPL;
 }
 
+static HRESULT parse_path(BSTR path, BSTR *provider, BSTR *server, BSTR *dn)
+{
+    WCHAR *p, *p_server;
+    int server_len;
+
+    *provider = NULL;
+    *server = NULL;
+    *dn = NULL;
+
+    if (wcsnicmp(path, L"LDAP:", 5) != 0)
+        return E_ADS_BAD_PATHNAME;
+
+    *provider = SysAllocStringLen(path, 4);
+    if (!*provider) return E_OUTOFMEMORY;
+
+    p = path + 5;
+    if (!*p) return S_OK;
+
+    if (*p++ != '/' || *p++ != '/' || !*p)
+        return E_ADS_BAD_PATHNAME;
+
+    p_server = p;
+    server_len = 0;
+    while (*p && *p != '/')
+    {
+        p++;
+        server_len++;
+    }
+    if (server_len == 0) return E_ADS_BAD_PATHNAME;
+
+    *server = SysAllocStringLen(p_server, server_len);
+    if (!*server)
+    {
+        SysFreeString(*provider);
+        return E_OUTOFMEMORY;
+    }
+
+    if (!*p) return S_OK;
+
+    if (*p++ != '/' || !*p)
+    {
+        SysFreeString(*provider);
+        SysFreeString(*server);
+        return E_ADS_BAD_PATHNAME;
+    }
+
+    *dn = SysAllocString(p);
+    if (!*dn)
+    {
+        SysFreeString(*provider);
+        SysFreeString(*server);
+        return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI path_Set(IADsPathname *iface, BSTR adspath, LONG type)
 {
     Pathname *path = impl_from_IADsPathname(iface);
+    HRESULT hr;
+    BSTR provider, server, dn;
 
-    FIXME("%p,%s,%d: stub\n", iface, debugstr_w(adspath), type);
+    TRACE("%p,%s,%d\n", iface, debugstr_w(adspath), type);
 
     if (!adspath) return E_INVALIDARG;
 
-    path->adspath = SysAllocString(adspath);
-    return path->adspath ? S_OK : E_OUTOFMEMORY;
+    if (type != ADS_SETTYPE_FULL)
+        FIXME("type %d not implemented\n", type);
+
+    hr = parse_path(adspath, &provider, &server, &dn);
+    if (hr == S_OK)
+    {
+        SysFreeString(path->provider);
+        SysFreeString(path->server);
+        SysFreeString(path->dn);
+
+        path->provider = provider;
+        path->server = server;
+        path->dn = dn;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI path_SetDisplayType(IADsPathname *iface, LONG type)
@@ -139,7 +215,7 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
 
     if (!adspath) return E_INVALIDARG;
 
-    *adspath = SysAllocString(path->adspath);
+    *adspath = SysAllocString(path->provider);
     return *adspath ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -223,7 +299,9 @@ static HRESULT Pathname_create(REFIID riid, void **obj)
 
     path->IADsPathname_iface.lpVtbl = &IADsPathname_vtbl;
     path->ref = 1;
-    path->adspath = NULL;
+    path->provider = SysAllocString(L"LDAP");
+    path->server = NULL;
+    path->dn = NULL;
 
     hr = IADsPathname_QueryInterface(&path->IADsPathname_iface, riid, obj);
     IADsPathname_Release(&path->IADsPathname_iface);
