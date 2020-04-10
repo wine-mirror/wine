@@ -97,9 +97,7 @@ static void test_Pathname(void)
 
     count = 0xdeadbeef;
     hr = IADsPathname_GetNumElements(path, &count);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(count == 0, "got %d\n", count);
 
     bstr = NULL;
@@ -115,9 +113,7 @@ todo_wine
 
     count = 0xdeadbeef;
     hr = IADsPathname_GetNumElements(path, &count);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(count == 0, "got %d\n", count);
 
     hr = IADsPathname_GetElement(path, 0, &bstr);
@@ -131,10 +127,9 @@ todo_wine
 
     count = 0xdeadbeef;
     hr = IADsPathname_GetNumElements(path, &count);
-todo_wine
     ok(hr == S_OK, "got %#x\n", hr);
-todo_wine
     ok(count == 3, "got %d\n", count);
+
     for (i = 0; i < count; i++)
     {
         hr = IADsPathname_GetElement(path, i, &bstr);

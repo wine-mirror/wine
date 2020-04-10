@@ -293,8 +293,24 @@ static HRESULT WINAPI path_Retrieve(IADsPathname *iface, LONG type, BSTR *adspat
 
 static HRESULT WINAPI path_GetNumElements(IADsPathname *iface, LONG *count)
 {
-    FIXME("%p,%p: stub\n", iface, count);
-    return E_NOTIMPL;
+    Pathname *path = impl_from_IADsPathname(iface);
+    WCHAR *p;
+
+    TRACE("%p,%p\n", iface, count);
+
+    if (!count) return E_INVALIDARG;
+
+    *count = 0;
+
+    p = path->dn;
+    while (p)
+    {
+        *count += 1;
+        p = wcschr(p, ',');
+        if (p) p++;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI path_GetElement(IADsPathname *iface, LONG index, BSTR *element)
