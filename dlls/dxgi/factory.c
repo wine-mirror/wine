@@ -445,10 +445,21 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumWarpAdapter(IWineDXGIFactory *
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CheckFeatureSupport(IWineDXGIFactory *iface,
         DXGI_FEATURE feature, void *feature_data, UINT data_size)
 {
-    FIXME("iface %p, feature %#x, feature_data %p, data_size %u stub!\n",
+    TRACE("iface %p, feature %#x, feature_data %p, data_size %u.\n",
             iface, feature, feature_data, data_size);
 
-    return E_NOTIMPL;
+    switch (feature)
+    {
+        case DXGI_FEATURE_PRESENT_ALLOW_TEARING:
+            if (data_size != sizeof(BOOL))
+                return DXGI_ERROR_INVALID_CALL;
+            *(BOOL *)feature_data = TRUE;
+            return S_OK;
+
+        default:
+            WARN("Unsupported feature %#x.\n", feature);
+            return DXGI_ERROR_INVALID_CALL;
+    }
 }
 
 static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =

@@ -6164,7 +6164,7 @@ static void test_factory_check_feature_support(void)
     }
 
     hr = IDXGIFactory5_CheckFeatureSupport(factory, 0x12345678, (void *)&data, sizeof(data));
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     /* Crashes on Windows. */
     if (0)
@@ -6174,15 +6174,15 @@ static void test_factory_check_feature_support(void)
     }
 
     hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &data, sizeof(data) - 1);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &data, sizeof(data) + 1);
-    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     data = (BOOL)0xdeadbeef;
     hr = IDXGIFactory5_CheckFeatureSupport(factory, DXGI_FEATURE_PRESENT_ALLOW_TEARING, &data, sizeof(data));
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(data == TRUE || data == FALSE, "Got unexpected data %#x.\n", data);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(data == TRUE || data == FALSE, "Got unexpected data %#x.\n", data);
 
     ref_count = IDXGIFactory5_Release(factory);
     ok(!ref_count, "Factory has %u references left.\n", ref_count);
