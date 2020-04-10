@@ -103,8 +103,8 @@ F:	dlls/dpnet/
 F:	dlls/dpwsockx/
 
 DirectShow
+M:	Zebediah Figura <z.figura12@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
-P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/amstream/
 F:	dlls/mciqtz32/
 F:	dlls/qasf/
