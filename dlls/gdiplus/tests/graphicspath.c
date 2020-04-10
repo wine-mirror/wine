@@ -174,6 +174,108 @@ static void test_getpathdata(void)
     GdipDeletePath(path);
 }
 
+static void test_createpath2(void)
+{
+    GpStatus status;
+    GpPath* path = NULL;
+    GpPathData data;
+    INT i, count, expect_count;
+
+    PointF test_line_points[] = {{1.0,1.0}, {2.0,1.0}};
+    BYTE test_line_types[] = {PathPointTypeStart, PathPointTypeLine};
+
+    PointF test_bez_points[] = {{1.0,1.0}, {2.0,1.0}, {3.0,1.0}, {4.0,1.0},
+            {5.0,1.0}, {6.0,1.0}, {7.0,1.0}};
+    BYTE test_bez_types[] = {PathPointTypeStart, PathPointTypeBezier,
+            PathPointTypeBezier, PathPointTypeBezier, PathPointTypeBezier,
+            PathPointTypeBezier, PathPointTypeBezier};
+
+    status = GdipCreatePath2(test_line_points, test_line_types, 2, FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+    expect(2, count);
+    GdipDeletePath(path);
+
+    status = GdipCreatePath2(test_line_points, test_line_types, 1, FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+    expect(1, count);
+    GdipDeletePath(path);
+
+    path = (void *)0xdeadbeef;
+    status = GdipCreatePath2(test_line_points, test_line_types, 0, FillModeAlternate, &path);
+    expect(OutOfMemory, status);
+    ok(!path, "Expected NULL, got %p\n", path);
+    if(path && path != (void *)0xdeadbeef)
+        GdipDeletePath(path);
+
+    path = (void *)0xdeadbeef;
+    status = GdipCreatePath2(test_line_points, test_line_types, -1, FillModeAlternate, &path);
+    expect(OutOfMemory, status);
+    ok(!path, "Expected NULL, got %p\n", path);
+    if(path && path != (void *)0xdeadbeef)
+        GdipDeletePath(path);
+
+    path = (void *)0xdeadbeef;
+    status = GdipCreatePath2(NULL, test_line_types, 2, FillModeAlternate, &path);
+    expect(InvalidParameter, status);
+    ok(path == (void *)0xdeadbeef, "Expected %p, got %p\n", (void *)0xdeadbeef, path);
+    if(path && path != (void *)0xdeadbeef)
+        GdipDeletePath(path);
+
+    path = (void *)0xdeadbeef;
+    status = GdipCreatePath2(test_line_points, NULL, 2, FillModeAlternate, &path);
+    expect(InvalidParameter, status);
+    ok(path == (void *)0xdeadbeef, "Expected %p, got %p\n", (void *)0xdeadbeef, path);
+    if(path && path != (void *)0xdeadbeef)
+        GdipDeletePath(path);
+
+    status = GdipCreatePath2(test_line_points, test_line_types, 2, FillModeAlternate, NULL);
+    expect(InvalidParameter, status);
+
+    /* Zero-length line points do not get altered */
+    path = NULL;
+    test_line_points[1].X = test_line_points[0].X;
+    test_line_points[1].Y = test_line_points[0].Y;
+    status = GdipCreatePath2(test_line_points, test_line_types, 2, FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+    expect(2, count);
+    GdipDeletePath(path);
+
+    /* The type of the first point is always converted to PathPointTypeStart */
+    test_line_types[0] = PathPointTypeLine;
+    status = GdipCreatePath2(test_line_points, test_line_types, 1, FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+    expect(1, count);
+    data.Count  = count;
+    data.Types  = GdipAlloc(sizeof(BYTE) * count);
+    data.Points = GdipAlloc(sizeof(PointF) * count);
+    status = GdipGetPathData(path, &data);
+    expect(Ok, status);
+    expect((data.Points[0].X == 1.0) && (data.Points[0].Y == 1.0), TRUE);
+    expect(data.Types[0], PathPointTypeStart);
+    GdipFree(data.Points);
+    GdipFree(data.Types);
+    GdipDeletePath(path);
+
+    /* Bezier points must come in groups of three */
+    for(i = 2; i <= 7; i++) {
+        expect_count = (i % 3 == 1) ? i : 0;
+        status = GdipCreatePath2(test_bez_points, test_bez_types, i, FillModeAlternate, &path);
+        expect(Ok, status);
+        status = GdipGetPointCount(path, &count);
+        expect(Ok, status);
+        expect(expect_count, count);
+        GdipDeletePath(path);
+    }
+}
+
 static path_test_t line2_path[] = {
     {0.0, 50.0, PathPointTypeStart, 0, 0}, /*0*/
     {5.0, 45.0, PathPointTypeLine, 0, 0}, /*1*/
@@ -1663,6 +1765,7 @@ START_TEST(graphicspath)
 
     test_constructor_destructor();
     test_getpathdata();
+    test_createpath2();
     test_line2();
     test_arc();
     test_worldbounds();

@@ -1213,13 +1213,33 @@ GpStatus WINGDIPAPI GdipCreatePath(GpFillMode fill, GpPath **path)
 GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
     GDIPCONST BYTE* types, INT count, GpFillMode fill, GpPath **path)
 {
+    int i;
+
     TRACE("(%p, %p, %d, %d, %p)\n", points, types, count, fill, path);
 
-    if(!path)
+    if(!points || !types || !path)
         return InvalidParameter;
+
+    if(count <= 0) {
+        *path = NULL;
+        return OutOfMemory;
+    }
 
     *path = heap_alloc_zero(sizeof(GpPath));
     if(!*path)  return OutOfMemory;
+
+    for(i = 1; i < count; i++) {
+        if((types[i] & PathPointTypePathTypeMask) == PathPointTypeBezier) {
+            if(i+2 < count &&
+                    (types[i+1] & PathPointTypePathTypeMask) == PathPointTypeBezier &&
+                    (types[i+2] & PathPointTypePathTypeMask) == PathPointTypeBezier)
+                i += 2;
+            else {
+                count = 0;
+                break;
+            }
+        }
+    }
 
     (*path)->pathdata.Points = heap_alloc_zero(count * sizeof(PointF));
     (*path)->pathdata.Types = heap_alloc_zero(count);
@@ -1233,6 +1253,8 @@ GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
 
     memcpy((*path)->pathdata.Points, points, count * sizeof(PointF));
     memcpy((*path)->pathdata.Types, types, count);
+    if(count > 0)
+        (*path)->pathdata.Types[0] = PathPointTypeStart;
     (*path)->pathdata.Count = count;
     (*path)->datalen = count;
 
