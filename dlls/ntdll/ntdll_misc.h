@@ -30,6 +30,13 @@
 #include "wine/server.h"
 #include "wine/asm.h"
 
+#define DECLARE_CRITICAL_SECTION(cs) \
+    static RTL_CRITICAL_SECTION cs; \
+    static RTL_CRITICAL_SECTION_DEBUG cs##_debug = \
+    { 0, 0, &cs, { &cs##_debug.ProcessLocksList, &cs##_debug.ProcessLocksList }, \
+      0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
+    static RTL_CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 };
+
 #define MAX_NT_PATH_LENGTH 277
 
 #define MAX_DOS_DRIVES 26

@@ -18,22 +18,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
 #include "ntdll_test.h"
 
 static HMODULE hntdll = 0;
 static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
+static NTSTATUS (WINAPI *pTpAllocIoCompletion)(TP_IO **,HANDLE,PTP_IO_CALLBACK,void *,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
 static NTSTATUS (WINAPI *pTpAllocTimer)(TP_TIMER **,PTP_TIMER_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpAllocWait)(TP_WAIT **,PTP_WAIT_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpAllocWork)(TP_WORK **,PTP_WORK_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpCallbackMayRunLong)(TP_CALLBACK_INSTANCE *);
 static VOID     (WINAPI *pTpCallbackReleaseSemaphoreOnCompletion)(TP_CALLBACK_INSTANCE *,HANDLE,DWORD);
+static void     (WINAPI *pTpCancelAsyncIoOperation)(TP_IO *);
 static VOID     (WINAPI *pTpDisassociateCallback)(TP_CALLBACK_INSTANCE *);
 static BOOL     (WINAPI *pTpIsTimerSet)(TP_TIMER *);
 static VOID     (WINAPI *pTpReleaseWait)(TP_WAIT *);
 static VOID     (WINAPI *pTpPostWork)(TP_WORK *);
 static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
+static void     (WINAPI *pTpReleaseIoCompletion)(TP_IO *);
 static VOID     (WINAPI *pTpReleasePool)(TP_POOL *);
 static VOID     (WINAPI *pTpReleaseTimer)(TP_TIMER *);
 static VOID     (WINAPI *pTpReleaseWork)(TP_WORK *);
@@ -41,6 +46,8 @@ static VOID     (WINAPI *pTpSetPoolMaxThreads)(TP_POOL *,DWORD);
 static VOID     (WINAPI *pTpSetTimer)(TP_TIMER *,LARGE_INTEGER *,LONG,LONG);
 static VOID     (WINAPI *pTpSetWait)(TP_WAIT *,HANDLE,LARGE_INTEGER *);
 static NTSTATUS (WINAPI *pTpSimpleTryPost)(PTP_SIMPLE_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
+static void     (WINAPI *pTpStartAsyncIoOperation)(TP_IO *);
+static void     (WINAPI *pTpWaitForIoCompletion)(TP_IO *,BOOL);
 static VOID     (WINAPI *pTpWaitForTimer)(TP_TIMER *,BOOL);
 static VOID     (WINAPI *pTpWaitForWait)(TP_WAIT *,BOOL);
 static VOID     (WINAPI *pTpWaitForWork)(TP_WORK *,BOOL);
@@ -63,10 +70,12 @@ static BOOL init_threadpool(void)
     }
 
     NTDLL_GET_PROC(TpAllocCleanupGroup);
+    NTDLL_GET_PROC(TpAllocIoCompletion);
     NTDLL_GET_PROC(TpAllocPool);
     NTDLL_GET_PROC(TpAllocTimer);
     NTDLL_GET_PROC(TpAllocWait);
     NTDLL_GET_PROC(TpAllocWork);
+    NTDLL_GET_PROC(TpCancelAsyncIoOperation);
     NTDLL_GET_PROC(TpCallbackMayRunLong);
     NTDLL_GET_PROC(TpCallbackReleaseSemaphoreOnCompletion);
     NTDLL_GET_PROC(TpDisassociateCallback);
@@ -74,6 +83,7 @@ static BOOL init_threadpool(void)
     NTDLL_GET_PROC(TpPostWork);
     NTDLL_GET_PROC(TpReleaseCleanupGroup);
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
+    NTDLL_GET_PROC(TpReleaseIoCompletion);
     NTDLL_GET_PROC(TpReleasePool);
     NTDLL_GET_PROC(TpReleaseTimer);
     NTDLL_GET_PROC(TpReleaseWait);
@@ -82,6 +92,8 @@ static BOOL init_threadpool(void)
     NTDLL_GET_PROC(TpSetTimer);
     NTDLL_GET_PROC(TpSetWait);
     NTDLL_GET_PROC(TpSimpleTryPost);
+    NTDLL_GET_PROC(TpStartAsyncIoOperation);
+    NTDLL_GET_PROC(TpWaitForIoCompletion);
     NTDLL_GET_PROC(TpWaitForTimer);
     NTDLL_GET_PROC(TpWaitForWait);
     NTDLL_GET_PROC(TpWaitForWork);
@@ -1906,6 +1918,172 @@ static void test_tp_multi_wait(void)
     CloseHandle(semaphore);
 }
 
+struct io_cb_ctx
+{
+    unsigned int count;
+    void *ovl;
+    NTSTATUS ret;
+    ULONG_PTR length;
+    TP_IO *io;
+};
+
+static void CALLBACK io_cb(TP_CALLBACK_INSTANCE *instance, void *userdata,
+        void *cvalue, IO_STATUS_BLOCK *iosb, TP_IO *io)
+{
+    struct io_cb_ctx *ctx = userdata;
+    ++ctx->count;
+    ctx->ovl = cvalue;
+    ctx->ret = iosb->u.Status;
+    ctx->length = iosb->Information;
+    ctx->io = io;
+}
+
+static DWORD WINAPI io_wait_thread(void *arg)
+{
+    TP_IO *io = arg;
+    pTpWaitForIoCompletion(io, FALSE);
+    return 0;
+}
+
+static void test_tp_io(void)
+{
+    TP_CALLBACK_ENVIRON environment = {.Version = 1};
+    OVERLAPPED ovl = {}, ovl2 = {};
+    HANDLE client, server, thread;
+    struct io_cb_ctx userdata;
+    char in[1], in2[1];
+    const char out[1];
+    NTSTATUS status;
+    DWORD ret_size;
+    TP_POOL *pool;
+    TP_IO *io;
+    BOOL ret;
+
+    ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "failed to allocate pool, status %#x\n", status);
+
+    server = CreateNamedPipeA("\\\\.\\pipe\\wine_tp_test",
+            PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, 0, 1, 1024, 1024, 0, NULL);
+    ok(server != INVALID_HANDLE_VALUE, "Failed to create server pipe, error %u.\n", GetLastError());
+    client = CreateFileA("\\\\.\\pipe\\wine_tp_test", GENERIC_READ | GENERIC_WRITE,
+            0, NULL, OPEN_EXISTING, 0, 0);
+    ok(client != INVALID_HANDLE_VALUE, "Failed to create client pipe, error %u.\n", GetLastError());
+
+    environment.Pool = pool;
+    io = NULL;
+    status = pTpAllocIoCompletion(&io, server, io_cb, &userdata, &environment);
+    ok(!status, "got %#x\n", status);
+    ok(!!io, "expected non-NULL TP_IO\n");
+
+    pTpWaitForIoCompletion(io, FALSE);
+
+    userdata.count = 0;
+    pTpStartAsyncIoOperation(io);
+
+    thread = CreateThread(NULL, 0, io_wait_thread, io, 0, NULL);
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "TpWaitForIoCompletion() should not return\n");
+
+    ret = ReadFile(server, in, sizeof(in), NULL, &ovl);
+    ok(!ret, "wrong ret %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "wrong error %u\n", GetLastError());
+
+    ret = WriteFile(client, out, sizeof(out), &ret_size, NULL);
+    ok(ret, "WriteFile() failed, error %u\n", GetLastError());
+
+    pTpWaitForIoCompletion(io, FALSE);
+    ok(userdata.count == 1, "callback ran %u times\n", userdata.count);
+    ok(userdata.ovl == &ovl, "expected %p, got %p\n", &ovl, userdata.ovl);
+    ok(userdata.ret == STATUS_SUCCESS, "got status %#x\n", userdata.ret);
+    ok(userdata.length == 1, "got length %lu\n", userdata.length);
+    ok(userdata.io == io, "expected %p, got %p\n", io, userdata.io);
+
+    ok(!WaitForSingleObject(thread, 1000), "wait timed out\n");
+    CloseHandle(thread);
+
+    userdata.count = 0;
+    pTpStartAsyncIoOperation(io);
+    pTpStartAsyncIoOperation(io);
+
+    ret = ReadFile(server, in, sizeof(in), NULL, &ovl);
+    ok(!ret, "wrong ret %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "wrong error %u\n", GetLastError());
+    ret = ReadFile(server, in2, sizeof(in2), NULL, &ovl2);
+    ok(!ret, "wrong ret %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "wrong error %u\n", GetLastError());
+
+    ret = WriteFile(client, out, sizeof(out), &ret_size, NULL);
+    ok(ret, "WriteFile() failed, error %u\n", GetLastError());
+    ret = WriteFile(client, out, sizeof(out), &ret_size, NULL);
+    ok(ret, "WriteFile() failed, error %u\n", GetLastError());
+
+    pTpWaitForIoCompletion(io, FALSE);
+    ok(userdata.count == 2, "callback ran %u times\n", userdata.count);
+    ok(userdata.ret == STATUS_SUCCESS, "got status %#x\n", userdata.ret);
+    ok(userdata.length == 1, "got length %lu\n", userdata.length);
+    ok(userdata.io == io, "expected %p, got %p\n", io, userdata.io);
+
+    /* The documentation is a bit unclear about passing TRUE to
+     * WaitForThreadpoolIoCallbacks()—"pending I/O requests are not canceled"
+     * [as with CancelIoEx()], but pending threadpool callbacks are, even those
+     * which have not yet reached the completion port [as with
+     * TpCancelAsyncIoOperation()]. */
+    userdata.count = 0;
+    pTpStartAsyncIoOperation(io);
+
+    pTpWaitForIoCompletion(io, TRUE);
+    ok(!userdata.count, "callback ran %u times\n", userdata.count);
+
+    pTpStartAsyncIoOperation(io);
+
+    ret = WriteFile(client, out, sizeof(out), &ret_size, NULL);
+    ok(ret, "WriteFile() failed, error %u\n", GetLastError());
+
+    ret = ReadFile(server, in, sizeof(in), NULL, &ovl);
+    ok(ret, "wrong ret %d\n", ret);
+
+    pTpWaitForIoCompletion(io, FALSE);
+    ok(userdata.count == 1, "callback ran %u times\n", userdata.count);
+    ok(userdata.ovl == &ovl, "expected %p, got %p\n", &ovl, userdata.ovl);
+    ok(userdata.ret == STATUS_SUCCESS, "got status %#x\n", userdata.ret);
+    ok(userdata.length == 1, "got length %lu\n", userdata.length);
+    ok(userdata.io == io, "expected %p, got %p\n", io, userdata.io);
+
+    userdata.count = 0;
+    pTpStartAsyncIoOperation(io);
+
+    ret = ReadFile(server, NULL, 1, NULL, &ovl);
+    ok(!ret, "wrong ret %d\n", ret);
+    ok(GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError());
+
+    pTpCancelAsyncIoOperation(io);
+    pTpWaitForIoCompletion(io, FALSE);
+    ok(!userdata.count, "callback ran %u times\n", userdata.count);
+
+    userdata.count = 0;
+    pTpStartAsyncIoOperation(io);
+
+    ret = ReadFile(server, in, sizeof(in), NULL, &ovl);
+    ok(!ret, "wrong ret %d\n", ret);
+    ok(GetLastError() == ERROR_IO_PENDING, "wrong error %u\n", GetLastError());
+    ret = CancelIo(server);
+    ok(ret, "CancelIo() failed, error %u\n", GetLastError());
+
+    pTpWaitForIoCompletion(io, FALSE);
+    ok(userdata.count == 1, "callback ran %u times\n", userdata.count);
+    ok(userdata.ovl == &ovl, "expected %p, got %p\n", &ovl, userdata.ovl);
+    ok(userdata.ret == STATUS_CANCELLED, "got status %#x\n", userdata.ret);
+    ok(!userdata.length, "got length %lu\n", userdata.length);
+    ok(userdata.io == io, "expected %p, got %p\n", io, userdata.io);
+
+    CloseHandle(ovl.hEvent);
+    CloseHandle(client);
+    CloseHandle(server);
+    pTpReleaseIoCompletion(io);
+    pTpReleasePool(pool);
+}
+
 START_TEST(threadpool)
 {
     test_RtlQueueWorkItem();
@@ -1925,4 +2103,5 @@ START_TEST(threadpool)
     test_tp_window_length();
     test_tp_wait();
     test_tp_multi_wait();
+    test_tp_io();
 }

@@ -2351,6 +2351,8 @@ typedef struct _SYSTEM_MODULE_INFORMATION
 
 typedef LONG (CALLBACK *PRTL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
 
+typedef void (CALLBACK *PTP_IO_CALLBACK)(PTP_CALLBACK_INSTANCE,void*,void*,IO_STATUS_BLOCK*,PTP_IO);
+
 /***********************************************************************
  * Function declarations
  */
@@ -3013,6 +3015,7 @@ NTSYSAPI NTSTATUS  WINAPI RtlLargeIntegerToChar(const ULONGLONG *,ULONG,ULONG,PC
 /* Threadpool functions */
 
 NTSYSAPI NTSTATUS  WINAPI TpAllocCleanupGroup(TP_CLEANUP_GROUP **);
+NTSYSAPI NTSTATUS  WINAPI TpAllocIoCompletion(TP_IO **,HANDLE,PTP_IO_CALLBACK,void *,TP_CALLBACK_ENVIRON *);
 NTSYSAPI NTSTATUS  WINAPI TpAllocPool(TP_POOL **,PVOID);
 NTSYSAPI NTSTATUS  WINAPI TpAllocTimer(TP_TIMER **,PTP_TIMER_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 NTSYSAPI NTSTATUS  WINAPI TpAllocWait(TP_WAIT **,PTP_WAIT_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
@@ -3023,23 +3026,26 @@ NTSYSAPI void      WINAPI TpCallbackReleaseMutexOnCompletion(TP_CALLBACK_INSTANC
 NTSYSAPI void      WINAPI TpCallbackReleaseSemaphoreOnCompletion(TP_CALLBACK_INSTANCE *,HANDLE,DWORD);
 NTSYSAPI void      WINAPI TpCallbackSetEventOnCompletion(TP_CALLBACK_INSTANCE *,HANDLE);
 NTSYSAPI void      WINAPI TpCallbackUnloadDllOnCompletion(TP_CALLBACK_INSTANCE *,HMODULE);
+NTSYSAPI void      WINAPI TpCancelAsyncIoOperation(TP_IO *);
 NTSYSAPI void      WINAPI TpDisassociateCallback(TP_CALLBACK_INSTANCE *);
 NTSYSAPI BOOL      WINAPI TpIsTimerSet(TP_TIMER *);
 NTSYSAPI void      WINAPI TpPostWork(TP_WORK *);
 NTSYSAPI NTSTATUS  WINAPI TpQueryPoolStackInformation(TP_POOL *, TP_POOL_STACK_INFORMATION *stack_info);
 NTSYSAPI void      WINAPI TpReleaseCleanupGroup(TP_CLEANUP_GROUP *);
 NTSYSAPI void      WINAPI TpReleaseCleanupGroupMembers(TP_CLEANUP_GROUP *,BOOL,PVOID);
+NTSYSAPI void      WINAPI TpReleaseIoCompletion(TP_IO *);
 NTSYSAPI void      WINAPI TpReleasePool(TP_POOL *);
 NTSYSAPI void      WINAPI TpReleaseTimer(TP_TIMER *);
 NTSYSAPI void      WINAPI TpReleaseWait(TP_WAIT *);
 NTSYSAPI void      WINAPI TpReleaseWork(TP_WORK *);
-NTSYSAPI void      WINAPI TpStartAsyncIoOperation(TP_IO *);
 NTSYSAPI void      WINAPI TpSetPoolMaxThreads(TP_POOL *,DWORD);
 NTSYSAPI BOOL      WINAPI TpSetPoolMinThreads(TP_POOL *,DWORD);
 NTSYSAPI NTSTATUS  WINAPI TpSetPoolStackInformation(TP_POOL *, TP_POOL_STACK_INFORMATION *stack_info);
 NTSYSAPI void      WINAPI TpSetTimer(TP_TIMER *, LARGE_INTEGER *,LONG,LONG);
 NTSYSAPI void      WINAPI TpSetWait(TP_WAIT *,HANDLE,LARGE_INTEGER *);
 NTSYSAPI NTSTATUS  WINAPI TpSimpleTryPost(PTP_SIMPLE_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
+NTSYSAPI void      WINAPI TpStartAsyncIoOperation(TP_IO *);
+NTSYSAPI void      WINAPI TpWaitForIoCompletion(TP_IO *,BOOL);
 NTSYSAPI void      WINAPI TpWaitForTimer(TP_TIMER *,BOOL);
 NTSYSAPI void      WINAPI TpWaitForWait(TP_WAIT *,BOOL);
 NTSYSAPI void      WINAPI TpWaitForWork(TP_WORK *,BOOL);
