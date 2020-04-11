@@ -1523,6 +1523,7 @@ enable_psapi
 enable_pstorec
 enable_qasf
 enable_qcap
+enable_qdvd
 enable_qedit
 enable_qmgr
 enable_qmgrprxy
@@ -20803,6 +20804,7 @@ wine_fn_config_makefile dlls/qasf enable_qasf
 wine_fn_config_makefile dlls/qasf/tests enable_tests
 wine_fn_config_makefile dlls/qcap enable_qcap
 wine_fn_config_makefile dlls/qcap/tests enable_tests
+wine_fn_config_makefile dlls/qdvd enable_qdvd
 wine_fn_config_makefile dlls/qedit enable_qedit
 wine_fn_config_makefile dlls/qedit/tests enable_tests
 wine_fn_config_makefile dlls/qmgr enable_qmgr

@@ -1,0 +1,6 @@
+MODULE    = qdvd.dll
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	qdvd_main.c

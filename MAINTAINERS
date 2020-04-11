@@ -109,6 +109,7 @@ F:	dlls/amstream/
 F:	dlls/mciqtz32/
 F:	dlls/qasf/
 F:	dlls/qcap/
+F:	dlls/qdvd/
 F:	dlls/qedit/
 F:	dlls/quartz/
 F:	dlls/strmbase/
