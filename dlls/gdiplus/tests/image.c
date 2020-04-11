@@ -3488,8 +3488,11 @@ static void test_dispose(void)
     stat = GdipDisposeImage(image);
     expect(Ok, stat);
 
+    if (0) {
+    /* Can crash with page heap or if the heap region is decommitted. */
     stat = GdipDisposeImage(image);
     expect(ObjectBusy, stat);
+    }
 
     memset(invalid_image, 0, 256);
     stat = GdipDisposeImage((GpImage*)invalid_image);
