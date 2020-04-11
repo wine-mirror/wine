@@ -2023,6 +2023,17 @@ static void tp_object_cancel( struct threadpool_object *object )
         tp_object_release( object );
 }
 
+static BOOL object_is_finished( struct threadpool_object *object, BOOL group )
+{
+    if (object->num_pending_callbacks)
+        return FALSE;
+
+    if (group)
+        return !object->num_running_callbacks;
+    else
+        return !object->num_associated_callbacks;
+}
+
 /***********************************************************************
  *           tp_object_wait    (internal)
  *
@@ -2034,14 +2045,11 @@ static void tp_object_wait( struct threadpool_object *object, BOOL group_wait )
     struct threadpool *pool = object->pool;
 
     RtlEnterCriticalSection( &pool->cs );
-    if (group_wait)
+    while (!object_is_finished( object, group_wait ))
     {
-        while (object->num_pending_callbacks || object->num_running_callbacks)
+        if (group_wait)
             RtlSleepConditionVariableCS( &object->group_finished_event, &pool->cs, NULL );
-    }
-    else
-    {
-        while (object->num_pending_callbacks || object->num_associated_callbacks)
+        else
             RtlSleepConditionVariableCS( &object->finished_event, &pool->cs, NULL );
     }
     RtlLeaveCriticalSection( &pool->cs );
@@ -2261,13 +2269,13 @@ static void CALLBACK threadpool_worker_proc( void *param )
             }
 
             object->num_running_callbacks--;
-            if (!object->num_pending_callbacks && !object->num_running_callbacks)
+            if (object_is_finished( object, TRUE ))
                 RtlWakeAllConditionVariable( &object->group_finished_event );
 
             if (instance.associated)
             {
                 object->num_associated_callbacks--;
-                if (!object->num_pending_callbacks && !object->num_associated_callbacks)
+                if (object_is_finished( object, FALSE ))
                     RtlWakeAllConditionVariable( &object->finished_event );
             }
 
@@ -2567,7 +2575,7 @@ VOID WINAPI TpDisassociateCallback( TP_CALLBACK_INSTANCE *instance )
     RtlEnterCriticalSection( &pool->cs );
 
     object->num_associated_callbacks--;
-    if (!object->num_pending_callbacks && !object->num_associated_callbacks)
+    if (object_is_finished( object, FALSE ))
         RtlWakeAllConditionVariable( &object->finished_event );
 
     RtlLeaveCriticalSection( &pool->cs );
