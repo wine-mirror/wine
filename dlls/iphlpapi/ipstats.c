@@ -1548,33 +1548,35 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
 
              ADVANCE (addrPtr, sa);
 
-             /* default routes are encoded by length-zero sockaddr */
-             if (sa->sa_len == 0) {
-                addr = 0;
-             }else {
-                 /* Apple's netstat prints the netmask together with the destination
-                  * and only looks at the destination's address family. The netmask's
-                  * sa_family sometimes contains the non-existent value 0xff. */
-                 switch(i == RTA_NETMASK ? dst_family : sa->sa_family) {
-                 case AF_INET: {
-                     struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-                     addr = sin->sin_addr.s_addr;
+             /* Apple's netstat prints the netmask together with the destination
+              * and only looks at the destination's address family. The netmask's
+              * sa_family sometimes contains the non-existent value 0xff. */
+             switch(i == RTA_NETMASK ? dst_family : sa->sa_family) {
+             case AF_INET: {
+                 /* Netmasks (and possibly other addresses) have only enough size
+                  * to represent the non-zero bits, e.g. a netmask of 255.0.0.0 has
+                  * 5 bytes (1 sa_len, 1 sa_family, 2 sa_port and 1 for the first
+                  * byte of sin_addr). Due to the alignment constraint we can de
+                  * facto read the full 4 bytes of sin_addr (except for the case of
+                  * netmask 0). Don't assume though that the extra bytes are zeroed. */
+                 struct sockaddr_in sin = {0};
+                 memcpy(&sin, sa, sa->sa_len);
+                 addr = sin.sin_addr.s_addr;
+                 break;
+             }
+#ifdef AF_LINK
+             case AF_LINK:
+                 if(i == RTA_GATEWAY && row.u1.ForwardType == MIB_IPROUTE_TYPE_DIRECT) {
+                     /* For direct route we may simply use dest addr as next hop */
+                     C_ASSERT(RTA_DST < RTA_GATEWAY);
+                     addr = row.dwForwardDest;
                      break;
                  }
-#ifdef AF_LINK
-                 case AF_LINK:
-                     if(i == RTA_GATEWAY && row.u1.ForwardType == MIB_IPROUTE_TYPE_DIRECT) {
-                         /* For direct route we may simply use dest addr as next hop */
-                         C_ASSERT(RTA_DST < RTA_GATEWAY);
-                         addr = row.dwForwardDest;
-                         break;
-                     }
-                     /* fallthrough */
+             /* fallthrough */
 #endif
-                 default:
-                     WARN ("Received unsupported sockaddr family 0x%x\n", sa->sa_family);
-                     addr = 0;
-                 }
+             default:
+                 WARN ("Received unsupported sockaddr family 0x%x\n", sa->sa_family);
+                 addr = 0;
              }
 
              switch (i)
