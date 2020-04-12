@@ -1539,6 +1539,12 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
                 continue;
 
              sa = (struct sockaddr *)addrPtr;
+             if (addrPtr + sa->sa_len > next + rtm->rtm_msglen)
+             {
+                ERR ("struct sockaddr extends beyond the route message, %p > %p\n",
+                   addrPtr + sa->sa_len, next + rtm->rtm_msglen );
+             }
+
              ADVANCE (addrPtr, sa);
 
              /* default routes are encoded by length-zero sockaddr */
