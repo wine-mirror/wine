@@ -761,6 +761,7 @@ static const int ws_proto_map[][2] =
     MAP_OPTION( IPPROTO_ICMP ),
     MAP_OPTION( IPPROTO_IGMP ),
     MAP_OPTION( IPPROTO_RAW ),
+    MAP_OPTION( IPPROTO_IPIP ),
     {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
 };
 
