@@ -1508,6 +1508,7 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
        for (next = buf; next < lim; next += rtm->rtm_msglen)
        {
           int i;
+          sa_family_t dst_family = AF_UNSPEC;
 
           rtm = (struct rt_msghdr *)next;
 
@@ -1551,7 +1552,10 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
              if (sa->sa_len == 0) {
                 addr = 0;
              }else {
-                 switch(sa->sa_family) {
+                 /* Apple's netstat prints the netmask together with the destination
+                  * and only looks at the destination's address family. The netmask's
+                  * sa_family sometimes contains the non-existent value 0xff. */
+                 switch(i == RTA_NETMASK ? dst_family : sa->sa_family) {
                  case AF_INET: {
                      struct sockaddr_in *sin = (struct sockaddr_in *)sa;
                      addr = sin->sin_addr.s_addr;
@@ -1575,7 +1579,10 @@ DWORD WINAPI AllocateAndGetIpForwardTableFromStack(PMIB_IPFORWARDTABLE *ppIpForw
 
              switch (i)
              {
-                case RTA_DST:     row.dwForwardDest = addr; break;
+                case RTA_DST:
+                   row.dwForwardDest = addr;
+                   dst_family = sa->sa_family;
+                   break;
                 case RTA_GATEWAY: row.dwForwardNextHop = addr; break;
                 case RTA_NETMASK: row.dwForwardMask = addr; break;
                 default:
