@@ -145,7 +145,7 @@
 
 #ifndef ROUNDUP
 #define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(int) - 1))) : sizeof(int))
 #endif
 #ifndef ADVANCE
 #define ADVANCE(x, n) (x += ROUNDUP(((struct sockaddr *)n)->sa_len))
