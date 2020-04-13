@@ -1943,7 +1943,7 @@ static void test_condvars_base(RTL_CONDITION_VARIABLE *cv)
 }
 
 static LONG srwlock_seq = 0;
-static SRWLOCK srwlock_base;
+static SRWLOCK aligned_srwlock;
 static struct
 {
     LONG wrong_execution_order;
@@ -1955,6 +1955,14 @@ static struct
     LONG trylock_excl;
     LONG trylock_shared;
 } srwlock_base_errors;
+
+#include "pshpack1.h"
+struct
+{
+    char c;
+    SRWLOCK lock;
+} unaligned_srwlock;
+#include "poppack.h"
 
 /* Sequence of acquire/release to check boundary conditions:
  *  0: init
@@ -2027,49 +2035,51 @@ static struct
  * 31: end
  */
 
-static DWORD WINAPI srwlock_base_thread1(LPVOID x)
+static DWORD WINAPI srwlock_base_thread1(void *arg)
 {
+    SRWLOCK *lock = arg;
+
     /* seq 2 */
     while (srwlock_seq < 2) Sleep(1);
     Sleep(100);
     if (InterlockedIncrement(&srwlock_seq) != 3)
         InterlockedIncrement(&srwlock_base_errors.samethread_excl_excl);
-    pReleaseSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
 
     /* seq 4 */
     while (srwlock_seq < 4) Sleep(1);
     Sleep(100);
     if (InterlockedIncrement(&srwlock_seq) != 5)
         InterlockedIncrement(&srwlock_base_errors.samethread_excl_shared);
-    pReleaseSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
 
     /* seq 6 */
     while (srwlock_seq < 6) Sleep(1);
     Sleep(100);
     if (InterlockedIncrement(&srwlock_seq) != 7)
         InterlockedIncrement(&srwlock_base_errors.samethread_shared_excl);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
 
     /* seq 8 */
     while (srwlock_seq < 8) Sleep(1);
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (InterlockedIncrement(&srwlock_seq) != 9)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
     Sleep(100);
     if (InterlockedIncrement(&srwlock_seq) != 10)
         InterlockedIncrement(&srwlock_base_errors.multithread_excl_excl);
-    pReleaseSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
 
     /* seq 11 */
     while (srwlock_seq < 11) Sleep(1);
-    pAcquireSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 12)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 13 */
     while (srwlock_seq < 13) Sleep(1);
-    pReleaseSRWLockShared(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
+    pAcquireSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 14)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
@@ -2078,7 +2088,7 @@ static DWORD WINAPI srwlock_base_thread1(LPVOID x)
     Sleep(50); /* ensure that both the exclusive and shared access thread are queued */
     if (InterlockedIncrement(&srwlock_seq) != 17)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
 
     /* skip over remaining tests if TryAcquireSRWLock* is not available */
     if (!pTryAcquireSRWLockExclusive)
@@ -2086,125 +2096,127 @@ static DWORD WINAPI srwlock_base_thread1(LPVOID x)
 
     /* seq 19 */
     while (srwlock_seq < 19) Sleep(1);
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    if (pTryAcquireSRWLockExclusive(lock))
     {
-        if (pTryAcquireSRWLockShared(&srwlock_base))
+        if (pTryAcquireSRWLockShared(lock))
             InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-        if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        if (pTryAcquireSRWLockExclusive(lock))
             InterlockedIncrement(&srwlock_base_errors.trylock_excl);
-        pReleaseSRWLockExclusive(&srwlock_base);
+        pReleaseSRWLockExclusive(lock);
     }
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
 
-    if (pTryAcquireSRWLockShared(&srwlock_base))
+    if (pTryAcquireSRWLockShared(lock))
     {
-        if (pTryAcquireSRWLockShared(&srwlock_base))
-            pReleaseSRWLockShared(&srwlock_base);
+        if (pTryAcquireSRWLockShared(lock))
+            pReleaseSRWLockShared(lock);
         else
             InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-        if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        if (pTryAcquireSRWLockExclusive(lock))
             InterlockedIncrement(&srwlock_base_errors.trylock_excl);
-        pReleaseSRWLockShared(&srwlock_base);
+        pReleaseSRWLockShared(lock);
     }
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_shared);
 
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (InterlockedIncrement(&srwlock_seq) != 20)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 21 */
     while (srwlock_seq < 21) Sleep(1);
-    pReleaseSRWLockExclusive(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
+    pAcquireSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 22)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 23 */
     while (srwlock_seq < 23) Sleep(1);
-    pReleaseSRWLockShared(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
+    pAcquireSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 24)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 25 */
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (srwlock_seq != 25)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
-    pReleaseSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
 
-    pAcquireSRWLockShared(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(lock);
+    pAcquireSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 26)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 27 */
     while (srwlock_seq < 27) Sleep(1);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 28)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 29 */
     while (srwlock_seq < 29) Sleep(1);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 30)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     return 0;
 }
 
-static DWORD WINAPI srwlock_base_thread2(LPVOID x)
+static DWORD WINAPI srwlock_base_thread2(void *arg)
 {
+    SRWLOCK *lock = arg;
+
     /* seq 1 */
     while (srwlock_seq < 1) Sleep(1);
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (InterlockedIncrement(&srwlock_seq) != 2)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 3 */
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (srwlock_seq != 3)
         InterlockedIncrement(&srwlock_base_errors.samethread_excl_excl);
-    pReleaseSRWLockExclusive(&srwlock_base);
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
+    pAcquireSRWLockExclusive(lock);
     if (InterlockedIncrement(&srwlock_seq) != 4)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 5 */
-    pAcquireSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(lock);
     if (srwlock_seq != 5)
         InterlockedIncrement(&srwlock_base_errors.samethread_excl_shared);
-    pReleaseSRWLockShared(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
+    pAcquireSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 6)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 7 */
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (srwlock_seq != 7)
         InterlockedIncrement(&srwlock_base_errors.samethread_shared_excl);
-    pReleaseSRWLockExclusive(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
-    pAcquireSRWLockShared(&srwlock_base);
-    pReleaseSRWLockShared(&srwlock_base);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
+    pAcquireSRWLockShared(lock);
+    pAcquireSRWLockShared(lock);
+    pReleaseSRWLockShared(lock);
+    pReleaseSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 8)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 9, 10 */
     while (srwlock_seq < 9) Sleep(1);
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (srwlock_seq != 10)
         InterlockedIncrement(&srwlock_base_errors.multithread_excl_excl);
-    pReleaseSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
     if (InterlockedIncrement(&srwlock_seq) != 11)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 12 */
     while (srwlock_seq < 12) Sleep(1);
-    pAcquireSRWLockShared(&srwlock_base);
-    pReleaseSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(lock);
+    pReleaseSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 13)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
@@ -2214,12 +2226,12 @@ static DWORD WINAPI srwlock_base_thread2(LPVOID x)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 17 */
-    pAcquireSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockExclusive(lock);
     if (srwlock_seq != 17)
         InterlockedIncrement(&srwlock_base_errors.excl_not_preferred);
     if (InterlockedIncrement(&srwlock_seq) != 18)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
-    pReleaseSRWLockExclusive(&srwlock_base);
+    pReleaseSRWLockExclusive(lock);
 
     /* skip over remaining tests if TryAcquireSRWLock* is not available */
     if (!pTryAcquireSRWLockExclusive)
@@ -2227,20 +2239,20 @@ static DWORD WINAPI srwlock_base_thread2(LPVOID x)
 
     /* seq 20 */
     while (srwlock_seq < 20) Sleep(1);
-    if (pTryAcquireSRWLockShared(&srwlock_base))
+    if (pTryAcquireSRWLockShared(lock))
         InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    if (pTryAcquireSRWLockExclusive(lock))
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
     if (InterlockedIncrement(&srwlock_seq) != 21)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 22 */
     while (srwlock_seq < 22) Sleep(1);
-    if (pTryAcquireSRWLockShared(&srwlock_base))
-        pReleaseSRWLockShared(&srwlock_base);
+    if (pTryAcquireSRWLockShared(lock))
+        pReleaseSRWLockShared(lock);
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    if (pTryAcquireSRWLockExclusive(lock))
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
     if (InterlockedIncrement(&srwlock_seq) != 23)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
@@ -2248,47 +2260,47 @@ static DWORD WINAPI srwlock_base_thread2(LPVOID x)
     /* seq 24 */
     while (srwlock_seq < 24) Sleep(1);
     Sleep(50); /* ensure that exclusive access request is queued */
-    if (pTryAcquireSRWLockShared(&srwlock_base))
+    if (pTryAcquireSRWLockShared(lock))
     {
-        pReleaseSRWLockShared(&srwlock_base);
+        pReleaseSRWLockShared(lock);
         InterlockedIncrement(&srwlock_base_errors.excl_not_preferred);
     }
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    if (pTryAcquireSRWLockExclusive(lock))
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
     if (InterlockedIncrement(&srwlock_seq) != 25)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
 
     /* seq 26 */
     while (srwlock_seq < 26) Sleep(1);
-    if (pTryAcquireSRWLockShared(&srwlock_base))
-        pReleaseSRWLockShared(&srwlock_base);
+    if (pTryAcquireSRWLockShared(lock))
+        pReleaseSRWLockShared(lock);
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    if (pTryAcquireSRWLockExclusive(lock))
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
     if (InterlockedIncrement(&srwlock_seq) != 27)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 28 */
     while (srwlock_seq < 28) Sleep(1);
-    if (pTryAcquireSRWLockShared(&srwlock_base))
-        pReleaseSRWLockShared(&srwlock_base);
+    if (pTryAcquireSRWLockShared(lock))
+        pReleaseSRWLockShared(lock);
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    if (pTryAcquireSRWLockExclusive(lock))
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
     if (InterlockedIncrement(&srwlock_seq) != 29)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 30 */
     while (srwlock_seq < 30) Sleep(1);
-    if (pTryAcquireSRWLockShared(&srwlock_base))
-        pReleaseSRWLockShared(&srwlock_base);
+    if (pTryAcquireSRWLockShared(lock))
+        pReleaseSRWLockShared(lock);
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_shared);
-    if (pTryAcquireSRWLockExclusive(&srwlock_base))
-        pReleaseSRWLockExclusive(&srwlock_base);
+    if (pTryAcquireSRWLockExclusive(lock))
+        pReleaseSRWLockExclusive(lock);
     else
         InterlockedIncrement(&srwlock_base_errors.trylock_excl);
     if (InterlockedIncrement(&srwlock_seq) != 31)
@@ -2297,8 +2309,10 @@ static DWORD WINAPI srwlock_base_thread2(LPVOID x)
     return 0;
 }
 
-static DWORD WINAPI srwlock_base_thread3(LPVOID x)
+static DWORD WINAPI srwlock_base_thread3(void *arg)
 {
+    SRWLOCK *lock = arg;
+
     /* seq 15 */
     while (srwlock_seq < 15) Sleep(1);
     Sleep(50); /* some delay, so that thread2 can try to acquire a second exclusive lock */
@@ -2306,10 +2320,10 @@ static DWORD WINAPI srwlock_base_thread3(LPVOID x)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     /* seq 18 */
-    pAcquireSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(lock);
     if (srwlock_seq != 18)
         InterlockedIncrement(&srwlock_base_errors.excl_not_preferred);
-    pReleaseSRWLockShared(&srwlock_base);
+    pReleaseSRWLockShared(lock);
     if (InterlockedIncrement(&srwlock_seq) != 19)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
@@ -2325,7 +2339,7 @@ static DWORD WINAPI srwlock_base_thread3(LPVOID x)
     return 0;
 }
 
-static void test_srwlock_base(void)
+static void test_srwlock_base(SRWLOCK *lock)
 {
     HANDLE h1, h2, h3;
     DWORD dummy;
@@ -2337,12 +2351,13 @@ static void test_srwlock_base(void)
         return;
     }
 
-    pInitializeSRWLock(&srwlock_base);
+    pInitializeSRWLock(lock);
     memset(&srwlock_base_errors, 0, sizeof(srwlock_base_errors));
+    srwlock_seq = 0;
 
-    h1 = CreateThread(NULL, 0, srwlock_base_thread1, NULL, 0, &dummy);
-    h2 = CreateThread(NULL, 0, srwlock_base_thread2, NULL, 0, &dummy);
-    h3 = CreateThread(NULL, 0, srwlock_base_thread3, NULL, 0, &dummy);
+    h1 = CreateThread(NULL, 0, srwlock_base_thread1, lock, 0, &dummy);
+    h2 = CreateThread(NULL, 0, srwlock_base_thread2, lock, 0, &dummy);
+    h3 = CreateThread(NULL, 0, srwlock_base_thread3, lock, 0, &dummy);
 
     srwlock_seq = 1; /* go */
     while (srwlock_seq < 31)
@@ -2743,7 +2758,8 @@ START_TEST(sync)
     test_condvars_base(&aligned_cv);
     test_condvars_base(&unaligned_cv.cv);
     test_condvars_consumer_producer();
-    test_srwlock_base();
+    test_srwlock_base(&aligned_srwlock);
+    test_srwlock_base(&unaligned_srwlock.lock);
     test_srwlock_example();
     test_alertable_wait();
     test_apc_deadlock();
