@@ -350,6 +350,11 @@ static void test_DirectorySearch(void)
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     hr = ADsGetObject(L"LDAP://ldap.forumsys.com/rootDSE", &IID_IDirectorySearch, (void **)&ds);
+    if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+    {
+        skip("server is down\n");
+        return;
+    }
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
 
     hr = ADsGetObject(L"LDAP://ldap.forumsys.com", &IID_IDirectorySearch, (void **)&ds);
