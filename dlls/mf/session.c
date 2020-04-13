@@ -98,12 +98,18 @@ enum object_state
     OBJ_STATE_INVALID,
 };
 
+enum media_source_flags
+{
+    SOURCE_FLAG_END_OF_PRESENTATION = 0x1,
+};
+
 struct media_source
 {
     struct list entry;
     IMFMediaSource *source;
     IMFPresentationDescriptor *pd;
     enum object_state state;
+    unsigned int flags;
 };
 
 struct media_sink
@@ -178,6 +184,7 @@ enum presentation_flags
     SESSION_FLAG_PRESENTATION_CLOCK_SET = 0x2,
     SESSION_FLAG_FINALIZE_SINKS = 0x4,
     SESSION_FLAG_NEEDS_PREROLL = 0x8,
+    SESSION_FLAG_END_OF_PRESENTATION = 0x10,
 };
 
 struct media_session
@@ -2055,20 +2062,30 @@ static HRESULT session_start_clock(struct media_session *session)
     return hr;
 }
 
+static struct topo_node *session_get_node_object(struct media_session *session, IUnknown *object,
+        MF_TOPOLOGY_TYPE node_type)
+{
+    struct topo_node *node = NULL;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == node_type && object == node->object.object)
+            break;
+    }
+
+    return node;
+}
+
 static BOOL session_set_node_object_state(struct media_session *session, IUnknown *object,
         MF_TOPOLOGY_TYPE node_type, enum object_state state)
 {
     struct topo_node *node;
     BOOL changed = FALSE;
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    if ((node = session_get_node_object(session, object, node_type)))
     {
-        if (node->type == node_type && object == node->object.object)
-        {
-            changed = node->state != state;
-            node->state = state;
-            break;
-        }
+        changed = node->state != state;
+        node->state = state;
     }
 
     return changed;
@@ -2680,6 +2697,80 @@ static void session_sink_invalidated(struct media_session *session, IMFMediaEven
     session_set_topo_status(session, S_OK, MF_TOPOSTATUS_ENDED);
 }
 
+static BOOL session_nodes_is_mask_set(struct media_session *session, MF_TOPOLOGY_TYPE node_type, unsigned int flags)
+{
+    struct media_source *source;
+    struct topo_node *node;
+
+    if (node_type == MF_TOPOLOGY_MAX)
+    {
+        LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+        {
+            if ((source->flags & flags) != flags)
+                return FALSE;
+        }
+    }
+    else
+    {
+        LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+        {
+            if (node->type == node_type && (node->flags & flags) != flags)
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static void session_raise_end_of_presentation(struct media_session *session)
+{
+    if (!(session_nodes_is_mask_set(session, MF_TOPOLOGY_SOURCESTREAM_NODE, TOPO_NODE_END_OF_STREAM)))
+        return;
+
+    if (!(session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION))
+    {
+        if (session_nodes_is_mask_set(session, MF_TOPOLOGY_MAX, SOURCE_FLAG_END_OF_PRESENTATION))
+        {
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, NULL);
+            session->presentation.flags |= SESSION_FLAG_END_OF_PRESENTATION;
+        }
+    }
+}
+
+static void session_handle_end_of_stream(struct media_session *session, IMFMediaStream *stream)
+{
+    struct topo_node *node;
+
+    if (!(node = session_get_node_object(session, (IUnknown *)stream, MF_TOPOLOGY_SOURCESTREAM_NODE))
+            || node->flags & TOPO_NODE_END_OF_STREAM)
+    {
+        return;
+    }
+
+    session_deliver_sample(session, stream, NULL);
+
+    session_raise_end_of_presentation(session);
+}
+
+static void session_handle_end_of_presentation(struct media_session *session, IMFMediaSource *object)
+{
+    struct media_source *source;
+
+    LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+    {
+        if (source->source == object)
+        {
+            if (!(source->flags & SOURCE_FLAG_END_OF_PRESENTATION))
+            {
+                source->flags |= SOURCE_FLAG_END_OF_PRESENTATION;
+                session_raise_end_of_presentation(session);
+            }
+
+            break;
+        }
+    }
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
@@ -2765,10 +2856,24 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 
             break;
         case MEMediaSample:
+
+            EnterCriticalSection(&session->cs);
+            session_deliver_sample(session, (IMFMediaStream *)event_source, &value);
+            LeaveCriticalSection(&session->cs);
+
+            break;
         case MEEndOfStream:
 
             EnterCriticalSection(&session->cs);
-            session_deliver_sample(session, (IMFMediaStream *)event_source, event_type == MEMediaSample ? &value : NULL);
+            session_handle_end_of_stream(session, (IMFMediaStream *)event_source);
+            LeaveCriticalSection(&session->cs);
+
+            break;
+
+        case MEEndOfPresentation:
+
+            EnterCriticalSection(&session->cs);
+            session_handle_end_of_presentation(session, (IMFMediaSource *)event_source);
             LeaveCriticalSection(&session->cs);
 
             break;
