@@ -1286,6 +1286,7 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
     LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
     ULONG err, i;
     WCHAR **props;
+    LDAPControlW **ctrls = NULL, *ctrls_a[2], tombstone;
     struct ldap_search_context *ldap_ctx;
 
     TRACE("%p,%s,%p,%u,%p\n", iface, debugstr_w(filter), names, count, res);
@@ -1317,7 +1318,19 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
         props[count] = NULL;
     }
 
-    err = ldap_search_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props, ldap->search.attribtypes_only, &ldap_ctx->res);
+    if (ldap->search.tombstone)
+    {
+        tombstone.ldctl_oid = (WCHAR *)L"1.2.840.113556.1.4.417";
+        tombstone.ldctl_iscritical = TRUE;
+        tombstone.ldctl_value.bv_val = NULL;
+        tombstone.ldctl_value.bv_len = 0;
+        ctrls_a[0] = &tombstone;
+        ctrls_a[1] = NULL;
+        ctrls = ctrls_a;
+    }
+
+    err = ldap_search_ext_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props,
+                             ldap->search.attribtypes_only, ctrls, NULL, NULL, 0, &ldap_ctx->res);
     heap_free(props);
     if (err != LDAP_SUCCESS)
     {

@@ -515,6 +515,25 @@ todo_wine
     hr = IDirectorySearch_CloseSearchHandle(ds, sh);
     ok(hr == S_OK, "got %#x\n", hr);
 
+    pref[0].dwSearchPref = ADS_SEARCHPREF_TOMBSTONE;
+    pref[0].vValue.dwType = ADSTYPE_BOOLEAN;
+    pref[0].vValue.Integer = 1;
+    pref[0].dwStatus = 0xdeadbeef;
+    hr = IDirectorySearch_SetSearchPreference(ds, pref, 1);
+    ok(hr == S_OK, "got %#x\n", hr);
+    ok(pref[0].dwStatus == ADS_STATUS_S_OK, "got %d\n", pref[0].dwStatus);
+
+    hr = IDirectorySearch_ExecuteSearch(ds, (WCHAR *)L"(objectClass=*)", NULL, ~0, &sh);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_DS_UNAVAILABLE_CRIT_EXTENSION) || broken(hr == S_OK) /* XP */, "got %#x\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IDirectorySearch_GetNextRow(ds, sh);
+        ok(hr == HRESULT_FROM_WIN32(ERROR_DS_UNAVAILABLE_CRIT_EXTENSION), "got %#x\n", hr);
+
+        hr = IDirectorySearch_CloseSearchHandle(ds, sh);
+        ok(hr == S_OK, "got %#x\n", hr);
+    }
+
     IDirectorySearch_Release(ds);
     IDirectoryObject_Release(dirobj);
 }
