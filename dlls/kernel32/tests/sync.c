@@ -1717,9 +1717,17 @@ static void test_condvars_consumer_producer(void)
 
 /* Sample test for some sequence of events happening, sequenced using "condvar_seq" */
 static DWORD condvar_seq = 0;
-static CONDITION_VARIABLE condvar_base = CONDITION_VARIABLE_INIT;
+static CONDITION_VARIABLE aligned_cv;
 static CRITICAL_SECTION condvar_crit;
 static SRWLOCK condvar_srwlock;
+
+#include "pshpack1.h"
+static struct
+{
+    char c;
+    CONDITION_VARIABLE cv;
+} unaligned_cv;
+#include "poppack.h"
 
 /* Sequence of wake/sleep to check boundary conditions:
  * 0: init
@@ -1740,28 +1748,31 @@ static SRWLOCK condvar_srwlock;
  * 12: producer (shared) wakes up consumer (shared)
  * 13: end
  */
-static DWORD WINAPI condvar_base_producer(LPVOID x) {
+static DWORD WINAPI condvar_base_producer(void *arg)
+{
+    CONDITION_VARIABLE *cv = arg;
+
     while (condvar_seq < 1) Sleep(1);
 
-    pWakeConditionVariable (&condvar_base);
+    pWakeConditionVariable(cv);
     condvar_seq = 2;
 
     while (condvar_seq < 3) Sleep(1);
-    pWakeAllConditionVariable (&condvar_base);
+    pWakeAllConditionVariable(cv);
     condvar_seq = 4;
 
     while (condvar_seq < 5) Sleep(1);
     EnterCriticalSection (&condvar_crit);
-    pWakeConditionVariable (&condvar_base);
+    pWakeConditionVariable(cv);
     LeaveCriticalSection (&condvar_crit);
     while (condvar_seq < 6) Sleep(1);
     EnterCriticalSection (&condvar_crit);
-    pWakeAllConditionVariable (&condvar_base);
+    pWakeAllConditionVariable(cv);
     LeaveCriticalSection (&condvar_crit);
 
     while (condvar_seq < 8) Sleep(1);
     EnterCriticalSection (&condvar_crit);
-    pWakeConditionVariable (&condvar_base);
+    pWakeConditionVariable(cv);
     Sleep(50);
     LeaveCriticalSection (&condvar_crit);
 
@@ -1771,36 +1782,38 @@ static DWORD WINAPI condvar_base_producer(LPVOID x) {
 
     while (condvar_seq < 9) Sleep(1);
     pAcquireSRWLockExclusive(&condvar_srwlock);
-    pWakeConditionVariable(&condvar_base);
+    pWakeConditionVariable(cv);
     pReleaseSRWLockExclusive(&condvar_srwlock);
 
     while (condvar_seq < 10) Sleep(1);
     pAcquireSRWLockExclusive(&condvar_srwlock);
-    pWakeConditionVariable(&condvar_base);
+    pWakeConditionVariable(cv);
     pReleaseSRWLockExclusive(&condvar_srwlock);
 
     while (condvar_seq < 11) Sleep(1);
     pAcquireSRWLockShared(&condvar_srwlock);
-    pWakeConditionVariable(&condvar_base);
+    pWakeConditionVariable(cv);
     pReleaseSRWLockShared(&condvar_srwlock);
 
     while (condvar_seq < 12) Sleep(1);
     Sleep(50); /* ensure that consumer waits for cond variable */
     pAcquireSRWLockShared(&condvar_srwlock);
-    pWakeConditionVariable(&condvar_base);
+    pWakeConditionVariable(cv);
     pReleaseSRWLockShared(&condvar_srwlock);
 
     return 0;
 }
 
-static DWORD WINAPI condvar_base_consumer(LPVOID x) {
+static DWORD WINAPI condvar_base_consumer(void *arg)
+{
+    CONDITION_VARIABLE *cv = arg;
     BOOL ret;
 
     while (condvar_seq < 2) Sleep(1);
 
     /* wake was emitted, but we were not sleeping */
     EnterCriticalSection (&condvar_crit);
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
     ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
     ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
@@ -1810,33 +1823,33 @@ static DWORD WINAPI condvar_base_consumer(LPVOID x) {
 
     /* wake all was emitted, but we were not sleeping */
     EnterCriticalSection (&condvar_crit);
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
     ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
     ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
 
     EnterCriticalSection (&condvar_crit);
     condvar_seq = 5;
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 200);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 200);
     LeaveCriticalSection (&condvar_crit);
     ok (ret, "SleepConditionVariableCS should return TRUE on good wake\n");
 
     EnterCriticalSection (&condvar_crit);
     condvar_seq = 6;
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 200);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 200);
     LeaveCriticalSection (&condvar_crit);
     ok (ret, "SleepConditionVariableCS should return TRUE on good wakeall\n");
     condvar_seq = 7;
 
     EnterCriticalSection (&condvar_crit);
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
     ok (!ret, "SleepConditionVariableCS should return FALSE on out of band wake\n");
     ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on out of band wake, not %d\n", GetLastError());
 
     EnterCriticalSection (&condvar_crit);
     condvar_seq = 8;
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 20);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 20);
     LeaveCriticalSection (&condvar_crit);
     ok (ret, "SleepConditionVariableCS should still return TRUE on crit unlock delay\n");
 
@@ -1850,25 +1863,25 @@ static DWORD WINAPI condvar_base_consumer(LPVOID x) {
 
     pAcquireSRWLockExclusive(&condvar_srwlock);
     condvar_seq = 9;
-    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, 0);
+    ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 200, 0);
     pReleaseSRWLockExclusive(&condvar_srwlock);
     ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
 
     pAcquireSRWLockShared(&condvar_srwlock);
     condvar_seq = 10;
-    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, CONDITION_VARIABLE_LOCKMODE_SHARED);
+    ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 200, CONDITION_VARIABLE_LOCKMODE_SHARED);
     pReleaseSRWLockShared(&condvar_srwlock);
     ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
 
     pAcquireSRWLockExclusive(&condvar_srwlock);
     condvar_seq = 11;
-    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, 0);
+    ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 200, 0);
     pReleaseSRWLockExclusive(&condvar_srwlock);
     ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
 
     pAcquireSRWLockShared(&condvar_srwlock);
     condvar_seq = 12;
-    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, CONDITION_VARIABLE_LOCKMODE_SHARED);
+    ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 200, CONDITION_VARIABLE_LOCKMODE_SHARED);
     pReleaseSRWLockShared(&condvar_srwlock);
     ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
 
@@ -1876,11 +1889,11 @@ static DWORD WINAPI condvar_base_consumer(LPVOID x) {
     return 0;
 }
 
-static void test_condvars_base(void) {
+static void test_condvars_base(RTL_CONDITION_VARIABLE *cv)
+{
     HANDLE hp, hc;
     DWORD dummy;
     BOOL ret;
-
 
     if (!pInitializeConditionVariable) {
         /* function is not yet in XP, only in newer Windows */
@@ -1894,7 +1907,7 @@ static void test_condvars_base(void) {
         pInitializeSRWLock(&condvar_srwlock);
 
     EnterCriticalSection (&condvar_crit);
-    ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
+    ret = pSleepConditionVariableCS(cv, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
 
     ok (!ret, "SleepConditionVariableCS should return FALSE on untriggered condvar\n");
@@ -1903,23 +1916,23 @@ static void test_condvars_base(void) {
     if (pInitializeSRWLock)
     {
         pAcquireSRWLockExclusive(&condvar_srwlock);
-        ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 10, 0);
+        ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 10, 0);
         pReleaseSRWLockExclusive(&condvar_srwlock);
 
         ok(!ret, "SleepConditionVariableSRW should return FALSE on untriggered condvar\n");
         ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
 
         pAcquireSRWLockShared(&condvar_srwlock);
-        ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 10, CONDITION_VARIABLE_LOCKMODE_SHARED);
+        ret = pSleepConditionVariableSRW(cv, &condvar_srwlock, 10, CONDITION_VARIABLE_LOCKMODE_SHARED);
         pReleaseSRWLockShared(&condvar_srwlock);
 
         ok(!ret, "SleepConditionVariableSRW should return FALSE on untriggered condvar\n");
         ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
     }
 
-
-    hp = CreateThread(NULL, 0, condvar_base_producer, NULL, 0, &dummy);
-    hc = CreateThread(NULL, 0, condvar_base_consumer, NULL, 0, &dummy);
+    condvar_seq = 0;
+    hp = CreateThread(NULL, 0, condvar_base_producer, cv, 0, &dummy);
+    hc = CreateThread(NULL, 0, condvar_base_consumer, cv, 0, &dummy);
 
     condvar_seq = 1; /* go */
 
@@ -2727,7 +2740,8 @@ START_TEST(sync)
     test_WaitForSingleObject();
     test_WaitForMultipleObjects();
     test_initonce();
-    test_condvars_base();
+    test_condvars_base(&aligned_cv);
+    test_condvars_base(&unaligned_cv.cv);
     test_condvars_consumer_producer();
     test_srwlock_base();
     test_srwlock_example();
