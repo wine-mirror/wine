@@ -1758,7 +1758,7 @@ static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COL
 
     if (col->hReserved)
     {
-        if (col->dwADsType == ADSTYPE_OCTET_STRING)
+        if (col->dwADsType == ADSTYPE_OCTET_STRING || col->dwADsType == ADSTYPE_NT_SECURITY_DESCRIPTOR)
             ldap_value_free_len(col->hReserved);
         else
             ldap_value_freeW(col->hReserved);
