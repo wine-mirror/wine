@@ -1985,11 +1985,11 @@ static NTSTATUS fast_release_srw_shared( RTL_SRWLOCK *lock )
 #define SRWLOCK_RES_SHARED            0x00000001
 
 #ifdef WORDS_BIGENDIAN
-#define srwlock_key_exclusive(lock)   (&lock->Ptr)
-#define srwlock_key_shared(lock)      ((void *)((char *)&lock->Ptr + 2))
+#define srwlock_key_exclusive(lock)   ((void *)(((ULONG_PTR)&lock->Ptr + 1) & ~1))
+#define srwlock_key_shared(lock)      ((void *)(((ULONG_PTR)&lock->Ptr + 3) & ~1))
 #else
-#define srwlock_key_exclusive(lock)   ((void *)((char *)&lock->Ptr + 2))
-#define srwlock_key_shared(lock)      (&lock->Ptr)
+#define srwlock_key_exclusive(lock)   ((void *)(((ULONG_PTR)&lock->Ptr + 3) & ~1))
+#define srwlock_key_shared(lock)      ((void *)(((ULONG_PTR)&lock->Ptr + 1) & ~1))
 #endif
 
 static inline void srwlock_check_invalid( unsigned int val )
