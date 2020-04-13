@@ -735,6 +735,68 @@ static void test_topology(void)
     IMFTopologyNode_Release(node2);
     IMFTopologyNode_Release(node);
 
+    /* Add one node, connect to another that hasn't been added. */
+    hr = IMFTopology_Clear(topology);
+    ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node2);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+
+    hr = IMFTopology_GetNodeCount(topology, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
+    ok(node_count == 1, "Unexpected node count.\n");
+
+    hr = IMFTopologyNode_ConnectOutput(node, 0, node2, 0);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    hr = IMFTopology_GetNodeCount(topology, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
+    ok(node_count == 1, "Unexpected node count.\n");
+
+    IMFTopologyNode_Release(node);
+    IMFTopologyNode_Release(node2);
+
+    /* Add same node to different topologies. */
+    hr = IMFTopology_Clear(topology);
+    ok(hr == S_OK, "Failed to clear topology, hr %#x.\n", hr);
+
+    hr = MFCreateTopology(&topology2);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+    EXPECT_REF(node, 2);
+
+    hr = IMFTopology_GetNodeCount(topology, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
+    ok(node_count == 1, "Unexpected node count.\n");
+
+    hr = IMFTopology_GetNodeCount(topology2, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
+    ok(node_count == 0, "Unexpected node count.\n");
+
+    hr = IMFTopology_AddNode(topology2, node);
+    ok(hr == S_OK, "Failed to add a node, hr %#x.\n", hr);
+    EXPECT_REF(node, 3);
+
+    hr = IMFTopology_GetNodeCount(topology, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
+    ok(node_count == 1, "Unexpected node count.\n");
+
+    hr = IMFTopology_GetNodeCount(topology2, &node_count);
+    ok(hr == S_OK, "Failed to get node count, hr %#x.\n", hr);
+    ok(node_count == 1, "Unexpected node count.\n");
+
+    IMFTopology_Release(topology2);
     IMFTopology_Release(topology);
 }
 
