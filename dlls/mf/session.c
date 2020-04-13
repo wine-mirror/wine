@@ -76,6 +76,7 @@ enum session_state
 {
     SESSION_STATE_STOPPED = 0,
     SESSION_STATE_STARTING_SOURCES,
+    SESSION_STATE_PREROLLING_SINKS,
     SESSION_STATE_STARTING_SINKS,
     SESSION_STATE_STARTED,
     SESSION_STATE_PAUSING_SINKS,
@@ -93,6 +94,7 @@ enum object_state
     OBJ_STATE_STOPPED = 0,
     OBJ_STATE_STARTED,
     OBJ_STATE_PAUSED,
+    OBJ_STATE_PREROLLED,
     OBJ_STATE_INVALID,
 };
 
@@ -108,6 +110,7 @@ struct media_sink
 {
     struct list entry;
     IMFMediaSink *sink;
+    IMFMediaSinkPreroll *preroll;
     IMFMediaEventGenerator *event_generator;
     BOOL finalized;
 };
@@ -168,6 +171,7 @@ enum presentation_flags
     SESSION_FLAG_SOURCES_SUBSCRIBED = 0x1,
     SESSION_FLAG_PRESENTATION_CLOCK_SET = 0x2,
     SESSION_FLAG_FINALIZE_SINKS = 0x4,
+    SESSION_FLAG_NEEDS_PREROLL = 0x8,
 };
 
 struct media_session
@@ -722,6 +726,8 @@ static void session_clear_presentation(struct media_session *session)
 
         if (sink->sink)
             IMFMediaSink_Release(sink->sink);
+        if (sink->preroll)
+            IMFMediaSinkPreroll_Release(sink->preroll);
         if (sink->event_generator)
             IMFMediaEventGenerator_Release(sink->event_generator);
         heap_free(sink);
@@ -982,6 +988,7 @@ static DWORD session_get_object_rate_caps(IUnknown *object)
 static HRESULT session_add_media_sink(struct media_session *session, IMFTopologyNode *node, IMFMediaSink *sink)
 {
     struct media_sink *media_sink;
+    DWORD flags;
 
     LIST_FOR_EACH_ENTRY(media_sink, &session->presentation.sinks, struct media_sink, entry)
     {
@@ -996,6 +1003,12 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
     IMFMediaSink_AddRef(media_sink->sink);
 
     IMFMediaSink_QueryInterface(media_sink->sink, &IID_IMFMediaEventGenerator, (void **)&media_sink->event_generator);
+
+    if (SUCCEEDED(IMFMediaSink_GetCharacteristics(sink, &flags)) && flags & MEDIASINK_CAN_PREROLL)
+    {
+        if (SUCCEEDED(IMFMediaSink_QueryInterface(media_sink->sink, &IID_IMFMediaSinkPreroll, (void **)&media_sink->preroll)))
+            session->presentation.flags |= SESSION_FLAG_NEEDS_PREROLL;
+    }
 
     list_add_tail(&session->presentation.sinks, &media_sink->entry);
 
@@ -1915,6 +1928,8 @@ static enum object_state session_get_object_state_for_event(MediaEventType event
         case MEStreamStopped:
         case MEStreamSinkStopped:
             return OBJ_STATE_STOPPED;
+        case MEStreamSinkPrerolled:
+            return OBJ_STATE_PREROLLED;
         default:
             return OBJ_STATE_INVALID;
     }
@@ -1931,11 +1946,10 @@ static void session_set_consumed_clock(IUnknown *object, IMFPresentationClock *c
     }
 }
 
-static HRESULT session_start_clock(struct media_session *session)
+static void session_set_presentation_clock(struct media_session *session)
 {
     IMFPresentationTimeSource *time_source = NULL;
     struct media_source *source;
-    LONGLONG start_offset = 0;
     struct media_sink *sink;
     struct topo_node *node;
     HRESULT hr;
@@ -2007,6 +2021,12 @@ static HRESULT session_start_clock(struct media_session *session)
 
         session->presentation.flags |= SESSION_FLAG_PRESENTATION_CLOCK_SET;
     }
+}
+
+static HRESULT session_start_clock(struct media_session *session)
+{
+    LONGLONG start_offset = 0;
+    HRESULT hr;
 
     if (IsEqualGUID(&session->presentation.time_format, &GUID_NULL))
     {
@@ -2026,14 +2046,36 @@ static HRESULT session_start_clock(struct media_session *session)
     return hr;
 }
 
+static BOOL session_set_node_object_state(struct media_session *session, IUnknown *object,
+        MF_TOPOLOGY_TYPE node_type, enum object_state state)
+{
+    struct topo_node *node;
+    BOOL changed = FALSE;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->type == node_type && object == node->object.object)
+        {
+            changed = node->state != state;
+            node->state = state;
+            break;
+        }
+    }
+
+    return changed;
+}
 
 static void session_set_source_object_state(struct media_session *session, IUnknown *object,
         MediaEventType event_type)
 {
+    IMFStreamSink *stream_sink;
     struct media_source *src;
+    struct media_sink *sink;
     enum object_state state;
     struct topo_node *node;
+    unsigned int i, count;
     BOOL changed = FALSE;
+    HRESULT hr;
 
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
         return;
@@ -2058,15 +2100,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
         case MEStreamPaused:
         case MEStreamStopped:
 
-            LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
-            {
-                if (node->type == MF_TOPOLOGY_SOURCESTREAM_NODE && object == node->object.object)
-                {
-                    changed = node->state != state;
-                    node->state = state;
-                    break;
-                }
-            }
+            changed = session_set_node_object_state(session, object, MF_TOPOLOGY_SOURCESTREAM_NODE, state);
         default:
             ;
     }
@@ -2081,7 +2115,44 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
                 break;
 
             session_set_topo_status(session, S_OK, MF_TOPOSTATUS_STARTED_SOURCE);
-            if (SUCCEEDED(session_start_clock(session)))
+
+            session_set_presentation_clock(session);
+
+            if (session->presentation.flags & SESSION_FLAG_NEEDS_PREROLL)
+            {
+                MFTIME preroll_time = 0;
+
+                if (session->presentation.start_position.vt == VT_I8)
+                    preroll_time = session->presentation.start_position.hVal.QuadPart;
+
+                /* Mark stream sinks without prerolling support as PREROLLED to keep state test logic generic. */
+                LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
+                {
+                    if (sink->preroll)
+                    {
+                        /* FIXME: abort and enter error state on failure. */
+                        if (FAILED(hr = IMFMediaSinkPreroll_NotifyPreroll(sink->preroll, preroll_time)))
+                            WARN("Preroll notification failed, hr %#x.\n", hr);
+                    }
+                    else
+                    {
+                        if (SUCCEEDED(IMFMediaSink_GetStreamSinkCount(sink->sink, &count)))
+                        {
+                            for (i = 0; i < count; ++i)
+                            {
+                                if (SUCCEEDED(IMFMediaSink_GetStreamSinkByIndex(sink->sink, i, &stream_sink)))
+                                {
+                                    session_set_node_object_state(session, (IUnknown *)stream_sink, MF_TOPOLOGY_OUTPUT_NODE,
+                                            OBJ_STATE_PREROLLED);
+                                    IMFStreamSink_Release(stream_sink);
+                                }
+                            }
+                        }
+                    }
+                }
+                session->state = SESSION_STATE_PREROLLING_SINKS;
+            }
+            else if (SUCCEEDED(session_start_clock(session)))
                 session->state = SESSION_STATE_STARTING_SINKS;
 
             break;
@@ -2137,31 +2208,27 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
         MediaEventType event_type)
 {
     struct media_source *source;
-    struct topo_node *node;
     enum object_state state;
-    BOOL changed = FALSE;
     IMFMediaEvent *event;
     DWORD caps, flags;
+    BOOL changed;
     HRESULT hr;
 
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
         return;
 
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
-    {
-        if (node->type == MF_TOPOLOGY_OUTPUT_NODE && stream == node->object.sink_stream)
-        {
-            changed = node->state != state;
-            node->state = state;
-            break;
-        }
-    }
-
-    if (!changed)
+    if (!(changed = session_set_node_object_state(session, (IUnknown *)stream, MF_TOPOLOGY_OUTPUT_NODE, state)))
         return;
 
     switch (session->state)
     {
+        case SESSION_STATE_PREROLLING_SINKS:
+            if (!session_is_output_nodes_state(session, OBJ_STATE_PREROLLED))
+                break;
+
+            if (SUCCEEDED(session_start_clock(session)))
+                session->state = SESSION_STATE_STARTING_SINKS;
+            break;
         case SESSION_STATE_STARTING_SINKS:
             if (!session_is_output_nodes_state(session, OBJ_STATE_STARTED))
                 break;
@@ -2630,6 +2697,7 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
         case MEStreamSinkStarted:
         case MEStreamSinkPaused:
         case MEStreamSinkStopped:
+        case MEStreamSinkPrerolled:
 
             EnterCriticalSection(&session->cs);
             session_set_sink_stream_state(session, (IMFStreamSink *)event_source, event_type);
