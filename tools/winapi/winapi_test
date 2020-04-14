@@ -276,7 +276,7 @@ sub _find_align_kind_size($) {
     } elsif (/^(struct|union)$/) {
 	$kind = $1;
 	if (!$size_parse_reported{$_}) {
-	    $output->write("$type_name: can't parse type\n");
+	    $output->write("cannot compute the size and alignment of $type_name types\n");
 	    $size_parse_reported{$_} = 1;
 	}
     } elsif (/^\w+\s*\((?:\s*CALLBACK|\s*NTAPI|\s*WINAPI)?\s*\*\s*\)\s*\(.*?\)$/) {
