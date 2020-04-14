@@ -826,9 +826,18 @@ static void session_pause(struct media_session *session)
     LeaveCriticalSection(&session->cs);
 }
 
+static void session_set_stopped(struct media_session *session, HRESULT status)
+{
+    MediaEventType event_type;
+
+    session->state = SESSION_STATE_STOPPED;
+    event_type = session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION ? MESessionEnded : MESessionStopped;
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, event_type, &GUID_NULL, status, NULL);
+}
+
 static void session_stop(struct media_session *session)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     EnterCriticalSection(&session->cs);
 
@@ -840,16 +849,12 @@ static void session_stop(struct media_session *session)
             /* Transition in two steps - pause clock, wait for sinks and pause sources. */
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
                 session->state = SESSION_STATE_STOPPING_SINKS;
+            else
+                session_set_stopped(session, hr);
 
             break;
         default:
             ;
-    }
-
-    if (FAILED(hr))
-    {
-        session->state = SESSION_STATE_STOPPED;
-        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, hr, NULL);
     }
 
     LeaveCriticalSection(&session->cs);
@@ -2215,14 +2220,9 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
 
             if (session->presentation.flags & SESSION_FLAG_FINALIZE_SINKS)
-            {
                 session_finalize_sinks(session);
-            }
             else
-            {
-                session->state = SESSION_STATE_STOPPED;
-                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, S_OK, NULL);
-            }
+                session_set_stopped(session, S_OK);
 
             break;
         default:
@@ -2237,8 +2237,8 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     enum object_state state;
     IMFMediaEvent *event;
     DWORD caps, flags;
+    HRESULT hr = S_OK;
     BOOL changed;
-    HRESULT hr;
 
     if ((state = session_get_object_state_for_event(event_type)) == OBJ_STATE_INVALID)
         return;
@@ -2311,15 +2311,14 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
 
             LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
             {
-                if (FAILED(hr = IMFMediaSource_Stop(source->source)))
+                if (session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION)
+                    IMFMediaSource_Stop(source->source);
+                else if (FAILED(hr = IMFMediaSource_Stop(source->source)))
                     break;
             }
 
-            if (FAILED(hr))
-            {
-                session->state = SESSION_STATE_STOPPED;
-                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, hr, NULL);
-            }
+            if (session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION || FAILED(hr))
+                session_set_stopped(session, hr);
 
             break;
         default:
@@ -2771,6 +2770,27 @@ static void session_handle_end_of_presentation(struct media_session *session, IM
     }
 }
 
+static void session_sink_stream_marker(struct media_session *session, IMFStreamSink *stream_sink)
+{
+    struct topo_node *node;
+
+    if (!(node = session_get_node_object(session, (IUnknown *)stream_sink, MF_TOPOLOGY_OUTPUT_NODE))
+            || node->flags & TOPO_NODE_END_OF_STREAM)
+    {
+        return;
+    }
+
+    node->flags |= TOPO_NODE_END_OF_STREAM;
+
+    if (session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION &&
+            session_nodes_is_mask_set(session, MF_TOPOLOGY_OUTPUT_NODE, TOPO_NODE_END_OF_STREAM))
+    {
+        session_set_topo_status(session, S_OK, MF_TOPOSTATUS_ENDED);
+        session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
+        session_stop(session);
+    }
+}
+
 static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_session *session = impl_from_events_callback_IMFAsyncCallback(iface);
@@ -2845,6 +2865,13 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
 
             EnterCriticalSection(&session->cs);
             session_set_sink_stream_state(session, (IMFStreamSink *)event_source, event_type);
+            LeaveCriticalSection(&session->cs);
+
+            break;
+        case MEStreamSinkMarker:
+
+            EnterCriticalSection(&session->cs);
+            session_sink_stream_marker(session, (IMFStreamSink *)event_source);
             LeaveCriticalSection(&session->cs);
 
             break;
