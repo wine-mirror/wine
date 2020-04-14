@@ -570,13 +570,15 @@ static void test_reflection(void)
         "    uint_t j;\n"
         "    float3x1 k;\n"
         "    row_major float3x1 l;\n"
+        "#pragma pack_matrix(row_major)\n"
+        "    float3x1 o;\n"
         "};\n"
         "\n"
         "float m;\n"
         "\n"
         "float4 main(uniform float4 n) : SV_POSITION\n"
         "{\n"
-        "    return l._31 + m + n;\n"
+        "    return o._31 + m + n;\n"
         "}";
 
     struct shader_variable
@@ -608,7 +610,8 @@ static void test_reflection(void)
         {{"i", 100, 4}, {D3D_SVC_SCALAR, D3D_SVT_INT, 1, 1, 0, 0, 0, "int"}},
         {{"j", 104, 4}, {D3D_SVC_SCALAR, D3D_SVT_UINT, 1, 1, 0, 0, 0, "uint_t"}},
         {{"k", 112, 12}, {D3D_SVC_MATRIX_COLUMNS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
-        {{"l", 128, 36, D3D_SVF_USED}, {D3D_SVC_MATRIX_ROWS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
+        {{"l", 128, 36}, {D3D_SVC_MATRIX_ROWS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
+        {{"o", 176, 36, D3D_SVF_USED}, {D3D_SVC_MATRIX_ROWS, D3D_SVT_FLOAT, 3, 1, 0, 0, 0, "float3x1"}},
     };
 
     static const struct
@@ -620,7 +623,7 @@ static void test_reflection(void)
     {
         {{"$Globals", D3D_CT_CBUFFER, 1, 16}, &globals_vars},
         {{"$Params", D3D_CT_CBUFFER, 1, 16}, &params_vars},
-        {{"b1", D3D_CT_CBUFFER, ARRAY_SIZE(buffer_vars), 176}, buffer_vars},
+        {{"b1", D3D_CT_CBUFFER, ARRAY_SIZE(buffer_vars), 224}, buffer_vars},
     };
 
     todo_wine vs_code = compile_shader(vs_source, "vs_5_0");

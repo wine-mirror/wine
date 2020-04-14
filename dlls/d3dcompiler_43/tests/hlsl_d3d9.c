@@ -775,6 +775,90 @@ static void test_array_dimensions(void)
     release_test_context(&test_context);
 }
 
+static void test_majority(void)
+{
+    static const D3DXMATRIX matrix = {{{0.1, 0.2, 0.0, 0.0, 0.3, 0.4}}};
+    struct test_context test_context;
+    ID3DXConstantTable *constants;
+    ID3D10Blob *ps_code = NULL;
+    IDirect3DDevice9 *device;
+    struct vec4 v;
+    HRESULT hr;
+
+    static const char ps_typedef_source[] =
+        "typedef float2x2 matrix_t;\n"
+        "typedef row_major matrix_t row_matrix_t;\n"
+        "typedef column_major matrix_t col_matrix_t;\n"
+        "uniform row_matrix_t r;\n"
+        "uniform col_matrix_t c;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    float4 ret;\n"
+        "    ret.xy = mul(r, float2(0.5, 0.6));\n"
+        "    ret.zw = mul(c, float2(0.5, 0.6));\n"
+        "    return ret;\n"
+        "}";
+
+    static const char ps_default_source[] =
+        "#pragma pack_matrix(row_major)\n"
+        "uniform float2x2 r;\n"
+        "#pragma pack_matrix(column_major)\n"
+        "uniform float2x2 c;\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    float4 ret;\n"
+        "    ret.xy = mul(r, float2(0.5, 0.6));\n"
+        "    ret.zw = mul(c, float2(0.5, 0.6));\n"
+        "    return ret;\n"
+        "}";
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    todo_wine ps_code = compile_shader(ps_typedef_source, "ps_2_0");
+    if (ps_code)
+    {
+        hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
+        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+        hr = ID3DXConstantTable_SetMatrix(constants, device, "r", &matrix);
+        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+        hr = ID3DXConstantTable_SetMatrix(constants, device, "c", &matrix);
+        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+        ID3DXConstantTable_Release(constants);
+
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.17f, 0.39f, 0.17f, 0.39f, 1),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
+    todo_wine ps_code = compile_shader(ps_default_source, "ps_2_0");
+    if (ps_code)
+    {
+        hr = pD3DXGetShaderConstantTable(ID3D10Blob_GetBufferPointer(ps_code), &constants);
+        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+        hr = ID3DXConstantTable_SetMatrix(constants, device, "r", &matrix);
+        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+        hr = ID3DXConstantTable_SetMatrix(constants, device, "c", &matrix);
+        ok(hr == D3D_OK, "Failed to get constant table, hr %#x.\n", hr);
+        ID3DXConstantTable_Release(constants);
+
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.17f, 0.39f, 0.17f, 0.39f, 1),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+
+    release_test_context(&test_context);
+}
+
 static void check_constant_desc(const char *prefix, const D3DXCONSTANT_DESC *desc,
         const D3DXCONSTANT_DESC *expect, BOOL nonzero_defaultvalue)
 {
@@ -794,6 +878,8 @@ static void check_constant_desc(const char *prefix, const D3DXCONSTANT_DESC *des
 static void test_constant_table(void)
 {
     static const char *source =
+        "typedef float3x3 matrix_t;\n"
+        "struct matrix_record { float3x3 a; };\n"
         "uniform float4 a;\n"
         "uniform float b;\n"
         "uniform float unused;\n"
@@ -805,11 +891,15 @@ static void test_constant_table(void)
         "    float2x2 a;\n"
         "    float b;\n"
         "    float c;\n"
+        "#pragma pack_matrix(row_major)\n"
+        "    float2x2 d;\n"
         "} f;\n"
         "uniform float g[5];\n"
+        "uniform matrix_t i;\n"
+        "uniform struct matrix_record j;\n"
         "float4 main(uniform float4 h) : COLOR\n"
         "{\n"
-        "    return a + b + c._31 + d._31 + f.c + g[e] + h;\n"
+        "    return a + b + c._31 + d._31 + f.d._22 + g[e] + h + i._33 + j.a._33;\n"
         "}";
 
     D3DXCONSTANTTABLE_DESC table_desc;
@@ -829,16 +919,22 @@ static void test_constant_table(void)
         {"c", D3DXRS_FLOAT4, 0, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
         {"d", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
         {"e", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 1, 0, 4},
-        {"f", D3DXRS_FLOAT4, 0, 4, D3DXPC_STRUCT, D3DXPT_VOID, 1, 6, 1, 3, 24},
+        {"f", D3DXRS_FLOAT4, 0, 6, D3DXPC_STRUCT, D3DXPT_VOID, 1, 10, 1, 4, 40},
         {"g", D3DXRS_FLOAT4, 0, 5, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 5, 0, 20},
+        {"i", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 1, 0, 36},
+        {"j", D3DXRS_FLOAT4, 0, 3, D3DXPC_STRUCT, D3DXPT_VOID, 1, 9, 1, 1, 36},
     };
 
-    static const D3DXCONSTANT_DESC expect_fields[] =
+    static const D3DXCONSTANT_DESC expect_fields_f[] =
     {
         {"a", D3DXRS_FLOAT4, 0, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 2, 2, 1, 0, 16},
         {"b", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4},
         {"c", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 1, 0, 4},
+        {"d", D3DXRS_FLOAT4, 0, 2, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 2, 2, 1, 0, 16},
     };
+
+    static const D3DXCONSTANT_DESC expect_fields_j =
+        {"a", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 3, 1, 0, 36};
 
     todo_wine ps_code = compile_shader(source, "ps_2_0");
     if (!ps_code)
@@ -850,7 +946,7 @@ static void test_constant_table(void)
     hr = ID3DXConstantTable_GetDesc(constants, &table_desc);
     ok(hr == D3D_OK, "Got hr %#x.\n", hr);
     ok(table_desc.Version == D3DPS_VERSION(2, 0), "Got Version %#x.\n", table_desc.Version);
-    ok(table_desc.Constants == 8, "Got %u constants.\n", table_desc.Constants);
+    ok(table_desc.Constants == ARRAY_SIZE(expect_constants), "Got %u constants.\n", table_desc.Constants);
 
     for (i = 0; i < table_desc.Constants; ++i)
     {
@@ -868,7 +964,7 @@ static void test_constant_table(void)
 
         if (!strcmp(desc.Name, "f"))
         {
-            for (j = 0; j < ARRAY_SIZE(expect_fields); ++j)
+            for (j = 0; j < ARRAY_SIZE(expect_fields_f); ++j)
             {
                 field = ID3DXConstantTable_GetConstant(constants, handle, j);
                 ok(!!field, "Failed to get constant.\n");
@@ -878,8 +974,20 @@ static void test_constant_table(void)
                 ok(hr == D3D_OK, "Got hr %#x.\n", hr);
                 ok(count == 1, "Got count %u.\n", count);
                 sprintf(prefix, "Test %u, %u", i, j);
-                check_constant_desc(prefix, &desc, &expect_fields[j], !!j);
+                check_constant_desc(prefix, &desc, &expect_fields_f[j], !!j);
             }
+        }
+        else if (!strcmp(desc.Name, "j"))
+        {
+            field = ID3DXConstantTable_GetConstant(constants, handle, 0);
+            ok(!!field, "Failed to get constant.\n");
+            memset(&desc, 0xcc, sizeof(desc));
+            count = 1;
+            hr = ID3DXConstantTable_GetConstantDesc(constants, field, &desc, &count);
+            ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+            ok(count == 1, "Got count %u.\n", count);
+            sprintf(prefix, "Test %u", i);
+            check_constant_desc(prefix, &desc, &expect_fields_j, FALSE);
         }
     }
 
@@ -975,6 +1083,13 @@ static void test_fail(void)
         "{\n"
         "    return float4(0, 0, 0, 0);\n"
         "}",
+
+        "typedef row_major float4x4 matrix_t;\n"
+        "typedef column_major matrix_t matrix2_t;\n"
+        "float4 test() : SV_TARGET\n"
+        "{\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
     };
 
     static const char *targets[] = {"ps_2_0", "ps_3_0", "ps_4_0"};
@@ -1036,6 +1151,8 @@ START_TEST(hlsl_d3d9)
     test_comma();
     test_return();
     test_array_dimensions();
+    test_majority();
+
     test_constant_table();
     test_fail();
 }
