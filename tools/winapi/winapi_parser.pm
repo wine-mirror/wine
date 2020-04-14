@@ -492,7 +492,11 @@ sub parse_c_file($$) {
 
 		    # die "$file: $.: syntax error: '$argument_type':'$argument_name'\n";
 		} else {
-		    die "$file: $.: syntax error: '$argument'\n";
+                    # This is either a complex argument type, typically
+                    # involving parentheses, or a macro argument. This is rare
+                    # so just ignore the 'function' declaration.
+		    print STDERR "$file: $.: cannot parse declaration argument (ignoring): '$argument'\n";
+                    next readmore;
 		}
 
 		$argument_type =~ s/\s*(?:const|volatile)\s*/ /g; # Remove const/volatile
