@@ -1599,7 +1599,10 @@ static void test_ImageList_DrawIndirect(void)
     todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0xFFE8F1FA, broken_value, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0xFFD3E5F7, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0xFFD3E5F7, __LINE__);
+
     todo_wine check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x895D6F81, __LINE__);
+    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, ILS_ALPHA, 127, 0xFFE9F2FB, 0xFFAEB7C0, __LINE__);
+    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, ILS_SATURATE, 0, 0xFFAFAFAF, 0xFFF0F0F0, __LINE__);
 
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0xFFFFFFFF, __LINE__);
 
