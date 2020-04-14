@@ -627,7 +627,7 @@ GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
 
     TRACE("(%p, %p, %d)\n", path, points, count);
 
-    if(!path || !points)
+    if(!path || !points || count < 1)
         return InvalidParameter;
 
     if(!lengthen_path(path, count))

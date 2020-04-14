@@ -308,6 +308,16 @@ static void test_line2(void)
     }
 
     GdipCreatePath(FillModeAlternate, &path);
+
+    status = GdipAddPathLine2(NULL, line2_points, 2);
+    expect(InvalidParameter, status);
+    status = GdipAddPathLine2(path, NULL, 2);
+    expect(InvalidParameter, status);
+    status = GdipAddPathLine2(path, line2_points, 0);
+    expect(InvalidParameter, status);
+    status = GdipAddPathLine2(path, line2_points, -1);
+    expect(InvalidParameter, status);
+
     status = GdipAddPathLine2(path, line2_points, 3);
     expect(Ok, status);
     status = GdipAddPathLine2(path, &(line2_points[3]), 3);
