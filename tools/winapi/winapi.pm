@@ -282,7 +282,7 @@ sub parse_spec_file($$) {
 	my $ARCHES="arm|arm64|i386|powerpc|win32|win64|x86_64";
 	if(/^(\d+|@)\s+
 	   (cdecl|pascal|stdcall|varargs|thiscall)\s+
-	   ((?:(?:-arch=(?:$ARCHES)(?:,(?:$ARCHES))*|-noname|-norelay|-ordinal|-i386|-ret16|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
+	   ((?:(?:-arch=!?(?:$ARCHES)(?:,(?:$ARCHES))*|-import|-noname|-norelay|-ordinal|-i386|-ret16|-ret64|-fastcall|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
 	{
 	    my $calling_convention = $2;
 	    my $flags = $3;
