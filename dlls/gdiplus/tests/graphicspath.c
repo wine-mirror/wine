@@ -181,8 +181,8 @@ static void test_createpath2(void)
     GpPathData data;
     INT i, count, expect_count;
 
-    PointF test_line_points[] = {{1.0,1.0}, {2.0,1.0}};
-    BYTE test_line_types[] = {PathPointTypeStart, PathPointTypeLine};
+    PointF test_line_points[] = {{1.0,1.0}, {2.0,1.0}, {2.0,2.0}};
+    BYTE test_line_types[] = {PathPointTypeStart, PathPointTypeLine, PathPointTypeStart};
 
     PointF test_bez_points[] = {{1.0,1.0}, {2.0,1.0}, {3.0,1.0}, {4.0,1.0},
             {5.0,1.0}, {6.0,1.0}, {7.0,1.0}};
@@ -235,8 +235,15 @@ static void test_createpath2(void)
     status = GdipCreatePath2(test_line_points, test_line_types, 2, FillModeAlternate, NULL);
     expect(InvalidParameter, status);
 
+    /* Multi-point paths should not end with Start */
+    status = GdipCreatePath2(test_line_points, test_line_types, 3, FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipGetPointCount(path, &count);
+    expect(Ok, status);
+    expect(0, count);
+    GdipDeletePath(path);
+
     /* Zero-length line points do not get altered */
-    path = NULL;
     test_line_points[1].X = test_line_points[0].X;
     test_line_points[1].Y = test_line_points[0].Y;
     status = GdipCreatePath2(test_line_points, test_line_types, 2, FillModeAlternate, &path);

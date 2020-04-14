@@ -1228,6 +1228,9 @@ GpStatus WINGDIPAPI GdipCreatePath2(GDIPCONST GpPointF* points,
     *path = heap_alloc_zero(sizeof(GpPath));
     if(!*path)  return OutOfMemory;
 
+    if(count > 1 && (types[count-1] & PathPointTypePathTypeMask) == PathPointTypeStart)
+        count = 0;
+
     for(i = 1; i < count; i++) {
         if((types[i] & PathPointTypePathTypeMask) == PathPointTypeBezier) {
             if(i+2 < count &&
