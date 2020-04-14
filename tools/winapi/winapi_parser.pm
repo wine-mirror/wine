@@ -556,7 +556,7 @@ sub parse_c_file($$) {
 	} elsif(/(DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\((\S+)\)/s) {
 	    $_ = $'; $again = 1;
 	    push @$debug_channels, $1;
-	} elsif(/typedef\s+(enum|interface|struct|union)(?:\s+(\w+))?\s*\{/s) {
+	} elsif(/typedef\s+(enum|interface|struct|union)(?:\s+DECLSPEC_ALIGN\(\d+\))?(?:\s+(\w+))?\s*\{/s) {
 	    $_ = $'; $again = 1;
 	    $level++;
 	    my $type = $1;
