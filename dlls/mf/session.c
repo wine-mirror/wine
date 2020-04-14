@@ -207,10 +207,11 @@ struct media_session
     {
         IMFTopology *current_topology;
         MF_TOPOSTATUS topo_status;
+        MFTIME clock_stop_time;
+        unsigned int flags;
         struct list sources;
         struct list sinks;
         struct list nodes;
-        DWORD flags;
 
         /* Latest Start() arguments. */
         GUID time_format;
@@ -829,10 +830,17 @@ static void session_pause(struct media_session *session)
 static void session_set_stopped(struct media_session *session, HRESULT status)
 {
     MediaEventType event_type;
+    IMFMediaEvent *event;
 
     session->state = SESSION_STATE_STOPPED;
     event_type = session->presentation.flags & SESSION_FLAG_END_OF_PRESENTATION ? MESessionEnded : MESessionStopped;
-    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, event_type, &GUID_NULL, status, NULL);
+
+    if (SUCCEEDED(MFCreateMediaEvent(event_type, &GUID_NULL, status, NULL, &event)))
+    {
+        IMFMediaEvent_SetUINT64(event, &MF_SESSION_APPROX_EVENT_OCCURRENCE_TIME, session->presentation.clock_stop_time);
+        IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+        IMFMediaEvent_Release(event);
+    }
 }
 
 static void session_stop(struct media_session *session)
@@ -847,6 +855,7 @@ static void session_stop(struct media_session *session)
         case SESSION_STATE_PAUSED:
 
             /* Transition in two steps - pause clock, wait for sinks and pause sources. */
+            IMFPresentationClock_GetTime(session->clock, &session->presentation.clock_stop_time);
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
                 session->state = SESSION_STATE_STOPPING_SINKS;
             else
