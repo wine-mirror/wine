@@ -620,10 +620,10 @@ sub parse_c_file($$) {
 	    &$type_end([$name]);
 	} elsif(/typedef[^\{;]*;/s) {
 	    $_ = $'; $again = 1;
-	    $output->write("$file: $.: can't parse: '$&'\n");
+	    $output->write("$file: $.: could not parse typedef: '$&'\n");
 	} elsif(/typedef[^\{]*\{[^\}]*\}[^;];/s) {
 	    $_ = $'; $again = 1;
-	    $output->write("$file: $.: can't parse: '$&'\n");
+	    $output->write("$file: $.: could not parse multi-line typedef: '$&'\n");
 	} elsif(/\'[^\']*\'/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/\"(?:[^\\\"]*|\\.)*\"/s) {
