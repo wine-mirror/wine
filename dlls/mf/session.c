@@ -853,6 +853,9 @@ static void session_stop(struct media_session *session)
                 session_set_stopped(session, hr);
 
             break;
+        case SESSION_STATE_STOPPED:
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, S_OK, NULL);
+            break;
         default:
             ;
     }
