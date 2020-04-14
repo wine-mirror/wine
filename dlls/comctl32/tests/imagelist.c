@@ -1392,18 +1392,19 @@ static BOOL colour_match(UINT32 x, UINT32 y)
     const INT32 dr = abs((INT32)(x & 0x000000FF) - (INT32)(y & 0x000000FF));
     const INT32 dg = abs((INT32)((x & 0x0000FF00) >> 8) - (INT32)((y & 0x0000FF00) >> 8));
     const INT32 db = abs((INT32)((x & 0x00FF0000) >> 16) - (INT32)((y & 0x00FF0000) >> 16));
+    const INT32 da = abs((INT32)((x & 0xFF000000) >> 24) - (INT32)((y & 0xFF000000) >> 24));
 
-    return (dr <= tolerance && dg <= tolerance && db <= tolerance);
+    return (dr <= tolerance && dg <= tolerance && db <= tolerance && da <= tolerance);
 }
 
 static void check_ImageList_DrawIndirect(IMAGELISTDRAWPARAMS *ildp, UINT32 *bits,
                                          UINT32 expected, int line)
 {
-    bits[0] = 0x00FFFFFF;
+    bits[0] = 0xFFFFFFFF;
     pImageList_DrawIndirect(ildp);
     ok(colour_match(bits[0], expected),
        "ImageList_DrawIndirect: Pixel %08X, Expected a close match to %08X from line %d\n",
-       bits[0] & 0x00FFFFFF, expected, line);
+       bits[0], expected, line);
 }
 
 
@@ -1437,12 +1438,12 @@ static void check_ImageList_DrawIndirect_broken(HDC hdc, HIMAGELIST himl, UINT32
 {
     IMAGELISTDRAWPARAMS ildp = {sizeof(IMAGELISTDRAWPARAMS), himl, i, hdc,
         0, 0, 0, 0, 0, 0, CLR_NONE, CLR_NONE, fStyle, 0, fState, Frame, 0x00000000};
-    bits[0] = 0x00FFFFFF;
+    bits[0] = 0xFFFFFFFF;
     pImageList_DrawIndirect(&ildp);
     ok(colour_match(bits[0], expected) ||
        broken(colour_match(bits[0], broken_expected)),
        "ImageList_DrawIndirect: Pixel %08X, Expected a close match to %08X from line %d\n",
-       bits[0] & 0x00FFFFFF, expected, line);
+       bits[0], expected, line);
 }
 
 static void check_ImageList_DrawIndirect_grayscale(HDC hdc, HIMAGELIST himl, UINT32 *dst_bits, const UINT32 *bitmap_bits,
@@ -1471,13 +1472,18 @@ static void check_ImageList_DrawIndirect_grayscale(HDC hdc, HIMAGELIST himl, UIN
             UINT32 alpha = (bitmap_bits[i] & 0xFF000000) >> 24;
             gray = gray * alpha / 0xff * alpha / 0xff;
             gray_winxp = gray_winxp * alpha / 0xff * 0x96 / 0xff;
+            expected = (alpha << 24) | (gray << 16) | (gray << 8) | gray;
+            expected_winxp = ((alpha * 0x96 / 0xff) << 24) | (gray_winxp << 16) | (gray_winxp << 8) | gray_winxp;
         }
-        expected = (gray << 16) | (gray << 8) | gray;
-        expected_winxp = (gray_winxp << 16) | (gray_winxp << 8) | gray_winxp;
+        else
+        {
+            expected = ((UINT32)0xFF << 24) | (gray << 16) | (gray << 8) | gray;
+            expected_winxp = (gray_winxp << 16) | (gray_winxp << 8) | gray_winxp;
+        }
 
         ok(colour_match(dst_bits[i], expected) || broken(colour_match(dst_bits[i], expected_winxp)),
            "ImageList_DrawIndirect: got Pixel(%d,%d) %08X, Expected a close match to %08X from line %d\n",
-           i % width, i / width, dst_bits[i] & 0x00FFFFFF, expected, line);
+           i % width, i / width, dst_bits[i], expected, line);
     }
 }
 
@@ -1574,46 +1580,46 @@ static void test_ImageList_DrawIndirect(void)
 
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_NORMAL, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_TRANSPARENT, 0x00ABCDEF, __LINE__);
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0x00E8F1FA, 0x00D4D9DD, __LINE__);
-    if (bpp == 16 || bpp == 24) broken_value = 0x00D4D9DD;
-    else broken_value = 0x00B4BDC4;
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0x00E8F1FA, broken_value, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0xFFE8F1FA, 0xFFD4D9DD, __LINE__);
+    if (bpp == 16 || bpp == 24) broken_value = 0xFFD4D9DD;
+    else broken_value = 0xFFB4BDC4;
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0xFFE8F1FA, broken_value, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_MASK, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_IMAGE, 0x00ABCDEF, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iImage, ILD_PRESERVEALPHA, 0x00ABCDEF, __LINE__);
 
-    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, 0x00D3E5F7, __LINE__);
-    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_TRANSPARENT, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, 0xFFD3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_TRANSPARENT, 0xFFD3E5F7, __LINE__);
 
-    if (bpp == 16 || bpp == 24) broken_value = 0x00D4D9DD;
-    else broken_value =  0x009DA8B1;
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0x00E8F1FA, broken_value, __LINE__);
-    if (bpp == 16 || bpp == 24) broken_value = 0x00D4D9DD;
-    else broken_value =  0x008C99A3;
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0x00E8F1FA, broken_value, __LINE__);
-    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0x00D3E5F7, __LINE__);
-    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0x00D3E5F7, __LINE__);
-    todo_wine check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x005D6F81, __LINE__);
+    if (bpp == 16 || bpp == 24) broken_value = 0xFFD4D9DD;
+    else broken_value =  0xFF9DA8B1;
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0xFFE8F1FA, broken_value, __LINE__);
+    if (bpp == 16 || bpp == 24) broken_value = 0xFFD4D9DD;
+    else broken_value =  0xFF8C99A3;
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0xFFE8F1FA, broken_value, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0xFFD3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0xFFD3E5F7, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_PRESERVEALPHA, 0x895D6F81, __LINE__);
 
-    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0x00FFFFFF, __LINE__);
+    check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iTransparentImage, ILD_NORMAL, 0xFFFFFFFF, __LINE__);
 
     check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCCOPY, 0x00ABCDEF, __LINE__);
-    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCINVERT, 0x00543210, __LINE__);
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iImage, SRCINVERT, 0xFF543210, __LINE__);
 
     /* ILD_ROP is ignored when the image has an alpha channel */
-    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCCOPY, 0x00D3E5F7, __LINE__);
-    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCINVERT, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCCOPY, 0xFFD3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_ILD_ROP(hdcDst, himl, bits, iAlphaImage, SRCINVERT, 0xFFD3E5F7, __LINE__);
 
     check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_image, iImage, 2, 1, __LINE__);
     check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_alpha, iAlphaImage, 2, 1, __LINE__);
     check_ImageList_DrawIndirect_grayscale(hdcDst, himl, bits, bits_transparent, iTransparentImage, 2, 1, __LINE__);
 
-    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_GLOW, 0, 0x00ABCDEF, __LINE__);
-    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SHADOW, 0, 0x00ABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_GLOW, 0, 0x00ABCDEF, 0xFFABCDEF, __LINE__);
+    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_SHADOW, 0, 0x00ABCDEF, 0xFFABCDEF, __LINE__);
 
-    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00D5E6F7, __LINE__);
-    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0x00E9F2FB, 0x00AEB7C0, __LINE__);
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_NORMAL, 127, 0x00E9F2FB, 0x00D3E5F7, __LINE__);
+    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iImage, ILD_NORMAL, ILS_ALPHA, 127, 0xFFD5E6F7, __LINE__);
+    check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_ALPHA, 127, 0xFFE9F2FB, 0xFFAEB7C0, __LINE__);
+    check_ImageList_DrawIndirect_fState(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, ILS_NORMAL, 127, 0xFFD3E5F7, __LINE__);
 
     /* 4x4 bitmap tests */
     SelectObject(hdcDst, hbmOld);
