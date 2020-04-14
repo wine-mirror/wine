@@ -240,7 +240,21 @@ sub parse_c_file($$) {
 
 	# remove preprocessor directives
 	if(s/^\s*\#/\#/s) {
-	    if(/^(\#.*?)\\$/s) {
+            if (/^#\s*if\s+0\s*$/ms) {
+                # Skip #if 0 ... #endif sections entirely.
+                # They are typically used as 'super comments' and may not
+                # contain C code. This totally ignores nesting.
+                if(s/^(\s*#\s*if\s+0\s*\n.*?\n\s*#\s*endif\s*)\n//s) {
+                    my @lines = split(/\n/, $1);
+                    $_ = "\n" x $#lines;
+                    &$preprocessor_found_callback("if", "0");
+                    $again = 1;
+                } else {
+                    $lookahead = 1;
+                }
+                next readmore;
+            }
+	    elsif(/^(\#.*?)\\$/s) {
 		$_ = "$1\n";
 		$lookahead = 1;
 		next;
