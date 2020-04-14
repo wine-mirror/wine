@@ -177,41 +177,73 @@ sub _find_align_kind_size($) {
 	$align = $pointer_size;
 	$kind = "pointer";
 	$size = $pointer_size;
+    } elsif (/^(?:void|VOID)$/) {
+	$align = 4;
+	$kind = "signed";
+	$size = 4;
     } elsif(/^char$/) {
 	$align = 1;
 	$kind = "char";
 	$size = 1;
-    } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char|byte)$/) {
+    } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char)$/) {
 	$align = 1;
 	$kind = defined($1) ? $1 : "signed";
+	$size = 1;
+    } elsif(/^CHAR$/) {
+	$align = 1;
+	$kind = "signed";
+	$size = 1;
+    } elsif(/^(?:byte|BOOLEAN|BYTE|UCHAR)$/) {
+	$align = 1;
+	$kind = "unsigned";
 	$size = 1;
     } elsif (/^(?:(signed|unsigned)\s+)?(?:__int16|short(?:\s+int)?)$/) {
 	$align = 2;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 2;
-    } elsif (/^(?:wchar_t)$/) {
+    } elsif (/^SHORT$/) {
 	$align = 2;
 	$kind = "signed";
 	$size = 2;
+    } elsif (/^(?:char16_t|wchar_t|USHORT|WCHAR|WORD)$/) {
+	$align = 2;
+	$kind = "unsigned";
+	$size = 2;
     } elsif (/^(signed|unsigned)$/) {
 	$align = 4;
-	$kind = defined($1) ? $1 : "signed";
+	$kind = $1;
 	$size = 4;
     } elsif (/^(?:(signed|unsigned)\s+)?(?:__int32|int)$/) {
 	$align = 4;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 4;
+    } elsif (/^(?:BOOL|INT|LONG)$/) {
+	$align = 4;
+	$kind = "signed";
+	$size = 4;
+    } elsif (/^(?:DWORD|FOURCC|LCID|UINT|ULONG)$/) {
+	$align = 4;
+	$kind = "unsigned";
+	$size = 4;
+    } elsif (/^(?:float|FLOAT)$/) {
+	$align = 4;
+	$kind = "float";
+	$size = 4;
     } elsif (/^(?:(signed|unsigned)\s+)?(?:long(?:\s+int)?)$/) {
 	$align = $pointer_size;
 	$kind = defined($1) ? $1 : "signed";
 	$size = $pointer_size;
-    } elsif (/^(?:float)$/) {
-	$align = 4;
-	$kind = "float";
-	$size = 4;
     } elsif (/^(?:(signed|unsigned)\s+)?__int64$/) {
 	$align = 8;
 	$kind = defined($1) ? $1 : "signed";
+	$size = 8;
+    } elsif (/^(?:INT64|LONG64|LONGLONG)$/) {
+	$align = 8;
+	$kind = "signed";
+	$size = 8;
+    } elsif (/^(?:UINT64|ULONG64|DWORD64|ULONGLONG|DWORDLONG)$/) {
+	$align = 8;
+	$kind = "unsigned";
 	$size = 8;
     } elsif (/^(?:double|DOUBLE|DATE)$/) {
 	$align = 8;
@@ -221,58 +253,38 @@ sub _find_align_kind_size($) {
 	$align = 4;
 	$kind = "float";
 	$size = 12;
-    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|WND)$/) {
+    } elsif (/^(?:INT|LONG)_PTR$/) {
+	$align = $pointer_size;
+	$kind = "signed";
+	$size = $pointer_size;
+    } elsif (/^(?:UINT|MMVERSION|ULONG|DWORD)_PTR$/) {
+	$align = $pointer_size;
+	$kind = "unsigned";
+	$size = $pointer_size;
+    } elsif (/^H(?:ANDLE|DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|MMIO|TASK|WND)$/) {
 	$align = $pointer_size;
 	$kind = "pointer";
 	$size = $pointer_size;
-    } elsif (/^LP(?:BYTE|CSTR|CWSTR|DWORD|STR|VOID|WSTR)$/) {
+    } elsif (/^(?:HPSTR|LP[A-Z0-9_]+|PVOID)$/) {
 	$align = $pointer_size;
 	$kind = "pointer";
 	$size = $pointer_size;
-    } elsif (/^(?:FILETIME)$/) {
+    } elsif (/^POINTS$/) {
+	$align = 2;
+	$kind = "struct";
+	$size = 4;
+    } elsif (/^(?:FILETIME|LUID|POINT|POINTL)$/) {
 	$align = 4;
 	$kind = "struct";
 	$size = 8;
-    } elsif (/^GUID$/) {
+    } elsif (/^(?:CLSID|GUID|RECT|RECTL)$/) {
 	$align = 4;
 	$kind = "struct";
 	$size = 16;
-    } elsif (/^(?:VOID)$/) {
- 	$align = 4;
- 	$kind = "signed";
- 	$size = 4;
-    } elsif (/^(?:SHORT)$/) {
-	$align = 2;
-	$kind = "unsigned";
-	$size = 2;
-    } elsif (/^(?:BYTE)$/) {
-	$align = 1;
-	$kind = "unsigned";
-	$size = 1;
-    } elsif (/^(?:DWORD)$/) {
-	$align = 4;
-	$kind = "unsigned";
-	$size = 4;
-    } elsif (/^(?:WORD)$/) {
-	$align = 2;
-	$kind = "unsigned";
-	$size = 2;
-    } elsif (/^(?:INT64|LONG64|LONGLONG)$/) {
-	$align = 8;
- 	$kind = "signed";
- 	$size = 8;
-    } elsif (/^(?:UINT64|ULONG64|DWORD64|ULONGLONG|DWORDLONG)$/) {
-	$align = 8;
- 	$kind = "unsigned";
- 	$size = 8;
     } elsif (/^(?:LARGE_INTEGER)$/) {
 	$align = 8;
 	$kind = "union";
 	$size = 8;
-    } elsif (/^(?:POINTS)$/) {
-	$align = 2;
-	$kind = "struct";
-	$size = 4;
     } elsif (/^(struct|union)$/) {
 	$kind = $1;
 	if (!$size_parse_reported{$_}) {
