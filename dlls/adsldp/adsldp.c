@@ -1147,7 +1147,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         case ADS_SEARCHPREF_SEARCH_SCOPE:
             if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
             {
-                FIXME("ADS_SEARCHPREF_SEACH_SCOPE: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_SEACH_SCOPE: not supported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }
@@ -1178,7 +1178,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
 
             if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
             {
-                FIXME("ADS_SEARCHPREF_SECURITY_MASK: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_SECURITY_MASK: not supported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }

@@ -227,7 +227,7 @@ static WCHAR *parse_name(WCHAR **str, ULONG *name_count)
 
     if (*p != '\'')
     {
-        FIXME("not suported NAME start at %s\n", debugstr_w(p));
+        FIXME("not supported NAME start at %s\n", debugstr_w(p));
         return NULL;
     }
 
