@@ -1174,6 +1174,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
  */
 static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name, BOOL builtin )
 {
+    WCHAR *buffer;
     WINE_MODREF *wm;
     const WCHAR *p;
     const IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
@@ -1186,9 +1187,16 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     wm->ldr.TlsIndex      = -1;
     wm->ldr.LoadCount     = 1;
 
-    RtlCreateUnicodeString( &wm->ldr.FullDllName, nt_name->Buffer + 4 /* \??\ prefix */ );
-    if ((p = wcsrchr( wm->ldr.FullDllName.Buffer, '\\' ))) p++;
-    else p = wm->ldr.FullDllName.Buffer;
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, nt_name->Length - 3 * sizeof(WCHAR) )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, wm );
+        return NULL;
+    }
+    memcpy( buffer, nt_name->Buffer + 4 /* \??\ prefix */, nt_name->Length - 4 * sizeof(WCHAR) );
+    buffer[nt_name->Length/sizeof(WCHAR) - 4] = 0;
+    if ((p = wcsrchr( buffer, '\\' ))) p++;
+    else p = buffer;
+    RtlInitUnicodeString( &wm->ldr.FullDllName, buffer );
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
     if (!is_dll_native_subsystem( &wm->ldr, nt, p ))
