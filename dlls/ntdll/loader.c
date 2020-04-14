@@ -1191,7 +1191,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     else p = wm->ldr.FullDllName.Buffer;
     RtlInitUnicodeString( &wm->ldr.BaseDllName, p );
 
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) || !is_dll_native_subsystem( &wm->ldr, nt, p ))
+    if (!is_dll_native_subsystem( &wm->ldr, nt, p ))
     {
         if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
             wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
@@ -1311,7 +1311,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return STATUS_SUCCESS;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.BaseAddress, reason );
-    if (!entry || !(wm->ldr.Flags & LDR_IMAGE_IS_DLL)) return STATUS_SUCCESS;
+    if (!entry) return STATUS_SUCCESS;
 
     if (TRACE_ON(relay))
     {
@@ -1463,6 +1463,7 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
         {
             LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
 
+            if (!(mod->Flags & LDR_IMAGE_IS_DLL)) continue;
             if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
             TRACE( "found implicitly loaded %s, attaching to it\n",
                    debugstr_w(mod->BaseDllName.Buffer));
@@ -3740,7 +3741,10 @@ PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknown3, ULONG_PTR unknown4 )
 {
     static const LARGE_INTEGER zero;
+    static int attach_done;
+    int i;
     NTSTATUS status;
+    ULONG_PTR cookie;
     WINE_MODREF *wm;
     LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
 
@@ -3774,25 +3778,35 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
     InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
     RtlReleasePebLock();
 
-    if (!(wm->ldr.Flags & LDR_PROCESS_ATTACHED))  /* first time around */
+    if (!attach_done)  /* first time around */
     {
+        attach_done = 1;
         if ((status = alloc_thread_tls()) != STATUS_SUCCESS)
         {
             ERR( "TLS init  failed when loading %s, status %x\n",
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
-        if ((status = process_attach( wm, context )) != STATUS_SUCCESS)
+        wm->ldr.LoadCount = -1;
+        if (wm->ldr.ActivationContext)
+            RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
+
+        for (i = 0; i < wm->nDeps; i++)
         {
-            if (last_failed_modref)
-                ERR( "%s failed to initialize, aborting\n",
-                     debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
-            ERR( "Initializing dlls for %s failed, status %x\n",
-                 debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
-            NtTerminateProcess( GetCurrentProcess(), status );
+            if (!wm->deps[i]) continue;
+            if ((status = process_attach( wm->deps[i], context )) != STATUS_SUCCESS)
+            {
+                if (last_failed_modref)
+                    ERR( "%s failed to initialize, aborting\n",
+                         debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
+                ERR( "Initializing dlls for %s failed, status %x\n",
+                     debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
+                NtTerminateProcess( GetCurrentProcess(), status );
+            }
         }
         attach_implicitly_loaded_dlls( context );
         virtual_release_address_space();
+        if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     }
     else
     {
