@@ -1749,50 +1749,6 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 }
 
 
-/***********************************************************************
- *           get_builtin_fullname
- *
- * Build the full pathname for a builtin dll.
- */
-static BOOL get_builtin_fullname( UNICODE_STRING *nt_name, const UNICODE_STRING *path,
-                                  const char *filename )
-{
-    static const WCHAR nt_prefixW[] = {'\\','?','?','\\',0};
-    static const WCHAR soW[] = {'.','s','o',0};
-    WCHAR *p, *fullname, filenameW[256];
-    size_t len = strlen(filename);
-
-    if (len >= ARRAY_SIZE(filenameW)) return FALSE;
-    ascii_to_unicode( filenameW, filename, len + 1 );
-
-    /* check if path can correspond to the dll we have */
-    if (path && (p = wcsrchr( path->Buffer, '\\' )))
-    {
-        p++;
-        if (!wcsnicmp( p, filenameW, len ) && (!p[len] || !wcsicmp( p + len, soW )))
-        {
-            /* the filename matches, use path as the full path */
-            len += p - path->Buffer;
-            if (!(fullname = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
-                return FALSE;
-            memcpy( fullname, path->Buffer, len * sizeof(WCHAR) );
-            fullname[len] = 0;
-            goto done;
-        }
-    }
-
-    if (!(fullname = RtlAllocateHeap( GetProcessHeap(), 0,
-                                      (wcslen(system_dir) + len + 5) * sizeof(WCHAR) )))
-        return FALSE;
-    wcscpy( fullname, nt_prefixW );
-    wcscat( fullname, system_dir );
-    wcscat( fullname, filenameW );
-done:
-    RtlInitUnicodeString( nt_name, fullname );
-    return TRUE;
-}
-
-
 /*************************************************************************
  *		is_16bit_builtin
  */
@@ -1819,17 +1775,16 @@ static void load_builtin_callback( void *module, const char *filename )
     static const WCHAR emptyW[1];
     IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
-    UNICODE_STRING nt_name;
     const WCHAR *load_path;
 
     if (!module)
     {
-        ERR("could not map image for %s\n", filename ? filename : "main exe" );
+        ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
         return;
     }
     if (!(nt = RtlImageNtHeader( module )))
     {
-        ERR( "bad module for %s\n", filename ? filename : "main exe" );
+        ERR( "bad module for %s\n", debugstr_us(builtin_load_info->filename) );
         builtin_load_info->status = STATUS_INVALID_IMAGE_FORMAT;
         return;
     }
@@ -1838,18 +1793,10 @@ static void load_builtin_callback( void *module, const char *filename )
 
     /* create the MODREF */
 
-    if (!get_builtin_fullname( &nt_name, builtin_load_info->filename, filename ))
-    {
-        ERR( "can't load %s\n", filename );
-        builtin_load_info->status = STATUS_NO_MEMORY;
-        return;
-    }
-
-    wm = alloc_module( module, &nt_name, TRUE );
-    RtlFreeUnicodeString( &nt_name );
+    wm = alloc_module( module, builtin_load_info->filename, TRUE );
     if (!wm)
     {
-        ERR( "can't load %s\n", filename );
+        ERR( "can't load %s\n", debugstr_us(builtin_load_info->filename) );
         builtin_load_info->status = STATUS_NO_MEMORY;
         return;
     }
@@ -1875,7 +1822,7 @@ static void load_builtin_callback( void *module, const char *filename )
     }
 
     builtin_load_info->wm = wm;
-    TRACE( "loaded %s %p %p\n", filename, wm, module );
+    TRACE( "loaded %s %p %p\n", debugstr_us(builtin_load_info->filename), wm, module );
 
     /* send the DLL load event */
 
@@ -2605,26 +2552,31 @@ done:
 static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
                              const char *so_name, WINE_MODREF** pwm )
 {
+    static const WCHAR soW[] = {'.','s','o',0};
+    DWORD len;
     void *handle;
     struct builtin_load_info info, *prev_info;
     ANSI_STRING unix_name;
+    UNICODE_STRING win_name = *nt_name;
 
-    if (so_name)
-    {
-        TRACE( "loading %s from so lib %s\n", debugstr_us(nt_name), debugstr_a(so_name) );
-        unix_name.Buffer = NULL;
-    }
-    else
-    {
-        TRACE( "loading %s as so lib\n", debugstr_us(nt_name) );
-        if (wine_nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN, FALSE ))
-            return STATUS_DLL_NOT_FOUND;
-    }
-
+    unix_name.Buffer = NULL;
     info.load_path = load_path;
-    info.filename  = nt_name;
+    info.filename  = &win_name;
     info.status    = STATUS_SUCCESS;
     info.wm        = NULL;
+
+    if (!so_name)
+    {
+        if (wine_nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN, FALSE ))
+            return STATUS_DLL_NOT_FOUND;
+
+        /* remove .so extension from Windows name */
+        len = nt_name->Length / sizeof(WCHAR);
+        if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) win_name.Length -= 3 * sizeof(WCHAR);
+    }
+
+    TRACE( "loading %s from so lib %s\n", debugstr_us(&win_name),
+           debugstr_a( so_name ? so_name : unix_name.Buffer ));
 
     prev_info = builtin_load_info;
     builtin_load_info = &info;
@@ -4254,6 +4206,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  */
 void __wine_process_init(void)
 {
+    static const WCHAR ntdllW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+                                   's','y','s','t','e','m','3','2','\\',
+                                   'n','t','d','l','l','.','d','l','l',0};
     static const WCHAR kernel32W[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                       's','y','s','t','e','m','3','2','\\',
                                       'k','e','r','n','e','l','3','2','.','d','l','l',0};
@@ -4289,6 +4244,8 @@ void __wine_process_init(void)
     version_init();
 
     /* setup the load callback and create ntdll modref */
+    RtlInitUnicodeString( &nt_name, ntdllW );
+    default_load_info.filename = &nt_name;
     wine_dll_set_callback( load_builtin_callback );
 
     RtlInitUnicodeString( &nt_name, kernel32W );
