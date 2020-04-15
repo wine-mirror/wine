@@ -2667,6 +2667,7 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     return teb;
 }
 #elif defined(__x86_64__) && defined(_MSC_VER)
+unsigned __int64 __readgsqword(unsigned long);
 #pragma intrinsic(__readgsqword)
 static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
