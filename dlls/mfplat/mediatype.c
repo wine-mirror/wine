@@ -2128,7 +2128,7 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
 
     if (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
     {
-        mediatype_set_guid(mediatype, &MF_MT_SUBTYPE, &wfex->SubFormat, &hr);
+        memcpy(&subtype, &wfex->SubFormat, sizeof(subtype));
 
         if (wfex->dwChannelMask)
             mediatype_set_uint32(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, wfex->dwChannelMask, &hr);
@@ -2140,10 +2140,10 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
     {
         memcpy(&subtype, &MFAudioFormat_Base, sizeof(subtype));
         subtype.Data1 = format->wFormatTag;
-        mediatype_set_guid(mediatype, &MF_MT_SUBTYPE, &subtype, &hr);
 
         mediatype_set_uint32(mediatype, &MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1, &hr);
     }
+    mediatype_set_guid(mediatype, &MF_MT_SUBTYPE, &subtype, &hr);
 
     if (format->nChannels)
         mediatype_set_uint32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, format->nChannels, &hr);
