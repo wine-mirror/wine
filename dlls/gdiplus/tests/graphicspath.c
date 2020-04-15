@@ -365,6 +365,28 @@ static void test_bezier(void)
     GdipDeletePath(path);
 }
 
+static void test_beziers(void)
+{
+    GpStatus status;
+    GpPath* path;
+    PointF bezier_points1[] = {{10.0,10.0}, {20.0,10.0}, {20.0,20.0}, {30.0,20.0}};
+    PointF bezier_points2[] = {{30.0,20.0}, {40.0,20.0}, {40.0,30.0}, {50.0,30.0}};
+    PointF bezier_points3[] = {{50.0,10.0}, {60.0,10.0}, {60.0,20.0}, {70.0,20.0}};
+
+    GdipCreatePath(FillModeAlternate, &path);
+
+    status = GdipAddPathBeziers(path, bezier_points1, 4);
+    expect(Ok, status);
+    status = GdipAddPathBeziers(path, bezier_points2, 4);
+    expect(Ok, status);
+    status = GdipAddPathBeziers(path, bezier_points3, 4);
+    expect(Ok, status);
+
+    ok_path(path, bezier_path, ARRAY_SIZE(bezier_path), FALSE);
+
+    GdipDeletePath(path);
+}
+
 static path_test_t arc_path[] = {
     {600.0, 450.0, PathPointTypeStart, 0, 0}, /*0*/
     {600.0, 643.3, PathPointTypeBezier, 0, 0}, /*1*/
@@ -1818,6 +1840,7 @@ START_TEST(graphicspath)
     test_createpath2();
     test_line2();
     test_bezier();
+    test_beziers();
     test_arc();
     test_worldbounds();
     test_pathpath();
