@@ -78,7 +78,7 @@ static IWICBitmapDecoder *create_decoder(IWICStream *stream)
     ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatDds), "Unexpected container format\n");
 
     hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
-    ok(hr == S_OK, "Decoder Initialize failed, hr=%x\n", hr);
+    todo_wine ok(hr == S_OK, "Decoder Initialize failed, hr=%x\n", hr);
     if (hr != S_OK) {
         IWICBitmapDecoder_Release(decoder);
         return NULL;
@@ -95,7 +95,7 @@ static void test_dds_decoder(void)
     stream = create_stream(test_dds_image, sizeof(test_dds_image));
     if (!stream) goto end;
 
-    todo_wine decoder = create_decoder(stream);
+    decoder = create_decoder(stream);
     if (!decoder) goto end;
 
 end:

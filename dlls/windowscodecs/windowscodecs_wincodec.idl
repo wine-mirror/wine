@@ -119,6 +119,13 @@ coclass WICTiffEncoder { interface IWICBitmapEncoder; }
 coclass WICIcnsEncoder { interface IWICBitmapEncoder; }
 
 [
+    helpstring("WIC DDS Decoder"),
+    threading(both),
+    uuid(9053699f-a341-429d-9e90-ee437cf80c73)
+]
+coclass WICDdsDecoder { interface IWICBitmapDecoder; }
+
+[
     helpstring("WIC Default Format Converter"),
     threading(both),
     uuid(1a3f11dc-b514-4b17-8c5f-2154513852f1)

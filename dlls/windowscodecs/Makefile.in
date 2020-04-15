@@ -13,6 +13,7 @@ C_SRCS = \
 	colorcontext.c \
 	colortransform.c \
 	converter.c \
+	ddsformat.c \
 	fliprotate.c \
 	gifformat.c \
 	icnsformat.c \

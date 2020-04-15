@@ -1140,6 +1140,18 @@ static struct decoder_pattern const bmp_patterns[] = {
     {0}
 };
 
+static const BYTE dds_magic[] = "DDS ";
+
+static GUID const * const dds_formats[] = {
+    &GUID_WICPixelFormat32bppBGRA,
+    NULL
+};
+
+static struct decoder_pattern const dds_patterns[] = {
+    {4,0,dds_magic,mask_all,0},
+    {0}
+};
+
 static const BYTE gif87a_magic[6] = "GIF87a";
 static const BYTE gif89a_magic[6] = "GIF89a";
 
@@ -1272,6 +1284,17 @@ static struct regsvr_decoder const decoder_list[] = {
 	".bmp,.dib,.rle",
 	bmp_formats,
 	bmp_patterns
+    },
+    {   &CLSID_WICDdsDecoder,
+    "The Wine Project",
+    "DDS Decoder",
+    "1.0.0.0",
+    &GUID_VendorMicrosoft,
+    &GUID_ContainerFormatDds,
+    "image/vnd-ms.dds",
+    ".dds",
+    dds_formats,
+    dds_patterns
     },
     {   &CLSID_WICGifDecoder,
 	"The Wine Project",
