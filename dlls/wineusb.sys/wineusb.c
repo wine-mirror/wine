@@ -40,6 +40,41 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
+static NTSTATUS fdo_pnp(IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret;
+
+    TRACE("irp %p, minor function %#x.\n", irp, stack->MinorFunction);
+
+    switch (stack->MinorFunction)
+    {
+        case IRP_MN_START_DEVICE:
+        case IRP_MN_SURPRISE_REMOVAL:
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+
+        case IRP_MN_REMOVE_DEVICE:
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            IoSkipCurrentIrpStackLocation(irp);
+            ret = IoCallDriver(bus_pdo, irp);
+            IoDetachDevice(bus_pdo);
+            IoDeleteDevice(bus_fdo);
+            return ret;
+
+        default:
+            FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
+    }
+
+    IoSkipCurrentIrpStackLocation(irp);
+    return IoCallDriver(bus_pdo, irp);
+}
+
+static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
+{
+    return fdo_pnp(irp);
+}
+
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
 {
     NTSTATUS ret;
@@ -78,6 +113,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
+    driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
 
     return STATUS_SUCCESS;
 }
