@@ -637,32 +637,12 @@ GpStatus WINGDIPAPI GdipAddPathEllipseI(GpPath *path, INT x, INT y, INT width,
 GpStatus WINGDIPAPI GdipAddPathLine2(GpPath *path, GDIPCONST GpPointF *points,
     INT count)
 {
-    INT i, old_count;
-
     TRACE("(%p, %p, %d)\n", path, points, count);
 
     if(!path || !points || count < 1)
         return InvalidParameter;
 
-    if(!lengthen_path(path, count))
-        return OutOfMemory;
-
-    old_count = path->pathdata.Count;
-
-    for(i = 0; i < count; i++){
-        path->pathdata.Points[old_count + i].X = points[i].X;
-        path->pathdata.Points[old_count + i].Y = points[i].Y;
-        path->pathdata.Types[old_count + i] = PathPointTypeLine;
-    }
-
-    if(path->newfigure){
-        path->pathdata.Types[old_count] = PathPointTypeStart;
-        path->newfigure = FALSE;
-    }
-
-    path->pathdata.Count += count;
-
-    return Ok;
+    return extend_current_figure(path, points, count, PathPointTypeLine);
 }
 
 GpStatus WINGDIPAPI GdipAddPathLine2I(GpPath *path, GDIPCONST GpPoint *points, INT count)

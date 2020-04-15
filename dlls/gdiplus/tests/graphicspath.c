@@ -329,6 +329,14 @@ static void test_line2(void)
 
     ok_path(path, line2_path, ARRAY_SIZE(line2_path), FALSE);
 
+    GdipResetPath(path);
+    status = GdipAddPathLine2(path, line2_points, 3);
+    expect(Ok, status);
+    status = GdipAddPathLine2(path, &(line2_points[2]), 3);
+    expect(Ok, status);
+
+    ok_path(path, line2_path, 5, FALSE);
+
     GdipDeletePath(path);
 }
 
