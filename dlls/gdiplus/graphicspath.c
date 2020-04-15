@@ -241,7 +241,9 @@ static GpStatus extend_current_figure(GpPath *path, GDIPCONST PointF *points, IN
 GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
     REAL y2, REAL startAngle, REAL sweepAngle)
 {
-    INT count, old_count, i;
+    GpPointF *points;
+    GpStatus status;
+    INT count;
 
     TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n",
           path, x1, y1, x2, y2, startAngle, sweepAngle);
@@ -250,26 +252,19 @@ GpStatus WINGDIPAPI GdipAddPathArc(GpPath *path, REAL x1, REAL y1, REAL x2,
         return InvalidParameter;
 
     count = arc2polybezier(NULL, x1, y1, x2, y2, startAngle, sweepAngle);
-
     if(count == 0)
         return Ok;
-    if(!lengthen_path(path, count))
+
+    points = heap_alloc_zero(sizeof(GpPointF)*count);
+    if(!points)
         return OutOfMemory;
 
-    old_count = path->pathdata.Count;
-    arc2polybezier(&path->pathdata.Points[old_count], x1, y1, x2, y2,
-                   startAngle, sweepAngle);
+    arc2polybezier(points, x1, y1, x2, y2, startAngle, sweepAngle);
 
-    for(i = 0; i < count; i++){
-        path->pathdata.Types[old_count + i] = PathPointTypeBezier;
-    }
+    status = extend_current_figure(path, points, count, PathPointTypeBezier);
 
-    path->pathdata.Types[old_count] =
-        (path->newfigure ? PathPointTypeStart : PathPointTypeLine);
-    path->newfigure = FALSE;
-    path->pathdata.Count += count;
-
-    return Ok;
+    heap_free(points);
+    return status;
 }
 
 /*******************************************************************************

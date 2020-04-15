@@ -435,6 +435,13 @@ static path_test_t arc_path[] = {
     {450.9, 824.1, PathPointTypeBezier, 0, 0}, /*36*/
     {540.4, 676.9, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 1} /*37*/
     };
+static path_test_t arc_path2[] = {
+    {1.0, 0.0, PathPointTypeStart, 0, 0}, /*0*/
+    {1.0, 0.5, PathPointTypeLine, 0, 0}, /*1*/
+    {1.0, 0.776142, PathPointTypeBezier, 0, 0}, /*2*/
+    {0.776142, 1.0, PathPointTypeBezier, 0, 0}, /*3*/
+    {0.5, 1.0, PathPointTypeBezier, 0, 0} /*4*/
+    };
 
 static void test_arc(void)
 {
@@ -462,6 +469,13 @@ static void test_arc(void)
     expect(Ok, status);
 
     ok_path(path, arc_path, ARRAY_SIZE(arc_path), FALSE);
+
+    GdipResetPath(path);
+    GdipAddPathLine(path, 1.0, 0.0, 1.0, 0.5);
+    status = GdipAddPathArc(path, 0.0, 0.0, 1.0, 1.0, 0.0, 90.0);
+    expect(Ok, status);
+
+    ok_path_fudge(path, arc_path2, ARRAY_SIZE(arc_path2), FALSE, 0.000005);
 
     GdipDeletePath(path);
 }
