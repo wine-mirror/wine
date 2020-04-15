@@ -25,7 +25,7 @@
 
 #include "wine/test.h"
 
-extern handle_t rpc_handle;
+extern handle_t schrpc_handle;
 
 static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
 {
@@ -103,7 +103,7 @@ START_TEST(rpcapi)
 
     hr = RpcStringBindingComposeA(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
     ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#x\n", hr);
-    hr = RpcBindingFromStringBindingA(binding_str, &rpc_handle);
+    hr = RpcBindingFromStringBindingA(binding_str, &schrpc_handle);
     ok(hr == RPC_S_OK, "RpcBindingFromStringBinding error %#x\n", hr);
     hr = RpcStringFreeA(&binding_str);
     ok(hr == RPC_S_OK, "RpcStringFree error %#x\n", hr);
@@ -537,7 +537,7 @@ todo_wine
         MIDL_user_free(path);
     }
 
-    hr = RpcBindingFree(&rpc_handle);
+    hr = RpcBindingFree(&schrpc_handle);
     ok(hr == RPC_S_OK, "RpcBindingFree error %#x\n", hr);
 }
 
