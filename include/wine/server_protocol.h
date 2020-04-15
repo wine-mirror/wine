@@ -5657,32 +5657,6 @@ struct update_rawinput_devices_reply
 
 
 
-struct get_suspend_context_request
-{
-    struct request_header __header;
-    char __pad_12[4];
-};
-struct get_suspend_context_reply
-{
-    struct reply_header __header;
-    /* VARARG(context,context); */
-};
-
-
-
-struct set_suspend_context_request
-{
-    struct request_header __header;
-    /* VARARG(context,context); */
-    char __pad_12[4];
-};
-struct set_suspend_context_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct create_job_request
 {
     struct request_header __header;
@@ -6097,8 +6071,6 @@ enum request
     REQ_free_user_handle,
     REQ_set_cursor,
     REQ_update_rawinput_devices,
-    REQ_get_suspend_context,
-    REQ_set_suspend_context,
     REQ_create_job,
     REQ_open_job,
     REQ_assign_job,
@@ -6401,8 +6373,6 @@ union generic_request
     struct free_user_handle_request free_user_handle_request;
     struct set_cursor_request set_cursor_request;
     struct update_rawinput_devices_request update_rawinput_devices_request;
-    struct get_suspend_context_request get_suspend_context_request;
-    struct set_suspend_context_request set_suspend_context_request;
     struct create_job_request create_job_request;
     struct open_job_request open_job_request;
     struct assign_job_request assign_job_request;
@@ -6703,8 +6673,6 @@ union generic_reply
     struct free_user_handle_reply free_user_handle_reply;
     struct set_cursor_reply set_cursor_reply;
     struct update_rawinput_devices_reply update_rawinput_devices_reply;
-    struct get_suspend_context_reply get_suspend_context_reply;
-    struct set_suspend_context_reply set_suspend_context_reply;
     struct create_job_reply create_job_reply;
     struct open_job_reply open_job_reply;
     struct assign_job_reply assign_job_reply;
@@ -6718,7 +6686,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 599
+#define SERVER_PROTOCOL_VERSION 600
 
 /* ### protocol_version end ### */
 

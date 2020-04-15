@@ -3889,19 +3889,6 @@ struct handle_info
 @END
 
 
-/* Retrieve the suspended context of a thread */
-@REQ(get_suspend_context)
-@REPLY
-    VARARG(context,context);   /* thread context */
-@END
-
-
-/* Store the suspend context of a thread */
-@REQ(set_suspend_context)
-    VARARG(context,context);   /* thread context */
-@END
-
-
 /* Create a new job object */
 @REQ(create_job)
     unsigned int access;          /* wanted access rights */

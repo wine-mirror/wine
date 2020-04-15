@@ -4537,20 +4537,6 @@ static void dump_update_rawinput_devices_request( const struct update_rawinput_d
     dump_varargs_rawinput_devices( " devices=", cur_size );
 }
 
-static void dump_get_suspend_context_request( const struct get_suspend_context_request *req )
-{
-}
-
-static void dump_get_suspend_context_reply( const struct get_suspend_context_reply *req )
-{
-    dump_varargs_context( " context=", cur_size );
-}
-
-static void dump_set_suspend_context_request( const struct set_suspend_context_request *req )
-{
-    dump_varargs_context( " context=", cur_size );
-}
-
 static void dump_create_job_request( const struct create_job_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4903,8 +4889,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_free_user_handle_request,
     (dump_func)dump_set_cursor_request,
     (dump_func)dump_update_rawinput_devices_request,
-    (dump_func)dump_get_suspend_context_request,
-    (dump_func)dump_set_suspend_context_request,
     (dump_func)dump_create_job_request,
     (dump_func)dump_open_job_request,
     (dump_func)dump_assign_job_request,
@@ -5202,8 +5186,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_reply,
     NULL,
     (dump_func)dump_set_cursor_reply,
-    NULL,
-    (dump_func)dump_get_suspend_context_reply,
     NULL,
     (dump_func)dump_create_job_reply,
     (dump_func)dump_open_job_reply,
@@ -5503,8 +5485,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "free_user_handle",
     "set_cursor",
     "update_rawinput_devices",
-    "get_suspend_context",
-    "set_suspend_context",
     "create_job",
     "open_job",
     "assign_job",

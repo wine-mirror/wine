@@ -1836,55 +1836,6 @@ DECL_HANDLER(set_thread_context)
     release_object( thread );
 }
 
-/* retrieve the suspended context of a thread */
-DECL_HANDLER(get_suspend_context)
-{
-    if (get_reply_max_size() < sizeof(context_t))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    if (current->suspend_context)
-    {
-        if (current->suspend_context->flags)
-            set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
-        else
-            free( current->suspend_context );
-        if (current->context == current->suspend_context)
-        {
-            current->context = NULL;
-            stop_thread_if_suspended( current );
-        }
-        current->suspend_context = NULL;
-    }
-    else set_error( STATUS_INVALID_PARAMETER );  /* not suspended, shouldn't happen */
-}
-
-/* store the suspended context of a thread */
-DECL_HANDLER(set_suspend_context)
-{
-    const context_t *context = get_req_data();
-
-    if (get_req_data_size() < sizeof(context_t))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    if (current->context || context->cpu != current->process->cpu)
-    {
-        /* nested suspend or exception, shouldn't happen */
-        set_error( STATUS_INVALID_PARAMETER );
-    }
-    else if ((current->suspend_context = mem_alloc( sizeof(context_t) )))
-    {
-        memcpy( current->suspend_context, get_req_data(), sizeof(context_t) );
-        current->suspend_context->flags = 0;  /* to keep track of what is modified */
-        current->context = current->suspend_context;
-    }
-}
-
 /* fetch a selector entry for a thread */
 DECL_HANDLER(get_selector_entry)
 {
