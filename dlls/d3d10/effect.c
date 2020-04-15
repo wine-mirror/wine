@@ -5337,7 +5337,7 @@ static void write_matrix_to_buffer(struct d3d10_effect_variable *variable, void 
 {
     unsigned int col_count = !transpose ? variable->type->column_count : variable->type->row_count;
     unsigned int row_count = !transpose ? variable->type->row_count : variable->type->column_count;
-    BOOL major = variable->type->type_class == D3D10_SVC_MATRIX_COLUMNS ? TRUE : FALSE;
+    BOOL major = variable->type->type_class == D3D10_SVC_MATRIX_COLUMNS;
     float *dst = dst_void;
     unsigned int row, col;
 
@@ -5415,7 +5415,7 @@ static void read_matrix_from_buffer(struct d3d10_effect_variable *variable, void
 {
     unsigned int col_count = !transpose ? variable->type->column_count : variable->type->row_count;
     unsigned int row_count = !transpose ? variable->type->row_count : variable->type->column_count;
-    BOOL major = variable->type->type_class == D3D10_SVC_MATRIX_COLUMNS ? TRUE : FALSE;
+    BOOL major = variable->type->type_class == D3D10_SVC_MATRIX_COLUMNS;
     float *src = src_void;
     unsigned int row, col;
 
