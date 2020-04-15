@@ -38,10 +38,114 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
+#define DECLARE_CRITICAL_SECTION(cs) \
+    static CRITICAL_SECTION cs; \
+    static CRITICAL_SECTION_DEBUG cs##_debug = \
+    { 0, 0, &cs, { &cs##_debug.ProcessLocksList, &cs##_debug.ProcessLocksList }, \
+      0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
+    static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 };
+
+DECLARE_CRITICAL_SECTION(wineusb_cs);
+
+static struct list device_list = LIST_INIT(device_list);
+
+struct usb_device
+{
+    struct list entry;
+
+    DEVICE_OBJECT *device_obj;
+
+    libusb_device *libusb_device;
+    libusb_device_handle *handle;
+};
+
+static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
+
+static libusb_hotplug_callback_handle hotplug_cb_handle;
+
+static void add_usb_device(libusb_device *libusb_device)
+{
+    static const WCHAR formatW[] = {'\\','D','e','v','i','c','e','\\','U','S','B','P','D','O','-','%','u',0};
+    struct libusb_device_descriptor device_desc;
+    static unsigned int name_index;
+    libusb_device_handle *handle;
+    struct usb_device *device;
+    DEVICE_OBJECT *device_obj;
+    UNICODE_STRING string;
+    NTSTATUS status;
+    WCHAR name[20];
+    int ret;
+
+    libusb_get_device_descriptor(libusb_device, &device_desc);
+
+    TRACE("Adding new device %p, vendor %04x, product %04x.\n", libusb_device,
+            device_desc.idVendor, device_desc.idProduct);
+
+    if ((ret = libusb_open(libusb_device, &handle)))
+    {
+        WARN("Failed to open device: %s\n", libusb_strerror(ret));
+        return;
+    }
+
+    sprintfW(name, formatW, name_index++);
+    RtlInitUnicodeString(&string, name);
+    if ((status = IoCreateDevice(driver_obj, sizeof(*device), &string,
+            FILE_DEVICE_USB, 0, FALSE, &device_obj)))
+    {
+        ERR("Failed to create device, status %#x.\n", status);
+        LeaveCriticalSection(&wineusb_cs);
+        libusb_close(handle);
+        return;
+    }
+
+    device = device_obj->DeviceExtension;
+    device->device_obj = device_obj;
+    device->libusb_device = libusb_ref_device(libusb_device);
+    device->handle = handle;
+
+    EnterCriticalSection(&wineusb_cs);
+    list_add_tail(&device_list, &device->entry);
+    LeaveCriticalSection(&wineusb_cs);
+
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+}
+
+static void remove_usb_device(libusb_device *libusb_device)
+{
+    struct usb_device *device;
+
+    TRACE("Removing device %p.\n", libusb_device);
+
+    EnterCriticalSection(&wineusb_cs);
+    LIST_FOR_EACH_ENTRY(device, &device_list, struct usb_device, entry)
+    {
+        if (device->libusb_device == libusb_device)
+        {
+            libusb_unref_device(device->libusb_device);
+            libusb_close(device->handle);
+            list_remove(&device->entry);
+            IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+            IoDeleteDevice(device->device_obj);
+            break;
+        }
+    }
+    LeaveCriticalSection(&wineusb_cs);
+}
 
 static BOOL thread_shutdown;
 static HANDLE event_thread;
+
+static int LIBUSB_CALL hotplug_cb(libusb_context *context, libusb_device *device,
+        libusb_hotplug_event event, void *user_data)
+{
+    if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED)
+        add_usb_device(device);
+    else
+        remove_usb_device(device);
+
+    return 0;
+}
 
 static DWORD CALLBACK event_thread_proc(void *arg)
 {
@@ -69,15 +173,41 @@ static NTSTATUS fdo_pnp(IRP *irp)
     switch (stack->MinorFunction)
     {
         case IRP_MN_START_DEVICE:
+            if ((ret = libusb_hotplug_register_callback(NULL,
+                    LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+                    LIBUSB_HOTPLUG_ENUMERATE, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+                    LIBUSB_HOTPLUG_MATCH_ANY, hotplug_cb, NULL, &hotplug_cb_handle)))
+            {
+                ERR("Failed to register callback: %s\n", libusb_strerror(ret));
+                irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+                break;
+            }
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+
         case IRP_MN_SURPRISE_REMOVAL:
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
+        {
+            struct usb_device *device, *cursor;
+
+            libusb_hotplug_deregister_callback(NULL, hotplug_cb_handle);
             thread_shutdown = TRUE;
             libusb_interrupt_event_handler(NULL);
             WaitForSingleObject(event_thread, INFINITE);
             CloseHandle(event_thread);
+
+            EnterCriticalSection(&wineusb_cs);
+            LIST_FOR_EACH_ENTRY_SAFE(device, cursor, &device_list, struct usb_device, entry)
+            {
+                libusb_unref_device(device->libusb_device);
+                libusb_close(device->handle);
+                list_remove(&device->entry);
+                IoDeleteDevice(device->device_obj);
+            }
+            LeaveCriticalSection(&wineusb_cs);
 
             irp->IoStatus.Status = STATUS_SUCCESS;
             IoSkipCurrentIrpStackLocation(irp);
@@ -85,6 +215,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
             IoDetachDevice(bus_pdo);
             IoDeleteDevice(bus_fdo);
             return ret;
+        }
 
         default:
             FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
@@ -94,9 +225,34 @@ static NTSTATUS fdo_pnp(IRP *irp)
     return IoCallDriver(bus_pdo, irp);
 }
 
+static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret = irp->IoStatus.Status;
+
+    TRACE("device_obj %p, irp %p, minor function %#x.\n", device_obj, irp, stack->MinorFunction);
+
+    switch (stack->MinorFunction)
+    {
+        case IRP_MN_START_DEVICE:
+        case IRP_MN_QUERY_CAPABILITIES:
+            ret = STATUS_SUCCESS;
+            break;
+
+        default:
+            FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
+    }
+
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return ret;
+}
+
 static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
-    return fdo_pnp(irp);
+    if (device == bus_fdo)
+        return fdo_pnp(irp);
+    return pdo_pnp(device, irp);
 }
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
@@ -128,6 +284,8 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     int err;
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
+
+    driver_obj = driver;
 
     if ((err = libusb_init(NULL)))
     {

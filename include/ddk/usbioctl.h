@@ -19,6 +19,8 @@
 #ifndef __DDK_USBIOCTL_H__
 #define __DDK_USBIOCTL_H__
 
+#include "ddk/usbiodef.h"
+
 #define IOCTL_INTERNAL_USB_SUBMIT_URB  \
   CTL_CODE(FILE_DEVICE_USB, USB_SUBMIT_URB, METHOD_NEITHER, FILE_ANY_ACCESS)
 
