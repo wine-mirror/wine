@@ -424,7 +424,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
     pt[len_pt-1].X = pt[0].X;
     pt[len_pt-1].Y = pt[0].Y;
 
-    stat = GdipAddPathBeziers(path, pt, len_pt);
+    stat = extend_current_figure(path, pt, len_pt, PathPointTypeBezier);
 
     /* close figure */
     if(stat == Ok){
@@ -532,7 +532,7 @@ GpStatus WINGDIPAPI GdipAddPathCurve2(GpPath *path, GDIPCONST GpPointF *points, 
     pt[len_pt-1].X = points[count-1].X;
     pt[len_pt-1].Y = points[count-1].Y;
 
-    stat = GdipAddPathBeziers(path, pt, len_pt);
+    stat = extend_current_figure(path, pt, len_pt, PathPointTypeBezier);
 
     heap_free(pt);
 
