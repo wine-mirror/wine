@@ -722,7 +722,8 @@ static path_test_t linei_path[] = {
     {15.00, 15.00, PathPointTypeLine, 0, 0}, /*9*/
     {26.00, 28.00, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}, /*10*/
     {35.00, 35.00, PathPointTypeStart, 0, 0}, /*11*/
-    {36.00, 38.00, PathPointTypeLine, 0, 0} /*12*/
+    {36.00, 38.00, PathPointTypeLine, 0, 0}, /*12*/
+    {39.00, 40.00, PathPointTypeLine, 0, 0} /*13*/
     };
 
 static void test_linei(void)
@@ -738,6 +739,8 @@ static void test_linei(void)
     expect(Ok, status);
     GdipClosePathFigure(path);
     status = GdipAddPathLineI(path, 35.0, 35.0, 36.0, 38.0);
+    expect(Ok, status);
+    status = GdipAddPathLineI(path, 36, 38, 39, 40);
     expect(Ok, status);
 
     ok_path(path, linei_path, ARRAY_SIZE(linei_path), FALSE);
