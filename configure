@@ -682,6 +682,8 @@ GPHOTO2_PORT_LIBS
 GPHOTO2_PORT_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_CFLAGS
+USB_LIBS
+USB_CFLAGS
 SANE_LIBS
 SANE_CFLAGS
 GNUTLS_LIBS
@@ -880,6 +882,7 @@ with_sdl
 with_tiff
 with_udev
 with_unwind
+with_usb
 with_v4l2
 with_vkd3d
 with_vulkan
@@ -1645,6 +1648,7 @@ enable_wineoss_drv
 enable_wineps_drv
 enable_winepulse_drv
 enable_wineqtdecoder
+enable_wineusb_sys
 enable_winevulkan
 enable_winex11_drv
 enable_wing32
@@ -1857,6 +1861,8 @@ GNUTLS_CFLAGS
 GNUTLS_LIBS
 SANE_CFLAGS
 SANE_LIBS
+USB_CFLAGS
+USB_LIBS
 GPHOTO2_CFLAGS
 GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS
@@ -2583,6 +2589,7 @@ Optional Packages:
   --without-udev          do not use udev (plug and play support)
   --without-unwind        do not use the libunwind library (exception
                           handling)
+  --without-usb           do not use the libusb library
   --without-v4l2          do not use v4l2 (video capture)
   --without-vkd3d         do not use vkd3d (Direct3D 12 support)
   --without-vulkan        do not use Vulkan
@@ -2635,6 +2642,8 @@ Some influential environment variables:
   GNUTLS_LIBS Linker flags for gnutls, overriding pkg-config
   SANE_CFLAGS C compiler flags for libsane, overriding pkg-config
   SANE_LIBS   Linker flags for libsane, overriding pkg-config
+  USB_CFLAGS  C compiler flags for libusb-1.0, overriding pkg-config
+  USB_LIBS    Linker flags for libusb-1.0, overriding pkg-config
   GPHOTO2_CFLAGS
               C compiler flags for libgphoto2, overriding pkg-config
   GPHOTO2_LIBS
@@ -4107,6 +4116,12 @@ fi
 # Check whether --with-unwind was given.
 if test "${with_unwind+set}" = set; then :
   withval=$with_unwind;
+fi
+
+
+# Check whether --with-usb was given.
+if test "${with_usb+set}" = set; then :
+  withval=$with_usb;
 fi
 
 
@@ -13905,6 +13920,89 @@ esac
 
 fi
 
+if test "x$with_usb" != "xno"
+then
+    if ${USB_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  USB_CFLAGS=`$PKG_CONFIG --cflags libusb-1.0 2>/dev/null`
+fi
+fi
+
+if ${USB_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  USB_LIBS=`$PKG_CONFIG --libs libusb-1.0 2>/dev/null`
+fi
+fi
+
+USB_LIBS=${USB_LIBS:-"-lusb-1.0"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libusb-1.0 cflags: $USB_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libusb-1.0 libs: $USB_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $USB_CFLAGS"
+ac_fn_c_check_header_mongrel "$LINENO" "libusb.h" "ac_cv_header_libusb_h" "$ac_includes_default"
+if test "x$ac_cv_header_libusb_h" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libusb_init in -lusb-1.0" >&5
+$as_echo_n "checking for libusb_init in -lusb-1.0... " >&6; }
+if ${ac_cv_lib_usb_1_0_libusb_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lusb-1.0 $USB_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char libusb_init ();
+int
+main ()
+{
+return libusb_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_usb_1_0_libusb_init=yes
+else
+  ac_cv_lib_usb_1_0_libusb_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_usb_1_0_libusb_init" >&5
+$as_echo "$ac_cv_lib_usb_1_0_libusb_init" >&6; }
+if test "x$ac_cv_lib_usb_1_0_libusb_init" = xyes; then :
+  :
+else
+  USB_LIBS=""
+fi
+
+else
+  USB_LIBS=""
+fi
+
+
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$USB_CFLAGS" || USB_CFLAGS=`echo " $USB_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$USB_LIBS" || USB_LIBS=`echo " $USB_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "$ac_cv_lib_usb_1_0_libusb_init" != "yes"; then :
+  case "x$with_usb" in
+  x)   as_fn_append wine_notices "|libusb-1.0 ${notice_platform}development files not found, USB devices won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libusb-1.0 ${notice_platform}development files not found, USB devices won't be supported.
+This is an error since --with-usb was requested." "$LINENO" 5 ;;
+esac
+enable_wineusb_sys=${enable_wineusb_sys:-no}
+fi
+
 if test "x$with_v4l2" != "xno"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lv4l2" >&5
@@ -19925,6 +20023,8 @@ GNUTLS_CFLAGS = $GNUTLS_CFLAGS
 GNUTLS_LIBS = $GNUTLS_LIBS
 SANE_CFLAGS = $SANE_CFLAGS
 SANE_LIBS = $SANE_LIBS
+USB_CFLAGS = $USB_CFLAGS
+USB_LIBS = $USB_LIBS
 GPHOTO2_CFLAGS = $GPHOTO2_CFLAGS
 GPHOTO2_LIBS = $GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS = $GPHOTO2_PORT_CFLAGS
@@ -21003,6 +21103,7 @@ wine_fn_config_makefile dlls/wineps.drv enable_wineps_drv
 wine_fn_config_makefile dlls/wineps16.drv16 enable_win16
 wine_fn_config_makefile dlls/winepulse.drv enable_winepulse_drv
 wine_fn_config_makefile dlls/wineqtdecoder enable_wineqtdecoder
+wine_fn_config_makefile dlls/wineusb.sys enable_wineusb_sys
 wine_fn_config_makefile dlls/winevulkan enable_winevulkan
 wine_fn_config_makefile dlls/winex11.drv enable_winex11_drv
 wine_fn_config_makefile dlls/wing.dll16 enable_win16
