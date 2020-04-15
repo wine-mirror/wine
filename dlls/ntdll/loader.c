@@ -1780,6 +1780,7 @@ static void load_builtin_callback( void *module, const char *filename )
     if (!module)
     {
         ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
+        builtin_load_info->status = STATUS_NO_MEMORY;
         return;
     }
     if (!(nt = RtlImageNtHeader( module )))
@@ -2555,6 +2556,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     static const WCHAR soW[] = {'.','s','o',0};
     DWORD len;
     void *handle;
+    const IMAGE_NT_HEADERS *nt;
     struct builtin_load_info info, *prev_info;
     ANSI_STRING unix_name;
     UNICODE_STRING win_name = *nt_name;
@@ -2581,7 +2583,6 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     prev_info = builtin_load_info;
     builtin_load_info = &info;
     handle = dlopen( so_name ? so_name : unix_name.Buffer, RTLD_NOW );
-    builtin_load_info = prev_info;
     RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
 
     if (!handle)
@@ -2589,15 +2590,39 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         if (so_name)
         {
             ERR("failed to load .so lib %s: %s\n", debugstr_a(so_name), dlerror() );
-            return STATUS_PROCEDURE_NOT_FOUND;
+            info.status = STATUS_PROCEDURE_NOT_FOUND;
         }
-        WARN( "failed to load .so lib %s: %s\n", debugstr_us(nt_name), dlerror() );
-        return STATUS_INVALID_IMAGE_FORMAT;
+        else
+        {
+            WARN( "failed to load .so lib %s: %s\n", debugstr_us(nt_name), dlerror() );
+            info.status = STATUS_INVALID_IMAGE_FORMAT;
+        }
     }
 
     if (info.status != STATUS_SUCCESS) goto failed;
 
-    if (!info.wm)
+    if (!info.wm && (nt = dlsym( handle, "__wine_spec_nt_header" )))
+    {
+        HMODULE module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+        if ((info.wm = get_modref( module )))  /* already loaded */
+        {
+            TRACE( "Found %s at %p for builtin %s\n",
+                   debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress,
+                   debugstr_us(nt_name) );
+            if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
+            dlclose( handle );
+        }
+        else
+        {
+            __wine_dll_register( nt, NULL );
+            if (!info.wm) goto failed;
+            TRACE_(loaddll)( "Loaded %s at %p: builtin\n",
+                             debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress );
+            info.wm->ldr.LoadCount = 1;
+            info.wm->ldr.SectionHandle = handle;
+        }
+    }
+    else if (!info.wm)
     {
         /* The constructor wasn't called, this means the .so is already
          * loaded under a different name. Try to find the wm for it. */
@@ -2620,11 +2645,13 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         info.wm->ldr.SectionHandle = handle;
     }
 
+    builtin_load_info = prev_info;
     *pwm = info.wm;
     return STATUS_SUCCESS;
 
 failed:
-    dlclose( handle );
+    builtin_load_info = prev_info;
+    if (handle) dlclose( handle );
     return info.status;
 }
 
