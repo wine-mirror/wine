@@ -624,6 +624,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 req->cookie   = wine_server_client_ptr( &cookie );
                 req->prev_apc = apc_handle;
                 req->timeout  = abs_timeout;
+                req->size     = size;
                 wine_server_add_data( req, &result, sizeof(result) );
                 wine_server_add_data( req, select_op, size );
                 ret = server_call_unlocked( req );

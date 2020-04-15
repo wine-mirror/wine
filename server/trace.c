@@ -1588,15 +1588,18 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, " flags=%d", req->flags );
     dump_uint64( ", cookie=", &req->cookie );
     dump_abstime( ", timeout=", &req->timeout );
+    fprintf( stderr, ", size=%u", req->size );
     fprintf( stderr, ", prev_apc=%04x", req->prev_apc );
     dump_varargs_apc_result( ", result=", cur_size );
-    dump_varargs_select_op( ", data=", cur_size );
+    dump_varargs_select_op( ", data=", min(cur_size,req->size) );
+    dump_varargs_context( ", context=", cur_size );
 }
 
 static void dump_select_reply( const struct select_reply *req )
 {
     dump_apc_call( " call=", &req->call );
     fprintf( stderr, ", apc_handle=%04x", req->apc_handle );
+    dump_varargs_context( ", context=", cur_size );
 }
 
 static void dump_create_event_request( const struct create_event_request *req )

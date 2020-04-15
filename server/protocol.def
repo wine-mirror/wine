@@ -1106,12 +1106,15 @@ struct rawinput_device
     int          flags;        /* wait flags (see below) */
     client_ptr_t cookie;       /* magic cookie to return to client */
     abstime_t    timeout;      /* timeout */
+    data_size_t  size;         /* size of select_op */
     obj_handle_t prev_apc;     /* handle to previous APC */
     VARARG(result,apc_result); /* result of previous APC */
-    VARARG(data,select_op);    /* operation-specific data */
+    VARARG(data,select_op,size); /* operation-specific data */
+    VARARG(context,context);   /* suspend context */
 @REPLY
     apc_call_t   call;         /* APC call arguments */
     obj_handle_t apc_handle;   /* handle to next APC */
+    VARARG(context,context);   /* suspend context */
 @END
 #define SELECT_ALERTABLE     1
 #define SELECT_INTERRUPTIBLE 2

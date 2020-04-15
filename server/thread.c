@@ -1536,18 +1536,36 @@ DECL_HANDLER(select)
     struct thread_apc *apc;
     const apc_result_t *result = get_req_data();
 
-    if (get_req_data_size() < sizeof(*result))
+    if (get_req_data_size() < sizeof(*result) ||
+        get_req_data_size() - sizeof(*result) < req->size ||
+        req->size & 3)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
+
+    if (get_req_data_size() - sizeof(*result) - req->size == sizeof(context_t))
+    {
+        const context_t *context = (const context_t *)((const char *)(result + 1) + req->size);
+        if (current->context || context->cpu != current->process->cpu)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+
+        if (!(current->suspend_context = mem_alloc( sizeof(*context) ))) return;
+        memcpy( current->suspend_context, context, sizeof(*context) );
+        current->suspend_context->flags = 0;  /* to keep track of what is modified */
+        current->context = current->suspend_context;
+    }
+
     if (!req->cookie)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
 
-    op_size = min( get_req_data_size() - sizeof(*result), sizeof(select_op) );
+    op_size = min( req->size, sizeof(select_op) );
     memset( &select_op, 0, sizeof(select_op) );
     memcpy( &select_op, result + 1, op_size );
 

@@ -1257,16 +1257,18 @@ struct select_request
     int          flags;
     client_ptr_t cookie;
     abstime_t    timeout;
+    data_size_t  size;
     obj_handle_t prev_apc;
     /* VARARG(result,apc_result); */
-    /* VARARG(data,select_op); */
-    char __pad_36[4];
+    /* VARARG(data,select_op,size); */
+    /* VARARG(context,context); */
 };
 struct select_reply
 {
     struct reply_header __header;
     apc_call_t   call;
     obj_handle_t apc_handle;
+    /* VARARG(context,context); */
     char __pad_52[4];
 };
 #define SELECT_ALERTABLE     1
@@ -6716,7 +6718,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 598
+#define SERVER_PROTOCOL_VERSION 599
 
 /* ### protocol_version end ### */
 
