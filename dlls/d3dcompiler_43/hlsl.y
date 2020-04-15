@@ -2035,7 +2035,7 @@ primary_expr:             C_FLOAT
                                     YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
-                                c->node.loc = get_location(&yylloc);
+                                c->node.loc = get_location(&@1);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("float"), HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1);
                                 c->v.value.f[0] = $1;
                                 if (!($$ = make_list(&c->node)))
@@ -2050,7 +2050,7 @@ primary_expr:             C_FLOAT
                                     YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
-                                c->node.loc = get_location(&yylloc);
+                                c->node.loc = get_location(&@1);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("int"), HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
                                 c->v.value.i[0] = $1;
                                 if (!($$ = make_list(&c->node)))
@@ -2065,7 +2065,7 @@ primary_expr:             C_FLOAT
                                     YYABORT;
                                 }
                                 c->node.type = HLSL_IR_CONSTANT;
-                                c->node.loc = get_location(&yylloc);
+                                c->node.loc = get_location(&@1);
                                 c->node.data_type = new_hlsl_type(d3dcompiler_strdup("bool"), HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1);
                                 c->v.value.b[0] = $1;
                                 if (!($$ = make_list(&c->node)))
