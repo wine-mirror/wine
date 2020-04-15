@@ -22,8 +22,6 @@
 #pragma makedep implib
 #endif
 
-#ifdef __MINGW32__
-
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -54,5 +52,3 @@ int __cdecl main( int argc, char *argv[] )
     if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWNORMAL;
     return WinMain( GetModuleHandleA(0), 0, cmdline, info.wShowWindow );
 }
-
-#endif
