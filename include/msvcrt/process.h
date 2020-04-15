@@ -31,8 +31,8 @@ typedef unsigned int (__stdcall *_beginthreadex_start_routine_t)(void *);
 uintptr_t __cdecl _beginthread(_beginthread_start_routine_t,unsigned int,void*);
 uintptr_t __cdecl _beginthreadex(void*,unsigned int,_beginthreadex_start_routine_t,void*,unsigned int,unsigned int*);
 intptr_t  __cdecl _cwait(int*,intptr_t,int);
-void      __cdecl _endthread(void) DECLSPEC_NORETURN;
-void      __cdecl _endthreadex(unsigned int) DECLSPEC_NORETURN;
+_ACRTIMP DECLSPEC_NORETURN void __cdecl _endthread(void);
+_ACRTIMP DECLSPEC_NORETURN void __cdecl _endthreadex(unsigned int);
 intptr_t  WINAPIV _execl(const char*,const char*,...);
 intptr_t  WINAPIV _execle(const char*,const char*,...);
 intptr_t  WINAPIV _execlp(const char*,const char*,...);
@@ -53,9 +53,9 @@ intptr_t  __cdecl _spawnvpe(int,const char*,const char* const *,const char* cons
 
 void      __cdecl _c_exit(void);
 void      __cdecl _cexit(void);
-void      __cdecl _exit(int) DECLSPEC_NORETURN;
-void      __cdecl abort(void) DECLSPEC_NORETURN;
-void      __cdecl exit(int) DECLSPEC_NORETURN;
+_ACRTIMP DECLSPEC_NORETURN void __cdecl _exit(int);
+_ACRTIMP DECLSPEC_NORETURN void __cdecl abort(void);
+_ACRTIMP DECLSPEC_NORETURN void __cdecl exit(int);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl quick_exit(int);
 int       __cdecl system(const char*);
 
