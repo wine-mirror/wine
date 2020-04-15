@@ -1187,14 +1187,23 @@ PTP_CLEANUP_GROUP WINAPI DECLSPEC_HOTPATCH CreateThreadpoolCleanupGroup(void)
 }
 
 
+static void WINAPI tp_io_callback( TP_CALLBACK_INSTANCE *instance, void *userdata, void *cvalue, IO_STATUS_BLOCK *iosb, TP_IO *io )
+{
+    PTP_WIN32_IO_CALLBACK callback = *(void **)io;
+    callback( instance, userdata, cvalue, RtlNtStatusToDosError( iosb->u.Status ), iosb->Information, io );
+}
+
+
 /***********************************************************************
  *           CreateThreadpoolIo   (kernelbase.@)
  */
-PTP_IO WINAPI /* DECLSPEC_HOTPATCH */ CreateThreadpoolIo( HANDLE handle, PTP_WIN32_IO_CALLBACK callback,
+PTP_IO WINAPI DECLSPEC_HOTPATCH CreateThreadpoolIo( HANDLE handle, PTP_WIN32_IO_CALLBACK callback,
                                                     PVOID userdata, TP_CALLBACK_ENVIRON *environment )
 {
-    FIXME( "(%p, %p, %p, %p): stub\n", handle, callback, userdata, environment );
-    return FALSE;
+    TP_IO *io;
+    if (!set_ntstatus( TpAllocIoCompletion( &io, handle, tp_io_callback, userdata, environment ))) return NULL;
+    *(void **)io = callback; /* ntdll leaves us space to store our callback at the beginning of TP_IO struct */
+    return io;
 }
 
 

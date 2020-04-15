@@ -153,6 +153,7 @@ struct io_completion
 /* internal threadpool object representation */
 struct threadpool_object
 {
+    void                   *win32_callback; /* leave space for kernelbase to store win32 callback */
     LONG                    refcount;
     BOOL                    shutdown;
     /* read-only information */

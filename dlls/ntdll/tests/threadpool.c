@@ -2130,9 +2130,7 @@ static void test_kernel32_tp_io(void)
     environment.Pool = pool;
     io = NULL;
     io = pCreateThreadpoolIo(server, kernel32_io_cb, &userdata, &environment);
-    todo_wine ok(!!io, "expected non-NULL TP_IO\n");
-    if (!io)
-        return;
+    ok(!!io, "expected non-NULL TP_IO\n");
 
     pWaitForThreadpoolIoCallbacks(io, FALSE);
 
