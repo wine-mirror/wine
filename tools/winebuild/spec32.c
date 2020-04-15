@@ -680,7 +680,8 @@ void output_module( DLLSPEC *spec )
 
     output( "\n\t.data\n" );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
-    output( "%s\n", asm_globl("__wine_spec_nt_header") );
+    output( "\t.globl %s\n", asm_name("__wine_spec_nt_header") );
+    output( "%s:\n", asm_name("__wine_spec_nt_header") );
     output( ".L__wine_spec_rva_base:\n" );
 
     output( "\t.long 0x4550\n" );         /* Signature */
@@ -749,13 +750,16 @@ void output_module( DLLSPEC *spec )
 
     output_data_directories( data_dirs );
 
-    output( "\n\t%s\n", get_asm_string_section() );
-    output( "%s\n", asm_globl("__wine_spec_file_name") );
-    output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
+    if (spec->characteristics & IMAGE_FILE_DLL)
+    {
+        output( "\n\t%s\n", get_asm_string_section() );
+        output( "%s\n", asm_globl("__wine_spec_file_name") );
+        output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
+        output_asm_constructor( "__wine_spec_init_ctor" );
+    }
+
     if (target_platform == PLATFORM_APPLE)
         output( "\t.lcomm %s,4\n", asm_name("_end") );
-
-    output_asm_constructor( "__wine_spec_init_ctor" );
 }
 
 
