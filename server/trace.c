@@ -2435,7 +2435,6 @@ static void dump_queue_exception_event_request( const struct queue_exception_eve
     dump_uint64( ", address=", &req->address );
     fprintf( stderr, ", len=%u", req->len );
     dump_varargs_uints64( ", params=", min(cur_size,req->len) );
-    dump_varargs_context( ", context=", cur_size );
 }
 
 static void dump_queue_exception_event_reply( const struct queue_exception_event_reply *req )
@@ -2446,11 +2445,6 @@ static void dump_queue_exception_event_reply( const struct queue_exception_event
 static void dump_get_exception_status_request( const struct get_exception_status_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_get_exception_status_reply( const struct get_exception_status_reply *req )
-{
-    dump_varargs_context( " context=", cur_size );
 }
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )
@@ -4999,7 +4993,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_next_thread_reply,
     (dump_func)dump_wait_debug_event_reply,
     (dump_func)dump_queue_exception_event_reply,
-    (dump_func)dump_get_exception_status_reply,
+    NULL,
     NULL,
     NULL,
     NULL,

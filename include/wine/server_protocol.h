@@ -2522,7 +2522,6 @@ struct queue_exception_event_request
     client_ptr_t  address;
     data_size_t   len;
     /* VARARG(params,uints64,len); */
-    /* VARARG(context,context); */
     char __pad_44[4];
 };
 struct queue_exception_event_reply
@@ -2542,7 +2541,6 @@ struct get_exception_status_request
 struct get_exception_status_reply
 {
     struct reply_header __header;
-    /* VARARG(context,context); */
 };
 
 
@@ -6686,7 +6684,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 600
+#define SERVER_PROTOCOL_VERSION 601
 
 /* ### protocol_version end ### */
 

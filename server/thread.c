@@ -588,12 +588,6 @@ void stop_thread( struct thread *thread )
     if (is_process_init_done(thread->process)) send_thread_signal( thread, SIGUSR1 );
 }
 
-/* stop a thread if it's supposed to be suspended */
-void stop_thread_if_suspended( struct thread *thread )
-{
-    if (thread->suspend + thread->process->suspend > 0) stop_thread( thread );
-}
-
 /* suspend a thread */
 int suspend_thread( struct thread *thread )
 {

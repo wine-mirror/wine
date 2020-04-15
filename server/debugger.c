@@ -50,7 +50,6 @@ struct debug_event
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
     debug_event_t          data;      /* event data */
-    context_t              context;   /* register context */
 };
 
 /* debug context */
@@ -346,11 +345,6 @@ static void debug_event_destroy( struct object *obj )
                 close_handle( debugger, event->data.load_dll.handle );
             break;
         }
-    }
-    if (event->sender->context == &event->context)
-    {
-        event->sender->context = NULL;
-        stop_thread_if_suspended( event->sender );
     }
     release_object( event->sender );
     release_object( event->debugger );
@@ -746,13 +740,6 @@ DECL_HANDLER(queue_exception_event)
 
         if ((event = alloc_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data )))
         {
-            const context_t *context = (const context_t *)((const char *)get_req_data() + req->len);
-            data_size_t size = get_req_data_size() - req->len;
-
-            memset( &event->context, 0, sizeof(event->context) );
-            memcpy( &event->context, context, min( sizeof(event->context), size ) );
-            thread->context = &event->context;
-
             if ((reply->handle = alloc_handle( thread->process, event, SYNCHRONIZE, 0 )))
             {
                 link_event( event );
@@ -772,18 +759,7 @@ DECL_HANDLER(get_exception_status)
                                                        0, &debug_event_ops )))
     {
         close_handle( current->process, req->handle );
-        if (event->state == EVENT_CONTINUED)
-        {
-            if (current->context == &event->context)
-            {
-                data_size_t size = min( sizeof(context_t), get_reply_max_size() );
-                set_reply_data( &event->context, size );
-                current->context = NULL;
-                stop_thread_if_suspended( current );
-            }
-            set_error( event->status );
-        }
-        else set_error( STATUS_PENDING );
+        set_error( event->state == EVENT_CONTINUED ? event->status : STATUS_PENDING );
         release_object( event );
     }
 }

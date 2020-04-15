@@ -1377,7 +1377,6 @@ C_ASSERT( FIELD_OFFSET(struct queue_exception_event_reply, handle) == 8 );
 C_ASSERT( sizeof(struct queue_exception_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_exception_status_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_exception_status_request) == 16 );
-C_ASSERT( sizeof(struct get_exception_status_reply) == 8 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, tid) == 16 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, status) == 20 );

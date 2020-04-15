@@ -1934,7 +1934,6 @@ enum char_info_mode
     client_ptr_t  address;     /* exception address */
     data_size_t   len;         /* size of parameters */
     VARARG(params,uints64,len);/* exception parameters */
-    VARARG(context,context);   /* thread context */
 @REPLY
     obj_handle_t     handle;   /* handle to the queued event */
 @END
@@ -1943,8 +1942,6 @@ enum char_info_mode
 /* Retrieve the status of an exception event */
 @REQ(get_exception_status)
     obj_handle_t     handle;   /* handle to the queued event */
-@REPLY
-    VARARG(context,context);   /* modified thread context */
 @END
 
 
