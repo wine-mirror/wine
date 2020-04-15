@@ -72,8 +72,7 @@ static void destroy_datasource(struct datasource *data)
         CoTaskMemFree(data->propinfoset->rgPropertyInfos);
         CoTaskMemFree(data->propinfoset);
     }
-    if (data->description)
-        CoTaskMemFree(data->description);
+    CoTaskMemFree(data->description);
 
     if (data->provider)
         IDBProperties_Release(data->provider);
