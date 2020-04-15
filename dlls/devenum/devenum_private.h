@@ -59,11 +59,8 @@ struct moniker
     CLSID class;
     BOOL has_class;
     enum device_type type;
-    union
-    {
-        WCHAR *name;    /* for filters and codecs */
-        CLSID clsid;    /* for DMOs */
-    };
+    WCHAR *name;    /* for filters and codecs */
+    CLSID clsid;    /* for DMOs */
 
     IPropertyBag IPropertyBag_iface;
 };
