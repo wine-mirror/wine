@@ -26,7 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
-#include "crt0_private.h"
 
 extern int __cdecl wmain( int argc, WCHAR *argv[] );
 
@@ -96,12 +95,7 @@ static WCHAR **build_argv( const WCHAR *src, int *ret_argc )
 DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_wentry( PEB *peb )
 {
     int argc;
-    BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
     WCHAR **argv = build_argv( GetCommandLineW(), &argc );
-    DWORD ret;
 
-    if (needs_init) _init( 0, NULL, NULL );
-    ret = wmain( argc, argv );
-    if (needs_init) _fini();
-    ExitProcess( ret );
+    ExitProcess( wmain( argc, argv ));
 }
