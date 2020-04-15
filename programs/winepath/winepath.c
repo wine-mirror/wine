@@ -24,6 +24,8 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <io.h>
 
 #include "wine/debug.h"
 
@@ -139,6 +141,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     int outputformats;
     int i;
     int separator;
+
+    setmode( fileno(stdout), O_BINARY );  /* avoid crlf */
 
     outputformats = parse_options(argv);
 
