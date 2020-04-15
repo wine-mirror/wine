@@ -106,6 +106,7 @@ DirectShow
 M:	Zebediah Figura <z.figura12@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/amstream/
+F:	dlls/devenum/
 F:	dlls/mciqtz32/
 F:	dlls/qasf/
 F:	dlls/qcap/
