@@ -3843,7 +3843,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
     DWORD len;
     HRESULT hr;
     RPC_WSTR binding_str;
-    extern handle_t rpc_handle;
+    extern handle_t schrpc_handle;
 
     TRACE("%p,%s,%s,%s,%s\n", iface, debugstr_variant(&server), debugstr_variant(&user),
           debugstr_variant(&domain), debugstr_variant(&password));
@@ -3882,7 +3882,7 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
 
     hr = RpcStringBindingComposeW(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
     if (hr != RPC_S_OK) return hr;
-    hr = RpcBindingFromStringBindingW(binding_str, &rpc_handle);
+    hr = RpcBindingFromStringBindingW(binding_str, &schrpc_handle);
     RpcStringFreeW(&binding_str);
     if (hr != RPC_S_OK) return hr;
 

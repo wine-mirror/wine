@@ -26,7 +26,7 @@ import "ocidl.idl";
 
 [
     uuid(86d35949-83c9-4044-b424-db363231fd0c),
-    implicit_handle(handle_t rpc_handle),
+    implicit_handle(handle_t schrpc_handle),
     version(1.0),
     pointer_default(unique)
 ]
