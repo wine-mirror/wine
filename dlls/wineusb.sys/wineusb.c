@@ -38,6 +38,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
+#if defined(__i386__) && !defined(_WIN32)
+
+extern void * WINAPI wrap_fastcall_func1( void *func, const void *a );
+__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
+                   "xchgl (%esp),%ecx\n\t"
+                   "jmp *%eax" );
+
+#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
+
+#else
+
+#define call_fastcall_func1(func,a) func(a)
+
+#endif
+
 #define DECLARE_CRITICAL_SECTION(cs) \
     static CRITICAL_SECTION cs; \
     static CRITICAL_SECTION_DEBUG cs##_debug = \
@@ -172,6 +189,42 @@ static NTSTATUS fdo_pnp(IRP *irp)
 
     switch (stack->MinorFunction)
     {
+        case IRP_MN_QUERY_DEVICE_RELATIONS:
+        {
+            struct usb_device *device;
+            DEVICE_RELATIONS *devices;
+            unsigned int i = 0;
+
+            if (stack->Parameters.QueryDeviceRelations.Type != BusRelations)
+            {
+                FIXME("Unhandled device relations type %#x.\n", stack->Parameters.QueryDeviceRelations.Type);
+                break;
+            }
+
+            EnterCriticalSection(&wineusb_cs);
+
+            if (!(devices = ExAllocatePool(PagedPool,
+                    offsetof(DEVICE_RELATIONS, Objects[list_count(&device_list)]))))
+            {
+                LeaveCriticalSection(&wineusb_cs);
+                irp->IoStatus.Status = STATUS_NO_MEMORY;
+                break;
+            }
+
+            LIST_FOR_EACH_ENTRY(device, &device_list, struct usb_device, entry)
+            {
+                devices->Objects[i++] = device->device_obj;
+                call_fastcall_func1(ObfReferenceObject, device->device_obj);
+            }
+
+            LeaveCriticalSection(&wineusb_cs);
+
+            devices->Count = i;
+            irp->IoStatus.Information = (ULONG_PTR)devices;
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+        }
+
         case IRP_MN_START_DEVICE:
             if ((ret = libusb_hotplug_register_callback(NULL,
                     LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
