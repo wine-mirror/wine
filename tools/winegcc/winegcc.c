@@ -532,20 +532,10 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
     strarray_add( link_args, "-Wl,-Bsymbolic" );
     if (!opts->noshortwchar && opts->target_cpu == CPU_ARM)
         strarray_add( flags, "-Wl,--no-wchar-size-warning" );
-
-    /* Try all options first - this is likely to succeed on modern compilers */
-    if (!try_link( opts->prefix, link_args, "-Wl,-z,defs -Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
-    {
+    if (!try_link( opts->prefix, link_args, "-Wl,-z,defs" ))
         strarray_add( flags, "-Wl,-z,defs" );
-        strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
-    }
-    else /* otherwise figure out which ones are allowed */
-    {
-        if (!try_link( opts->prefix, link_args, "-Wl,-z,defs" ))
-            strarray_add( flags, "-Wl,-z,defs" );
-        if (!try_link( opts->prefix, link_args, "-Wl,-init,__wine_spec_init,-fini,_wine_spec_fini" ))
-            strarray_add( flags, "-Wl,-init,__wine_spec_init,-fini,__wine_spec_fini" );
-    }
+    if (opts->shared && !try_link( opts->prefix, link_args, "-Wl,-init,__wine_spec_init" ))
+        strarray_add( flags, "-Wl,-init,__wine_spec_init" );
 
     strarray_addall( link_args, flags );
     return link_args;
