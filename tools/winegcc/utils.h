@@ -52,7 +52,7 @@ enum target_platform
     PLATFORM_CYGWIN
 };
 
-void error(const char* s, ...) DECLSPEC_NORETURN;
+void DECLSPEC_NORETURN error(const char* s, ...);
 
 void* xmalloc(size_t size);
 void* xrealloc(void* p, size_t size);
