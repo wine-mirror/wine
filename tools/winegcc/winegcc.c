@@ -1187,19 +1187,16 @@ static void build(struct options* opts)
     /* set default entry point, if needed */
     if (!opts->entry_point)
     {
-        if (is_pe)
+        if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
+            entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "_DriverEntry@8" : "DriverEntry";
+        else if (opts->use_msvcrt && !opts->shared && !opts->win16_app)
         {
-            if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
-                entry_point = opts->target_cpu == CPU_x86 ? "_DriverEntry@8" : "DriverEntry";
-            else if(opts->use_msvcrt && !opts->shared && !opts->win16_app)
-            {
-                if (opts->unicode_app)
-                    entry_point = opts->target_cpu == CPU_x86 ? "_wmainCRTStartup" : "wmainCRTStartup";
-                else
-                    entry_point = opts->target_cpu == CPU_x86 ? "_mainCRTStartup" : "mainCRTStartup";
-            }
+            if (opts->unicode_app)
+                entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "_wmainCRTStartup" : "wmainCRTStartup";
+            else
+                entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "_mainCRTStartup" : "mainCRTStartup";
         }
-        else if (!opts->shared && opts->unicode_app)
+        else if (!is_pe && !opts->shared && opts->unicode_app)
             entry_point = "__wine_spec_exe_wentry";
     }
     else entry_point = opts->entry_point;
