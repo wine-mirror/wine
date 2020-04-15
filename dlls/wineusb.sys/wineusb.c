@@ -40,6 +40,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
+static BOOL thread_shutdown;
+static HANDLE event_thread;
+
+static DWORD CALLBACK event_thread_proc(void *arg)
+{
+    int ret;
+
+    TRACE("Starting event thread.\n");
+
+    while (!thread_shutdown)
+    {
+        if ((ret = libusb_handle_events(NULL)))
+            ERR("Error handling events: %s\n", libusb_strerror(ret));
+    }
+
+    TRACE("Shutting down event thread.\n");
+    return 0;
+}
+
 static NTSTATUS fdo_pnp(IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -55,6 +74,11 @@ static NTSTATUS fdo_pnp(IRP *irp)
             break;
 
         case IRP_MN_REMOVE_DEVICE:
+            thread_shutdown = TRUE;
+            libusb_interrupt_event_handler(NULL);
+            WaitForSingleObject(event_thread, INFINITE);
+            CloseHandle(event_thread);
+
             irp->IoStatus.Status = STATUS_SUCCESS;
             IoSkipCurrentIrpStackLocation(irp);
             ret = IoCallDriver(bus_pdo, irp);
@@ -110,6 +134,8 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
         ERR("Failed to initialize libusb: %s\n", libusb_strerror(err));
         return STATUS_UNSUCCESSFUL;
     }
+
+    event_thread = CreateThread(NULL, 0, event_thread_proc, NULL, 0, NULL);
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
