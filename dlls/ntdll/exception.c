@@ -112,24 +112,9 @@ static ULONG remove_vectored_handler( struct list *handler_list, VECTORED_HANDLE
 void wait_suspend( CONTEXT *context )
 {
     int saved_errno = errno;
-    context_t server_context;
-    DWORD flags = context->ContextFlags;
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL );
-
-    /* retrieve the new context */
-    SERVER_START_REQ( get_suspend_context )
-    {
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
-        if (wine_server_reply_size( reply ))
-        {
-            context_from_server( context, &server_context );
-            context->ContextFlags |= flags;  /* unchanged registers are still available */
-        }
-    }
-    SERVER_END_REQ;
 
     errno = saved_errno;
 }

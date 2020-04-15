@@ -639,9 +639,16 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                     wine_server_add_data( req, &server_context, sizeof(server_context) );
                     suspend_context = FALSE; /* server owns the context now */
                 }
+                if (context) wine_server_set_reply( req, &server_context, sizeof(server_context) );
                 ret = server_call_unlocked( req );
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
+                if (wine_server_reply_size( reply ))
+                {
+                    DWORD context_flags = context->ContextFlags; /* unchanged registers are still available */
+                    context_from_server( context, &server_context );
+                    context->ContextFlags |= context_flags;
+                }
             }
             SERVER_END_REQ;
 

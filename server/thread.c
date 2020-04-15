@@ -780,6 +780,19 @@ static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int s
     struct wake_up_reply reply;
     int ret;
 
+    /* check if we're waking current suspend wait */
+    if (thread->suspend_context && thread->suspend_cookie == cookie
+        && signaled != STATUS_KERNEL_APC && signaled != STATUS_USER_APC)
+    {
+        if (!thread->suspend_context->flags)
+        {
+            if (current->context == current->suspend_context) thread->context = NULL;
+            free( thread->suspend_context );
+            thread->suspend_context = NULL;
+        }
+        else signaled = STATUS_KERNEL_APC; /* signal a fake APC so that client calls select to get a new context */
+    }
+
     memset( &reply, 0, sizeof(reply) );
     reply.cookie   = cookie;
     reply.signaled = signaled;
@@ -1557,6 +1570,7 @@ DECL_HANDLER(select)
         memcpy( current->suspend_context, context, sizeof(*context) );
         current->suspend_context->flags = 0;  /* to keep track of what is modified */
         current->context = current->suspend_context;
+        current->suspend_cookie = req->cookie;
     }
 
     if (!req->cookie)
@@ -1626,6 +1640,16 @@ DECL_HANDLER(select)
             wake_up( &apc->obj, 0 );
         }
         release_object( apc );
+    }
+    else if(get_error() != STATUS_PENDING && get_reply_max_size() == sizeof(context_t)
+            && current->suspend_context && current->suspend_cookie == req->cookie)
+    {
+        if (current->suspend_context->flags)
+            set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
+        else
+            free( current->suspend_context );
+        if (current->context == current->suspend_context) current->context = NULL;
+        current->suspend_context = NULL;
     }
 }
 
