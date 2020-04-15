@@ -38,6 +38,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
+static DEVICE_OBJECT *bus_fdo, *bus_pdo;
+
+static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
+{
+    NTSTATUS ret;
+
+    TRACE("driver %p, pdo %p.\n", driver, pdo);
+
+    if ((ret = IoCreateDevice(driver, 0, NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &bus_fdo)))
+    {
+        ERR("Failed to create FDO, status %#x.\n", ret);
+        return ret;
+    }
+
+    IoAttachDeviceToDeviceStack(bus_fdo, pdo);
+    bus_pdo = pdo;
+    bus_fdo->Flags &= ~DO_DEVICE_INITIALIZING;
+
+    return STATUS_SUCCESS;
+}
+
 static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 {
     libusb_exit(NULL);
@@ -55,6 +76,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
         return STATUS_UNSUCCESSFUL;
     }
 
+    driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
 
     return STATUS_SUCCESS;
