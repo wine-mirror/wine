@@ -1904,7 +1904,10 @@ static void debug_dump_instr_list(const struct list *list)
 
 static void debug_dump_src(const struct hlsl_ir_node *node)
 {
-    wine_dbg_printf("%p", node);
+    if (node->index)
+        wine_dbg_printf("@%u", node->index);
+    else
+        wine_dbg_printf("%p", node);
 }
 
 static void debug_dump_ir_var(const struct hlsl_ir_var *var)
@@ -2178,7 +2181,10 @@ static void debug_dump_ir_loop(const struct hlsl_ir_loop *loop)
 
 static void debug_dump_instr(const struct hlsl_ir_node *instr)
 {
-    wine_dbg_printf("%4u: %p: ", instr->index, instr);
+    if (instr->index)
+        wine_dbg_printf("%4u: ", instr->index);
+    else
+        wine_dbg_printf("%p: ", instr);
     switch (instr->type)
     {
         case HLSL_IR_EXPR:
