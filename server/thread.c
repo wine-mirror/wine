@@ -180,7 +180,6 @@ static inline void init_thread_structure( struct thread *thread )
     thread->unix_pid        = -1;  /* not known yet */
     thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
-    thread->suspend_context = NULL;
     thread->teb             = 0;
     thread->entry_point     = 0;
     thread->debug_ctx       = NULL;
@@ -325,7 +324,7 @@ static void cleanup_thread( struct thread *thread )
     if (thread->request_fd) release_object( thread->request_fd );
     if (thread->reply_fd) release_object( thread->reply_fd );
     if (thread->wait_fd) release_object( thread->wait_fd );
-    free( thread->suspend_context );
+    free( thread->context );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
     free_msg_queue( thread );
@@ -345,7 +344,6 @@ static void cleanup_thread( struct thread *thread )
     thread->reply_fd = NULL;
     thread->wait_fd = NULL;
     thread->context = NULL;
-    thread->suspend_context = NULL;
     thread->desktop = 0;
     thread->desc = NULL;
     thread->desc_len = 0;
@@ -775,14 +773,13 @@ static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int s
     int ret;
 
     /* check if we're waking current suspend wait */
-    if (thread->suspend_context && thread->suspend_cookie == cookie
+    if (thread->context && thread->suspend_cookie == cookie
         && signaled != STATUS_KERNEL_APC && signaled != STATUS_USER_APC)
     {
-        if (!thread->suspend_context->flags)
+        if (!thread->context->flags)
         {
-            if (current->context == current->suspend_context) thread->context = NULL;
-            free( thread->suspend_context );
-            thread->suspend_context = NULL;
+            free( thread->context );
+            thread->context = NULL;
         }
         else signaled = STATUS_KERNEL_APC; /* signal a fake APC so that client calls select to get a new context */
     }
@@ -1560,10 +1557,9 @@ DECL_HANDLER(select)
             return;
         }
 
-        if (!(current->suspend_context = mem_alloc( sizeof(*context) ))) return;
-        memcpy( current->suspend_context, context, sizeof(*context) );
-        current->suspend_context->flags = 0;  /* to keep track of what is modified */
-        current->context = current->suspend_context;
+        if (!(current->context = mem_alloc( sizeof(*context) ))) return;
+        memcpy( current->context, context, sizeof(*context) );
+        current->context->flags = 0;  /* to keep track of what is modified */
         current->suspend_cookie = req->cookie;
     }
 
@@ -1635,15 +1631,14 @@ DECL_HANDLER(select)
         }
         release_object( apc );
     }
-    else if(get_error() != STATUS_PENDING && get_reply_max_size() == sizeof(context_t)
-            && current->suspend_context && current->suspend_cookie == req->cookie)
+    else if (get_error() != STATUS_PENDING && get_reply_max_size() == sizeof(context_t) &&
+             current->context && current->suspend_cookie == req->cookie)
     {
-        if (current->suspend_context->flags)
-            set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
+        if (current->context->flags)
+            set_reply_data_ptr( current->context, sizeof(context_t) );
         else
-            free( current->suspend_context );
-        if (current->context == current->suspend_context) current->context = NULL;
-        current->suspend_context = NULL;
+            free( current->context );
+        current->context = NULL;
     }
 }
 
