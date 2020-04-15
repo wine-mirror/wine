@@ -133,8 +133,11 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *con
     client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
     context_t server_context;
     select_op_t select_op;
+    sigset_t old_set;
 
     if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
+
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
 
     for (i = 0; i < min( rec->NumberParameters, EXCEPTION_MAXIMUM_PARAMETERS ); i++)
         params[i] = rec->ExceptionInformation[i];
@@ -151,23 +154,27 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *con
         req->len     = i * sizeof(params[0]);
         wine_server_add_data( req, params, req->len );
         wine_server_add_data( req, &server_context, sizeof(server_context) );
-        if (!wine_server_call( req )) handle = reply->handle;
+        if (!(ret = wine_server_call( req ))) handle = reply->handle;
     }
     SERVER_END_REQ;
-    if (!handle) return 0;
 
-    select_op.wait.op = SELECT_WAIT;
-    select_op.wait.handles[0] = handle;
-    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, NULL, NULL );
-
-    SERVER_START_REQ( get_exception_status )
+    if (handle)
     {
-        req->handle = handle;
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-        ret = wine_server_call( req );
+        select_op.wait.op = SELECT_WAIT;
+        select_op.wait.handles[0] = handle;
+        server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, NULL, NULL );
+
+        SERVER_START_REQ( get_exception_status )
+        {
+            req->handle = handle;
+            wine_server_set_reply( req, &server_context, sizeof(server_context) );
+            ret = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        if (ret >= 0) context_from_server( context, &server_context );
     }
-    SERVER_END_REQ;
-    if (ret >= 0) context_from_server( context, &server_context );
+
+    pthread_sigmask( SIG_SETMASK, &old_set, NULL );
     return ret;
 }
 
