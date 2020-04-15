@@ -105,7 +105,7 @@
 @ stdcall CancelIo(long)
 @ stdcall CancelIoEx(long ptr)
 @ stdcall CancelSynchronousIo(long)
-@ stub CancelThreadpoolIo
+@ stdcall CancelThreadpoolIo(ptr) ntdll.TpCancelAsyncIoOperation
 @ stdcall CancelWaitableTimer(long)
 # @ stub CeipIsOptedIn
 @ stdcall ChangeTimerQueueTimer(ptr ptr long long)
@@ -146,7 +146,7 @@
 @ stdcall CloseThreadpool(ptr) ntdll.TpReleasePool
 @ stdcall CloseThreadpoolCleanupGroup(ptr) ntdll.TpReleaseCleanupGroup
 @ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) ntdll.TpReleaseCleanupGroupMembers
-@ stub CloseThreadpoolIo
+@ stdcall CloseThreadpoolIo(ptr) ntdll.TpReleaseIoCompletion
 @ stdcall CloseThreadpoolTimer(ptr) ntdll.TpReleaseTimer
 @ stdcall CloseThreadpoolWait(ptr) ntdll.TpReleaseWait
 @ stdcall CloseThreadpoolWork(ptr) ntdll.TpReleaseWork
@@ -1690,7 +1690,7 @@
 @ stdcall WaitForMultipleObjectsEx(long ptr long long long)
 @ stdcall WaitForSingleObject(long long)
 @ stdcall WaitForSingleObjectEx(long long long)
-@ stub WaitForThreadpoolIoCallbacks
+@ stdcall WaitForThreadpoolIoCallbacks(ptr) ntdll.TpWaitForIoCompletion
 @ stdcall WaitForThreadpoolTimerCallbacks(ptr long) ntdll.TpWaitForTimer
 @ stdcall WaitForThreadpoolWaitCallbacks(ptr long) ntdll.TpWaitForWait
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) ntdll.TpWaitForWork
