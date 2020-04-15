@@ -602,16 +602,23 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
  *              server_select
  */
 unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                            timeout_t abs_timeout, user_apc_t *user_apc )
+                            timeout_t abs_timeout, CONTEXT *context, user_apc_t *user_apc )
 {
     unsigned int ret;
     int cookie;
     obj_handle_t apc_handle = 0;
+    context_t server_context;
+    BOOL suspend_context = FALSE;
     apc_call_t call;
     apc_result_t result;
     sigset_t old_set;
 
     memset( &result, 0, sizeof(result) );
+    if (context)
+    {
+        suspend_context = TRUE;
+        context_to_server( &server_context, context );
+    }
 
     do
     {
@@ -627,6 +634,11 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 req->size     = size;
                 wine_server_add_data( req, &result, sizeof(result) );
                 wine_server_add_data( req, select_op, size );
+                if (suspend_context)
+                {
+                    wine_server_add_data( req, &server_context, sizeof(server_context) );
+                    suspend_context = FALSE; /* server owns the context now */
+                }
                 ret = server_call_unlocked( req );
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
@@ -673,7 +685,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
 
     for (;;)
     {
-        ret = server_select( select_op, size, flags, abs_timeout, &apc );
+        ret = server_select( select_op, size, flags, abs_timeout, NULL, &apc );
         if (ret != STATUS_USER_APC) break;
         invoke_apc( &apc );
 

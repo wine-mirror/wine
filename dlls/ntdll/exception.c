@@ -115,18 +115,8 @@ void wait_suspend( CONTEXT *context )
     context_t server_context;
     DWORD flags = context->ContextFlags;
 
-    context_to_server( &server_context, context );
-
-    /* store the context we got at suspend time */
-    SERVER_START_REQ( set_suspend_context )
-    {
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, NULL );
+    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL );
 
     /* retrieve the new context */
     SERVER_START_REQ( get_suspend_context )
@@ -183,7 +173,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *con
 
     select_op.wait.op = SELECT_WAIT;
     select_op.wait.handles[0] = handle;
-    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, NULL );
+    server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, NULL, NULL );
 
     SERVER_START_REQ( get_exception_status )
     {

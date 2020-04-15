@@ -2585,7 +2585,7 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
         if (!compare_addr( addr, cmp, size ))
             ret = STATUS_SUCCESS;
         else
-            ret = server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, &apc );
+            ret = server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, NULL, &apc );
         RtlLeaveCriticalSection( &addr_section );
 
         if (ret != STATUS_USER_APC) break;
