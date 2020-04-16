@@ -3068,6 +3068,7 @@ static void test_CoWaitForMultipleHandles(void)
 static void test_CoGetMalloc(void)
 {
     IMalloc *imalloc;
+    SIZE_T size;
     HRESULT hr;
     char *ptr;
     int ret;
@@ -3120,6 +3121,13 @@ static void test_CoGetMalloc(void)
 
     ret = IMalloc_DidAlloc(imalloc, ptr + 4);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
+
+    /* GetSize() */
+    size = IMalloc_GetSize(imalloc, NULL);
+    ok(size == (SIZE_T)-1, "Unexpected return value.\n");
+
+    size = IMalloc_GetSize(imalloc, ptr);
+    ok(size == 16, "Unexpected return value.\n");
 
     IMalloc_Free(imalloc, ptr);
 
