@@ -599,14 +599,10 @@ static ULONG WINAPI sample_grabber_stream_type_handler_Release(IMFMediaTypeHandl
     return IMFStreamSink_Release(&stream->IMFStreamSink_iface);
 }
 
-static HRESULT WINAPI sample_grabber_stream_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
-        IMFMediaType *in_type, IMFMediaType **out_type)
+static HRESULT sample_grabber_stream_is_media_type_supported(struct sample_grabber_stream *stream, IMFMediaType *in_type)
 {
-    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
     const DWORD supported_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
     DWORD flags;
-
-    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
 
     if (!stream->sink)
         return MF_E_STREAMSINK_REMOVED;
@@ -618,6 +614,16 @@ static HRESULT WINAPI sample_grabber_stream_type_handler_IsMediaTypeSupported(IM
         return S_OK;
 
     return (flags & supported_flags) == supported_flags ? S_OK : MF_E_INVALIDMEDIATYPE;
+}
+
+static HRESULT WINAPI sample_grabber_stream_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
+        IMFMediaType *in_type, IMFMediaType **out_type)
+{
+    struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+
+    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
+
+    return sample_grabber_stream_is_media_type_supported(stream, in_type);
 }
 
 static HRESULT WINAPI sample_grabber_stream_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
@@ -647,14 +653,12 @@ static HRESULT WINAPI sample_grabber_stream_type_handler_SetCurrentMediaType(IMF
         IMFMediaType *media_type)
 {
     struct sample_grabber_stream *stream = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr;
 
     TRACE("%p, %p.\n", iface, media_type);
 
-    if (!media_type)
-        return E_POINTER;
-
-    if (!stream->sink)
-        return MF_E_STREAMSINK_REMOVED;
+    if (FAILED(hr = sample_grabber_stream_is_media_type_supported(stream, media_type)))
+        return hr;
 
     IMFMediaType_Release(stream->sink->media_type);
     stream->sink->media_type = media_type;
