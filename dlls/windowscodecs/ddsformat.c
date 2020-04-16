@@ -33,12 +33,43 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+#define DDS_MAGIC 0x20534444
+
+typedef struct {
+    DWORD size;
+    DWORD flags;
+    DWORD fourCC;
+    DWORD rgbBitCount;
+    DWORD rBitMask;
+    DWORD gBitMask;
+    DWORD bBitMask;
+    DWORD aBitMask;
+} DDS_PIXELFORMAT;
+
+typedef struct {
+    DWORD size;
+    DWORD flags;
+    DWORD height;
+    DWORD width;
+    DWORD pitchOrLinearSize;
+    DWORD depth;
+    DWORD mipMapCount;
+    DWORD reserved1[11];
+    DDS_PIXELFORMAT ddspf;
+    DWORD caps;
+    DWORD caps2;
+    DWORD caps3;
+    DWORD caps4;
+    DWORD reserved2;
+} DDS_HEADER;
+
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;
     BOOL initialized;
     IStream *stream;
     CRITICAL_SECTION lock;
+    DDS_HEADER header;
 } DdsDecoder;
 
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
@@ -108,9 +139,55 @@ static HRESULT WINAPI DdsDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
 static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
                                             WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%x): stub.\n", iface, pIStream, cacheOptions);
+    DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    HRESULT hr;
+    LARGE_INTEGER seek;
+    DWORD magic;
+    ULONG bytesread;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->initialized) {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(pIStream, seek, SEEK_SET, NULL);
+    if (FAILED(hr)) goto end;
+
+    hr = IStream_Read(pIStream, &magic, sizeof(magic), &bytesread);
+    if (FAILED(hr)) goto end;
+    if (bytesread != sizeof(magic)) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
+    if (magic != DDS_MAGIC) {
+        hr = WINCODEC_ERR_UNKNOWNIMAGEFORMAT;
+        goto end;
+    }
+
+    hr = IStream_Read(pIStream, &This->header, sizeof(This->header), &bytesread);
+    if (FAILED(hr)) goto end;
+    if (bytesread != sizeof(This->header)) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
+    if (This->header.size != sizeof(This->header)) {
+        hr = WINCODEC_ERR_BADHEADER;
+        goto end;
+    }
+
+    This->initialized = TRUE;
+    This->stream = pIStream;
+    IStream_AddRef(pIStream);
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI DdsDecoder_GetContainerFormat(IWICBitmapDecoder *iface,

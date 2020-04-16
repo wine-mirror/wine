@@ -86,9 +86,9 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
 
     hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
     if (index == -1) {
-        todo_wine ok(SUCCEEDED(hr), "Decoder Initialize failed, hr=%x\n", hr);
+        ok(SUCCEEDED(hr), "Decoder Initialize failed, hr=%x\n", hr);
     } else {
-        todo_wine ok(hr == expected, "%d: Expected hr=%x, got %x\n", index, expected, hr);
+        ok(hr == expected, "%d: Expected hr=%x, got %x\n", index, expected, hr);
     }
     return hr;
 }
