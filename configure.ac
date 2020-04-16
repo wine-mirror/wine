@@ -2182,7 +2182,7 @@ CFLAGS="$ac_save_CFLAGS"
 
 dnl Check for -ldl
 AC_SEARCH_LIBS(dlopen, dl)
-WINE_CHECK_LIB_FUNCS(dladdr,[$DL_LIBS])
+WINE_CHECK_LIB_FUNCS(dladdr dlinfo,[$DL_LIBS])
 
 dnl Check for -lpoll for Mac OS X/Darwin
 if test "$ac_cv_func_poll" = no

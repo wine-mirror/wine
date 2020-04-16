@@ -110,6 +110,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the `dlinfo' function. */
+#undef HAVE_DLINFO
+
 /* Define to 1 if you have the <EGL/egl.h> header file. */
 #undef HAVE_EGL_EGL_H
 
