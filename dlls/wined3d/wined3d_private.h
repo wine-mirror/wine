@@ -1994,6 +1994,7 @@ struct wined3d_context
 };
 
 void wined3d_context_cleanup(struct wined3d_context *context) DECLSPEC_HIDDEN;
+void wined3d_context_init(struct wined3d_context *context, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
 HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
