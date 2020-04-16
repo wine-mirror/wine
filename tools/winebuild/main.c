@@ -115,6 +115,7 @@ enum exec_mode_values
     MODE_IMPLIB,
     MODE_STATICLIB,
     MODE_BUILTIN,
+    MODE_FIXUP_CTORS,
     MODE_RESOURCES
 };
 
@@ -301,8 +302,9 @@ static const char usage_str[] =
 "       --exe                 Build an executable from object files\n"
 "       --implib              Build an import library\n"
 "       --staticlib           Build a static library\n"
-"       --builtin             Mark a library as a Wine builtin\n"
 "       --resources           Build a .o or .res file for the resource files\n\n"
+"       --builtin             Mark a library as a Wine builtin\n"
+"       --fixup-ctors         Fixup the constructors data after the module has been built\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
 
 enum long_options_values
@@ -316,6 +318,7 @@ enum long_options_values
     LONG_OPT_CCCMD,
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_FAKE_MODULE,
+    LONG_OPT_FIXUP_CTORS,
     LONG_OPT_LARGE_ADDRESS_AWARE,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
@@ -341,6 +344,7 @@ static const struct option long_options[] =
     { "cc-cmd",        1, 0, LONG_OPT_CCCMD },
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
     { "fake-module",   0, 0, LONG_OPT_FAKE_MODULE },
+    { "fixup-ctors",   0, 0, LONG_OPT_FIXUP_CTORS },
     { "large-address-aware", 0, 0, LONG_OPT_LARGE_ADDRESS_AWARE },
     { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
@@ -510,6 +514,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_BUILTIN:
             set_exec_mode( MODE_BUILTIN );
+            break;
+        case LONG_OPT_FIXUP_CTORS:
+            set_exec_mode( MODE_FIXUP_CTORS );
             break;
         case LONG_OPT_ASCMD:
             as_command = strarray_fromstring( optarg, " " );
@@ -700,6 +707,10 @@ int main(int argc, char **argv)
     case MODE_BUILTIN:
         if (!argv[0]) fatal_error( "missing file argument for --builtin option\n" );
         make_builtin_files( argv );
+        break;
+    case MODE_FIXUP_CTORS:
+        if (!argv[0]) fatal_error( "missing file argument for --fixup-ctors option\n" );
+        fixup_constructors( argv );
         break;
     case MODE_RESOURCES:
         load_resources( argv, spec );

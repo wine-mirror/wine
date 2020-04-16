@@ -1095,3 +1095,162 @@ void make_builtin_files( char *argv[] )
         close( fd );
     }
 }
+
+static void fixup_elf32( const char *name, int fd, void *header, size_t header_size )
+{
+    struct
+    {
+        unsigned char  e_ident[16];
+        unsigned short e_type;
+        unsigned short e_machine;
+        unsigned int   e_version;
+        unsigned int   e_entry;
+        unsigned int   e_phoff;
+        unsigned int   e_shoff;
+        unsigned int   e_flags;
+        unsigned short e_ehsize;
+        unsigned short e_phentsize;
+        unsigned short e_phnum;
+        unsigned short e_shentsize;
+        unsigned short e_shnum;
+        unsigned short e_shstrndx;
+    } *elf = header;
+    struct
+    {
+        unsigned int p_type;
+        unsigned int p_offset;
+        unsigned int p_vaddr;
+        unsigned int p_paddr;
+        unsigned int p_filesz;
+        unsigned int p_memsz;
+        unsigned int p_flags;
+        unsigned int p_align;
+    } *phdr;
+    struct
+    {
+        unsigned int d_tag;
+        unsigned int d_val;
+    } *dyn;
+
+    unsigned int i, size;
+
+    if (header_size < sizeof(*elf)) return;
+    if (elf->e_ident[6] != 1 /* EV_CURRENT */) return;
+
+    size = elf->e_phnum * elf->e_phentsize;
+    phdr = xmalloc( size );
+    lseek( fd, elf->e_phoff, SEEK_SET );
+    if (read( fd, phdr, size ) != size) return;
+
+    for (i = 0; i < elf->e_phnum; i++)
+    {
+        if (phdr->p_type == 2 /* PT_DYNAMIC */ ) break;
+        phdr = (void *)((char *)phdr + elf->e_phentsize);
+    }
+    if (i == elf->e_phnum) return;
+
+    dyn = xmalloc( phdr->p_filesz );
+    lseek( fd, phdr->p_offset, SEEK_SET );
+    if (read( fd, dyn, phdr->p_filesz ) != phdr->p_filesz) return;
+    for (i = 0; i < phdr->p_filesz / sizeof(*dyn) && dyn[i].d_tag; i++)
+    {
+        switch (dyn[i].d_tag)
+        {
+        case 25: dyn[i].d_tag = 0x60009990; break;  /* DT_INIT_ARRAY */
+        case 27: dyn[i].d_tag = 0x60009991; break;  /* DT_INIT_ARRAYSZ */
+        case 12: dyn[i].d_tag = 0x60009992; break;  /* DT_INIT */
+        }
+    }
+    lseek( fd, phdr->p_offset, SEEK_SET );
+    write( fd, dyn, phdr->p_filesz );
+}
+
+static void fixup_elf64( const char *name, int fd, void *header, size_t header_size )
+{
+    struct
+    {
+        unsigned char    e_ident[16];
+        unsigned short   e_type;
+        unsigned short   e_machine;
+        unsigned int     e_version;
+        unsigned __int64 e_entry;
+        unsigned __int64 e_phoff;
+        unsigned __int64 e_shoff;
+        unsigned int     e_flags;
+        unsigned short   e_ehsize;
+        unsigned short   e_phentsize;
+        unsigned short   e_phnum;
+        unsigned short   e_shentsize;
+        unsigned short   e_shnum;
+        unsigned short   e_shstrndx;
+    } *elf = header;
+    struct
+    {
+        unsigned int     p_type;
+        unsigned int     p_flags;
+        unsigned __int64 p_offset;
+        unsigned __int64 p_vaddr;
+        unsigned __int64 p_paddr;
+        unsigned __int64 p_filesz;
+        unsigned __int64 p_memsz;
+        unsigned __int64 p_align;
+    } *phdr;
+    struct
+    {
+        unsigned __int64 d_tag;
+        unsigned __int64 d_val;
+    } *dyn;
+
+    unsigned int i, size;
+
+    if (header_size < sizeof(*elf)) return;
+    if (elf->e_ident[6] != 1 /* EV_CURRENT */) return;
+
+    size = elf->e_phnum * elf->e_phentsize;
+    phdr = xmalloc( size );
+    lseek( fd, elf->e_phoff, SEEK_SET );
+    if (read( fd, phdr, size ) != size) return;
+
+    for (i = 0; i < elf->e_phnum; i++)
+    {
+        if (phdr->p_type == 2 /* PT_DYNAMIC */ ) break;
+        phdr = (void *)((char *)phdr + elf->e_phentsize);
+    }
+    if (i == elf->e_phnum) return;
+
+    dyn = xmalloc( phdr->p_filesz );
+    lseek( fd, phdr->p_offset, SEEK_SET );
+    if (read( fd, dyn, phdr->p_filesz ) != phdr->p_filesz) return;
+    for (i = 0; i < phdr->p_filesz / sizeof(*dyn) && dyn[i].d_tag; i++)
+    {
+        switch (dyn[i].d_tag)
+        {
+        case 25: dyn[i].d_tag = 0x60009990; break;  /* DT_INIT_ARRAY */
+        case 27: dyn[i].d_tag = 0x60009991; break;  /* DT_INIT_ARRAYSZ */
+        case 12: dyn[i].d_tag = 0x60009992; break;  /* DT_INIT */
+        }
+    }
+    lseek( fd, phdr->p_offset, SEEK_SET );
+    write( fd, dyn, phdr->p_filesz );
+}
+
+/*******************************************************************
+ *         fixup_constructors
+ */
+void fixup_constructors( char *argv[] )
+{
+    int i, fd, size;
+    unsigned int header[64];
+
+    for (i = 0; argv[i]; i++)
+    {
+        if ((fd = open( argv[i], O_RDWR | O_BINARY )) == -1) fatal_perror( "Cannot open %s", argv[i] );
+        size = read( fd, &header, sizeof(header) );
+        if (size > 5)
+        {
+            if (!memcmp( header, "\177ELF\001", 5 )) fixup_elf32( argv[i], fd, header, size );
+            else if (!memcmp( header, "\177ELF\002", 5 )) fixup_elf64( argv[i], fd, header, size );
+        }
+        close( fd );
+    }
+}

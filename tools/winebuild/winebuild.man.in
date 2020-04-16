@@ -54,16 +54,22 @@ in .delay.a, a delayed import library is built.
 .BI \--staticlib
 Build a .a static library from object files.
 .TP
-.BI \--builtin
-Mark a PE module as a Wine builtin module, by adding the "Wine builtin
-DLL" signature string after the DOS header.
-.TP
 .B \--resources
 Generate a .o file containing all the input resources. This is useful
 when building with a PE compiler, since the PE binutils cannot handle
 multiple resource files as input. For a standard Unix build, the
 resource files are automatically included when building the spec file,
 so there's no need for an intermediate .o file.
+.TP
+.BI \--builtin
+Mark a PE module as a Wine builtin module, by adding the "Wine builtin
+DLL" signature string after the DOS header.
+.TP
+.BI \--fixup-ctors
+Fixup constructors after a module has been built. This should be done
+on the final .so module if its code contains constructors, to ensure
+that Wine has a chance to initialize the module before the
+constructors are executed.
 .SH OPTIONS
 .TP
 .BI \--as-cmd= as-command
