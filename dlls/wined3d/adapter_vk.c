@@ -556,13 +556,30 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context, const s
 {
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
+    VkMappedMemoryRange range;
     struct wined3d_bo_vk *bo;
+    unsigned int i;
 
     if (!(bo = (struct wined3d_bo_vk *)data->buffer_object))
         return;
 
     vk_info = wined3d_context_vk(context)->vk_info;
     device_vk = wined3d_device_vk(context->device);
+
+    if (!(bo->memory_type & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+    {
+        range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        range.pNext = NULL;
+        range.memory = bo->vk_memory;
+
+        for (i = 0; i < range_count; ++i)
+        {
+            range.offset = ranges[i].offset;
+            range.size = ranges[i].size;
+            VK_CALL(vkFlushMappedMemoryRanges(device_vk->vk_device, 1, &range));
+        }
+    }
+
     VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
 }
 
