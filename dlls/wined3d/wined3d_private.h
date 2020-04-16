@@ -1521,6 +1521,8 @@ struct wined3d_bo_vk
 {
     VkBuffer vk_buffer;
     VkDeviceMemory vk_memory;
+
+    VkMemoryPropertyFlags memory_type;
 };
 
 struct wined3d_bo_address

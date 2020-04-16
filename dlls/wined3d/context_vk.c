@@ -38,6 +38,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     struct wined3d_adapter_vk *adapter_vk;
     VkMemoryAllocateInfo allocate_info;
     VkBufferCreateInfo create_info;
+    unsigned int memory_type_idx;
     VkResult vr;
 
     adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
@@ -62,14 +63,15 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocate_info.pNext = NULL;
     allocate_info.allocationSize = memory_requirements.size;
-    allocate_info.memoryTypeIndex = wined3d_adapter_vk_get_memory_type_index(adapter_vk,
+    memory_type_idx = wined3d_adapter_vk_get_memory_type_index(adapter_vk,
             memory_requirements.memoryTypeBits, memory_type);
-    if (allocate_info.memoryTypeIndex == ~0u)
+    if (memory_type_idx == ~0u)
     {
         ERR("Failed to find suitable memory type.\n");
         VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
         return FALSE;
     }
+    allocate_info.memoryTypeIndex = memory_type_idx;
     if ((vr = VK_CALL(vkAllocateMemory(device_vk->vk_device, &allocate_info, NULL, &bo->vk_memory))) < 0)
     {
         ERR("Failed to allocate buffer memory, vr %s.\n", wined3d_debug_vkresult(vr));
@@ -84,6 +86,8 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
         VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
         return FALSE;
     }
+
+    bo->memory_type = adapter_vk->memory_properties.memoryTypes[memory_type_idx].propertyFlags;
 
     return TRUE;
 }

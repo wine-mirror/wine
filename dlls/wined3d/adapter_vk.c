@@ -496,6 +496,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     struct wined3d_device_vk *device_vk;
     VkCommandBuffer vk_command_buffer;
     VkBufferMemoryBarrier vk_barrier;
+    VkMappedMemoryRange range;
     struct wined3d_bo_vk *bo;
     void *map_ptr;
     VkResult vr;
@@ -525,6 +526,16 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
         vk_barrier.size = size;
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                 VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+
+        if (!(bo->memory_type & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+        {
+            range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            range.pNext = NULL;
+            range.memory = bo->vk_memory;
+            range.offset = (uintptr_t)data->addr;
+            range.size = size;
+            VK_CALL(vkInvalidateMappedMemoryRanges(device_vk->vk_device, 1, &range));
+        }
     }
 
     wined3d_context_vk_submit_command_buffer(context_vk);
