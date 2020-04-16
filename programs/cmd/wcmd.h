@@ -22,6 +22,7 @@
 #define IDI_ICON1	1
 #include <windows.h>
 #include <windef.h>
+#include <winternl.h>
 #ifndef RC_INVOKED
 #include <string.h>
 #include <stdlib.h>

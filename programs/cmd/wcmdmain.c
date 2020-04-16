@@ -2437,7 +2437,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   static const WCHAR cmdW[] = {'\\','c','m','d','.','e','x','e',0};
   WCHAR comspec[MAX_PATH];
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
-  OSVERSIONINFOW osv;
+  RTL_OSVERSIONINFOEXW osv;
   char osver[50];
   STARTUPINFOW startupInfo;
 
@@ -2452,7 +2452,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   /* Get the windows version being emulated */
   osv.dwOSVersionInfoSize = sizeof(osv);
-  GetVersionExW(&osv);
+  RtlGetVersion(&osv);
 
   /* Pre initialize some messages */
   lstrcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
