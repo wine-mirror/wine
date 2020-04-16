@@ -59,7 +59,7 @@ fail:
     return NULL;
 }
 
-static IWICBitmapDecoder *create_decoder(IWICStream *stream)
+static IWICBitmapDecoder *create_decoder(void)
 {
     HRESULT hr;
     IWICBitmapDecoder *decoder = NULL;
@@ -77,26 +77,87 @@ static IWICBitmapDecoder *create_decoder(IWICStream *stream)
     ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%x\n", hr);
     ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatDds), "Unexpected container format\n");
 
-    hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
-    todo_wine ok(hr == S_OK, "Decoder Initialize failed, hr=%x\n", hr);
-    if (hr != S_OK) {
-        IWICBitmapDecoder_Release(decoder);
-        return NULL;
-    }
-
     return decoder;
+}
+
+static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRESULT expected, int index)
+{
+    HRESULT hr;
+
+    hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
+    if (index == -1) {
+        todo_wine ok(SUCCEEDED(hr), "Decoder Initialize failed, hr=%x\n", hr);
+    } else {
+        todo_wine ok(hr == expected, "%d: Expected hr=%x, got %x\n", index, expected, hr);
+    }
+    return hr;
+}
+
+static void test_dds_decoder_initialize(void)
+{
+    static BYTE test_dds_bad_magic[sizeof(test_dds_image)];
+    static BYTE test_dds_bad_header[sizeof(test_dds_image)];
+    static BYTE byte = 0;
+    static DWORD dword = 0;
+    static BYTE qword1[8] = { 0 };
+    static BYTE qword2[8] = "DDS ";
+
+    static struct test_data {
+        void *data;
+        UINT size;
+        HRESULT expected;
+    } test_data[] = {
+        { test_dds_image,      sizeof(test_dds_image),      S_OK },
+        { test_dds_bad_magic,  sizeof(test_dds_bad_magic),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
+        { test_dds_bad_header, sizeof(test_dds_bad_header), WINCODEC_ERR_BADHEADER },
+        { &byte,   sizeof(byte),   WINCODEC_ERR_STREAMREAD },
+        { &dword,  sizeof(dword),  WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
+        { &qword1, sizeof(qword1), WINCODEC_ERR_UNKNOWNIMAGEFORMAT },
+        { &qword2, sizeof(qword2), WINCODEC_ERR_STREAMREAD },
+    };
+
+    int i;
+
+    memcpy(test_dds_bad_magic, test_dds_image, sizeof(test_dds_image));
+    memcpy(test_dds_bad_header, test_dds_image, sizeof(test_dds_image));
+    test_dds_bad_magic[0] = 0;
+    test_dds_bad_header[4] = 0;
+
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
+    {
+        IWICStream *stream = NULL;
+        IWICBitmapDecoder *decoder = NULL;
+
+        stream = create_stream(test_data[i].data, test_data[i].size);
+        if (!stream) goto next;
+
+        decoder = create_decoder();
+        if (!decoder) goto next;
+
+        init_decoder(decoder, stream, test_data[i].expected, i);
+
+    next:
+        if (decoder) IWICBitmapDecoder_Release(decoder);
+        if (stream) IWICStream_Release(stream);
+    }
 }
 
 static void test_dds_decoder(void)
 {
+    HRESULT hr;
     IWICStream *stream = NULL;
     IWICBitmapDecoder *decoder = NULL;
 
     stream = create_stream(test_dds_image, sizeof(test_dds_image));
     if (!stream) goto end;
 
-    decoder = create_decoder(stream);
+    decoder = create_decoder();
     if (!decoder) goto end;
+
+    hr = init_decoder(decoder, stream, S_OK, -1);
+    if (FAILED(hr)) goto end;
+
+    test_dds_decoder_initialize();
 
 end:
     if (decoder) IWICBitmapDecoder_Release(decoder);
