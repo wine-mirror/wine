@@ -74,9 +74,15 @@ static inline WORD d3d_fpu_setup(void)
 
 static enum wined3d_render_state wined3d_render_state_from_ddraw(D3DRENDERSTATETYPE state)
 {
-    if (state == D3DRENDERSTATE_ZBIAS)
-        return WINED3D_RS_DEPTHBIAS;
-    return (enum wined3d_render_state)state;
+    switch (state)
+    {
+        case D3DRENDERSTATE_ZBIAS:
+            return WINED3D_RS_DEPTHBIAS;
+        case D3DRENDERSTATE_EDGEANTIALIAS:
+            return WINED3D_RS_ANTIALIASEDLINEENABLE;
+        default:
+            return (enum wined3d_render_state)state;
+    }
 }
 
 static enum wined3d_transform_state wined3d_transform_state_from_ddraw(D3DTRANSFORMSTATETYPE state)

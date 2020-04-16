@@ -422,6 +422,9 @@ void d3dcaps_from_wined3dcaps(D3DCAPS8 *caps, const struct wined3d_caps *wined3d
             | D3DPTFILTERCAPS_MIPFLINEAR | D3DPTFILTERCAPS_MAGFPOINT | D3DPTFILTERCAPS_MAGFLINEAR
             | D3DPTFILTERCAPS_MAGFANISOTROPIC | D3DPTFILTERCAPS_MAGFAFLATCUBIC
             | D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC;
+    if (caps->LineCaps & WINED3DLINECAPS_ANTIALIAS)
+        caps->RasterCaps |= D3DPRASTERCAPS_ANTIALIASEDGES;
+    caps->LineCaps &= ~WINED3DLINECAPS_ANTIALIAS;
     caps->StencilCaps &= ~WINED3DSTENCILCAPS_TWOSIDED;
     caps->VertexProcessingCaps &= D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7
             | D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER
@@ -446,9 +449,15 @@ static enum wined3d_transform_state wined3d_transform_state_from_d3d(D3DTRANSFOR
 
 static enum wined3d_render_state wined3d_render_state_from_d3d(D3DRENDERSTATETYPE state)
 {
-    if (state == D3DRS_ZBIAS)
-        return WINED3D_RS_DEPTHBIAS;
-    return (enum wined3d_render_state)state;
+    switch (state)
+    {
+        case D3DRS_ZBIAS:
+            return WINED3D_RS_DEPTHBIAS;
+        case D3DRS_EDGEANTIALIAS:
+            return WINED3D_RS_ANTIALIASEDLINEENABLE;
+        default:
+            return (enum wined3d_render_state)state;
+    }
 }
 
 static enum wined3d_primitive_type wined3d_primitive_type_from_d3d(D3DPRIMITIVETYPE type)

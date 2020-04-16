@@ -1340,6 +1340,8 @@ HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps)
     if (caps->dpcLineCaps.dwRasterCaps & WINED3DPRASTERCAPS_DEPTHBIAS)
         caps->dpcLineCaps.dwRasterCaps = (caps->dpcLineCaps.dwRasterCaps | D3DPRASTERCAPS_ZBIAS)
                 & ~WINED3DPRASTERCAPS_DEPTHBIAS;
+    if (wined3d_caps.LineCaps & WINED3DLINECAPS_ANTIALIAS)
+        caps->dpcLineCaps.dwRasterCaps |= D3DPRASTERCAPS_ANTIALIASEDGES;
 
     caps->dpcLineCaps.dwZCmpCaps &= (
         D3DPCMPCAPS_NEVER                | D3DPCMPCAPS_LESS                    | D3DPCMPCAPS_EQUAL                   |

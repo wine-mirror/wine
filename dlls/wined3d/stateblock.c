@@ -1665,7 +1665,6 @@ static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], c
     rs[WINED3D_RS_FOGEND] = tmpfloat.d;
     tmpfloat.f = 1.0f;
     rs[WINED3D_RS_FOGDENSITY] = tmpfloat.d;
-    rs[WINED3D_RS_EDGEANTIALIAS] = FALSE;
     rs[WINED3D_RS_RANGEFOGENABLE] = FALSE;
     rs[WINED3D_RS_STENCILENABLE] = FALSE;
     rs[WINED3D_RS_STENCILFAIL] = WINED3D_STENCIL_OP_KEEP;
