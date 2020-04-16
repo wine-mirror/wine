@@ -728,11 +728,11 @@ version_table[] =
 
 static const char *get_windows_version(void)
 {
-    OSVERSIONINFOEXW info = { sizeof(OSVERSIONINFOEXW) };
+    RTL_OSVERSIONINFOEXW info = { sizeof(RTL_OSVERSIONINFOEXW) };
     static char str[64];
     int i;
 
-    GetVersionExW( (OSVERSIONINFOW *)&info );
+    RtlGetVersion( &info );
 
     for (i = 0; i < ARRAY_SIZE(version_table); i++)
     {
