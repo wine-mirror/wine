@@ -22,21 +22,10 @@
  * - Private file where devenum globals are declared
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winreg.h"
-#include "winerror.h"
-
 #define COBJMACROS
-
-#include "ole2.h"
-#include "strmif.h"
-#include "olectl.h"
-#include "uuids.h"
+#include "dshow.h"
+#include "dmo.h"
+#include "dmodshow.h"
 
 /**********************************************************************
  * Dll lifetime tracking declaration for devenum.dll
