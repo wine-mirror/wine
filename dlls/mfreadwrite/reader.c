@@ -727,6 +727,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
             {
                 case MEEndOfStream:
                     stream->state = STREAM_STATE_EOS;
+                    stream->flags &= ~STREAM_FLAG_SAMPLE_REQUESTED;
 
                     if (stream->decoder && SUCCEEDED(IMFTransform_ProcessMessage(stream->decoder,
                             MFT_MESSAGE_COMMAND_DRAIN, 0)))
