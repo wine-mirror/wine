@@ -195,8 +195,8 @@ struct ddraw_surface
     /* You can't traverse the tree upwards. Only a flag for Surface::Release because it's needed there,
      * but no pointer to prevent temptations to traverse it in the wrong direction.
      */
-    BOOL                    is_complex_root;
-    BOOL is_lost;
+    unsigned int is_complex_root : 1;
+    unsigned int is_lost : 1;
 
     /* Surface description, for GetAttachedSurface */
     DDSURFACEDESC2          surface_desc;
