@@ -506,23 +506,26 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context->device);
 
-    if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+    if (map_flags & WINED3D_MAP_READ)
     {
-        ERR("Failed to get command buffer.\n");
-        return NULL;
-    }
+        if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+        {
+            ERR("Failed to get command buffer.\n");
+            return NULL;
+        }
 
-    vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    vk_barrier.pNext = NULL;
-    vk_barrier.srcAccessMask = vk_access_mask_from_bind_flags(bind_flags);
-    vk_barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-    vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    vk_barrier.buffer = bo->vk_buffer;
-    vk_barrier.offset = (uintptr_t)data->addr;
-    vk_barrier.size = size;
-    VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+        vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        vk_barrier.pNext = NULL;
+        vk_barrier.srcAccessMask = vk_access_mask_from_bind_flags(bind_flags);
+        vk_barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+        vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        vk_barrier.buffer = bo->vk_buffer;
+        vk_barrier.offset = (uintptr_t)data->addr;
+        vk_barrier.size = size;
+        VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+    }
 
     wined3d_context_vk_submit_command_buffer(context_vk);
     wined3d_context_vk_wait_command_buffer(context_vk, context_vk->current_command_buffer.id - 1);
