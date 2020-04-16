@@ -31,6 +31,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
@@ -1765,65 +1766,220 @@ static BOOL is_16bit_builtin( HMODULE module )
 }
 
 
-/***********************************************************************
- *           load_builtin_callback
- *
- * Load a library in memory; callback function for wine_dll_register
- */
-static void load_builtin_callback( void *module, const char *filename )
+/* adjust an array of pointers to make them into RVAs */
+static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
 {
-    static const WCHAR emptyW[1];
+    BYTE **src = array;
+    DWORD *dst = array;
+
+    for ( ; count; count--, src++, dst++) *dst = *src ? *src - base : 0;
+}
+
+/* fixup an array of RVAs by adding the specified delta */
+static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
+{
+    for ( ; count; count--, ptr++) if (*ptr) *ptr += delta;
+}
+
+
+/* fixup an array of name/ordinal RVAs by adding the specified delta */
+static inline void fixup_rva_names( UINT_PTR *ptr, int delta )
+{
+    for ( ; *ptr; ptr++) if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
+}
+
+
+/* fixup RVAs in the resource directory */
+static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
+{
+    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    unsigned int i;
+
+    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
+    {
+        void *ptr = root + entry->u2.s2.OffsetToDirectory;
+        if (entry->u2.s2.DataIsDirectory) fixup_so_resources( ptr, root, delta );
+        else fixup_rva_dwords( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
+    }
+}
+
+/*************************************************************************
+ *		map_so_dll
+ *
+ * Map a builtin dll in memory and fixup RVAs.
+ */
+static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
+{
+    static const char builtin_signature[32] = "Wine builtin DLL";
+    IMAGE_DATA_DIRECTORY *dir;
+    IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
-    WINE_MODREF *wm;
-    const WCHAR *load_path;
+    IMAGE_SECTION_HEADER *sec;
+    BYTE *addr = (BYTE *)module;
+    DWORD code_start, code_end, data_start, data_end, align_mask;
+    int delta, nb_sections = 2;  /* code + data */
+    unsigned int i;
+    DWORD size = (sizeof(IMAGE_DOS_HEADER)
+                  + sizeof(builtin_signature)
+                  + sizeof(IMAGE_NT_HEADERS)
+                  + nb_sections * sizeof(IMAGE_SECTION_HEADER));
 
-    if (!module)
+    if (wine_anon_mmap( addr, size, PROT_READ | PROT_WRITE, MAP_FIXED ) != addr) return STATUS_NO_MEMORY;
+
+    dos = (IMAGE_DOS_HEADER *)addr;
+    nt  = (IMAGE_NT_HEADERS *)((BYTE *)(dos + 1) + sizeof(builtin_signature));
+    sec = (IMAGE_SECTION_HEADER *)(nt + 1);
+
+    /* build the DOS and NT headers */
+
+    dos->e_magic    = IMAGE_DOS_SIGNATURE;
+    dos->e_cblp     = 0x90;
+    dos->e_cp       = 3;
+    dos->e_cparhdr  = (sizeof(*dos) + 0xf) / 0x10;
+    dos->e_minalloc = 0;
+    dos->e_maxalloc = 0xffff;
+    dos->e_ss       = 0x0000;
+    dos->e_sp       = 0x00b8;
+    dos->e_lfanew   = sizeof(*dos) + sizeof(builtin_signature);
+
+    *nt = *nt_descr;
+
+    delta      = (const BYTE *)nt_descr - addr;
+    align_mask = nt->OptionalHeader.SectionAlignment - 1;
+    code_start = (size + align_mask) & ~align_mask;
+    data_start = delta & ~align_mask;
+#ifdef __APPLE__
     {
-        ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
-        builtin_load_info->status = STATUS_NO_MEMORY;
-        return;
+        Dl_info dli;
+        unsigned long data_size;
+        /* need the mach_header, not the PE header, to give to getsegmentdata(3) */
+        dladdr(addr, &dli);
+        code_end   = getsegmentdata(dli.dli_fbase, "__DATA", &data_size) - addr;
+        data_end   = (code_end + data_size + align_mask) & ~align_mask;
     }
-    if (!(nt = RtlImageNtHeader( module )))
+#else
+    code_end   = data_start;
+    data_end   = (nt->OptionalHeader.SizeOfImage + delta + align_mask) & ~align_mask;
+#endif
+
+    fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
+
+    nt->FileHeader.NumberOfSections                = nb_sections;
+    nt->OptionalHeader.BaseOfCode                  = code_start;
+#ifndef _WIN64
+    nt->OptionalHeader.BaseOfData                  = data_start;
+#endif
+    nt->OptionalHeader.SizeOfCode                  = code_end - code_start;
+    nt->OptionalHeader.SizeOfInitializedData       = data_end - data_start;
+    nt->OptionalHeader.SizeOfUninitializedData     = 0;
+    nt->OptionalHeader.SizeOfImage                 = data_end;
+    nt->OptionalHeader.ImageBase                   = (ULONG_PTR)addr;
+
+    /* build the code section */
+
+    memcpy( sec->Name, ".text", sizeof(".text") );
+    sec->SizeOfRawData = code_end - code_start;
+    sec->Misc.VirtualSize = sec->SizeOfRawData;
+    sec->VirtualAddress   = code_start;
+    sec->PointerToRawData = code_start;
+    sec->Characteristics  = (IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
+    sec++;
+
+    /* build the data section */
+
+    memcpy( sec->Name, ".data", sizeof(".data") );
+    sec->SizeOfRawData = data_end - data_start;
+    sec->Misc.VirtualSize = sec->SizeOfRawData;
+    sec->VirtualAddress   = data_start;
+    sec->PointerToRawData = data_start;
+    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
+                             IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
+    sec++;
+
+    for (i = 0; i < nt->OptionalHeader.NumberOfRvaAndSizes; i++)
+        fixup_rva_dwords( &nt->OptionalHeader.DataDirectory[i].VirtualAddress, delta, 1 );
+
+    /* build the import directory */
+
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+    if (dir->Size)
     {
-        ERR( "bad module for %s\n", debugstr_us(builtin_load_info->filename) );
-        builtin_load_info->status = STATUS_INVALID_IMAGE_FORMAT;
-        return;
-    }
+        IMAGE_IMPORT_DESCRIPTOR *imports = (IMAGE_IMPORT_DESCRIPTOR *)(addr + dir->VirtualAddress);
 
-    virtual_create_builtin_view( module );
-
-    /* create the MODREF */
-
-    wm = alloc_module( module, builtin_load_info->filename, TRUE );
-    if (!wm)
-    {
-        ERR( "can't load %s\n", debugstr_us(builtin_load_info->filename) );
-        builtin_load_info->status = STATUS_NO_MEMORY;
-        return;
-    }
-
-    if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
-        nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
-        is_16bit_builtin( module ))
-    {
-        /* fixup imports */
-
-        load_path = builtin_load_info->load_path;
-        if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-        if (!load_path) load_path = emptyW;
-        if (fixup_imports( wm, load_path ) != STATUS_SUCCESS)
+        while (imports->Name)
         {
-            /* the module has only be inserted in the load & memory order lists */
-            RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
-            RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
-            /* FIXME: free the modref */
-            builtin_load_info->status = STATUS_DLL_NOT_FOUND;
-            return;
+            fixup_rva_dwords( &imports->u.OriginalFirstThunk, delta, 1 );
+            fixup_rva_dwords( &imports->Name, delta, 1 );
+            fixup_rva_dwords( &imports->FirstThunk, delta, 1 );
+            if (imports->u.OriginalFirstThunk)
+                fixup_rva_names( (UINT_PTR *)(addr + imports->u.OriginalFirstThunk), delta );
+            if (imports->FirstThunk)
+                fixup_rva_names( (UINT_PTR *)(addr + imports->FirstThunk), delta );
+            imports++;
         }
     }
 
-    builtin_load_info->wm = wm;
-    TRACE( "loaded %s %p %p\n", debugstr_us(builtin_load_info->filename), wm, module );
+    /* build the resource directory */
+
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+    if (dir->Size)
+    {
+        void *ptr = addr + dir->VirtualAddress;
+        fixup_so_resources( ptr, ptr, delta );
+    }
+
+    /* build the export directory */
+
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+    if (dir->Size)
+    {
+        IMAGE_EXPORT_DIRECTORY *exports = (IMAGE_EXPORT_DIRECTORY *)(addr + dir->VirtualAddress);
+
+        fixup_rva_dwords( &exports->Name, delta, 1 );
+        fixup_rva_dwords( &exports->AddressOfFunctions, delta, 1 );
+        fixup_rva_dwords( &exports->AddressOfNames, delta, 1 );
+        fixup_rva_dwords( &exports->AddressOfNameOrdinals, delta, 1 );
+        fixup_rva_dwords( (DWORD *)(addr + exports->AddressOfNames), delta, exports->NumberOfNames );
+        fixup_rva_ptrs( addr + exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/*************************************************************************
+ *		build_so_dll_module
+ *
+ * Build the module for a .so builtin library.
+ */
+static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRING *nt_name,
+                                     HMODULE module, DWORD flags, WINE_MODREF **pwm )
+{
+    IMAGE_NT_HEADERS *nt;
+    WINE_MODREF *wm;
+    NTSTATUS status;
+
+    if (!(nt = RtlImageNtHeader( module ))) return STATUS_INVALID_IMAGE_FORMAT;
+
+    if (!(wm = alloc_module( module, nt_name, TRUE ))) return STATUS_NO_MEMORY;
+
+    virtual_create_builtin_view( module );
+
+    if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
+        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
+         nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
+         is_16bit_builtin( module )))
+    {
+        if ((status = fixup_imports( wm, load_path )))
+        {
+            /* the module has only been inserted in the load & memory order lists */
+            RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+            RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
+            /* FIXME: free the modref */
+            return status;
+        }
+    }
+
+    TRACE( "loaded %s %p %p\n", debugstr_us(nt_name), wm, module );
 
     /* send the DLL load event */
 
@@ -1840,6 +1996,35 @@ static void load_builtin_callback( void *module, const char *filename )
 
     /* setup relay debugging entry points */
     if (TRACE_ON(relay)) RELAY_SetupDLL( module );
+
+    *pwm = wm;
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           load_builtin_callback
+ *
+ * Load a library in memory; callback function for wine_dll_register
+ */
+static void load_builtin_callback( void *module, const char *filename )
+{
+    static const WCHAR emptyW[1];
+    const WCHAR *load_path;
+
+    if (!module)
+    {
+        ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
+        builtin_load_info->status = STATUS_NO_MEMORY;
+        return;
+    }
+
+    load_path = builtin_load_info->load_path;
+    if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
+    if (!load_path) load_path = emptyW;
+
+    builtin_load_info->status = build_so_dll_module( load_path, builtin_load_info->filename, module,
+                                                     0, &builtin_load_info->wm );
 }
 
 
@@ -2551,7 +2736,7 @@ done:
  *           load_so_dll
  */
 static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
-                             const char *so_name, WINE_MODREF** pwm )
+                             const char *so_name, DWORD flags, WINE_MODREF** pwm )
 {
     static const WCHAR soW[] = {'.','s','o',0};
     DWORD len;
@@ -2583,6 +2768,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     prev_info = builtin_load_info;
     builtin_load_info = &info;
     handle = dlopen( so_name ? so_name : unix_name.Buffer, RTLD_NOW );
+    builtin_load_info = prev_info;
     RtlFreeHeap( GetProcessHeap(), 0, unix_name.Buffer );
 
     if (!handle)
@@ -2614,8 +2800,9 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         }
         else
         {
-            __wine_dll_register( nt, NULL );
-            if (!info.wm) goto failed;
+            if ((info.status = map_so_dll( nt, module ))) goto failed;
+            if ((info.status = build_so_dll_module( load_path, &win_name, module, flags, &info.wm )))
+                goto failed;
             TRACE_(loaddll)( "Loaded %s at %p: builtin\n",
                              debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress );
             info.wm->ldr.LoadCount = 1;
@@ -2645,12 +2832,10 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         info.wm->ldr.SectionHandle = handle;
     }
 
-    builtin_load_info = prev_info;
     *pwm = info.wm;
     return STATUS_SUCCESS;
 
 failed:
-    builtin_load_info = prev_info;
     if (handle) dlclose( handle );
     return info.status;
 }
@@ -2696,7 +2881,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
         return load_native_dll( load_path, nt_name, module_ptr, &image_info, flags, pwm, &st );
     }
 
-    status = load_so_dll( load_path, nt_name, so_name, pwm );
+    status = load_so_dll( load_path, nt_name, so_name, flags, pwm );
     RtlFreeHeap( GetProcessHeap(), 0, so_name );
     return status;
 }
@@ -2977,7 +3162,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
         case LO_BUILTIN:
         case LO_BUILTIN_NATIVE:
         case LO_DEFAULT:
-            if (!load_so_dll( load_path, &nt_name, NULL, pwm )) nts = STATUS_SUCCESS;
+            if (!load_so_dll( load_path, &nt_name, NULL, flags, pwm )) nts = STATUS_SUCCESS;
             break;
         default:
             nts = STATUS_DLL_NOT_FOUND;
