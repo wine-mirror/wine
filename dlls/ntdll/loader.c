@@ -121,6 +121,7 @@ typedef struct _wine_modref
     LDR_MODULE            ldr;
     dev_t                 dev;
     ino_t                 ino;
+    void                 *so_handle;
     int                   alloc_deps;
     int                   nDeps;
     struct _wine_modref **deps;
@@ -585,7 +586,7 @@ static WINE_MODREF *find_so_module( void *handle )
         LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
         WINE_MODREF *wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
 
-        if (mod->Flags & LDR_WINE_INTERNAL && mod->SectionHandle == handle) return wm;
+        if (wm->so_handle == handle) return wm;
     }
     return NULL;
 }
@@ -2806,7 +2807,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
             TRACE_(loaddll)( "Loaded %s at %p: builtin\n",
                              debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress );
             info.wm->ldr.LoadCount = 1;
-            info.wm->ldr.SectionHandle = handle;
+            info.wm->so_handle = handle;
         }
     }
     else if (!info.wm)
@@ -2829,7 +2830,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     {
         TRACE_(loaddll)( "Loaded %s at %p: builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer), info.wm->ldr.BaseAddress );
         info.wm->ldr.LoadCount = 1;
-        info.wm->ldr.SectionHandle = handle;
+        info.wm->so_handle = handle;
     }
 
     *pwm = info.wm;
@@ -3760,7 +3761,7 @@ static void free_modref( WINE_MODREF *wm )
 
     free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
-    if ((wm->ldr.Flags & LDR_WINE_INTERNAL) && wm->ldr.SectionHandle) dlclose( wm->ldr.SectionHandle );
+    if (wm->so_handle) dlclose( wm->so_handle );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
     if (cached_modref == wm) cached_modref = NULL;
     RtlFreeUnicodeString( &wm->ldr.FullDllName );
