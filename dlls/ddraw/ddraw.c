@@ -4899,7 +4899,7 @@ void ddraw_update_lost_surfaces(struct ddraw *ddraw)
 
     LIST_FOR_EACH_ENTRY(surface, &ddraw->surface_list, struct ddraw_surface, surface_list_entry)
     {
-        surface->is_lost = TRUE;
+        surface->is_lost = ddraw_surface_can_be_lost(surface);
     }
     ddraw->device_state = DDRAW_DEVICE_STATE_OK;
 }
