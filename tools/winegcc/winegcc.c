@@ -936,6 +936,16 @@ static strarray *get_winebuild_args(struct options *opts)
     return spec_args;
 }
 
+static void fixup_constructors( struct options *opts, const char *file )
+{
+    strarray *args = get_winebuild_args( opts );
+
+    strarray_add( args, "--fixup-ctors" );
+    strarray_add( args, file );
+    spawn( opts->prefix, args, 0 );
+    strarray_free( args );
+}
+
 static void make_wine_builtin( struct options *opts, const char *file )
 {
     strarray *args = get_winebuild_args( opts );
@@ -1354,8 +1364,6 @@ static void build(struct options* opts)
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
 
-    if (is_pe && opts->wine_builtin) make_wine_builtin( opts, output_path );
-
     /* set the base address with prelink if linker support is not present */
     if (opts->prelink && !opts->target)
     {
@@ -1370,6 +1378,9 @@ static void build(struct options* opts)
             strarray_free(prelink_args);
         }
     }
+
+    if (!is_pe && !opts->shared) fixup_constructors( opts, output_path );
+    if (is_pe && opts->wine_builtin) make_wine_builtin( opts, output_path );
 
     /* create the loader script */
     if (generate_app_loader)
