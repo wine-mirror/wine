@@ -2303,11 +2303,11 @@ ok(Math.floor(Math.SQRT1_2*100) === 70, "modified Math.SQRT1_2 = " + Math.SQRT1_
 ok(isNaN.toString() === "\nfunction isNaN() {\n    [native code]\n}\n",
    "isNaN.toString = '" + isNaN.toString() + "'");
 ok(Array.toString() === "\nfunction Array() {\n    [native code]\n}\n",
-   "isNaN.toString = '" + Array.toString() + "'");
+   "Array.toString = '" + Array.toString() + "'");
 ok(Function.toString() === "\nfunction Function() {\n    [native code]\n}\n",
-   "isNaN.toString = '" + Function.toString() + "'");
+   "Function.toString = '" + Function.toString() + "'");
 ok(Function.prototype.toString() === "\nfunction prototype() {\n    [native code]\n}\n",
-   "isNaN.toString = '" + Function.prototype.toString() + "'");
+   "Function.prototype.toString = '" + Function.prototype.toString() + "'");
 ok("".substr.toString() === "\nfunction substr() {\n    [native code]\n}\n",
    "''.substr.toString = '" + "".substr.toString() + "'");
 
