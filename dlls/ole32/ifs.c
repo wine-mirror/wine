@@ -323,7 +323,7 @@ static SIZE_T WINAPI IMalloc_fnGetSize(IMalloc *iface, void *pv)
  */
 static INT WINAPI IMalloc_fnDidAlloc(IMalloc *iface, void *mem)
 {
-    BOOL spyed_block = FALSE;
+    BOOL spyed_block = FALSE, spy_active = FALSE;
     int did_alloc;
 
     TRACE("(%p)\n", mem);
@@ -335,12 +335,13 @@ static INT WINAPI IMalloc_fnDidAlloc(IMalloc *iface, void *mem)
     {
         EnterCriticalSection(&IMalloc32_SpyCS);
         spyed_block = !!mallocspy_is_allocation_spyed(mem);
+        spy_active = TRUE;
         mem = IMallocSpy_PreDidAlloc(Malloc32.pSpy, mem, spyed_block);
     }
 
     did_alloc = HeapValidate(GetProcessHeap(), 0, mem);
 
-    if (Malloc32.pSpy)
+    if (spy_active)
     {
         did_alloc = IMallocSpy_PostDidAlloc(Malloc32.pSpy, mem, spyed_block, did_alloc);
         LeaveCriticalSection(&IMalloc32_SpyCS);
