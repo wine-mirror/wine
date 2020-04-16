@@ -202,6 +202,20 @@ ProcessCmdLine(LPSTR lpCmdLine)
         return set_winver_from_string(&lpCmdLine[3]);
     }
 
+    if (lpCmdLine[1] == '?')
+    {
+        printf("Usage: winecfg [options]\n\n");
+        printf("Options:\n");
+        printf("  [no option] Launch the graphical version of this program.\n");
+        printf("  /D          Autodetect drives.\n");
+        printf("  /v version  Set global Windows version to 'version'.\n");
+        printf("  /?          Display this information and exit.\n\n");
+        printf("Valid versions for 'version':\n\n");
+        print_windows_versions();
+
+        return 0;
+    }
+
     return -1;
 }
 

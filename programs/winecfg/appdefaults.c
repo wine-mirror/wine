@@ -484,6 +484,16 @@ BOOL set_winver_from_string(const char *version)
     return FALSE;
 }
 
+void print_windows_versions(void)
+{
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(win_versions); i++)
+    {
+        printf("  %10s  %s\n", win_versions[i].szVersion, win_versions[i].szDescription);
+    }
+}
+
 static void on_winver_change(HWND dialog)
 {
     int selection = SendDlgItemMessageW(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);

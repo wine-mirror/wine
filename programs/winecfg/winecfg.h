@@ -91,6 +91,7 @@ INT_PTR CALLBACK AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 /* Windows version management */
 BOOL set_winver_from_string(const char *version);
+void print_windows_versions(void);
 
 /* Drive management  */
 BOOL load_drives(void);
