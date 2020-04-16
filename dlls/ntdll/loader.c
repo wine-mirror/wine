@@ -24,6 +24,9 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#ifdef HAVE_LINK_H
+# include <link.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -1307,6 +1310,42 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
 
 
 /*************************************************************************
+ *              call_constructors
+ */
+static void call_constructors( WINE_MODREF *wm )
+{
+#ifdef HAVE_DLINFO
+    extern char **__wine_main_environ;
+    struct link_map *map;
+    void (*init_func)(int, char **, char **) = NULL;
+    void (**init_array)(int, char **, char **) = NULL;
+    ULONG_PTR i, init_arraysz = 0;
+
+    if (dlinfo( wm->so_handle, RTLD_DI_LINKMAP, &map ) == -1) return;
+    while (map->l_ld->d_tag)
+    {
+        switch (map->l_ld->d_tag)
+        {
+        case 0x60009990: init_array = (void *)((char *)map->l_addr + map->l_ld->d_un.d_val); break;
+        case 0x60009991: init_arraysz = map->l_ld->d_un.d_val; break;
+        case 0x60009992: init_func = (void *)((char *)map->l_addr + map->l_ld->d_un.d_val); break;
+        }
+        map->l_ld++;
+    }
+
+    TRACE( "%s: got init_func %p init_array %p %lu\n", debugstr_us( &wm->ldr.BaseDllName ),
+           init_func, init_array, init_arraysz );
+
+    if (init_func) init_func( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+
+    if (init_array)
+        for (i = 0; i < init_arraysz / sizeof(*init_array); i++)
+            init_array[i]( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+#endif
+}
+
+
+/*************************************************************************
  *              MODULE_InitDLL
  */
 static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
@@ -1321,6 +1360,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return STATUS_SUCCESS;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.BaseAddress, reason );
+    if (wm->so_handle && reason == DLL_PROCESS_ATTACH) call_constructors( wm );
     if (!entry) return STATUS_SUCCESS;
 
     if (TRACE_ON(relay))
@@ -3979,6 +4019,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
         }
         attach_implicitly_loaded_dlls( context );
         virtual_release_address_space();
+        if (wm->so_handle) call_constructors( wm );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     }
     else
