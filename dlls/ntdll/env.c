@@ -377,15 +377,16 @@ static void set_wow64_environment( WCHAR **env )
     static const WCHAR winehomedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
     static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
     static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+    static const WCHAR wineusernameW[] = {'W','I','N','E','U','S','E','R','N','A','M','E',0};
     static const WCHAR wineconfigdirW[] = {'W','I','N','E','C','O','N','F','I','G','D','I','R',0};
 
-    WCHAR buf[64];
+    WCHAR buf[256];
     UNICODE_STRING arch_strW = { sizeof(archW) - sizeof(WCHAR), sizeof(archW), archW };
     UNICODE_STRING arch6432_strW = { sizeof(arch6432W) - sizeof(WCHAR), sizeof(arch6432W), arch6432W };
     UNICODE_STRING valW = { 0, sizeof(buf), buf };
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    const char *path;
+    const char *p, *name;
     WCHAR *val;
     HANDLE hkey;
     DWORD i;
@@ -396,13 +397,21 @@ static void set_wow64_environment( WCHAR **env )
     set_wine_path_variable( env, winehomedirW, getenv("HOME") );
     set_wine_path_variable( env, winebuilddirW, wine_get_build_dir() );
     set_wine_path_variable( env, wineconfigdirW, wine_get_config_dir() );
-    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
+    for (i = 0; (p = wine_dll_enum_load_path( i )); i++)
     {
         NTDLL_swprintf( buf, winedlldirW, i );
-        set_wine_path_variable( env, buf, path );
+        set_wine_path_variable( env, buf, p );
     }
     NTDLL_swprintf( buf, winedlldirW, i );
     set_wine_path_variable( env, buf, NULL );
+
+    /* set user name */
+
+    name = wine_get_user_name();
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    ntdll_umbstowcs( name, strlen(name) + 1, buf, ARRAY_SIZE(buf) );
+    set_env_var( env, wineusernameW, buf );
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
