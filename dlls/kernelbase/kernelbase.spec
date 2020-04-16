@@ -570,7 +570,7 @@
 @ stub GetNamedLocaleHashNode
 @ stub GetNamedPipeAttribute
 @ stub GetNamedPipeClientComputerNameW
-@ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long) kernel32.GetNamedPipeHandleStateW
+@ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr ptr long)
 @ stdcall GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNativeSystemInfo(ptr)
 # @ stub GetNextFgPolicyRefreshInfoInternal

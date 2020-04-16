@@ -1202,6 +1202,44 @@ BOOL WINAPI DECLSPEC_HOTPATCH DisconnectNamedPipe( HANDLE pipe )
 
 
 /***********************************************************************
+ *           GetNamedPipeHandleStateW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetNamedPipeHandleStateW( HANDLE pipe, DWORD *state, DWORD *instances,
+                                                        DWORD *max_count, DWORD *timeout,
+                                                        WCHAR *user, DWORD size )
+{
+    IO_STATUS_BLOCK io;
+
+    FIXME( "%p %p %p %p %p %p %d: semi-stub\n", pipe, state, instances, max_count, timeout, user, size );
+
+    if (max_count) *max_count = 0;
+    if (timeout) *timeout = 0;
+    if (user && size && !GetEnvironmentVariableW( L"WINEUSERNAME", user, size )) user[0] = 0;
+
+    if (state)
+    {
+        FILE_PIPE_INFORMATION info;
+
+        if (!set_ntstatus( NtQueryInformationFile( pipe, &io, &info, sizeof(info), FilePipeInformation )))
+            return FALSE;
+
+        *state = (info.ReadMode ? PIPE_READMODE_MESSAGE : PIPE_READMODE_BYTE) |
+                 (info.CompletionMode ? PIPE_NOWAIT : PIPE_WAIT);
+    }
+    if (instances)
+    {
+        FILE_PIPE_LOCAL_INFORMATION info;
+
+        if (!set_ntstatus( NtQueryInformationFile( pipe, &io, &info, sizeof(info),
+                                                   FilePipeLocalInformation)))
+            return FALSE;
+        *instances = info.CurrentInstances;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           GetNamedPipeInfo   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetNamedPipeInfo( HANDLE pipe, LPDWORD flags, LPDWORD out_size,

@@ -731,8 +731,8 @@
 # @ stub GetNamedPipeClientComputerNameW
 @ stdcall GetNamedPipeClientProcessId(long ptr)
 @ stdcall GetNamedPipeClientSessionId(long ptr)
-@ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr str long)
-@ stdcall GetNamedPipeHandleStateW(long ptr ptr ptr ptr wstr long)
+@ stdcall GetNamedPipeHandleStateA(long ptr ptr ptr ptr ptr long)
+@ stdcall -import GetNamedPipeHandleStateW(long ptr ptr ptr ptr ptr long)
 @ stdcall -import GetNamedPipeInfo(long ptr ptr ptr ptr)
 @ stdcall GetNamedPipeServerProcessId(long ptr)
 @ stdcall GetNamedPipeServerSessionId(long ptr)
