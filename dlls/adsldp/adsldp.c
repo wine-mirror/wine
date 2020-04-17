@@ -785,12 +785,14 @@ static HRESULT WINAPI ldapns_GetInfoEx(IADs *iface, VARIANT prop, LONG reserved)
             {
                 ldap_value_freeW(values);
                 ldap_memfreeW(attr);
+                ber_free(ber, 0);
                 goto exit;
             }
 
             attr = ldap_next_attributeW(ldap->ld, entry, ber);
         }
 
+        ber_free(ber, 0);
         entry = ldap_next_entry(ldap->ld, res);
     }
 
@@ -1812,6 +1814,8 @@ static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COL
 
     if (!col) return E_ADS_BAD_PARAMETER;
 
+    if (!wcsicmp(col->pszAttrName, L"ADsPath"))
+        heap_free(col->pADsValues[0].u.CaseIgnoreString);
     heap_free(col->pADsValues);
     heap_free(col->pszAttrName);
 
@@ -1839,6 +1843,9 @@ static HRESULT WINAPI search_CloseSearchHandle(IDirectorySearch *iface, ADS_SEAR
         ldap_search_abandon_page(ldap->ld, ldap_ctx->page);
     if (ldap_ctx->res)
         ldap_msgfree(ldap_ctx->res);
+    if (ldap_ctx->ber)
+        ber_free(ldap_ctx->ber, 0);
+    heap_free(ldap_ctx);
 
     return S_OK;
 }

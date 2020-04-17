@@ -433,6 +433,7 @@ struct attribute_type *load_schema(LDAP *ld, ULONG *at_single_count, ULONG *at_m
     }
 
 exit:
+    ldap_value_freeW(schema);
     ldap_msgfree(res);
     if (at)
     {
