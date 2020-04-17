@@ -39,6 +39,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
+#ifdef HAVE_LDAP
+static struct berval null_cookie = { 0, NULL };
+#endif
+
 /***********************************************************************
  *      ldap_create_page_controlA     (WLDAP32.@)
  *
@@ -77,7 +81,7 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
     LDAPControlW *ctrl;
     BerElement *ber;
     ber_tag_t tag;
-    struct berval *berval, null_cookie = { 0, NULL };
+    struct berval *berval;
     INT ret, len;
     char *val;
 
@@ -181,15 +185,41 @@ ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
 ULONG CDECL ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
     ULONG *count, WLDAP32_LDAPMessage *results )
 {
-    ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP
-    FIXME( "(%p, %p, %p, %p)\n", ld, search, count, results );
+    ULONG ret;
+    LDAPControlW **server_ctrls = NULL;
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    /* FIXME: save the cookie from the server here */
+    TRACE( "(%p, %p, %p, %p)\n", ld, search, count, results );
+
+    if (!ld || !count || !results) return WLDAP32_LDAP_PARAM_ERROR;
+
+    *count = 0;
+
+    ret = ldap_parse_resultW( ld, results, NULL, NULL, NULL, NULL, &server_ctrls, 0 );
+    if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+    if (!server_ctrls) /* assume end of paged results */
+    {
+        search->cookie = &null_cookie;
+        return WLDAP32_LDAP_SUCCESS;
+    }
+
+    if (search->cookie)
+    {
+        ber_bvfree( search->cookie );
+        search->cookie = NULL;
+    }
+
+    ret = ldap_parse_page_controlW( ld, server_ctrls, count, (struct WLDAP32_berval **)&search->cookie );
+    if (ret == WLDAP32_LDAP_SUCCESS)
+        TRACE("new search->cookie: %s, count %u\n", debugstr_an(search->cookie->bv_val, search->cookie->bv_len), *count);
+
+    ldap_controls_freeW( server_ctrls );
+
+    return ret;
 
 #endif
-    return ret;
+    return WLDAP32_LDAP_NOT_SUPPORTED;
 }
 
 /***********************************************************************
@@ -278,7 +308,7 @@ ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
     while (*ctrls) controlfreeW( *ctrls++ );
     heap_free( search->serverctrls );
     controlarrayfreeW( search->clientctrls );
-    if (search->cookie)
+    if (search->cookie && search->cookie != &null_cookie)
         ber_bvfree( search->cookie );
     heap_free( search );
 
