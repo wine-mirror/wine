@@ -610,6 +610,9 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context->device);
 
+    if (map_flags & WINED3D_MAP_NOOVERWRITE)
+        goto map;
+
     if (map_flags & WINED3D_MAP_READ)
     {
         if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
@@ -647,6 +650,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
         wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
     wined3d_context_vk_wait_command_buffer(context_vk, bo->command_buffer_id);
 
+map:
     if (!(map_ptr = wined3d_bo_vk_map(bo, context_vk)))
     {
         ERR("Failed to map bo.\n");
