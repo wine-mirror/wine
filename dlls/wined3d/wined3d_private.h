@@ -33,6 +33,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <math.h>
 #include <limits.h>
 #include "ntstatus.h"
@@ -1520,8 +1521,11 @@ do {                                                                \
 struct wined3d_bo_vk
 {
     VkBuffer vk_buffer;
+    struct wined3d_allocator_block *memory;
+
     VkDeviceMemory vk_memory;
 
+    VkDeviceSize memory_offset;
     VkMemoryPropertyFlags memory_type;
 
     uint64_t command_buffer_id;
@@ -2188,6 +2192,7 @@ enum wined3d_retired_object_type_vk
 {
     WINED3D_RETIRED_FREE_VK,
     WINED3D_RETIRED_MEMORY_VK,
+    WINED3D_RETIRED_ALLOCATOR_BLOCK_VK,
     WINED3D_RETIRED_BUFFER_VK,
 };
 
@@ -2198,6 +2203,7 @@ struct wined3d_retired_object_vk
     {
         struct wined3d_retired_object_vk *next;
         VkDeviceMemory vk_memory;
+        struct wined3d_allocator_block *block;
         VkBuffer vk_buffer;
     } u;
     uint64_t command_buffer_id;
@@ -2236,6 +2242,8 @@ static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_conte
     return CONTAINING_RECORD(context, struct wined3d_context_vk, c);
 }
 
+VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,
+        unsigned int pool, size_t size) DECLSPEC_HIDDEN;
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
@@ -3422,6 +3430,77 @@ static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device 
     return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
 }
 
+#define WINED3D_ALLOCATOR_CHUNK_SIZE        (64 * 1024 * 1024)
+#define WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT 15
+#define WINED3D_ALLOCATOR_MIN_BLOCK_SIZE    (WINED3D_ALLOCATOR_CHUNK_SIZE >> (WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT - 1))
+
+struct wined3d_allocator_chunk
+{
+    struct list entry;
+    struct list available[WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT];
+    struct wined3d_allocator *allocator;
+    unsigned int map_count;
+    void *map_ptr;
+};
+
+void wined3d_allocator_chunk_cleanup(struct wined3d_allocator_chunk *chunk) DECLSPEC_HIDDEN;
+bool wined3d_allocator_chunk_init(struct wined3d_allocator_chunk *chunk,
+        struct wined3d_allocator *allocator) DECLSPEC_HIDDEN;
+
+struct wined3d_allocator_chunk_vk
+{
+    struct wined3d_allocator_chunk c;
+    VkDeviceMemory vk_memory;
+};
+
+static inline struct wined3d_allocator_chunk_vk *wined3d_allocator_chunk_vk(struct wined3d_allocator_chunk *chunk)
+{
+    return CONTAINING_RECORD(chunk, struct wined3d_allocator_chunk_vk, c);
+}
+
+void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_allocator_chunk_vk_unmap(struct wined3d_allocator_chunk_vk *chunk_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+
+struct wined3d_allocator_block
+{
+    struct list entry;
+    struct wined3d_allocator_chunk *chunk;
+    struct wined3d_allocator_block *parent, *sibling;
+    unsigned int order;
+    size_t offset;
+    bool free;
+};
+
+void wined3d_allocator_block_free(struct wined3d_allocator_block *block) DECLSPEC_HIDDEN;
+
+struct wined3d_allocator_pool
+{
+    struct list chunks;
+};
+
+struct wined3d_allocator_ops
+{
+    struct wined3d_allocator_chunk *(*allocator_create_chunk)(struct wined3d_allocator *allocator,
+            struct wined3d_context *context, unsigned int memory_type, size_t chunk_size);
+    void (*allocator_destroy_chunk)(struct wined3d_allocator_chunk *chunk);
+};
+
+struct wined3d_allocator
+{
+    const struct wined3d_allocator_ops *ops;
+    struct wined3d_allocator_pool *pools;
+    size_t pool_count;
+    struct wined3d_allocator_block *free;
+};
+
+struct wined3d_allocator_block *wined3d_allocator_allocate(struct wined3d_allocator *allocator,
+        struct wined3d_context *context, unsigned int memory_type, size_t size) DECLSPEC_HIDDEN;
+void wined3d_allocator_cleanup(struct wined3d_allocator *allocator) DECLSPEC_HIDDEN;
+bool wined3d_allocator_init(struct wined3d_allocator *allocator,
+        size_t pool_count, const struct wined3d_allocator_ops *allocator_ops) DECLSPEC_HIDDEN;
+
 struct wined3d_device_vk
 {
     struct wined3d_device d;
@@ -3433,6 +3512,8 @@ struct wined3d_device_vk
     uint32_t vk_queue_family_index;
 
     struct wined3d_vk_info vk_info;
+
+    struct wined3d_allocator allocator;
 };
 
 static inline struct wined3d_device_vk *wined3d_device_vk(struct wined3d_device *device)

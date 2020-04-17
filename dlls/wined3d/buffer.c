@@ -1636,7 +1636,7 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
         case WINED3D_LOCATION_BUFFER:
             wined3d_context_vk_destroy_bo(context_vk, &buffer_vk->bo);
             buffer_vk->bo.vk_buffer = VK_NULL_HANDLE;
-            buffer_vk->bo.vk_memory = VK_NULL_HANDLE;
+            buffer_vk->bo.memory = NULL;
             buffer_vk->b.buffer_object = 0u;
             break;
 

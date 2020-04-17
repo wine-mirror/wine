@@ -7060,3 +7060,218 @@ void compute_normal_matrix(float *normal_matrix, BOOL legacy_lighting,
         for (j = 0; j < 3; ++j)
             normal_matrix[i * 3 + j] = (&mv._11)[j * 4 + i];
 }
+
+static void wined3d_allocator_release_block(struct wined3d_allocator *allocator,
+        struct wined3d_allocator_block *block)
+{
+    block->parent = allocator->free;
+    allocator->free = block;
+}
+
+static struct wined3d_allocator_block *wined3d_allocator_acquire_block(struct wined3d_allocator *allocator)
+{
+    struct wined3d_allocator_block *block;
+
+    if (!allocator->free)
+        return heap_alloc(sizeof(*block));
+
+    block = allocator->free;
+    allocator->free = block->parent;
+
+    return block;
+}
+
+void wined3d_allocator_block_free(struct wined3d_allocator_block *block)
+{
+    struct wined3d_allocator *allocator = block->chunk->allocator;
+    struct wined3d_allocator_block *parent;
+
+    while ((parent = block->parent) && block->sibling->free)
+    {
+        list_remove(&block->sibling->entry);
+        wined3d_allocator_release_block(allocator, block->sibling);
+        wined3d_allocator_release_block(allocator, block);
+        block = parent;
+    }
+
+    block->free = true;
+    list_add_head(&block->chunk->available[block->order], &block->entry);
+}
+
+static void wined3d_allocator_block_init(struct wined3d_allocator_block *block,
+        struct wined3d_allocator_chunk *chunk, struct wined3d_allocator_block *parent,
+        struct wined3d_allocator_block *sibling, unsigned int order, size_t offset, bool free)
+{
+    list_init(&block->entry);
+    block->chunk = chunk;
+    block->parent = parent;
+    block->sibling = sibling;
+    block->order = order;
+    block->offset = offset;
+    block->free = free;
+}
+
+void wined3d_allocator_chunk_cleanup(struct wined3d_allocator_chunk *chunk)
+{
+    struct wined3d_allocator_block *block;
+    size_t i;
+
+    if (list_empty(&chunk->available[0]))
+    {
+        ERR("Chunk %p is not empty.\n", chunk);
+        return;
+    }
+
+    for (i = 1; i < ARRAY_SIZE(chunk->available); ++i)
+    {
+        if (!list_empty(&chunk->available[i]))
+        {
+            ERR("Chunk %p is not empty.\n", chunk);
+            return;
+        }
+    }
+
+    block = LIST_ENTRY(list_head(&chunk->available[0]), struct wined3d_allocator_block, entry);
+    wined3d_allocator_release_block(chunk->allocator, block);
+}
+
+bool wined3d_allocator_chunk_init(struct wined3d_allocator_chunk *chunk, struct wined3d_allocator *allocator)
+{
+    struct wined3d_allocator_block *block;
+    unsigned int i;
+
+    if (!(block = wined3d_allocator_acquire_block(allocator)))
+        return false;
+    wined3d_allocator_block_init(block, chunk, NULL, NULL, 0, 0, true);
+
+    list_init(&chunk->entry);
+    for (i = 0; i < ARRAY_SIZE(chunk->available); ++i)
+    {
+        list_init(&chunk->available[i]);
+    }
+    list_add_head(&chunk->available[0], &block->entry);
+    chunk->allocator = allocator;
+    chunk->map_count = 0;
+    chunk->map_ptr = NULL;
+
+    return true;
+}
+
+void wined3d_allocator_cleanup(struct wined3d_allocator *allocator)
+{
+    struct wined3d_allocator_chunk *chunk, *chunk2;
+    struct wined3d_allocator_block *block, *next;
+    size_t i;
+
+    for (i = 0; i < allocator->pool_count; ++i)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(chunk, chunk2, &allocator->pools[i].chunks, struct wined3d_allocator_chunk, entry)
+        {
+            list_remove(&chunk->entry);
+            allocator->ops->allocator_destroy_chunk(chunk);
+        }
+    }
+    heap_free(allocator->pools);
+
+    next = allocator->free;
+    while ((block = next))
+    {
+        next = block->parent;
+        heap_free(block);
+    }
+}
+
+static struct wined3d_allocator_block *wined3d_allocator_chunk_allocate(struct wined3d_allocator_chunk *chunk,
+        unsigned int order)
+{
+    struct wined3d_allocator_block *block, *left, *right;
+    unsigned int i = order;
+
+    while (i)
+    {
+        if (!list_empty(&chunk->available[i]))
+            break;
+        --i;
+    }
+
+    if (list_empty(&chunk->available[i]))
+        return NULL;
+
+    block = LIST_ENTRY(list_head(&chunk->available[i]), struct wined3d_allocator_block, entry);
+    list_remove(&block->entry);
+    block->free = false;
+
+    while (i < order)
+    {
+        if (!(left = wined3d_allocator_acquire_block(chunk->allocator)))
+        {
+            ERR("Failed to allocate left.\n");
+            break;
+        }
+
+        if (!(right = wined3d_allocator_acquire_block(chunk->allocator)))
+        {
+            ERR("Failed to allocate right.\n");
+            wined3d_allocator_release_block(chunk->allocator, left);
+            break;
+        }
+
+        wined3d_allocator_block_init(left, chunk, block, right, block->order + 1, block->offset, false);
+        wined3d_allocator_block_init(right, chunk, block, left, block->order + 1,
+                block->offset + (WINED3D_ALLOCATOR_CHUNK_SIZE >> left->order), true);
+        list_add_head(&chunk->available[right->order], &right->entry);
+
+        block = left;
+        ++i;
+    }
+
+    return block;
+}
+
+struct wined3d_allocator_block *wined3d_allocator_allocate(struct wined3d_allocator *allocator,
+        struct wined3d_context *context, unsigned int memory_type, size_t size)
+{
+    struct wined3d_allocator_chunk *chunk;
+    struct wined3d_allocator_block *block;
+    unsigned int order;
+
+    if (size > WINED3D_ALLOCATOR_CHUNK_SIZE / 2)
+        return NULL;
+
+    if (size < WINED3D_ALLOCATOR_MIN_BLOCK_SIZE)
+        order = WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT - 1;
+    else
+        order = wined3d_log2i(WINED3D_ALLOCATOR_CHUNK_SIZE / size);
+
+    LIST_FOR_EACH_ENTRY(chunk, &allocator->pools[memory_type].chunks, struct wined3d_allocator_chunk, entry)
+    {
+        if ((block = wined3d_allocator_chunk_allocate(chunk, order)))
+            return block;
+    }
+
+    if (!(chunk = allocator->ops->allocator_create_chunk(allocator,
+            context, memory_type, WINED3D_ALLOCATOR_CHUNK_SIZE)))
+        return NULL;
+
+    if (!(block = wined3d_allocator_chunk_allocate(chunk, order)))
+        return NULL;
+
+    return block;
+}
+
+bool wined3d_allocator_init(struct wined3d_allocator *allocator,
+        size_t pool_count, const struct wined3d_allocator_ops *allocator_ops)
+{
+    size_t i;
+
+    allocator->ops = allocator_ops;
+    allocator->pool_count = pool_count;
+    if (!(allocator->pools = heap_calloc(pool_count, sizeof(*allocator->pools))))
+        return false;
+    for (i = 0; i < pool_count; ++i)
+    {
+        list_init(&allocator->pools[i].chunks);
+    }
+
+    return true;
+}
