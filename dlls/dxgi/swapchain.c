@@ -2622,9 +2622,11 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetMaximumFrameLatency(IDXGISwa
 
 static HANDLE STDMETHODCALLTYPE d3d12_swapchain_GetFrameLatencyWaitableObject(IDXGISwapChain3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
 
-    return NULL;
+    TRACE("iface %p.\n", iface);
+
+    return swapchain->frame_latency_event;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMatrixTransform(IDXGISwapChain3 *iface,
