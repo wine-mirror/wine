@@ -188,13 +188,19 @@ static BOOL init_tests(void)
 static void test_mediadet(void)
 {
     HRESULT hr;
+    FILTER_INFO filter_info;
+    AM_MEDIA_TYPE mt, *pmt;
+    IEnumMediaTypes *type;
     IMediaDet *pM = NULL;
     BSTR filename = NULL;
+    IBaseFilter *filter;
+    IEnumPins *enumpins;
     LONG nstrms = 0;
+    IUnknown *unk;
+    IPin *pin;
     LONG strm;
     GUID guid;
     BSTR bstr;
-    AM_MEDIA_TYPE mt;
     double fps;
     int flags;
     int i;
@@ -255,6 +261,14 @@ static void test_mediadet(void)
 
     hr = IMediaDet_get_StreamTypeB(pM, NULL);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_Filter(pM, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IMediaDet_get_Filter(pM, &unk);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!unk, "Got filter %p.\n", unk);
 
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
@@ -429,6 +443,39 @@ static void test_mediadet(void)
     hr = IMediaDet_get_CurrentStream(pM, &strm);
     ok(hr == S_OK, "IMediaDet_get_CurrentStream failed: %08x\n", hr);
     ok(strm == 1, "IMediaDet_get_CurrentStream: strm is %i\n", strm);
+
+    unk = NULL;
+    hr = IMediaDet_get_Filter(pM, &unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!unk, "Expected a non-NULL filter.\n");
+    hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void**)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IBaseFilter_EnumPins(filter, &enumpins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enumpins, 1, &pin, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IPin_EnumMediaTypes(pin, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumMediaTypes_Next(type, 1, &pmt, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&pmt->majortype, &MEDIATYPE_Stream), "Got major type %s.\n",
+            debugstr_guid(&pmt->majortype));
+    IEnumMediaTypes_Release(type);
+    CoTaskMemFree(pmt->pbFormat);
+    CoTaskMemFree(pmt);
+    IPin_Release(pin);
+
+    hr = IEnumPins_Next(enumpins, 1, &pin, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    IEnumPins_Release(enumpins);
+
+    hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!wcscmp(filter_info.achName, L"Source"), "Got name %s.\n", debugstr_w(filter_info.achName));
+    IFilterGraph_Release(filter_info.pGraph);
+    IBaseFilter_Release(filter);
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);

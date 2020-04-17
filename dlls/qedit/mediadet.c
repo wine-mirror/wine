@@ -144,11 +144,22 @@ static ULONG WINAPI MediaDet_Release(IMediaDet *iface)
     return IUnknown_Release(This->outer_unk);
 }
 
-static HRESULT WINAPI MediaDet_get_Filter(IMediaDet* iface, IUnknown **pVal)
+static HRESULT WINAPI MediaDet_get_Filter(IMediaDet *iface, IUnknown **filter)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    MediaDetImpl *detector = impl_from_IMediaDet(iface);
+
+    TRACE("detector %p, filter %p.\n", detector, filter);
+
+    if (!filter)
+        return E_POINTER;
+
+    *filter = (IUnknown *)detector->source;
+    if (*filter)
+        IUnknown_AddRef(*filter);
+    else
+        return S_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaDet_put_Filter(IMediaDet* iface, IUnknown *newVal)
