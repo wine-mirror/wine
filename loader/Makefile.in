@@ -10,7 +10,8 @@ SOURCES = \
 	wine.pl.UTF-8.man.in \
 	wine_info.plist.in \
 	winebus.inf.in \
-	winehid.inf.in
+	winehid.inf.in \
+	wineusb.inf.in
 
 PROGRAMS = $(WINELOADER_PROGRAMS)
 INSTALL_LIB = $(WINELOADER_PROGRAMS)
