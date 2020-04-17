@@ -8,6 +8,7 @@ C_SRCS = \
 	avico.c \
 	avimux.c \
 	capturegraph.c \
+	filewriter.c \
 	filter.c \
 	mediatype.c \
 	pin.c \

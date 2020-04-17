@@ -56,6 +56,12 @@ coclass CaptureGraphBuilder {}
 coclass CaptureGraphBuilder2 {}
 
 [
+    threading(both),
+    uuid(8596e5f0-0da5-11d0-bd21-00a0c911ce86)
+]
+coclass FileWriter {}
+
+[
     helpstring("Smart Tee Filter"),
     threading(both),
     uuid(cc58e280-8aa1-11d1-b3f1-00aa003761c5)

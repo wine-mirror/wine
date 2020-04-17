@@ -29,6 +29,7 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT avi_mux_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT capture_graph_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
+HRESULT file_writer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 

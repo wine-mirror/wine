@@ -6,6 +6,7 @@ C_SRCS = \
 	avico.c \
 	avimux.c \
 	capturegraph.c \
+	filewriter.c \
 	qcap.c \
 	smartteefilter.c \
 	videocapture.c
