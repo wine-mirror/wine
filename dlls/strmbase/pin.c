@@ -57,10 +57,13 @@ static HRESULT enum_media_types_create(struct strmbase_pin *pin, IEnumMediaTypes
     object->pin = pin;
     IPin_AddRef(&pin->IPin_iface);
 
-    while (pin->ops->pin_get_media_type(pin, object->count, &mt) == S_OK)
+    if (pin->ops->pin_get_media_type)
     {
-        FreeMediaType(&mt);
-        ++object->count;
+        while (pin->ops->pin_get_media_type(pin, object->count, &mt) == S_OK)
+        {
+            FreeMediaType(&mt);
+            ++object->count;
+        }
     }
 
     TRACE("Created enumerator %p.\n", object);
@@ -121,6 +124,13 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
 
     TRACE("enummt %p, count %u, mts %p, ret_count %p.\n", enummt, count, mts, ret_count);
 
+    if (!enummt->pin->ops->pin_get_media_type)
+    {
+        if (ret_count)
+            *ret_count = 0;
+        return count ? S_FALSE : S_OK;
+    }
+
     for (i = 0; i < count; ++i)
     {
         if ((mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
@@ -169,10 +179,13 @@ static HRESULT WINAPI enum_media_types_Reset(IEnumMediaTypes *iface)
     TRACE("enummt %p.\n", enummt);
 
     enummt->count = 0;
-    while (enummt->pin->ops->pin_get_media_type(enummt->pin, enummt->count, &mt) == S_OK)
+    if (enummt->pin->ops->pin_get_media_type)
     {
-        FreeMediaType(&mt);
-        ++enummt->count;
+        while (enummt->pin->ops->pin_get_media_type(enummt->pin, enummt->count, &mt) == S_OK)
+        {
+            FreeMediaType(&mt);
+            ++enummt->count;
+        }
     }
 
     enummt->index = 0;
@@ -397,10 +410,13 @@ static HRESULT WINAPI pin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_med
     TRACE("pin %p %s:%s, enum_media_types %p.\n", pin, debugstr_w(pin->filter->name),
             debugstr_w(pin->name), enum_media_types);
 
-    if (FAILED(hr = pin->ops->pin_get_media_type(pin, 0, &mt)))
-        return hr;
-    if (hr == S_OK)
-        FreeMediaType(&mt);
+    if (pin->ops->pin_get_media_type)
+    {
+        if (FAILED(hr = pin->ops->pin_get_media_type(pin, 0, &mt)))
+            return hr;
+        if (hr == S_OK)
+            FreeMediaType(&mt);
+    }
 
     return enum_media_types_create(pin, enum_media_types);
 }
