@@ -234,7 +234,16 @@ typedef struct WLDAP32_ldapvlvinfo
     VOID *ldvlv_extradata;
 } WLDAP32_LDAPVLVInfo, *WLDAP32_PLDAPVLVInfo;
 
-typedef struct ldapsearch LDAPSearch, *PLDAPSearch;
+typedef struct ldapsearch
+{
+    WCHAR *dn, *filter, **attrs;
+    ULONG scope, attrsonly;
+    LDAPControlW **serverctrls;
+    LDAPControlW **clientctrls;
+    struct l_timeval timeout;
+    ULONG sizelimit;
+    struct berval *cookie;
+} LDAPSearch, *PLDAPSearch;
 
 typedef struct ldapsortkeyA
 {
