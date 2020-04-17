@@ -4642,7 +4642,8 @@ BOOL WINAPI SetupDiEnumDriverInfoA(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
 
     driver_dataW.cbSize = sizeof(driver_dataW);
     ret = SetupDiEnumDriverInfoW(devinfo, device_data, type, index, &driver_dataW);
-    driver_data_wtoa(driver_data, &driver_dataW);
+    if (ret) driver_data_wtoa(driver_data, &driver_dataW);
+
     return ret;
 }
 
