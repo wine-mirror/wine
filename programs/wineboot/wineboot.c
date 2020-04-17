@@ -1367,6 +1367,7 @@ static void install_root_pnp_devices(void)
     root_devices[] =
     {
         {"root\\wine\\winebus", "root\\winebus\0", "C:\\windows\\inf\\winebus.inf"},
+        {"root\\wine\\wineusb", "root\\wineusb\0", "C:\\windows\\inf\\wineusb.inf"},
     };
     SP_DEVINFO_DATA device = {sizeof(device)};
     unsigned int i;
