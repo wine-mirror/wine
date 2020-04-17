@@ -439,6 +439,15 @@ static void transfer_cb(struct libusb_transfer *transfer)
                 break;
             }
 
+            case URB_FUNCTION_VENDOR_INTERFACE:
+            {
+                struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
+                req->TransferBufferLength = transfer->actual_length;
+                if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
+                    memcpy(req->TransferBuffer, libusb_control_transfer_get_data(transfer), transfer->actual_length);
+                break;
+            }
+
             default:
                 ERR("Unexpected function %#x.\n", urb->UrbHeader.Function);
         }
@@ -538,6 +547,43 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
             }
 
             return STATUS_SUCCESS;
+        }
+
+        case URB_FUNCTION_VENDOR_INTERFACE:
+        {
+            struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
+            uint8_t req_type = LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_INTERFACE;
+            unsigned char *buffer;
+
+            if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
+                req_type |= LIBUSB_ENDPOINT_IN;
+            if (req->TransferFlags & ~USBD_TRANSFER_DIRECTION_IN)
+                FIXME("Unhandled flags %#x.\n", req->TransferFlags);
+
+            if (req->TransferBufferMDL)
+                FIXME("Unhandled MDL output buffer.\n");
+
+            if (!(transfer = libusb_alloc_transfer(0)))
+                return STATUS_NO_MEMORY;
+
+            if (!(buffer = malloc(sizeof(struct libusb_control_setup) + req->TransferBufferLength)))
+            {
+                libusb_free_transfer(transfer);
+                return STATUS_NO_MEMORY;
+            }
+
+            queue_irp(device, irp, transfer);
+            libusb_fill_control_setup(buffer, req_type, req->Request,
+                    req->Value, req->Index, req->TransferBufferLength);
+            if (!(req->TransferFlags & USBD_TRANSFER_DIRECTION_IN))
+                memcpy(buffer + LIBUSB_CONTROL_SETUP_SIZE, req->TransferBuffer, req->TransferBufferLength);
+            libusb_fill_control_transfer(transfer, device->handle, buffer, transfer_cb, irp, 0);
+            transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
+            ret = libusb_submit_transfer(transfer);
+            if (ret < 0)
+                ERR("Failed to submit vendor-specific interface transfer: %s\n", libusb_strerror(ret));
+
+            return STATUS_PENDING;
         }
 
         default:
