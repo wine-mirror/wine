@@ -31,6 +31,10 @@
 # include <sys/mman.h>
 #endif
 
+#if defined(__APPLE__)
+# include <mach-o/getsect.h>
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
