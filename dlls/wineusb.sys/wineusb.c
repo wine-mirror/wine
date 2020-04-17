@@ -514,6 +514,27 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
     switch (urb->UrbHeader.Function)
     {
+        case URB_FUNCTION_ABORT_PIPE:
+        {
+            LIST_ENTRY *entry, *mark;
+
+            /* The documentation states that URB_FUNCTION_ABORT_PIPE may
+             * complete before outstanding requests complete, so we don't need
+             * to wait for them. */
+            EnterCriticalSection(&wineusb_cs);
+            mark = &device->irp_list;
+            for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+            {
+                IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+
+                if ((ret = libusb_cancel_transfer(queued_irp->Tail.Overlay.DriverContext[0])) < 0)
+                    ERR("Failed to cancel transfer: %s\n", libusb_strerror(ret));
+            }
+            LeaveCriticalSection(&wineusb_cs);
+
+            return STATUS_SUCCESS;
+        }
+
         case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
         {
             struct _URB_BULK_OR_INTERRUPT_TRANSFER *req = &urb->UrbBulkOrInterruptTransfer;
