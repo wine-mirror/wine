@@ -431,6 +431,10 @@ static void transfer_cb(struct libusb_transfer *transfer)
     {
         switch (urb->UrbHeader.Function)
         {
+            case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
+                urb->UrbBulkOrInterruptTransfer.TransferBufferLength = transfer->actual_length;
+                break;
+
             case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
             {
                 struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
@@ -488,6 +492,18 @@ static HANDLE make_pipe_handle(unsigned char endpoint, USBD_PIPE_TYPE type)
     return u.handle;
 }
 
+static struct pipe get_pipe(HANDLE handle)
+{
+    union
+    {
+        struct pipe pipe;
+        HANDLE handle;
+    } u;
+
+    u.handle = handle;
+    return u.pipe;
+}
+
 static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 {
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
@@ -498,6 +514,43 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
     switch (urb->UrbHeader.Function)
     {
+        case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
+        {
+            struct _URB_BULK_OR_INTERRUPT_TRANSFER *req = &urb->UrbBulkOrInterruptTransfer;
+            struct pipe pipe = get_pipe(req->PipeHandle);
+
+            if (req->TransferBufferMDL)
+                FIXME("Unhandled MDL output buffer.\n");
+
+            if (!(transfer = libusb_alloc_transfer(0)))
+                return STATUS_NO_MEMORY;
+
+            if (pipe.type == UsbdPipeTypeBulk)
+            {
+                libusb_fill_bulk_transfer(transfer, device->handle, pipe.endpoint,
+                        req->TransferBuffer, req->TransferBufferLength, transfer_cb, irp, 0);
+            }
+            else if (pipe.type == UsbdPipeTypeInterrupt)
+            {
+                libusb_fill_interrupt_transfer(transfer, device->handle, pipe.endpoint,
+                        req->TransferBuffer, req->TransferBufferLength, transfer_cb, irp, 0);
+            }
+            else
+            {
+                WARN("Invalid pipe type %#x.\n", pipe.type);
+                libusb_free_transfer(transfer);
+                return USBD_STATUS_INVALID_PIPE_HANDLE;
+            }
+
+            queue_irp(device, irp, transfer);
+            transfer->flags = LIBUSB_TRANSFER_FREE_TRANSFER;
+            ret = libusb_submit_transfer(transfer);
+            if (ret < 0)
+                ERR("Failed to submit bulk transfer: %s\n", libusb_strerror(ret));
+
+            return STATUS_PENDING;
+        }
+
         case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
         {
             struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
