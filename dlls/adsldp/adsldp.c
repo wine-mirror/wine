@@ -409,6 +409,7 @@ typedef struct
 
 struct ldap_search_context
 {
+    LDAPSearch *page;
     LDAPMessage *res, *entry;
     BerElement *ber;
     ULONG count, pos;
@@ -1329,12 +1330,26 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
         ctrls = ctrls_a;
     }
 
-    err = ldap_search_ext_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props,
-                             ldap->search.attribtypes_only, ctrls, NULL, NULL, 0, &ldap_ctx->res);
+    if (ldap->search.pagesize)
+    {
+        ldap_ctx->page = ldap_search_init_pageW(ldap->ld, ldap->object, ldap->search.scope,
+                                                filter, props, ldap->search.attribtypes_only,
+                                                ctrls, NULL, 0, 0, NULL);
+        if (ldap_ctx->page)
+            err = ldap_get_next_page_s(ldap->ld, ldap_ctx->page, NULL,
+                                       ldap->search.pagesize, &count, &ldap_ctx->res);
+        else
+            err = LDAP_NO_MEMORY;
+    }
+    else
+        err = ldap_search_ext_sW(ldap->ld, ldap->object, ldap->search.scope, filter, props,
+                                 ldap->search.attribtypes_only, ctrls, NULL, NULL, 0, &ldap_ctx->res);
     heap_free(props);
     if (err != LDAP_SUCCESS)
     {
         TRACE("ldap_search_sW error %#x\n", err);
+        if (ldap_ctx->page)
+            ldap_search_abandon_page(ldap->ld, ldap_ctx->page);
         heap_free(ldap_ctx);
         return HRESULT_FROM_WIN32(map_ldap_error(err));
     }
@@ -1384,11 +1399,42 @@ static HRESULT WINAPI search_GetNextRow(IDirectorySearch *iface, ADS_SEARCH_HAND
     else
     {
         if (ldap_ctx->pos >= ldap_ctx->count)
+        {
+            if (ldap_ctx->page)
+            {
+                ULONG err, count;
+
+                ldap_msgfree(ldap_ctx->res);
+                ldap_ctx->res = NULL;
+
+                err = ldap_get_next_page_s(ldap->ld, ldap_ctx->page, NULL, ldap->search.pagesize, &count, &ldap_ctx->res);
+                if (err == LDAP_SUCCESS)
+                {
+                    ldap_ctx->count = ldap_count_entries(ldap->ld, ldap_ctx->res);
+                    ldap_ctx->pos = 0;
+
+                    if (ldap_ctx->pos >= ldap_ctx->count)
+                        return S_ADS_NOMORE_ROWS;
+
+                    ldap_ctx->entry = ldap_first_entry(ldap->ld, ldap_ctx->res);
+                    goto exit;
+                }
+
+                if (err != LDAP_NO_RESULTS_RETURNED)
+                {
+                    TRACE("ldap_get_next_page_s error %#x\n", err);
+                    return HRESULT_FROM_WIN32(map_ldap_error(err));
+                }
+                /* fall through */
+            }
+
             return S_ADS_NOMORE_ROWS;
+        }
 
         ldap_ctx->entry = ldap_next_entry(ldap->ld, ldap_ctx->entry);
     }
 
+exit:
     if (!ldap_ctx->entry)
         return S_ADS_NOMORE_ROWS;
 
@@ -1782,13 +1828,17 @@ static HRESULT WINAPI search_FreeColumn(IDirectorySearch *iface, PADS_SEARCH_COL
 
 static HRESULT WINAPI search_CloseSearchHandle(IDirectorySearch *iface, ADS_SEARCH_HANDLE res)
 {
+    LDAP_namespace *ldap = impl_from_IDirectorySearch(iface);
     struct ldap_search_context *ldap_ctx = res;
 
     TRACE("%p,%p\n", iface, res);
 
     if (!res) return E_ADS_BAD_PARAMETER;
 
-    ldap_msgfree(ldap_ctx->res);
+    if (ldap_ctx->page)
+        ldap_search_abandon_page(ldap->ld, ldap_ctx->page);
+    if (ldap_ctx->res)
+        ldap_msgfree(ldap_ctx->res);
 
     return S_OK;
 }
