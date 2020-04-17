@@ -2685,10 +2685,19 @@ static UINT STDMETHODCALLTYPE d3d12_swapchain_GetCurrentBackBufferIndex(IDXGISwa
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_CheckColorSpaceSupport(IDXGISwapChain3 *iface,
         DXGI_COLOR_SPACE_TYPE colour_space, UINT *colour_space_support)
 {
-    FIXME("iface %p, colour_space %#x, colour_space_support %p stub!\n",
+    UINT support_flags = 0;
+
+    FIXME("iface %p, colour_space %#x, colour_space_support %p semi-stub!\n",
             iface, colour_space, colour_space_support);
 
-    return E_NOTIMPL;
+    if (!colour_space_support)
+        return E_INVALIDARG;
+
+    if (colour_space == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709)
+      support_flags |= DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT;
+
+    *colour_space_support = support_flags;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetColorSpace1(IDXGISwapChain3 *iface,
