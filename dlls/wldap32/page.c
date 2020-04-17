@@ -262,10 +262,31 @@ ULONG CDECL ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
 
 ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
 {
-    FIXME( "(%p, %p)\n", ld, search );
+#ifdef HAVE_LDAP
+    LDAPControlW **ctrls;
 
-    if (!ld) return ~0u;
+    TRACE( "(%p, %p)\n", ld, search );
+
+    if (!ld || !search) return ~0u;
+
+    strfreeW( search->dn );
+    strfreeW( search->filter );
+    strarrayfreeW( search->attrs );
+    ctrls = search->serverctrls;
+    controlfreeW( ctrls[0] ); /* page control */
+    ctrls++;
+    while (*ctrls) controlfreeW( *ctrls++ );
+    heap_free( search->serverctrls );
+    controlarrayfreeW( search->clientctrls );
+    if (search->cookie)
+        ber_bvfree( search->cookie );
+    heap_free( search );
+
     return WLDAP32_LDAP_SUCCESS;
+
+#else
+    return WLDAP32_LDAP_NOT_SUPPORTED;
+#endif
 }
 
 PLDAPSearch CDECL ldap_search_init_pageA( WLDAP32_LDAP *ld, PCHAR dn, ULONG scope,
