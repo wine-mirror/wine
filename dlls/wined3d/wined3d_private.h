@@ -1997,6 +1997,14 @@ struct wined3d_context
 
 void wined3d_context_cleanup(struct wined3d_context *context) DECLSPEC_HIDDEN;
 void wined3d_context_init(struct wined3d_context *context, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+void context_load_shader_resources(struct wined3d_context *context,
+        const struct wined3d_state *state, unsigned int shader_mask) DECLSPEC_HIDDEN;
+void context_load_stream_output_buffers(struct wined3d_context *context,
+        const struct wined3d_state *state) DECLSPEC_HIDDEN;
+void context_load_unordered_access_resources(struct wined3d_context *context,
+        const struct wined3d_shader *shader, struct wined3d_unordered_access_view * const *views) DECLSPEC_HIDDEN;
+void context_preload_textures(struct wined3d_context *context, const struct wined3d_state *state) DECLSPEC_HIDDEN;
+void context_update_stream_info(struct wined3d_context *context, const struct wined3d_state *state) DECLSPEC_HIDDEN;
 
 HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
@@ -5077,6 +5085,15 @@ static inline BOOL use_vs(const struct wined3d_state *state)
 static inline BOOL use_ps(const struct wined3d_state *state)
 {
     return !!state->shader[WINED3D_SHADER_TYPE_PIXEL];
+}
+
+static inline BOOL use_transform_feedback(const struct wined3d_state *state)
+{
+    const struct wined3d_shader *shader;
+
+    if (!(shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY]))
+        return FALSE;
+    return shader->u.gs.so_desc.element_count;
 }
 
 static inline void context_apply_state(struct wined3d_context *context,
