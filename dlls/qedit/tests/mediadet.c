@@ -192,6 +192,7 @@ static void test_mediadet(void)
     BSTR filename = NULL;
     LONG nstrms = 0;
     LONG strm;
+    GUID guid;
     AM_MEDIA_TYPE mt;
     double fps;
     int flags;
@@ -242,6 +243,12 @@ static void test_mediadet(void)
     hr = IMediaDet_get_StreamMediaType(pM, NULL);
     ok(hr == E_POINTER, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
 
+    hr = IMediaDet_get_StreamType(pM, &guid);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_StreamType(pM, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
     ok(hr == S_OK, "IMediaDet_put_Filename failed: %08x\n", hr);
@@ -257,6 +264,10 @@ static void test_mediadet(void)
     hr = IMediaDet_get_StreamMediaType(pM, &mt);
     ok(hr == S_OK, "IMediaDet_get_StreamMediaType failed: %08x\n", hr);
     CoTaskMemFree(mt.pbFormat);
+
+    hr = IMediaDet_get_StreamType(pM, &guid);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&guid));
 
     /* Even before get_OutputStreams.  */
     hr = IMediaDet_put_CurrentStream(pM, 1);
@@ -310,6 +321,10 @@ static void test_mediadet(void)
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Video),
                  "IMediaDet_get_StreamMediaType\n");
     CoTaskMemFree(mt.pbFormat);
+
+    hr = IMediaDet_get_StreamType(pM, &guid);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&guid));
 
     hr = IMediaDet_get_FrameRate(pM, NULL);
     ok(hr == E_POINTER, "IMediaDet_get_FrameRate failed: %08x\n", hr);
@@ -370,6 +385,10 @@ static void test_mediadet(void)
 
         if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio))
         {
+            hr = IMediaDet_get_StreamType(pM, &guid);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(IsEqualGUID(&guid, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&guid));
+
             hr = IMediaDet_get_FrameRate(pM, &fps);
             ok(hr == VFW_E_INVALIDMEDIATYPE, "IMediaDet_get_FrameRate failed: %08x\n", hr);
         }

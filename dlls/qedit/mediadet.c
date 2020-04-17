@@ -28,6 +28,7 @@
 #include "ole2.h"
 
 #include "qedit_private.h"
+#include "wine/strmbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
@@ -280,11 +281,24 @@ static HRESULT WINAPI MediaDet_put_CurrentStream(IMediaDet* iface, LONG newVal)
     return S_OK;
 }
 
-static HRESULT WINAPI MediaDet_get_StreamType(IMediaDet* iface, GUID *pVal)
+static HRESULT WINAPI MediaDet_get_StreamType(IMediaDet *iface, GUID *majortype)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%s): not implemented!\n", This, debugstr_guid(pVal));
-    return E_NOTIMPL;
+    MediaDetImpl *detector = impl_from_IMediaDet(iface);
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    TRACE("detector %p, majortype %p.\n", detector, majortype);
+
+    if (!majortype)
+        return E_POINTER;
+
+    if (SUCCEEDED(hr = IMediaDet_get_StreamMediaType(iface, &mt)))
+    {
+        *majortype = mt.majortype;
+        FreeMediaType(&mt);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaDet_get_StreamTypeB(IMediaDet* iface, BSTR *pVal)
