@@ -473,7 +473,7 @@ static void test_mediadet(void)
 
     hr = IBaseFilter_QueryFilterInfo(filter, &filter_info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!wcscmp(filter_info.achName, L"Source"), "Got name %s.\n", debugstr_w(filter_info.achName));
+    ok(!wcscmp(filter_info.achName, L"Source"), "Got name %s.\n", debugstr_w(filter_info.achName));
     IFilterGraph_Release(filter_info.pGraph);
     IBaseFilter_Release(filter);
 

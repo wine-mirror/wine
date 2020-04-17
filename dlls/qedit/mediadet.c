@@ -535,7 +535,7 @@ static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
     if (FAILED(hr))
         return hr;
 
-    if (FAILED(hr = IGraphBuilder_AddSourceFilter(gb, newVal, L"Reader", &bf)))
+    if (FAILED(hr = IGraphBuilder_AddSourceFilter(gb, newVal, L"Source", &bf)))
     {
         IGraphBuilder_Release(gb);
         return hr;
