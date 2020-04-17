@@ -391,6 +391,13 @@ static HRESULT WINAPI pin_QueryId(IPin *iface, WCHAR **id)
     return S_OK;
 }
 
+static BOOL query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
+{
+    if (pin->ops->pin_query_accept && pin->ops->pin_query_accept(pin, mt) != S_OK)
+        return FALSE;
+    return TRUE;
+}
+
 static HRESULT WINAPI pin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
 {
     struct strmbase_pin *pin = impl_from_IPin(iface);
@@ -398,7 +405,7 @@ static HRESULT WINAPI pin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
     TRACE("pin %p %s:%s, mt %p.\n", pin, debugstr_w(pin->filter->name), debugstr_w(pin->name), mt);
     strmbase_dump_media_type(mt);
 
-    return (pin->ops->pin_query_accept(pin, mt) == S_OK ? S_OK : S_FALSE);
+    return query_accept(pin, mt) ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI pin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)
@@ -763,7 +770,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *This,
 
     TRACE("(%p)->(%p, %p)\n", This, pReceivePin, pmt);
 
-    if (This->pFuncsTable->base.pin_query_accept(&This->pin, pmt) != S_OK)
+    if (!query_accept(&This->pin, pmt))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
     This->pin.peer = pReceivePin;
@@ -871,7 +878,7 @@ static HRESULT WINAPI sink_ReceiveConnection(IPin *iface, IPin *pReceivePin, con
         if (This->pin.peer)
             hr = VFW_E_ALREADY_CONNECTED;
 
-        if (SUCCEEDED(hr) && This->pin.ops->pin_query_accept(&This->pin, pmt) != S_OK)
+        if (SUCCEEDED(hr) && !query_accept(&This->pin, pmt))
             hr = VFW_E_TYPE_NOT_ACCEPTED; /* FIXME: shouldn't we just map common errors onto
                                            * VFW_E_TYPE_NOT_ACCEPTED and pass the value on otherwise? */
 
