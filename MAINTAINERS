@@ -281,6 +281,17 @@ F:	dlls/wbemdisp/
 F:	dlls/wbemprox/
 F:	dlls/wmiutils/
 
+Windows Media Foundation
+M:	Nikolay Sivov <nsivov@codeweavers.com>
+F:	dlls/mf/
+F:	dlls/mferror/
+F:	dlls/mfmediaengine/
+F:	dlls/mfplat/
+F:	dlls/mfplay/
+F:	dlls/mfreadwrite/
+F:	dlls/mfuuid/
+F:	dlls/rtworkq/
+
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
