@@ -193,6 +193,7 @@ static void test_mediadet(void)
     LONG nstrms = 0;
     LONG strm;
     GUID guid;
+    BSTR bstr;
     AM_MEDIA_TYPE mt;
     double fps;
     int flags;
@@ -249,6 +250,12 @@ static void test_mediadet(void)
     hr = IMediaDet_get_StreamType(pM, NULL);
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
+    hr = IMediaDet_get_StreamTypeB(pM, &bstr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_StreamTypeB(pM, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
     filename = SysAllocString(test_avi_filename);
     hr = IMediaDet_put_Filename(pM, filename);
     ok(hr == S_OK, "IMediaDet_put_Filename failed: %08x\n", hr);
@@ -268,6 +275,12 @@ static void test_mediadet(void)
     hr = IMediaDet_get_StreamType(pM, &guid);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&guid));
+
+    hr = IMediaDet_get_StreamTypeB(pM, &bstr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(bstr, L"{73646976-0000-0010-8000-00AA00389B71}"),
+            "Got major type %s.\n", debugstr_w(bstr));
+    SysFreeString(bstr);
 
     /* Even before get_OutputStreams.  */
     hr = IMediaDet_put_CurrentStream(pM, 1);
@@ -325,6 +338,12 @@ static void test_mediadet(void)
     hr = IMediaDet_get_StreamType(pM, &guid);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&guid));
+
+    hr = IMediaDet_get_StreamTypeB(pM, &bstr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!wcscmp(bstr, L"{73646976-0000-0010-8000-00AA00389B71}"),
+            "Got major type %s.\n", debugstr_w(bstr));
+    SysFreeString(bstr);
 
     hr = IMediaDet_get_FrameRate(pM, NULL);
     ok(hr == E_POINTER, "IMediaDet_get_FrameRate failed: %08x\n", hr);
@@ -388,6 +407,12 @@ static void test_mediadet(void)
             hr = IMediaDet_get_StreamType(pM, &guid);
             ok(hr == S_OK, "Got hr %#x.\n", hr);
             ok(IsEqualGUID(&guid, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&guid));
+
+            hr = IMediaDet_get_StreamTypeB(pM, &bstr);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(!wcscmp(bstr, L"{73647561-0000-0010-8000-00AA00389B71}"),
+                    "Got major type %s.\n", debugstr_w(bstr));
+            SysFreeString(bstr);
 
             hr = IMediaDet_get_FrameRate(pM, &fps);
             ok(hr == VFW_E_INVALIDMEDIATYPE, "IMediaDet_get_FrameRate failed: %08x\n", hr);

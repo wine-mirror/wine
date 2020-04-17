@@ -301,11 +301,21 @@ static HRESULT WINAPI MediaDet_get_StreamType(IMediaDet *iface, GUID *majortype)
     return hr;
 }
 
-static HRESULT WINAPI MediaDet_get_StreamTypeB(IMediaDet* iface, BSTR *pVal)
+static HRESULT WINAPI MediaDet_get_StreamTypeB(IMediaDet *iface, BSTR *bstr)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%p): not implemented!\n", This, pVal);
-    return E_NOTIMPL;
+    MediaDetImpl *detector = impl_from_IMediaDet(iface);
+    HRESULT hr;
+    GUID guid;
+
+    TRACE("detector %p, bstr %p.\n", detector, bstr);
+
+    if (SUCCEEDED(hr = IMediaDet_get_StreamType(iface, &guid)))
+    {
+        if (!(*bstr = SysAllocStringLen(NULL, CHARS_IN_GUID - 1)))
+            return E_OUTOFMEMORY;
+        StringFromGUID2(&guid, *bstr, CHARS_IN_GUID);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet* iface, double *pVal)
