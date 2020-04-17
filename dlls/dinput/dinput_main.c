@@ -1717,10 +1717,11 @@ static DWORD WINAPI hook_thread_proc(void *param)
         if (msg.message == WM_USER+0x10)
         {
             IDirectInputImpl *dinput;
+            HANDLE finished_event = (HANDLE)msg.lParam;
 
-            TRACE( "Processing hook change notification lp:%ld\n", msg.lParam );
+            TRACE( "Processing hook change notification wp:%ld lp:%#lx\n", msg.wParam, msg.lParam );
 
-            if (!msg.wParam && !msg.lParam)
+            if (!msg.wParam)
             {
                 if (kbd_hook) UnhookWindowsHookEx( kbd_hook );
                 if (mouse_hook) UnhookWindowsHookEx( mouse_hook );
@@ -1765,6 +1766,9 @@ static DWORD WINAPI hook_thread_proc(void *param)
                 UnhookWindowsHookEx( mouse_hook );
                 mouse_hook = NULL;
             }
+
+            if (finished_event)
+                SetEvent(finished_event);
         }
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
@@ -1824,6 +1828,7 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface, BOOL acquired)
     static HHOOK callwndproc_hook;
     static ULONG foreground_cnt;
     IDirectInputDeviceImpl *dev = impl_from_IDirectInputDevice8W(iface);
+    HANDLE hook_change_finished_event = NULL;
 
     EnterCriticalSection(&dinput_hook_crit);
 
@@ -1851,9 +1856,17 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface, BOOL acquired)
         hook_thread_event = NULL;
     }
 
-    PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, 0 );
+    if (acquired)
+        hook_change_finished_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, (LPARAM)hook_change_finished_event );
 
     LeaveCriticalSection(&dinput_hook_crit);
+
+    if (acquired)
+    {
+        WaitForSingleObject(hook_change_finished_event, INFINITE);
+        CloseHandle(hook_change_finished_event);
+    }
 }
 
 void check_dinput_events(void)

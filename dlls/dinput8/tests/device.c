@@ -798,12 +798,10 @@ static void test_keyboard_events(void)
     data_size = ARRAY_SIZE(obj_data);
     hr = IDirectInputDevice8_GetDeviceData(di_keyboard, sizeof(DIDEVICEOBJECTDATA), obj_data, &data_size, 0);
     ok(SUCCEEDED(hr), "Failed to get data hr=%08x\n", hr);
-    todo_wine
     ok(data_size == 1, "Expected 1 element, received %d\n", data_size);
 
     hr = IDirectInputDevice8_GetDeviceState(di_keyboard, sizeof(kbdata), kbdata);
     ok(SUCCEEDED(hr), "IDirectInputDevice8_GetDeviceState failed: %08x\n", hr);
-    todo_wine
     ok(kbdata[DIK_SPACE], "Expected DIK_SPACE key state down\n");
 
     keybd_event(VK_SPACE, DIK_SPACE, KEYEVENTF_KEYUP, 0);
@@ -812,7 +810,6 @@ static void test_keyboard_events(void)
     data_size = ARRAY_SIZE(obj_data);
     hr = IDirectInputDevice8_GetDeviceData(di_keyboard, sizeof(DIDEVICEOBJECTDATA), obj_data, &data_size, 0);
     ok(SUCCEEDED(hr), "Failed to get data hr=%08x\n", hr);
-    todo_wine
     ok(data_size == 1, "Expected 1 element, received %d\n", data_size);
 
     /* Test injecting keyboard events with scancode=0.
