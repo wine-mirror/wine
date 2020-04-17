@@ -4188,7 +4188,11 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
     have_name = 0 < dret;
 
     if (dret >= MAX_PATH -1) FIXME("buffer might be too small\n");
-    if (have_guid && !have_name) FIXME("class name lookup via guid not implemented\n");
+    if (have_guid && !have_name)
+    {
+        class_name[0] = '\0';
+        FIXME("class name lookup via guid not implemented\n");
+    }
 
     if (have_name)
     {
