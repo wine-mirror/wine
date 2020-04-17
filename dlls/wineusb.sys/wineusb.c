@@ -535,6 +535,17 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
             return STATUS_SUCCESS;
         }
 
+        case URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL:
+        {
+            struct _URB_PIPE_REQUEST *req = &urb->UrbPipeRequest;
+            struct pipe pipe = get_pipe(req->PipeHandle);
+
+            if ((ret = libusb_clear_halt(device->handle, pipe.endpoint)) < 0)
+                ERR("Failed to clear halt: %s\n", libusb_strerror(ret));
+
+            return STATUS_SUCCESS;
+        }
+
         case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
         {
             struct _URB_BULK_OR_INTERRUPT_TRANSFER *req = &urb->UrbBulkOrInterruptTransfer;
