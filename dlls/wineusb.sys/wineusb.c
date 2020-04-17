@@ -74,6 +74,8 @@ struct usb_device
 
     libusb_device *libusb_device;
     libusb_device_handle *handle;
+
+    LIST_ENTRY irp_list;
 };
 
 static DRIVER_OBJECT *driver_obj;
@@ -120,6 +122,7 @@ static void add_usb_device(libusb_device *libusb_device)
     device->device_obj = device_obj;
     device->libusb_device = libusb_ref_device(libusb_device);
     device->handle = handle;
+    InitializeListHead(&device->irp_list);
 
     EnterCriticalSection(&wineusb_cs);
     list_add_tail(&device_list, &device->entry);
@@ -394,6 +397,149 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
     return pdo_pnp(device, irp);
 }
 
+static NTSTATUS usbd_status_from_libusb(enum libusb_transfer_status status)
+{
+    switch (status)
+    {
+        case LIBUSB_TRANSFER_CANCELLED:
+            return USBD_STATUS_CANCELED;
+        case LIBUSB_TRANSFER_COMPLETED:
+            return USBD_STATUS_SUCCESS;
+        case LIBUSB_TRANSFER_NO_DEVICE:
+            return USBD_STATUS_DEVICE_GONE;
+        case LIBUSB_TRANSFER_STALL:
+            return USBD_STATUS_ENDPOINT_HALTED;
+        case LIBUSB_TRANSFER_TIMED_OUT:
+            return USBD_STATUS_TIMEOUT;
+        default:
+            FIXME("Unhandled status %#x.\n", status);
+        case LIBUSB_TRANSFER_ERROR:
+            return USBD_STATUS_REQUEST_FAILED;
+    }
+}
+
+static void transfer_cb(struct libusb_transfer *transfer)
+{
+    IRP *irp = transfer->user_data;
+    URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
+
+    TRACE("Completing IRP %p, status %#x.\n", irp, transfer->status);
+
+    urb->UrbHeader.Status = usbd_status_from_libusb(transfer->status);
+
+    if (transfer->status == LIBUSB_TRANSFER_COMPLETED)
+    {
+        switch (urb->UrbHeader.Function)
+        {
+            case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
+            {
+                struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
+                req->TransferBufferLength = transfer->actual_length;
+                memcpy(req->TransferBuffer, libusb_control_transfer_get_data(transfer), transfer->actual_length);
+                break;
+            }
+
+            default:
+                ERR("Unexpected function %#x.\n", urb->UrbHeader.Function);
+        }
+    }
+
+    EnterCriticalSection(&wineusb_cs);
+    RemoveEntryList(&irp->Tail.Overlay.ListEntry);
+    LeaveCriticalSection(&wineusb_cs);
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
+static void queue_irp(struct usb_device *device, IRP *irp, struct libusb_transfer *transfer)
+{
+    EnterCriticalSection(&wineusb_cs);
+    irp->Tail.Overlay.DriverContext[0] = transfer;
+    InsertTailList(&device->irp_list, &irp->Tail.Overlay.ListEntry);
+    LeaveCriticalSection(&wineusb_cs);
+}
+
+static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
+{
+    URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
+    struct libusb_transfer *transfer;
+    int ret;
+
+    TRACE("type %#x.\n", urb->UrbHeader.Function);
+
+    switch (urb->UrbHeader.Function)
+    {
+        case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
+        {
+            struct _URB_CONTROL_DESCRIPTOR_REQUEST *req = &urb->UrbControlDescriptorRequest;
+            unsigned char *buffer;
+
+            if (req->TransferBufferMDL)
+                FIXME("Unhandled MDL output buffer.\n");
+
+            if (!(transfer = libusb_alloc_transfer(0)))
+                return STATUS_NO_MEMORY;
+
+            if (!(buffer = malloc(sizeof(struct libusb_control_setup) + req->TransferBufferLength)))
+            {
+                libusb_free_transfer(transfer);
+                return STATUS_NO_MEMORY;
+            }
+
+            queue_irp(device, irp, transfer);
+            libusb_fill_control_setup(buffer,
+                    LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_DEVICE,
+                    LIBUSB_REQUEST_GET_DESCRIPTOR, (req->DescriptorType << 8) | req->Index,
+                    req->LanguageId, req->TransferBufferLength);
+            libusb_fill_control_transfer(transfer, device->handle, buffer, transfer_cb, irp, 0);
+            transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
+            ret = libusb_submit_transfer(transfer);
+            if (ret < 0)
+                ERR("Failed to submit GET_DESRIPTOR transfer: %s\n", libusb_strerror(ret));
+
+            return STATUS_PENDING;
+        }
+
+        default:
+            FIXME("Unhandled function %#x.\n", urb->UrbHeader.Function);
+    }
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device_obj, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    struct usb_device *device = device_obj->DeviceExtension;
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+
+    TRACE("device_obj %p, irp %p, code %#x.\n", device_obj, irp, code);
+
+    switch (code)
+    {
+        case IOCTL_INTERNAL_USB_SUBMIT_URB:
+            status = usb_submit_urb(device, irp);
+            break;
+
+        default:
+            FIXME("Unhandled ioctl %#x (device %#x, access %#x, function %#x, method %#x).\n",
+                    code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+    }
+
+    if (status == STATUS_PENDING)
+    {
+        IoMarkIrpPending(irp);
+    }
+    else
+    {
+        irp->IoStatus.Status = status;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+    return status;
+}
+
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
 {
     NTSTATUS ret;
@@ -437,6 +583,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
+    driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = driver_internal_ioctl;
 
     return STATUS_SUCCESS;
 }
