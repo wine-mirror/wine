@@ -194,11 +194,6 @@ static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid
     return S_OK;
 }
 
-static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT testsource_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
@@ -222,7 +217,6 @@ static HRESULT WINAPI testsource_DecideBufferSize(struct strmbase_source *iface,
 static const struct strmbase_source_ops testsource_ops =
 {
     .base.pin_query_interface = testsource_query_interface,
-    .base.pin_query_accept = testsource_query_accept,
     .base.pin_get_media_type = testsource_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
@@ -264,7 +258,6 @@ static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
     .base.pin_query_accept = testsink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
 };
 
 static void reset_interfaces(struct testfilter *filter)
