@@ -2703,9 +2703,15 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_CheckColorSpaceSupport(IDXGISwa
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetColorSpace1(IDXGISwapChain3 *iface,
         DXGI_COLOR_SPACE_TYPE colour_space)
 {
-    FIXME("iface %p, colour_space %#x stub!\n", iface, colour_space);
+    FIXME("iface %p, colour_space %#x semi-stub!\n", iface, colour_space);
 
-    return E_NOTIMPL;
+    if (colour_space != DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709)
+    {
+        WARN("Colour space %u not supported.\n", colour_space);
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeBuffers1(IDXGISwapChain3 *iface,
