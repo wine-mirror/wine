@@ -734,6 +734,7 @@ static void delete_device(struct device *device)
 
     RegCloseKey(device->key);
     heap_free(device->instanceId);
+    heap_free(device->drivers);
 
     LIST_FOR_EACH_ENTRY_SAFE(iface, next, &device->interfaces,
             struct device_iface, entry)
