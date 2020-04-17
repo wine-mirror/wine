@@ -1523,6 +1523,8 @@ struct wined3d_bo_vk
     VkDeviceMemory vk_memory;
 
     VkMemoryPropertyFlags memory_type;
+
+    uint64_t command_buffer_id;
 };
 
 struct wined3d_bo_address
@@ -2182,6 +2184,33 @@ struct wined3d_command_buffer_vk
     VkFence vk_fence;
 };
 
+enum wined3d_retired_object_type_vk
+{
+    WINED3D_RETIRED_FREE_VK,
+    WINED3D_RETIRED_MEMORY_VK,
+    WINED3D_RETIRED_BUFFER_VK,
+};
+
+struct wined3d_retired_object_vk
+{
+    enum wined3d_retired_object_type_vk type;
+    union
+    {
+        struct wined3d_retired_object_vk *next;
+        VkDeviceMemory vk_memory;
+        VkBuffer vk_buffer;
+    } u;
+    uint64_t command_buffer_id;
+};
+
+struct wined3d_retired_objects_vk
+{
+    struct wined3d_retired_object_vk *objects;
+    struct wined3d_retired_object_vk *free;
+    SIZE_T size;
+    SIZE_T count;
+};
+
 struct wined3d_context_vk
 {
     struct wined3d_context c;
@@ -2198,6 +2227,8 @@ struct wined3d_context_vk
         SIZE_T buffers_size;
         SIZE_T buffer_count;
     } submitted;
+
+    struct wined3d_retired_objects_vk retired;
 };
 
 static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_context *context)
@@ -2213,7 +2244,9 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
-void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk,
+        unsigned int wait_semaphore_count, const VkSemaphore *wait_semaphores, const VkPipelineStageFlags *wait_stages,
+        unsigned int signal_semaphore_count, const VkSemaphore *signal_semaphores) DECLSPEC_HIDDEN;
 void wined3d_context_vk_wait_command_buffer(struct wined3d_context_vk *context_vk, uint64_t id) DECLSPEC_HIDDEN;
 
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);

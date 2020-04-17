@@ -88,24 +88,97 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     }
 
     bo->memory_type = adapter_vk->memory_properties.memoryTypes[memory_type_idx].propertyFlags;
+    bo->command_buffer_id = 0;
+
+    TRACE("Created buffer 0x%s, memory 0x%s for bo %p.\n",
+            wine_dbgstr_longlong(bo->vk_buffer), wine_dbgstr_longlong(bo->vk_memory), bo);
 
     return TRUE;
 }
 
-void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)
+static struct wined3d_retired_object_vk *wined3d_context_vk_get_retired_object_vk(struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_retired_objects_vk *retired = &context_vk->retired;
+    struct wined3d_retired_object_vk *o;
+
+    if (retired->free)
+    {
+        o = retired->free;
+        retired->free = o->u.next;
+        return o;
+    }
+
+    if (!wined3d_array_reserve((void **)&retired->objects, &retired->size,
+            retired->count + 1, sizeof(*retired->objects)))
+        return NULL;
+
+    return &retired->objects[retired->count++];
+}
+
+static void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
+        VkDeviceMemory vk_memory, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
 
-    VK_CALL(vkDestroyBuffer(device_vk->vk_device, bo->vk_buffer, NULL));
-    VK_CALL(vkFreeMemory(device_vk->vk_device, bo->vk_memory, NULL));
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkFreeMemory(device_vk->vk_device, vk_memory, NULL));
+        TRACE("Freed memory 0x%s.\n", wine_dbgstr_longlong(vk_memory));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking memory 0x%s.\n", wine_dbgstr_longlong(vk_memory));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_MEMORY_VK;
+    o->u.vk_memory = vk_memory;
+    o->command_buffer_id = command_buffer_id;
+}
+
+static void wined3d_context_vk_destroy_buffer(struct wined3d_context_vk *context_vk,
+        VkBuffer vk_buffer, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkDestroyBuffer(device_vk->vk_device, vk_buffer, NULL));
+        TRACE("Destroyed buffer 0x%s.\n", wine_dbgstr_longlong(vk_buffer));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking buffer 0x%s.\n", wine_dbgstr_longlong(vk_buffer));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_BUFFER_VK;
+    o->u.vk_buffer = vk_buffer;
+    o->command_buffer_id = command_buffer_id;
+}
+
+void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)
+{
+    wined3d_context_vk_destroy_buffer(context_vk, bo->vk_buffer, bo->command_buffer_id);
+    wined3d_context_vk_destroy_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
 }
 
 static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *context_vk)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    struct wined3d_retired_objects_vk *retired = &context_vk->retired;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_command_buffer_vk *buffer;
+    struct wined3d_retired_object_vk *o;
+    uint64_t command_buffer_id;
     SIZE_T i = 0;
 
     while (i < context_vk->submitted.buffer_count)
@@ -127,6 +200,47 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             context_vk->completed_command_buffer_id = buffer->id;
         *buffer = context_vk->submitted.buffers[--context_vk->submitted.buffer_count];
     }
+    command_buffer_id = context_vk->completed_command_buffer_id;
+
+    retired->free = NULL;
+    for (i = retired->count; i; --i)
+    {
+        o = &retired->objects[i - 1];
+
+        if (o->type != WINED3D_RETIRED_FREE_VK && o->command_buffer_id > command_buffer_id)
+            continue;
+
+        switch (o->type)
+        {
+            case WINED3D_RETIRED_FREE_VK:
+                /* Nothing to do. */
+                break;
+
+            case WINED3D_RETIRED_MEMORY_VK:
+                VK_CALL(vkFreeMemory(device_vk->vk_device, o->u.vk_memory, NULL));
+                TRACE("Freed memory 0x%s.\n", wine_dbgstr_longlong(o->u.vk_memory));
+                break;
+
+            case WINED3D_RETIRED_BUFFER_VK:
+                VK_CALL(vkDestroyBuffer(device_vk->vk_device, o->u.vk_buffer, NULL));
+                TRACE("Destroyed buffer 0x%s.\n", wine_dbgstr_longlong(o->u.vk_buffer));
+                break;
+
+            default:
+                ERR("Unhandled object type %#x.\n", o->type);
+                break;
+        }
+
+        if (i == retired->count)
+        {
+            --retired->count;
+            continue;
+        }
+
+        o->type = WINED3D_RETIRED_FREE_VK;
+        o->u.next = retired->free;
+        retired->free = o;
+    }
 }
 
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
@@ -147,6 +261,8 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     context_vk->completed_command_buffer_id = buffer->id;
     wined3d_context_vk_cleanup_resources(context_vk);
     heap_free(context_vk->submitted.buffers);
+    heap_free(context_vk->retired.objects);
+
     wined3d_context_cleanup(&context_vk->c);
 }
 
@@ -199,7 +315,9 @@ VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk 
     return buffer->vk_command_buffer;
 }
 
-void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk)
+void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk,
+        unsigned int wait_semaphore_count, const VkSemaphore *wait_semaphores, const VkPipelineStageFlags *wait_stages,
+        unsigned int signal_semaphore_count, const VkSemaphore *signal_semaphores)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
@@ -208,7 +326,10 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     VkSubmitInfo submit_info;
     VkResult vr;
 
-    TRACE("context_vk %p.\n", context_vk);
+    TRACE("context_vk %p, wait_semaphore_count %u, wait_semaphores %p, wait_stages %p,"
+            "signal_semaphore_count %u, signal_semaphores %p.\n",
+            context_vk, wait_semaphore_count, wait_semaphores, wait_stages,
+            signal_semaphore_count, signal_semaphores);
 
     buffer = &context_vk->current_command_buffer;
     if (!buffer->vk_command_buffer)
@@ -227,13 +348,13 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
 
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.pNext = NULL;
-    submit_info.waitSemaphoreCount = 0;
-    submit_info.pWaitSemaphores = NULL;
-    submit_info.pWaitDstStageMask = NULL;
+    submit_info.waitSemaphoreCount = wait_semaphore_count;
+    submit_info.pWaitSemaphores = wait_semaphores;
+    submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &buffer->vk_command_buffer;
-    submit_info.signalSemaphoreCount = 0;
-    submit_info.pSignalSemaphores = NULL;
+    submit_info.signalSemaphoreCount = signal_semaphore_count;
+    submit_info.pSignalSemaphores = signal_semaphores;
 
     if ((vr = VK_CALL(vkQueueSubmit(device_vk->vk_queue, 1, &submit_info, buffer->vk_fence))) < 0)
         ERR("Failed to submit command buffer %p, vr %s.\n",
@@ -262,7 +383,8 @@ void wined3d_context_vk_wait_command_buffer(struct wined3d_context_vk *context_v
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     SIZE_T i;
 
-    if (id <= context_vk->completed_command_buffer_id)
+    if (id <= context_vk->completed_command_buffer_id
+            || id > context_vk->current_command_buffer.id) /* In case the buffer ID wrapped. */
         return;
 
     for (i = 0; i < context_vk->submitted.buffer_count; ++i)

@@ -536,10 +536,13 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
             range.size = size;
             VK_CALL(vkInvalidateMappedMemoryRanges(device_vk->vk_device, 1, &range));
         }
+
+        bo->command_buffer_id = context_vk->current_command_buffer.id;
     }
 
-    wined3d_context_vk_submit_command_buffer(context_vk);
-    wined3d_context_vk_wait_command_buffer(context_vk, context_vk->current_command_buffer.id - 1);
+    if (bo->command_buffer_id == context_vk->current_command_buffer.id)
+        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
+    wined3d_context_vk_wait_command_buffer(context_vk, bo->command_buffer_id);
 
     if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory,
             (uintptr_t)data->addr, size, 0, &map_ptr))) < 0)
