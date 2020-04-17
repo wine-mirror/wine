@@ -278,15 +278,58 @@ static NTSTATUS fdo_pnp(IRP *irp)
     return IoCallDriver(bus_pdo, irp);
 }
 
+static void get_device_id(const struct usb_device *device, WCHAR *buffer)
+{
+    static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
+            '&','P','I','D','_','%','0','4','X',0};
+    struct libusb_device_descriptor desc;
+
+    libusb_get_device_descriptor(device->libusb_device, &desc);
+    sprintfW(buffer, formatW, desc.idVendor, desc.idProduct);
+}
+
+static NTSTATUS query_id(const struct usb_device *device, IRP *irp, BUS_QUERY_ID_TYPE type)
+{
+    WCHAR *id = NULL;
+
+    switch (type)
+    {
+        case BusQueryDeviceID:
+            if ((id = ExAllocatePool(PagedPool, 28 * sizeof(WCHAR))))
+                get_device_id(device, id);
+            break;
+
+        case BusQueryInstanceID:
+            if ((id = ExAllocatePool(PagedPool, 2 * sizeof(WCHAR))))
+            {
+                id[0] = '0';
+                id[1] = 0;
+            }
+            break;
+
+        default:
+            FIXME("Unhandled ID query type %#x.\n", type);
+            return irp->IoStatus.Status;
+    }
+
+    irp->IoStatus.Information = (ULONG_PTR)id;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    struct usb_device *device = device_obj->DeviceExtension;
     NTSTATUS ret = irp->IoStatus.Status;
 
     TRACE("device_obj %p, irp %p, minor function %#x.\n", device_obj, irp, stack->MinorFunction);
 
     switch (stack->MinorFunction)
     {
+        case IRP_MN_QUERY_ID:
+            ret = query_id(device, irp, stack->Parameters.QueryId.IdType);
+            break;
+
         case IRP_MN_START_DEVICE:
         case IRP_MN_QUERY_CAPABILITIES:
             ret = STATUS_SUCCESS;
