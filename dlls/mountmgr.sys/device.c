@@ -38,7 +38,6 @@
 #include "winuser.h"
 #include "dbt.h"
 
-#include "wine/library.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -131,12 +130,19 @@ static CRITICAL_SECTION device_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static char *get_dosdevices_path( char **device )
 {
-    const char *config_dir = wine_get_config_dir();
-    size_t len = strlen(config_dir) + sizeof("/dosdevices/com256");
+    const char *home = getenv( "HOME" );
+    const char *prefix = getenv( "WINEPREFIX" );
+    size_t len = (prefix ? strlen(prefix) : strlen(home) + strlen("/.wine")) + sizeof("/dosdevices/com256");
     char *path = HeapAlloc( GetProcessHeap(), 0, len );
+
     if (path)
     {
-        strcpy( path, config_dir );
+        if (prefix) strcpy( path, prefix );
+        else
+        {
+            strcpy( path, home );
+            strcat( path, "/.wine" );
+        }
         strcat( path, "/dosdevices/a::" );
         *device = path + len - sizeof("com256");
     }
@@ -254,13 +260,20 @@ static int open_volume_file( const struct volume *volume, const char *file )
     }
     else
     {
-        const char *config_dir = wine_get_config_dir();
+        const char *home = getenv( "HOME" );
+        const char *prefix = getenv( "WINEPREFIX" );
+        size_t len = prefix ? strlen(prefix) : strlen(home) + strlen("/.wine");
 
-        if (!(path = HeapAlloc( GetProcessHeap(), 0, strlen( config_dir )
-                + strlen("/dosdevices/") + strlen(unix_mount) + 1 + strlen( file ) + 1 )))
+        if (!(path = HeapAlloc( GetProcessHeap(), 0, len + strlen("/dosdevices/") +
+                                strlen(unix_mount) + 1 + strlen( file ) + 1 )))
             return -1;
 
-        strcpy( path, config_dir );
+        if (prefix) strcpy( path, prefix );
+        else
+        {
+            strcpy( path, home );
+            strcat( path, "/.wine" );
+        }
         strcat( path, "/dosdevices/" );
         strcat( path, unix_mount );
     }
