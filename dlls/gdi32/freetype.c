@@ -100,7 +100,6 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "gdi_private.h"
-#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -2775,6 +2774,16 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
     return TRUE;
 }
 
+static void read_font_dir( const WCHAR *dirname, BOOL external_fonts )
+{
+    char *unixname = wine_get_unix_file_name( dirname );
+    if (unixname)
+    {
+        ReadFontDir( unixname, external_fonts );
+        HeapFree( GetProcessHeap(), 0, unixname );
+    }
+}
+
 #ifdef SONAME_LIBFONTCONFIG
 
 static BOOL fontconfig_enabled;
@@ -3024,43 +3033,33 @@ static void load_mac_fonts(void)
 
 #endif
 
-static char *get_font_dir(void)
+static void get_font_dir( WCHAR *path )
 {
-    const char *build_dir, *data_dir;
-    char *name = NULL;
+    static const WCHAR slashW[] = {'\\',0};
+    static const WCHAR fontsW[] = {'\\','f','o','n','t','s',0};
+    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
 
-    if ((data_dir = wine_get_data_dir()))
+    if (GetEnvironmentVariableW( winedatadirW, path, MAX_PATH ))
     {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(data_dir) + 1 + sizeof(WINE_FONT_DIR) )))
-            return NULL;
-        strcpy( name, data_dir );
-        strcat( name, "/" );
-        strcat( name, WINE_FONT_DIR );
+        const char fontdir[] = WINE_FONT_DIR;
+        strcatW( path, slashW );
+        MultiByteToWideChar( CP_ACP, 0, fontdir, -1, path + strlenW(path), MAX_PATH - strlenW(path) );
     }
-    else if ((build_dir = wine_get_build_dir()))
+    else if (GetEnvironmentVariableW( winebuilddirW, path, MAX_PATH ))
     {
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/fonts") )))
-            return NULL;
-        strcpy( name, build_dir );
-        strcat( name, "/fonts" );
+        strcatW( path, fontsW );
     }
-    return name;
+    path[1] = '\\';  /* change \??\ to \\?\ */
 }
 
 static void get_data_dir_path( LPCWSTR file, WCHAR *path )
 {
     static const WCHAR slashW[] = {'\\','\0'};
-    char *font_dir = get_font_dir();
 
-    if (font_dir)
-    {
-        WCHAR *dirW = wine_get_dos_file_name( font_dir );
-        strcpyW( path, dirW );
-        strcatW( path, slashW );
-        strcatW( path, file );
-        HeapFree( GetProcessHeap(), 0, dirW );
-        HeapFree( GetProcessHeap(), 0, font_dir );
-    }
+    get_font_dir( path );
+    strcatW( path, slashW );
+    strcatW( path, file );
 }
 
 static void get_winfonts_dir_path(LPCWSTR file, WCHAR *path)
@@ -4216,7 +4215,7 @@ static void init_font_list(void)
     static const WCHAR pathW[] = {'P','a','t','h',0};
     HKEY hkey;
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    WCHAR windowsdir[MAX_PATH];
+    WCHAR path[MAX_PATH];
     char *unixname;
 
     delete_external_font_keys();
@@ -4225,20 +4224,13 @@ static void init_font_list(void)
     load_system_fonts();
 
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
-    GetWindowsDirectoryW(windowsdir, ARRAY_SIZE(windowsdir));
-    strcatW(windowsdir, fontsW);
-    if((unixname = wine_get_unix_file_name(windowsdir)))
-    {
-        ReadFontDir(unixname, FALSE);
-        HeapFree(GetProcessHeap(), 0, unixname);
-    }
+    GetWindowsDirectoryW(path, ARRAY_SIZE(path));
+    strcatW(path, fontsW);
+    read_font_dir( path, FALSE );
 
     /* load the wine fonts */
-    if ((unixname = get_font_dir()))
-    {
-        ReadFontDir(unixname, TRUE);
-        HeapFree(GetProcessHeap(), 0, unixname);
-    }
+    get_font_dir( path );
+    read_font_dir( path, TRUE );
 
     /* now look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
        for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
