@@ -460,6 +460,25 @@ static void queue_irp(struct usb_device *device, IRP *irp, struct libusb_transfe
     LeaveCriticalSection(&wineusb_cs);
 }
 
+struct pipe
+{
+    unsigned char endpoint;
+    unsigned char type;
+};
+
+static HANDLE make_pipe_handle(unsigned char endpoint, USBD_PIPE_TYPE type)
+{
+    union
+    {
+        struct pipe pipe;
+        HANDLE handle;
+    } u;
+
+    u.pipe.endpoint = endpoint;
+    u.pipe.type = type;
+    return u.handle;
+}
+
 static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 {
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
@@ -499,6 +518,26 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                 ERR("Failed to submit GET_DESRIPTOR transfer: %s\n", libusb_strerror(ret));
 
             return STATUS_PENDING;
+        }
+
+        case URB_FUNCTION_SELECT_CONFIGURATION:
+        {
+            struct _URB_SELECT_CONFIGURATION *req = &urb->UrbSelectConfiguration;
+            ULONG i;
+
+            /* FIXME: In theory, we'd call libusb_set_configuration() here, but
+             * the CASIO FX-9750GII (which has only one configuration) goes into
+             * an error state if it receives a SET_CONFIGURATION request. Maybe
+             * we should skip setting that if and only if the configuration is
+             * already active? */
+
+            for (i = 0; i < req->Interface.NumberOfPipes; ++i)
+            {
+                USBD_PIPE_INFORMATION *pipe = &req->Interface.Pipes[i];
+                pipe->PipeHandle = make_pipe_handle(pipe->EndpointAddress, pipe->PipeType);
+            }
+
+            return STATUS_SUCCESS;
         }
 
         default:
