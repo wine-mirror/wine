@@ -820,7 +820,6 @@ static void test_keyboard_events(void)
     data_size = ARRAY_SIZE(obj_data);
     hr = IDirectInputDevice8_GetDeviceData(di_keyboard, sizeof(DIDEVICEOBJECTDATA), obj_data, &data_size, 0);
     ok(SUCCEEDED(hr), "Failed to get data hr=%08x\n", hr);
-    todo_wine
     ok(data_size == 0, "Expected 0 elements, received %d\n", data_size);
 
     hr = IDirectInputDevice8_GetDeviceState(di_keyboard, sizeof(kbdata), kbdata);
@@ -834,7 +833,6 @@ static void test_keyboard_events(void)
     data_size = ARRAY_SIZE(obj_data);
     hr = IDirectInputDevice8_GetDeviceData(di_keyboard, sizeof(DIDEVICEOBJECTDATA), obj_data, &data_size, 0);
     ok(SUCCEEDED(hr), "Failed to get data hr=%08x\n", hr);
-    todo_wine
     ok(data_size == 0, "Expected 0 elements, received %d\n", data_size);
 
     hr = IDirectInputDevice8_Unacquire(di_keyboard);

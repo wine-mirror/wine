@@ -68,9 +68,9 @@ static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardIm
     return &This->base.IDirectInputDevice8W_iface;
 }
 
-static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType)
+static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD version)
 {
-    if (!scanCode)
+    if (!scanCode && version < 0x0800)
         scanCode = MapVirtualKeyW(vkCode, MAPVK_VK_TO_VSC);
 
     if (subType == DIDEVTYPEKEYBOARD_JAPAN106)
@@ -125,7 +125,7 @@ static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM 
         case VK_NUMLOCK : dik_code = DIK_NUMLOCK; break;
         case VK_SUBTRACT: dik_code = DIK_SUBTRACT; break;
         default:
-            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode, This->subtype);
+            dik_code = map_dik_code(hook->scanCode & 0xff, hook->vkCode, This->subtype, This->base.dinput->dwVersion);
             if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
     }
     new_diks = hook->flags & LLKHF_UP ? 0 : 0x80;
@@ -282,7 +282,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
         if (!GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), buf, sizeof(buf)))
             continue;
 
-        dik_code = map_dik_code(i, 0, newDevice->subtype);
+        dik_code = map_dik_code(i, 0, newDevice->subtype, dinput->dwVersion);
         memcpy(&df->rgodf[idx], &c_dfDIKeyboard.rgodf[dik_code], df->dwObjSize);
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(dik_code) | DIDFT_PSHBUTTON;
     }
