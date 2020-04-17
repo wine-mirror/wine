@@ -609,7 +609,7 @@ msgstr "&Carattere:"
 msgid "Font St&yle:"
 msgstr "&Stile:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "Dimen&sione:"
 
@@ -625,7 +625,7 @@ msgstr "&Barrato"
 msgid "&Underline"
 msgstr "S&ottolineato"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "&Colore:"
 
@@ -799,7 +799,7 @@ msgstr "Numero di &copie:"
 msgid "C&ollate"
 msgstr "&Fascicola"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "&Dimensione:"
 
@@ -2282,7 +2282,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "Nome del &file:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "&Naviga..."
 
@@ -7538,7 +7538,7 @@ msgstr "Iperlink"
 msgid "Hyperlink Information"
 msgstr "Informazioni sull'iperlink"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&Tipo:"
 
@@ -9623,7 +9623,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Apri:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Naviga..."
@@ -12212,7 +12212,7 @@ msgstr "Ana&logico"
 msgid "Digi&tal"
 msgstr "Digi&tale"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Carattere..."
 
@@ -16318,114 +16318,109 @@ msgstr ""
 msgid "A&dd..."
 msgstr "Aggiungi..."
 
-#: winecfg.rc:237
-#, fuzzy
-msgid "Aut&odetect"
-msgstr "&Rileva automaticamente"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "&Percorso:"
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 #, fuzzy
 #| msgid "Show &Advanced"
 msgid "Show Advan&ced"
 msgstr "Mostra controlli &avanzati"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "&Unità:"
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "Na&viga..."
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "&Etichetta:"
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "Numero &seriale:"
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 #, fuzzy
 #| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "Mostra file &dot"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "Diagnostica del driver"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "Valori predefiniti"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "Unità output:"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "Unità output voce:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "Unità input:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "Unità input voce:"
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "&Test dell'audio"
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 #, fuzzy
 #| msgid "Wine configuration"
 msgid "Speaker configuration"
 msgstr "Configurazione di Wine"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "Aspetto"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "&Tema:"
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "&Installa un tema..."
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "Ogg&etto:"
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "C&olore:"
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr ""
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "Cartelle"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "&Collega a:"
 

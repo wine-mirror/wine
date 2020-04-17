@@ -579,7 +579,7 @@ msgstr "字型(&F)："
 msgid "Font St&yle:"
 msgstr "字型樣式(&Y)："
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "大小(&S)："
 
@@ -595,7 +595,7 @@ msgstr "刪除線(&K)"
 msgid "&Underline"
 msgstr "底線(&U)"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "配色(&C)："
 
@@ -769,7 +769,7 @@ msgstr "份數(&C)："
 msgid "C&ollate"
 msgstr "自動分頁(&O)"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "大小(&Z)："
 
@@ -2244,7 +2244,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "檔案名稱(&F)："
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "瀏覽(&R)..."
 
@@ -7438,7 +7438,7 @@ msgstr "超連結"
 msgid "Hyperlink Information"
 msgstr "超連結資訊"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "類型(&T)："
 
@@ -9477,7 +9477,7 @@ msgstr "輸入程式，目錄，檔案或者 Internet 資源名，Wine 將為您
 msgid "&Open:"
 msgstr "開啟(&O):"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "瀏覽(&B)..."
@@ -11954,7 +11954,7 @@ msgstr "類比時鐘(&L)"
 msgid "Digi&tal"
 msgstr "數位時鐘(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "字型(&F)..."
 
@@ -16151,109 +16151,105 @@ msgstr "連線到掛載管理員時失敗，無法編輯磁碟組態。"
 msgid "A&dd..."
 msgstr "加入(&D)..."
 
-#: winecfg.rc:237
-msgid "Aut&odetect"
-msgstr "自動偵測(&O)"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "路徑(&P)："
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "顯示進階選項(&C)"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "裝置(&V)："
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "瀏覽(&W)..."
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "標貼(&L)："
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "序號(&E)："
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "顯示隱藏檔案(&S)"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "驅動程式資訊"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "預設"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "輸出裝置："
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "語音輸出裝置："
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "輸入裝置："
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "語音輸入裝置："
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "測試音效(&T)"
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 #, fuzzy
 #| msgid "Wine configuration"
 msgid "Speaker configuration"
 msgstr "Wine 設定"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "外觀"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "布景主題(&T)："
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "安裝布景主題(&I)..."
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "項目(&E)："
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "顏色(&O)："
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr ""
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "資料夾"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "連結至(&L)："
 

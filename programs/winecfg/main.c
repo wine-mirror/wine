@@ -187,16 +187,6 @@ ProcessCmdLine(LPSTR lpCmdLine)
     {
         return -1;
     }
-
-    if ((lpCmdLine[1] == 'D' || lpCmdLine[1] == 'd'))
-    {
-        gui_mode = FALSE;
-        if (autodetect_drives()) {
-            apply_drive_changes();
-        }
-        return 0;
-    }
-
     if ((lpCmdLine[1] == 'V' || lpCmdLine[1] == 'v') && (lstrlenA(lpCmdLine) > 4))
     {
         return set_winver_from_string(&lpCmdLine[3]);
@@ -207,7 +197,6 @@ ProcessCmdLine(LPSTR lpCmdLine)
         printf("Usage: winecfg [options]\n\n");
         printf("Options:\n");
         printf("  [no option] Launch the graphical version of this program.\n");
-        printf("  /D          Autodetect drives.\n");
         printf("  /v version  Set global Windows version to 'version'.\n");
         printf("  /?          Display this information and exit.\n\n");
         printf("Valid versions for 'version':\n\n");
@@ -265,7 +254,7 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 	WINE_ERR("initialization failed, aborting\n");
 	ExitProcess(1);
     }
-    
+
     /*
      * The next 9 lines should be all that is needed
      * for the Wine Configuration property sheet

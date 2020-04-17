@@ -583,7 +583,7 @@ msgstr "글꼴(&F):"
 msgid "Font St&yle:"
 msgstr "글꼴 스타일(&Y):"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "크기(&S):"
 
@@ -599,7 +599,7 @@ msgstr "취소선(&K)"
 msgid "&Underline"
 msgstr "밑줄(&U)"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "색상(&C):"
 
@@ -773,7 +773,7 @@ msgstr "복사본 개수(&C):"
 msgid "C&ollate"
 msgstr "정렬(&O)"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "크기(&Z):"
 
@@ -2248,7 +2248,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "파일 이름(&F):"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "찾기(&R)..."
 
@@ -7266,7 +7266,7 @@ msgstr "하이퍼링크"
 msgid "Hyperlink Information"
 msgstr "하이퍼링크 정보"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "형식(&T):"
 
@@ -9194,7 +9194,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "열기(&O):"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "찾아보기(&B)..."
@@ -11646,7 +11646,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -15582,107 +15582,103 @@ msgstr ""
 msgid "A&dd..."
 msgstr "추가(&D)..."
 
-#: winecfg.rc:237
-msgid "Aut&odetect"
-msgstr "자동으로 구성(&O)"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "경로(&P):"
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "추가 옵션(&C) 보이기"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "장치(&V):"
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "찾아보기(&W)..."
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "레이블(&L):"
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "시리얼(&E):"
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "숨김 파일(dot 파일) 보기(&S)"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "드라이버 진단"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "기본"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "출력 장치:"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "음성 출력 장치:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "입력 장치:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "음성 입력 장치:"
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "소리 테스트(&T)"
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "스피커 설정"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "스피커:"
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "모양새"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "테마(&T):"
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "테마 설치(&I)..."
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "목록(&E):"
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "색상(&O):"
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME 형식"
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr "Wine이 호스트 시스템의 파일 연결을 수정합니다(&A)"
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "폴더"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "연결 대상(&L):"
 

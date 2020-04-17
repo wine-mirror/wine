@@ -584,7 +584,7 @@ msgstr "ال&خط:"
 msgid "Font St&yle:"
 msgstr "نم&ط الخط:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "ال&حجم:"
 
@@ -600,7 +600,7 @@ msgstr "&شطب"
 msgid "&Underline"
 msgstr "تسطي&ر"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "اللو&ن:"
 
@@ -774,7 +774,7 @@ msgstr "عدد النُّس&خ:"
 msgid "C&ollate"
 msgstr "قارن"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "ال&حجم:"
 
@@ -2253,7 +2253,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "ا&سم الملف:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "استعر&ض..."
 
@@ -7468,7 +7468,7 @@ msgstr "الوصلة العليا"
 msgid "Hyperlink Information"
 msgstr "معلومات الوصلة العليا"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "الن&وع:"
 
@@ -9513,7 +9513,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "ا&فتح:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "ا&ستعرض..."
@@ -12034,7 +12034,7 @@ msgstr "تما&ثلية"
 msgid "Digi&tal"
 msgstr "ر&قمية"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "ال&خط..."
 
@@ -16256,115 +16256,109 @@ msgstr "فشل الاتّصال بمدير المحرّكات ، لا يمكن �
 msgid "A&dd..."
 msgstr "أ&ضف..."
 
-#: winecfg.rc:237
-#, fuzzy
-#| msgid "Autodetect"
-msgid "Aut&odetect"
-msgstr "تحديد تلقائي"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "الم&سار:"
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 #, fuzzy
 #| msgid "Show &Advanced"
 msgid "Show Advan&ced"
 msgstr "الخيارات المتقدمة"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "الج&هاز:"
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "است&عراض..."
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "الاس&م:"
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "المس&لسل:"
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 #, fuzzy
 #| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "أظهر الملفات المخفيّة"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "معالج المحركات"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "الافتراضيات"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "جهاز الإخراج:"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "جهاز الإخراج الصوتي:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "جهاز الإدخال:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "جهاز الإدخال الصوتي:"
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "ا&ختبار الصوت"
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 #, fuzzy
 #| msgid "Wine configuration"
 msgid "Speaker configuration"
 msgstr "إعدادات واين"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "العرض"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "السّم&ة:"
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "ت&ثبيت سمة..."
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "العن&صر:"
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "اللو&ن:"
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr ""
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "الم&جلدات"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "موص&ول إلى:"
 

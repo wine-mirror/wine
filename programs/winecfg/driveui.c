@@ -668,7 +668,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                 ShowWindow( GetDlgItem( dialog, IDC_LIST_DRIVES ), SW_HIDE );
                 ShowWindow( GetDlgItem( dialog, IDC_BUTTON_ADD ), SW_HIDE );
                 ShowWindow( GetDlgItem( dialog, IDC_BUTTON_REMOVE ), SW_HIDE );
-                ShowWindow( GetDlgItem( dialog, IDC_BUTTON_AUTODETECT ), SW_HIDE );
                 ShowWindow( GetDlgItem( dialog, IDC_STATIC_PATH ), SW_HIDE );
                 ShowWindow( GetDlgItem( dialog, IDC_EDIT_PATH ), SW_HIDE );
                 ShowWindow( GetDlgItem( dialog, IDC_BUTTON_BROWSE_PATH ), SW_HIDE );
@@ -730,12 +729,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     if (HIWORD(wParam) != BN_CLICKED) break;
                     item = SendMessageW(GetDlgItem(dialog, IDC_LIST_DRIVES),  LB_GETCURSEL, 0, 0);
                     SendMessageW(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_GETITEMDATA, item, 0);
-                    break;
-
-                case IDC_BUTTON_AUTODETECT:
-                    autodetect_drives();
-                    fill_drives_list(dialog);
-                    SendMessageW(GetParent(dialog), PSM_CHANGED, 0, 0);
                     break;
 
                 case IDC_BUTTON_SHOW_HIDE_ADVANCED:

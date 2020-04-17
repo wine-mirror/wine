@@ -585,7 +585,7 @@ msgstr "ෆොන්ටය (&F):"
 msgid "Font St&yle:"
 msgstr "ෆොන්ට විලාසය (&Y):"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "තරම (&S):"
 
@@ -601,7 +601,7 @@ msgstr "මැදි ඉරැති (&K)"
 msgid "&Underline"
 msgstr "යටිඉරි (&U)"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "පාට (&C)"
 
@@ -775,7 +775,7 @@ msgstr "පිටපත් ගණන (&C):"
 msgid "C&ollate"
 msgstr "සංසන්දනය කරන්න (&O)"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "තරම (&Z):"
 
@@ -2246,7 +2246,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "ගොනුව නම (&F):"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "පිරික්සන්න... (&R)"
 
@@ -7240,7 +7240,7 @@ msgstr "අධිබැඳිය"
 msgid "Hyperlink Information"
 msgstr "අධිබැඳියේ තොරතුරු"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "වර්ගය (&T):"
 
@@ -9151,7 +9151,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "විවෘත කරන්න (&O):"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "පිරික්සන්න... (&B)"
@@ -11498,7 +11498,7 @@ msgstr "ප්‍රතිසම (&L)"
 msgid "Digi&tal"
 msgstr "ඩිජිටල් (&T)"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "ෆොන්ටය... (&F)"
 
@@ -15262,107 +15262,103 @@ msgstr ""
 msgid "A&dd..."
 msgstr "එක් කරන්න (&D)"
 
-#: winecfg.rc:237
-msgid "Aut&odetect"
-msgstr "ස්වයං අනාවරිත කරන්න (&O)"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "පෙත:"
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "'උසස්' පෙන්නන්න (&C)"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "ආම්පන්නය (&V):"
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "පිරික්සන්න... (&W)"
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "ලේබලය (&L):"
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "අනුක්‍රම (&E):"
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 msgid "&Show dot files"
 msgstr "dot ගොනු පෙන්නන්න (&S)"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "ධාවක දෝෂ නිර්ණය"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "පෙරනිමි"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "ප්‍රතිදාන ආම්පන්නය:"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "හඬ ප්‍රතිදාන ආම්පන්නය:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "ආදාන ආම්පන්නය:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "හඬ ආදාන ආම්පන්නය:"
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "ශ්‍රව්‍ය පරික්‍ෂණ කරන්න (&T)"
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "ස්පීකර වින්‍යාසය"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr "ස්පීකර"
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "පෙනුම"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "තේමාව (&T):"
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "තේමාව ස්ථාපනය කරන්න... (&I)"
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "අයිතමය (&E):"
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "පාට (&O):"
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr "MIME වර්ග"
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "ෆෝල්ඩර"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr ""
 

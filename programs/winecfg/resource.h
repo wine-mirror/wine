@@ -90,7 +90,6 @@
 #define IDC_BUTTON_ADD                  1043
 #define IDC_BUTTON_REMOVE               1044
 #define IDC_BUTTON_EDIT                 1045
-#define IDC_BUTTON_AUTODETECT           1046
 #define IDC_EDIT_LABEL                  1060
 #define IDC_EDIT_PATH                   1061
 #define IDC_EDIT_SERIAL                 1062

@@ -602,7 +602,7 @@ msgstr "&Fuente:"
 msgid "Font St&yle:"
 msgstr "Est&ilo:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "Ta&maño:"
 
@@ -618,7 +618,7 @@ msgstr "&Tachado"
 msgid "&Underline"
 msgstr "&Subrayado"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "C&olor:"
 
@@ -792,7 +792,7 @@ msgstr "Número de &copias:"
 msgid "C&ollate"
 msgstr "I&ntercalar"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "Ta&maño:"
 
@@ -2275,7 +2275,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "Nombre de &fichero:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 msgid "B&rowse..."
 msgstr "Explo&rar..."
 
@@ -7521,7 +7521,7 @@ msgstr "Enlace"
 msgid "Hyperlink Information"
 msgstr "Información sobre el enlace"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&Tipo:"
 
@@ -9607,7 +9607,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&Abrir:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&Examinar..."
@@ -12202,7 +12202,7 @@ msgstr "&Analógico"
 msgid "Digi&tal"
 msgstr "&Digital"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&Fuente..."
 
@@ -16315,115 +16315,109 @@ msgstr ""
 msgid "A&dd..."
 msgstr "&Añadir..."
 
-#: winecfg.rc:237
-#, fuzzy
-#| msgid "Autodetect"
-msgid "Aut&odetect"
-msgstr "Autodetectar"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 msgid "&Path:"
 msgstr "&Ruta:"
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 #, fuzzy
 #| msgid "Show &Advanced"
 msgid "Show Advan&ced"
 msgstr "Mostrar &avanzado"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr "Dispositi&vo:"
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 msgid "Bro&wse..."
 msgstr "E&xaminar..."
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr "Eti&queta:"
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr "&Nº serie:"
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 #, fuzzy
 #| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "Mostrar archivos &punto"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 msgid "Driver diagnostics"
 msgstr "Diagnósticos del controlador"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 msgid "Defaults"
 msgstr "Configuraciones por defecto"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 msgid "Output device:"
 msgstr "Dispositivo de salida:"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr "Dispositivo de salida de voz:"
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr "Dispositivo de entrada:"
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr "Dispositivo de entrada de voz:"
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr "Probar &sonido"
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 #, fuzzy
 #| msgid "Wine configuration"
 msgid "Speaker configuration"
 msgstr "Configuración de Wine"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr "Apariencia"
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr "&Tema:"
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 msgid "&Install theme..."
 msgstr "&Instalar tema..."
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr "&Elemento:"
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 msgid "C&olor:"
 msgstr "C&olor:"
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr ""
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 msgid "Folders"
 msgstr "Carpeta"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 msgid "&Link to:"
 msgstr "E&nlace a:"
 

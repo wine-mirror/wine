@@ -595,7 +595,7 @@ msgstr "&גופן:"
 msgid "Font St&yle:"
 msgstr "&סגנון הגופן:"
 
-#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:293
+#: comdlg32.rc:260 comdlg32.rc:439 winecfg.rc:292
 msgid "&Size:"
 msgstr "&גודל:"
 
@@ -611,7 +611,7 @@ msgstr "קו חו&צה"
 msgid "&Underline"
 msgstr "קו &תחתי"
 
-#: comdlg32.rc:270 winecfg.rc:291
+#: comdlg32.rc:270 winecfg.rc:290
 msgid "&Color:"
 msgstr "&צבע:"
 
@@ -787,7 +787,7 @@ msgstr "מספר ה&עותקים:"
 msgid "C&ollate"
 msgstr "&איסוף"
 
-#: comdlg32.rc:414 winecfg.rc:299
+#: comdlg32.rc:414 winecfg.rc:298
 msgid "Si&ze:"
 msgstr "&גודל:"
 
@@ -2279,7 +2279,7 @@ msgstr ""
 msgid "&File name:"
 msgstr "&שם הקובץ:"
 
-#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:312
+#: cryptui.rc:301 cryptui.rc:323 cryptui.rc:437 winecfg.rc:311
 #, fuzzy
 msgid "B&rowse..."
 msgstr "&עיון"
@@ -7634,7 +7634,7 @@ msgstr "קישור"
 msgid "Hyperlink Information"
 msgstr "פרטי הקישור"
 
-#: mshtml.rc:43 winecfg.rc:244
+#: mshtml.rc:43 winecfg.rc:243
 msgid "&Type:"
 msgstr "&סוג:"
 
@@ -9615,7 +9615,7 @@ msgstr ""
 msgid "&Open:"
 msgstr "&פתיחה:"
 
-#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:242
+#: shell32.rc:343 progman.rc:182 progman.rc:201 progman.rc:218 winecfg.rc:241
 #: winefile.rc:129
 msgid "&Browse..."
 msgstr "&עיון..."
@@ -12048,7 +12048,7 @@ msgstr "&אנלוגי"
 msgid "Digi&tal"
 msgstr "&דיגיטלי"
 
-#: clock.rc:35 notepad.rc:53 winecfg.rc:306 winefile.rc:63 wordpad.rc:84
+#: clock.rc:35 notepad.rc:53 winecfg.rc:305 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "&גופן..."
 
@@ -15826,119 +15826,114 @@ msgstr ""
 msgid "A&dd..."
 msgstr "הו&ספה"
 
-#: winecfg.rc:237
-#, fuzzy
-msgid "Aut&odetect"
-msgstr "זיהוי אוטומטי"
-
-#: winecfg.rc:240
+#: winecfg.rc:239
 #, fuzzy
 msgid "&Path:"
 msgstr "ה&נתיב המלא:"
 
-#: winecfg.rc:247 winecfg.rc:37
+#: winecfg.rc:246 winecfg.rc:37
 #, fuzzy
 msgid "Show Advan&ced"
 msgstr "הצגת אפשרויות מ&תקדמות"
 
-#: winecfg.rc:248
+#: winecfg.rc:247
 msgid "De&vice:"
 msgstr ""
 
-#: winecfg.rc:250
+#: winecfg.rc:249
 #, fuzzy
 msgid "Bro&wse..."
 msgstr "&עיון"
 
-#: winecfg.rc:252
+#: winecfg.rc:251
 msgid "&Label:"
 msgstr ""
 
-#: winecfg.rc:254
+#: winecfg.rc:253
 msgid "S&erial:"
 msgstr ""
 
-#: winecfg.rc:257
+#: winecfg.rc:256
 #, fuzzy
 msgid "&Show dot files"
 msgstr "אין עוד קבצים\n"
 
-#: winecfg.rc:264
+#: winecfg.rc:263
 #, fuzzy
 msgid "Driver diagnostics"
 msgstr "כלי ניתוח ה־DirectX"
 
-#: winecfg.rc:266
+#: winecfg.rc:265
 #, fuzzy
 msgid "Defaults"
 msgstr "הגדרת &בררות מחדל"
 
-#: winecfg.rc:267
+#: winecfg.rc:266
 #, fuzzy
 msgid "Output device:"
 msgstr "שם קובץ ה&פלט:"
 
-#: winecfg.rc:268
+#: winecfg.rc:267
 msgid "Voice output device:"
 msgstr ""
 
-#: winecfg.rc:269
+#: winecfg.rc:268
 msgid "Input device:"
 msgstr ""
 
-#: winecfg.rc:270
+#: winecfg.rc:269
 msgid "Voice input device:"
 msgstr ""
 
-#: winecfg.rc:275
+#: winecfg.rc:274
 msgid "&Test Sound"
 msgstr ""
 
-#: winecfg.rc:276 winecfg.rc:89
+#: winecfg.rc:275 winecfg.rc:89
 #, fuzzy
 msgid "Speaker configuration"
 msgstr "תצורת Wine"
 
-#: winecfg.rc:279
+#: winecfg.rc:278
 msgid "Speakers:"
 msgstr ""
 
-#: winecfg.rc:287
+#: winecfg.rc:286
 msgid "Appearance"
 msgstr ""
 
-#: winecfg.rc:288
+#: winecfg.rc:287
 msgid "&Theme:"
 msgstr ""
 
-#: winecfg.rc:290
+#: winecfg.rc:289
 #, fuzzy
 msgid "&Install theme..."
 msgstr "התקנה..."
 
-#: winecfg.rc:295
+#: winecfg.rc:294
 msgid "It&em:"
 msgstr ""
 
-#: winecfg.rc:297
+#: winecfg.rc:296
 #, fuzzy
 msgid "C&olor:"
 msgstr "&צבע"
 
-#: winecfg.rc:303
+#: winecfg.rc:302
 msgid "MIME types"
 msgstr ""
 
-#: winecfg.rc:304
+#: winecfg.rc:303
 msgid "Manage file &associations"
 msgstr ""
 
-#: winecfg.rc:307
+#: winecfg.rc:306
 #, fuzzy
 msgid "Folders"
 msgstr "תיקייה"
 
-#: winecfg.rc:310
+#: winecfg.rc:309
 #, fuzzy
 msgid "&Link to:"
 msgstr "קישורים אל"
