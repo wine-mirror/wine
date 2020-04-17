@@ -26,7 +26,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commdlg.h>
-#include <wine/library.h>
 #include <wine/debug.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -254,33 +253,39 @@ static void clear_settings(HWND dialog)
 static void load_library_list_from_dir( HWND dialog, const char *dir_path, int check_subdirs )
 {
     static const char * const ext[] = { ".dll", ".dll.so", ".so", "" };
-    char *buffer = NULL, name[256];
+    char *buffer, *p, name[256];
     unsigned int i;
-    struct dirent *de;
-    DIR *dir = opendir( dir_path );
+    HANDLE handle;
+    WIN32_FIND_DATAA data;
 
-    if (!dir) return;
+    buffer = HeapAlloc( GetProcessHeap(), 0, strlen(dir_path) + 2 * sizeof(name) + 10 );
 
-    if (check_subdirs)
-        buffer = HeapAlloc( GetProcessHeap(), 0, strlen(dir_path) + 2 * sizeof(name) + 10 );
+    strcpy( buffer, dir_path );
+    strcat( buffer, "\\*" );
+    buffer[1] = '\\';  /* change \??\ to \\?\ */
+    p = buffer + strlen(buffer) - 1;
 
-    while ((de = readdir( dir )))
+    if ((handle = FindFirstFileA( buffer, &data )) == INVALID_HANDLE_VALUE)
     {
-        size_t len = strlen(de->d_name);
+        HeapFree( GetProcessHeap(), 0, buffer );
+        return;
+    }
+
+    do
+    {
+        size_t len = strlen(data.cFileName);
         if (len > sizeof(name)) continue;
         if (check_subdirs)
         {
-            struct stat st;
-
-            if (!strcmp( de->d_name, "." )) continue;
-            if (!strcmp( de->d_name, ".." )) continue;
-            if (!show_dll_in_list( de->d_name )) continue;
+            if (!strcmp( data.cFileName, "." )) continue;
+            if (!strcmp( data.cFileName, ".." )) continue;
+            if (!show_dll_in_list( data.cFileName )) continue;
             for (i = 0; i < ARRAY_SIZE( ext ); i++)
             {
-                sprintf( buffer, "%s/%s/%s%s", dir_path, de->d_name, de->d_name, ext[i] );
-                if (!stat( buffer, &st ))
+                sprintf( p, "%s\\%s%s", data.cFileName, data.cFileName, ext[i] );
+                if (GetFileAttributesA( buffer ) != INVALID_FILE_ATTRIBUTES)
                 {
-                    SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)de->d_name );
+                    SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)data.cFileName );
                     break;
                 }
             }
@@ -290,18 +295,19 @@ static void load_library_list_from_dir( HWND dialog, const char *dir_path, int c
             for (i = 0; i < ARRAY_SIZE( ext ); i++)
             {
                 if (!ext[i][0]) continue;
-                if (len > strlen(ext[i]) && !strcmp( de->d_name + len - strlen(ext[i]), ext[i]))
+                if (len > strlen(ext[i]) && !strcmp( data.cFileName + len - strlen(ext[i]), ext[i]))
                 {
                     len -= strlen( ext[i] );
-                    memcpy( name, de->d_name, len );
+                    memcpy( name, data.cFileName, len );
                     name[len] = 0;
                     if (!show_dll_in_list( name )) continue;
                     SendDlgItemMessageA( dialog, IDC_DLLCOMBO, CB_ADDSTRING, 0, (LPARAM)name );
                 }
             }
         }
-    }
-    closedir( dir );
+    } while (FindNextFileA( handle, &data ));
+
+    FindClose( handle );
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
@@ -309,21 +315,24 @@ static void load_library_list_from_dir( HWND dialog, const char *dir_path, int c
 static void load_library_list( HWND dialog )
 {
     unsigned int i = 0;
-    const char *path, *build_dir = wine_get_build_dir();
-    char item1[256], item2[256];
+    char item1[256], item2[256], var[32], path[MAX_PATH];
     HCURSOR old_cursor = SetCursor( LoadCursorW(0, (LPWSTR)IDC_WAIT) );
 
-    if (build_dir)
+    if (GetEnvironmentVariableA( "WINEBUILDDIR", path, MAX_PATH ))
     {
-        char *dir = HeapAlloc( GetProcessHeap(), 0, strlen(build_dir) + sizeof("/dlls") );
-        strcpy( dir, build_dir );
-        strcat( dir, "/dlls" );
+        char *dir = HeapAlloc( GetProcessHeap(), 0, strlen(path) + sizeof("\\dlls") );
+        strcpy( dir, path );
+        strcat( dir, "\\dlls" );
         load_library_list_from_dir( dialog, dir, TRUE );
         HeapFree( GetProcessHeap(), 0, dir );
     }
 
-    while ((path = wine_dll_enum_load_path( i++ )))
+    for (;;)
+    {
+        sprintf( var, "WINEDLLDIR%u", i++ );
+        if (!GetEnvironmentVariableA( var, path, MAX_PATH )) break;
         load_library_list_from_dir( dialog, path, FALSE );
+    }
 
     /* get rid of duplicate entries */
 
