@@ -7649,11 +7649,15 @@ static HRESULT arbfp_blit_set(struct wined3d_arbfp_blitter *blitter, struct wine
             case COMPLEX_FIXUP_NV12:
                 shader = gen_yuv_shader(gl_info, &type);
                 break;
+
+            default:
+                FIXME("Unsupported fixup %#x.\n", fixup);
+                return E_NOTIMPL;
         }
 
         if (!shader)
         {
-            FIXME("Unsupported complex fixup %#x, not setting a shader\n", fixup);
+            ERR("Failed to get shader for fixup %#x.\n", fixup);
             return E_NOTIMPL;
         }
 

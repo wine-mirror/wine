@@ -1320,6 +1320,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_FILTERING,
             WINED3D_GL_LEGACY_CONTEXT,  NULL},
+    {WINED3DFMT_UYVY,                   GL_RGB_RAW_422_APPLE,             GL_RGB_RAW_422_APPLE,                   0,
+            GL_RGB_422_APPLE,           GL_UNSIGNED_SHORT_8_8_APPLE,      0,
+            WINED3DFMT_FLAG_FILTERING,
+            APPLE_RGB_422,              NULL},
     {WINED3DFMT_UYVY,                   GL_RGB,                           GL_RGB,                                 0,
             GL_YCBCR_422_APPLE,         GL_UNSIGNED_SHORT_8_8_APPLE,      0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_FILTERING,
@@ -1332,6 +1336,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_FILTERING,
             WINED3D_GL_LEGACY_CONTEXT,  NULL},
+    {WINED3DFMT_YUY2,                   GL_RGB_RAW_422_APPLE,             GL_RGB_RAW_422_APPLE,                   0,
+            GL_RGB_422_APPLE,           GL_UNSIGNED_SHORT_8_8_REV_APPLE,  0,
+            WINED3DFMT_FLAG_FILTERING,
+            APPLE_RGB_422,              NULL},
     {WINED3DFMT_YUY2,                   GL_RGB,                           GL_RGB,                                 0,
             GL_YCBCR_422_APPLE,         GL_UNSIGNED_SHORT_8_8_REV_APPLE,  0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_FILTERING,
@@ -3577,7 +3585,8 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         format->f.color_fixup = create_color_fixup_desc_from_string(fixups[i].fixup);
     }
 
-    if (!gl_info->supported[APPLE_YCBCR_422] && (gl_info->supported[ARB_FRAGMENT_PROGRAM]
+    if (!gl_info->supported[APPLE_YCBCR_422] && !gl_info->supported[APPLE_RGB_422]
+            && (gl_info->supported[ARB_FRAGMENT_PROGRAM]
             || (gl_info->supported[ARB_FRAGMENT_SHADER] && gl_info->supported[ARB_VERTEX_SHADER])))
     {
         format = get_format_gl_internal(adapter, WINED3DFMT_YUY2);
@@ -3585,6 +3594,14 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
 
         format = get_format_gl_internal(adapter, WINED3DFMT_UYVY);
         format->f.color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_UYVY);
+    }
+    else if (!gl_info->supported[APPLE_YCBCR_422] && gl_info->supported[APPLE_RGB_422])
+    {
+        format = get_format_gl_internal(adapter, WINED3DFMT_YUY2);
+        format->f.color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YUV);
+
+        format = get_format_gl_internal(adapter, WINED3DFMT_UYVY);
+        format->f.color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YUV);
     }
     else if (!gl_info->supported[APPLE_YCBCR_422] && (!gl_info->supported[ARB_FRAGMENT_PROGRAM]
             && (!gl_info->supported[ARB_FRAGMENT_SHADER] || !gl_info->supported[ARB_VERTEX_SHADER])))
@@ -5389,6 +5406,7 @@ static const char *debug_complex_fixup(enum complex_fixup fixup)
         WINED3D_TO_STR(COMPLEX_FIXUP_YV12);
         WINED3D_TO_STR(COMPLEX_FIXUP_NV12);
         WINED3D_TO_STR(COMPLEX_FIXUP_P8);
+        WINED3D_TO_STR(COMPLEX_FIXUP_YUV);
 #undef WINED3D_TO_STR
         default:
             FIXME("Unrecognized complex fixup %#x\n", fixup);

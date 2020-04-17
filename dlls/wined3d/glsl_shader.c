@@ -12713,6 +12713,15 @@ static void glsl_blitter_generate_yuv_shader(struct wined3d_string_buffer *buffe
             gen_nv12_read(buffer, gl_info, tex_type);
             break;
 
+        case COMPLEX_FIXUP_YUV:
+            /* With APPLE_rgb_422, things are much simpler. The only thing we
+             * have to do here is Y'CbCr to RGB conversion. */
+            shader_addline(buffer, "    vec3 yuv = vec3(texture%s(sampler, out_texcoord.xy));\n",
+                    needs_legacy_glsl_syntax(gl_info) ? tex_type : "");
+            shader_addline(buffer, "    luminance = yuv.y;\n");
+            shader_addline(buffer, "    chroma = yuv.xz;\n");
+            break;
+
         default:
             FIXME("Unsupported fixup %#x.\n", complex_fixup);
             string_buffer_free(buffer);
@@ -12836,6 +12845,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
         case COMPLEX_FIXUP_UYVY:
         case COMPLEX_FIXUP_YV12:
         case COMPLEX_FIXUP_NV12:
+        case COMPLEX_FIXUP_YUV:
             glsl_blitter_generate_yuv_shader(buffer, gl_info, args, output->buffer, tex_type, swizzle);
             break;
         case COMPLEX_FIXUP_NONE:
@@ -13183,6 +13193,7 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         case COMPLEX_FIXUP_UYVY:
         case COMPLEX_FIXUP_YV12:
         case COMPLEX_FIXUP_NV12:
+        case COMPLEX_FIXUP_YUV:
             src_level = src_sub_resource_idx % src_texture->level_count;
             location = GL_EXTCALL(glGetUniformLocation(program->id, "size"));
             GL_EXTCALL(glUniform2f(location, wined3d_texture_get_level_pow2_width(src_texture, src_level),

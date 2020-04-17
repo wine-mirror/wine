@@ -154,6 +154,7 @@ enum complex_fixup
     COMPLEX_FIXUP_YV12 = 3,
     COMPLEX_FIXUP_P8   = 4,
     COMPLEX_FIXUP_NV12 = 5,
+    COMPLEX_FIXUP_YUV  = 6,
 };
 
 #include <pshpack2.h>
