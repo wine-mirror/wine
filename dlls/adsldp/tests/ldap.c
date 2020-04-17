@@ -235,8 +235,12 @@ static void do_search(const struct search *s)
     trace("search DN %s\n", wine_dbgstr_w(s->dn));
 
     hr = ADsGetObject(s->dn, &IID_IDirectorySearch, (void **)&ds);
+    if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+    {
+        skip("server is down\n");
+        return;
+    }
     ok(hr == S_OK, "got %#x\n", hr);
-    if (hr != S_OK) return;
 
     pref.dwSearchPref = ADS_SEARCHPREF_SEARCH_SCOPE;
     pref.vValue.dwType = ADSTYPE_INTEGER;
@@ -282,6 +286,7 @@ static void do_search(const struct search *s)
 
             ok(!res->values[i], "expected extra value %s\n", wine_dbgstr_w(res->values[i]));
 
+            IDirectorySearch_FreeColumn(ds, &col);
             FreeADsMem(name);
             res++;
         }
@@ -485,6 +490,7 @@ static void test_DirectoryObject(void)
     hr = IDirectoryObject_QueryInterface(dirobj, &IID_IADsOpenDSObject, (void **)&unk);
 todo_wine
     ok(hr == E_NOINTERFACE, "got %#x\n", hr);
+    if (hr == S_OK) IUnknown_Release(unk);
     hr = IDirectoryObject_QueryInterface(dirobj, &IID_IDispatch, (void **)&unk);
     ok(hr == S_OK, "got %#x\n", hr);
     IUnknown_Release(unk);
