@@ -475,7 +475,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     {
         if (!wglDescribePixelFormat( hdc, i, sizeof(format), &format )) continue;
 
-        if (ppfd->iPixelType != format.iPixelType)
+        if ((ppfd->iPixelType == PFD_TYPE_COLORINDEX) != (format.iPixelType == PFD_TYPE_COLORINDEX))
         {
             TRACE( "pixel type mismatch for iPixelFormat=%d\n", i );
             continue;

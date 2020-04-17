@@ -220,7 +220,7 @@ static void test_pbuffers(HDC hdc)
     else skip("Pbuffer test for offscreen pixelformat skipped as no offscreen-only format with pbuffer capabilities has been found\n");
 }
 
-static int test_pfd(const PIXELFORMATDESCRIPTOR *pfd)
+static int test_pfd(const PIXELFORMATDESCRIPTOR *pfd, PIXELFORMATDESCRIPTOR *fmt)
 {
     int pf;
     HDC hdc;
@@ -233,6 +233,12 @@ static int test_pfd(const PIXELFORMATDESCRIPTOR *pfd)
 
     hdc = GetDC( hwnd );
     pf = ChoosePixelFormat( hdc, pfd );
+    if (pf && fmt)
+    {
+        memset(fmt, 0, sizeof(*fmt));
+        ok(DescribePixelFormat( hdc, pf, sizeof(*fmt), fmt ),
+           "DescribePixelFormat failed with error: %u\n", GetLastError());
+    }
     ReleaseDC( hwnd, hdc );
     DestroyWindow( hwnd );
 
@@ -259,57 +265,68 @@ static void test_choosepixelformat(void)
         0,                     /* reserved */
         0, 0, 0                /* layer masks */
     };
+    PIXELFORMATDESCRIPTOR ret_fmt;
 
-    ok( test_pfd(&pfd), "Simple pfd failed\n" );
+    ok( test_pfd(&pfd, NULL), "Simple pfd failed\n" );
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
+    pfd.iPixelType = 32;
+    ok( test_pfd(&pfd, &ret_fmt), "Invalid pixel format 32 failed\n" );
+    ok( ret_fmt.iPixelType == PFD_TYPE_RGBA, "Expected pixel type PFD_TYPE_RGBA, got %d\n", ret_fmt.iPixelType );
+    pfd.iPixelType = 33;
+    ok( test_pfd(&pfd, &ret_fmt), "Invalid pixel format 33 failed\n" );
+    ok( ret_fmt.iPixelType == PFD_TYPE_RGBA, "Expected pixel type PFD_TYPE_RGBA, got %d\n", ret_fmt.iPixelType );
+    pfd.iPixelType = 15;
+    ok( test_pfd(&pfd, &ret_fmt), "Invalid pixel format 15 failed\n" );
+    ok( ret_fmt.iPixelType == PFD_TYPE_RGBA, "Expected pixel type PFD_TYPE_RGBA, got %d\n", ret_fmt.iPixelType );
+    pfd.iPixelType = PFD_TYPE_RGBA;
 
     pfd.cColorBits = 32;
-    ok( test_pfd(&pfd), "Simple pfd failed\n" );
+    ok( test_pfd(&pfd, NULL), "Simple pfd failed\n" );
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
     pfd.cColorBits = 0;
 
     pfd.cAlphaBits = 8;
-    ok( test_pfd(&pfd), "Simple pfd failed\n" );
+    ok( test_pfd(&pfd, NULL), "Simple pfd failed\n" );
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
     pfd.cAlphaBits = 0;
 
     pfd.cStencilBits = 8;
-    ok( test_pfd(&pfd), "Simple pfd failed\n" );
+    ok( test_pfd(&pfd, NULL), "Simple pfd failed\n" );
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
     pfd.cStencilBits = 0;
 
     pfd.cAuxBuffers = 1;
-    ok( test_pfd(&pfd), "Simple pfd failed\n" );
+    ok( test_pfd(&pfd, NULL), "Simple pfd failed\n" );
     pfd.dwFlags |= PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE failed\n" );
     pfd.dwFlags |= PFD_STEREO_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_DOUBLEBUFFER_DONTCARE|PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_DOUBLEBUFFER_DONTCARE;
-    ok( test_pfd(&pfd), "PFD_STEREO_DONTCARE failed\n" );
+    ok( test_pfd(&pfd, NULL), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
     pfd.cAuxBuffers = 0;
 }
