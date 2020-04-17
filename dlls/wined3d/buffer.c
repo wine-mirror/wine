@@ -1649,7 +1649,32 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
 static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
-    FIXME("Not implemented.\n");
+    struct wined3d_resource *resource = &buffer->resource;
+    const struct wined3d_range *range;
+    struct wined3d_bo_address dst;
+    unsigned int i = range_count;
+    void *map_ptr;
+
+    if (!range_count)
+        return;
+
+    dst.buffer_object = buffer->buffer_object;
+    dst.addr = NULL;
+
+    if (!(map_ptr = wined3d_context_map_bo_address(context, &dst,
+            resource->size, resource->bind_flags, WINED3D_MAP_WRITE)))
+    {
+        FIXME("Failed to map buffer.\n");
+        return;
+    }
+
+    while (i--)
+    {
+        range = &ranges[i];
+        memcpy((uint8_t *)map_ptr + range->offset, (uint8_t *)data + range->offset - data_offset, range->size);
+    }
+
+    wined3d_context_unmap_bo_address(context, &dst, resource->bind_flags, range_count, ranges);
 }
 
 static void wined3d_buffer_vk_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
