@@ -4887,7 +4887,10 @@ BOOL WINAPI SetupDiGetDriverInfoDetailA(HDEVINFO devinfo, SP_DEVINFO_DATA *devic
     if (ret_size)
         *ret_size = size_needed;
     if (!detail_data)
+    {
+        SetupCloseInfFile(hinf);
         return TRUE;
+    }
 
     detail_data->CompatIDsLength = detail_data->CompatIDsOffset = 0;
     detail_data->HardwareID[0] = 0;
