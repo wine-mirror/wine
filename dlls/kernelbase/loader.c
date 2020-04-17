@@ -544,6 +544,15 @@ HMODULE WINAPI /* DECLSPEC_HOTPATCH */ LoadPackagedLibrary( LPCWSTR name, DWORD 
 }
 
 
+/***********************************************************************
+ *      LoadAppInitDlls    (kernelbase.@)
+ */
+void WINAPI LoadAppInitDlls(void)
+{
+    TRACE( "\n" );
+}
+
+
 /****************************************************************************
  *	RemoveDllDirectory   (kernelbase.@)
  */

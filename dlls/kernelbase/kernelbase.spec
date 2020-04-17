@@ -920,7 +920,7 @@
 # @ stub LeaveCriticalPolicySectionInternal
 @ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
 @ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion
-# @ stub LoadAppInitDlls
+@ stdcall LoadAppInitDlls()
 # @ stub LoadEnclaveData
 @ stdcall LoadLibraryA(str)
 @ stdcall LoadLibraryExA( str long long)

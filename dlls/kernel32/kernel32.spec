@@ -1044,7 +1044,7 @@
 @ stdcall LZStart()
 @ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
 @ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion
-# @ stub LoadAppInitDlls
+@ stdcall -import LoadAppInitDlls()
 @ stdcall -import LoadLibraryA(str)
 @ stdcall -import LoadLibraryExA( str long long)
 @ stdcall -import LoadLibraryExW(wstr long long)
