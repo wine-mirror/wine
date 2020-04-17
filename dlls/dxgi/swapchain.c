@@ -1097,6 +1097,9 @@ struct d3d12_swapchain
 
     ID3D12Fence *frame_latency_fence;
     HANDLE frame_latency_event;
+
+    uint64_t frame_number;
+    uint32_t frame_latency;
 };
 
 static DXGI_FORMAT dxgi_format_from_vk_format(VkFormat vk_format)
@@ -2104,6 +2107,7 @@ static VkResult d3d12_swapchain_queue_present(struct d3d12_swapchain *swapchain,
 static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         unsigned int sync_interval, unsigned int flags)
 {
+    HANDLE frame_latency_event;
     VkQueue vk_queue;
     VkResult vr;
     HRESULT hr;
@@ -2164,6 +2168,25 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     {
         ERR("Failed to queue present, vr %d.\n", vr);
         return hresult_from_vk_result(vr);
+    }
+
+    if ((frame_latency_event = swapchain->frame_latency_event))
+    {
+        ++swapchain->frame_number;
+
+        if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
+                swapchain->frame_latency_fence, swapchain->frame_number)))
+        {
+            ERR("Failed to signal frame latency fence, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (FAILED(hr = ID3D12Fence_SetEventOnCompletion(swapchain->frame_latency_fence,
+                swapchain->frame_number - swapchain->frame_latency, frame_latency_event)))
+        {
+            ERR("Failed to enqueue frame latency event, hr %#x.\n", hr);
+            return hr;
+        }
     }
 
     swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->desc.BufferCount;
@@ -2994,6 +3017,9 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
 
     if (swapchain_desc->Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
     {
+        swapchain->frame_number = DXGI_MAX_SWAP_CHAIN_BUFFERS;
+        swapchain->frame_latency = 1;
+
         if (FAILED(hr = ID3D12Device_CreateFence(device, DXGI_MAX_SWAP_CHAIN_BUFFERS,
                 0, &IID_ID3D12Fence, (void **)&swapchain->frame_latency_fence)))
         {
