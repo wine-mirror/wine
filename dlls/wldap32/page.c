@@ -175,10 +175,38 @@ ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     struct l_timeval *timeout, ULONG pagesize, ULONG *count,
     WLDAP32_LDAPMessage **results )
 {
-    FIXME( "(%p, %p, %p, 0x%08x, %p, %p)\n", ld, search, timeout,
-           pagesize, count, results );
+#ifdef HAVE_LDAP
+    ULONG ret;
 
-    if (!ld) return ~0u;
+    TRACE( "(%p, %p, %p, %u, %p, %p)\n", ld, search, timeout,
+           pagesize, count, results );
+    if (!ld || !search || !count || !results) return ~0u;
+
+    if (search->cookie && search->cookie->bv_len == 0)
+    {
+        /* end of paged results */
+        return WLDAP32_LDAP_NO_RESULTS_RETURNED;
+    }
+
+    if (search->serverctrls[0])
+    {
+        controlfreeW( search->serverctrls[0] );
+        search->serverctrls[0] = NULL;
+    }
+
+    TRACE("search->cookie: %s\n", search->cookie ? debugstr_an(search->cookie->bv_val, search->cookie->bv_len) : "NULL");
+    ret = ldap_create_page_controlW( ld, pagesize, (struct WLDAP32_berval *)search->cookie, 1, &search->serverctrls[0] );
+    if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+    ret = ldap_search_ext_sW( ld, search->dn, search->scope,
+                              search->filter, search->attrs, search->attrsonly,
+                              search->serverctrls, search->clientctrls,
+                              search->timeout.tv_sec ? &search->timeout : NULL, search->sizelimit, results );
+    if (ret != WLDAP32_LDAP_SUCCESS) return ret;
+
+    return ldap_get_paged_count( ld, search, count, *results );
+
+#endif
     return WLDAP32_LDAP_NOT_SUPPORTED;
 }
 
