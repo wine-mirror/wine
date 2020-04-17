@@ -2301,14 +2301,29 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     return ret;
 }
 
-static int remove_font_resource( const char *file, DWORD flags )
+static int add_font_resource( const WCHAR *file, DWORD flags )
+{
+    int ret = 0;
+    char *unixname = wine_get_unix_file_name( file );
+
+    if (unixname)
+    {
+        ret = AddFontToList( unixname, NULL, 0, flags );
+        HeapFree( GetProcessHeap(), 0, unixname );
+    }
+    return ret;
+}
+
+static int remove_font_resource( const WCHAR *file, DWORD flags )
 {
     Family *family, *family_next;
     Face *face, *face_next;
     struct stat st;
     int count = 0;
+    char *unixname;
 
-    if (stat( file, &st ) == -1) return 0;
+    if (!(unixname = wine_get_unix_file_name( file ))) return 0;
+    if (stat( unixname, &st ) == -1) goto done;
     LIST_FOR_EACH_ENTRY_SAFE( family, family_next, &font_list, Family, entry )
     {
         family->refcount++;
@@ -2325,6 +2340,8 @@ static int remove_font_resource( const char *file, DWORD flags )
 	}
         release_family( family );
     }
+done:
+    HeapFree( GetProcessHeap(), 0, unixname );
     return count;
 }
 
@@ -3030,77 +3047,50 @@ static char *get_font_dir(void)
     return name;
 }
 
-static char *get_data_dir_path( LPCWSTR file )
+static void get_data_dir_path( LPCWSTR file, WCHAR *path )
 {
-    char *unix_name = NULL;
+    static const WCHAR slashW[] = {'\\','\0'};
     char *font_dir = get_font_dir();
 
     if (font_dir)
     {
-        INT len = WideCharToMultiByte(CP_UNIXCP, 0, file, -1, NULL, 0, NULL, NULL);
-
-        unix_name = HeapAlloc(GetProcessHeap(), 0, strlen(font_dir) + len + 1 );
-        strcpy(unix_name, font_dir);
-        strcat(unix_name, "/");
-
-        WideCharToMultiByte(CP_UNIXCP, 0, file, -1, unix_name + strlen(unix_name), len, NULL, NULL);
+        WCHAR *dirW = wine_get_dos_file_name( font_dir );
+        strcpyW( path, dirW );
+        strcatW( path, slashW );
+        strcatW( path, file );
+        HeapFree( GetProcessHeap(), 0, dirW );
         HeapFree( GetProcessHeap(), 0, font_dir );
     }
-    return unix_name;
 }
 
-static BOOL load_font_from_data_dir(LPCWSTR file)
-{
-    BOOL ret = FALSE;
-    char *unix_name = get_data_dir_path( file );
-
-    if (unix_name)
-    {
-        EnterCriticalSection( &freetype_cs );
-        ret = AddFontToList(unix_name, NULL, 0, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
-        LeaveCriticalSection( &freetype_cs );
-        HeapFree(GetProcessHeap(), 0, unix_name);
-    }
-    return ret;
-}
-
-static char *get_winfonts_dir_path(LPCWSTR file)
+static void get_winfonts_dir_path(LPCWSTR file, WCHAR *path)
 {
     static const WCHAR slashW[] = {'\\','\0'};
-    WCHAR windowsdir[MAX_PATH];
 
-    GetWindowsDirectoryW(windowsdir, ARRAY_SIZE(windowsdir));
-    strcatW(windowsdir, fontsW);
-    strcatW(windowsdir, slashW);
-    strcatW(windowsdir, file);
-    return wine_get_unix_file_name( windowsdir );
+    GetWindowsDirectoryW(path, MAX_PATH);
+    strcatW(path, fontsW);
+    strcatW(path, slashW);
+    strcatW(path, file);
 }
 
 static void load_system_fonts(void)
 {
     HKEY hkey;
-    WCHAR data[MAX_PATH], windowsdir[MAX_PATH], pathW[MAX_PATH];
+    WCHAR data[MAX_PATH], pathW[MAX_PATH];
     const WCHAR * const *value;
     DWORD dlen, type;
-    static const WCHAR fmtW[] = {'%','s','\\','%','s','\0'};
-    char *unixname;
 
     if(RegOpenKeyW(HKEY_CURRENT_CONFIG, system_fonts_reg_key, &hkey) == ERROR_SUCCESS) {
-        GetWindowsDirectoryW(windowsdir, ARRAY_SIZE(windowsdir));
-        strcatW(windowsdir, fontsW);
         for(value = SystemFontValues; *value; value++) { 
             dlen = sizeof(data);
             if(RegQueryValueExW(hkey, *value, 0, &type, (void*)data, &dlen) == ERROR_SUCCESS &&
                type == REG_SZ) {
-                BOOL added = FALSE;
-
-                sprintfW(pathW, fmtW, windowsdir, data);
-                if((unixname = wine_get_unix_file_name(pathW))) {
-                    added = AddFontToList(unixname, NULL, 0, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
-                    HeapFree(GetProcessHeap(), 0, unixname);
+                get_winfonts_dir_path( data, pathW );
+                if (!add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
+                {
+                    get_data_dir_path( data, pathW );
+                    add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
                 }
-                if (!added)
-                    load_font_from_data_dir(data);
             }
         }
         RegCloseKey(hkey);
@@ -3299,36 +3289,29 @@ static void delete_external_font_keys(void)
  */
 INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
+    WCHAR path[MAX_PATH];
     INT ret = 0;
 
     GDI_CheckNotLock();
 
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
-        char *unixname;
+        DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
         EnterCriticalSection( &freetype_cs );
 
-        if((unixname = wine_get_unix_file_name(file)))
-        {
-            DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
+        if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+        ret = add_font_resource( file, addfont_flags );
 
-            if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-            ret = AddFontToList(unixname, NULL, 0, addfont_flags);
-            HeapFree(GetProcessHeap(), 0, unixname);
-        }
         if (!ret && !strchrW(file, '\\')) {
             /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
-            if ((unixname = get_winfonts_dir_path( file )))
-            {
-                ret = AddFontToList(unixname, NULL, 0, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
-                HeapFree(GetProcessHeap(), 0, unixname);
-            }
+            get_winfonts_dir_path( file, path );
+            ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
             /* Try in datadir/fonts (or builddir/fonts), needed for Magic the Gathering Online */
-            if (!ret && (unixname = get_data_dir_path( file )))
+            if (!ret)
             {
-                ret = AddFontToList(unixname, NULL, 0, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
-                HeapFree(GetProcessHeap(), 0, unixname);
+                get_data_dir_path( file, path );
+                ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
             }
         }
 
@@ -3379,35 +3362,28 @@ HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD 
  */
 BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
+    WCHAR path[MAX_PATH];
     INT ret = 0;
 
     GDI_CheckNotLock();
 
     if (ft_handle)  /* do it only if we have freetype up and running */
     {
-        char *unixname;
+        DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
         EnterCriticalSection( &freetype_cs );
 
-        if ((unixname = wine_get_unix_file_name(file)))
-        {
-            DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
+        if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+        ret = remove_font_resource( file, addfont_flags );
 
-            if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-            ret = remove_font_resource( unixname, addfont_flags );
-            HeapFree(GetProcessHeap(), 0, unixname);
-        }
         if (!ret && !strchrW(file, '\\'))
         {
-            if ((unixname = get_winfonts_dir_path( file )))
+            get_winfonts_dir_path( file, path );
+            ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+            if (!ret)
             {
-                ret = remove_font_resource( unixname, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-                HeapFree(GetProcessHeap(), 0, unixname);
-            }
-            if (!ret && (unixname = get_data_dir_path( file )))
-            {
-                ret = remove_font_resource( unixname, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-                HeapFree(GetProcessHeap(), 0, unixname);
+                get_data_dir_path( file, path );
+                ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
             }
         }
 
@@ -4288,26 +4264,18 @@ static void init_font_list(void)
             {
                 if(data[0] && (data[1] == ':'))
                 {
-                    if((unixname = wine_get_unix_file_name(data)))
-                    {
-                        AddFontToList(unixname, NULL, 0, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
-                        HeapFree(GetProcessHeap(), 0, unixname);
-                    }
+                    add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
                 }
                 else if(dlen / 2 >= 6 && !strcmpiW(data + dlen / 2 - 5, dot_fonW))
                 {
                     WCHAR pathW[MAX_PATH];
-                    static const WCHAR fmtW[] = {'%','s','\\','%','s','\0'};
-                    BOOL added = FALSE;
 
-                    sprintfW(pathW, fmtW, windowsdir, data);
-                    if((unixname = wine_get_unix_file_name(pathW)))
+                    get_winfonts_dir_path( data, pathW );
+                    if (!add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
                     {
-                        added = AddFontToList(unixname, NULL, 0, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
-                        HeapFree(GetProcessHeap(), 0, unixname);
+                        get_data_dir_path( data, pathW );
+                        add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
                     }
-                    if (!added)
-                        load_font_from_data_dir(data);
                 }
                 /* reset dlen and vlen */
                 dlen = datalen;
