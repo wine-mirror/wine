@@ -502,6 +502,7 @@ BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
     memcpy( rename_info->FileName, nt_name.Buffer, nt_name.Length );
     RtlFreeUnicodeString( &nt_name );
     status = NtSetInformationFile( source_handle, &io, rename_info, size, FileRenameInformation );
+    HeapFree( GetProcessHeap(), 0, rename_info );
     if (status == STATUS_NOT_SAME_DEVICE && (flag & MOVEFILE_COPY_ALLOWED))
     {
         NtClose( source_handle );
