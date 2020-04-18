@@ -182,10 +182,12 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
                                       &cmdlineW, envW, &titleW, &desktopW,
                                       NULL, &runtimeW, PROCESS_PARAMS_FLAG_NORMALIZED ))
     {
+        RtlFreeUnicodeString( &newdirW );
         RtlReleasePath( load_path );
         if (envW != env) RtlFreeHeap( GetProcessHeap(), 0, envW );
         return NULL;
     }
+    RtlFreeUnicodeString( &newdirW );
     RtlReleasePath( load_path );
 
     if (flags & CREATE_NEW_PROCESS_GROUP) params->ConsoleFlags = 1;
