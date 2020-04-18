@@ -416,6 +416,8 @@ static void set_winver(const struct win_version *version)
 
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentMajorVersionNumber", NULL);
+            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentMinorVersionNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuild", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "ProductName", NULL);
@@ -429,6 +431,8 @@ static void set_winver(const struct win_version *version)
             snprintf(Buffer, sizeof(Buffer), "%d.%d", version->dwMajorVersion,
                         version->dwMinorVersion);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", Buffer);
+            set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentMajorVersionNumber", version->dwMajorVersion);
+            set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentMinorVersionNumber", version->dwMinorVersion);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CSDVersion", version->szCSDVersion);
             snprintf(Buffer, sizeof(Buffer), "%d", version->dwBuildNumber);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuild", Buffer);
