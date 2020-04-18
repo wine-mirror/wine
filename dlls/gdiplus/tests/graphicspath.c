@@ -75,8 +75,10 @@ typedef struct
     int todo;
 } path_test_t;
 
-#define ok_path(a,b,c,d) ok_path_fudge(a,b,c,d,2.0)
-static void ok_path_fudge(GpPath* path, const path_test_t *expected, INT expected_size, BOOL todo_size, REAL fudge)
+#define ok_path(a,b,c,d) _ok_path_fudge(a,b,c,d,2.0,__LINE__)
+#define ok_path_fudge(a,b,c,d,e) _ok_path_fudge(a,b,c,d,e,__LINE__)
+static void _ok_path_fudge(GpPath* path, const path_test_t *expected, INT expected_size,
+        BOOL todo_size, REAL fudge, int line)
 {
     BYTE * types;
     INT size, idx = 0, eidx = 0, numskip;
@@ -89,7 +91,7 @@ static void ok_path_fudge(GpPath* path, const path_test_t *expected, INT expecte
     }
 
     todo_wine_if (todo_size)
-        ok(size == expected_size, "Path size %d does not match expected size %d\n",
+        ok_(__FILE__,line)(size == expected_size, "Path size %d does not match expected size %d\n",
             size, expected_size);
 
     points = HeapAlloc(GetProcessHeap(), 0, size * sizeof(GpPointF));
@@ -112,7 +114,7 @@ static void ok_path_fudge(GpPath* path, const path_test_t *expected, INT expecte
         stringify_point_type(types[idx], name);
 
         todo_wine_if (expected[eidx].todo || numskip)
-            ok(match, "Expected #%d: %s (%.1f,%.1f) but got %s (%.1f,%.1f)\n", eidx,
+            ok_(__FILE__,line)(match, "Expected #%d: %s (%.1f,%.1f) but got %s (%.1f,%.1f)\n", eidx,
                ename, expected[eidx].X, expected[eidx].Y,
                name, points[idx].X, points[idx].Y);
 
