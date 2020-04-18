@@ -1462,6 +1462,7 @@ void init_user_process_params( SIZE_T data_size )
 
         params->Environment = env;
         NtCurrentTeb()->Peb->ProcessParameters = params;
+        RtlFreeUnicodeString( &initial_params.ImagePathName );
         RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
 
