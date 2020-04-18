@@ -3738,6 +3738,8 @@ HKLM,"System\CurrentControlSet\Services\Winsock2\Parameters\Protocol_Catalog9\Ca
 
 [VersionInfo]
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"6.1"
+HKLM,%CurrentVersionNT%,"CurrentMajorVersionNumber",0x10001,6
+HKLM,%CurrentVersionNT%,"CurrentMinorVersionNumber",0x10001,1
 HKLM,%CurrentVersionNT%,"CSDVersion",2,"Service Pack 1"
 HKLM,%CurrentVersionNT%,"CurrentBuild",2,"7601"
 HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"7601"
