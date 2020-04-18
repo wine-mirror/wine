@@ -1555,6 +1555,7 @@ static NTSTATUS fork_and_exec( UNICODE_STRING *path, const RTL_USER_PROCESS_PARA
     if (stdout_fd != -1) close( stdout_fd );
     RtlFreeHeap( GetProcessHeap(), 0, argv );
     RtlFreeHeap( GetProcessHeap(), 0, envp );
+    RtlFreeHeap( GetProcessHeap(), 0, unixdir );
     RtlFreeAnsiString( &unix_name );
     return status;
 }
