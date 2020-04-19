@@ -5418,7 +5418,7 @@ static void test_overlapped_read(void)
     err = GetLastError();
     /* Win8+ return ERROR_IO_PENDING like stated in MSDN, while older ones
      * return ERROR_HANDLE_EOF right away. */
-    ok(!ret && (err == ERROR_HANDLE_EOF || err == ERROR_IO_PENDING),
+    ok(!ret && (err == ERROR_IO_PENDING || broken(err == ERROR_HANDLE_EOF)),
             "Unexpected ReadFile result, ret %#x, GetLastError() %u.\n", ret, GetLastError());
     if (err == ERROR_IO_PENDING)
     {
