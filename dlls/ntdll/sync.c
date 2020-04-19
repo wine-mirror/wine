@@ -2557,9 +2557,7 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
 {
     select_op_t select_op;
     NTSTATUS ret;
-    BOOL user_apc = FALSE;
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
-    user_apc_t apc;
 
     if (size != 1 && size != 2 && size != 4 && size != 8)
         return STATUS_INVALID_PARAMETER;
@@ -2567,9 +2565,12 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
     if ((ret = fast_wait_addr( addr, cmp, size, timeout )) != STATUS_NOT_IMPLEMENTED)
         return ret;
 
-    select_op.keyed_event.op     = SELECT_KEYED_EVENT_WAIT;
-    select_op.keyed_event.handle = wine_server_obj_handle( keyed_event );
-    select_op.keyed_event.key    = wine_server_client_ptr( addr );
+    RtlEnterCriticalSection( &addr_section );
+    if (!compare_addr( addr, cmp, size ))
+    {
+        RtlLeaveCriticalSection( &addr_section );
+        return STATUS_SUCCESS;
+    }
 
     if (abs_timeout < 0)
     {
@@ -2579,25 +2580,12 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
         abs_timeout -= now.QuadPart;
     }
 
-    for (;;)
-    {
-        RtlEnterCriticalSection( &addr_section );
-        if (!compare_addr( addr, cmp, size ))
-            ret = STATUS_SUCCESS;
-        else
-            ret = server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, NULL, &apc );
-        RtlLeaveCriticalSection( &addr_section );
+    select_op.keyed_event.op     = SELECT_KEYED_EVENT_WAIT;
+    select_op.keyed_event.handle = wine_server_obj_handle( keyed_event );
+    select_op.keyed_event.key    = wine_server_client_ptr( addr );
 
-        if (ret != STATUS_USER_APC) break;
-        invoke_apc( &apc );
-
-        /* if we ran a user apc we have to check once more if additional apcs are queued,
-         * but we don't want to wait */
-        abs_timeout = 0;
-        user_apc = TRUE;
-    }
-
-    if (ret == STATUS_TIMEOUT && user_apc) ret = STATUS_USER_APC;
+    ret = server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, NULL, NULL );
+    RtlLeaveCriticalSection( &addr_section );
     return ret;
 }
 

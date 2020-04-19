@@ -349,7 +349,7 @@ void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sig
  *
  * Wait for a reply on the waiting pipe of the current thread.
  */
-int wait_select_reply( void *cookie )
+static int wait_select_reply( void *cookie )
 {
     int signaled;
     struct wake_up_reply reply;
@@ -381,7 +381,7 @@ int wait_select_reply( void *cookie )
 }
 
 
-void invoke_apc( const user_apc_t *apc )
+static void invoke_apc( const user_apc_t *apc )
 {
     switch( apc->type )
     {
