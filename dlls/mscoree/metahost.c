@@ -93,7 +93,6 @@ MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type);
 MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name);
 MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
 static void (CDECL *mono_config_parse)(const char *filename);
-MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name);
 MonoDomain* (CDECL *mono_domain_get)(void);
 MonoDomain* (CDECL *mono_domain_get_by_id)(int id);
 BOOL (CDECL *mono_domain_set)(MonoDomain *domain,BOOL force);
@@ -199,7 +198,6 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_class_from_mono_type);
         LOAD_MONO_FUNCTION(mono_class_from_name);
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
-        LOAD_MONO_FUNCTION(mono_domain_assembly_open);
         LOAD_MONO_FUNCTION(mono_domain_get);
         LOAD_MONO_FUNCTION(mono_domain_get_by_id);
         LOAD_MONO_FUNCTION(mono_domain_set);

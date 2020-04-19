@@ -157,7 +157,6 @@ extern void (CDECL *mono_callspec_set_assembly)(MonoAssembly *assembly) DECLSPEC
 extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type) DECLSPEC_HIDDEN;
 extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name) DECLSPEC_HIDDEN;
 extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count) DECLSPEC_HIDDEN;
-extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name) DECLSPEC_HIDDEN;
 extern MonoDomain* (CDECL *mono_domain_get)(void) DECLSPEC_HIDDEN;
 extern MonoDomain* (CDECL *mono_domain_get_by_id)(int id) DECLSPEC_HIDDEN;
 extern BOOL (CDECL *mono_domain_set)(MonoDomain *domain, BOOL force) DECLSPEC_HIDDEN;

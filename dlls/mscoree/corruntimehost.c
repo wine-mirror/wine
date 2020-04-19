@@ -206,10 +206,11 @@ static BOOL RuntimeHost_GetMethod(MonoDomain *domain, const char *assemblyname,
     }
     else
     {
-        assembly = mono_domain_assembly_open(domain, assemblyname);
+        MonoImageOpenStatus status;
+        assembly = mono_assembly_open(assemblyname, &status);
         if (!assembly)
         {
-            ERR("Cannot load assembly %s\n", assemblyname);
+            ERR("Cannot load assembly %s, status=%i\n", assemblyname, status);
             return FALSE;
         }
 
@@ -1819,6 +1820,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             MonoClass *klass;
             MonoObject *result;
             MonoDomain *prev_domain;
+            MonoImageOpenStatus status;
             IUnknown *unk = NULL;
             char *filenameA, *ns;
             char *classA;
@@ -1828,11 +1830,11 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             prev_domain = domain_attach(domain);
 
             filenameA = WtoA(filename);
-            assembly = mono_domain_assembly_open(domain, filenameA);
+            assembly = mono_assembly_open(filenameA, &status);
             HeapFree(GetProcessHeap(), 0, filenameA);
             if (!assembly)
             {
-                ERR("Cannot open assembly %s\n", filenameA);
+                ERR("Cannot open assembly %s, status=%i\n", filenameA, status);
                 domain_restore(prev_domain);
                 goto cleanup;
             }
