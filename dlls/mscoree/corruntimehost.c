@@ -200,18 +200,25 @@ static BOOL RuntimeHost_GetMethod(MonoDomain *domain, const char *assemblyname,
     MonoImage *image;
     MonoClass *klass;
 
-    assembly = mono_domain_assembly_open(domain, assemblyname);
-    if (!assembly)
+    if (!assemblyname)
     {
-        ERR("Cannot load assembly %s\n", assemblyname);
-        return FALSE;
+        image = mono_get_corlib();
     }
-
-    image = mono_assembly_get_image(assembly);
-    if (!image)
+    else
     {
-        ERR("Couldn't get assembly image for %s\n", assemblyname);
-        return FALSE;
+        assembly = mono_domain_assembly_open(domain, assemblyname);
+        if (!assembly)
+        {
+            ERR("Cannot load assembly %s\n", assemblyname);
+            return FALSE;
+        }
+
+        image = mono_assembly_get_image(assembly);
+        if (!image)
+        {
+            ERR("Couldn't get assembly image for %s\n", assemblyname);
+            return FALSE;
+        }
     }
 
     klass = mono_class_from_name(image, namespace, typename);
@@ -250,7 +257,7 @@ static HRESULT RuntimeHost_DoInvoke(RuntimeHost *This, MonoDomain *domain,
         if (methodname != get_hresult)
         {
             /* Map the exception to an HRESULT. */
-            hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System", "Exception", get_hresult,
+            hr = RuntimeHost_Invoke(This, domain, NULL, "System", "Exception", get_hresult,
                 exc, NULL, 0, &hr_object);
             if (SUCCEEDED(hr))
                 hr = *(HRESULT*)mono_object_unbox(hr_object);
@@ -348,7 +355,7 @@ static HRESULT RuntimeHost_GetObjectForIUnknown(RuntimeHost *This, MonoDomain *d
     MonoObject *result;
 
     args[0] = &unk;
-    hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System.Runtime.InteropServices", "Marshal", "GetObjectForIUnknown",
+    hr = RuntimeHost_Invoke(This, domain, NULL, "System.Runtime.InteropServices", "Marshal", "GetObjectForIUnknown",
         NULL, args, 1, &result);
 
     if (SUCCEEDED(hr))
@@ -413,7 +420,7 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
         args[2] = NULL;
     }
 
-    res = RuntimeHost_Invoke(This, domain, "mscorlib", "System", "AppDomain", "CreateDomain",
+    res = RuntimeHost_Invoke(This, domain, NULL, "System", "AppDomain", "CreateDomain",
         NULL, args, 3, &new_domain);
 
     if (FAILED(res))
@@ -427,7 +434,7 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnkn
      * Instead, do a vcall.
      */
 
-    res = RuntimeHost_VirtualInvoke(This, domain, "mscorlib", "System", "AppDomain", "get_Id",
+    res = RuntimeHost_VirtualInvoke(This, domain, NULL, "System", "AppDomain", "get_Id",
         new_domain, NULL, 0, &id);
 
     if (FAILED(res))
@@ -448,7 +455,7 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
     MonoObject *appdomain_object;
     IUnknown *unk;
 
-    hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System", "AppDomain", "get_CurrentDomain",
+    hr = RuntimeHost_Invoke(This, domain, NULL, "System", "AppDomain", "get_CurrentDomain",
         NULL, NULL, 0, &appdomain_object);
 
     if (SUCCEEDED(hr))
@@ -480,7 +487,7 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
 
     args[0] = &exitcode;
     args[1] = NULL;
-    RuntimeHost_Invoke(This, domain, "mscorlib", "System", "Environment", "Exit",
+    RuntimeHost_Invoke(This, domain, NULL, "System", "Environment", "Exit",
         NULL, args, 1, &dummy);
 
     ERR("Process should have exited\n");
@@ -1048,7 +1055,7 @@ HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
 
     domain = mono_object_get_domain(obj);
 
-    hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System.Runtime.InteropServices", "Marshal", "GetIUnknownForObject",
+    hr = RuntimeHost_Invoke(This, domain, NULL, "System.Runtime.InteropServices", "Marshal", "GetIUnknownForObject",
         NULL, (void**)&obj, 1, &result);
 
     if (SUCCEEDED(hr))

@@ -162,6 +162,7 @@ extern MonoDomain* (CDECL *mono_domain_get)(void) DECLSPEC_HIDDEN;
 extern MonoDomain* (CDECL *mono_domain_get_by_id)(int id) DECLSPEC_HIDDEN;
 extern BOOL (CDECL *mono_domain_set)(MonoDomain *domain, BOOL force) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name) DECLSPEC_HIDDEN;
+extern MonoImage* (CDECL *mono_get_corlib)(void) DECLSPEC_HIDDEN;
 extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]) DECLSPEC_HIDDEN;
 extern MonoDomain* (CDECL *mono_jit_init_version)(const char *domain_name, const char *runtime_version) DECLSPEC_HIDDEN;
 extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status) DECLSPEC_HIDDEN;
