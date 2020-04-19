@@ -2584,9 +2584,7 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
     select_op.keyed_event.handle = wine_server_obj_handle( keyed_event );
     select_op.keyed_event.key    = wine_server_client_ptr( addr );
 
-    ret = server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, NULL, NULL );
-    RtlLeaveCriticalSection( &addr_section );
-    return ret;
+    return server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, NULL, &addr_section, NULL );
 }
 
 /***********************************************************************

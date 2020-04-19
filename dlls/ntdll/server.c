@@ -602,7 +602,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
  *              server_select
  */
 unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                            timeout_t abs_timeout, CONTEXT *context, user_apc_t *user_apc )
+                            timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs, user_apc_t *user_apc )
 {
     unsigned int ret;
     int cookie;
@@ -660,6 +660,11 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 size = offsetof( select_op_t, signal_and_wait.signal );
         }
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
+        if (cs)
+        {
+            RtlLeaveCriticalSection( cs );
+            cs = NULL;
+        }
         if (ret != STATUS_PENDING) break;
 
         ret = wait_select_reply( &cookie );
@@ -692,7 +697,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
 
     for (;;)
     {
-        ret = server_select( select_op, size, flags, abs_timeout, NULL, &apc );
+        ret = server_select( select_op, size, flags, abs_timeout, NULL, NULL, &apc );
         if (ret != STATUS_USER_APC) break;
         invoke_apc( &apc );
 
