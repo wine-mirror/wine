@@ -1324,17 +1324,21 @@ static void call_constructors( WINE_MODREF *wm )
     void (*init_func)(int, char **, char **) = NULL;
     void (**init_array)(int, char **, char **) = NULL;
     ULONG_PTR i, init_arraysz = 0;
+#ifdef _WIN64
+    const Elf64_Dyn *dyn;
+#else
+    const Elf32_Dyn *dyn;
+#endif
 
     if (dlinfo( wm->so_handle, RTLD_DI_LINKMAP, &map ) == -1) return;
-    while (map->l_ld->d_tag)
+    for (dyn = map->l_ld; dyn->d_tag; dyn++)
     {
-        switch (map->l_ld->d_tag)
+        switch (dyn->d_tag)
         {
-        case 0x60009990: init_array = (void *)((char *)map->l_addr + map->l_ld->d_un.d_val); break;
-        case 0x60009991: init_arraysz = map->l_ld->d_un.d_val; break;
-        case 0x60009992: init_func = (void *)((char *)map->l_addr + map->l_ld->d_un.d_val); break;
+        case 0x60009990: init_array = (void *)((char *)map->l_addr + dyn->d_un.d_val); break;
+        case 0x60009991: init_arraysz = dyn->d_un.d_val; break;
+        case 0x60009992: init_func = (void *)((char *)map->l_addr + dyn->d_un.d_val); break;
         }
-        map->l_ld++;
     }
 
     TRACE( "%s: got init_func %p init_array %p %lu\n", debugstr_us( &wm->ldr.BaseDllName ),
