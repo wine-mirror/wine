@@ -184,6 +184,7 @@ struct audio_stream
     IMemAllocator *allocator;
     AM_MEDIA_TYPE mt;
     WAVEFORMATEX format;
+    FILTER_STATE state;
 };
 
 static inline struct audio_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
@@ -340,11 +341,17 @@ static HRESULT WINAPI audio_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
 
 static HRESULT WINAPI audio_IAMMediaStream_SetState(IAMMediaStream *iface, FILTER_STATE state)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%u) stub!\n", This, iface, state);
+    TRACE("stream %p, state %u.\n", stream, state);
 
-    return S_FALSE;
+    EnterCriticalSection(&stream->cs);
+
+    stream->state = state;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface,
