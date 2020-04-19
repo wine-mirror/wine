@@ -1018,13 +1018,13 @@ done:
 
 err:
     if (needs_close) close( unix_handle );
-    if (status == STATUS_SUCCESS || (status == STATUS_END_OF_FILE && !async_read))
+    if (status == STATUS_SUCCESS || (status == STATUS_END_OF_FILE && (!async_read || type == FD_TYPE_FILE)))
     {
         io_status->u.Status = status;
         io_status->Information = total;
         TRACE("= SUCCESS (%u)\n", total);
         if (hEvent) NtSetEvent( hEvent, NULL );
-        if (apc && !status) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
+        if (apc && (!status || async_read)) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc,
                                               (ULONG_PTR)apc_user, (ULONG_PTR)io_status, 0 );
     }
     else
@@ -1033,7 +1033,7 @@ err:
         if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
     }
 
-    ret_status = async_read && type == FD_TYPE_FILE && status == STATUS_SUCCESS
+    ret_status = async_read && type == FD_TYPE_FILE && (status == STATUS_SUCCESS || status == STATUS_END_OF_FILE)
             ? STATUS_PENDING : status;
 
     if (send_completion) NTDLL_AddCompletion( hFile, cvalue, status, total, ret_status == STATUS_PENDING );

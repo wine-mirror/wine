@@ -652,7 +652,8 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = strlen(text) + 2;
     status = pNtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, &offset, NULL );
-    ok(status == STATUS_PENDING || status == STATUS_END_OF_FILE /* before Vista */, "expected STATUS_PENDING or STATUS_END_OF_FILE, got %#x\n", status);
+    ok(status == STATUS_PENDING || broken(status == STATUS_END_OF_FILE) /* before Vista */,
+            "expected STATUS_PENDING, got %#x\n", status);
     if (status == STATUS_PENDING)  /* vista */
     {
         WaitForSingleObject( event, 1000 );
@@ -4540,7 +4541,8 @@ static void test_read_write(void)
     ret = ReadFile(hfile, buf, sizeof(buf), &bytes, &ovl);
     ok(!ret, "ReadFile should fail\n");
     ret = GetLastError();
-    ok(ret == ERROR_IO_PENDING || ret == ERROR_HANDLE_EOF /* before Vista */, "expected ERROR_IO_PENDING or ERROR_HANDLE_EOF, got %d\n", ret);
+    ok(ret == ERROR_IO_PENDING || broken(ret == ERROR_HANDLE_EOF) /* before Vista */,
+            "expected ERROR_IO_PENDING, got %d\n", ret);
     ok(bytes == 0, "bytes %u\n", bytes);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
