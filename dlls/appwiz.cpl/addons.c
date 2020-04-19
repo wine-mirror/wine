@@ -58,8 +58,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
-#define MONO_VERSION "4.9.4"
-#define MONO_SHA "51a6ff38323fcda71d70ead90c252b5eaeacec542ba737dbd1d676787b210fdd"
+#define MONO_VERSION "5.0.0"
+#if defined(__i386__) || defined(__x86_64__)
+#define MONO_ARCH "x86"
+#define MONO_SHA "17da208645a82a5e45e84fc75c73a8440acda484411cb8fae8e9b72db9886cd5"
+#else
+#define MONO_ARCH ""
+#define MONO_SHA "???"
+#endif
 
 typedef struct {
     const char *version;
@@ -88,7 +94,7 @@ static const addon_info_t addons_info[] = {
     },
     {
         MONO_VERSION,
-        L"wine-mono-" MONO_VERSION ".msi",
+        L"wine-mono-" MONO_VERSION "-" MONO_ARCH ".msi",
         L"mono",
         MONO_SHA,
         "http://source.winehq.org/winemono.php",
