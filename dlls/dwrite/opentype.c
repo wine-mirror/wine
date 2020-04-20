@@ -21,6 +21,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
+#include "config.h"
 #include "dwrite_private.h"
 #include "winternl.h"
 
