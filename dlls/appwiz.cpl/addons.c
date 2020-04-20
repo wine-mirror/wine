@@ -321,7 +321,7 @@ static enum install_res install_from_default_dir(void)
 
     if (ret == INSTALL_NEXT)
         ret = install_from_unix_file(INSTALL_DATADIR "/wine/", addon->subdir_name, addon->file_name);
-    if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share"))
+    if (ret == INSTALL_NEXT && strcmp(INSTALL_DATADIR, "/usr/share") != 0)
         ret = install_from_unix_file("/usr/share/wine/", addon->subdir_name, addon->file_name);
     if (ret == INSTALL_NEXT)
         ret = install_from_unix_file("/opt/wine/", addon->subdir_name, addon->file_name);
