@@ -1282,6 +1282,7 @@ static void test_Win32_VideoController( IWbemServices *services )
         hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (hr != S_OK) break;
 
+        check_property( obj, L"AdapterCompatibility", VT_BSTR, CIM_STRING );
         check_property( obj, L"Availability", VT_I4, CIM_UINT16 );
         check_property( obj, L"ConfigManagerErrorCode", VT_I4, CIM_UINT32 );
         check_property( obj, L"DriverDate", VT_BSTR, CIM_DATETIME );

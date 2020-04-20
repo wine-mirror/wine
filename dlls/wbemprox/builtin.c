@@ -399,6 +399,7 @@ static const struct column col_systemsecurity[] =
 };
 static const struct column col_videocontroller[] =
 {
+    { L"AdapterCompatibility",        CIM_STRING },
     { L"AdapterDACType",              CIM_STRING },
     { L"AdapterRAM",                  CIM_UINT32 },
     { L"Availability",                CIM_UINT16 },
@@ -783,6 +784,7 @@ struct record_systemenclosure
 };
 struct record_videocontroller
 {
+    const WCHAR *adapter_compatibility;
     const WCHAR *adapter_dactype;
     UINT32       adapter_ram;
     UINT16       availability;
@@ -3842,6 +3844,7 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
 
 done:
     rec = (struct record_videocontroller *)table->data;
+    rec->adapter_compatibility = L"(Standard display types)";
     rec->adapter_dactype       = L"Integrated RAMDAC";
     rec->adapter_ram           = vidmem;
     rec->availability          = 3; /* Running or Full Power */
