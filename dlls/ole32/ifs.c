@@ -363,17 +363,22 @@ static INT WINAPI IMalloc_fnDidAlloc(IMalloc *iface, void *mem)
  */
 static void WINAPI IMalloc_fnHeapMinimize(IMalloc *iface)
 {
-	TRACE("()\n");
+    BOOL spy_active = FALSE;
 
-	if(Malloc32.pSpy) {
-            EnterCriticalSection(&IMalloc32_SpyCS);
-	    IMallocSpy_PreHeapMinimize(Malloc32.pSpy);
-	}
+    TRACE("()\n");
 
-	if(Malloc32.pSpy) {
-	    IMallocSpy_PostHeapMinimize(Malloc32.pSpy);
-            LeaveCriticalSection(&IMalloc32_SpyCS);
-	}
+    if (Malloc32.pSpy)
+    {
+        EnterCriticalSection(&IMalloc32_SpyCS);
+        spy_active = TRUE;
+        IMallocSpy_PreHeapMinimize(Malloc32.pSpy);
+    }
+
+    if (spy_active)
+    {
+        IMallocSpy_PostHeapMinimize(Malloc32.pSpy);
+        LeaveCriticalSection(&IMalloc32_SpyCS);
+    }
 }
 
 static const IMallocVtbl VT_IMalloc32 =
