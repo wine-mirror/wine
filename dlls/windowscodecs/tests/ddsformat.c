@@ -142,6 +142,55 @@ static void test_dds_decoder_initialize(void)
     }
 }
 
+static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
+{
+    HRESULT hr;
+    IWICPalette *pallette = NULL;
+    IWICMetadataQueryReader *metadata_reader = NULL;
+    IWICBitmapSource *preview = NULL, *thumnail = NULL;
+    IWICColorContext *color_context = NULL;
+    UINT count;
+
+    hr = IWICImagingFactory_CreatePalette(factory, &pallette);
+    ok (hr == S_OK, "CreatePalette failed, hr=%x\n", hr);
+    if (hr == S_OK) {
+        todo_wine {
+        hr = IWICBitmapDecoder_CopyPalette(decoder, pallette);
+        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Expected hr=WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
+        hr = IWICBitmapDecoder_CopyPalette(decoder, NULL);
+        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Expected hr=WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
+        };
+    }
+
+    todo_wine {
+    hr = IWICBitmapDecoder_GetMetadataQueryReader(decoder, &metadata_reader);
+    ok (hr == S_OK, "Expected hr=S_OK, got %x\n", hr);
+    hr = IWICBitmapDecoder_GetMetadataQueryReader(decoder, NULL);
+    ok (hr == E_INVALIDARG, "Expected hr=E_INVALIDARG, got %x\n", hr);
+
+    hr = IWICBitmapDecoder_GetPreview(decoder, &preview);
+    ok (hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Expected hr=WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+    hr = IWICBitmapDecoder_GetPreview(decoder, NULL);
+    ok (hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Expected hr=WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
+    hr = IWICBitmapDecoder_GetColorContexts(decoder, 1, &color_context, &count);
+    ok (hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Expected hr=WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+    hr = IWICBitmapDecoder_GetColorContexts(decoder, 1, NULL, NULL);
+    ok (hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Expected hr=WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
+    hr = IWICBitmapDecoder_GetThumbnail(decoder, &thumnail);
+    ok (hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "Expected hr=WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
+    hr = IWICBitmapDecoder_GetThumbnail(decoder, NULL);
+    ok (hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "Expected hr=WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
+    };
+
+    if (pallette) IWICPalette_Release(pallette);
+    if (metadata_reader) IWICMetadataQueryReader_Release(metadata_reader);
+    if (preview) IWICBitmapSource_Release(preview);
+    if (color_context) IWICColorContext_Release(color_context);
+    if (thumnail) IWICBitmapSource_Release(thumnail);
+}
+
 static void test_dds_decoder(void)
 {
     HRESULT hr;
@@ -158,6 +207,7 @@ static void test_dds_decoder(void)
     if (FAILED(hr)) goto end;
 
     test_dds_decoder_initialize();
+    test_dds_decoder_global_properties(decoder);
 
 end:
     if (decoder) IWICBitmapDecoder_Release(decoder);
