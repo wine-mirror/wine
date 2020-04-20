@@ -254,35 +254,39 @@ static void * WINAPI IMalloc_fnRealloc(IMalloc *iface, void *pv, SIZE_T cb)
 /******************************************************************************
  * IMalloc32_Free [VTABLE]
  */
-static void WINAPI IMalloc_fnFree(IMalloc *iface, void *pv)
+static void WINAPI IMalloc_fnFree(IMalloc *iface, void *mem)
 {
-        BOOL fSpyed = FALSE;
+    BOOL spyed_block = FALSE, spy_active = FALSE;
 
-	TRACE("(%p)\n",pv);
+    TRACE("(%p)\n", mem);
 
-	if(!pv)
-	    return;
+    if (!mem)
+        return;
 
-	if(Malloc32.pSpy) {
-            EnterCriticalSection(&IMalloc32_SpyCS);
-            fSpyed = mallocspy_remove_spyed_memory(pv);
-	    pv = IMallocSpy_PreFree(Malloc32.pSpy, pv, fSpyed);
-	}
+    if (Malloc32.pSpy)
+    {
+        EnterCriticalSection(&IMalloc32_SpyCS);
+        spyed_block = mallocspy_remove_spyed_memory(mem);
+        spy_active = TRUE;
+        mem = IMallocSpy_PreFree(Malloc32.pSpy, mem, spyed_block);
+    }
 
-	HeapFree(GetProcessHeap(),0,pv);
+    HeapFree(GetProcessHeap(), 0, mem);
 
-	if(Malloc32.pSpy) {
-	    IMallocSpy_PostFree(Malloc32.pSpy, fSpyed);
+    if (spy_active)
+    {
+        IMallocSpy_PostFree(Malloc32.pSpy, spyed_block);
 
-	    /* check if can release the spy */
-	    if(Malloc32.SpyReleasePending && !Malloc32.SpyedAllocationsLeft) {
-	        IMallocSpy_Release(Malloc32.pSpy);
-		Malloc32.SpyReleasePending = FALSE;
-		Malloc32.pSpy = NULL;
-	    }
-
-	    LeaveCriticalSection(&IMalloc32_SpyCS);
+        /* check if can release the spy */
+        if (Malloc32.SpyReleasePending && !Malloc32.SpyedAllocationsLeft)
+        {
+            IMallocSpy_Release(Malloc32.pSpy);
+            Malloc32.SpyReleasePending = FALSE;
+            Malloc32.pSpy = NULL;
         }
+
+        LeaveCriticalSection(&IMalloc32_SpyCS);
+    }
 }
 
 /******************************************************************************
