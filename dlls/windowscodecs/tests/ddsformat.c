@@ -45,12 +45,12 @@ static IWICStream *create_stream(const void *image_data, UINT image_size)
     IWICStream *stream = NULL;
 
     hr = IWICImagingFactory_CreateStream(factory, &stream);
-    ok(SUCCEEDED(hr), "CreateStream failed, hr=%x\n", hr);
-    if (FAILED(hr)) goto fail;
+    ok(hr == S_OK, "CreateStream failed, hr=%x\n", hr);
+    if (hr != S_OK) goto fail;
 
     hr = IWICStream_InitializeFromMemory(stream, (BYTE *)image_data, image_size);
-    ok(SUCCEEDED(hr), "InitializeFromMemory failed, hr=%x\n", hr);
-    if (FAILED(hr)) goto fail;
+    ok(hr == S_OK, "InitializeFromMemory failed, hr=%x\n", hr);
+    if (hr != S_OK) goto fail;
 
     return stream;
 
@@ -67,14 +67,14 @@ static IWICBitmapDecoder *create_decoder(void)
 
     hr = CoCreateInstance(&CLSID_WICDdsDecoder, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICBitmapDecoder, (void **)&decoder);
-    if (FAILED(hr)) {
+    if (hr != S_OK) {
         win_skip("Dds decoder is not supported\n");
         return NULL;
     }
 
     memset(&guidresult, 0, sizeof(guidresult));
     hr = IWICBitmapDecoder_GetContainerFormat(decoder, &guidresult);
-    ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%x\n", hr);
+    ok(hr == S_OK, "GetContainerFormat failed, hr=%x\n", hr);
     ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatDds), "Unexpected container format\n");
 
     return decoder;
@@ -86,7 +86,7 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
 
     hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnDemand);
     if (index == -1) {
-        ok(SUCCEEDED(hr), "Decoder Initialize failed, hr=%x\n", hr);
+        ok(hr == S_OK, "Decoder Initialize failed, hr=%x\n", hr);
     } else {
         ok(hr == expected, "%d: Expected hr=%x, got %x\n", index, expected, hr);
     }
@@ -200,7 +200,7 @@ static void test_dds_decoder(void)
     if (!decoder) goto end;
 
     hr = init_decoder(decoder, stream, S_OK, -1);
-    if (FAILED(hr)) goto end;
+    if (hr != S_OK) goto end;
 
     test_dds_decoder_initialize();
     test_dds_decoder_global_properties(decoder);
@@ -217,8 +217,8 @@ START_TEST(ddsformat)
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICImagingFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
-    if (FAILED(hr)) goto end;
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+    if (hr != S_OK) goto end;
 
     test_dds_decoder();
 
