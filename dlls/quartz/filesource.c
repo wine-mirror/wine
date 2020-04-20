@@ -64,6 +64,7 @@ struct async_reader
     LPOLESTR pszFileName;
     AM_MEDIA_TYPE mt;
     HANDLE file, port, io_thread;
+    LARGE_INTEGER file_size;
     CRITICAL_SECTION sample_cs;
     BOOL flushing;
     struct request *requests;
@@ -471,6 +472,12 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
     if (hFile == INVALID_HANDLE_VALUE)
     {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    if (!GetFileSizeEx(hFile, &This->file_size))
+    {
+        WARN("Could not get file size.\n");
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -883,14 +890,10 @@ static HRESULT WINAPI FileAsyncReader_SyncRead(IAsyncReader *iface,
 static HRESULT WINAPI FileAsyncReader_Length(IAsyncReader *iface, LONGLONG *total, LONGLONG *available)
 {
     struct async_reader *filter = impl_from_IAsyncReader(iface);
-    DWORD low, high;
 
     TRACE("iface %p, total %p, available %p.\n", iface, total, available);
 
-    if ((low = GetFileSize(filter->file, &high)) == -1 && GetLastError() != NO_ERROR)
-        return HRESULT_FROM_WIN32(GetLastError());
-
-    *available = *total = (LONGLONG)low | (LONGLONG)high << (sizeof(DWORD) * 8);
+    *available = *total = filter->file_size.QuadPart;
 
     return S_OK;
 }
