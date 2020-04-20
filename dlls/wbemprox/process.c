@@ -70,7 +70,7 @@ HRESULT process_get_owner( IWbemClassObject *obj, IWbemClassObject *in, IWbemCla
 
     TRACE("%p, %p, %p\n", obj, in, out);
 
-    hr = create_signature( class_processW, method_getownerW, PARAM_OUT, &sig );
+    hr = create_signature( L"Win32_Process", L"GetOwner", PARAM_OUT, &sig );
     if (hr != S_OK) return hr;
 
     if (out)
@@ -90,12 +90,12 @@ HRESULT process_get_owner( IWbemClassObject *obj, IWbemClassObject *in, IWbemCla
     {
         if (!V_UI4( &retval ))
         {
-            hr = IWbemClassObject_Put( out_params, param_userW, 0, &user, CIM_STRING );
+            hr = IWbemClassObject_Put( out_params, L"User", 0, &user, CIM_STRING );
             if (hr != S_OK) goto done;
-            hr = IWbemClassObject_Put( out_params, param_domainW, 0, &domain, CIM_STRING );
+            hr = IWbemClassObject_Put( out_params, L"Domain", 0, &domain, CIM_STRING );
             if (hr != S_OK) goto done;
         }
-        hr = IWbemClassObject_Put( out_params, param_returnvalueW, 0, &retval, CIM_UINT32 );
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
     }
 
 done:

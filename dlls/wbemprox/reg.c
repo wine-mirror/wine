@@ -100,12 +100,12 @@ HRESULT reg_create_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassO
 
     TRACE("%p, %p\n", in, out);
 
-    hr = IWbemClassObject_Get( in, param_defkeyW, 0, &defkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"hDefKey", 0, &defkey, NULL, NULL );
     if (hr != S_OK) return hr;
-    hr = IWbemClassObject_Get( in, param_subkeynameW, 0, &subkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( class_stdregprovW, method_createkeyW, PARAM_OUT, &sig );
+    hr = create_signature( L"StdRegProv", L"CreateKey", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );
@@ -123,7 +123,7 @@ HRESULT reg_create_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassO
     }
     hr = create_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &retval );
     if (hr == S_OK && out_params)
-        hr = IWbemClassObject_Put( out_params, param_returnvalueW, 0, &retval, CIM_UINT32 );
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
 
     VariantClear( &subkey );
     IWbemClassObject_Release( sig );
@@ -199,12 +199,12 @@ HRESULT reg_enum_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObj
 
     TRACE("%p, %p\n", in, out);
 
-    hr = IWbemClassObject_Get( in, param_defkeyW, 0, &defkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"hDefKey", 0, &defkey, NULL, NULL );
     if (hr != S_OK) return hr;
-    hr = IWbemClassObject_Get( in, param_subkeynameW, 0, &subkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( class_stdregprovW, method_enumkeyW, PARAM_OUT, &sig );
+    hr = create_signature( L"StdRegProv", L"EnumKey", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );
@@ -227,10 +227,10 @@ HRESULT reg_enum_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObj
     {
         if (!V_UI4( &retval ))
         {
-            hr = IWbemClassObject_Put( out_params, param_namesW, 0, &names, CIM_STRING|CIM_FLAG_ARRAY );
+            hr = IWbemClassObject_Put( out_params, L"sNames", 0, &names, CIM_STRING|CIM_FLAG_ARRAY );
             if (hr != S_OK) goto done;
         }
-        hr = IWbemClassObject_Put( out_params, param_returnvalueW, 0, &retval, CIM_UINT32 );
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
     }
 
 done:
@@ -309,12 +309,12 @@ HRESULT reg_enum_values( IWbemClassObject *obj, IWbemClassObject *in, IWbemClass
 
     TRACE("%p, %p\n", in, out);
 
-    hr = IWbemClassObject_Get( in, param_defkeyW, 0, &defkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"hDefKey", 0, &defkey, NULL, NULL );
     if (hr != S_OK) return hr;
-    hr = IWbemClassObject_Get( in, param_subkeynameW, 0, &subkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( class_stdregprovW, method_enumvaluesW, PARAM_OUT, &sig );
+    hr = create_signature( L"StdRegProv", L"EnumValues", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &subkey );
@@ -338,12 +338,12 @@ HRESULT reg_enum_values( IWbemClassObject *obj, IWbemClassObject *in, IWbemClass
     {
         if (!V_UI4( &retval ))
         {
-            hr = IWbemClassObject_Put( out_params, param_namesW, 0, &names, CIM_STRING|CIM_FLAG_ARRAY );
+            hr = IWbemClassObject_Put( out_params, L"sNames", 0, &names, CIM_STRING|CIM_FLAG_ARRAY );
             if (hr != S_OK) goto done;
-            hr = IWbemClassObject_Put( out_params, param_typesW, 0, &types, CIM_SINT32|CIM_FLAG_ARRAY );
+            hr = IWbemClassObject_Put( out_params, L"Types", 0, &types, CIM_SINT32|CIM_FLAG_ARRAY );
             if (hr != S_OK) goto done;
         }
-        hr = IWbemClassObject_Put( out_params, param_returnvalueW, 0, &retval, CIM_UINT32 );
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
     }
 
 done:
@@ -392,14 +392,14 @@ HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemC
 
     TRACE("%p, %p\n", in, out);
 
-    hr = IWbemClassObject_Get( in, param_defkeyW, 0, &defkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"hDefKey", 0, &defkey, NULL, NULL );
     if (hr != S_OK) return hr;
-    hr = IWbemClassObject_Get( in, param_subkeynameW, 0, &subkey, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
     if (hr != S_OK) return hr;
-    hr = IWbemClassObject_Get( in, param_valuenameW, 0, &name, NULL, NULL );
+    hr = IWbemClassObject_Get( in, L"sValueName", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
 
-    hr = create_signature( class_stdregprovW, method_getstringvalueW, PARAM_OUT, &sig );
+    hr = create_signature( L"StdRegProv", L"GetStringValue", PARAM_OUT, &sig );
     if (hr != S_OK)
     {
         VariantClear( &name );
@@ -424,10 +424,10 @@ HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemC
     {
         if (!V_UI4( &retval ))
         {
-            hr = IWbemClassObject_Put( out_params, param_valueW, 0, &value, CIM_STRING );
+            hr = IWbemClassObject_Put( out_params, L"sValue", 0, &value, CIM_STRING );
             if (hr != S_OK) goto done;
         }
-        hr = IWbemClassObject_Put( out_params, param_returnvalueW, 0, &retval, CIM_UINT32 );
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
     }
 
 done:

@@ -86,21 +86,16 @@ static HRESULT WINAPI wbem_locator_QueryInterface(
 
 static BOOL is_local_machine( const WCHAR *server )
 {
-    static const WCHAR dotW[] = {'.',0};
-    static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
     WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len = ARRAY_SIZE( buffer );
 
-    if (!server || !wcscmp( server, dotW ) || !wcsicmp( server, localhostW )) return TRUE;
+    if (!server || !wcscmp( server, L"." ) || !wcsicmp( server, L"localhost" )) return TRUE;
     if (GetComputerNameW( buffer, &len ) && !wcsicmp( server, buffer )) return TRUE;
     return FALSE;
 }
 
 static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **namespace )
 {
-    static const WCHAR rootW[] = {'R','O','O','T',0};
-    static const WCHAR cimv2W[] = {'C','I','M','V','2',0};
-    static const WCHAR defaultW[] = {'D','E','F','A','U','L','T',0};
     HRESULT hr = WBEM_E_INVALID_NAMESPACE;
     const WCHAR *p, *q;
     unsigned int len;
@@ -131,7 +126,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     p = q;
     while (*q && *q != '\\' && *q != '/') q++;
     len = q - p;
-    if (len >= ARRAY_SIZE( rootW ) - 1 && wcsnicmp( rootW, p, len )) goto done;
+    if (len >= ARRAY_SIZE( L"root" ) - 1 && wcsnicmp( L"root", p, len )) goto done;
     if (!*q)
     {
         hr = S_OK;
@@ -139,7 +134,7 @@ static HRESULT parse_resource( const WCHAR *resource, WCHAR **server, WCHAR **na
     }
     q++;
     len = lstrlenW( q );
-    if (wcsicmp( q, cimv2W ) && wcsicmp( q, defaultW ))
+    if (wcsicmp( q, L"cimv2" ) && wcsicmp( q, L"default" ))
         goto done;
     if (!(*namespace = heap_alloc( (len + 1) * sizeof(WCHAR) ))) hr = E_OUTOFMEMORY;
     else

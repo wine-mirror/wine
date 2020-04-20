@@ -154,13 +154,6 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
 
 BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
 {
-    static const WCHAR fmt_signedW[] = {'%','d',0};
-    static const WCHAR fmt_unsignedW[] = {'%','u',0};
-    static const WCHAR fmt_signed64W[] = {'%','I','6','4','d',0};
-    static const WCHAR fmt_unsigned64W[] = {'%','I','6','4','u',0};
-    static const WCHAR fmt_strW[] = {'\"','%','s','\"',0};
-    static const WCHAR trueW[] = {'T','R','U','E',0};
-    static const WCHAR falseW[] = {'F','A','L','S','E',0};
     LONGLONG val;
     BSTR ret;
     WCHAR number[22];
@@ -176,8 +169,8 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
     switch (table->columns[column].type & COL_TYPE_MASK)
     {
     case CIM_BOOLEAN:
-        if (val) return SysAllocString( trueW );
-        else return SysAllocString( falseW );
+        if (val) return SysAllocString( L"TRUE" );
+        else return SysAllocString( L"FALSE" );
 
     case CIM_DATETIME:
     case CIM_REFERENCE:
@@ -185,25 +178,25 @@ BSTR get_value_bstr( const struct table *table, UINT row, UINT column )
         if (!val) return NULL;
         len = lstrlenW( (const WCHAR *)(INT_PTR)val ) + 2;
         if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
-        swprintf( ret, len, fmt_strW, (const WCHAR *)(INT_PTR)val );
+        swprintf( ret, len, L"\"%s\"", (const WCHAR *)(INT_PTR)val );
         return ret;
 
     case CIM_SINT16:
     case CIM_SINT32:
-        swprintf( number, ARRAY_SIZE( number ), fmt_signedW, val );
+        swprintf( number, ARRAY_SIZE( number ), L"%d", val );
         return SysAllocString( number );
 
     case CIM_UINT16:
     case CIM_UINT32:
-        swprintf( number, ARRAY_SIZE( number ), fmt_unsignedW, val );
+        swprintf( number, ARRAY_SIZE( number ), L"%u", val );
         return SysAllocString( number );
 
     case CIM_SINT64:
-        wsprintfW( number, fmt_signed64W, val );
+        wsprintfW( number, L"%I64d", val );
         return SysAllocString( number );
 
     case CIM_UINT64:
-        wsprintfW( number, fmt_unsigned64W, val );
+        wsprintfW( number, L"%I64u", val );
         return SysAllocString( number );
 
     default:
