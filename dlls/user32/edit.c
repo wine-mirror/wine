@@ -465,7 +465,7 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData(EDITSTATE *es, HDC dc, IN
 
 static inline INT get_vertical_line_count(EDITSTATE *es)
 {
-	INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	INT vlc = es->line_height ? (es->format_rect.bottom - es->format_rect.top) / es->line_height : 0;
 	return max(1,vlc);
 }
 
@@ -1638,7 +1638,7 @@ static void EDIT_UpdateScrollInfo(EDITSTATE *es)
 	si.fMask	= SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
 	si.nMin		= 0;
 	si.nMax		= es->line_count - 1;
-	si.nPage	= (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+	si.nPage	= es->line_height ? (es->format_rect.bottom - es->format_rect.top) / es->line_height : 0;
 	si.nPos		= es->y_offset;
 	TRACE("SB_VERT, nMin=%d, nMax=%d, nPage=%d, nPos=%d\n",
 		si.nMin, si.nMax, si.nPage, si.nPos);
