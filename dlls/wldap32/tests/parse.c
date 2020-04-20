@@ -212,10 +212,72 @@ static void test_ldap_server_control( void )
     ldap_unbind( ld );
 }
 
+static void test_ldap_paged_search(void)
+{
+    LDAP *ld;
+    ULONG ret, count;
+    int version;
+    LDAPSearch *search;
+    LDAPMessage *res, *entry;
+    BerElement *ber;
+    WCHAR *attr;
+
+    ld = ldap_initA( (char *)"ldap.forumsys.com", 389 );
+    ok( ld != NULL, "ldap_init failed\n" );
+
+    version = LDAP_VERSION3;
+    ret = ldap_set_optionW( ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
+
+    search = ldap_search_init_pageW( ld, (WCHAR *)L"", LDAP_SCOPE_BASE, (WCHAR *)L"(objectclass=*)",
+                                     NULL, FALSE, NULL, NULL, 0, 0, NULL);
+    ok( search != NULL, "ldap_search_init_page failed\n" );
+
+    count = 0xdeadbeef;
+    res = NULL;
+    ret = ldap_get_next_page_s( ld, search, NULL, 1, &count, &res );
+    ok( !ret, "ldap_get_next_page_s failed 0x%x\n", ret );
+    ok( res != NULL, "expected res != NULL\n" );
+    ok( count == 0, "got %u\n", count );
+
+    count = ldap_count_entries( ld, res);
+    ok( count == 1, "got %u\n", count );
+
+    entry = ldap_first_entry( ld, res);
+    ok( res != NULL, "expected entry != NULL\n" );
+
+    attr = ldap_first_attributeW( ld, entry, &ber );
+    ok( !wcscmp( attr, L"objectClass" ), "got %s\n", wine_dbgstr_w( attr ) );
+    ldap_memfreeW( attr );
+    attr = ldap_next_attributeW( ld, entry, ber );
+    ok( !attr, "got %s\n", wine_dbgstr_w( attr ));
+
+    ber_free(ber, 0);
+    ldap_msgfree( res );
+
+    count = 0xdeadbeef;
+    res = (void *)0xdeadbeef;
+    ret = ldap_get_next_page_s( ld, search, NULL, 1, &count, &res );
+    ok( ret == LDAP_NO_RESULTS_RETURNED, "got 0x%x\n", ret );
+todo_wine
+    ok( !res, "expected res == NULL\n" );
+todo_wine
+    ok( count == 0, "got %u\n", count );
+
+    ldap_search_abandon_page( ld, search );
+    ldap_unbind( ld );
+}
+
 START_TEST (parse)
 {
     LDAP *ld;
 
+    test_ldap_paged_search();
     test_ldap_server_control();
     test_ldap_bind_sA();
 
