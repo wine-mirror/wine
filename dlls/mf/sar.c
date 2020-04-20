@@ -24,6 +24,7 @@
 #include "mf_private.h"
 #include "initguid.h"
 #include "mmdeviceapi.h"
+#include "audioclient.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -46,6 +47,9 @@ struct audio_renderer
     IMFMediaEventQueue *event_queue;
     IMFMediaEventQueue *stream_event_queue;
     IMFPresentationClock *clock;
+    IMFMediaType *media_type;
+    IMFMediaType *current_media_type;
+    IMMDevice *device;
     BOOL is_shut_down;
     CRITICAL_SECTION cs;
 };
@@ -162,6 +166,12 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
             IMFMediaEventQueue_Release(renderer->stream_event_queue);
         if (renderer->clock)
             IMFPresentationClock_Release(renderer->clock);
+        if (renderer->device)
+            IMMDevice_Release(renderer->device);
+        if (renderer->media_type)
+            IMFMediaType_Release(renderer->media_type);
+        if (renderer->current_media_type)
+            IMFMediaType_Release(renderer->current_media_type);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -814,7 +824,7 @@ static const IMFAudioPolicyVtbl audio_renderer_policy_vtbl =
     audio_renderer_policy_GetIconPath,
 };
 
-static HRESULT sar_create_mmdevice(IMFAttributes *attributes, IMMDevice **device)
+static HRESULT sar_create_mmdevice(IMFAttributes *attributes, struct audio_renderer *renderer)
 {
     WCHAR *endpoint;
     unsigned int length, role = eMultimedia;
@@ -845,11 +855,11 @@ static HRESULT sar_create_mmdevice(IMFAttributes *attributes, IMMDevice **device
             &endpoint, &length)))
     {
         TRACE("Specified end point %s.\n", debugstr_w(endpoint));
-        hr = IMMDeviceEnumerator_GetDevice(devenum, endpoint, device);
+        hr = IMMDeviceEnumerator_GetDevice(devenum, endpoint, &renderer->device);
         CoTaskMemFree(endpoint);
     }
     else
-        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, role, device);
+        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, role, &renderer->device);
 
     if (FAILED(hr))
         hr = MF_E_NO_AUDIO_PLAYBACK_DEVICE;
@@ -1057,40 +1067,92 @@ static ULONG WINAPI audio_renderer_stream_type_handler_Release(IMFMediaTypeHandl
 static HRESULT WINAPI audio_renderer_stream_type_handler_IsMediaTypeSupported(IMFMediaTypeHandler *iface,
         IMFMediaType *in_type, IMFMediaType **out_type)
 {
-    FIXME("%p, %p, %p.\n", iface, in_type, out_type);
+    struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
+    unsigned int flags;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, in_type, out_type);
+
+    EnterCriticalSection(&renderer->cs);
+    hr = renderer->current_media_type && IMFMediaType_IsEqual(renderer->current_media_type, in_type, &flags) == S_OK ?
+            S_OK : MF_E_INVALIDMEDIATYPE;
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    TRACE("%p, %p.\n", iface, count);
 
-    return E_NOTIMPL;
+    *count = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_renderer_stream_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
         IMFMediaType **media_type)
 {
-    FIXME("%p, %u, %p.\n", iface, index, media_type);
+    struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, media_type);
+
+    if (index == 0)
+    {
+        *media_type = renderer->media_type;
+        IMFMediaType_AddRef(*media_type);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_renderer_stream_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface,
         IMFMediaType *media_type)
 {
-    FIXME("%p, %p.\n", iface, media_type);
+    struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
+    const unsigned int test_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
+    unsigned int flags;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, media_type);
+
+    if (!media_type)
+        return E_POINTER;
+
+    EnterCriticalSection(&renderer->cs);
+    if (SUCCEEDED(IMFMediaType_IsEqual(renderer->media_type, media_type, &flags)) && ((flags & test_flags) == test_flags))
+    {
+        if (renderer->current_media_type)
+            IMFMediaType_Release(renderer->current_media_type);
+        renderer->current_media_type = media_type;
+        IMFMediaType_AddRef(renderer->current_media_type);
+    }
+    else
+        hr = MF_E_INVALIDMEDIATYPE;
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_type_handler_GetCurrentMediaType(IMFMediaTypeHandler *iface,
         IMFMediaType **media_type)
 {
-    FIXME("%p, %p.\n", iface, media_type);
+    struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, media_type);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->current_media_type)
+    {
+        *media_type = renderer->current_media_type;
+        IMFMediaType_AddRef(*media_type);
+    }
+    else
+        hr = MF_E_NOT_INITIALIZED;
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
@@ -1122,10 +1184,48 @@ static const IMFMediaTypeHandlerVtbl audio_renderer_stream_type_handler_vtbl =
     audio_renderer_stream_type_handler_GetMajorType,
 };
 
+static HRESULT audio_renderer_collect_supported_types(struct audio_renderer *renderer)
+{
+    IAudioClient *client;
+    WAVEFORMATEX *format;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateMediaType(&renderer->media_type)))
+        return hr;
+
+    hr = IMMDevice_Activate(renderer->device, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void **)&client);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create audio client, hr %#x.\n", hr);
+        return hr;
+    }
+
+    /* FIXME:  */
+
+    hr = IAudioClient_GetMixFormat(client, &format);
+    IAudioClient_Release(client);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get device audio format, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = MFInitMediaTypeFromWaveFormatEx(renderer->media_type, format, format->cbSize + sizeof(*format));
+    CoTaskMemFree(format);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize media type, hr %#x.\n", hr);
+        return hr;
+    }
+
+    IMFMediaType_DeleteItem(renderer->media_type, &MF_MT_AUDIO_PREFER_WAVEFORMATEX);
+
+    return hr;
+}
+
 static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct audio_renderer *renderer;
-    IMMDevice *device;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
@@ -1152,10 +1252,11 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
     if (FAILED(hr = MFCreateEventQueue(&renderer->stream_event_queue)))
         goto failed;
 
-    if (FAILED(hr = sar_create_mmdevice(attributes, &device)))
+    if (FAILED(hr = sar_create_mmdevice(attributes, renderer)))
         goto failed;
 
-    IMMDevice_Release(device);
+    if (FAILED(hr = audio_renderer_collect_supported_types(renderer)))
+        goto failed;
 
     *obj = (IUnknown *)&renderer->IMFMediaSink_iface;
 
