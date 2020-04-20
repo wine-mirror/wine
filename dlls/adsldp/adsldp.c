@@ -1150,7 +1150,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         case ADS_SEARCHPREF_SEARCH_SCOPE:
             if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
             {
-                FIXME("ADS_SEARCHPREF_SEACH_SCOPE: not supported dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_SEARCH_SCOPE: unsupported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }
@@ -1224,7 +1224,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         case ADS_SEARCHPREF_PAGESIZE:
             if (prefs[i].vValue.dwType != ADSTYPE_INTEGER)
             {
-                FIXME("ADS_SEARCHPREF_PAGESIZE: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_PAGESIZE: unsupported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }
@@ -1237,7 +1237,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         case ADS_SEARCHPREF_CACHE_RESULTS:
             if (prefs[i].vValue.dwType != ADSTYPE_BOOLEAN)
             {
-                FIXME("ADS_SEARCHPREF_CACHE_RESULTS: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_CACHE_RESULTS: unsupported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }
@@ -1250,7 +1250,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         case ADS_SEARCHPREF_ATTRIBTYPES_ONLY:
             if (prefs[i].vValue.dwType != ADSTYPE_BOOLEAN)
             {
-                FIXME("ADS_SEARCHPREF_ATTRIBTYPES_ONLY: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_ATTRIBTYPES_ONLY: unsupported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }
@@ -1263,7 +1263,7 @@ static HRESULT WINAPI search_SetSearchPreference(IDirectorySearch *iface, PADS_S
         case ADS_SEARCHPREF_TOMBSTONE:
             if (prefs[i].vValue.dwType != ADSTYPE_BOOLEAN)
             {
-                FIXME("ADS_SEARCHPREF_TOMBSTONE: not supportd dwType %d\n", prefs[i].vValue.dwType);
+                FIXME("ADS_SEARCHPREF_TOMBSTONE: unsupported dwType %d\n", prefs[i].vValue.dwType);
                 prefs[i].dwStatus = ADS_STATUS_INVALID_SEARCHPREFVALUE;
                 break;
             }
