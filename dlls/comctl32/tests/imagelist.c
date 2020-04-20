@@ -1507,7 +1507,6 @@ static void test_ImageList_DrawIndirect(void)
     int iImage = -1, iAlphaImage = -1, iTransparentImage = -1;
     UINT32 *bits = 0;
     UINT32 maskBits = 0x00000000, inverseMaskBits = 0xFFFFFFFF;
-    int bpp, broken_value;
     IImageList *imgl;
     DWORD flags;
     HRESULT hr;
@@ -1519,7 +1518,6 @@ static void test_ImageList_DrawIndirect(void)
     ok(hdcDst != 0, "CreateCompatibleDC(0) failed to return a valid DC\n");
     if (!hdcDst)
         return;
-    bpp = GetDeviceCaps(hdcDst, BITSPIXEL);
 
     hbmMask = CreateBitmap(2, 1, 1, 1, &maskBits);
     ok(hbmMask != 0, "CreateBitmap failed\n");
@@ -1587,12 +1585,10 @@ static void test_ImageList_DrawIndirect(void)
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_NORMAL, 0xFFD3E5F7, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_TRANSPARENT, 0xFFD3E5F7, __LINE__);
 
-    if (bpp == 16 || bpp == 24) broken_value = 0xFFD4D9DD;
-    else broken_value =  0xFF9DA8B1;
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0xFFE8F1FA, broken_value, __LINE__);
-    if (bpp == 16 || bpp == 24) broken_value = 0xFFD4D9DD;
-    else broken_value =  0xFF8C99A3;
-    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0xFFE8F1FA, broken_value, __LINE__);
+    /* broken on winxp */
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND25, ILS_NORMAL, 0, 0xFFE8F1FA, 0xFFD4D9DD, __LINE__);
+    todo_wine check_ImageList_DrawIndirect_broken(hdcDst, himl, bits, iAlphaImage, ILD_BLEND50, ILS_NORMAL, 0, 0xFFE8F1FA, 0xFFB4BDC4, __LINE__);
+
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_MASK, 0xFFD3E5F7, __LINE__);
     check_ImageList_DrawIndirect_fStyle(hdcDst, himl, bits, iAlphaImage, ILD_IMAGE, 0xFFD3E5F7, __LINE__);
 
