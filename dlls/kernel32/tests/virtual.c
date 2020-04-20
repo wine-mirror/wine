@@ -2865,8 +2865,8 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     success = VirtualProtect( base, size, PAGE_READWRITE, &old_prot );
     ok( success, "VirtualProtect failed %u\n", GetLastError() );
 
-    ret = (DWORD_PTR)atl5_test_func;
-    ret = call_proc_excpt( (void *)base, &ret - 1 );
+    results[1] = atl5_test_func;
+    ret = call_proc_excpt( (void *)base, results );
     /* FIXME: We don't check the content of the registers EAX/ECX yet */
     ok( ret == 44, "call returned wrong result, expected 44, got %d\n", ret );
     ok( num_guard_page_calls == 0, "expected no STATUS_GUARD_PAGE_VIOLATION exception, got %d exceptions\n", num_guard_page_calls );
