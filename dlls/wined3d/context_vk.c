@@ -86,7 +86,7 @@ VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_cont
     return vk_memory;
 }
 
-static struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
+struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
         unsigned int memory_type, VkDeviceSize size, VkDeviceMemory *vk_memory)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -198,7 +198,7 @@ static struct wined3d_retired_object_vk *wined3d_context_vk_get_retired_object_v
     return &retired->objects[retired->count++];
 }
 
-static void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -223,7 +223,7 @@ static void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context
     o->command_buffer_id = command_buffer_id;
 }
 
-static void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *context_vk,
         struct wined3d_allocator_block *block, uint64_t command_buffer_id)
 {
     struct wined3d_retired_object_vk *o;
@@ -268,6 +268,31 @@ static void wined3d_context_vk_destroy_buffer(struct wined3d_context_vk *context
 
     o->type = WINED3D_RETIRED_BUFFER_VK;
     o->u.vk_buffer = vk_buffer;
+    o->command_buffer_id = command_buffer_id;
+}
+
+void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
+        VkImage vk_image, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkDestroyImage(device_vk->vk_device, vk_image, NULL));
+        TRACE("Destroyed image 0x%s.\n", wine_dbgstr_longlong(vk_image));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking image 0x%s.\n", wine_dbgstr_longlong(vk_image));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_IMAGE_VK;
+    o->u.vk_image = vk_image;
     o->command_buffer_id = command_buffer_id;
 }
 
@@ -343,6 +368,11 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             case WINED3D_RETIRED_BUFFER_VK:
                 VK_CALL(vkDestroyBuffer(device_vk->vk_device, o->u.vk_buffer, NULL));
                 TRACE("Destroyed buffer 0x%s.\n", wine_dbgstr_longlong(o->u.vk_buffer));
+                break;
+
+            case WINED3D_RETIRED_IMAGE_VK:
+                VK_CALL(vkDestroyImage(device_vk->vk_device, o->u.vk_image, NULL));
+                TRACE("Destroyed image 0x%s.\n", wine_dbgstr_longlong(o->u.vk_image));
                 break;
 
             default:

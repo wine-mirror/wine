@@ -2195,6 +2195,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_MEMORY_VK,
     WINED3D_RETIRED_ALLOCATOR_BLOCK_VK,
     WINED3D_RETIRED_BUFFER_VK,
+    WINED3D_RETIRED_IMAGE_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -2206,6 +2207,7 @@ struct wined3d_retired_object_vk
         VkDeviceMemory vk_memory;
         struct wined3d_allocator_block *block;
         VkBuffer vk_buffer;
+        VkImage vk_image;
     } u;
     uint64_t command_buffer_id;
 };
@@ -2243,13 +2245,21 @@ static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_conte
     return CONTAINING_RECORD(context, struct wined3d_context_vk, c);
 }
 
+struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3d_context_vk *context_vk,
+        unsigned int memory_type, VkDeviceSize size, VkDeviceMemory *vk_memory) DECLSPEC_HIDDEN;
 VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_context_vk *context_vk,
         unsigned int pool, size_t size) DECLSPEC_HIDDEN;
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *context_vk,
+        struct wined3d_allocator_block *block, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
         const struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
+        VkImage vk_image, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
+        VkDeviceMemory vk_memory, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
@@ -3944,6 +3954,11 @@ void wined3d_texture_gl_set_compatible_renderbuffer(struct wined3d_texture_gl *t
 struct wined3d_texture_vk
 {
     struct wined3d_texture t;
+
+    VkImage vk_image;
+    struct wined3d_allocator_block *memory;
+    VkDeviceMemory vk_memory;
+    uint64_t command_buffer_id;
 };
 
 static inline struct wined3d_texture_vk *wined3d_texture_vk(struct wined3d_texture *texture)

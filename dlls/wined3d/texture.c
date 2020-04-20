@@ -4230,6 +4230,129 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     FIXME("Not implemented.\n");
 }
 
+static BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    const struct wined3d_format_vk *format_vk;
+    VkMemoryRequirements memory_requirements;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_adapter_vk *adapter_vk;
+    struct wined3d_device_vk *device_vk;
+    struct wined3d_resource *resource;
+    VkImageCreateInfo create_info;
+    unsigned int memory_type_idx;
+    VkResult vr;
+
+    if (texture_vk->t.flags & WINED3D_TEXTURE_RGB_ALLOCATED)
+        return TRUE;
+
+    resource = &texture_vk->t.resource;
+    device_vk = wined3d_device_vk(resource->device);
+    adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
+    format_vk = wined3d_format_vk(resource->format);
+    vk_info = context_vk->vk_info;
+
+    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    create_info.pNext = NULL;
+
+    create_info.flags = 0;
+    if (wined3d_format_is_typeless(&format_vk->f))
+        create_info.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
+
+    switch (resource->type)
+    {
+        case WINED3D_RTYPE_TEXTURE_1D:
+            create_info.imageType = VK_IMAGE_TYPE_1D;
+            break;
+        case WINED3D_RTYPE_TEXTURE_2D:
+            create_info.imageType = VK_IMAGE_TYPE_2D;
+            if (texture_vk->t.layer_count >= 6 && resource->width == resource->height)
+                create_info.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+            break;
+        case WINED3D_RTYPE_TEXTURE_3D:
+            create_info.imageType = VK_IMAGE_TYPE_3D;
+            if (resource->bind_flags & (WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_UNORDERED_ACCESS))
+                create_info.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
+            break;
+        default:
+            ERR("Invalid resource type %s.\n", debug_d3dresourcetype(resource->type));
+            create_info.imageType = VK_IMAGE_TYPE_2D;
+            break;
+    }
+
+    create_info.format = format_vk->vk_format;
+    create_info.extent.width = resource->width;
+    create_info.extent.height = resource->height;
+    create_info.extent.depth = resource->depth;
+    create_info.mipLevels = texture_vk->t.level_count;
+    create_info.arrayLayers = texture_vk->t.layer_count;
+    create_info.samples = max(1, wined3d_resource_get_sample_count(resource));
+    create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+
+    create_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (resource->bind_flags & WINED3D_BIND_SHADER_RESOURCE)
+        create_info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
+        create_info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+        create_info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    if (resource->bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
+        create_info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.queueFamilyIndexCount = 0;
+    create_info.pQueueFamilyIndices = NULL;
+    create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    if ((vr = VK_CALL(vkCreateImage(device_vk->vk_device, &create_info, NULL, &texture_vk->vk_image))) < 0)
+    {
+        ERR("Failed to create Vulkan image, vr %s.\n", wined3d_debug_vkresult(vr));
+        return FALSE;
+    }
+
+    VK_CALL(vkGetImageMemoryRequirements(device_vk->vk_device, texture_vk->vk_image, &memory_requirements));
+
+    memory_type_idx = wined3d_adapter_vk_get_memory_type_index(adapter_vk,
+            memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (memory_type_idx == ~0u)
+    {
+        ERR("Failed to find suitable memory type.\n");
+        VK_CALL(vkDestroyImage(device_vk->vk_device, texture_vk->vk_image, NULL));
+        texture_vk->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    texture_vk->memory = wined3d_context_vk_allocate_memory(context_vk,
+            memory_type_idx, memory_requirements.size, &texture_vk->vk_memory);
+    if (!texture_vk->vk_memory)
+    {
+        ERR("Failed to allocate image memory.\n");
+        VK_CALL(vkDestroyImage(device_vk->vk_device, texture_vk->vk_image, NULL));
+        texture_vk->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    if ((vr = VK_CALL(vkBindImageMemory(device_vk->vk_device, texture_vk->vk_image,
+            texture_vk->vk_memory, texture_vk->memory ? texture_vk->memory->offset : 0))) < 0)
+    {
+        WARN("Failed to bind memory, vr %s.\n", wined3d_debug_vkresult(vr));
+        if (texture_vk->memory)
+            wined3d_allocator_block_free(texture_vk->memory);
+        else
+            VK_CALL(vkFreeMemory(device_vk->vk_device, texture_vk->vk_memory, NULL));
+        texture_vk->vk_memory = VK_NULL_HANDLE;
+        VK_CALL(vkDestroyImage(device_vk->vk_device, texture_vk->vk_image, NULL));
+        texture_vk->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    texture_vk->t.flags |= WINED3D_TEXTURE_RGB_ALLOCATED;
+
+    TRACE("Created image 0x%s, memory 0x%s for texture %p.\n",
+            wine_dbgstr_longlong(texture_vk->vk_image), wine_dbgstr_longlong(texture_vk->vk_memory), texture_vk);
+
+    return TRUE;
+}
+
 static BOOL wined3d_texture_vk_prepare_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, unsigned int location)
 {
@@ -4244,8 +4367,7 @@ static BOOL wined3d_texture_vk_prepare_location(struct wined3d_texture *texture,
             return TRUE;
 
         case WINED3D_LOCATION_TEXTURE_RGB:
-            /* The Vulkan image is created during resource creation. */
-            return TRUE;
+            return wined3d_texture_vk_prepare_texture(wined3d_texture_vk(texture), wined3d_context_vk(context));
 
         default:
             FIXME("Unhandled location %s.\n", wined3d_debug_location(location));
@@ -4264,7 +4386,39 @@ static BOOL wined3d_texture_vk_load_location(struct wined3d_texture *texture,
 static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
         struct wined3d_context *context, unsigned int location)
 {
-    FIXME("texture %p, context %p, location %s.\n", texture, context, wined3d_debug_location(location));
+    struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture);
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+
+    TRACE("texture %p, context %p, location %s.\n", texture, context, wined3d_debug_location(location));
+
+    switch (location)
+    {
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            if (texture_vk->vk_image)
+            {
+                wined3d_context_vk_destroy_image(context_vk, texture_vk->vk_image, texture_vk->command_buffer_id);
+                texture_vk->vk_image = VK_NULL_HANDLE;
+                if (texture_vk->memory)
+                    wined3d_context_vk_destroy_allocator_block(context_vk,
+                            texture_vk->memory, texture_vk->command_buffer_id);
+                else
+                    wined3d_context_vk_destroy_memory(context_vk,
+                            texture_vk->vk_memory, texture_vk->command_buffer_id);
+                texture_vk->vk_memory = VK_NULL_HANDLE;
+                texture_vk->memory = NULL;
+            }
+            break;
+
+        case WINED3D_LOCATION_BUFFER:
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+        case WINED3D_LOCATION_RB_RESOLVED:
+            break;
+
+        default:
+            ERR("Unhandled location %s.\n", wined3d_debug_location(location));
+            break;
+    }
 }
 
 static const struct wined3d_texture_ops wined3d_texture_vk_ops =
