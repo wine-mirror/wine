@@ -49,7 +49,6 @@ static const IMallocVtbl VT_IMalloc32;
 
 typedef struct {
         IMalloc IMalloc_iface;
-        DWORD dummy;                /* nothing, we are static */
 	IMallocSpy * pSpy;          /* the spy when active */
 	DWORD SpyedAllocationsLeft; /* number of spyed allocations left */
 	BOOL SpyReleasePending;     /* CoRevokeMallocSpy called with spyed allocations left*/
@@ -58,7 +57,7 @@ typedef struct {
 } _Malloc32;
 
 /* this is the static object instance */
-static _Malloc32 Malloc32 = {{&VT_IMalloc32}, 0, NULL, 0, 0, NULL, 0};
+static _Malloc32 Malloc32 = {{&VT_IMalloc32}, NULL, 0, 0, NULL, 0};
 
 /* with a spy active all calls from pre to post methods are threadsafe */
 static CRITICAL_SECTION IMalloc32_SpyCS;
