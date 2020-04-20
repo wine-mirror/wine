@@ -446,7 +446,8 @@ static void test_v1_completion_port(void)
 
 static void test_v1_multiple_requests(void)
 {
-    char DECLSPEC_ALIGN(8) req_buffer1[2048], DECLSPEC_ALIGN(8) req_buffer2[2048];
+    char DECLSPEC_ALIGN(8) req_buffer1[2048];
+    char DECLSPEC_ALIGN(8) req_buffer2[2048];
     HTTP_REQUEST_V1 *req1 = (HTTP_REQUEST_V1 *)req_buffer1, *req2 = (HTTP_REQUEST_V1 *)req_buffer2;
     HTTP_RESPONSE_V1 response = {};
     struct sockaddr_in sockaddr;
@@ -552,7 +553,8 @@ static void test_v1_multiple_requests(void)
 
 static void test_v1_short_buffer(void)
 {
-    char DECLSPEC_ALIGN(8) req_buffer[2048], DECLSPEC_ALIGN(8) req_buffer2[2048];
+    char DECLSPEC_ALIGN(8) req_buffer[2048];
+    char DECLSPEC_ALIGN(8) req_buffer2[2048];
     HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer, *req2 = (HTTP_REQUEST_V1 *)req_buffer2;
     HTTP_REQUEST_ID req_id;
     unsigned short port;
