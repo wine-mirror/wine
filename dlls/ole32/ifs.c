@@ -128,22 +128,19 @@ static void** mallocspy_is_allocation_spyed(const void *mem)
     return current;
 }
 
-static BOOL RemoveMemoryLocation(LPCVOID pMem)
+static BOOL mallocspy_remove_spyed_memory(const void *mem)
 {
-        LPVOID * Current;
+    void **current;
 
-	/* allocate the table if not already allocated */
-        if (!Malloc32.SpyedBlockTableLength && !SetSpyedBlockTableLength(0x1000))
-            return FALSE;
+    if (!Malloc32.SpyedBlockTableLength)
+        return FALSE;
 
-        if (!(Current = mallocspy_is_allocation_spyed(pMem)))
-            return FALSE;
+    if (!(current = mallocspy_is_allocation_spyed(mem)))
+        return FALSE;
 
-	/* location found */
-        Malloc32.SpyedAllocationsLeft--;
-	/*TRACE("%lu\n",Malloc32.SpyedAllocationsLeft);*/
-	*Current = NULL;
-        return TRUE;
+    Malloc32.SpyedAllocationsLeft--;
+    *current = NULL;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -216,7 +213,7 @@ static void * WINAPI IMalloc_fnRealloc(IMalloc *iface, void *pv, SIZE_T cb)
 	    BOOL fSpyed;
 
 	    EnterCriticalSection(&IMalloc32_SpyCS);
-            fSpyed = RemoveMemoryLocation(pv);
+            fSpyed = mallocspy_remove_spyed_memory(pv);
             cb = IMallocSpy_PreRealloc(Malloc32.pSpy, pv, cb, &pRealMemory, fSpyed);
 
 	    /* check if can release the spy */
@@ -268,7 +265,7 @@ static void WINAPI IMalloc_fnFree(IMalloc *iface, void *pv)
 
 	if(Malloc32.pSpy) {
             EnterCriticalSection(&IMalloc32_SpyCS);
-            fSpyed = RemoveMemoryLocation(pv);
+            fSpyed = mallocspy_remove_spyed_memory(pv);
 	    pv = IMallocSpy_PreFree(Malloc32.pSpy, pv, fSpyed);
 	}
 
