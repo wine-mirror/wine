@@ -30,6 +30,7 @@
 
 /* FIXME: We suppose that page size is 4096 */
 #undef PAGE_SIZE
+#undef PAGE_SHIFT
 #define PAGE_SIZE   0x1000
 #define PAGE_SHIFT  12
 
