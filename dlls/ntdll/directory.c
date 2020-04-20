@@ -2010,7 +2010,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryDirectoryFile( HANDLE handle, HANDLE ev
             {
                 status = get_dir_data_entry( data, buffer, io, length, info_class, &last_info );
                 if (!status || status == STATUS_BUFFER_OVERFLOW) data->pos++;
-                if (single_entry) break;
+                if (single_entry && last_info) break;
             }
 
             if (!last_info) status = STATUS_NO_MORE_FILES;
