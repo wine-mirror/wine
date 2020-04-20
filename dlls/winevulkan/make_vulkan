@@ -2779,7 +2779,9 @@ class VkRegistry(object):
         """ Parse extensions section and pull in any types and commands for this extension. """
         extensions = []
         exts = root.findall("./extensions/extension")
-        for ext in exts:
+        deferred_exts = []
+
+        def process_ext(ext, deferred=False):
             ext_name = ext.attrib["name"]
 
             # Set extension name on any functions calls part of this extension as we
@@ -2792,29 +2794,34 @@ class VkRegistry(object):
             # Some extensions are not ready or have numbers reserved as a place holder.
             if ext.attrib["supported"] == "disabled":
                 LOGGER.debug("Skipping disabled extension: {0}".format(ext_name))
-                continue
+                return
+
+            # Defer extensions with 'sortorder' as they are order-dependent for spec-parsing.
+            if not deferred and "sortorder" in ext.attrib:
+                deferred_exts.append(ext)
+                return
 
             # Disable highly experimental extensions as the APIs are unstable and can
             # change between minor Vulkan revisions until API is final and becomes KHR
             # or NV.
             if "KHX" in ext_name or "NVX" in ext_name:
                 LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
-                continue
+                return
 
             platform = ext.attrib.get("platform")
             if platform and platform != "win32":
                 LOGGER.debug("Skipping extensions {0} for platform {1}".format(ext_name, platform))
-                continue;
+                return
 
             if not self._is_extension_supported(ext_name):
                 LOGGER.debug("Skipping blacklisted extension: {0}".format(ext_name))
-                continue
+                return
             elif "requires" in ext.attrib:
                 # Check if this extension builds on top of another blacklisted
                 # extension.
                 requires = ext.attrib["requires"].split(",")
                 if len(set(requires).intersection(BLACKLISTED_EXTENSIONS)) > 0:
-                    continue
+                    return
 
             LOGGER.debug("Loading extension: {0}".format(ext_name))
 
@@ -2843,9 +2850,21 @@ class VkRegistry(object):
                     cmd_name = command.attrib["name"]
                     self._mark_command_required(cmd_name)
 
+
             # Store a list with extensions.
             ext_info = {"name" : ext_name, "type" : ext.attrib["type"]}
             extensions.append(ext_info)
+
+
+        # Process extensions, allowing for sortorder to defer extension processing
+        for ext in exts:
+            process_ext(ext)
+
+        deferred_exts.sort(key=lambda ext: ext.attrib["sortorder"])
+
+        # Respect sortorder
+        for ext in deferred_exts:
+            process_ext(ext, deferred=True)
 
         # Sort in alphabetical order.
         self.extensions = sorted(extensions, key=lambda ext: ext["name"])
