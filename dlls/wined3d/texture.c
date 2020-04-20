@@ -4326,7 +4326,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
             dst_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             dst_texture_vk->vk_image, aspect_mask);
 
-    region.bufferOffset = dst_offset;
+    region.bufferOffset = staging_bo.buffer_offset + dst_offset;
     region.bufferRowLength = (dst_row_pitch / src_format->block_byte_count) * src_format->block_width;
     if (dst_row_pitch)
         region.bufferImageHeight = (dst_slice_pitch / dst_row_pitch) * src_format->block_height;
@@ -4461,7 +4461,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             src_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             src_texture_vk->vk_image, aspect_mask);
 
-    region.bufferOffset = 0;
+    region.bufferOffset = staging_bo.buffer_offset;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
     region.imageSubresource.aspectMask = aspect_mask;

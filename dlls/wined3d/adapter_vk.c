@@ -553,13 +553,23 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
 {
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
+    struct wined3d_bo_slab_vk *slab;
     void *map_ptr;
     VkResult vr;
 
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context_vk->c.device);
 
-    if (bo->memory)
+    if ((slab = bo->slab))
+    {
+        if (!(map_ptr = slab->map_ptr) && !(map_ptr = wined3d_bo_vk_map(&slab->bo, context_vk)))
+        {
+            ERR("Failed to map slab.\n");
+            return NULL;
+        }
+        ++slab->map_count;
+    }
+    else if (bo->memory)
     {
         struct wined3d_allocator_chunk_vk *chunk_vk = wined3d_allocator_chunk_vk(bo->memory->chunk);
 
@@ -582,6 +592,17 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
 {
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
+    struct wined3d_bo_slab_vk *slab;
+
+    if ((slab = bo->slab))
+    {
+        if (--slab->map_count)
+            return;
+
+        wined3d_bo_vk_unmap(&slab->bo, context_vk);
+        slab->map_ptr = NULL;
+        return;
+    }
 
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context_vk->c.device);
@@ -628,7 +649,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
         vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.buffer = bo->vk_buffer;
-        vk_barrier.offset = (uintptr_t)data->addr;
+        vk_barrier.offset = bo->buffer_offset + (uintptr_t)data->addr;
         vk_barrier.size = size;
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                 VK_PIPELINE_STAGE_HOST_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
@@ -718,8 +739,8 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
             return;
         }
 
-        region.srcOffset = (uintptr_t)src->addr;
-        region.dstOffset = (uintptr_t)dst->addr;
+        region.srcOffset = src_bo->buffer_offset + (uintptr_t)src->addr;
+        region.dstOffset = dst_bo->buffer_offset + (uintptr_t)dst->addr;
         region.size = size;
 
         vk_barrier[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;

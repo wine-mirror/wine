@@ -110,6 +110,97 @@ struct wined3d_allocator_block *wined3d_context_vk_allocate_memory(struct wined3
     return block;
 }
 
+static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context_vk,
+        VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo)
+{
+    const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk(context_vk->c.device->adapter);
+    const VkPhysicalDeviceLimits *limits = &adapter_vk->device_limits;
+    struct wined3d_bo_slab_vk_key key;
+    struct wined3d_bo_slab_vk *slab;
+    struct wine_rb_entry *entry;
+    size_t object_size, idx;
+    size_t alignment;
+
+    if (size > WINED3D_ALLOCATOR_MIN_BLOCK_SIZE / 2)
+        return false;
+
+    alignment = WINED3D_SLAB_BO_MIN_OBJECT_ALIGN;
+    if ((usage & (VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT))
+            && limits->minTexelBufferOffsetAlignment > alignment)
+        alignment = limits->minTexelBufferOffsetAlignment;
+    if ((usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) && limits->minUniformBufferOffsetAlignment)
+        alignment = limits->minUniformBufferOffsetAlignment;
+    if ((usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) && limits->minStorageBufferOffsetAlignment)
+        alignment = limits->minStorageBufferOffsetAlignment;
+
+    object_size = (size + (alignment - 1)) & ~(alignment - 1);
+    if (object_size < WINED3D_ALLOCATOR_MIN_BLOCK_SIZE / 32)
+        object_size = WINED3D_ALLOCATOR_MIN_BLOCK_SIZE / 32;
+    key.memory_type = memory_type;
+    key.usage = usage;
+    key.size = 32 * object_size;
+
+    if ((entry = wine_rb_get(&context_vk->bo_slab_available, &key)))
+    {
+        slab = WINE_RB_ENTRY_VALUE(entry, struct wined3d_bo_slab_vk, entry);
+        TRACE("Using existing bo slab %p.\n", slab);
+    }
+    else
+    {
+        if (!(slab = heap_alloc_zero(sizeof(*slab))))
+        {
+            ERR("Failed to allocate bo slab.\n");
+            return false;
+        }
+
+        if (!wined3d_context_vk_create_bo(context_vk, key.size, usage, memory_type, &slab->bo))
+        {
+            ERR("Failed to create slab bo.\n");
+            heap_free(slab);
+            return false;
+        }
+        slab->map = ~0u;
+
+        if (wine_rb_put(&context_vk->bo_slab_available, &key, &slab->entry) < 0)
+        {
+            ERR("Failed to add slab to available tree.\n");
+            wined3d_context_vk_destroy_bo(context_vk, &slab->bo);
+            heap_free(slab);
+            return false;
+        }
+
+        TRACE("Created new bo slab %p.\n", slab);
+    }
+
+    idx = wined3d_bit_scan(&slab->map);
+    if (!slab->map)
+    {
+        if (slab->next)
+        {
+            wine_rb_replace(&context_vk->bo_slab_available, &slab->entry, &slab->next->entry);
+            slab->next = NULL;
+        }
+        else
+        {
+            wine_rb_remove(&context_vk->bo_slab_available, &slab->entry);
+        }
+    }
+
+    *bo = slab->bo;
+    bo->memory = NULL;
+    bo->slab = slab;
+    bo->buffer_offset = idx * object_size;
+    bo->memory_offset = slab->bo.memory_offset + bo->buffer_offset;
+    bo->size = size;
+    bo->command_buffer_id = 0;
+
+    TRACE("Using buffer 0x%s, memory 0x%s, offset 0x%s for bo %p.\n",
+            wine_dbgstr_longlong(bo->vk_buffer), wine_dbgstr_longlong(bo->vk_memory),
+            wine_dbgstr_longlong(bo->buffer_offset), bo);
+
+    return true;
+}
+
 BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo)
 {
@@ -120,6 +211,9 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     VkBufferCreateInfo create_info;
     unsigned int memory_type_idx;
     VkResult vr;
+
+    if (wined3d_context_vk_create_slab_bo(context_vk, size, usage, memory_type, bo))
+        return TRUE;
 
     adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
 
@@ -170,8 +264,12 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
         return FALSE;
     }
 
+    bo->buffer_offset = 0;
+    bo->size = size;
+    bo->usage = usage;
     bo->memory_type = adapter_vk->memory_properties.memoryTypes[memory_type_idx].propertyFlags;
     bo->command_buffer_id = 0;
+    bo->slab = NULL;
 
     TRACE("Created buffer 0x%s, memory 0x%s for bo %p.\n",
             wine_dbgstr_longlong(bo->vk_buffer), wine_dbgstr_longlong(bo->vk_memory), bo);
@@ -246,6 +344,56 @@ void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *conte
     o->command_buffer_id = command_buffer_id;
 }
 
+static void wined3d_bo_slab_vk_free_slice(struct wined3d_bo_slab_vk *slab,
+        size_t idx, struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_bo_slab_vk_key key;
+    struct wine_rb_entry *entry;
+
+    TRACE("slab %p, idx %zu, context_vk %p.\n", slab, idx, context_vk);
+
+    if (!slab->map)
+    {
+        key.memory_type = slab->bo.memory_type;
+        key.usage = slab->bo.usage;
+        key.size = slab->bo.size;
+
+        if ((entry = wine_rb_get(&context_vk->bo_slab_available, &key)))
+        {
+            slab->next = WINE_RB_ENTRY_VALUE(entry, struct wined3d_bo_slab_vk, entry);
+            wine_rb_replace(&context_vk->bo_slab_available, entry, &slab->entry);
+        }
+        else if (wine_rb_put(&context_vk->bo_slab_available, &key, &slab->entry) < 0)
+        {
+            ERR("Unable to return slab %p (map 0x%08x) to available tree.\n", slab, slab->map);
+        }
+    }
+    slab->map |= 1u << idx;
+}
+
+static void wined3d_context_vk_destroy_bo_slab_slice(struct wined3d_context_vk *context_vk,
+        struct wined3d_bo_slab_vk *slab, size_t idx, uint64_t command_buffer_id)
+{
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        wined3d_bo_slab_vk_free_slice(slab, idx, context_vk);
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking slab %p, slice %#zx.\n", slab, idx);
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_BO_SLAB_SLICE_VK;
+    o->u.slice.slab = slab;
+    o->u.slice.idx = idx;
+    o->command_buffer_id = command_buffer_id;
+}
+
 static void wined3d_context_vk_destroy_buffer(struct wined3d_context_vk *context_vk,
         VkBuffer vk_buffer, uint64_t command_buffer_id)
 {
@@ -298,7 +446,17 @@ void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
 
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)
 {
+    size_t object_size, idx;
+
     TRACE("context_vk %p, bo %p.\n", context_vk, bo);
+
+    if (bo->slab)
+    {
+        object_size = bo->slab->bo.size / 32;
+        idx = bo->buffer_offset / object_size;
+        wined3d_context_vk_destroy_bo_slab_slice(context_vk, bo->slab, idx, bo->command_buffer_id);
+        return;
+    }
 
     wined3d_context_vk_destroy_buffer(context_vk, bo->vk_buffer, bo->command_buffer_id);
     if (bo->memory)
@@ -365,6 +523,10 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
                 wined3d_allocator_block_free(o->u.block);
                 break;
 
+            case WINED3D_RETIRED_BO_SLAB_SLICE_VK:
+                wined3d_bo_slab_vk_free_slice(o->u.slice.slab, o->u.slice.idx, context_vk);
+                break;
+
             case WINED3D_RETIRED_BUFFER_VK:
                 VK_CALL(vkDestroyBuffer(device_vk->vk_device, o->u.vk_buffer, NULL));
                 TRACE("Destroyed buffer 0x%s.\n", wine_dbgstr_longlong(o->u.vk_buffer));
@@ -392,6 +554,21 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
     }
 }
 
+static void wined3d_context_vk_destroy_bo_slab(struct wine_rb_entry *entry, void *ctx)
+{
+    struct wined3d_context_vk *context_vk = ctx;
+    struct wined3d_bo_slab_vk *slab, *next;
+
+    slab = WINE_RB_ENTRY_VALUE(entry, struct wined3d_bo_slab_vk, entry);
+    while (slab)
+    {
+        next = slab->next;
+        wined3d_context_vk_destroy_bo(context_vk, &slab->bo);
+        heap_free(slab);
+        slab = next;
+    }
+}
+
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
 {
     struct wined3d_command_buffer_vk *buffer = &context_vk->current_command_buffer;
@@ -409,6 +586,7 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wined3d_context_vk_wait_command_buffer(context_vk, buffer->id - 1);
     context_vk->completed_command_buffer_id = buffer->id;
     wined3d_context_vk_cleanup_resources(context_vk);
+    wine_rb_destroy(&context_vk->bo_slab_available, wined3d_context_vk_destroy_bo_slab, context_vk);
     heap_free(context_vk->submitted.buffers);
     heap_free(context_vk->retired.objects);
 
@@ -576,6 +754,18 @@ void wined3d_context_vk_image_barrier(struct wined3d_context_vk *context_vk,
     VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, src_stage_mask, dst_stage_mask, 0, 0, NULL, 0, NULL, 1, &barrier));
 }
 
+static int wined3d_bo_slab_vk_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_bo_slab_vk *slab = WINE_RB_ENTRY_VALUE(entry, const struct wined3d_bo_slab_vk, entry);
+    const struct wined3d_bo_slab_vk_key *k = key;
+
+    if (k->memory_type != slab->bo.memory_type)
+        return k->memory_type - slab->bo.memory_type;
+    if (k->usage != slab->bo.usage)
+        return k->usage - slab->bo.usage;
+    return k->size - slab->bo.size;
+}
+
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wined3d_swapchain *swapchain)
 {
     VkCommandPoolCreateInfo command_pool_info;
@@ -603,6 +793,8 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
         return E_FAIL;
     }
     context_vk->current_command_buffer.id = 1;
+
+    wine_rb_init(&context_vk->bo_slab_available, wined3d_bo_slab_vk_compare);
 
     return WINED3D_OK;
 }

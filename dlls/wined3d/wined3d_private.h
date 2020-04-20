@@ -1523,13 +1523,34 @@ struct wined3d_bo_vk
 {
     VkBuffer vk_buffer;
     struct wined3d_allocator_block *memory;
+    struct wined3d_bo_slab_vk *slab;
 
     VkDeviceMemory vk_memory;
 
+    VkDeviceSize buffer_offset;
     VkDeviceSize memory_offset;
+    VkDeviceSize size;
+    VkBufferUsageFlags usage;
     VkMemoryPropertyFlags memory_type;
 
     uint64_t command_buffer_id;
+};
+
+struct wined3d_bo_slab_vk_key
+{
+    VkMemoryPropertyFlags memory_type;
+    VkBufferUsageFlags usage;
+    VkDeviceSize size;
+};
+
+struct wined3d_bo_slab_vk
+{
+    struct wine_rb_entry entry;
+    struct wined3d_bo_slab_vk *next;
+    struct wined3d_bo_vk bo;
+    unsigned int map_count;
+    void *map_ptr;
+    uint32_t map;
 };
 
 struct wined3d_bo_address
@@ -2194,6 +2215,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_FREE_VK,
     WINED3D_RETIRED_MEMORY_VK,
     WINED3D_RETIRED_ALLOCATOR_BLOCK_VK,
+    WINED3D_RETIRED_BO_SLAB_SLICE_VK,
     WINED3D_RETIRED_BUFFER_VK,
     WINED3D_RETIRED_IMAGE_VK,
 };
@@ -2206,6 +2228,11 @@ struct wined3d_retired_object_vk
         struct wined3d_retired_object_vk *next;
         VkDeviceMemory vk_memory;
         struct wined3d_allocator_block *block;
+        struct
+        {
+            struct wined3d_bo_slab_vk *slab;
+            size_t idx;
+        } slice;
         VkBuffer vk_buffer;
         VkImage vk_image;
     } u;
@@ -2238,6 +2265,7 @@ struct wined3d_context_vk
     } submitted;
 
     struct wined3d_retired_objects_vk retired;
+    struct wine_rb_tree bo_slab_available;
 };
 
 static inline struct wined3d_context_vk *wined3d_context_vk(struct wined3d_context *context)
@@ -3448,6 +3476,7 @@ static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device 
 #define WINED3D_ALLOCATOR_CHUNK_SIZE        (64 * 1024 * 1024)
 #define WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT 15
 #define WINED3D_ALLOCATOR_MIN_BLOCK_SIZE    (WINED3D_ALLOCATOR_CHUNK_SIZE >> (WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT - 1))
+#define WINED3D_SLAB_BO_MIN_OBJECT_ALIGN    16
 
 struct wined3d_allocator_chunk
 {
