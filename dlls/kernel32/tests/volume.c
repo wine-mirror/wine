@@ -1523,7 +1523,7 @@ static void test_mounted_folder(void)
 
 static void test_GetVolumeInformationByHandle(void)
 {
-    char buffer[50] DECLSPEC_ALIGN(8);
+    char DECLSPEC_ALIGN(8) buffer[50];
     FILE_FS_ATTRIBUTE_INFORMATION *attr_info = (void *)buffer;
     FILE_FS_VOLUME_INFORMATION *volume_info = (void *)buffer;
     DWORD serial, filename_len, flags;
