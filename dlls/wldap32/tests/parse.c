@@ -264,9 +264,7 @@ static void test_ldap_paged_search(void)
     res = (void *)0xdeadbeef;
     ret = ldap_get_next_page_s( ld, search, NULL, 1, &count, &res );
     ok( ret == LDAP_NO_RESULTS_RETURNED, "got 0x%x\n", ret );
-todo_wine
     ok( !res, "expected res == NULL\n" );
-todo_wine
     ok( count == 0, "got %u\n", count );
 
     ldap_search_abandon_page( ld, search );

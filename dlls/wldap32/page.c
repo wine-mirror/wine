@@ -185,6 +185,8 @@ ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     if (search->cookie && search->cookie->bv_len == 0)
     {
         /* end of paged results */
+        *count = 0;
+        *results = NULL;
         return WLDAP32_LDAP_NO_RESULTS_RETURNED;
     }
 
