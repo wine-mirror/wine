@@ -2659,9 +2659,6 @@ class VkRegistry(object):
             elif type_info["category"] == "bitmask":
                 mark_bitmask_dependencies(type_info["data"], self.types)
 
-        if func.is_alias():
-            func.alias.required = True
-
     def _parse_commands(self, root):
         """ Parse command section containing the Vulkan function calls. """
         funcs = {}
