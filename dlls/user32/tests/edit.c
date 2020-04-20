@@ -1765,6 +1765,8 @@ static LRESULT CALLBACK test_class_proc(HWND hwnd, UINT message, WPARAM wParam, 
             ok(r == 1, "Returned %ld, expected 1.\n", r);
             r = SendMessageA(hwnd, WM_SIZE, 0, 0x00100010);
             todo_wine ok(r == 1, "Returned %ld, expected 1.\n", r);
+            r = SendMessageA(hwnd, EM_LINESCROLL, 1, 1);
+            ok(r == 1, "Returned %ld, expected 1.\n", r);
 
             return result;
 
@@ -1775,6 +1777,8 @@ static LRESULT CALLBACK test_class_proc(HWND hwnd, UINT message, WPARAM wParam, 
             ok(r == 1, "Returned %ld, expected 1.\n", r);
             r = SendMessageA(hwnd, WM_SIZE, 0, 0x00100010);
             todo_wine ok(r == 1, "Returned %ld, expected 1.\n", r);
+            r = SendMessageA(hwnd, EM_LINESCROLL, 1, 1);
+            ok(r == 1, "Returned %ld, expected 1.\n", r);
 
             break;
     }
