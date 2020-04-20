@@ -769,7 +769,7 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
     XRRScreenResources *screen_resources = NULL;
     XRRProviderInfo *provider_info = NULL;
     XRRCrtcInfo *enum_crtc_info, *crtc_info = NULL;
-    XRROutputInfo *output_info = NULL;
+    XRROutputInfo *enum_output_info, *output_info = NULL;
     RROutput *outputs;
     INT crtc_count, output_count;
     INT primary_adapter = 0;
@@ -833,24 +833,34 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
         if (!output_info->crtc || !crtc_info->mode)
             detached = TRUE;
 
-        /* Ignore crtc mirroring slaves because mirrored monitors are under the same adapter */
+        /* Ignore mirroring output slaves because mirrored monitors are under the same adapter */
         mirrored = FALSE;
         if (!detached)
         {
-            for (j = 0; j < screen_resources->ncrtc; ++j)
+            for (j = 0; j < screen_resources->noutput; ++j)
             {
-                enum_crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, screen_resources->crtcs[j] );
-                if (!enum_crtc_info)
-                    goto done;
+                enum_output_info = pXRRGetOutputInfo( gdi_display, screen_resources, screen_resources->outputs[j] );
+                if (!enum_output_info)
+                    continue;
 
-                /* Some crtcs on different providers may have the same coordinates, aka mirrored.
-                 * Choose the crtc with the lowest value as primary and the rest will then be slaves
-                 * in a mirroring set */
+                if (enum_output_info->connection != RR_Connected || !enum_output_info->crtc)
+                {
+                    pXRRFreeOutputInfo( enum_output_info );
+                    continue;
+                }
+
+                enum_crtc_info = pXRRGetCrtcInfo( gdi_display, screen_resources, enum_output_info->crtc );
+                pXRRFreeOutputInfo( enum_output_info );
+                if (!enum_crtc_info)
+                    continue;
+
+                /* Some outputs may have the same coordinates, aka mirrored. Choose the output with
+                 * the lowest value as primary and the rest will then be slaves in a mirroring set */
                 if (crtc_info->x == enum_crtc_info->x &&
                     crtc_info->y == enum_crtc_info->y &&
                     crtc_info->width == enum_crtc_info->width &&
                     crtc_info->height == enum_crtc_info->height &&
-                    output_info->crtc > screen_resources->crtcs[j])
+                    outputs[i] > screen_resources->outputs[j])
                 {
                     mirrored = TRUE;
                     pXRRFreeCrtcInfo( enum_crtc_info );
