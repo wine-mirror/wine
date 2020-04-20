@@ -482,6 +482,21 @@ static XRRCrtcInfo *xrandr12_get_primary_crtc_info( XRRScreenResources *resource
     return NULL;
 }
 
+static unsigned int get_frequency( const XRRModeInfo *mode )
+{
+    unsigned int dots = mode->hTotal * mode->vTotal;
+
+    if (!dots)
+        return 0;
+
+    if (mode->modeFlags & RR_DoubleScan)
+        dots *= 2;
+    if (mode->modeFlags & RR_Interlace)
+        dots /= 2;
+
+    return (mode->dotClock + dots / 2) / dots;
+}
+
 static int xrandr12_init_modes(void)
 {
     unsigned int only_one_resolution = 1, mode_count;
@@ -540,8 +555,7 @@ static int xrandr12_init_modes(void)
 
             if (mode->id == output_info->modes[i])
             {
-                unsigned int dots = mode->hTotal * mode->vTotal;
-                unsigned int refresh = dots ? (mode->dotClock + dots / 2) / dots : 0;
+                unsigned int refresh = get_frequency( mode );
 
                 TRACE("Adding mode %#lx: %ux%u@%u.\n", mode->id, mode->width, mode->height, refresh);
                 X11DRV_Settings_AddOneMode( mode->width, mode->height, 0, refresh );
