@@ -47,17 +47,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(olemalloc);
 /* set the vtable later */
 static const IMallocVtbl VT_IMalloc32;
 
-typedef struct {
+struct allocator
+{
         IMalloc IMalloc_iface;
 	IMallocSpy * pSpy;          /* the spy when active */
 	DWORD SpyedAllocationsLeft; /* number of spyed allocations left */
 	BOOL SpyReleasePending;     /* CoRevokeMallocSpy called with spyed allocations left*/
         LPVOID * SpyedBlocks;       /* root of the table */
         DWORD SpyedBlockTableLength;/* size of the table*/
-} _Malloc32;
+};
 
-/* this is the static object instance */
-static _Malloc32 Malloc32 = {{&VT_IMalloc32}, NULL, 0, 0, NULL, 0};
+static struct allocator Malloc32 = { .IMalloc_iface.lpVtbl = &VT_IMalloc32 };
 
 /* with a spy active all calls from pre to post methods are threadsafe */
 static CRITICAL_SECTION IMalloc32_SpyCS;
