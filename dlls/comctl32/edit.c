@@ -1579,8 +1579,12 @@ static BOOL EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy)
 {
 	INT nyoff;
 	INT x_offset_in_pixels;
-	INT lines_per_page = (es->format_rect.bottom - es->format_rect.top) /
-			      es->line_height;
+	INT lines_per_page;
+
+	if (!es->line_height || !es->char_width)
+		return TRUE;
+
+	lines_per_page = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
 
 	if (es->style & ES_MULTILINE)
 	{
