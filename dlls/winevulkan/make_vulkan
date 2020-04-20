@@ -2731,9 +2731,26 @@ class VkRegistry(object):
 
         self.enums = OrderedDict(sorted(enums.items()))
 
-    def _process_require_enum(self, enum_elem, ext=None):
+    def _process_require_enum(self, enum_elem, ext=None, only_aliased=False):
         if "extends" in enum_elem.keys():
             enum = self.types[enum_elem.attrib["extends"]]["data"]
+
+            # Need to define VkEnumValues which were aliased to by another value. This is necessary
+            # from VK spec version 1.2.135 where the provisional VK_KHR_ray_tracing extension was
+            # added which altered VK_NV_ray_tracing's VkEnumValues to alias to the provisional
+            # extension.
+            aliased = False
+            for _, t in self.types.items():
+                if t["category"] != "enum":
+                    continue
+                if not t["data"]:
+                    continue
+                for value in t["data"].values:
+                    if value.alias == enum_elem.attrib["name"]:
+                        aliased = True
+
+            if only_aliased and not aliased:
+                return
 
             if "bitpos" in enum_elem.keys():
                 # We need to add an extra value to an existing enum type.
@@ -2763,6 +2780,10 @@ class VkRegistry(object):
                 enum.add(VkEnumValue(enum_elem.attrib["name"], alias=enum_elem.attrib["alias"]))
 
         elif "value" in enum_elem.keys():
+            # Constants are not aliased, no need to add them here, they'll get added later on.
+            if only_aliased:
+                return
+
             self.consts.append(VkConstant(enum_elem.attrib["name"], enum_elem.attrib["value"]))
 
     @staticmethod
@@ -2807,6 +2828,13 @@ class VkRegistry(object):
             if "KHX" in ext_name or "NVX" in ext_name:
                 LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
                 return
+
+            # Extensions can define VkEnumValues which alias to provisional extensions. Pre-process
+            # extensions to define any required VkEnumValues before the platform check below.
+            for require in ext.findall("require"):
+                # Extensions can add enum values to Core / extension enums, so add these.
+                for enum_elem in require.findall("enum"):
+                    self._process_require_enum(enum_elem, ext, only_aliased=True)
 
             platform = ext.attrib.get("platform")
             if platform and platform != "win32":
