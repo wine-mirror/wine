@@ -2261,6 +2261,10 @@ void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
 void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_context_vk_image_barrier(struct wined3d_context_vk *context_vk,
+        VkCommandBuffer vk_command_buffer, VkPipelineStageFlags src_stage_mask, VkPipelineStageFlags dst_stage_mask,
+        VkAccessFlags src_access_mask, VkAccessFlags dst_access_mask, VkImageLayout old_layout,
+        VkImageLayout new_layout, VkImage image, VkImageAspectFlags aspect_mask) DECLSPEC_HIDDEN;
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context_vk,
@@ -3958,6 +3962,7 @@ struct wined3d_texture_vk
     VkImage vk_image;
     struct wined3d_allocator_block *memory;
     VkDeviceMemory vk_memory;
+    enum VkImageLayout layout;
     uint64_t command_buffer_id;
 };
 
@@ -5155,6 +5160,9 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height, UINT depth) DECLSPEC_HIDDEN;
 DWORD wined3d_format_convert_from_float(const struct wined3d_format *format,
         const struct wined3d_color *color) DECLSPEC_HIDDEN;
+void wined3d_format_copy_data(const struct wined3d_format *format, const uint8_t *src,
+        unsigned int src_row_pitch, unsigned int src_slice_pitch, uint8_t *dst, unsigned int dst_row_pitch,
+        unsigned int dst_slice_pitch, unsigned int w, unsigned int h, unsigned int d) DECLSPEC_HIDDEN;
 void wined3d_format_get_float_color_key(const struct wined3d_format *format,
         const struct wined3d_color_key *key, struct wined3d_color *float_colors) DECLSPEC_HIDDEN;
 BOOL wined3d_format_is_depth_view(enum wined3d_format_id resource_format_id,
@@ -5536,6 +5544,20 @@ static inline BOOL wined3d_bitmap_get_range(const DWORD *bitmap, unsigned int bi
     range->offset = range_start;
     range->size = range_end - range_start;
     return TRUE;
+}
+
+static inline VkImageAspectFlags vk_aspect_mask_from_format(const struct wined3d_format *format)
+{
+    VkImageAspectFlags mask = 0;
+
+    if (format->depth_size)
+        mask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (format->stencil_size)
+        mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    if (!mask || format->red_size || format->green_size || format->blue_size || format->alpha_size)
+        mask |= VK_IMAGE_ASPECT_COLOR_BIT;
+
+    return mask;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

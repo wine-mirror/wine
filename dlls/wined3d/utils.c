@@ -5977,6 +5977,36 @@ enum wined3d_format_id pixelformat_for_depth(DWORD depth)
     }
 }
 
+void wined3d_format_copy_data(const struct wined3d_format *format, const uint8_t *src,
+        unsigned int src_row_pitch, unsigned int src_slice_pitch, uint8_t *dst, unsigned int dst_row_pitch,
+        unsigned int dst_slice_pitch, unsigned int w, unsigned int h, unsigned int d)
+{
+    unsigned int row_block_count, row_count, row_size, slice, row;
+    unsigned int slice_count = d;
+    const uint8_t *src_row;
+    uint8_t *dst_row;
+
+    row_block_count = (w + format->block_width - 1) / format->block_width;
+    row_count = (h + format->block_height - 1) / format->block_height;
+    row_size = row_block_count * format->block_byte_count;
+
+    if (src_row_pitch == row_size && dst_row_pitch == row_size && src_slice_pitch == dst_slice_pitch)
+    {
+        memcpy(dst, src, slice_count * row_count * row_size);
+        return;
+    }
+
+    for (slice = 0; slice < slice_count; ++slice)
+    {
+        for (row = 0; row < row_count; ++row)
+        {
+            src_row = &src[slice * src_slice_pitch + row * src_row_pitch];
+            dst_row = &dst[slice * dst_slice_pitch + row * dst_row_pitch];
+            memcpy(dst_row, src_row, row_size);
+        }
+    }
+}
+
 void multiply_matrix(struct wined3d_matrix *dst, const struct wined3d_matrix *src1, const struct wined3d_matrix *src2)
 {
     struct wined3d_matrix tmp;
