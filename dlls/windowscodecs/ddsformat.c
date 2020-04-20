@@ -208,15 +208,17 @@ static HRESULT WINAPI DdsDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
 static HRESULT WINAPI DdsDecoder_CopyPalette(IWICBitmapDecoder *iface,
                                              IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub.\n", iface, pIPalette);
+    TRACE("(%p,%p)\n", iface, pIPalette);
 
-    return E_NOTIMPL;
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
 }
 
 static HRESULT WINAPI DdsDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
                                                         IWICMetadataQueryReader **ppIMetadataQueryReader)
 {
-    FIXME("(%p,%p): stub.\n", iface, ppIMetadataQueryReader);
+    if (!ppIMetadataQueryReader) return E_INVALIDARG;
+
+    FIXME("(%p,%p)\n", iface, ppIMetadataQueryReader);
 
     return E_NOTIMPL;
 }
@@ -224,25 +226,25 @@ static HRESULT WINAPI DdsDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface
 static HRESULT WINAPI DdsDecoder_GetPreview(IWICBitmapDecoder *iface,
                                             IWICBitmapSource **ppIBitmapSource)
 {
-    FIXME("(%p,%p): stub.\n", iface, ppIBitmapSource);
+    TRACE("(%p,%p)\n", iface, ppIBitmapSource);
 
-    return E_NOTIMPL;
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI DdsDecoder_GetColorContexts(IWICBitmapDecoder *iface,
                                                   UINT cCount, IWICColorContext **ppDdslorContexts, UINT *pcActualCount)
 {
-    FIXME("(%p,%u,%p,%p): stub.\n", iface, cCount, ppDdslorContexts, pcActualCount);
+    TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppDdslorContexts, pcActualCount);
 
-    return E_NOTIMPL;
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI DdsDecoder_GetThumbnail(IWICBitmapDecoder *iface,
                                               IWICBitmapSource **ppIThumbnail)
 {
-    FIXME("(%p,%p): stub.\n", iface, ppIThumbnail);
+    TRACE("(%p,%p)\n", iface, ppIThumbnail);
 
-    return E_NOTIMPL;
+    return WINCODEC_ERR_CODECNOTHUMBNAIL;
 }
 
 static HRESULT WINAPI DdsDecoder_GetFrameCount(IWICBitmapDecoder *iface,

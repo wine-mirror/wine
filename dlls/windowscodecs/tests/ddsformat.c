@@ -154,17 +154,14 @@ static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
     hr = IWICImagingFactory_CreatePalette(factory, &pallette);
     ok (hr == S_OK, "CreatePalette failed, hr=%x\n", hr);
     if (hr == S_OK) {
-        todo_wine {
         hr = IWICBitmapDecoder_CopyPalette(decoder, pallette);
         ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Expected hr=WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
         hr = IWICBitmapDecoder_CopyPalette(decoder, NULL);
         ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Expected hr=WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
-        };
     }
 
-    todo_wine {
     hr = IWICBitmapDecoder_GetMetadataQueryReader(decoder, &metadata_reader);
-    ok (hr == S_OK, "Expected hr=S_OK, got %x\n", hr);
+    todo_wine ok (hr == S_OK, "Expected hr=S_OK, got %x\n", hr);
     hr = IWICBitmapDecoder_GetMetadataQueryReader(decoder, NULL);
     ok (hr == E_INVALIDARG, "Expected hr=E_INVALIDARG, got %x\n", hr);
 
@@ -182,7 +179,6 @@ static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
     ok (hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "Expected hr=WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
     hr = IWICBitmapDecoder_GetThumbnail(decoder, NULL);
     ok (hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "Expected hr=WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
-    };
 
     if (pallette) IWICPalette_Release(pallette);
     if (metadata_reader) IWICMetadataQueryReader_Release(metadata_reader);
