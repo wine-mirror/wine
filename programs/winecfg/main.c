@@ -199,7 +199,7 @@ ProcessCmdLine(LPSTR lpCmdLine)
 
     if ((lpCmdLine[1] == 'V' || lpCmdLine[1] == 'v') && (lstrlenA(lpCmdLine) > 4))
     {
-        return set_winver_from_string(&lpCmdLine[3]);
+        return set_winver_from_string(&lpCmdLine[3]) ? 0 : 1;
     }
 
     return -1;
