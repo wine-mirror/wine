@@ -2219,8 +2219,10 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
         if (lib)
         {
-            if (delay && !delay_load_flag) lib = replace_extension( lib, ".a", ".delay.a" );
-            else if (make->is_cross) lib = replace_extension( lib, ".a", ".cross.a" );
+            if (delay && !delay_load_flag && (make->is_cross || !*dll_ext))
+                lib = replace_extension( lib, ".a", ".delay.a" );
+            else if (make->is_cross)
+                lib = replace_extension( lib, ".a", ".cross.a" );
             lib = top_obj_dir_path( make, lib );
             strarray_add( deps, lib );
             strarray_add( &ret, lib );
