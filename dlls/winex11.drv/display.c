@@ -39,6 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
+DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
+
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
@@ -278,9 +280,11 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
     static const BOOL present = TRUE;
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     WCHAR instanceW[MAX_PATH];
+    DEVPROPTYPE property_type;
     WCHAR bufferW[1024];
     HKEY hkey = NULL;
     GUID guid;
+    LUID luid;
     INT written;
     DWORD size;
     BOOL ret = FALSE;
@@ -305,6 +309,20 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPKEY_Device_IsPresent, DEVPROP_TYPE_BOOLEAN,
                                    (const BYTE *)&present, sizeof(present), 0))
         goto done;
+
+    /* Write DEVPROPKEY_GPU_LUID property */
+    if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &property_type,
+                                   (BYTE *)&luid, sizeof(luid), NULL, 0))
+    {
+        if (!AllocateLocallyUniqueId(&luid))
+            goto done;
+
+        if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_GPU_LUID,
+                                       DEVPROP_TYPE_UINT64, (const BYTE *)&luid, sizeof(luid), 0))
+            goto done;
+    }
+    TRACE("GPU id:0x%s name:%s LUID:%08x:%08x.\n", wine_dbgstr_longlong(gpu->id),
+          wine_dbgstr_w(gpu->name), luid.HighPart, luid.LowPart);
 
     /* Open driver key.
      * This is where HKLM\System\CurrentControlSet\Control\Video\{GPU GUID}\{Adapter Index} links to */
