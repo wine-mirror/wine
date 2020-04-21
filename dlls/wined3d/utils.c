@@ -2586,7 +2586,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
                 && format->format != GL_LUMINANCE && format->format != GL_LUMINANCE_ALPHA
                 && (format->f.red_size || format->f.alpha_size))
         {
-            DWORD readback[16 * 16 * 16], color, r_range, a_range;
+            DWORD readback[16 * 16 * 16], color = 0, r_range, a_range;
             BYTE r, a;
             BOOL match = TRUE;
             GLuint rb;

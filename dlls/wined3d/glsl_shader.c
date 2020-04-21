@@ -12781,7 +12781,7 @@ static GLuint glsl_blitter_generate_program(struct wined3d_glsl_blitter *blitter
     enum complex_fixup complex_fixup = get_complex_fixup(args->fixup);
     struct wined3d_string_buffer *buffer, *output;
     GLuint program, vshader_id, fshader_id;
-    const char *tex_type, *swizzle, *ptr;
+    const char *tex_type = NULL, *swizzle = NULL, *ptr;
     unsigned int i;
     GLint loc;
 
