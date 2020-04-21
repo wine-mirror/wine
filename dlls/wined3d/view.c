@@ -1073,8 +1073,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     src.buffer_object = (uintptr_t)&view_gl->counter_bo;
     src.addr = NULL;
 
-    wined3d_context_gl_copy_bo_address(context_gl, &dst, wined3d_buffer_gl(buffer)->bo.binding,
-            &src, GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint));
+    wined3d_context_gl_copy_bo_address(context_gl, &dst, &src, sizeof(GLuint));
 
     wined3d_buffer_invalidate_location(buffer, ~dst_location);
 }

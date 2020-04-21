@@ -2581,8 +2581,7 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, 
 }
 
 void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
-        const struct wined3d_bo_address *dst, GLenum dst_binding,
-        const struct wined3d_bo_address *src, GLenum src_binding, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *src_bo, *dst_bo;
@@ -2605,27 +2604,27 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         }
         else
         {
-            src_ptr = wined3d_context_gl_map_bo_address(context_gl, src, size, src_binding, WINED3D_MAP_READ);
-            dst_ptr = wined3d_context_gl_map_bo_address(context_gl, dst, size, dst_binding, WINED3D_MAP_WRITE);
+            src_ptr = wined3d_context_gl_map_bo_address(context_gl, src, size, src_bo->binding, WINED3D_MAP_READ);
+            dst_ptr = wined3d_context_gl_map_bo_address(context_gl, dst, size, dst_bo->binding, WINED3D_MAP_WRITE);
 
             memcpy(dst_ptr, src_ptr, size);
 
             range.offset = 0;
             range.size = size;
-            wined3d_context_gl_unmap_bo_address(context_gl, dst, dst_binding, 1, &range);
-            wined3d_context_gl_unmap_bo_address(context_gl, src, src_binding, 0, NULL);
+            wined3d_context_gl_unmap_bo_address(context_gl, dst, dst_bo->binding, 1, &range);
+            wined3d_context_gl_unmap_bo_address(context_gl, src, src_bo->binding, 0, NULL);
         }
     }
     else if (!dst_bo && src_bo)
     {
-        wined3d_context_gl_bind_bo(context_gl, src_binding, src_bo->id);
-        GL_EXTCALL(glGetBufferSubData(src_binding, (GLintptr)src->addr, size, dst->addr));
+        wined3d_context_gl_bind_bo(context_gl, src_bo->binding, src_bo->id);
+        GL_EXTCALL(glGetBufferSubData(src_bo->binding, (GLintptr)src->addr, size, dst->addr));
         checkGLcall("buffer download");
     }
     else if (dst_bo && !src_bo)
     {
-        wined3d_context_gl_bind_bo(context_gl, dst_binding, dst_bo->id);
-        GL_EXTCALL(glBufferSubData(dst_binding, (GLintptr)dst->addr, size, src->addr));
+        wined3d_context_gl_bind_bo(context_gl, dst_bo->binding, dst_bo->id);
+        GL_EXTCALL(glBufferSubData(dst_bo->binding, (GLintptr)dst->addr, size, src->addr));
         checkGLcall("buffer upload");
     }
     else

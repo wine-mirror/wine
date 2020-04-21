@@ -4654,14 +4654,7 @@ static void adapter_gl_copy_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
         const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
 {
-    struct wined3d_context_gl *context_gl;
-    GLenum dst_binding, src_binding;
-
-    context_gl = wined3d_context_gl(context);
-    dst_binding = wined3d_buffer_gl_binding_from_bind_flags(context_gl->gl_info, dst_bind_flags);
-    src_binding = wined3d_buffer_gl_binding_from_bind_flags(context_gl->gl_info, src_bind_flags);
-
-    wined3d_context_gl_copy_bo_address(context_gl, dst, dst_binding, src, src_binding, size);
+    wined3d_context_gl_copy_bo_address(wined3d_context_gl(context), dst, src, size);
 }
 
 static HRESULT adapter_gl_create_swapchain(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
