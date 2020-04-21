@@ -50,6 +50,8 @@ struct audio_renderer
     IMFMediaType *media_type;
     IMFMediaType *current_media_type;
     IMMDevice *device;
+    IAudioClient *audio_client;
+    HANDLE buffer_ready_event;
     BOOL is_shut_down;
     CRITICAL_SECTION cs;
 };
@@ -172,6 +174,9 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
             IMFMediaType_Release(renderer->media_type);
         if (renderer->current_media_type)
             IMFMediaType_Release(renderer->current_media_type);
+        CloseHandle(renderer->buffer_ready_event);
+        if (renderer->audio_client)
+            IAudioClient_Release(renderer->audio_client);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -1110,6 +1115,52 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_GetMediaTypeByIndex(IMF
     return S_OK;
 }
 
+static HRESULT audio_renderer_create_audio_client(struct audio_renderer *renderer)
+{
+    WAVEFORMATEX *wfx;
+    HRESULT hr;
+
+    if (renderer->audio_client)
+    {
+        IAudioClient_Release(renderer->audio_client);
+        renderer->audio_client = NULL;
+    }
+
+    hr = IMMDevice_Activate(renderer->device, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL,
+            (void **)&renderer->audio_client);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create audio client, hr %#x.\n", hr);
+        return hr;
+    }
+
+    /* FIXME: use SAR configuration for flags and session id. */
+
+    /* FIXME: for now always use default format. */
+    if (FAILED(hr = IAudioClient_GetMixFormat(renderer->audio_client, &wfx)))
+    {
+        WARN("Failed to get audio format, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IAudioClient_Initialize(renderer->audio_client, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+            1000000, 0, wfx, NULL);
+    CoTaskMemFree(wfx);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize audio client, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IAudioClient_SetEventHandle(renderer->audio_client, renderer->buffer_ready_event)))
+    {
+        WARN("Failed to set event handle, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI audio_renderer_stream_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface,
         IMFMediaType *media_type)
 {
@@ -1130,6 +1181,8 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_SetCurrentMediaType(IMF
             IMFMediaType_Release(renderer->current_media_type);
         renderer->current_media_type = media_type;
         IMFMediaType_AddRef(renderer->current_media_type);
+
+        hr = audio_renderer_create_audio_client(renderer);
     }
     else
         hr = MF_E_INVALIDMEDIATYPE;
@@ -1249,6 +1302,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
     renderer->IMFAudioPolicy_iface.lpVtbl = &audio_renderer_policy_vtbl;
     renderer->refcount = 1;
     InitializeCriticalSection(&renderer->cs);
+    renderer->buffer_ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     if (FAILED(hr = MFCreateEventQueue(&renderer->event_queue)))
         goto failed;
