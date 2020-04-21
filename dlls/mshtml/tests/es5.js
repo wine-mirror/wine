@@ -862,6 +862,9 @@ function test_bind() {
     f = (function() { return this; }).bind(a);
     ok(f() === a, "f() != a");
 
+    f = (function() { return this; }).bind(null);
+    ok(f() === window, "f() = " + f());
+
     var t;
     f = (function() { return t = this; }).bind(a);
     ok(new f() === t, "new f() != a");

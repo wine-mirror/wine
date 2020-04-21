@@ -439,6 +439,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 static HRESULT Function_bind(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    IDispatch *bound_this = NULL;
     FunctionInstance *function;
     jsdisp_t *new_function;
     HRESULT hres;
@@ -453,12 +454,14 @@ static HRESULT Function_bind(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return E_NOTIMPL;
     }
 
-    if(!is_object_instance(argv[0]) || !get_object(argv[0])) {
+    if(is_object_instance(argv[0])) {
+        bound_this = get_object(argv[0]);
+    }else if(!is_null(argv[0])) {
         FIXME("%s is not an object instance\n", debugstr_jsval(argv[0]));
         return E_NOTIMPL;
     }
 
-    hres = create_bind_function(ctx, function, get_object(argv[0]), argc - 1, argv + 1, &new_function);
+    hres = create_bind_function(ctx, function, bound_this, argc - 1, argv + 1, &new_function);
     if(FAILED(hres))
         return hres;
 
@@ -875,7 +878,8 @@ static void BindFunction_destructor(FunctionInstance *func)
     for(i = 0; i < function->argc; i++)
         jsval_release(function->args[i]);
     jsdisp_release(&function->target->dispex);
-    IDispatch_Release(function->this);
+    if(function->this)
+        IDispatch_Release(function->this);
 }
 
 static const function_vtbl_t BindFunctionVtbl = {
@@ -899,7 +903,8 @@ static HRESULT create_bind_function(script_ctx_t *ctx, FunctionInstance *target,
     jsdisp_addref(&target->dispex);
     function->target = target;
 
-    IDispatch_AddRef(function->this = bound_this);
+    if(bound_this)
+        IDispatch_AddRef(function->this = bound_this);
 
     for(function->argc = 0; function->argc < argc; function->argc++) {
         hres = jsval_copy(argv[function->argc], function->args + function->argc);
