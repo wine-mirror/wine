@@ -588,43 +588,6 @@ void output_exports( DLLSPEC *spec )
 
 
 /*******************************************************************
- *         output_asm_constructor
- *
- * Output code for calling a dll constructor.
- */
-static void output_asm_constructor( const char *constructor )
-{
-    if (target_platform == PLATFORM_APPLE)
-    {
-        /* Mach-O doesn't have an init section */
-        output( "\n\t.mod_init_func\n" );
-        output( "\t.align %d\n", get_alignment(get_ptr_size()) );
-        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name(constructor) );
-    }
-    else
-    {
-        switch(target_cpu)
-        {
-        case CPU_x86:
-        case CPU_x86_64:
-            output( "\n\t.section \".init\",\"ax\"\n" );
-            output( "\tcall %s\n", asm_name(constructor) );
-            break;
-        case CPU_ARM:
-            output( "\n\t.section \".text\",\"ax\"\n" );
-            output( "\tblx %s\n", asm_name(constructor) );
-            break;
-        case CPU_ARM64:
-        case CPU_POWERPC:
-            output( "\n\t.section \".init\",\"ax\"\n" );
-            output( "\tbl %s\n", asm_name(constructor) );
-            break;
-        }
-    }
-}
-
-
-/*******************************************************************
  *         output_module
  *
  * Output the module data.
@@ -749,14 +712,6 @@ void output_module( DLLSPEC *spec )
         data_dirs[2] = ".L__wine_spec_resources"; /* DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE] */
 
     output_data_directories( data_dirs );
-
-    if (spec->characteristics & IMAGE_FILE_DLL)
-    {
-        output( "\n\t%s\n", get_asm_string_section() );
-        output( "%s\n", asm_globl("__wine_spec_file_name") );
-        output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
-        output_asm_constructor( "__wine_spec_init_ctor" );
-    }
 
     if (target_platform == PLATFORM_APPLE)
         output( "\t.lcomm %s,4\n", asm_name("_end") );

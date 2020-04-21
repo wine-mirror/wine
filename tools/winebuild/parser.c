@@ -829,7 +829,7 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
     if (spec16->characteristics & IMAGE_FILE_DLL)
     {
         spec32->characteristics = IMAGE_FILE_DLL;
-        spec32->init_func = xstrdup( "__wine_spec_dll_entry" );
+        spec32->init_func = xstrdup( "DllMain" );
     }
 
     /* add an export for the NE module */
