@@ -1186,6 +1186,36 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
 
         HeapFree(GetProcessHeap(), 0, srcdata);
     }
+    /* 16bps RGBA */
+    else if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 4 && This->decode_info.bpp == 32)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 12 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 4;
+
+            for (x = 0; x < This->decode_info.tile_width; x++)
+            {
+                dst[0] = ((src[1] & 0xf0) >> 4) * 17; /* B */
+                dst[1] = (src[0] & 0x0f) * 17; /* G */
+                dst[2] = ((src[0] & 0xf0) >> 4) * 17; /* R */
+                dst[3] = (src[1] & 0x0f) * 17; /* A */
+                src += 2;
+                dst += 4;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
     /* 8bpp grayscale with extra alpha */
     else if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 2 && This->decode_info.bpp == 32)
     {
