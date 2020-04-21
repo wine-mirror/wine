@@ -46,9 +46,74 @@ typedef struct __cxx_type_info
     unsigned int copy_ctor;
 } cxx_type_info;
 
+#define CLASS_IS_SIMPLE_TYPE          1
+#define CLASS_HAS_VIRTUAL_BASE_CLASS  4
+
+/* table of C++ types that apply for a given object */
+typedef struct __cxx_type_info_table
+{
+    UINT count;
+    unsigned int info[3];
+} cxx_type_info_table;
+
+struct __cxx_exception_frame;
+struct __cxx_function_descr;
+
+/* type information for an exception object */
+typedef struct
+{
+    UINT flags;
+    unsigned int destructor;
+    unsigned int custom_handler;
+    unsigned int type_info_table;
+} cxx_exception_type;
+
 static inline const char *dbgstr_type_info( const type_info *info )
 {
     if (!info) return "{}";
     return wine_dbg_sprintf( "{vtable=%p name=%s (%s)}",
                              info->vtable, info->mangled, info->name ? info->name : "" );
 }
+
+/* compute the this pointer for a base class of a given type */
+static inline void *get_this_pointer( const this_ptr_offsets *off, void *object )
+{
+    if (!object) return NULL;
+
+    if (off->vbase_descr >= 0)
+    {
+        int *offset_ptr;
+
+        /* move this ptr to vbase descriptor */
+        object = (char *)object + off->vbase_descr;
+        /* and fetch additional offset from vbase descriptor */
+        offset_ptr = (int *)(*(char **)object + off->vbase_offset);
+        object = (char *)object + *offset_ptr;
+    }
+
+    object = (char *)object + off->this_offset;
+    return object;
+}
+
+typedef void (__cdecl *_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
+
+typedef struct _frame_info
+{
+    void *object;
+    struct _frame_info *next;
+} frame_info;
+
+typedef struct
+{
+    frame_info frame_info;
+    EXCEPTION_RECORD *rec;
+    CONTEXT *context;
+} cxx_frame_info;
+
+BOOL __cdecl __CxxRegisterExceptionObject(EXCEPTION_POINTERS*, cxx_frame_info*);
+void __cdecl __CxxUnregisterExceptionObject(cxx_frame_info*, BOOL);
+void __cdecl __DestructExceptionObject(EXCEPTION_RECORD *rec);
+
+void** __cdecl __current_exception(void);
+int* __cdecl __processing_throw(void);
+void __cdecl terminate(void);
