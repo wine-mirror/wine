@@ -1638,9 +1638,10 @@ static void wined3d_texture_prepare_buffer_object(struct wined3d_texture *textur
         return;
 
     GL_EXTCALL(glGenBuffers(1, &bo->id));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bo->id));
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, sub_resource->size, NULL, GL_STREAM_DRAW));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+    bo->binding = GL_PIXEL_UNPACK_BUFFER;
+    GL_EXTCALL(glBindBuffer(bo->binding, bo->id));
+    GL_EXTCALL(glBufferData(bo->binding, sub_resource->size, NULL, GL_STREAM_DRAW));
+    GL_EXTCALL(glBindBuffer(bo->binding, 0));
     checkGLcall("Create buffer object");
 
     TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo->id, texture, sub_resource_idx);

@@ -1032,8 +1032,8 @@ void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access
     wined3d_unordered_access_view_invalidate_location(&view_gl->v, ~WINED3D_LOCATION_BUFFER);
 
     get_buffer_view_range(&buffer_gl->b, &view_gl->v.desc, &format->f, &offset, &size);
-    wined3d_context_gl_bind_bo(context_gl, buffer_gl->buffer_type_hint, buffer_gl->bo.id);
-    GL_EXTCALL(glClearBufferSubData(buffer_gl->buffer_type_hint, format->internal,
+    wined3d_context_gl_bind_bo(context_gl, buffer_gl->bo.binding, buffer_gl->bo.id);
+    GL_EXTCALL(glClearBufferSubData(buffer_gl->bo.binding, format->internal,
             offset, size, format->format, format->type, clear_value));
     checkGLcall("clear unordered access view");
 }
@@ -1073,7 +1073,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     src.buffer_object = (uintptr_t)&view_gl->counter_bo;
     src.addr = NULL;
 
-    wined3d_context_gl_copy_bo_address(context_gl, &dst, wined3d_buffer_gl(buffer)->buffer_type_hint,
+    wined3d_context_gl_copy_bo_address(context_gl, &dst, wined3d_buffer_gl(buffer)->bo.binding,
             &src, GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint));
 
     wined3d_buffer_invalidate_location(buffer, ~dst_location);
@@ -1102,9 +1102,9 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
             static const GLuint initial_value = 0;
 
             GL_EXTCALL(glGenBuffers(1, &bo->id));
-            GL_EXTCALL(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, bo->id));
-            GL_EXTCALL(glBufferData(GL_ATOMIC_COUNTER_BUFFER,
-                    sizeof(initial_value), &initial_value, GL_STATIC_DRAW));
+            bo->binding = GL_ATOMIC_COUNTER_BUFFER;
+            GL_EXTCALL(glBindBuffer(bo->binding, bo->id));
+            GL_EXTCALL(glBufferData(bo->binding, sizeof(initial_value), &initial_value, GL_STATIC_DRAW));
             checkGLcall("create atomic counter buffer");
         }
         context_release(context);

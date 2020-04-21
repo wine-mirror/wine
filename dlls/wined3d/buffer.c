@@ -135,7 +135,7 @@ void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD loc
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct wined3d_context_gl *context_gl)
 {
-    wined3d_context_gl_bind_bo(context_gl, buffer_gl->buffer_type_hint, buffer_gl->bo.id);
+    wined3d_context_gl_bind_bo(context_gl, buffer_gl->bo.binding, buffer_gl->bo.id);
 }
 
 /* Context activation is done by the caller. */
@@ -225,6 +225,7 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
 
     bo = &buffer_gl->bo;
     GL_EXTCALL(glGenBuffers(1, &bo->id));
+    bo->binding = wined3d_buffer_gl_binding_from_bind_flags(gl_info, buffer_gl->b.resource.bind_flags);
     buffer_gl->b.buffer_object = (uintptr_t)bo;
     error = gl_info->gl_ops.gl.p_glGetError();
     if (!bo->id || error != GL_NO_ERROR)
@@ -248,17 +249,15 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
 
         if (gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
         {
-            GL_EXTCALL(glBufferParameteriAPPLE(buffer_gl->buffer_type_hint,
-                    GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
-            GL_EXTCALL(glBufferParameteriAPPLE(buffer_gl->buffer_type_hint,
-                    GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
+            GL_EXTCALL(glBufferParameteriAPPLE(bo->binding, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
+            GL_EXTCALL(glBufferParameteriAPPLE(bo->binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
             checkGLcall("glBufferParameteriAPPLE");
             buffer_gl->b.flags |= WINED3D_BUFFER_APPLESYNC;
         }
         /* No setup is needed here for GL_ARB_map_buffer_range. */
     }
 
-    GL_EXTCALL(glBufferData(buffer_gl->buffer_type_hint, buffer_gl->b.resource.size, NULL, gl_usage));
+    GL_EXTCALL(glBufferData(bo->binding, buffer_gl->b.resource.size, NULL, gl_usage));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -803,7 +802,7 @@ static void wined3d_buffer_gl_sync_apple(struct wined3d_buffer_gl *buffer_gl,
     {
         wined3d_buffer_gl_bind(buffer_gl, context_gl);
 
-        GL_EXTCALL(glBufferData(buffer_gl->buffer_type_hint, buffer_gl->b.resource.size,
+        GL_EXTCALL(glBufferData(buffer_gl->bo.binding, buffer_gl->b.resource.size,
                 NULL, buffer_gl->buffer_object_usage));
         checkGLcall("glBufferData");
         return;
@@ -854,7 +853,7 @@ drop_fence:
 
     gl_info->gl_ops.gl.p_glFinish();
     wined3d_buffer_gl_bind(buffer_gl, context_gl);
-    GL_EXTCALL(glBufferParameteriAPPLE(buffer_gl->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
+    GL_EXTCALL(glBufferParameteriAPPLE(buffer_gl->bo.binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
     checkGLcall("glBufferParameteriAPPLE(buffer_gl->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
     buffer_gl->b.flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
@@ -1172,7 +1171,7 @@ static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resou
         wined3d_buffer_gl_bind(buffer_gl, context_gl);
         for (i = 0; i < range_count; ++i)
         {
-            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(buffer_gl->buffer_type_hint,
+            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(buffer_gl->bo.binding,
                     buffer->maps[i].offset, buffer->maps[i].size));
             checkGLcall("glFlushMappedBufferRangeAPPLE");
         }
@@ -1503,7 +1502,7 @@ static void wined3d_buffer_gl_upload_ranges(struct wined3d_buffer *buffer, struc
     while (range_count--)
     {
         range = &ranges[range_count];
-        GL_EXTCALL(glBufferSubData(buffer_gl->buffer_type_hint,
+        GL_EXTCALL(glBufferSubData(buffer_gl->bo.binding,
                 range->offset, range->size, (BYTE *)data + range->offset - data_offset));
     }
     checkGLcall("buffer upload");
@@ -1526,7 +1525,7 @@ static void wined3d_buffer_gl_download_ranges(struct wined3d_buffer *buffer, str
     while (range_count--)
     {
         range = &ranges[range_count];
-        GL_EXTCALL(glGetBufferSubData(buffer_gl->buffer_type_hint,
+        GL_EXTCALL(glGetBufferSubData(buffer_gl->bo.binding,
                 range->offset, range->size, (BYTE *)data + range->offset - data_offset));
     }
     checkGLcall("buffer download");
@@ -1561,7 +1560,6 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
         TRACE("Not creating a BO because the buffer has dynamic usage and no GL support.\n");
     else
         buffer_gl->b.flags |= WINED3D_BUFFER_USE_BO;
-    buffer_gl->buffer_type_hint = wined3d_buffer_gl_binding_from_bind_flags(gl_info, desc->bind_flags);
 
     return wined3d_buffer_init(&buffer_gl->b, device, desc, data, parent, parent_ops, &wined3d_buffer_gl_ops);
 }

@@ -1522,6 +1522,7 @@ do {                                                                \
 struct wined3d_bo_gl
 {
     GLuint id;
+    GLenum binding;
 };
 
 static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
@@ -4422,7 +4423,6 @@ struct wined3d_buffer_gl
 
     struct wined3d_bo_gl bo;
     GLenum buffer_object_usage;
-    GLenum buffer_type_hint;
 };
 
 static inline struct wined3d_buffer_gl *wined3d_buffer_gl(struct wined3d_buffer *buffer)
