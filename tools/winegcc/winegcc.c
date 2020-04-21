@@ -534,8 +534,6 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         strarray_add( flags, "-Wl,--no-wchar-size-warning" );
     if (!try_link( opts->prefix, link_args, "-Wl,-z,defs" ))
         strarray_add( flags, "-Wl,-z,defs" );
-    if (opts->shared && !try_link( opts->prefix, link_args, "-Wl,-init,__wine_spec_init" ))
-        strarray_add( flags, "-Wl,-init,__wine_spec_init" );
 
     strarray_addall( link_args, flags );
     return link_args;
@@ -1379,8 +1377,8 @@ static void build(struct options* opts)
         }
     }
 
-    if (!is_pe && !opts->shared) fixup_constructors( opts, output_path );
-    if (is_pe && opts->wine_builtin) make_wine_builtin( opts, output_path );
+    if (!is_pe) fixup_constructors( opts, output_path );
+    else if (opts->wine_builtin) make_wine_builtin( opts, output_path );
 
     /* create the loader script */
     if (generate_app_loader)
