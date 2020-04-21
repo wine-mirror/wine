@@ -391,6 +391,14 @@ static const IMFMediaSinkVtbl audio_renderer_sink_vtbl =
     audio_renderer_sink_Shutdown,
 };
 
+static void audio_renderer_preroll(struct audio_renderer *renderer)
+{
+    int i;
+
+    for (i = 0; i < 2; ++i)
+        IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+}
+
 static HRESULT WINAPI audio_renderer_preroll_QueryInterface(IMFMediaSinkPreroll *iface, REFIID riid, void **obj)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
@@ -411,9 +419,15 @@ static ULONG WINAPI audio_renderer_preroll_Release(IMFMediaSinkPreroll *iface)
 
 static HRESULT WINAPI audio_renderer_preroll_NotifyPreroll(IMFMediaSinkPreroll *iface, MFTIME start_time)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(start_time));
+    struct audio_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(start_time));
+
+    if (renderer->is_shut_down)
+        return MF_E_SHUTDOWN;
+
+    audio_renderer_preroll(renderer);
+    return IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkPrerolled, &GUID_NULL, S_OK, NULL);
 }
 
 static const IMFMediaSinkPrerollVtbl audio_renderer_preroll_vtbl =
