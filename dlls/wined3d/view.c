@@ -1059,21 +1059,20 @@ void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_v
 void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_view *view,
         struct wined3d_buffer *buffer, unsigned int offset, struct wined3d_context *context)
 {
-    struct wined3d_unordered_access_view_gl *view_gl = wined3d_unordered_access_view_gl(view);
-    struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     struct wined3d_bo_address dst, src;
     DWORD dst_location;
 
-    if (!view_gl->counter_bo.id)
+    if (!view->counter_bo)
         return;
 
     dst_location = wined3d_buffer_get_memory(buffer, &dst, buffer->locations);
     dst.addr += offset;
 
-    src.buffer_object = (uintptr_t)&view_gl->counter_bo;
+    src.buffer_object = view->counter_bo;
     src.addr = NULL;
 
-    wined3d_context_gl_copy_bo_address(context_gl, &dst, &src, sizeof(GLuint));
+    wined3d_context_copy_bo_address(context, &dst, buffer->resource.bind_flags,
+            &src, WINED3D_BIND_UNORDERED_ACCESS, sizeof(uint32_t));
 
     wined3d_buffer_invalidate_location(buffer, ~dst_location);
 }
@@ -1105,6 +1104,7 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
             GL_EXTCALL(glBindBuffer(bo->binding, bo->id));
             GL_EXTCALL(glBufferData(bo->binding, sizeof(initial_value), &initial_value, GL_STATIC_DRAW));
             checkGLcall("create atomic counter buffer");
+            view_gl->v.counter_bo = (uintptr_t)bo;
         }
         context_release(context);
     }
