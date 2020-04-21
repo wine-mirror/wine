@@ -428,6 +428,7 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         switch(bps)
         {
         case 1:
+        case 4:
         case 8:
             decode_info->reverse_bgr = 1;
             if (samples == 3)
@@ -1106,6 +1107,41 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
                 }
                 src += 3;
                 dst += 24;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
+    /* 12bps RGB */
+    else if (This->decode_info.source_bpp == 12 && This->decode_info.samples == 3 && This->decode_info.bpp == 24)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 12 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 3;
+
+            for (x = 0; x < This->decode_info.tile_width; x += 2)
+            {
+                dst[0] = ((src[1] & 0xf0) >> 4) * 17; /* B */
+                dst[1] = (src[0] & 0x0f) * 17; /* G */
+                dst[2] = ((src[0] & 0xf0) >> 4) * 17; /* R */
+                if (x + 1 < This->decode_info.tile_width)
+                {
+                    dst[5] = (src[1] & 0x0f) * 17; /* B */
+                    dst[4] = ((src[2] & 0xf0) >> 4) * 17; /* G */
+                    dst[3] = (src[2] & 0x0f) * 17; /* R */
+                }
+                src += 3;
+                dst += 6;
             }
         }
 
