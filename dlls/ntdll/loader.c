@@ -4469,6 +4469,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  */
 void __wine_process_init(void)
 {
+    extern IMAGE_NT_HEADERS __wine_spec_nt_header;
     static const WCHAR ntdllW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','t','e','m','3','2','\\',
                                    'n','t','d','l','l','.','d','l','l',0};
@@ -4480,6 +4481,7 @@ void __wine_process_init(void)
     NTSTATUS status;
     ANSI_STRING func_name;
     UNICODE_STRING nt_name;
+    HMODULE ntdll_module;
     INITIAL_TEB stack;
     BOOL suspend;
     SIZE_T info_size;
@@ -4496,6 +4498,7 @@ void __wine_process_init(void)
     init_unix_codepage();
     init_directories();
     init_user_process_params( info_size );
+    params = peb->ProcessParameters;
 
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
 
@@ -4510,9 +4513,16 @@ void __wine_process_init(void)
     RtlInitUnicodeString( &nt_name, ntdllW );
     default_load_info.filename = &nt_name;
     wine_dll_set_callback( load_builtin_callback );
+    ntdll_module = (HMODULE)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+    if (!get_modref( ntdll_module ))
+    {
+        map_so_dll( &__wine_spec_nt_header, ntdll_module );
+        status = build_so_dll_module( params->DllPath.Buffer, &nt_name, ntdll_module, 0, &wm );
+        assert( !status );
+    }
 
     RtlInitUnicodeString( &nt_name, kernel32W );
-    if ((status = load_builtin_dll( NULL, &nt_name, NULL, 0, &wm )) != STATUS_SUCCESS)
+    if ((status = load_builtin_dll( params->DllPath.Buffer, &nt_name, NULL, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         exit(1);
@@ -4527,7 +4537,6 @@ void __wine_process_init(void)
 
     init_locale( wm->ldr.BaseAddress );
 
-    params = peb->ProcessParameters;
     if (!(status = load_dll( params->DllPath.Buffer, params->ImagePathName.Buffer, NULL,
                              DONT_RESOLVE_DLL_REFERENCES, &wm )))
     {
