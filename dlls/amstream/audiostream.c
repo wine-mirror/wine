@@ -27,10 +27,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 static const WCHAR sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
+struct audio_stream
+{
+    IAMMediaStream IAMMediaStream_iface;
+    IAudioMediaStream IAudioMediaStream_iface;
+    IMemInputPin IMemInputPin_iface;
+    IPin IPin_iface;
+    LONG ref;
+
+    IMultiMediaStream* parent;
+    MSPID purpose_id;
+    STREAM_TYPE stream_type;
+    CRITICAL_SECTION cs;
+    IMediaStreamFilter *filter;
+
+    IPin *peer;
+    IMemAllocator *allocator;
+    AM_MEDIA_TYPE mt;
+    WAVEFORMATEX format;
+    FILTER_STATE state;
+};
+
 typedef struct {
     IAudioStreamSample IAudioStreamSample_iface;
     LONG ref;
-    IMediaStream *parent;
+    struct audio_stream *parent;
     IAudioData *audio_data;
 } IAudioStreamSampleImpl;
 
@@ -146,7 +167,7 @@ static const struct IAudioStreamSampleVtbl AudioStreamSample_Vtbl =
     IAudioStreamSampleImpl_GetAudioData
 };
 
-static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *audio_data, IAudioStreamSample **audio_stream_sample)
+static HRESULT audiostreamsample_create(struct audio_stream *parent, IAudioData *audio_data, IAudioStreamSample **audio_stream_sample)
 {
     IAudioStreamSampleImpl *object;
 
@@ -158,34 +179,13 @@ static HRESULT audiostreamsample_create(IAudioMediaStream *parent, IAudioData *a
 
     object->IAudioStreamSample_iface.lpVtbl = &AudioStreamSample_Vtbl;
     object->ref = 1;
-    object->parent = (IMediaStream*)parent;
+    object->parent = parent;
     object->audio_data = audio_data;
 
     *audio_stream_sample = &object->IAudioStreamSample_iface;
 
     return S_OK;
 }
-
-struct audio_stream
-{
-    IAMMediaStream IAMMediaStream_iface;
-    IAudioMediaStream IAudioMediaStream_iface;
-    IMemInputPin IMemInputPin_iface;
-    IPin IPin_iface;
-    LONG ref;
-
-    IMultiMediaStream* parent;
-    MSPID purpose_id;
-    STREAM_TYPE stream_type;
-    CRITICAL_SECTION cs;
-    IMediaStreamFilter *filter;
-
-    IPin *peer;
-    IMemAllocator *allocator;
-    AM_MEDIA_TYPE mt;
-    WAVEFORMATEX format;
-    FILTER_STATE state;
-};
 
 static inline struct audio_stream *impl_from_IAMMediaStream(IAMMediaStream *iface)
 {
@@ -565,7 +565,7 @@ static HRESULT WINAPI audio_IAudioMediaStream_CreateSample(IAudioMediaStream *if
     if (!audio_data)
         return E_POINTER;
 
-    return audiostreamsample_create(iface, audio_data, sample);
+    return audiostreamsample_create(This, audio_data, sample);
 }
 
 static const struct IAudioMediaStreamVtbl audio_IAudioMediaStream_vtbl =
