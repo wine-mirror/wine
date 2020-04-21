@@ -100,12 +100,17 @@ typedef struct {
     const wchar_t *locnameW;
 } __lc_time_data;
 
+typedef void (__cdecl *_se_translator_function)(unsigned int code, struct _EXCEPTION_POINTERS *info);
+
 static LONGLONG crt_init_end;
 
 _ACRTIMP int __cdecl _o__initialize_onexit_table(_onexit_table_t *table);
 _ACRTIMP int __cdecl _o__register_onexit_function(_onexit_table_t *table, _onexit_t func);
 _ACRTIMP int __cdecl _o__execute_onexit_table(_onexit_table_t *table);
 _ACRTIMP void *__cdecl _o_malloc(size_t);
+_se_translator_function __cdecl _set_se_translator(_se_translator_function func);
+void** __cdecl __current_exception(void);
+int* __cdecl __processing_throw(void);
 
 static void test__initialize_onexit_table(void)
 {
@@ -1297,6 +1302,26 @@ static void test_clock(void)
             c, expect_min - thresh, expect_min + max_load_delay);
 }
 
+static void __cdecl se_translator(unsigned int u, EXCEPTION_POINTERS *ep)
+{
+}
+
+static void test_thread_storage(void)
+{
+    void **current_exception;
+    void *processing_throw;
+
+    _set_se_translator(se_translator);
+    current_exception = __current_exception();
+    processing_throw = __processing_throw();
+
+    ok(current_exception+2 == processing_throw,
+            "current_exception = %p, processing_throw = %p\n",
+            current_exception, processing_throw);
+    ok(current_exception[-2] == se_translator,
+            "can't find se_translator in thread storage\n");
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1335,4 +1360,5 @@ START_TEST(misc)
     test__stat32();
     test__o_malloc();
     test_clock();
+    test_thread_storage();
 }

@@ -1139,8 +1139,7 @@ struct __thread_data {
     void*                           terminate_handler;
     void*                           unexpected_handler;
     void*                           se_translator;
-    void                            *unk6[3];
-    int                             unk7;
+    void                            *unk6;
     EXCEPTION_RECORD                *exc_record;
 };
 
