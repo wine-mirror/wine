@@ -1041,18 +1041,22 @@ void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access
 void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_view *view,
         unsigned int value)
 {
-    struct wined3d_unordered_access_view_gl *view_gl = wined3d_unordered_access_view_gl(view);
-    const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_address dst, src;
     struct wined3d_context *context;
 
-    if (!view_gl->counter_bo.id)
+    if (!view->counter_bo)
         return;
 
-    context = context_acquire(view_gl->v.resource->device, NULL, 0);
-    gl_info = wined3d_context_gl(context)->gl_info;
-    GL_EXTCALL(glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, view_gl->counter_bo.id));
-    GL_EXTCALL(glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(value), &value));
-    checkGLcall("set atomic counter");
+    context = context_acquire(view->resource->device, NULL, 0);
+
+    src.buffer_object = 0;
+    src.addr = (void *)&value;
+
+    dst.buffer_object = view->counter_bo;
+    dst.addr = NULL;
+
+    wined3d_context_copy_bo_address(context, &dst, WINED3D_BIND_UNORDERED_ACCESS, &src, 0, sizeof(uint32_t));
+
     context_release(context);
 }
 
