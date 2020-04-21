@@ -92,7 +92,7 @@ void WINECON_ResizeWithContainer(struct inner_data* data, int width, int height)
 {
     struct config_data  cfg;
 
-    if (data->in_set_config) return;
+    if (data->in_set_config || data->in_grab_changes) return;
 
     cfg = data->curcfg;
     cfg.win_width  = width;
