@@ -1271,6 +1271,7 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_SetCurrentMediaType(IMF
 {
     struct audio_renderer *renderer = impl_from_IMFMediaTypeHandler(iface);
     const unsigned int test_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
+    BOOL compare_result;
     unsigned int flags;
     HRESULT hr = S_OK;
 
@@ -1287,7 +1288,16 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_SetCurrentMediaType(IMF
         renderer->current_media_type = media_type;
         IMFMediaType_AddRef(renderer->current_media_type);
 
-        hr = audio_renderer_create_audio_client(renderer);
+        if (SUCCEEDED(hr = audio_renderer_create_audio_client(renderer)))
+        {
+            if (SUCCEEDED(IMFMediaType_Compare(renderer->media_type, (IMFAttributes *)media_type, MF_ATTRIBUTES_MATCH_OUR_ITEMS,
+                    &compare_result)) && !compare_result)
+            {
+                IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkFormatInvalidated, &GUID_NULL,
+                        S_OK, NULL);
+                audio_renderer_preroll(renderer);
+            }
+        }
     }
     else
         hr = MF_E_INVALIDMEDIATYPE;
