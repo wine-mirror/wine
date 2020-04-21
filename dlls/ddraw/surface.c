@@ -3931,14 +3931,7 @@ static HRESULT WINAPI ddraw_surface7_UpdateOverlay(IDirectDrawSurface7 *iface, R
             src_rect, dst_wined3d_texture, dst_sub_resource_idx, dst_rect, flags);
     wined3d_mutex_unlock();
 
-    switch (hr)
-    {
-        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
-        case WINEDDERR_NOTAOVERLAYSURFACE:  return DDERR_NOTAOVERLAYSURFACE;
-        case WINEDDERR_OVERLAYNOTVISIBLE:   return DDERR_OVERLAYNOTVISIBLE;
-        default:
-            return hr;
-    }
+    return hr_ddraw_from_wined3d(hr);
 }
 
 static HRESULT WINAPI ddraw_surface4_UpdateOverlay(IDirectDrawSurface4 *iface, RECT *src_rect,

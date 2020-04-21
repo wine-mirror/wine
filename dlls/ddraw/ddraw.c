@@ -1146,11 +1146,7 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
 
     wined3d_mutex_unlock();
 
-    switch (hr)
-    {
-        case WINED3DERR_NOTAVAILABLE: return DDERR_UNSUPPORTED;
-        default:                      return hr;
-    }
+    return hr_ddraw_from_wined3d(hr);
 }
 
 static HRESULT WINAPI ddraw4_SetDisplayMode(IDirectDraw4 *iface, DWORD width, DWORD height,
