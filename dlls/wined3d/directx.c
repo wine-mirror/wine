@@ -1755,7 +1755,7 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d,
             debug_d3dformat(backbuffer_format), windowed);
 
     /* The task of this function is to check whether a certain display / backbuffer format
-     * combination is available on the given adapter. In fullscreen mode microsoft specified
+     * combination is available on the given output. In fullscreen mode microsoft specified
      * that the display format shouldn't provide alpha and that ignoring alpha the backbuffer
      * and display format should match exactly.
      * In windowed mode format conversion can occur and this depends on the driver. */
