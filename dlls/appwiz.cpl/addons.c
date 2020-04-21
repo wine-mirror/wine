@@ -46,15 +46,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
 #define GECKO_VERSION "2.47.1"
-
 #ifdef __i386__
-#define ARCH_STRING "x86"
+#define GECKO_ARCH "x86"
 #define GECKO_SHA "f00b0e2892404827e8ce6811dedfc25ae699a09955bb3df1bbb31753e51da051"
 #elif defined(__x86_64__)
-#define ARCH_STRING "x86_64"
+#define GECKO_ARCH "x86_64"
 #define GECKO_SHA "69312e79a988da3e7d292382005e92bc4d4b2a52a23c34440ae3007feb57474a"
 #else
-#define ARCH_STRING ""
+#define GECKO_ARCH ""
 #define GECKO_SHA "???"
 #endif
 
@@ -85,7 +84,7 @@ typedef struct {
 static const addon_info_t addons_info[] = {
     {
         GECKO_VERSION,
-        L"wine-gecko-" GECKO_VERSION "-" ARCH_STRING ".msi",
+        L"wine-gecko-" GECKO_VERSION "-" GECKO_ARCH ".msi",
         L"gecko",
         GECKO_SHA,
         "http://source.winehq.org/winegecko.php",
@@ -623,7 +622,7 @@ static void append_url_params( WCHAR *url )
 
     memcpy(url+len, arch_formatW, sizeof(arch_formatW));
     len += ARRAY_SIZE(arch_formatW);
-    len += MultiByteToWideChar(CP_ACP, 0, ARCH_STRING, sizeof(ARCH_STRING),
+    len += MultiByteToWideChar(CP_ACP, 0, GECKO_ARCH, sizeof(GECKO_ARCH),
                                url+len, size/sizeof(WCHAR)-len)-1;
     memcpy(url+len, v_formatW, sizeof(v_formatW));
     len += ARRAY_SIZE(v_formatW);
@@ -767,7 +766,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 BOOL install_addon(addon_t addon_type)
 {
-    if(!*ARCH_STRING)
+    if(!*GECKO_ARCH)
         return FALSE;
 
     addon = addons_info+addon_type;
