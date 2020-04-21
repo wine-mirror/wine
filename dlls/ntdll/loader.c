@@ -4009,6 +4009,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         wm->ldr.LoadCount = -1;
+        wm->ldr.Flags |= LDR_PROCESS_ATTACHED;  /* don't try to attach again */
         if (wm->ldr.ActivationContext)
             RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
 
