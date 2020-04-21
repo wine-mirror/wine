@@ -1236,6 +1236,7 @@ static GUID const * const tiff_decode_formats[] = {
     &GUID_WICPixelFormat48bppRGB,
     &GUID_WICPixelFormat64bppRGBA,
     &GUID_WICPixelFormat64bppPRGBA,
+    &GUID_WICPixelFormat128bppRGBAFloat,
     NULL
 };
 
@@ -1766,6 +1767,11 @@ static BYTE const channel_mask_16bit4[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 
 static BYTE const channel_mask_32bit[] = { 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
 
+static BYTE const channel_mask_128bit1[] = { 0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
+static BYTE const channel_mask_128bit2[] = { 0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
+static BYTE const channel_mask_128bit3[] = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00 };
+static BYTE const channel_mask_128bit4[] = { 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff };
+
 static BYTE const channel_mask_5bit[] = { 0x1f, 0x00 };
 static BYTE const channel_mask_5bit2[] = { 0xe0, 0x03 };
 static BYTE const channel_mask_5bit3[] = { 0x00, 0x7c };
@@ -1783,6 +1789,7 @@ static BYTE const * const channel_masks_16bit[] = { channel_mask_16bit,
     channel_mask_16bit2, channel_mask_16bit3, channel_mask_16bit4};
 
 static BYTE const * const channel_masks_32bit[] = { channel_mask_32bit };
+static BYTE const * const channel_masks_128bit[] = { channel_mask_128bit1, channel_mask_128bit2, channel_mask_128bit3, channel_mask_128bit4 };
 
 static BYTE const * const channel_masks_BGRA5551[] = { channel_mask_5bit,
     channel_mask_5bit2, channel_mask_5bit3, channel_mask_5bit4 };
@@ -2065,6 +2072,17 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         channel_masks_8bit,
         WICPixelFormatNumericRepresentationUnsignedInteger,
         0
+    },
+    {   &GUID_WICPixelFormat128bppRGBAFloat,
+        "The Wine Project",
+        "128bpp RGBAFloat",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        128, /* bitsperpixel */
+        4, /* channel count */
+        channel_masks_128bit,
+        WICPixelFormatNumericRepresentationFloat,
+        1
     },
     { NULL }			/* list terminator */
 };

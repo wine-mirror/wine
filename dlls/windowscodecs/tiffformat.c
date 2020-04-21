@@ -464,9 +464,17 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
                     return E_FAIL;
                 }
             break;
+        case 32:
+            if (samples != 4)
+            {
+                FIXME("unhandled 32bpp RGB sample count %u\n", samples);
+                return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+            }
+            decode_info->format = &GUID_WICPixelFormat128bppRGBAFloat;
+            break;
         default:
-            FIXME("unhandled RGB bit count %u\n", bps);
-            return E_FAIL;
+            WARN("unhandled RGB bit count %u\n", bps);
+            return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
         }
         break;
     case 3: /* RGB Palette */
