@@ -1180,7 +1180,6 @@ static void build(struct options* opts)
         add_library(opts, lib_dirs, files, "kernel32");
         add_library(opts, lib_dirs, files, "ntdll");
     }
-    if (!opts->nostdlib && !is_pe) add_library(opts, lib_dirs, files, "wine");
 
     /* set default entry point, if needed */
     if (!opts->entry_point)
