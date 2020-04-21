@@ -2811,9 +2811,13 @@ if (SUCCEEDED(hr))
     IUnknown_Release(unk);
 
     /* Clock */
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&unk);
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&state_sink);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+
+    hr = IMFClockStateSink_OnClockStart(state_sink, 0, 0);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    IMFClockStateSink_Release(state_sink);
 
     hr = IMFMediaSink_SetPresentationClock(sink, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -2946,6 +2950,36 @@ todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     IMFMediaTypeHandler_Release(handler);
+
+    /* State change with initialized stream. */
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&state_sink);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStart(state_sink, 0, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStart(state_sink, 0, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockPause(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockPause(state_sink, 0);
+    ok(hr == MF_E_INVALID_STATE_TRANSITION, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockRestart(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockRestart(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFClockStateSink_Release(state_sink);
 
     IMFStreamSink_Release(stream_sink);
 
