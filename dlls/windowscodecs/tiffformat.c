@@ -319,6 +319,8 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     }
     decode_info->planar = planar;
 
+    TRACE("planar %u, photometric %u, samples %u, bps %u\n", planar, photometric, samples, bps);
+
     switch(photometric)
     {
     case 0: /* WhiteIsZero */
@@ -383,9 +385,25 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
                 }
             }
             break;
+        case 16:
+            if (samples != 1)
+            {
+                FIXME("unhandled 16bpp grayscale sample count %u\n", samples);
+                return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+            }
+            decode_info->format = &GUID_WICPixelFormat16bppGray;
+            break;
+        case 32:
+            if (samples != 1)
+            {
+                FIXME("unhandled 32bpp grayscale sample count %u\n", samples);
+                return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+            }
+            decode_info->format = &GUID_WICPixelFormat32bppGrayFloat;
+            break;
         default:
-            FIXME("unhandled greyscale bit count %u\n", bps);
-            return E_FAIL;
+            WARN("unhandled greyscale bit count %u\n", bps);
+            return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
         }
         break;
     case 2: /* RGB */
