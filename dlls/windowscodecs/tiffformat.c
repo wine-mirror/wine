@@ -407,8 +407,6 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         }
         break;
     case 2: /* RGB */
-        decode_info->bpp = bps * samples;
-
         if (samples == 4)
         {
             ret = pTIFFGetField(tiff, TIFFTAG_EXTRASAMPLES, &extra_sample_count, &extra_samples);
@@ -425,8 +423,11 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             return E_FAIL;
         }
 
+        decode_info->bpp = max(bps, 8) * samples;
+        decode_info->source_bpp = bps * samples;
         switch(bps)
         {
+        case 1:
         case 8:
             decode_info->reverse_bgr = 1;
             if (samples == 3)
@@ -1039,8 +1040,79 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
     if (ret == -1)
         return E_FAIL;
 
+    /* 3bps RGB */
+    if (This->decode_info.source_bpp == 3 && This->decode_info.samples == 3 && This->decode_info.bpp == 24)
+    {
+        BYTE *srcdata, *src, *dst;
+        DWORD x, y, count, width_bytes = (This->decode_info.tile_width * 3 + 7) / 8;
+
+        count = width_bytes * This->decode_info.tile_height;
+
+        srcdata = HeapAlloc(GetProcessHeap(), 0, count);
+        if (!srcdata) return E_OUTOFMEMORY;
+        memcpy(srcdata, This->cached_tile, count);
+
+        for (y = 0; y < This->decode_info.tile_height; y++)
+        {
+            src = srcdata + y * width_bytes;
+            dst = This->cached_tile + y * This->decode_info.tile_width * 3;
+
+            for (x = 0; x < This->decode_info.tile_width; x += 8)
+            {
+                dst[2] = (src[0] & 0x80) ? 0xff : 0; /* R */
+                dst[1] = (src[0] & 0x40) ? 0xff : 0; /* G */
+                dst[0] = (src[0] & 0x20) ? 0xff : 0; /* B */
+                if (x + 1 < This->decode_info.tile_width)
+                {
+                    dst[5] = (src[0] & 0x10) ? 0xff : 0; /* R */
+                    dst[4] = (src[0] & 0x08) ? 0xff : 0; /* G */
+                    dst[3] = (src[0] & 0x04) ? 0xff : 0; /* B */
+                }
+                if (x + 2 < This->decode_info.tile_width)
+                {
+                    dst[8] = (src[0] & 0x02) ? 0xff : 0; /* R */
+                    dst[7] = (src[0] & 0x01) ? 0xff : 0; /* G */
+                    dst[6]  = (src[1] & 0x80) ? 0xff : 0; /* B */
+                }
+                if (x + 3 < This->decode_info.tile_width)
+                {
+                    dst[11] = (src[1] & 0x40) ? 0xff : 0; /* R */
+                    dst[10] = (src[1] & 0x20) ? 0xff : 0; /* G */
+                    dst[9]  = (src[1] & 0x10) ? 0xff : 0; /* B */
+                }
+                if (x + 4 < This->decode_info.tile_width)
+                {
+                    dst[14] = (src[1] & 0x08) ? 0xff : 0; /* R */
+                    dst[13] = (src[1] & 0x04) ? 0xff : 0; /* G */
+                    dst[12] = (src[1] & 0x02) ? 0xff : 0; /* B */
+                }
+                if (x + 5 < This->decode_info.tile_width)
+                {
+                    dst[17] = (src[1] & 0x01) ? 0xff : 0; /* R */
+                    dst[16] = (src[2] & 0x80) ? 0xff : 0; /* G */
+                    dst[15] = (src[2] & 0x40) ? 0xff : 0; /* B */
+                }
+                if (x + 6 < This->decode_info.tile_width)
+                {
+                    dst[20] = (src[2] & 0x20) ? 0xff : 0; /* R */
+                    dst[19] = (src[2] & 0x10) ? 0xff : 0; /* G */
+                    dst[18] = (src[2] & 0x08) ? 0xff : 0; /* B */
+                }
+                if (x + 7 < This->decode_info.tile_width)
+                {
+                    dst[23] = (src[2] & 0x04) ? 0xff : 0; /* R */
+                    dst[22] = (src[2] & 0x02) ? 0xff : 0; /* G */
+                    dst[21] = (src[2] & 0x01) ? 0xff : 0; /* B */
+                }
+                src += 3;
+                dst += 24;
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, srcdata);
+    }
     /* 8bpp grayscale with extra alpha */
-    if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 2 && This->decode_info.bpp == 32)
+    else if (This->decode_info.source_bpp == 16 && This->decode_info.samples == 2 && This->decode_info.bpp == 32)
     {
         BYTE *src;
         DWORD *dst, count = This->decode_info.tile_width * This->decode_info.tile_height;
