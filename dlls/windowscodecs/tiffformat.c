@@ -505,8 +505,31 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             return E_NOTIMPL;
         }
         break;
+
+    case 5: /* Separated */
+        if (samples != 4)
+        {
+            FIXME("unhandled Separated sample count %u\n", samples);
+            return E_FAIL;
+        }
+
+        decode_info->bpp = bps * samples;
+        switch(bps)
+        {
+        case 8:
+            decode_info->format = &GUID_WICPixelFormat32bppCMYK;
+            break;
+        case 16:
+            decode_info->format = &GUID_WICPixelFormat64bppCMYK;
+            break;
+
+        default:
+            WARN("unhandled Separated bit count %u\n", bps);
+            return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+        }
+        break;
+
     case 4: /* Transparency mask */
-    case 5: /* CMYK */
     case 6: /* YCbCr */
     case 8: /* CIELab */
     default:
