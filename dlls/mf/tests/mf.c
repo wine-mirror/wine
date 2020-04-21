@@ -2970,8 +2970,10 @@ todo_wine
         IUnknown_Release(unk);
 
     /* Shutdown */
+    EXPECT_REF(present_clock, 2);
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    EXPECT_REF(present_clock, 1);
 
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);

@@ -282,6 +282,21 @@ static HRESULT WINAPI audio_renderer_sink_GetStreamSinkById(IMFMediaSink *iface,
     return hr;
 }
 
+static void audio_renderer_set_presentation_clock(struct audio_renderer *renderer, IMFPresentationClock *clock)
+{
+    if (renderer->clock)
+    {
+        IMFPresentationClock_RemoveClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
+        IMFPresentationClock_Release(renderer->clock);
+    }
+    renderer->clock = clock;
+    if (renderer->clock)
+    {
+        IMFPresentationClock_AddRef(renderer->clock);
+        IMFPresentationClock_AddClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
+    }
+}
+
 static HRESULT WINAPI audio_renderer_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
@@ -294,19 +309,7 @@ static HRESULT WINAPI audio_renderer_sink_SetPresentationClock(IMFMediaSink *ifa
     if (renderer->is_shut_down)
         hr = MF_E_SHUTDOWN;
     else
-    {
-        if (renderer->clock)
-        {
-            IMFPresentationClock_RemoveClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
-            IMFPresentationClock_Release(renderer->clock);
-        }
-        renderer->clock = clock;
-        if (renderer->clock)
-        {
-            IMFPresentationClock_AddRef(renderer->clock);
-            IMFPresentationClock_AddClockStateSink(renderer->clock, &renderer->IMFClockStateSink_iface);
-        }
-    }
+        audio_renderer_set_presentation_clock(renderer, clock);
 
     LeaveCriticalSection(&renderer->cs);
 
@@ -353,6 +356,7 @@ static HRESULT WINAPI audio_renderer_sink_Shutdown(IMFMediaSink *iface)
     renderer->is_shut_down = TRUE;
     IMFMediaEventQueue_Shutdown(renderer->event_queue);
     IMFMediaEventQueue_Shutdown(renderer->stream_event_queue);
+    audio_renderer_set_presentation_clock(renderer, NULL);
     LeaveCriticalSection(&renderer->cs);
 
     return S_OK;
