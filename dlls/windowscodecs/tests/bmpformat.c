@@ -22,7 +22,6 @@
 #define COBJMACROS
 
 #include "windef.h"
-#include "initguid.h"
 #include "objbase.h"
 #include "wincodec.h"
 #include "wincodecsdk.h"

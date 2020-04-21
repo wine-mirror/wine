@@ -27,6 +27,8 @@
 #include "winreg.h"
 #include "objbase.h"
 #include "ocidl.h"
+#include "wincodec.h"
+#include "wincodecsdk.h"
 #include "initguid.h"
 
 #include "wincodecs_private.h"
