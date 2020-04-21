@@ -361,6 +361,7 @@ static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture
     unsigned int size = texture->sub_resources[sub_resource_idx].size;
     struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_gl *src_bo, *dst_bo;
     struct wined3d_bo_address dst, src;
 
     if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
@@ -370,11 +371,11 @@ static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture
     wined3d_texture_get_memory(texture, sub_resource_idx, &src,
             texture->sub_resources[sub_resource_idx].locations);
 
-    if (dst.buffer_object)
+    if ((dst_bo = (struct wined3d_bo_gl *)dst.buffer_object))
     {
         context = context_acquire(device, NULL, 0);
         gl_info = wined3d_context_gl(context)->gl_info;
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst_bo->id));
         GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
         checkGLcall("PBO upload");
@@ -382,11 +383,11 @@ static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture
         return TRUE;
     }
 
-    if (src.buffer_object)
+    if ((src_bo = (struct wined3d_bo_gl *)src.buffer_object))
     {
         context = context_acquire(device, NULL, 0);
         gl_info = wined3d_context_gl(context)->gl_info;
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src_bo->id));
         GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
         checkGLcall("PBO download");
@@ -466,7 +467,7 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
     if (locations & WINED3D_LOCATION_BUFFER)
     {
         data->addr = NULL;
-        data->buffer_object = sub_resource->buffer_object;
+        data->buffer_object = (uintptr_t)&sub_resource->bo;
         return;
     }
     if (locations & WINED3D_LOCATION_USER_MEMORY)
@@ -492,18 +493,16 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
 static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
 {
-    uintptr_t *buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
-    GLuint bo;
+    struct wined3d_bo_gl *bo = &texture->sub_resources[sub_resource_idx].bo;
 
-    bo = *buffer_object;
-    GL_EXTCALL(glDeleteBuffers(1, &bo));
+    GL_EXTCALL(glDeleteBuffers(1, &bo->id));
     checkGLcall("glDeleteBuffers");
 
     TRACE("Deleted buffer object %u for texture %p, sub-resource %u.\n",
-            bo, texture, sub_resource_idx);
+            bo->id, texture, sub_resource_idx);
 
     wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
-    *buffer_object = 0;
+    bo->id = 0;
 }
 
 static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
@@ -1631,20 +1630,20 @@ static void wined3d_texture_prepare_buffer_object(struct wined3d_texture *textur
         unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_texture_sub_resource *sub_resource;
-    GLuint bo;
+    struct wined3d_bo_gl *bo;
 
     sub_resource = &texture->sub_resources[sub_resource_idx];
-    if (sub_resource->buffer_object)
+    bo = &sub_resource->bo;
+    if (bo->id)
         return;
 
-    GL_EXTCALL(glGenBuffers(1, &bo));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bo));
+    GL_EXTCALL(glGenBuffers(1, &bo->id));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bo->id));
     GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, sub_resource->size, NULL, GL_STREAM_DRAW));
     GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
     checkGLcall("Create buffer object");
 
-    sub_resource->buffer_object = bo;
-    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo, texture, sub_resource_idx);
+    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo->id, texture, sub_resource_idx);
 }
 
 static void wined3d_texture_force_reload(struct wined3d_texture *texture)
@@ -2186,7 +2185,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
     {
         if (bo.buffer_object)
         {
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, bo.buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, ((struct wined3d_bo_gl *)bo.buffer_object)->id));
             checkGLcall("glBindBuffer");
         }
 
@@ -2215,6 +2214,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
 static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl *texture_gl,
         unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl, const struct wined3d_bo_address *data)
 {
+    const struct wined3d_bo_gl *bo = (const struct wined3d_bo_gl *)data->buffer_object;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_texture_sub_resource *sub_resource;
     unsigned int dst_row_pitch, dst_slice_pitch;
@@ -2280,7 +2280,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
             return;
         }
 
-        if (data->buffer_object)
+        if (bo)
             ERR("NP2 emulated texture uses PBO unexpectedly.\n");
         if (texture_gl->t.resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
             ERR("Unexpected compressed format for NP2 emulated texture.\n");
@@ -2290,7 +2290,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
     {
         struct wined3d_format f;
 
-        if (data->buffer_object)
+        if (bo)
             ERR("Converted texture %p uses PBO unexpectedly.\n", texture_gl);
 
         WARN_(d3d_perf)("Downloading converted texture %p, %u with format %s.\n",
@@ -2315,9 +2315,9 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
     {
         mem = temporary_mem;
     }
-    else if (data->buffer_object)
+    else if (bo)
     {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data->buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, bo->id));
         checkGLcall("glBindBuffer");
         mem = data->addr;
     }
@@ -2418,9 +2418,9 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
     {
         unsigned int layer = sub_resource_idx / texture_gl->t.level_count;
         void *src_data = temporary_mem + layer * sub_resource->size;
-        if (data->buffer_object)
+        if (bo)
         {
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data->buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, bo->id));
             checkGLcall("glBindBuffer");
             GL_EXTCALL(glBufferSubData(GL_PIXEL_PACK_BUFFER, 0, sub_resource->size, src_data));
             checkGLcall("glBufferSubData");
@@ -2431,7 +2431,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
         }
     }
 
-    if (data->buffer_object)
+    if (bo)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
         checkGLcall("glBindBuffer");
@@ -2452,6 +2452,7 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
     unsigned int src_level, src_width, src_height, src_depth;
     unsigned int src_row_pitch, src_slice_pitch;
     const struct wined3d_format_gl *format_gl;
+    struct wined3d_bo_gl *dst_bo;
     BOOL srgb = FALSE;
     GLenum target;
 
@@ -2526,9 +2527,9 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
         return;
     }
 
-    if (dst_bo_addr->buffer_object)
+    if ((dst_bo = (struct wined3d_bo_gl *)dst_bo_addr->buffer_object))
     {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, dst_bo_addr->buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, dst_bo->id));
         checkGLcall("glBindBuffer");
     }
 
@@ -2549,7 +2550,7 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
         checkGLcall("glGetTexImage");
     }
 
-    if (dst_bo_addr->buffer_object)
+    if (dst_bo)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
         checkGLcall("glBindBuffer");
@@ -2793,7 +2794,7 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
      * getting called. */
-    if (conversion && sub_resource->buffer_object)
+    if (conversion && sub_resource->bo.id)
     {
         TRACE("Removing the pbo attached to texture %p, %u.\n", texture_gl, sub_resource_idx);
 
@@ -2936,7 +2937,7 @@ static void wined3d_texture_gl_unload_location(struct wined3d_texture *texture,
             sub_count = texture->level_count * texture->layer_count;
             for (i = 0; i < sub_count; ++i)
             {
-                if (texture_gl->t.sub_resources[i].buffer_object)
+                if (texture_gl->t.sub_resources[i].bo.id)
                     wined3d_texture_remove_buffer_object(&texture_gl->t, i, context_gl->gl_info);
             }
             break;

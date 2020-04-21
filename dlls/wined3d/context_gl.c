@@ -2528,13 +2528,14 @@ void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *data, size_t size, GLenum binding, DWORD flags)
 {
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_gl *bo;
     BYTE *memory;
 
-    if (!data->buffer_object)
+    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
         return data->addr;
 
     gl_info = context_gl->gl_info;
-    wined3d_context_gl_bind_bo(context_gl, binding, data->buffer_object);
+    wined3d_context_gl_bind_bo(context_gl, binding, bo->id);
 
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
@@ -2557,13 +2558,14 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, 
         GLenum binding, unsigned int range_count, const struct wined3d_range *ranges)
 {
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_gl *bo;
     unsigned int i;
 
-    if (!data->buffer_object)
+    if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
         return;
 
     gl_info = context_gl->gl_info;
-    wined3d_context_gl_bind_bo(context_gl, binding, data->buffer_object);
+    wined3d_context_gl_bind_bo(context_gl, binding, bo->id);
 
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
@@ -2583,17 +2585,20 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *src, GLenum src_binding, size_t size)
 {
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_gl *src_bo, *dst_bo;
     struct wined3d_range range;
     BYTE *dst_ptr, *src_ptr;
 
     gl_info = context_gl->gl_info;
+    src_bo = (struct wined3d_bo_gl *)src->buffer_object;
+    dst_bo = (struct wined3d_bo_gl *)dst->buffer_object;
 
-    if (dst->buffer_object && src->buffer_object)
+    if (dst_bo && src_bo)
     {
         if (gl_info->supported[ARB_COPY_BUFFER])
         {
-            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src->buffer_object));
-            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst->buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_COPY_READ_BUFFER, src_bo->id));
+            GL_EXTCALL(glBindBuffer(GL_COPY_WRITE_BUFFER, dst_bo->id));
             GL_EXTCALL(glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
                     (GLintptr)src->addr, (GLintptr)dst->addr, size));
             checkGLcall("direct buffer copy");
@@ -2611,15 +2616,15 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
             wined3d_context_gl_unmap_bo_address(context_gl, src, src_binding, 0, NULL);
         }
     }
-    else if (!dst->buffer_object && src->buffer_object)
+    else if (!dst_bo && src_bo)
     {
-        wined3d_context_gl_bind_bo(context_gl, src_binding, src->buffer_object);
+        wined3d_context_gl_bind_bo(context_gl, src_binding, src_bo->id);
         GL_EXTCALL(glGetBufferSubData(src_binding, (GLintptr)src->addr, size, dst->addr));
         checkGLcall("buffer download");
     }
-    else if (dst->buffer_object && !src->buffer_object)
+    else if (dst_bo && !src_bo)
     {
-        wined3d_context_gl_bind_bo(context_gl, dst_binding, dst->buffer_object);
+        wined3d_context_gl_bind_bo(context_gl, dst_binding, dst_bo->id);
         GL_EXTCALL(glBufferSubData(dst_binding, (GLintptr)dst->addr, size, src->addr));
         checkGLcall("buffer upload");
     }
@@ -3489,8 +3494,8 @@ static void wined3d_context_gl_bind_unordered_access_views(struct wined3d_contex
         GL_EXTCALL(glBindImageTexture(i, texture_name, level, GL_TRUE, 0, GL_READ_WRITE,
                 format_gl->internal));
 
-        if (view_gl->counter_bo)
-            GL_EXTCALL(glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, i, view_gl->counter_bo));
+        if (view_gl->counter_bo.id)
+            GL_EXTCALL(glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, i, view_gl->counter_bo.id));
     }
     checkGLcall("Bind unordered access views");
 }
@@ -3908,9 +3913,9 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
     if (parameters->indirect)
     {
         const struct wined3d_indirect_dispatch_parameters *indirect = &parameters->u.indirect;
-        struct wined3d_buffer *buffer = indirect->buffer;
+        struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(indirect->buffer);
 
-        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer->buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer_gl->bo.id));
         GL_EXTCALL(glDispatchComputeIndirect((GLintptr)indirect->offset));
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
     }
@@ -4303,7 +4308,7 @@ static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_
         return;
     }
 
-    GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer->buffer_object));
+    GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, wined3d_buffer_gl(buffer)->bo.id));
 
     offset = (void *)(GLintptr)parameters->offset;
     if (idx_size)
@@ -4662,6 +4667,7 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
     const struct wined3d_format_gl *format_gl;
     unsigned int mapped_stage = 0;
     unsigned int texture_idx;
+    GLuint bo;
 
     for (texture_idx = 0; texture_idx < context_gl->c.d3d_info->limits.ffp_blend_stages; ++texture_idx)
     {
@@ -4683,11 +4689,12 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
             TRACE("Setting up texture %u, idx %u, coord_idx %u, data %s.\n",
                     texture_idx, mapped_stage, coord_idx, debug_bo_address(&e->data));
 
-            if (*current_bo != e->data.buffer_object)
+            bo = wined3d_bo_gl_id(e->data.buffer_object);
+            if (*current_bo != bo)
             {
-                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, bo));
                 checkGLcall("glBindBuffer");
-                *current_bo = e->data.buffer_object;
+                *current_bo = bo;
             }
 
             GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
@@ -4738,7 +4745,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_stream_info_element *e;
     const struct wined3d_format_gl *format_gl;
-    GLuint current_bo;
+    GLuint current_bo, bo;
 
     TRACE("context_gl %p, si %p, state %p.\n", context_gl, si, state);
 
@@ -4770,11 +4777,12 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         e = &si->elements[WINED3D_FFP_POSITION];
         format_gl = wined3d_format_gl(e->format);
 
-        if (current_bo != e->data.buffer_object)
+        bo = wined3d_bo_gl_id(e->data.buffer_object);
+        if (current_bo != bo)
         {
-            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, bo));
             checkGLcall("glBindBuffer");
-            current_bo = e->data.buffer_object;
+            current_bo = bo;
         }
 
         TRACE("glVertexPointer(%#x, %#x, %#x, %p);\n",
@@ -4793,11 +4801,12 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         e = &si->elements[WINED3D_FFP_NORMAL];
         format_gl = wined3d_format_gl(e->format);
 
-        if (current_bo != e->data.buffer_object)
+        bo = wined3d_bo_gl_id(e->data.buffer_object);
+        if (current_bo != bo)
         {
-            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, bo));
             checkGLcall("glBindBuffer");
-            current_bo = e->data.buffer_object;
+            current_bo = bo;
         }
 
         TRACE("glNormalPointer(%#x, %#x, %p);\n", format_gl->vtx_type, e->stride,
@@ -4821,11 +4830,12 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         e = &si->elements[WINED3D_FFP_DIFFUSE];
         format_gl = wined3d_format_gl(e->format);
 
-        if (current_bo != e->data.buffer_object)
+        bo = wined3d_bo_gl_id(e->data.buffer_object);
+        if (current_bo != bo)
         {
-            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+            GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, bo));
             checkGLcall("glBindBuffer");
-            current_bo = e->data.buffer_object;
+            current_bo = bo;
         }
 
         TRACE("glColorPointer(%#x, %#x %#x, %p);\n",
@@ -4860,11 +4870,12 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
             type = format_gl->vtx_type;
             format = format_gl->vtx_format;
 
-            if (current_bo != e->data.buffer_object)
+            bo = wined3d_bo_gl_id(e->data.buffer_object);
+            if (current_bo != bo)
             {
-                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, e->data.buffer_object));
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, bo));
                 checkGLcall("glBindBuffer");
-                current_bo = e->data.buffer_object;
+                current_bo = bo;
             }
 
             if (format != 4 || (gl_info->quirks & WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA))
@@ -4957,7 +4968,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
     struct wined3d_context *context = &context_gl->c;
     const struct wined3d_shader *vs = state->shader[WINED3D_SHADER_TYPE_VERTEX];
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    GLuint current_bo;
+    GLuint current_bo, bo;
     unsigned int i;
 
     /* Default to no instancing. */
@@ -5021,11 +5032,12 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
         {
             DWORD format_flags = format_gl->f.flags[WINED3D_GL_RES_TYPE_BUFFER];
 
-            if (current_bo != element->data.buffer_object)
+            bo = wined3d_bo_gl_id(element->data.buffer_object);
+            if (current_bo != bo)
             {
-                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, element->data.buffer_object));
+                GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, bo));
                 checkGLcall("glBindBuffer");
-                current_bo = element->data.buffer_object;
+                current_bo = bo;
             }
             /* Use the VBO to find out if a vertex buffer exists, not the vb
              * pointer. vb can point to a user pointer data blob. In that case

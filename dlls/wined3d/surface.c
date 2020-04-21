@@ -742,7 +742,7 @@ void texture2d_read_from_framebuffer(struct wined3d_texture *texture, unsigned i
 
     if (data.buffer_object)
     {
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, data.buffer_object));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, ((struct wined3d_bo_gl *)data.buffer_object)->id));
         checkGLcall("glBindBuffer");
     }
 

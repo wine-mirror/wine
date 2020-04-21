@@ -135,7 +135,7 @@ void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD loc
 /* Context activation is done by the caller. */
 static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct wined3d_context_gl *context_gl)
 {
-    wined3d_context_gl_bind_bo(context_gl, buffer_gl->buffer_type_hint, buffer_gl->b.buffer_object);
+    wined3d_context_gl_bind_bo(context_gl, buffer_gl->buffer_type_hint, buffer_gl->bo.id);
 }
 
 /* Context activation is done by the caller. */
@@ -146,7 +146,6 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
     struct wined3d_resource *resource = &buffer_gl->b.resource;
     struct wined3d_buffer *buffer = &buffer_gl->b;
     struct wined3d_cs *cs = resource->device->cs;
-    GLuint bo;
 
     if (!buffer_gl->b.buffer_object)
         return;
@@ -186,10 +185,10 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
         }
     }
 
-    bo = buffer_gl->b.buffer_object;
-    GL_EXTCALL(glDeleteBuffers(1, &bo));
+    GL_EXTCALL(glDeleteBuffers(1, &buffer_gl->bo.id));
     checkGLcall("glDeleteBuffers");
     buffer_gl->b.buffer_object = 0;
+    buffer_gl->bo.id = 0;
 
     if (buffer_gl->b.fence)
     {
@@ -205,8 +204,8 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     GLenum gl_usage = GL_STATIC_DRAW;
+    struct wined3d_bo_gl *bo;
     GLenum error;
-    GLuint bo;
 
     TRACE("Creating an OpenGL buffer object for wined3d buffer %p with usage %s.\n",
             buffer_gl, debug_d3dusage(buffer_gl->b.resource.usage));
@@ -224,10 +223,11 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
      * to be verified to check if the rhw and color values are in the correct
      * format. */
 
-    GL_EXTCALL(glGenBuffers(1, &bo));
-    buffer_gl->b.buffer_object = bo;
+    bo = &buffer_gl->bo;
+    GL_EXTCALL(glGenBuffers(1, &bo->id));
+    buffer_gl->b.buffer_object = (uintptr_t)bo;
     error = gl_info->gl_ops.gl.p_glGetError();
-    if (!buffer_gl->b.buffer_object || error != GL_NO_ERROR)
+    if (!bo->id || error != GL_NO_ERROR)
     {
         ERR("Failed to create a BO with error %s (%#x).\n", debug_glerror(error), error);
         goto fail;

@@ -1519,6 +1519,16 @@ do {                                                                \
 #define checkGLcall(A) do {} while(0)
 #endif
 
+struct wined3d_bo_gl
+{
+    GLuint id;
+};
+
+static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
+{
+    return bo ? ((struct wined3d_bo_gl *)bo)->id : 0;
+}
+
 struct wined3d_bo_vk
 {
     VkBuffer vk_buffer;
@@ -3800,7 +3810,7 @@ struct wined3d_texture
         unsigned int map_count;
         uint32_t map_flags;
         DWORD locations;
-        uintptr_t buffer_object;
+        struct wined3d_bo_gl bo;
     } *sub_resources;
 };
 
@@ -4410,11 +4420,17 @@ struct wined3d_buffer_gl
 {
     struct wined3d_buffer b;
 
+    struct wined3d_bo_gl bo;
     GLenum buffer_object_usage;
     GLenum buffer_type_hint;
 };
 
 static inline struct wined3d_buffer_gl *wined3d_buffer_gl(struct wined3d_buffer *buffer)
+{
+    return CONTAINING_RECORD(buffer, struct wined3d_buffer_gl, b);
+}
+
+static inline const struct wined3d_buffer_gl *wined3d_buffer_gl_const(const struct wined3d_buffer *buffer)
 {
     return CONTAINING_RECORD(buffer, struct wined3d_buffer_gl, b);
 }
@@ -4581,7 +4597,7 @@ struct wined3d_unordered_access_view_gl
 {
     struct wined3d_unordered_access_view v;
     struct wined3d_gl_view gl_view;
-    GLuint counter_bo;
+    struct wined3d_bo_gl counter_bo;
 };
 
 static inline struct wined3d_unordered_access_view_gl *wined3d_unordered_access_view_gl(

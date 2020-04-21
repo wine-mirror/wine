@@ -4825,7 +4825,7 @@ struct wined3d_view_gl_destroy_ctx
 {
     struct wined3d_device *device;
     const struct wined3d_gl_view *gl_view;
-    GLuint *counter_bo;
+    struct wined3d_bo_gl *counter_bo;
     void *object;
     struct wined3d_view_gl_destroy_ctx *free;
 };
@@ -4836,10 +4836,12 @@ static void wined3d_view_gl_destroy_object(void *object)
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     struct wined3d_device *device;
+    GLuint counter_id;
 
     device = ctx->device;
 
-    if (ctx->gl_view->name || ctx->counter_bo)
+    counter_id = ctx->counter_bo ? ctx->counter_bo->id : 0;
+    if (ctx->gl_view->name || counter_id)
     {
         context = context_acquire(device, NULL, 0);
         gl_info = wined3d_context_gl(context)->gl_info;
@@ -4848,8 +4850,8 @@ static void wined3d_view_gl_destroy_object(void *object)
             context_gl_resource_released(device, ctx->gl_view->name, FALSE);
             gl_info->gl_ops.gl.p_glDeleteTextures(1, &ctx->gl_view->name);
         }
-        if (ctx->counter_bo)
-            GL_EXTCALL(glDeleteBuffers(1, ctx->counter_bo));
+        if (counter_id)
+            GL_EXTCALL(glDeleteBuffers(1, &counter_id));
         checkGLcall("delete resources");
         context_release(context);
     }
@@ -4859,7 +4861,7 @@ static void wined3d_view_gl_destroy_object(void *object)
 }
 
 static void wined3d_view_gl_destroy(struct wined3d_device *device,
-        const struct wined3d_gl_view *gl_view, GLuint *counter_bo, void *object)
+        const struct wined3d_gl_view *gl_view, struct wined3d_bo_gl *counter_bo, void *object)
 {
     struct wined3d_view_gl_destroy_ctx *ctx, c;
 
