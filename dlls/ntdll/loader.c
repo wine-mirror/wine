@@ -600,6 +600,27 @@ static WINE_MODREF *find_so_module( void *handle )
 
 
 /*************************************************************************
+ *		grow_module_deps
+ */
+static WINE_MODREF **grow_module_deps( WINE_MODREF *wm, int count )
+{
+    WINE_MODREF **deps;
+
+    if (wm->alloc_deps)
+        deps = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, wm->deps,
+                                  (wm->alloc_deps + count) * sizeof(*deps) );
+    else
+        deps = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(*deps) );
+
+    if (deps)
+    {
+        wm->deps = deps;
+        wm->alloc_deps += count;
+    }
+    return deps;
+}
+
+/*************************************************************************
  *		find_forwarded_export
  *
  * Find the final function pointer for a forwarded function.
@@ -632,18 +653,8 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
         {
             if (!imports_fixup_done && current_modref)
             {
-                WINE_MODREF **deps;
-                if (current_modref->alloc_deps)
-                    deps = RtlReAllocateHeap( GetProcessHeap(), 0, current_modref->deps,
-                                              (current_modref->alloc_deps + 1) * sizeof(*deps) );
-                else
-                    deps = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*deps) );
-                if (deps)
-                {
-                    deps[current_modref->nDeps++] = wm;
-                    current_modref->deps = deps;
-                    current_modref->alloc_deps++;
-                }
+                WINE_MODREF **deps = grow_module_deps( current_modref, 1 );
+                if (deps) deps[current_modref->nDeps++] = wm;
             }
             else if (process_attach( wm, NULL ) != STATUS_SUCCESS)
             {
@@ -1087,9 +1098,8 @@ static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void *
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
 
+    if (!grow_module_deps( wm, 1 )) return STATUS_NO_MEMORY;
     wm->nDeps = 1;
-    wm->alloc_deps = 1;
-    wm->deps  = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(WINE_MODREF *) );
 
     prev = current_modref;
     current_modref = wm;
@@ -1144,13 +1154,10 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     while (imports[nb_imports].Name && imports[nb_imports].FirstThunk) nb_imports++;
 
     if (!nb_imports) return STATUS_SUCCESS;  /* no imports */
+    if (!grow_module_deps( wm, nb_imports )) return STATUS_NO_MEMORY;
 
     if (!create_module_activation_context( &wm->ldr ))
         RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
-
-    /* Allocate module dependency list */
-    wm->alloc_deps = nb_imports;
-    wm->deps  = RtlAllocateHeap( GetProcessHeap(), 0, nb_imports*sizeof(WINE_MODREF *) );
 
     /* load the imported modules. They are automatically
      * added to the modref list of the process.
