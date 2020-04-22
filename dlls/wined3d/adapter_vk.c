@@ -613,6 +613,26 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
         VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
 }
 
+static VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
+{
+    VkAccessFlags flags = 0;
+
+    if (usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+        flags |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    if (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+        flags |= VK_ACCESS_INDEX_READ_BIT;
+    if (usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+        flags |= VK_ACCESS_UNIFORM_READ_BIT;
+    if (usage & VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)
+        flags |= VK_ACCESS_SHADER_READ_BIT;
+    if (usage & VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)
+        flags |= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    if (usage & VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+        flags |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+
+    return flags;
+}
+
 static void *adapter_vk_map_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *data, size_t size, uint32_t bind_flags, uint32_t map_flags)
 {
@@ -644,7 +664,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
 
         vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier.pNext = NULL;
-        vk_barrier.srcAccessMask = vk_access_mask_from_bind_flags(bind_flags);
+        vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(bo->usage);
         vk_barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
         vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
