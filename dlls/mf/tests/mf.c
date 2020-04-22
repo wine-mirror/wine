@@ -2102,8 +2102,6 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to set time source, hr %#x.\n", hr);
     IMFPresentationTimeSource_Release(time_source);
 
-    IMFPresentationClock_Release(clock);
-
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
 
@@ -2221,8 +2219,10 @@ static void test_sample_grabber(void)
     hr = IMFStreamSink_GetEvent(stream, MF_EVENT_FLAG_NO_WAIT, &event);
     ok(hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#x.\n", hr);
 
+    EXPECT_REF(clock, 3);
     hr = IMFMediaSink_Shutdown(sink);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+    EXPECT_REF(clock, 1);
 
     hr = IMFMediaEventGenerator_GetEvent(eg, MF_EVENT_FLAG_NO_WAIT, &event);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
@@ -2355,6 +2355,7 @@ static void test_sample_grabber(void)
     IMFActivate_Release(activate);
 
     IMFMediaType_Release(media_type);
+    IMFPresentationClock_Release(clock);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

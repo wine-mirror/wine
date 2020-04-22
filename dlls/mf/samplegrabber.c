@@ -956,6 +956,31 @@ static HRESULT WINAPI sample_grabber_sink_GetStreamSinkById(IMFMediaSink *iface,
     return hr;
 }
 
+static void sample_grabber_set_presentation_clock(struct sample_grabber *grabber, IMFPresentationClock *clock)
+{
+    if (grabber->clock)
+    {
+        IMFPresentationClock_RemoveClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
+        IMFPresentationClock_Release(grabber->clock);
+        if (grabber->timer)
+        {
+            IMFTimer_Release(grabber->timer);
+            grabber->timer = NULL;
+        }
+    }
+    grabber->clock = clock;
+    if (grabber->clock)
+    {
+        IMFPresentationClock_AddRef(grabber->clock);
+        IMFPresentationClock_AddClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
+        if (FAILED(IMFPresentationClock_QueryInterface(grabber->clock, &IID_IMFTimer, (void **)&grabber->timer)))
+        {
+            WARN("Failed to get IMFTimer interface.\n");
+            grabber->timer = NULL;
+        }
+    }
+}
+
 static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *iface, IMFPresentationClock *clock)
 {
     struct sample_grabber *grabber = impl_from_IMFMediaSink(iface);
@@ -968,27 +993,7 @@ static HRESULT WINAPI sample_grabber_sink_SetPresentationClock(IMFMediaSink *ifa
     if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnSetPresentationClock(sample_grabber_get_callback(grabber),
             clock)))
     {
-        if (grabber->clock)
-        {
-            IMFPresentationClock_RemoveClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
-            IMFPresentationClock_Release(grabber->clock);
-            if (grabber->timer)
-            {
-                IMFTimer_Release(grabber->timer);
-                grabber->timer = NULL;
-            }
-        }
-        grabber->clock = clock;
-        if (grabber->clock)
-        {
-            IMFPresentationClock_AddRef(grabber->clock);
-            IMFPresentationClock_AddClockStateSink(grabber->clock, &grabber->IMFClockStateSink_iface);
-            if (FAILED(IMFPresentationClock_QueryInterface(grabber->clock, &IID_IMFTimer, (void **)&grabber->timer)))
-            {
-                WARN("Failed to get IMFTimer interface.\n");
-                grabber->timer = NULL;
-            }
-        }
+        sample_grabber_set_presentation_clock(grabber, clock);
     }
 
     LeaveCriticalSection(&grabber->cs);
@@ -1035,6 +1040,7 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
     grabber->is_shut_down = TRUE;
     if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
     {
+        sample_grabber_set_presentation_clock(grabber, NULL);
         IMFMediaEventQueue_Shutdown(grabber->stream_event_queue);
         IMFMediaEventQueue_Shutdown(grabber->event_queue);
     }
