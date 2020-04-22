@@ -1202,7 +1202,6 @@ void kill_thread( struct thread *thread, int violent_death )
 static void copy_context( context_t *to, const context_t *from, unsigned int flags )
 {
     assert( to->cpu == from->cpu );
-    to->flags |= flags;
     if (flags & SERVER_CTX_CONTROL) to->ctl = from->ctl;
     if (flags & SERVER_CTX_INTEGER) to->integer = from->integer;
     if (flags & SERVER_CTX_SEGMENTS) to->seg = from->seg;
@@ -1776,7 +1775,11 @@ DECL_HANDLER(get_thread_context)
 
         memset( context, 0, sizeof(context_t) );
         context->cpu = thread->process->cpu;
-        if (thread->context) copy_context( context, thread->context, req->flags & ~flags );
+        if (thread->context)
+        {
+            copy_context( context, thread->context, req->flags & ~flags );
+            context->flags |= req->flags & ~flags;
+        }
         if (req->flags & flags) get_thread_context( thread, context, req->flags & flags );
     }
     release_object( thread );
@@ -1818,7 +1821,11 @@ DECL_HANDLER(set_thread_context)
         unsigned int client_flags = context->flags & ~system_flags;
 
         if (system_flags) set_thread_context( thread, context, system_flags );
-        if (thread->context && !get_error()) copy_context( thread->context, context, client_flags );
+        if (thread->context && !get_error())
+        {
+            copy_context( thread->context, context, client_flags );
+            thread->context->flags |= client_flags;
+        }
     }
     else set_error( STATUS_INVALID_PARAMETER );
 
