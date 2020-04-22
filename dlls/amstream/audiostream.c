@@ -27,6 +27,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 static const WCHAR sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
+struct queued_receive
+{
+    struct list entry;
+    IMediaSample *sample;
+    DWORD length;
+    BYTE *pointer;
+    DWORD position;
+};
+
 struct audio_stream
 {
     IAMMediaStream IAMMediaStream_iface;
@@ -47,6 +56,7 @@ struct audio_stream
     WAVEFORMATEX format;
     FILTER_STATE state;
     BOOL eos;
+    struct list receive_queue;
 };
 
 typedef struct {
@@ -55,6 +65,24 @@ typedef struct {
     struct audio_stream *parent;
     IAudioData *audio_data;
 } IAudioStreamSampleImpl;
+
+static void remove_queued_receive(struct queued_receive *receive)
+{
+    list_remove(&receive->entry);
+    IMediaSample_Release(receive->sample);
+    free(receive);
+}
+
+static void flush_receive_queue(struct audio_stream *stream)
+{
+    while (!list_empty(&stream->receive_queue))
+    {
+        struct queued_receive *receive =
+            LIST_ENTRY(list_head(&stream->receive_queue), struct queued_receive, entry);
+
+        remove_queued_receive(receive);
+    }
+}
 
 static inline IAudioStreamSampleImpl *impl_from_IAudioStreamSample(IAudioStreamSample *iface)
 {
@@ -348,6 +376,8 @@ static HRESULT WINAPI audio_IAMMediaStream_SetState(IAMMediaStream *iface, FILTE
 
     EnterCriticalSection(&stream->cs);
 
+    if (state == State_Stopped)
+        flush_receive_queue(stream);
     if (stream->state == State_Stopped)
         stream->eos = FALSE;
 
@@ -1048,8 +1078,44 @@ static HRESULT WINAPI audio_meminput_GetAllocatorRequirements(IMemInputPin *ifac
 
 static HRESULT WINAPI audio_meminput_Receive(IMemInputPin *iface, IMediaSample *sample)
 {
-    FIXME("iface %p, sample %p, stub!\n", iface, sample);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IMemInputPin(iface);
+    struct queued_receive *receive;
+    BYTE *pointer;
+    HRESULT hr;
+
+    TRACE("stream %p, sample %p.\n", stream, sample);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->state == State_Stopped)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return VFW_E_WRONG_STATE;
+    }
+
+    hr = IMediaSample_GetPointer(sample, &pointer);
+    if (FAILED(hr))
+    {
+        LeaveCriticalSection(&stream->cs);
+        return hr;
+    }
+
+    receive = calloc(1, sizeof(*receive));
+    if (!receive)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    receive->length = IMediaSample_GetActualDataLength(sample);
+    receive->pointer = pointer;
+    receive->sample = sample;
+    IMediaSample_AddRef(receive->sample);
+    list_add_tail(&stream->receive_queue, &receive->entry);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_meminput_ReceiveMultiple(IMemInputPin *iface,
@@ -1102,6 +1168,7 @@ HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
     object->parent = parent;
     object->purpose_id = *purpose_id;
     object->stream_type = stream_type;
+    list_init(&object->receive_queue);
 
     *media_stream = &object->IAMMediaStream_iface;
 
