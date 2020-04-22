@@ -34,6 +34,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 #define DDS_MAGIC 0x20534444
+#ifndef MAKEFOURCC
+#define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
+    ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) |  \
+    ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24 ))
+#endif
+
+#define DDPF_ALPHAPIXELS     0x00000001
+#define DDPF_ALPHA           0x00000002
+#define DDPF_FOURCC          0x00000004
+#define DDPF_PALETTEINDEXED8 0x00000020
+#define DDPF_RGB             0x00000040
+#define DDPF_LUMINANCE       0x00020000
+#define DDPF_BUMPDUDV        0x00080000
 
 typedef struct {
     DWORD size;
@@ -63,6 +76,14 @@ typedef struct {
     DWORD reserved2;
 } DDS_HEADER;
 
+typedef struct {
+    DWORD dxgiFormat;
+    DWORD resourceDimension;
+    DWORD miscFlag;
+    DWORD arraySize;
+    DWORD miscFlags2;
+} DDS_HEADER_DXT10;
+
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     LONG ref;
@@ -70,6 +91,7 @@ typedef struct DdsDecoder {
     IStream *stream;
     CRITICAL_SECTION lock;
     DDS_HEADER header;
+    DDS_HEADER_DXT10 header_dxt10;
 } DdsDecoder;
 
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
@@ -178,6 +200,16 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     if (This->header.size != sizeof(This->header)) {
         hr = WINCODEC_ERR_BADHEADER;
         goto end;
+    }
+
+    if (This->header.ddspf.flags & DDPF_FOURCC &&
+        This->header.ddspf.fourCC == MAKEFOURCC('D', 'X', '1', '0')) {
+        hr = IStream_Read(pIStream, &This->header_dxt10, sizeof(This->header_dxt10), &bytesread);
+        if (FAILED(hr)) goto end;
+        if (bytesread != sizeof(This->header_dxt10)) {
+            hr = WINCODEC_ERR_STREAMREAD;
+            goto end;
+        }
     }
 
     This->initialized = TRUE;
