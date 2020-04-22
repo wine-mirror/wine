@@ -4629,13 +4629,7 @@ static void adapter_gl_uninit_3d(struct wined3d_device *device)
 static void *adapter_gl_map_bo_address(struct wined3d_context *context,
         const struct wined3d_bo_address *data, size_t size, uint32_t bind_flags, uint32_t map_flags)
 {
-    struct wined3d_context_gl *context_gl;
-    GLenum binding;
-
-    context_gl = wined3d_context_gl(context);
-    binding = wined3d_buffer_gl_binding_from_bind_flags(context_gl->gl_info, bind_flags);
-
-    return wined3d_context_gl_map_bo_address(context_gl, data, size, binding, map_flags);
+    return wined3d_context_gl_map_bo_address(wined3d_context_gl(context), data, size, map_flags);
 }
 
 static void adapter_gl_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,

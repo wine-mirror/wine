@@ -2160,8 +2160,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
             return;
         }
 
-        src_mem = wined3d_context_gl_map_bo_address(context_gl, &bo,
-                src_slice_pitch * update_d, GL_PIXEL_UNPACK_BUFFER, WINED3D_MAP_READ);
+        src_mem = wined3d_context_gl_map_bo_address(context_gl, &bo, src_slice_pitch * update_d, WINED3D_MAP_READ);
 
         for (z = 0; z < update_d; ++z, src_mem += src_slice_pitch)
         {
@@ -2811,8 +2810,7 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
         wined3d_format_calculate_pitch(format, device->surface_alignment,
                 width, height, &dst_row_pitch, &dst_slice_pitch);
 
-        src_mem = wined3d_context_gl_map_bo_address(context_gl, &data,
-                src_slice_pitch, GL_PIXEL_UNPACK_BUFFER, WINED3D_MAP_READ);
+        src_mem = wined3d_context_gl_map_bo_address(context_gl, &data, src_slice_pitch, WINED3D_MAP_READ);
         if (!(dst_mem = heap_alloc(dst_slice_pitch)))
         {
             ERR("Out of memory (%u).\n", dst_slice_pitch);

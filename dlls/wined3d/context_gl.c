@@ -2525,7 +2525,7 @@ void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl, GLen
 }
 
 void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
-        const struct wined3d_bo_address *data, size_t size, GLenum binding, DWORD flags)
+        const struct wined3d_bo_address *data, size_t size, uint32_t flags)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *bo;
@@ -2535,20 +2535,20 @@ void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         return data->addr;
 
     gl_info = context_gl->gl_info;
-    wined3d_context_gl_bind_bo(context_gl, binding, bo->id);
+    wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 
     if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
     {
-        memory = GL_EXTCALL(glMapBufferRange(binding, (INT_PTR)data->addr,
+        memory = GL_EXTCALL(glMapBufferRange(bo->binding, (INT_PTR)data->addr,
                 size, wined3d_resource_gl_map_flags(flags)));
     }
     else
     {
-        memory = GL_EXTCALL(glMapBuffer(binding, wined3d_resource_gl_legacy_map_flags(flags)));
+        memory = GL_EXTCALL(glMapBuffer(bo->binding, wined3d_resource_gl_legacy_map_flags(flags)));
         memory += (INT_PTR)data->addr;
     }
 
-    wined3d_context_gl_bind_bo(context_gl, binding, 0);
+    wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);
     checkGLcall("Map buffer object");
 
     return memory;
@@ -2604,8 +2604,8 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
         }
         else
         {
-            src_ptr = wined3d_context_gl_map_bo_address(context_gl, src, size, src_bo->binding, WINED3D_MAP_READ);
-            dst_ptr = wined3d_context_gl_map_bo_address(context_gl, dst, size, dst_bo->binding, WINED3D_MAP_WRITE);
+            src_ptr = wined3d_context_gl_map_bo_address(context_gl, src, size, WINED3D_MAP_READ);
+            dst_ptr = wined3d_context_gl_map_bo_address(context_gl, dst, size, WINED3D_MAP_WRITE);
 
             memcpy(dst_ptr, src_ptr, size);
 
