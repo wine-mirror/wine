@@ -2157,11 +2157,11 @@ enum char_info_mode
 
 /* Retrieve the current context of a thread */
 @REQ(get_thread_context)
-    obj_handle_t handle;       /* thread handle */
+    obj_handle_t handle;       /* thread or context handle */
     unsigned int flags;        /* context flags */
-    int          suspend;      /* suspend the thread if needed */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
+    obj_handle_t handle;       /* pending context handle */
     VARARG(context,context);   /* thread context */
 @END
 
@@ -2169,7 +2169,6 @@ enum char_info_mode
 /* Set the current context of a thread */
 @REQ(set_thread_context)
     obj_handle_t handle;       /* thread handle */
-    int          suspend;      /* suspend the thread if needed */
     VARARG(context,context);   /* thread context */
 @REPLY
     int          self;         /* was it a handle to the current thread? */

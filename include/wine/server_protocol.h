@@ -2900,14 +2900,14 @@ struct get_thread_context_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int flags;
-    int          suspend;
+    char __pad_20[4];
 };
 struct get_thread_context_reply
 {
     struct reply_header __header;
     int          self;
+    obj_handle_t handle;
     /* VARARG(context,context); */
-    char __pad_12[4];
 };
 
 
@@ -2916,9 +2916,7 @@ struct set_thread_context_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    int          suspend;
     /* VARARG(context,context); */
-    char __pad_20[4];
 };
 struct set_thread_context_reply
 {
@@ -6684,7 +6682,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 601
+#define SERVER_PROTOCOL_VERSION 602
 
 /* ### protocol_version end ### */
 

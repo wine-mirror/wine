@@ -2675,19 +2675,18 @@ static void dump_get_thread_context_request( const struct get_thread_context_req
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", flags=%08x", req->flags );
-    fprintf( stderr, ", suspend=%d", req->suspend );
 }
 
 static void dump_get_thread_context_reply( const struct get_thread_context_reply *req )
 {
     fprintf( stderr, " self=%d", req->self );
+    fprintf( stderr, ", handle=%04x", req->handle );
     dump_varargs_context( ", context=", cur_size );
 }
 
 static void dump_set_thread_context_request( const struct set_thread_context_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", suspend=%d", req->suspend );
     dump_varargs_context( ", context=", cur_size );
 }
 
