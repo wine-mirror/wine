@@ -467,12 +467,22 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
                 }
             break;
         case 32:
-            if (samples != 4)
-            {
-                FIXME("unhandled 32bpp RGB sample count %u\n", samples);
-                return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
-            }
-            decode_info->format = &GUID_WICPixelFormat128bppRGBAFloat;
+            if (samples == 3)
+                decode_info->format = &GUID_WICPixelFormat96bppRGBFloat;
+            else
+                switch(extra_samples[0])
+                {
+                case 1: /* Associated (pre-multiplied) alpha data */
+                    decode_info->format = &GUID_WICPixelFormat128bppPRGBAFloat;
+                    break;
+                case 0: /* Unspecified data */
+                case 2: /* Unassociated alpha data */
+                    decode_info->format = &GUID_WICPixelFormat128bppRGBAFloat;
+                    break;
+                default:
+                    FIXME("unhandled extra sample type %i\n", extra_samples[0]);
+                    return E_FAIL;
+                }
             break;
         default:
             WARN("unhandled RGB bit count %u\n", bps);
