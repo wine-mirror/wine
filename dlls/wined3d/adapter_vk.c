@@ -701,8 +701,8 @@ map:
     return (uint8_t *)map_ptr + bo->memory_offset + (uintptr_t)data->addr;
 }
 
-static void adapter_vk_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
-        uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges)
+static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     const struct wined3d_vk_info *vk_info;
@@ -849,8 +849,8 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
     range.offset = 0;
     range.size = size;
-    adapter_vk_unmap_bo_address(context, dst, dst_bind_flags, 1, &range);
-    adapter_vk_unmap_bo_address(context, src, src_bind_flags, 0, NULL);
+    adapter_vk_unmap_bo_address(context, dst, 1, &range);
+    adapter_vk_unmap_bo_address(context, src, 0, NULL);
 }
 
 static HRESULT adapter_vk_create_swapchain(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,

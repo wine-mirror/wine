@@ -654,8 +654,8 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
         range.offset = 0;
         range.size = dst_texture->sub_resources[0].size;
         wined3d_texture_invalidate_location(dst_texture, 0, ~map_binding);
-        wined3d_context_unmap_bo_address(context, &dst_data, 0, 1, &range);
-        wined3d_context_unmap_bo_address(context, &src_data, 0, 0, NULL);
+        wined3d_context_unmap_bo_address(context, &dst_data, 1, &range);
+        wined3d_context_unmap_bo_address(context, &src_data, 0, NULL);
     }
     else
     {
@@ -2116,11 +2116,11 @@ release:
     }
     else
     {
-        wined3d_context_unmap_bo_address(context, &dst_data, 0, 1, &dst_range);
+        wined3d_context_unmap_bo_address(context, &dst_data, 1, &dst_range);
     }
 
     if (!same_sub_resource)
-        wined3d_context_unmap_bo_address(context, &src_data, 0, 0, NULL);
+        wined3d_context_unmap_bo_address(context, &src_data, 0, NULL);
     if (SUCCEEDED(hr) && dst_texture->swapchain && dst_texture->swapchain->front_buffer == dst_texture)
     {
         SetRect(&dst_texture->swapchain->front_buffer_update,
@@ -2254,7 +2254,7 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         memcpy(dst, map.data, w * h * bpp);
     }
 
-    wined3d_context_unmap_bo_address(context, &data, 0, 1, &range);
+    wined3d_context_unmap_bo_address(context, &data, 1, &range);
     context_release(context);
 }
 

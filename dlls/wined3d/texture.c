@@ -791,7 +791,7 @@ static void wined3d_texture_destroy_dc(void *object)
         context = context_acquire(device, NULL, 0);
         range.offset = 0;
         range.size = texture->sub_resources[sub_resource_idx].size;
-        wined3d_context_unmap_bo_address(context, &data, 0, 1, &range);
+        wined3d_context_unmap_bo_address(context, &data, 1, &range);
         context_release(context);
     }
 }
@@ -3240,7 +3240,7 @@ static HRESULT texture_resource_sub_resource_unmap(struct wined3d_resource *reso
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, texture->resource.map_binding);
     range.offset = 0;
     range.size = sub_resource->size;
-    wined3d_context_unmap_bo_address(context, &data, 0, !!(sub_resource->map_flags & WINED3D_MAP_WRITE), &range);
+    wined3d_context_unmap_bo_address(context, &data, !!(sub_resource->map_flags & WINED3D_MAP_WRITE), &range);
 
     context_release(context);
 
@@ -4311,7 +4311,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
 
     range.offset = 0;
     range.size = sub_resource->size;
-    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 0, 1, &range);
+    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 1, &range);
 
     if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
     {
@@ -4506,7 +4506,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
 
     range.offset = 0;
     range.size = sub_resource->size;
-    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 0, 1, &range);
+    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 1, &range);
     wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 }
 

@@ -4632,8 +4632,8 @@ static void *adapter_gl_map_bo_address(struct wined3d_context *context,
     return wined3d_context_gl_map_bo_address(wined3d_context_gl(context), data, size, map_flags);
 }
 
-static void adapter_gl_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
-        uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges)
+static void adapter_gl_unmap_bo_address(struct wined3d_context *context,
+        const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
 {
     wined3d_context_gl_unmap_bo_address(wined3d_context_gl(context), data, range_count, ranges);
 }

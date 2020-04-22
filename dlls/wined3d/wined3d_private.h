@@ -2966,7 +2966,7 @@ struct wined3d_adapter_ops
     void *(*adapter_map_bo_address)(struct wined3d_context *context,
             const struct wined3d_bo_address *data, size_t size, uint32_t bind_flags, uint32_t map_flags);
     void (*adapter_unmap_bo_address)(struct wined3d_context *context, const struct wined3d_bo_address *data,
-            uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges);
+            unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_copy_bo_address)(struct wined3d_context *context,
             const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
             const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size);
@@ -5481,10 +5481,9 @@ static inline void *wined3d_context_map_bo_address(struct wined3d_context *conte
 }
 
 static inline void wined3d_context_unmap_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *data, uint32_t bind_flags,
-        unsigned int range_count, const struct wined3d_range *ranges)
+        const struct wined3d_bo_address *data, unsigned int range_count, const struct wined3d_range *ranges)
 {
-    context->device->adapter->adapter_ops->adapter_unmap_bo_address(context, data, bind_flags, range_count, ranges);
+    context->device->adapter->adapter_ops->adapter_unmap_bo_address(context, data, range_count, ranges);
 }
 
 static inline void wined3d_context_copy_bo_address(struct wined3d_context *context,

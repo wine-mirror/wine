@@ -1087,7 +1087,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
                 {
                     WARN("Pointer %p is not %u byte aligned.\n", buffer->map_ptr, RESOURCE_ALIGNMENT);
 
-                    wined3d_context_unmap_bo_address(context, &addr, resource->bind_flags, 0, NULL);
+                    wined3d_context_unmap_bo_address(context, &addr, 0, NULL);
                     buffer->map_ptr = NULL;
 
                     if (resource->usage & WINED3DUSAGE_DYNAMIC)
@@ -1180,7 +1180,7 @@ static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resou
 
     addr.buffer_object = buffer->buffer_object;
     addr.addr = 0;
-    wined3d_context_unmap_bo_address(context, &addr, resource->bind_flags, range_count, buffer->maps);
+    wined3d_context_unmap_bo_address(context, &addr, range_count, buffer->maps);
 
     context_release(context);
 
@@ -1672,7 +1672,7 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
         memcpy((uint8_t *)map_ptr + range->offset, (uint8_t *)data + range->offset - data_offset, range->size);
     }
 
-    wined3d_context_unmap_bo_address(context, &dst, resource->bind_flags, range_count, ranges);
+    wined3d_context_unmap_bo_address(context, &dst, range_count, ranges);
 }
 
 static void wined3d_buffer_vk_download_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
