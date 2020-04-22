@@ -1569,7 +1569,13 @@ failed:
 
 static void sar_shutdown_object(void *user_context, IUnknown *obj)
 {
-    /* FIXME: shut down sink */
+    IMFMediaSink *sink;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(obj, &IID_IMFMediaSink, (void **)&sink)))
+    {
+        IMFMediaSink_Shutdown(sink);
+        IMFMediaSink_Release(sink);
+    }
 }
 
 static void sar_free_private(void *user_context)
