@@ -276,6 +276,53 @@ static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
     if (thumnail) IWICBitmapSource_Release(thumnail);
 }
 
+static void test_dds_decoder_frame_count(void)
+{
+    static struct test_data {
+        void *data;
+        UINT size;
+        UINT expected;
+    } test_data[] = {
+        { test_dds_image,   sizeof(test_dds_image),   1 },
+        { test_dds_mipmaps, sizeof(test_dds_mipmaps), 3 },
+        { test_dds_volume,  sizeof(test_dds_volume),  7 },
+        { test_dds_array,   sizeof(test_dds_array),   9 },
+    };
+
+    int i;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
+    {
+        UINT frame_count;
+        IWICStream *stream = NULL;
+        IWICBitmapDecoder *decoder = NULL;
+
+        stream = create_stream(test_data[i].data, test_data[i].size);
+        if (!stream) goto next;
+
+        decoder = create_decoder();
+        if (!decoder) goto next;
+
+        hr = init_decoder(decoder, stream, S_OK, -1);
+        if (hr != S_OK) goto next;
+
+        todo_wine {
+        hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+        ok (hr == S_OK, "GetFrameCount failed, hr=%x\n", hr);
+        if (hr == S_OK) {
+            ok (frame_count == test_data[i].expected, "%d: expected frame count %d, got %d\n",
+                i, test_data[i].expected, frame_count);
+        }
+        };
+
+    next:
+        if (decoder) IWICBitmapDecoder_Release(decoder);
+        if (stream) IWICStream_Release(stream);
+
+    }
+}
+
 static void test_dds_decoder(void)
 {
     HRESULT hr;
@@ -293,6 +340,7 @@ static void test_dds_decoder(void)
 
     test_dds_decoder_initialize();
     test_dds_decoder_global_properties(decoder);
+    test_dds_decoder_frame_count();
 
 end:
     if (decoder) IWICBitmapDecoder_Release(decoder);
