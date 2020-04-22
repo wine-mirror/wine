@@ -2178,7 +2178,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
                     dst_z + z, update_w, update_h, 1, converted_mem, srgb, dst_texture, gl_info);
         }
 
-        wined3d_context_gl_unmap_bo_address(context_gl, &bo, GL_PIXEL_UNPACK_BUFFER, 0, NULL);
+        wined3d_context_gl_unmap_bo_address(context_gl, &bo, 0, NULL);
         heap_free(converted_mem);
     }
     else
@@ -2820,7 +2820,7 @@ static BOOL wined3d_texture_gl_load_texture(struct wined3d_texture_gl *texture_g
                 width, height, &texture_gl->t.async.gl_color_key);
         src_row_pitch = dst_row_pitch;
         src_slice_pitch = dst_slice_pitch;
-        wined3d_context_gl_unmap_bo_address(context_gl, &data, GL_PIXEL_UNPACK_BUFFER, 0, NULL);
+        wined3d_context_gl_unmap_bo_address(context_gl, &data, 0, NULL);
 
         data.buffer_object = 0;
         data.addr = dst_mem;

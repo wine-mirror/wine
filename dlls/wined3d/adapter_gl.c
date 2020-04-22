@@ -4635,13 +4635,7 @@ static void *adapter_gl_map_bo_address(struct wined3d_context *context,
 static void adapter_gl_unmap_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *data,
         uint32_t bind_flags, unsigned int range_count, const struct wined3d_range *ranges)
 {
-    struct wined3d_context_gl *context_gl;
-    GLenum binding;
-
-    context_gl = wined3d_context_gl(context);
-    binding = wined3d_buffer_gl_binding_from_bind_flags(context_gl->gl_info, bind_flags);
-
-    wined3d_context_gl_unmap_bo_address(context_gl, data, binding, range_count, ranges);
+    wined3d_context_gl_unmap_bo_address(wined3d_context_gl(context), data, range_count, ranges);
 }
 
 static void adapter_gl_copy_bo_address(struct wined3d_context *context,
