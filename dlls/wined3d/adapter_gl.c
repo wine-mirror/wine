@@ -5115,6 +5115,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
 
     adapter_gl->a.shader_backend->shader_get_caps(&adapter_gl->a, &shader_caps);
     adapter_gl->a.vertex_pipe->vp_get_caps(&adapter_gl->a, &vertex_caps);
+    adapter_gl->a.misc_state_template = misc_state_template_gl;
     adapter_gl->a.fragment_pipe->get_caps(&adapter_gl->a, &fragment_caps);
 
     d3d_info->limits.vs_version = shader_caps.vs_version;

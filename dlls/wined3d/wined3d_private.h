@@ -2378,7 +2378,7 @@ struct wined3d_vertex_pipe_ops
     const struct wined3d_state_entry_template *vp_states;
 };
 
-extern const struct wined3d_state_entry_template misc_state_template[] DECLSPEC_HIDDEN;
+extern const struct wined3d_state_entry_template misc_state_template_gl[] DECLSPEC_HIDDEN;
 extern const struct wined3d_fragment_pipe_ops none_fragment_pipe DECLSPEC_HIDDEN;
 extern const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct wined3d_fragment_pipe_ops atifs_fragment_pipeline DECLSPEC_HIDDEN;
@@ -3037,6 +3037,7 @@ struct wined3d_adapter
 
     const struct wined3d_vertex_pipe_ops *vertex_pipe;
     const struct wined3d_fragment_pipe_ops *fragment_pipe;
+    const struct wined3d_state_entry_template *misc_state_template;
     const struct wined3d_shader_backend_ops *shader_backend;
     const struct wined3d_adapter_ops *adapter_ops;
 };

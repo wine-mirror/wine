@@ -5596,7 +5596,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->state_table, device->multistate_funcs,
             &adapter->d3d_info, adapter->gl_info.supported, vertex_pipeline,
-            fragment_pipeline, misc_state_template)))
+            fragment_pipeline, adapter->misc_state_template)))
     {
         ERR("Failed to compile state table, hr %#x.\n", hr);
         wine_rb_destroy(&device->samplers, NULL, NULL);
