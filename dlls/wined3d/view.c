@@ -1055,7 +1055,7 @@ void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_v
     dst.buffer_object = view->counter_bo;
     dst.addr = NULL;
 
-    wined3d_context_copy_bo_address(context, &dst, WINED3D_BIND_UNORDERED_ACCESS, &src, 0, sizeof(uint32_t));
+    wined3d_context_copy_bo_address(context, &dst, &src, sizeof(uint32_t));
 
     context_release(context);
 }
@@ -1075,8 +1075,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     src.buffer_object = view->counter_bo;
     src.addr = NULL;
 
-    wined3d_context_copy_bo_address(context, &dst, buffer->resource.bind_flags,
-            &src, WINED3D_BIND_UNORDERED_ACCESS, sizeof(uint32_t));
+    wined3d_context_copy_bo_address(context, &dst, &src, sizeof(uint32_t));
 
     wined3d_buffer_invalidate_location(buffer, ~dst_location);
 }

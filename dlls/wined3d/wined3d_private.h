@@ -2968,8 +2968,7 @@ struct wined3d_adapter_ops
     void (*adapter_unmap_bo_address)(struct wined3d_context *context, const struct wined3d_bo_address *data,
             unsigned int range_count, const struct wined3d_range *ranges);
     void (*adapter_copy_bo_address)(struct wined3d_context *context,
-            const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
-            const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size);
+            const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size);
     HRESULT (*adapter_create_swapchain)(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
             void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
     void (*adapter_destroy_swapchain)(struct wined3d_swapchain *swapchain);
@@ -5487,11 +5486,9 @@ static inline void wined3d_context_unmap_bo_address(struct wined3d_context *cont
 }
 
 static inline void wined3d_context_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
-        const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
-    context->device->adapter->adapter_ops->adapter_copy_bo_address(context,
-            dst, dst_bind_flags, src, src_bind_flags, size);
+    context->device->adapter->adapter_ops->adapter_copy_bo_address(context, dst, src, size);
 }
 
 static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_view *dsv,

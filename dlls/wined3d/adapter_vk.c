@@ -735,12 +735,12 @@ static void adapter_vk_unmap_bo_address(struct wined3d_context *context,
 }
 
 static void adapter_vk_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
-        const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_bo_vk staging_bo, *src_bo, *dst_bo;
+    VkAccessFlags src_access_mask, dst_access_mask;
     VkBufferMemoryBarrier vk_barrier[2];
     struct wined3d_bo_address staging;
     VkCommandBuffer vk_command_buffer;
@@ -759,13 +759,16 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
             return;
         }
 
+        src_access_mask = vk_access_mask_from_buffer_usage(src_bo->usage);
+        dst_access_mask = vk_access_mask_from_buffer_usage(dst_bo->usage);
+
         region.srcOffset = src_bo->buffer_offset + (uintptr_t)src->addr;
         region.dstOffset = dst_bo->buffer_offset + (uintptr_t)dst->addr;
         region.size = size;
 
         vk_barrier[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier[0].pNext = NULL;
-        vk_barrier[0].srcAccessMask = vk_access_mask_from_bind_flags(src_bind_flags);
+        vk_barrier[0].srcAccessMask = src_access_mask;
         vk_barrier[0].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         vk_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -775,7 +778,7 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
         vk_barrier[1].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier[1].pNext = NULL;
-        vk_barrier[1].srcAccessMask = vk_access_mask_from_bind_flags(dst_bind_flags);
+        vk_barrier[1].srcAccessMask = dst_access_mask;
         vk_barrier[1].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         vk_barrier[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         vk_barrier[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -789,10 +792,10 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
         VK_CALL(vkCmdCopyBuffer(vk_command_buffer, src_bo->vk_buffer, dst_bo->vk_buffer, 1, &region));
 
         vk_barrier[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-        vk_barrier[0].dstAccessMask = vk_access_mask_from_bind_flags(src_bind_flags);
+        vk_barrier[0].dstAccessMask = src_access_mask;
 
         vk_barrier[1].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        vk_barrier[1].dstAccessMask = vk_access_mask_from_bind_flags(dst_bind_flags);
+        vk_barrier[1].dstAccessMask = dst_access_mask;
 
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, NULL, 2, vk_barrier, 0, NULL));
@@ -814,8 +817,8 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
         staging.buffer_object = (uintptr_t)&staging_bo;
         staging.addr = NULL;
-        adapter_vk_copy_bo_address(context, &staging, 0, src, src_bind_flags, size);
-        adapter_vk_copy_bo_address(context, dst, dst_bind_flags, &staging, 0, size);
+        adapter_vk_copy_bo_address(context, &staging, src, size);
+        adapter_vk_copy_bo_address(context, dst, &staging, size);
 
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 
@@ -834,8 +837,8 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
 
         staging.buffer_object = (uintptr_t)&staging_bo;
         staging.addr = NULL;
-        adapter_vk_copy_bo_address(context, &staging, 0, src, src_bind_flags, size);
-        adapter_vk_copy_bo_address(context, dst, dst_bind_flags, &staging, 0, size);
+        adapter_vk_copy_bo_address(context, &staging, src, size);
+        adapter_vk_copy_bo_address(context, dst, &staging, size);
 
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 

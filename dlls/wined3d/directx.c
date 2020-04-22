@@ -2426,8 +2426,7 @@ static void adapter_no3d_unmap_bo_address(struct wined3d_context *context,
 }
 
 static void adapter_no3d_copy_bo_address(struct wined3d_context *context,
-        const struct wined3d_bo_address *dst, uint32_t dst_bind_flags,
-        const struct wined3d_bo_address *src, uint32_t src_bind_flags, size_t size)
+        const struct wined3d_bo_address *dst, const struct wined3d_bo_address *src, size_t size)
 {
     if (dst->buffer_object)
         ERR("Unsupported dst buffer object %#lx.\n", dst->buffer_object);
