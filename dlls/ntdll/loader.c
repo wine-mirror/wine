@@ -2058,21 +2058,14 @@ static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRIN
  */
 static void load_builtin_callback( void *module, const char *filename )
 {
-    static const WCHAR emptyW[1];
-    const WCHAR *load_path;
-
     if (!module)
     {
         ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
         builtin_load_info->status = STATUS_NO_MEMORY;
         return;
     }
-
-    load_path = builtin_load_info->load_path;
-    if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-    if (!load_path) load_path = emptyW;
-
-    builtin_load_info->status = build_so_dll_module( load_path, builtin_load_info->filename, module,
+    builtin_load_info->status = build_so_dll_module( builtin_load_info->load_path,
+                                                     builtin_load_info->filename, module,
                                                      0, &builtin_load_info->wm );
 }
 
@@ -4482,7 +4475,7 @@ void __wine_process_init(void)
     NTSTATUS status;
     ANSI_STRING func_name;
     UNICODE_STRING nt_name;
-    HMODULE ntdll_module;
+    HMODULE ntdll_module = (HMODULE)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
     INITIAL_TEB stack;
     BOOL suspend;
     SIZE_T info_size;
@@ -4512,15 +4505,11 @@ void __wine_process_init(void)
 
     /* setup the load callback and create ntdll modref */
     RtlInitUnicodeString( &nt_name, ntdllW );
-    default_load_info.filename = &nt_name;
+    map_so_dll( &__wine_spec_nt_header, ntdll_module );
+    status = build_so_dll_module( params->DllPath.Buffer, &nt_name, ntdll_module, 0, &wm );
+    assert( !status );
+
     wine_dll_set_callback( load_builtin_callback );
-    ntdll_module = (HMODULE)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
-    if (!get_modref( ntdll_module ))
-    {
-        map_so_dll( &__wine_spec_nt_header, ntdll_module );
-        status = build_so_dll_module( params->DllPath.Buffer, &nt_name, ntdll_module, 0, &wm );
-        assert( !status );
-    }
 
     RtlInitUnicodeString( &nt_name, kernel32W );
     if ((status = load_builtin_dll( params->DllPath.Buffer, &nt_name, NULL, 0, &wm )) != STATUS_SUCCESS)
