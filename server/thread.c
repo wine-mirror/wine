@@ -1859,35 +1859,21 @@ DECL_HANDLER(set_thread_context)
     if (!(thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT ))) return;
     reply->self = (thread == current);
 
-    if (thread != current && (!thread->context || thread->context->status == STATUS_PENDING))
-    {
-        /* thread is not suspended, retry (if it's still running) */
-        if (thread->state == RUNNING)
-        {
-            set_error( STATUS_PENDING );
-            if (req->suspend)
-            {
-                release_object( thread );
-                /* make sure we have suspend access */
-                if (!(thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME ))) return;
-                suspend_thread( thread );
-            }
-        }
-        else set_error( STATUS_UNSUCCESSFUL );
-    }
-    else if (context->cpu == thread->process->cpu)
+    if (thread->state == TERMINATED) set_error( STATUS_UNSUCCESSFUL );
+    else if (context->cpu != thread->process->cpu) set_error( STATUS_INVALID_PARAMETER );
+    else
     {
         unsigned int system_flags = get_context_system_regs(context->cpu) & context->flags;
         unsigned int client_flags = context->flags & ~system_flags;
 
         if (system_flags) set_thread_context( thread, context, system_flags );
+        if (thread != current && !get_error()) stop_thread( thread );
         if (thread->context && !get_error())
         {
             copy_context( &thread->context->regs, context, context->flags );
             thread->context->regs.flags |= client_flags;
         }
     }
-    else set_error( STATUS_INVALID_PARAMETER );
 
     release_object( thread );
 }

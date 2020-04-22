@@ -787,41 +787,15 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
 NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self )
 {
     NTSTATUS ret;
-    DWORD dummy, i;
 
     SERVER_START_REQ( set_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
-        req->suspend = 1;
         wine_server_add_data( req, context, sizeof(*context) );
         ret = wine_server_call( req );
         *self = reply->self;
     }
     SERVER_END_REQ;
-
-    if (ret == STATUS_PENDING)
-    {
-        for (i = 0; i < 100; i++)
-        {
-            SERVER_START_REQ( set_thread_context )
-            {
-                req->handle  = wine_server_obj_handle( handle );
-                req->suspend = 0;
-                wine_server_add_data( req, context, sizeof(*context) );
-                ret = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-            if (ret == STATUS_PENDING)
-            {
-                LARGE_INTEGER timeout;
-                timeout.QuadPart = -10000;
-                NtDelayExecution( FALSE, &timeout );
-            }
-            else break;
-        }
-        NtResumeThread( handle, &dummy );
-        if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
-    }
 
     return ret;
 }
