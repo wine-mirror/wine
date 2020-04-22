@@ -58,6 +58,7 @@ struct audio_renderer
     IMFMediaType *current_media_type;
     IMMDevice *device;
     IAudioClient *audio_client;
+    IAudioStreamVolume *stream_volume;
     HANDLE buffer_ready_event;
     enum stream_state state;
     BOOL is_shut_down;
@@ -161,6 +162,16 @@ static ULONG WINAPI audio_renderer_sink_AddRef(IMFMediaSink *iface)
     return refcount;
 }
 
+static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
+{
+    if (renderer->audio_client)
+        IAudioClient_Release(renderer->audio_client);
+    renderer->audio_client = NULL;
+    if (renderer->stream_volume)
+        IAudioStreamVolume_Release(renderer->stream_volume);
+    renderer->stream_volume = NULL;
+}
+
 static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
@@ -183,8 +194,7 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
         if (renderer->current_media_type)
             IMFMediaType_Release(renderer->current_media_type);
         CloseHandle(renderer->buffer_ready_event);
-        if (renderer->audio_client)
-            IAudioClient_Release(renderer->audio_client);
+        audio_renderer_release_audio_client(renderer);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -812,38 +822,94 @@ static ULONG WINAPI audio_renderer_stream_volume_Release(IMFAudioStreamVolume *i
 
 static HRESULT WINAPI audio_renderer_stream_volume_GetChannelCount(IMFAudioStreamVolume *iface, UINT32 *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_POINTER;
+
+    *count = 0;
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->stream_volume)
+        hr = IAudioStreamVolume_GetChannelCount(renderer->stream_volume, count);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_volume_SetChannelVolume(IMFAudioStreamVolume *iface, UINT32 index, float level)
 {
-    FIXME("%p, %u, %f.\n", iface, index, level);
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %f.\n", iface, index, level);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->stream_volume)
+        hr = IAudioStreamVolume_SetChannelVolume(renderer->stream_volume, index, level);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_volume_GetChannelVolume(IMFAudioStreamVolume *iface, UINT32 index, float *level)
 {
-    FIXME("%p, %u, %p.\n", iface, index, level);
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, level);
+
+    if (!level)
+        return E_POINTER;
+
+    *level = 0.0f;
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->stream_volume)
+        hr = IAudioStreamVolume_GetChannelVolume(renderer->stream_volume, index, level);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_volume_SetAllVolumes(IMFAudioStreamVolume *iface, UINT32 count,
         const float *volumes)
 {
-    FIXME("%p, %u, %p.\n", iface, count, volumes);
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, count, volumes);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->stream_volume)
+        hr = IAudioStreamVolume_SetAllVolumes(renderer->stream_volume, count, volumes);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_volume_GetAllVolumes(IMFAudioStreamVolume *iface, UINT32 count, float *volumes)
 {
-    FIXME("%p, %u, %p.\n", iface, count, volumes);
+    struct audio_renderer *renderer = impl_from_IMFAudioStreamVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, count, volumes);
+
+    if (!volumes)
+        return E_POINTER;
+
+    if (count)
+        memset(volumes, 0, sizeof(*volumes) * count);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->stream_volume)
+        hr = IAudioStreamVolume_GetAllVolumes(renderer->stream_volume, count, volumes);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMFAudioStreamVolumeVtbl audio_renderer_stream_volume_vtbl =
@@ -1229,11 +1295,7 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
     WAVEFORMATEX *wfx;
     HRESULT hr;
 
-    if (renderer->audio_client)
-    {
-        IAudioClient_Release(renderer->audio_client);
-        renderer->audio_client = NULL;
-    }
+    audio_renderer_release_audio_client(renderer);
 
     hr = IMMDevice_Activate(renderer->device, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL,
             (void **)&renderer->audio_client);
@@ -1258,6 +1320,13 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
     if (FAILED(hr))
     {
         WARN("Failed to initialize audio client, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IAudioClient_GetService(renderer->audio_client, &IID_IAudioStreamVolume,
+            (void **)&renderer->stream_volume)))
+    {
+        WARN("Failed to get stream volume control, hr %#x.\n", hr);
         return hr;
     }
 
