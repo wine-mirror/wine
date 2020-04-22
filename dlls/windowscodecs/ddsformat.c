@@ -200,9 +200,9 @@ static HRESULT WINAPI DdsDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
 static HRESULT WINAPI DdsDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
                                                 IWICBitmapDecoderInfo **ppIDecoderInfo)
 {
-    FIXME("(%p,%p): stub.\n", iface, ppIDecoderInfo);
+    TRACE("(%p,%p)\n", iface, ppIDecoderInfo);
 
-    return E_NOTIMPL;
+    return get_decoder_info(&CLSID_WICDdsDecoder, ppIDecoderInfo);
 }
 
 static HRESULT WINAPI DdsDecoder_CopyPalette(IWICBitmapDecoder *iface,
