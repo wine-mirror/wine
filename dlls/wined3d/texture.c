@@ -720,7 +720,7 @@ static void wined3d_texture_create_dc(void *object)
         if (!context)
             context = context_acquire(device, NULL, 0);
         desc.pMemory = wined3d_context_map_bo_address(context, &data,
-                texture->sub_resources[sub_resource_idx].size, 0, WINED3D_MAP_READ | WINED3D_MAP_WRITE);
+                texture->sub_resources[sub_resource_idx].size, WINED3D_MAP_READ | WINED3D_MAP_WRITE);
     }
     else
     {
@@ -3152,7 +3152,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
 
     wined3d_texture_get_memory(texture, sub_resource_idx, &data, resource->map_binding);
-    base_memory = wined3d_context_map_bo_address(context, &data, sub_resource->size, 0, flags);
+    base_memory = wined3d_context_map_bo_address(context, &data, sub_resource->size, flags);
     sub_resource->map_flags = flags;
     TRACE("Base memory pointer %p.\n", base_memory);
 
@@ -4298,7 +4298,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     staging_bo_addr.buffer_object = (uintptr_t)&staging_bo;
     staging_bo_addr.addr = NULL;
     if (!(map_ptr = wined3d_context_map_bo_address(context, &staging_bo_addr,
-            sub_resource->size, 0, WINED3D_MAP_DISCARD | WINED3D_MAP_WRITE)))
+            sub_resource->size, WINED3D_MAP_DISCARD | WINED3D_MAP_WRITE)))
     {
         ERR("Failed to map staging bo.\n");
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
@@ -4493,7 +4493,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     staging_bo_addr.buffer_object = (uintptr_t)&staging_bo;
     staging_bo_addr.addr = (uint8_t *)NULL;
     if (!(map_ptr = wined3d_context_map_bo_address(context, &staging_bo_addr,
-            sub_resource->size, 0, WINED3D_MAP_READ)))
+            sub_resource->size, WINED3D_MAP_READ)))
     {
         ERR("Failed to map staging bo.\n");
         wined3d_context_vk_destroy_bo(context_vk, &staging_bo);

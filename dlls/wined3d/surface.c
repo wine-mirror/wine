@@ -645,9 +645,9 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
         wined3d_texture_get_memory(dst_texture, 0, &dst_data, map_binding);
 
         src = wined3d_context_map_bo_address(context, &src_data,
-                src_texture->sub_resources[sub_resource_idx].size, 0, WINED3D_MAP_READ);
+                src_texture->sub_resources[sub_resource_idx].size, WINED3D_MAP_READ);
         dst = wined3d_context_map_bo_address(context, &dst_data,
-                dst_texture->sub_resources[0].size, 0, WINED3D_MAP_WRITE);
+                dst_texture->sub_resources[0].size, WINED3D_MAP_WRITE);
 
         conv->convert(src, dst, src_row_pitch, dst_row_pitch, desc.width, desc.height);
 
@@ -1668,7 +1668,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         wined3d_texture_get_pitch(dst_texture, texture_level, &dst_map.row_pitch, &dst_map.slice_pitch);
         wined3d_texture_get_memory(dst_texture, dst_sub_resource_idx, &dst_data, map_binding);
         dst_map.data = wined3d_context_map_bo_address(context, &dst_data,
-                dst_texture->sub_resources[dst_sub_resource_idx].size, 0, WINED3D_MAP_READ | WINED3D_MAP_WRITE);
+                dst_texture->sub_resources[dst_sub_resource_idx].size, WINED3D_MAP_READ | WINED3D_MAP_WRITE);
 
         src_map = dst_map;
     }
@@ -1705,7 +1705,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         wined3d_texture_get_pitch(src_texture, texture_level, &src_map.row_pitch, &src_map.slice_pitch);
         wined3d_texture_get_memory(src_texture, src_sub_resource_idx, &src_data, map_binding);
         src_map.data = wined3d_context_map_bo_address(context, &src_data,
-                src_texture->sub_resources[src_sub_resource_idx].size, 0, WINED3D_MAP_READ);
+                src_texture->sub_resources[src_sub_resource_idx].size, WINED3D_MAP_READ);
 
         if (upload)
         {
@@ -1724,7 +1724,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
             wined3d_texture_get_pitch(dst_texture, texture_level, &dst_map.row_pitch, &dst_map.slice_pitch);
             wined3d_texture_get_memory(dst_texture, dst_sub_resource_idx, &dst_data, map_binding);
             dst_map.data = wined3d_context_map_bo_address(context, &dst_data,
-                    dst_texture->sub_resources[dst_sub_resource_idx].size, 0, WINED3D_MAP_WRITE);
+                    dst_texture->sub_resources[dst_sub_resource_idx].size, WINED3D_MAP_WRITE);
         }
     }
     src_fmt_flags = src_format->flags[src_texture->resource.gl_type];
@@ -2192,7 +2192,7 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     wined3d_texture_get_pitch(texture, level, &map.row_pitch, &map.slice_pitch);
     wined3d_texture_get_memory(texture, view->sub_resource_idx, &data, map_binding);
     map.data = wined3d_context_map_bo_address(context, &data,
-            texture->sub_resources[view->sub_resource_idx].size, 0, WINED3D_MAP_WRITE);
+            texture->sub_resources[view->sub_resource_idx].size, WINED3D_MAP_WRITE);
     map.data = (BYTE *)map.data
             + (box->front * map.slice_pitch)
             + ((box->top / view->format->block_height) * map.row_pitch)

@@ -1080,8 +1080,7 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
                 addr.buffer_object = buffer->buffer_object;
                 addr.addr = 0;
-                buffer->map_ptr = wined3d_context_map_bo_address(context,
-                        &addr, resource->size, resource->bind_flags, flags);
+                buffer->map_ptr = wined3d_context_map_bo_address(context, &addr, resource->size, flags);
 
                 if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
                 {
@@ -1659,8 +1658,7 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
     dst.buffer_object = buffer->buffer_object;
     dst.addr = NULL;
 
-    if (!(map_ptr = wined3d_context_map_bo_address(context, &dst,
-            resource->size, resource->bind_flags, WINED3D_MAP_WRITE)))
+    if (!(map_ptr = wined3d_context_map_bo_address(context, &dst, resource->size, WINED3D_MAP_WRITE)))
     {
         FIXME("Failed to map buffer.\n");
         return;
