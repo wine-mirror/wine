@@ -4028,6 +4028,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
         }
         attach_implicitly_loaded_dlls( context );
         virtual_release_address_space();
+        if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.BaseAddress, DLL_PROCESS_ATTACH );
         if (wm->so_handle) call_constructors( wm );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     }
