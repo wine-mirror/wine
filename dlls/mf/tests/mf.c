@@ -2025,11 +2025,8 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to get stream count, hr %#x.\n", hr);
     ok(count == 1, "Unexpected stream count %u.\n", count);
 
-    EXPECT_REF(sink, 3);
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream);
     ok(hr == S_OK, "Failed to get sink stream, hr %#x.\n", hr);
-    EXPECT_REF(sink, 3);
-    EXPECT_REF(stream, 2);
 
     hr = IMFStreamSink_GetIdentifier(stream, &id);
     ok(hr == S_OK, "Failed to get stream id, hr %#x.\n", hr);
