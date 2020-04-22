@@ -2370,10 +2370,28 @@ static void testfilter_destroy(struct strmbase_filter *iface)
     strmbase_filter_cleanup(&filter->filter);
 }
 
+static HRESULT testfilter_init_stream(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_BaseFilter(iface);
+
+    BaseOutputPinImpl_Active(&filter->source);
+    return S_OK;
+}
+
+static HRESULT testfilter_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_BaseFilter(iface);
+
+    BaseOutputPinImpl_Inactive(&filter->source);
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops testfilter_ops =
 {
     .filter_get_pin = testfilter_get_pin,
     .filter_destroy = testfilter_destroy,
+    .filter_init_stream = testfilter_init_stream,
+    .filter_cleanup_stream = testfilter_cleanup_stream,
 };
 
 static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -3035,6 +3053,298 @@ static void test_audiostream_receive(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void CALLBACK apc_func(ULONG_PTR param)
+{
+}
+
+static IMediaSample *audiostream_allocate_sample(struct testfilter *source, const BYTE *input_data, DWORD input_length)
+{
+    IMediaSample *sample;
+    BYTE *sample_data;
+    HRESULT hr;
+
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&source->source, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSample_GetPointer(sample, &sample_data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSample_SetActualDataLength(sample, input_length);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memcpy(sample_data, input_data, input_length);
+
+    return sample;
+}
+
+static IPin *audiostream_pin;
+static IMemInputPin *audiostream_mem_input_pin;
+static IMediaSample *audiostream_media_sample;
+
+static DWORD CALLBACK audiostream_end_of_stream(void *param)
+{
+    HRESULT hr;
+
+    Sleep(100);
+    hr = IPin_EndOfStream(audiostream_pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    return 0;
+}
+
+static DWORD CALLBACK audiostream_receive(void *param)
+{
+    HRESULT hr;
+
+    Sleep(100);
+    hr = IMemInputPin_Receive(audiostream_mem_input_pin, audiostream_media_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    return 0;
+}
+
+static void test_audiostreamsample_update(void)
+{
+    static const WAVEFORMATEX format =
+    {
+        .wFormatTag = WAVE_FORMAT_PCM,
+        .nChannels = 1,
+        .nSamplesPerSec = 11025,
+        .wBitsPerSample = 16,
+        .nBlockAlign = 2,
+        .nAvgBytesPerSec = 2 * 11025,
+    };
+
+    const AM_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = MEDIASUBTYPE_PCM,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(WAVEFORMATEX),
+        .pbFormat = (BYTE *)&format,
+    };
+
+    static const BYTE test_data[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IAudioStreamSample *stream_sample;
+    IAudioMediaStream *audio_stream;
+    IMediaControl *media_control;
+    IMemInputPin *mem_input_pin;
+    IMediaSample *media_sample1;
+    IMediaSample *media_sample2;
+    struct testfilter source;
+    IAudioData *audio_data;
+    IGraphBuilder *graph;
+    IMediaStream *stream;
+    DWORD actual_length;
+    BYTE buffer[6];
+    HANDLE thread;
+    HANDLE event;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IMemInputPin, (void **)&mem_input_pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(graph != NULL, "Expected non-NULL graph.\n");
+    hr = IGraphBuilder_QueryInterface(graph, &IID_IMediaControl, (void **)&media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testfilter_init(&source);
+    hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAudioMediaStream_CreateSample(audio_stream, audio_data, 0, &stream_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "Expected non-NULL event.");
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, event, apc_func, 0);
+    ok(hr == MS_E_NOTINIT, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_E_NOTINIT, "Got hr %#x.\n", hr);
+
+    hr = IAudioData_SetBuffer(audio_data, sizeof(buffer), buffer, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, event, apc_func, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_E_NOTRUNNING, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_S_ENDOFSTREAM, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    media_sample1 = audiostream_allocate_sample(&source, test_data, 8);
+    hr = IMemInputPin_Receive(mem_input_pin, media_sample1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(media_sample1);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioData_GetInfo(audio_data, NULL, NULL, &actual_length);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(actual_length == 6, "Got actual length %u.\n", actual_length);
+
+    ok(memcmp(buffer, test_data, 6) == 0, "Sample data didn't match.\n");
+
+    ref = get_refcount(media_sample1);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    media_sample2 = audiostream_allocate_sample(&source, test_data, 8);
+    hr = IMemInputPin_Receive(mem_input_pin, media_sample2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = get_refcount(media_sample2);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioData_GetInfo(audio_data, NULL, NULL, &actual_length);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(actual_length == 6, "Got actual length %u.\n", actual_length);
+
+    ok(memcmp(buffer, &test_data[6], 2) == 0, "Sample data didn't match.\n");
+    ok(memcmp(&buffer[2], test_data, 4) == 0, "Sample data didn't match.\n");
+
+    ref = IMediaSample_Release(media_sample1);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioData_GetInfo(audio_data, NULL, NULL, &actual_length);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(actual_length == 4, "Got actual length %u.\n", actual_length);
+
+    ok(memcmp(buffer, &test_data[4], 4) == 0, "Sample data didn't match.\n");
+
+    ref = IMediaSample_Release(media_sample2);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_S_ENDOFSTREAM, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Pause(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    media_sample1 = audiostream_allocate_sample(&source, test_data, 6);
+    hr = IMemInputPin_Receive(mem_input_pin, media_sample1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = IMediaSample_Release(media_sample1);
+    ok(ref == 1, "Got outstanding refcount %d.\n", ref);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_E_NOTRUNNING, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    media_sample1 = audiostream_allocate_sample(&source, test_data, 6);
+
+    audiostream_mem_input_pin = mem_input_pin;
+    audiostream_media_sample = media_sample1;
+    thread = CreateThread(NULL, 0, audiostream_receive, NULL, 0, NULL);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioData_GetInfo(audio_data, NULL, NULL, &actual_length);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(actual_length == 6, "Got actual length %u.\n", actual_length);
+
+    ok(memcmp(buffer, test_data, 6) == 0, "Sample data didn't match.\n");
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    ref = IMediaSample_Release(media_sample1);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    audiostream_pin = pin;
+    thread = CreateThread(NULL, 0, audiostream_end_of_stream, NULL, 0, NULL);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_S_ENDOFSTREAM, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    IAudioStreamSample_AddRef(stream_sample);
+    ref = IAudioStreamSample_Release(stream_sample);
+    ok(ref == 1, "Got outstanding refcount %d.\n", ref);
+
+    hr = IAudioStreamSample_Update(stream_sample, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_E_BUSY, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IGraphBuilder_Disconnect(graph, pin);
+    IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == MS_S_ENDOFSTREAM, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+
+    CloseHandle(event);
+    ref = IAudioStreamSample_Release(stream_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAudioData_Release(audio_data);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMediaControl_Release(media_control);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IMemInputPin_Release(mem_input_pin);
+    IAudioMediaStream_Release(audio_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 void test_mediastreamfilter_get_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -3209,6 +3519,8 @@ START_TEST(amstream)
     test_audiostream_set_state();
     test_audiostream_end_of_stream();
     test_audiostream_receive();
+
+    test_audiostreamsample_update();
 
     test_mediastreamfilter_get_state();
     test_mediastreamfilter_stop_pause_run();
