@@ -452,12 +452,12 @@ static LONG CALLBACK cxx_rethrow_filter(PEXCEPTION_POINTERS eptrs, void *c)
     EXCEPTION_RECORD *rec = eptrs->ExceptionRecord;
     cxx_catch_ctx *ctx = c;
 
-    FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx->search_state);
+    if (rec->ExceptionCode == CXX_EXCEPTION && !rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
+        return EXCEPTION_EXECUTE_HANDLER;
 
+    FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx->search_state);
     if (rec->ExceptionCode != CXX_EXCEPTION)
         return EXCEPTION_CONTINUE_SEARCH;
-    if (!rec->ExceptionInformation[1] && !rec->ExceptionInformation[2])
-        return EXCEPTION_EXECUTE_HANDLER;
     if (rec->ExceptionInformation[1] == ((EXCEPTION_RECORD*)*__current_exception())->ExceptionInformation[1])
         ctx->rethrow = TRUE;
     return EXCEPTION_CONTINUE_SEARCH;
@@ -499,6 +499,7 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
         {
             TRACE("detect rethrow: exception code: %x\n", prev_rec->ExceptionCode);
             ctx.rethrow = TRUE;
+            FlsSetValue(fls_index, (void*)(DWORD_PTR)ctx.search_state);
 
             if (untrans_rec)
             {
