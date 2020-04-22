@@ -131,6 +131,7 @@ static const struct object_ops thread_apc_ops =
 struct context
 {
     struct object   obj;        /* object header */
+    unsigned int    status;     /* status of the context */
     context_t       regs;       /* context data */
 };
 
@@ -270,6 +271,7 @@ static struct context *create_thread_context( struct thread *thread )
 {
     struct context *context;
     if (!(context = alloc_object( &context_ops ))) return NULL;
+    context->status = STATUS_PENDING;
     memset( &context->regs, 0, sizeof(context->regs) );
     context->regs.cpu = thread->process->cpu;
     return context;
@@ -374,6 +376,7 @@ static void cleanup_thread( struct thread *thread )
 
     if (thread->context)
     {
+        thread->context->status = STATUS_ACCESS_DENIED;
         release_object( thread->context );
         thread->context = NULL;
     }
@@ -639,7 +642,8 @@ static void set_thread_info( struct thread *thread,
 /* stop a thread (at the Unix level) */
 void stop_thread( struct thread *thread )
 {
-    if (thread->context) return;  /* already inside a debug event, no need for a signal */
+    if (thread->context) return;  /* already suspended, no need for a signal */
+    if (!(thread->context = create_thread_context( thread ))) return;
     /* can't stop a thread while initialisation is in progress */
     if (is_process_init_done(thread->process)) send_thread_signal( thread, SIGUSR1 );
 }
@@ -1463,7 +1467,7 @@ DECL_HANDLER(init_thread)
     reply->version = SERVER_PROTOCOL_VERSION;
     reply->server_start = server_start_time;
     reply->all_cpus     = supported_cpus & get_prefix_cpu_mask();
-    reply->suspend      = (current->suspend || process->suspend);
+    reply->suspend      = (current->suspend || process->suspend || current->context != NULL);
     return;
 
  error:
@@ -1608,14 +1612,15 @@ DECL_HANDLER(select)
     if (get_req_data_size() - sizeof(*result) - req->size == sizeof(context_t))
     {
         const context_t *context = (const context_t *)((const char *)(result + 1) + req->size);
-        if (current->context || context->cpu != current->process->cpu)
+        if ((current->context && current->context->status != STATUS_PENDING) || context->cpu != current->process->cpu)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
         }
 
-        if (!(current->context = create_thread_context( current ))) return;
-        copy_context( &current->context->regs, context, context->flags );
+        if (!current->context && !(current->context = create_thread_context( current ))) return;
+        copy_context( &current->context->regs, context, context->flags & ~current->context->regs.flags );
+        current->context->status = STATUS_SUCCESS;
         current->suspend_cookie = req->cookie;
     }
 
@@ -1808,7 +1813,7 @@ DECL_HANDLER(get_thread_context)
     if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
     reply->self = (thread == current);
 
-    if (thread != current && !thread->context)
+    if (thread != current && (!thread->context || thread->context->status == STATUS_PENDING))
     {
         /* thread is not suspended, retry (if it's still running) */
         if (thread->state == RUNNING)
@@ -1854,7 +1859,7 @@ DECL_HANDLER(set_thread_context)
     if (!(thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT ))) return;
     reply->self = (thread == current);
 
-    if (thread != current && !thread->context)
+    if (thread != current && (!thread->context || thread->context->status == STATUS_PENDING))
     {
         /* thread is not suspended, retry (if it's still running) */
         if (thread->state == RUNNING)
