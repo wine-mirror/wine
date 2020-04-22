@@ -1480,11 +1480,11 @@ if test "x$with_usb" != "xno"
 then
     WINE_PACKAGE_FLAGS(USB,[libusb-1.0],[-lusb-1.0],,,
         [AC_CHECK_HEADER([libusb.h],
-            [AC_CHECK_LIB(usb-1.0,libusb_init,[:],[USB_LIBS=""],[$USB_LIBS])],
+            [AC_CHECK_LIB(usb-1.0,libusb_interrupt_event_handler,[:],[USB_LIBS=""],[$USB_LIBS])],
             [USB_LIBS=""])])
 fi
-WINE_NOTICE_WITH(usb,[test "$ac_cv_lib_usb_1_0_libusb_init" != "yes"],
-                 [libusb-1.0 ${notice_platform}development files not found, USB devices won't be supported.],
+WINE_NOTICE_WITH(usb,[test "$ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" != "yes"],
+                 [libusb-1.0 ${notice_platform}development files not found (or too old), USB devices won't be supported.],
                  [enable_wineusb_sys])
 
 dnl **** Check for libv4l2 ****

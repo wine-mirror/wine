@@ -13941,9 +13941,9 @@ ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $USB_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "libusb.h" "ac_cv_header_libusb_h" "$ac_includes_default"
 if test "x$ac_cv_header_libusb_h" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libusb_init in -lusb-1.0" >&5
-$as_echo_n "checking for libusb_init in -lusb-1.0... " >&6; }
-if ${ac_cv_lib_usb_1_0_libusb_init+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libusb_interrupt_event_handler in -lusb-1.0" >&5
+$as_echo_n "checking for libusb_interrupt_event_handler in -lusb-1.0... " >&6; }
+if ${ac_cv_lib_usb_1_0_libusb_interrupt_event_handler+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -13957,27 +13957,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char libusb_init ();
+char libusb_interrupt_event_handler ();
 int
 main ()
 {
-return libusb_init ();
+return libusb_interrupt_event_handler ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_usb_1_0_libusb_init=yes
+  ac_cv_lib_usb_1_0_libusb_interrupt_event_handler=yes
 else
-  ac_cv_lib_usb_1_0_libusb_init=no
+  ac_cv_lib_usb_1_0_libusb_interrupt_event_handler=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_usb_1_0_libusb_init" >&5
-$as_echo "$ac_cv_lib_usb_1_0_libusb_init" >&6; }
-if test "x$ac_cv_lib_usb_1_0_libusb_init" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" >&5
+$as_echo "$ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" >&6; }
+if test "x$ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" = xyes; then :
   :
 else
   USB_LIBS=""
@@ -13993,11 +13993,11 @@ test -z "$USB_CFLAGS" || USB_CFLAGS=`echo " $USB_CFLAGS" | sed 's/ -I\([^/]\)/ -
 test -z "$USB_LIBS" || USB_LIBS=`echo " $USB_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
-if test "$ac_cv_lib_usb_1_0_libusb_init" != "yes"; then :
+if test "$ac_cv_lib_usb_1_0_libusb_interrupt_event_handler" != "yes"; then :
   case "x$with_usb" in
-  x)   as_fn_append wine_notices "|libusb-1.0 ${notice_platform}development files not found, USB devices won't be supported." ;;
+  x)   as_fn_append wine_notices "|libusb-1.0 ${notice_platform}development files not found (or too old), USB devices won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "libusb-1.0 ${notice_platform}development files not found, USB devices won't be supported.
+  *)   as_fn_error $? "libusb-1.0 ${notice_platform}development files not found (or too old), USB devices won't be supported.
 This is an error since --with-usb was requested." "$LINENO" 5 ;;
 esac
 enable_wineusb_sys=${enable_wineusb_sys:-no}
