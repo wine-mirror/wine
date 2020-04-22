@@ -612,6 +612,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockPause(IMFClockStateSink *
 static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
 {
     struct audio_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    BOOL preroll = FALSE;
     HRESULT hr = S_OK;
 
     TRACE("%p, %s.\n", iface, debugstr_time(systime));
@@ -619,7 +620,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink
     EnterCriticalSection(&renderer->cs);
     if (renderer->audio_client)
     {
-        if (renderer->state == STREAM_STATE_PAUSED)
+        if ((preroll = (renderer->state != STREAM_STATE_RUNNING)))
         {
             if (FAILED(hr = IAudioClient_Start(renderer->audio_client)))
                 WARN("Failed to start audio client, hr %#x.\n", hr);
@@ -630,6 +631,9 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockRestart(IMFClockStateSink
         hr = MF_E_NOT_INITIALIZED;
 
     IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkStarted, &GUID_NULL, hr, NULL);
+    if (preroll)
+        audio_renderer_preroll(renderer);
+
     LeaveCriticalSection(&renderer->cs);
 
     return hr;
