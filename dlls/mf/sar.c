@@ -59,6 +59,7 @@ struct audio_renderer
     IMMDevice *device;
     IAudioClient *audio_client;
     IAudioStreamVolume *stream_volume;
+    ISimpleAudioVolume *audio_volume;
     HANDLE buffer_ready_event;
     enum stream_state state;
     BOOL is_shut_down;
@@ -170,6 +171,9 @@ static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
     if (renderer->stream_volume)
         IAudioStreamVolume_Release(renderer->stream_volume);
     renderer->stream_volume = NULL;
+    if (renderer->audio_volume)
+        ISimpleAudioVolume_Release(renderer->audio_volume);
+    renderer->audio_volume = NULL;
 }
 
 static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
@@ -754,30 +758,72 @@ static ULONG WINAPI audio_renderer_simple_volume_Release(IMFSimpleAudioVolume *i
 
 static HRESULT WINAPI audio_renderer_simple_volume_SetMasterVolume(IMFSimpleAudioVolume *iface, float level)
 {
-    FIXME("%p, %f.\n", iface, level);
+    struct audio_renderer *renderer = impl_from_IMFSimpleAudioVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %f.\n", iface, level);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->audio_volume)
+        hr = ISimpleAudioVolume_SetMasterVolume(renderer->audio_volume, level, NULL);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_simple_volume_GetMasterVolume(IMFSimpleAudioVolume *iface, float *level)
 {
-    FIXME("%p, %p.\n", iface, level);
+    struct audio_renderer *renderer = impl_from_IMFSimpleAudioVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, level);
+
+    if (!level)
+        return E_POINTER;
+
+    *level = 0.0f;
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->audio_volume)
+        hr = ISimpleAudioVolume_GetMasterVolume(renderer->audio_volume, level);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_simple_volume_SetMute(IMFSimpleAudioVolume *iface, BOOL mute)
 {
-    FIXME("%p, %d.\n", iface, mute);
+    struct audio_renderer *renderer = impl_from_IMFSimpleAudioVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, mute);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->audio_volume)
+        hr = ISimpleAudioVolume_SetMute(renderer->audio_volume, mute, NULL);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_renderer_simple_volume_GetMute(IMFSimpleAudioVolume *iface, BOOL *mute)
 {
-    FIXME("%p, %p.\n", iface, mute);
+    struct audio_renderer *renderer = impl_from_IMFSimpleAudioVolume(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, mute);
+
+    if (!mute)
+        return E_POINTER;
+
+    *mute = FALSE;
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->audio_volume)
+        hr = ISimpleAudioVolume_GetMute(renderer->audio_volume, mute);
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMFSimpleAudioVolumeVtbl audio_renderer_simple_volume_vtbl =
@@ -1327,6 +1373,12 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
             (void **)&renderer->stream_volume)))
     {
         WARN("Failed to get stream volume control, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IAudioClient_GetService(renderer->audio_client, &IID_ISimpleAudioVolume, (void **)&renderer->audio_volume)))
+    {
+        WARN("Failed to get audio volume control, hr %#x.\n", hr);
         return hr;
     }
 

@@ -2726,6 +2726,7 @@ static void test_sar(void)
     IMFMediaTypeHandler *handler, *handler2;
     IMFPresentationTimeSource *time_source;
     IMFSimpleAudioVolume *simple_volume;
+    IMFAudioStreamVolume *stream_volume;
     IMFClockStateSink *state_sink;
     IMFMediaSink *sink, *sink2;
     IMFStreamSink *stream_sink;
@@ -2815,6 +2816,15 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 
     hr = IMFClockStateSink_OnClockStart(state_sink, 0, 0);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockPause(state_sink, 0);
+    ok(hr == MF_E_INVALID_STATE_TRANSITION, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClockStateSink_OnClockRestart(state_sink, 0);
     ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
     IMFClockStateSink_Release(state_sink);
@@ -2979,6 +2989,9 @@ todo_wine
     hr = IMFClockStateSink_OnClockRestart(state_sink, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFClockStateSink_OnClockStop(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     IMFClockStateSink_Release(state_sink);
 
     IMFStreamSink_Release(stream_sink);
@@ -2988,14 +3001,20 @@ todo_wine
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 
     hr = IMFSimpleAudioVolume_GetMute(simple_volume, &mute);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMFSimpleAudioVolume_Release(simple_volume);
 
-    hr = MFGetService((IUnknown *)sink, &MR_STREAM_VOLUME_SERVICE, &IID_IMFAudioStreamVolume, (void **)&unk);
+    hr = MFGetService((IUnknown *)sink, &MR_STREAM_VOLUME_SERVICE, &IID_IMFAudioStreamVolume, (void **)&stream_volume);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+
+    hr = IMFAudioStreamVolume_GetChannelCount(stream_volume, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAudioStreamVolume_GetChannelCount(stream_volume, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    IMFAudioStreamVolume_Release(stream_volume);
 
     hr = MFGetService((IUnknown *)sink, &MR_AUDIO_POLICY_SERVICE, &IID_IMFAudioPolicy, (void **)&unk);
 todo_wine
