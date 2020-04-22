@@ -126,6 +126,40 @@ static const struct object_ops thread_apc_ops =
 };
 
 
+/* thread CPU context */
+
+struct context
+{
+    struct object   obj;        /* object header */
+    context_t       regs;       /* context data */
+};
+
+static void dump_context( struct object *obj, int verbose );
+
+static const struct object_ops context_ops =
+{
+    sizeof(struct context),     /* size */
+    dump_context,               /* dump */
+    no_get_type,                /* get_type */
+    add_queue,                  /* add_queue */
+    remove_queue,               /* remove_queue */
+    NULL,                       /* signaled */
+    no_satisfied,               /* satisfied */
+    no_signal,                  /* signal */
+    no_get_fd,                  /* get_fd */
+    no_map_access,              /* map_access */
+    default_get_sd,             /* get_sd */
+    default_set_sd,             /* set_sd */
+    no_lookup_name,             /* lookup_name */
+    no_link_name,               /* link_name */
+    NULL,                       /* unlink_name */
+    no_open_file,               /* open_file */
+    no_kernel_obj_list,         /* get_kernel_obj_list */
+    no_close_handle,            /* close_handle */
+    no_destroy                  /* destroy */
+};
+
+
 /* thread operations */
 
 static void dump_thread( struct object *obj, int verbose );
@@ -220,6 +254,27 @@ static inline int is_valid_address( client_ptr_t addr )
 {
     return addr && !(addr % sizeof(int));
 }
+
+
+/* dump a context on stdout for debugging purposes */
+static void dump_context( struct object *obj, int verbose )
+{
+    struct context *context = (struct context *)obj;
+    assert( obj->ops == &context_ops );
+
+    fprintf( stderr, "context flags=%x\n", context->regs.flags );
+}
+
+
+static struct context *create_thread_context( struct thread *thread )
+{
+    struct context *context;
+    if (!(context = alloc_object( &context_ops ))) return NULL;
+    memset( &context->regs, 0, sizeof(context->regs) );
+    context->regs.cpu = thread->process->cpu;
+    return context;
+}
+
 
 /* create a new thread */
 struct thread *create_thread( int fd, struct process *process, const struct security_descriptor *sd )
@@ -317,6 +372,11 @@ static void cleanup_thread( struct thread *thread )
 {
     int i;
 
+    if (thread->context)
+    {
+        release_object( thread->context );
+        thread->context = NULL;
+    }
     clear_apc_queue( &thread->system_apc );
     clear_apc_queue( &thread->user_apc );
     free( thread->req_data );
@@ -324,7 +384,6 @@ static void cleanup_thread( struct thread *thread )
     if (thread->request_fd) release_object( thread->request_fd );
     if (thread->reply_fd) release_object( thread->reply_fd );
     if (thread->wait_fd) release_object( thread->wait_fd );
-    free( thread->context );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
     free_msg_queue( thread );
@@ -343,7 +402,6 @@ static void cleanup_thread( struct thread *thread )
     thread->request_fd = NULL;
     thread->reply_fd = NULL;
     thread->wait_fd = NULL;
-    thread->context = NULL;
     thread->desktop = 0;
     thread->desc = NULL;
     thread->desc_len = 0;
@@ -776,9 +834,9 @@ static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int s
     if (thread->context && thread->suspend_cookie == cookie
         && signaled != STATUS_KERNEL_APC && signaled != STATUS_USER_APC)
     {
-        if (!thread->context->flags)
+        if (!thread->context->regs.flags)
         {
-            free( thread->context );
+            release_object( thread->context );
             thread->context = NULL;
         }
         else signaled = STATUS_KERNEL_APC; /* signal a fake APC so that client calls select to get a new context */
@@ -1556,9 +1614,8 @@ DECL_HANDLER(select)
             return;
         }
 
-        if (!(current->context = mem_alloc( sizeof(*context) ))) return;
-        memcpy( current->context, context, sizeof(*context) );
-        current->context->flags = 0;  /* to keep track of what is modified */
+        if (!(current->context = create_thread_context( current ))) return;
+        copy_context( &current->context->regs, context, context->flags );
         current->suspend_cookie = req->cookie;
     }
 
@@ -1633,10 +1690,8 @@ DECL_HANDLER(select)
     else if (get_error() != STATUS_PENDING && get_reply_max_size() == sizeof(context_t) &&
              current->context && current->suspend_cookie == req->cookie)
     {
-        if (current->context->flags)
-            set_reply_data_ptr( current->context, sizeof(context_t) );
-        else
-            free( current->context );
+        if (current->context->regs.flags) set_reply_data( &current->context->regs, sizeof(context_t) );
+        release_object( current->context );
         current->context = NULL;
     }
 }
@@ -1777,7 +1832,7 @@ DECL_HANDLER(get_thread_context)
         context->cpu = thread->process->cpu;
         if (thread->context)
         {
-            copy_context( context, thread->context, req->flags & ~flags );
+            copy_context( context, &thread->context->regs, req->flags & ~flags );
             context->flags |= req->flags & ~flags;
         }
         if (req->flags & flags) get_thread_context( thread, context, req->flags & flags );
@@ -1823,8 +1878,8 @@ DECL_HANDLER(set_thread_context)
         if (system_flags) set_thread_context( thread, context, system_flags );
         if (thread->context && !get_error())
         {
-            copy_context( thread->context, context, context->flags );
-            thread->context->flags |= client_flags;
+            copy_context( &thread->context->regs, context, context->flags );
+            thread->context->regs.flags |= client_flags;
         }
     }
     else set_error( STATUS_INVALID_PARAMETER );

@@ -75,7 +75,7 @@ struct thread
     int                    exit_code;     /* thread exit code */
     int                    unix_pid;      /* Unix pid of client */
     int                    unix_tid;      /* Unix tid of client */
-    context_t             *context;       /* current context */
+    struct context        *context;       /* current context */
     client_ptr_t           suspend_cookie;/* wait cookie of suspending select */
     client_ptr_t           teb;           /* TEB address (in client address space) */
     client_ptr_t           entry_point;   /* entry point (in client address space) */
