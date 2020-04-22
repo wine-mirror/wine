@@ -1823,7 +1823,7 @@ DECL_HANDLER(set_thread_context)
         if (system_flags) set_thread_context( thread, context, system_flags );
         if (thread->context && !get_error())
         {
-            copy_context( thread->context, context, client_flags );
+            copy_context( thread->context, context, context->flags );
             thread->context->flags |= client_flags;
         }
     }

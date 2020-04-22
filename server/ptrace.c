@@ -637,36 +637,24 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         /* Linux 2.6.33+ does DR0-DR3 alignment validation, so it has to know LEN bits first */
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 & 0xffff0000 ) == -1) goto error;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.i386_regs.dr0 ) == -1) goto error;
-        if (thread->context) thread->context->debug.i386_regs.dr0 = context->debug.i386_regs.dr0;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->debug.i386_regs.dr1 ) == -1) goto error;
-        if (thread->context) thread->context->debug.i386_regs.dr1 = context->debug.i386_regs.dr1;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->debug.i386_regs.dr2 ) == -1) goto error;
-        if (thread->context) thread->context->debug.i386_regs.dr2 = context->debug.i386_regs.dr2;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->debug.i386_regs.dr3 ) == -1) goto error;
-        if (thread->context) thread->context->debug.i386_regs.dr3 = context->debug.i386_regs.dr3;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.i386_regs.dr6 ) == -1) goto error;
-        if (thread->context) thread->context->debug.i386_regs.dr6 = context->debug.i386_regs.dr6;
         /* Linux 2.6.33+ needs enable bits set briefly to update value returned by PEEKUSER later */
         ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 | 0x55 );
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 ) == -1) goto error;
-        if (thread->context) thread->context->debug.i386_regs.dr7 = context->debug.i386_regs.dr7;
         thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
         break;
     case CPU_x86_64:
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 & 0xffff0000 ) == -1) goto error;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.x86_64_regs.dr0 ) == -1) goto error;
-        if (thread->context) thread->context->debug.x86_64_regs.dr0 = context->debug.x86_64_regs.dr0;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->debug.x86_64_regs.dr1 ) == -1) goto error;
-        if (thread->context) thread->context->debug.x86_64_regs.dr1 = context->debug.x86_64_regs.dr1;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(2), context->debug.x86_64_regs.dr2 ) == -1) goto error;
-        if (thread->context) thread->context->debug.x86_64_regs.dr2 = context->debug.x86_64_regs.dr2;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(3), context->debug.x86_64_regs.dr3 ) == -1) goto error;
-        if (thread->context) thread->context->debug.x86_64_regs.dr3 = context->debug.x86_64_regs.dr3;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(6), context->debug.x86_64_regs.dr6 ) == -1) goto error;
-        if (thread->context) thread->context->debug.x86_64_regs.dr6 = context->debug.x86_64_regs.dr6;
         ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 | 0x55 );
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 ) == -1) goto error;
-        if (thread->context) thread->context->debug.x86_64_regs.dr7 = context->debug.x86_64_regs.dr7;
         thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
         break;
     default:
@@ -785,8 +773,6 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 #endif
     if (ptrace( PTRACE_SETDBREGS, pid, (caddr_t)&dbregs, 0 ) != -1)
     {
-        if (thread->context)
-            thread->context->debug.i386_regs = context->debug.i386_regs;  /* update the cached values */
         thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
     }
     else file_set_error();

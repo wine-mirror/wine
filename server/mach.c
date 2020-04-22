@@ -283,18 +283,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         state.uds.ds32.dr7 = dr7;
 #endif
     }
-    if (!thread_set_state( port, x86_DEBUG_STATE, (thread_state_t)&state, count ))
-    {
-        if (thread->context)  /* update the cached values */
-        {
-#ifdef __x86_64__
-            if (thread->process->cpu == CPU_x86_64)
-                thread->context->debug.x86_64_regs = context->debug.x86_64_regs;
-            else
-#endif
-                thread->context->debug.i386_regs = context->debug.i386_regs;
-        }
-    }
+    thread_set_state( port, x86_DEBUG_STATE, (thread_state_t)&state, count );
     mach_port_deallocate( mach_task_self(), port );
 #endif
 }
