@@ -193,7 +193,10 @@ end:
 static HRESULT WINAPI DdsDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
                                                     GUID *pguidContainerFormat)
 {
+    TRACE("(%p,%p)\n", iface, pguidContainerFormat);
+
     memcpy(pguidContainerFormat, &GUID_ContainerFormatDds, sizeof(GUID));
+
     return S_OK;
 }
 
