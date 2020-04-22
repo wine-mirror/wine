@@ -2381,10 +2381,21 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
     return S_OK;
 }
 
-static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
-        IMemInputPin *peer, IMemAllocator **allocator)
+static HRESULT WINAPI testsource_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *alloc, ALLOCATOR_PROPERTIES *requested)
 {
-    return S_OK;
+    ALLOCATOR_PROPERTIES actual;
+
+    if (!requested->cbAlign)
+        requested->cbAlign = 1;
+
+    if (requested->cbBuffer < 4096)
+        requested->cbBuffer = 4096;
+
+    if (!requested->cBuffers)
+        requested->cBuffers = 2;
+
+    return IMemAllocator_SetProperties(alloc, requested, &actual);
 }
 
 static const struct strmbase_source_ops testsource_ops =
@@ -2392,7 +2403,8 @@ static const struct strmbase_source_ops testsource_ops =
     .base.pin_query_accept = testsource_query_accept,
     .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
-    .pfnDecideAllocator = testsource_DecideAllocator,
+    .pfnDecideBufferSize = testsource_DecideBufferSize,
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
 static void testfilter_init(struct testfilter *filter)
@@ -2814,6 +2826,84 @@ static void test_audiostream_set_state(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+void test_audiostream_end_of_stream(void)
+{
+    static const WAVEFORMATEX format =
+    {
+        .wFormatTag = WAVE_FORMAT_PCM,
+        .nChannels = 1,
+        .nSamplesPerSec = 11025,
+        .wBitsPerSample = 16,
+        .nBlockAlign = 2,
+        .nAvgBytesPerSec = 2 * 11025,
+    };
+
+    const AM_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Audio,
+        .subtype = MEDIASUBTYPE_PCM,
+        .formattype = FORMAT_WaveFormatEx,
+        .cbFormat = sizeof(WAVEFORMATEX),
+        .pbFormat = (BYTE *)&format,
+    };
+
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    struct testfilter source;
+    IGraphBuilder *graph;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!graph, "Expected non-NULL graph.\n");
+    testfilter_init(&source);
+    hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    IGraphBuilder_Disconnect(graph, pin);
+    IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 void test_mediastreamfilter_get_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -2986,6 +3076,7 @@ START_TEST(amstream)
     test_audiostream_set_format();
     test_audiostream_receive_connection();
     test_audiostream_set_state();
+    test_audiostream_end_of_stream();
 
     test_mediastreamfilter_get_state();
     test_mediastreamfilter_stop_pause_run();
