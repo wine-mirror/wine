@@ -5488,6 +5488,12 @@ static inline void wined3d_context_vk_reference_bo(struct wined3d_context_vk *co
     bo->command_buffer_id = context_vk->current_command_buffer.id;
 }
 
+static inline void wined3d_context_vk_reference_texture(struct wined3d_context_vk *context_vk,
+        struct wined3d_texture_vk *texture_vk)
+{
+    texture_vk->command_buffer_id = context_vk->current_command_buffer.id;
+}
+
 static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_view *dsv,
         const struct wined3d_format *srv_format)
 {
