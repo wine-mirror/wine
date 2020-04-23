@@ -49,7 +49,7 @@
 #endif
 #endif
 
-#ifndef __stdcall
+#if !defined(_MSC_VER) && !defined(__stdcall)
 # ifdef __i386__
 #  ifdef __GNUC__
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
@@ -57,8 +57,6 @@
 #   else
 #    define __stdcall __attribute__((__stdcall__))
 #   endif
-#  elif defined(_MSC_VER)
-    /* Nothing needs to be done. __stdcall already exists */
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
@@ -77,7 +75,7 @@
 # endif  /* __i386__ */
 #endif /* __stdcall */
 
-#ifndef __cdecl
+#if !defined(_MSC_VER) && !defined(__cdecl)
 # if defined(__i386__) && defined(__GNUC__)
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
 #   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
@@ -94,8 +92,6 @@
 #   define __cdecl __attribute__((pcs("aapcs-vfp")))
 # elif defined(__aarch64__) && defined (__GNUC__)
 #  define __cdecl __attribute__((ms_abi))
-# elif !defined(_MSC_VER)
-#  define __cdecl
 # endif
 #endif /* __cdecl */
 

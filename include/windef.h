@@ -50,7 +50,7 @@ extern "C" {
 # endif
 #endif
 
-#ifndef __stdcall
+#if !defined(_MSC_VER) && !defined(__stdcall)
 # ifdef __i386__
 #  ifdef __GNUC__
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
@@ -58,8 +58,6 @@ extern "C" {
 #   else
 #    define __stdcall __attribute__((__stdcall__))
 #   endif
-#  elif defined(_MSC_VER)
-    /* Nothing needs to be done. __stdcall already exists */
 #  else
 #   error You need to define __stdcall for your compiler
 #  endif
@@ -78,7 +76,7 @@ extern "C" {
 # endif  /* __i386__ */
 #endif /* __stdcall */
 
-#ifndef __cdecl
+#if !defined(_MSC_VER) && !defined(__cdecl)
 # if defined(__i386__) && defined(__GNUC__)
 #   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
 #   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
@@ -100,10 +98,8 @@ extern "C" {
 # endif
 #endif /* __cdecl */
 
-#ifndef __fastcall
-# ifndef _MSC_VER
-#  define __fastcall __stdcall
-# endif
+#if !defined(_MSC_VER) && !defined(__fastcall)
+# define __fastcall __stdcall
 #endif
 
 #ifndef __thiscall
@@ -140,12 +136,7 @@ extern "C" {
 #define __ONLY_IN_WINELIB(x)	x
 #endif
 
-#ifndef pascal
-#define pascal      __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef _pascal
-#define _pascal	    __ONLY_IN_WINELIB(__stdcall)
-#endif
+#ifndef _MSC_VER
 #ifndef _stdcall
 #define _stdcall    __ONLY_IN_WINELIB(__stdcall)
 #endif
@@ -155,16 +146,23 @@ extern "C" {
 #ifndef __fastcall
 #define __fastcall  __ONLY_IN_WINELIB(__stdcall)
 #endif
-#ifndef __export
-#define __export    __ONLY_IN_WINELIB(__stdcall)
-#endif
 #ifndef cdecl
 #define cdecl       __ONLY_IN_WINELIB(__cdecl)
 #endif
 #ifndef _cdecl
 #define _cdecl      __ONLY_IN_WINELIB(__cdecl)
 #endif
+#endif /* _MSC_VER */
 
+#ifndef pascal
+#define pascal      __ONLY_IN_WINELIB(__stdcall)
+#endif
+#ifndef _pascal
+#define _pascal     __ONLY_IN_WINELIB(__stdcall)
+#endif
+#ifndef __export
+#define __export    __ONLY_IN_WINELIB(__stdcall)
+#endif
 #ifndef near
 #define near        __ONLY_IN_WINELIB(/* nothing */)
 #endif
