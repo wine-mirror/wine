@@ -193,17 +193,12 @@ static HRESULT find_splitter(MediaDetImpl *detector)
 
         hr = IBaseFilter_EnumPins(splitter, &enum_pins);
         if (FAILED(hr))
-        {
-            IBaseFilter_Release(splitter);
-            continue;
-        }
+            goto next;
+
         hr = IEnumPins_Next(enum_pins, 1, &splitter_pin, NULL);
         IEnumPins_Release(enum_pins);
         if (FAILED(hr))
-        {
-            IBaseFilter_Release(splitter);
-            continue;
-        }
+            goto next;
 
         hr = IPin_Connect(source_pin, splitter_pin, NULL);
         IPin_Release(splitter_pin);
@@ -213,6 +208,8 @@ static HRESULT find_splitter(MediaDetImpl *detector)
             break;
         }
 
+next:
+        IGraphBuilder_RemoveFilter(detector->graph, splitter);
         IBaseFilter_Release(splitter);
     }
 
