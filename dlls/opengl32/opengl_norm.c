@@ -2346,16 +2346,16 @@ void WINAPI glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
   funcs->gl.p_glViewport( x, y, width, height );
 }
 
-static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
-static struct wgl_context * null_wglCreateContext( HDC hDc ) { return 0; }
-static BOOL null_wglDeleteContext( struct wgl_context * oldContext ) { return 0; }
-static int null_wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd ) { return 0; }
-static int null_wglGetPixelFormat( HDC hdc ) { return 0; }
-static PROC null_wglGetProcAddress( LPCSTR lpszProc ) { return 0; }
-static BOOL null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext ) { return 0; }
-static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd ) { return 0; }
-static BOOL null_wglShareLists( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource ) { return 0; }
-static BOOL null_wglSwapBuffers( HDC hdc ) { return 0; }
+static BOOL WINAPI null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
+static struct wgl_context * WINAPI null_wglCreateContext( HDC hDc ) { return 0; }
+static BOOL WINAPI null_wglDeleteContext( struct wgl_context * oldContext ) { return 0; }
+static int WINAPI null_wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd ) { return 0; }
+static int WINAPI null_wglGetPixelFormat( HDC hdc ) { return 0; }
+static PROC WINAPI null_wglGetProcAddress( LPCSTR lpszProc ) { return 0; }
+static BOOL WINAPI null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext ) { return 0; }
+static BOOL WINAPI null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd ) { return 0; }
+static BOOL WINAPI null_wglShareLists( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource ) { return 0; }
+static BOOL WINAPI null_wglSwapBuffers( HDC hdc ) { return 0; }
 static void null_glAccum( GLenum op, GLfloat value ) { }
 static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
 static GLboolean null_glAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences ) { return 0; }

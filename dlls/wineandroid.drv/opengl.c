@@ -418,7 +418,7 @@ static BOOL android_wglSetPixelFormatWINE( HDC hdc, int format )
 /***********************************************************************
  *		android_wglCopyContext
  */
-static BOOL android_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
+static BOOL WINAPI android_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
 {
     FIXME( "%p -> %p mask %#x unsupported\n", src, dst, mask );
     return FALSE;
@@ -427,7 +427,7 @@ static BOOL android_wglCopyContext( struct wgl_context *src, struct wgl_context 
 /***********************************************************************
  *		android_wglCreateContext
  */
-static struct wgl_context *android_wglCreateContext( HDC hdc )
+static struct wgl_context * WINAPI android_wglCreateContext( HDC hdc )
 {
     int egl_attribs[3] = { EGL_CONTEXT_CLIENT_VERSION, egl_client_version, EGL_NONE };
 
@@ -437,7 +437,7 @@ static struct wgl_context *android_wglCreateContext( HDC hdc )
 /***********************************************************************
  *		android_wglDeleteContext
  */
-static BOOL android_wglDeleteContext( struct wgl_context *ctx )
+static BOOL WINAPI android_wglDeleteContext( struct wgl_context *ctx )
 {
     EnterCriticalSection( &drawable_section );
     list_remove( &ctx->entry );
@@ -449,7 +449,7 @@ static BOOL android_wglDeleteContext( struct wgl_context *ctx )
 /***********************************************************************
  *		android_wglDescribePixelFormat
  */
-static int android_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd )
+static int WINAPI android_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd )
 {
     EGLint val;
     EGLConfig config;
@@ -495,7 +495,7 @@ static int android_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFOR
 /***********************************************************************
  *		android_wglGetPixelFormat
  */
-static int android_wglGetPixelFormat( HDC hdc )
+static int WINAPI android_wglGetPixelFormat( HDC hdc )
 {
     struct gl_drawable *gl;
     int ret = 0;
@@ -513,7 +513,7 @@ static int android_wglGetPixelFormat( HDC hdc )
 /***********************************************************************
  *		android_wglGetProcAddress
  */
-static PROC android_wglGetProcAddress( LPCSTR name )
+static PROC WINAPI android_wglGetProcAddress( LPCSTR name )
 {
     PROC ret;
     if (!strncmp( name, "wgl", 3 )) return NULL;
@@ -525,7 +525,7 @@ static PROC android_wglGetProcAddress( LPCSTR name )
 /***********************************************************************
  *		android_wglMakeCurrent
  */
-static BOOL android_wglMakeCurrent( HDC hdc, struct wgl_context *ctx )
+static BOOL WINAPI android_wglMakeCurrent( HDC hdc, struct wgl_context *ctx )
 {
     BOOL ret = FALSE;
     struct gl_drawable *gl;
@@ -565,7 +565,7 @@ done:
 /***********************************************************************
  *		android_wglSetPixelFormat
  */
-static BOOL android_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDESCRIPTOR *pfd )
+static BOOL WINAPI android_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDESCRIPTOR *pfd )
 {
     return set_pixel_format( hdc, format, FALSE );
 }
@@ -573,7 +573,7 @@ static BOOL android_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDES
 /***********************************************************************
  *		android_wglShareLists
  */
-static BOOL android_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
+static BOOL WINAPI android_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
 {
     FIXME( "%p %p\n", org, dest );
     return FALSE;
@@ -582,7 +582,7 @@ static BOOL android_wglShareLists( struct wgl_context *org, struct wgl_context *
 /***********************************************************************
  *		android_wglSwapBuffers
  */
-static BOOL android_wglSwapBuffers( HDC hdc )
+static BOOL WINAPI android_wglSwapBuffers( HDC hdc )
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
 

@@ -4340,7 +4340,7 @@ void sync_gl_view(struct macdrv_win_data* data, const RECT* old_whole_rect, cons
 /**********************************************************************
  *              macdrv_wglDescribePixelFormat
  */
-int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
+static int WINAPI macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr)
 {
     const pixel_format *pf;
     const struct color_mode *mode;
@@ -4406,7 +4406,7 @@ int macdrv_wglDescribePixelFormat(HDC hdc, int fmt, UINT size, PIXELFORMATDESCRI
 /***********************************************************************
  *              macdrv_wglCopyContext
  */
-static BOOL macdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
+static BOOL WINAPI macdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
 {
     CGLError err;
 
@@ -4421,7 +4421,7 @@ static BOOL macdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *d
 /***********************************************************************
  *              macdrv_wglCreateContext
  */
-static struct wgl_context *macdrv_wglCreateContext(HDC hdc)
+static struct wgl_context * WINAPI macdrv_wglCreateContext(HDC hdc)
 {
     struct wgl_context *context;
 
@@ -4435,7 +4435,7 @@ static struct wgl_context *macdrv_wglCreateContext(HDC hdc)
 /***********************************************************************
  *              macdrv_wglDeleteContext
  */
-static BOOL macdrv_wglDeleteContext(struct wgl_context *context)
+static BOOL WINAPI macdrv_wglDeleteContext(struct wgl_context *context)
 {
     TRACE("deleting context %p/%p/%p\n", context, context->context, context->cglcontext);
 
@@ -4450,7 +4450,7 @@ static BOOL macdrv_wglDeleteContext(struct wgl_context *context)
 /***********************************************************************
  *              macdrv_wglGetPixelFormat
  */
-static int macdrv_wglGetPixelFormat(HDC hdc)
+static int WINAPI macdrv_wglGetPixelFormat(HDC hdc)
 {
     int format;
 
@@ -4472,7 +4472,7 @@ static int macdrv_wglGetPixelFormat(HDC hdc)
 /***********************************************************************
  *              macdrv_wglGetProcAddress
  */
-static PROC macdrv_wglGetProcAddress(const char *proc)
+static PROC WINAPI macdrv_wglGetProcAddress(const char *proc)
 {
     void *ret;
 
@@ -4497,7 +4497,7 @@ static PROC macdrv_wglGetProcAddress(const char *proc)
 /***********************************************************************
  *              macdrv_wglMakeCurrent
  */
-static BOOL macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
+static BOOL WINAPI macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
 {
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
@@ -4508,7 +4508,7 @@ static BOOL macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
 /**********************************************************************
  *              macdrv_wglSetPixelFormat
  */
-static BOOL macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr)
+static BOOL WINAPI macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr)
 {
     return set_pixel_format(hdc, fmt, FALSE);
 }
@@ -4516,7 +4516,7 @@ static BOOL macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPT
 /***********************************************************************
  *              macdrv_wglShareLists
  */
-static BOOL macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
+static BOOL WINAPI macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
 {
     macdrv_opengl_context saved_context;
     CGLContextObj saved_cglcontext;
@@ -4569,7 +4569,7 @@ static BOOL macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
 /**********************************************************************
  *              macdrv_wglSwapBuffers
  */
-static BOOL macdrv_wglSwapBuffers(HDC hdc)
+static BOOL WINAPI macdrv_wglSwapBuffers(HDC hdc)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
     BOOL match = FALSE;

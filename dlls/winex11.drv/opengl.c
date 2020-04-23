@@ -1533,8 +1533,8 @@ void destroy_gl_drawable( HWND hwnd )
  *
  * Get the pixel-format descriptor associated to the given id
  */
-static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
-                                          UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
+static int WINAPI glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
+                                                 UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
 {
   /*XVisualInfo *vis;*/
   int value;
@@ -1665,7 +1665,7 @@ static int glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
 /***********************************************************************
  *		glxdrv_wglGetPixelFormat
  */
-static int glxdrv_wglGetPixelFormat( HDC hdc )
+static int WINAPI glxdrv_wglGetPixelFormat( HDC hdc )
 {
     struct gl_drawable *gl;
     int ret = 0;
@@ -1685,7 +1685,7 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
 /***********************************************************************
  *		glxdrv_wglSetPixelFormat
  */
-static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd )
+static BOOL WINAPI glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd )
 {
     return set_pixel_format(hdc, iPixelFormat, FALSE);
 }
@@ -1693,7 +1693,7 @@ static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORM
 /***********************************************************************
  *		glxdrv_wglCopyContext
  */
-static BOOL glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
+static BOOL WINAPI glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *dst, UINT mask)
 {
     TRACE("%p -> %p mask %#x\n", src, dst, mask);
 
@@ -1706,7 +1706,7 @@ static BOOL glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *d
 /***********************************************************************
  *		glxdrv_wglCreateContext
  */
-static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
+static struct wgl_context * WINAPI glxdrv_wglCreateContext( HDC hdc )
 {
     struct wgl_context *ret;
     struct gl_drawable *gl;
@@ -1734,7 +1734,7 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
 /***********************************************************************
  *		glxdrv_wglDeleteContext
  */
-static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
+static BOOL WINAPI glxdrv_wglDeleteContext(struct wgl_context *ctx)
 {
     struct wgl_pbuffer *pb;
 
@@ -1762,7 +1762,7 @@ static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
 /***********************************************************************
  *		glxdrv_wglGetProcAddress
  */
-static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
+static PROC WINAPI glxdrv_wglGetProcAddress(LPCSTR lpszProc)
 {
     if (!strncmp(lpszProc, "wgl", 3)) return NULL;
     return pglXGetProcAddressARB((const GLubyte*)lpszProc);
@@ -1787,7 +1787,7 @@ static void set_context_drawables( struct wgl_context *ctx, struct gl_drawable *
 /***********************************************************************
  *		glxdrv_wglMakeCurrent
  */
-static BOOL glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
+static BOOL WINAPI glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
 {
     BOOL ret = FALSE;
     struct gl_drawable *gl;
@@ -1884,7 +1884,7 @@ done:
 /***********************************************************************
  *		glxdrv_wglShareLists
  */
-static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
+static BOOL WINAPI glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *dest)
 {
     TRACE("(%p, %p)\n", org, dest);
 
@@ -3235,7 +3235,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
  *
  * Swap the buffers of this DC
  */
-static BOOL glxdrv_wglSwapBuffers( HDC hdc )
+static BOOL WINAPI glxdrv_wglSwapBuffers( HDC hdc )
 {
     struct x11drv_escape_flush_gl_drawable escape;
     struct gl_drawable *gl;

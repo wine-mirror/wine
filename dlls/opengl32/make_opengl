@@ -222,14 +222,14 @@ sub GenerateThunk($$$)
     return $ret;
 }
 
-sub generate_null_func($$)
+sub generate_null_func($$$)
 {
-    my ($name, $func_ref) = @_;
+    my ($name, $func_ref, $callconv) = @_;
     my $ret;
 
     return "" if $name eq "glDebugEntry";
 
-    $ret = get_func_proto( "static %s null_%s(%s)", $name, $func_ref, 1 );
+    $ret = get_func_proto( "static %s$callconv null_%s(%s)", $name, $func_ref, 1 );
     $ret .= " {";
     if ($name eq "glGetError")
     {
@@ -611,7 +611,7 @@ print HEADER "    struct\n    {\n";
 foreach (sort keys %wgl_functions)
 {
     next unless defined $supported_wgl_functions{$_};
-    print HEADER get_func_proto("        %-10s (WINE_GLAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
+    print HEADER get_func_proto("        %-10s (WINAPI *p_%s)(%s);\n", $_, $wgl_functions{$_}, 1);
 }
 print HEADER "    } wgl;\n\n";
 
@@ -717,13 +717,13 @@ foreach (sort keys %norm_functions) {
 
 foreach (sort keys %wgl_functions) {
     next unless defined $supported_wgl_functions{$_};
-    print NORM generate_null_func($_, $wgl_functions{$_});
+    print NORM generate_null_func($_, $wgl_functions{$_}, " WINAPI");
 }
 foreach (sort keys %norm_functions) {
-    print NORM generate_null_func($_, $norm_functions{$_});
+    print NORM generate_null_func($_, $norm_functions{$_}, "");
 }
 foreach (sort keys %ext_functions) {
-    print NORM generate_null_func($_, $ext_functions{$_});
+    print NORM generate_null_func($_, $ext_functions{$_}, "");
 }
 
 print NORM "\nstruct opengl_funcs null_opengl_funcs =\n{\n    {\n";
