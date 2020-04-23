@@ -28,6 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 struct file_writer
 {
     struct strmbase_filter filter;
+    IFileSinkFilter IFileSinkFilter_iface;
 
     struct strmbase_sink sink;
 };
@@ -60,6 +61,19 @@ static inline struct file_writer *impl_from_strmbase_filter(struct strmbase_filt
     return CONTAINING_RECORD(iface, struct file_writer, filter);
 }
 
+static HRESULT file_writer_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
+{
+    struct file_writer *filter = impl_from_strmbase_filter(iface);
+
+    if (IsEqualGUID(iid, &IID_IFileSinkFilter))
+        *out = &filter->IFileSinkFilter_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static struct strmbase_pin *file_writer_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
     struct file_writer *filter = impl_from_strmbase_filter(iface);
@@ -80,8 +94,62 @@ static void file_writer_destroy(struct strmbase_filter *iface)
 
 static struct strmbase_filter_ops filter_ops =
 {
+    .filter_query_interface = file_writer_query_interface,
     .filter_get_pin = file_writer_get_pin,
     .filter_destroy = file_writer_destroy,
+};
+
+static inline struct file_writer *impl_from_IFileSinkFilter(IFileSinkFilter *iface)
+{
+    return CONTAINING_RECORD(iface, struct file_writer, IFileSinkFilter_iface);
+}
+
+static HRESULT WINAPI filesinkfilter_QueryInterface(IFileSinkFilter *iface, REFIID iid, void **out)
+{
+    struct file_writer *filter = impl_from_IFileSinkFilter(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI filesinkfilter_AddRef(IFileSinkFilter *iface)
+{
+    struct file_writer *filter = impl_from_IFileSinkFilter(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI filesinkfilter_Release(IFileSinkFilter *iface)
+{
+    struct file_writer *filter = impl_from_IFileSinkFilter(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static HRESULT WINAPI filesinkfilter_SetFileName(IFileSinkFilter *iface,
+        LPCOLESTR filename, const AM_MEDIA_TYPE *mt)
+{
+    struct file_writer *filter = impl_from_IFileSinkFilter(iface);
+
+    FIXME("filter %p, filename %s, mt %p, stub!\n", filter, debugstr_w(filename), mt);
+    strmbase_dump_media_type(mt);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filesinkfilter_GetCurFile(IFileSinkFilter *iface,
+        LPOLESTR *filename, AM_MEDIA_TYPE *mt)
+{
+    struct file_writer *filter = impl_from_IFileSinkFilter(iface);
+
+    FIXME("filter %p, filename %p, mt %p, stub!\n", filter, filename, mt);
+
+    return E_NOTIMPL;
+}
+
+static const IFileSinkFilterVtbl filesinkfilter_vtbl =
+{
+    filesinkfilter_QueryInterface,
+    filesinkfilter_AddRef,
+    filesinkfilter_Release,
+    filesinkfilter_SetFileName,
+    filesinkfilter_GetCurFile,
 };
 
 HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
@@ -93,6 +161,7 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_FileWriter, &filter_ops);
+    object->IFileSinkFilter_iface.lpVtbl = &filesinkfilter_vtbl;
 
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &sink_ops, NULL);
 
