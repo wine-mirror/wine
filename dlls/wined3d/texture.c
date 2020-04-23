@@ -5760,13 +5760,93 @@ static void vk_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_dev
             clear_rects, draw_rect, flags, colour, depth, stencil);
 }
 
+static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wined3d_context *context,
+        const struct wined3d_resource *src_resource, const RECT *src_rect,
+        const struct wined3d_resource *dst_resource, const RECT *dst_rect)
+{
+    const struct wined3d_format *src_format = src_resource->format;
+    const struct wined3d_format *dst_format = dst_resource->format;
+
+    if (!(dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
+    {
+        TRACE("Destination resource does not have GPU access.\n");
+        return false;
+    }
+
+    if (!(src_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
+    {
+        TRACE("Source resource does not have GPU access.\n");
+        return false;
+    }
+
+    if (dst_format->id != src_format->id)
+    {
+        if (!is_identity_fixup(dst_format->color_fixup))
+        {
+            TRACE("Destination fixups are not supported.\n");
+            return false;
+        }
+
+        if (!is_identity_fixup(src_format->color_fixup))
+        {
+            TRACE("Source fixups are not supported.\n");
+            return false;
+        }
+
+        if (op != WINED3D_BLIT_OP_RAW_BLIT
+                && wined3d_format_vk(src_format)->vk_format != wined3d_format_vk(dst_format)->vk_format)
+        {
+            TRACE("Format conversion not supported.\n");
+            return false;
+        }
+    }
+
+    if (wined3d_resource_get_sample_count(dst_resource) > 1)
+    {
+        TRACE("Multi-sample destination resource not supported.\n");
+        return false;
+    }
+
+    if (wined3d_resource_get_sample_count(src_resource) > 1)
+    {
+        TRACE("Multi-sample source resource not supported.\n");
+        return false;
+    }
+
+    if (op == WINED3D_BLIT_OP_RAW_BLIT)
+        return true;
+
+    if (op != WINED3D_BLIT_OP_COLOR_BLIT)
+    {
+        TRACE("Unsupported blit operation %#x.\n", op);
+        return false;
+    }
+
+    if ((src_rect->right - src_rect->left != dst_rect->right - dst_rect->left)
+            || (src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top))
+    {
+        TRACE("Scaling not supported.\n");
+        return false;
+    }
+
+    return true;
+}
+
 static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
         struct wined3d_context *context, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         DWORD src_location, const RECT *src_rect, struct wined3d_texture *dst_texture,
         unsigned int dst_sub_resource_idx, DWORD dst_location, const RECT *dst_rect,
         const struct wined3d_color_key *colour_key, enum wined3d_texture_filter_type filter)
 {
+    struct wined3d_texture_vk *src_texture_vk = wined3d_texture_vk(src_texture);
+    struct wined3d_texture_vk *dst_texture_vk = wined3d_texture_vk(dst_texture);
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    unsigned int src_level, src_layer, dst_level, dst_layer;
+    VkImageAspectFlags src_aspect, dst_aspect;
+    VkCommandBuffer vk_command_buffer;
     struct wined3d_blitter *next;
+    VkImageCopy region;
 
     TRACE("blitter %p, op %#x, context %p, src_texture %p, src_sub_resource_idx %u, src_location %s, src_rect %s, "
             "dst_texture %p, dst_sub_resource_idx %u, dst_location %s, dst_rect %s, colour_key %p, filter %s.\n",
@@ -5774,6 +5854,109 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             wine_dbgstr_rect(src_rect), dst_texture, dst_sub_resource_idx, wined3d_debug_location(dst_location),
             wine_dbgstr_rect(dst_rect), colour_key, debug_d3dtexturefiltertype(filter));
 
+    if (!vk_blitter_blit_supported(op, context, &src_texture->resource, src_rect, &dst_texture->resource, dst_rect))
+        goto next;
+
+    src_aspect = vk_aspect_mask_from_format(src_texture_vk->t.resource.format);
+    dst_aspect = vk_aspect_mask_from_format(dst_texture_vk->t.resource.format);
+    if ((src_aspect | dst_aspect) & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT))
+    {
+        TRACE("Depth/stencil blits not supported.\n");
+        goto next;
+    }
+
+    src_level = src_sub_resource_idx % src_texture->level_count;
+    src_layer = src_sub_resource_idx / src_texture->level_count;
+
+    dst_level = dst_sub_resource_idx % dst_texture->level_count;
+    dst_layer = dst_sub_resource_idx / dst_texture->level_count;
+
+    if (!wined3d_texture_load_location(src_texture, src_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB))
+        ERR("Failed to load the source sub-resource.\n");
+
+    if (texture2d_is_full_rect(dst_texture, dst_level, dst_rect))
+    {
+        if (!wined3d_texture_prepare_location(dst_texture,
+                dst_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB))
+        {
+            ERR("Failed to prepare the destination sub-resource.\n");
+            goto next;
+        }
+    }
+    else
+    {
+        if (!wined3d_texture_load_location(dst_texture,
+                dst_sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB))
+        {
+            ERR("Failed to load the destination sub-resource.\n");
+            goto next;
+        }
+    }
+
+    if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+    {
+        ERR("Failed to get command buffer.\n");
+        goto next;
+    }
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            vk_access_mask_from_bind_flags(src_texture_vk->t.resource.bind_flags),
+            VK_ACCESS_TRANSFER_READ_BIT,
+            src_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            src_texture_vk->vk_image, src_aspect);
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            vk_access_mask_from_bind_flags(dst_texture_vk->t.resource.bind_flags),
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            dst_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            dst_texture_vk->vk_image, dst_aspect);
+
+    region.srcSubresource.aspectMask = src_aspect;
+    region.srcSubresource.mipLevel = src_level;
+    region.srcSubresource.baseArrayLayer = src_layer;
+    region.srcSubresource.layerCount = 1;
+    region.srcOffset.x = src_rect->left;
+    region.srcOffset.y = src_rect->top;
+    region.srcOffset.z = 0;
+    region.dstSubresource.aspectMask = dst_aspect;
+    region.dstSubresource.mipLevel = dst_level;
+    region.dstSubresource.baseArrayLayer = dst_layer;
+    region.dstSubresource.layerCount = 1;
+    region.dstOffset.x = dst_rect->left;
+    region.dstOffset.y = dst_rect->top;
+    region.dstOffset.z = 0;
+    region.extent.width = src_rect->right - src_rect->left;
+    region.extent.height = src_rect->bottom - src_rect->top;
+    region.extent.depth = 1;
+
+    VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            dst_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT,
+            vk_access_mask_from_bind_flags(dst_texture_vk->t.resource.bind_flags),
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,  dst_texture_vk->layout,
+            dst_texture_vk->vk_image, dst_aspect);
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            vk_access_mask_from_bind_flags(src_texture_vk->t.resource.bind_flags),
+            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,  src_texture_vk->layout,
+            src_texture_vk->vk_image, src_aspect);
+
+    wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
+    if (!wined3d_texture_load_location(dst_texture, dst_sub_resource_idx, context, dst_location))
+        ERR("Failed to load the destination sub-resource into %s.\n", wined3d_debug_location(dst_location));
+
+    wined3d_context_vk_reference_texture(context_vk, src_texture_vk);
+    wined3d_context_vk_reference_texture(context_vk, dst_texture_vk);
+
+    return dst_location | WINED3D_LOCATION_TEXTURE_RGB;
+
+next:
     if (!(next = blitter->next))
     {
         ERR("No blitter to handle blit op %#x.\n", op);
