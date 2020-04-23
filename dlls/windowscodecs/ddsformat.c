@@ -94,6 +94,12 @@ typedef struct DdsDecoder {
     DDS_HEADER_DXT10 header_dxt10;
 } DdsDecoder;
 
+static inline BOOL has_extended_header(DDS_HEADER *header)
+{
+    return (header->ddspf.flags & DDPF_FOURCC) &&
+           (header->ddspf.fourCC == MAKEFOURCC('D', 'X', '1', '0'));
+}
+
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsDecoder, IWICBitmapDecoder_iface);
@@ -202,8 +208,7 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         goto end;
     }
 
-    if (This->header.ddspf.flags & DDPF_FOURCC &&
-        This->header.ddspf.fourCC == MAKEFOURCC('D', 'X', '1', '0')) {
+    if (has_extended_header(&This->header)) {
         hr = IStream_Read(pIStream, &This->header_dxt10, sizeof(This->header_dxt10), &bytesread);
         if (FAILED(hr)) goto end;
         if (bytesread != sizeof(This->header_dxt10)) {
@@ -285,9 +290,36 @@ static HRESULT WINAPI DdsDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI DdsDecoder_GetFrameCount(IWICBitmapDecoder *iface,
                                                UINT *pCount)
 {
-    FIXME("(%p) <-- %d: stub.\n", iface, *pCount);
+    DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    UINT arraySize = 1, mipMapCount = 1, depth = 1;
+    int i;
 
-    return E_NOTIMPL;
+    if (!pCount) return E_INVALIDARG;
+    if (!This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->header.mipMapCount) mipMapCount = This->header.mipMapCount;
+    if (This->header.depth) depth = This->header.depth;
+    if (has_extended_header(&This->header) && This->header_dxt10.arraySize) arraySize = This->header_dxt10.arraySize;
+
+    if (depth == 1) {
+        *pCount = arraySize * mipMapCount;
+    } else {
+        *pCount = 0;
+        for (i = 0; i < mipMapCount; i++)
+        {
+            *pCount += depth;
+            if (depth > 1) depth /= 2;
+        }
+        *pCount *= arraySize;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    TRACE("(%p) <-- %d\n", iface, *pCount);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DdsDecoder_GetFrame(IWICBitmapDecoder *iface,

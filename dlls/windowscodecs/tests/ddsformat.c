@@ -304,17 +304,22 @@ static void test_dds_decoder_frame_count(void)
         decoder = create_decoder();
         if (!decoder) goto next;
 
+        hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
+        ok (hr == WINCODEC_ERR_WRONGSTATE, "%d: Expected hr=WINCODEC_ERR_WRONGSTATE, got %x\n", i, hr);
+        hr = IWICBitmapDecoder_GetFrameCount(decoder, NULL);
+        ok (hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
+
         hr = init_decoder(decoder, stream, S_OK, -1);
         if (hr != S_OK) goto next;
 
-        todo_wine {
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
-        ok (hr == S_OK, "GetFrameCount failed, hr=%x\n", hr);
+        ok (hr == S_OK, "%d: GetFrameCount failed, hr=%x\n", i, hr);
         if (hr == S_OK) {
             ok (frame_count == test_data[i].expected, "%d: expected frame count %d, got %d\n",
                 i, test_data[i].expected, frame_count);
         }
-        };
+        hr = IWICBitmapDecoder_GetFrameCount(decoder, NULL);
+        ok (hr == E_INVALIDARG, "%d: Expected hr=S_OK, got %x\n", i, hr);
 
     next:
         if (decoder) IWICBitmapDecoder_Release(decoder);
