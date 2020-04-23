@@ -96,7 +96,7 @@
 
 /* thiscall support */
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#if defined(__i386__) && !defined(__MINGW32__) && (!defined(_MSC_VER) || !defined(__clang__))
 
 # ifdef _MSC_VER
 #  define DEFINE_THISCALL_WRAPPER(func,args) \

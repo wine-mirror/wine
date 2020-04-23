@@ -102,7 +102,7 @@ extern "C" {
 # define __fastcall __stdcall
 #endif
 
-#ifndef __thiscall
+#if (!defined(_MSC_VER) || !defined(__clang__)) && !defined(__thiscall)
 # define __thiscall __stdcall
 #endif
 
