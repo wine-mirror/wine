@@ -2255,6 +2255,68 @@ typedef struct _NLSTABLEINFO
  *
  * Those are not part of standard Winternl.h
  */
+
+typedef struct _LDR_SERVICE_TAG_RECORD
+{
+    struct _LDR_SERVICE_TAG_RECORD *Next;
+    ULONG ServiceTag;
+} LDR_SERVICE_TAG_RECORD, *PLDR_SERVICE_TAG_RECORD;
+
+typedef struct _LDRP_CSLIST
+{
+    SINGLE_LIST_ENTRY *Tail;
+} LDRP_CSLIST, *PLDRP_CSLIST;
+
+typedef enum _LDR_DDAG_STATE
+{
+    LdrModulesMerged = -5,
+    LdrModulesInitError = -4,
+    LdrModulesSnapError = -3,
+    LdrModulesUnloaded = -2,
+    LdrModulesUnloading = -1,
+    LdrModulesPlaceHolder = 0,
+    LdrModulesMapping = 1,
+    LdrModulesMapped = 2,
+    LdrModulesWaitingForDependencies = 3,
+    LdrModulesSnapping = 4,
+    LdrModulesSnapped = 5,
+    LdrModulesCondensed = 6,
+    LdrModulesReadyToInit = 7,
+    LdrModulesInitializing = 8,
+    LdrModulesReadyToRun = 9,
+} LDR_DDAG_STATE;
+
+typedef struct _LDR_DDAG_NODE
+{
+    LIST_ENTRY Modules;
+    LDR_SERVICE_TAG_RECORD *ServiceTagList;
+    ULONG LoadCount;
+    ULONG ReferenceCount;
+    ULONG DependencyCount;
+    union
+    {
+        LDRP_CSLIST Dependencies;
+        SINGLE_LIST_ENTRY RemovalLink;
+    };
+    LDRP_CSLIST IncomingDependencies;
+    LDR_DDAG_STATE State;
+    SINGLE_LIST_ENTRY CondenseLink;
+    ULONG PreorderNumber;
+    ULONG LowestLink;
+} LDR_DDAG_NODE, *PLDR_DDAG_NODE;
+
+typedef enum _LDR_DLL_LOAD_REASON
+{
+    LoadReasonStaticDependency,
+    LoadReasonStaticForwarderDependency,
+    LoadReasonDynamicForwarderDependency,
+    LoadReasonDelayloadDependency,
+    LoadReasonDynamicLoad,
+    LoadReasonAsImageLoad,
+    LoadReasonAsDataLoad,
+    LoadReasonUnknown = -1
+} LDR_DLL_LOAD_REASON, *PLDR_DLL_LOAD_REASON;
+
 typedef struct _LDR_MODULE
 {
     LIST_ENTRY          InLoadOrderModuleList;
@@ -2272,6 +2334,20 @@ typedef struct _LDR_MODULE
     ULONG               CheckSum;
     ULONG               TimeDateStamp;
     HANDLE              ActivationContext;
+    void*               Lock;
+    LDR_DDAG_NODE*      DdagNode;
+    LIST_ENTRY          NodeModuleLink;
+    struct _LDRP_LOAD_CONTEXT *LoadContext;
+    void*               ParentDllBase;
+    void*               SwitchBackContext;
+    RTL_BALANCED_NODE   BaseAddressIndexNode;
+    RTL_BALANCED_NODE   MappingInfoIndexNode;
+    ULONG_PTR           OriginalBase;
+    LARGE_INTEGER       LoadTime;
+    ULONG               BaseNameHashValue;
+    LDR_DLL_LOAD_REASON LoadReason;
+    ULONG               ImplicitPathOptions;
+    ULONG               ReferenceCount;
 } LDR_MODULE, *PLDR_MODULE;
 
 typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA
