@@ -143,6 +143,17 @@ my %remap_types =
      "HGLRC" => "struct wgl_context *",
      "HPBUFFERARB" => "struct wgl_pbuffer *",
     );
+
+my %khronos_types =
+    (
+     "khronos_int8_t" => "signed char",
+     "khronos_uint8_t" => "unsigned char",
+     "khronos_int16_t" => "short",
+     "khronos_uint16_t" => "unsigned short",
+     "khronos_int32_t" => "int",
+     "khronos_uint32_t" => "unsigned int",
+     "khronos_float_t" => "float",
+    );
 #
 # Used to convert some types
 #
@@ -318,7 +329,7 @@ if ($version eq "1.0") {
 # Fetch the registry files
 #
 my $url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
-my $commit="9929a7296ffdbd9c17125e1aa319cde78d1032e6";
+my $commit="03e1bfb87c4664d34dc7822fb591841eec747094";
 
 -f "gl-$commit.xml" || system "wget", "-O", "gl-$commit.xml", "$url/$commit/xml/gl.xml" || die "cannot download gl.xml";
 -f "wgl-$commit.xml" || system "wget", "-O", "wgl-$commit.xml", "$url/$commit/xml/wgl.xml" || die "cannot download wgl.xml";
@@ -647,7 +658,9 @@ print HEADER "#endif\n\n";
 
 foreach (@gl_types)
 {
-    printf HEADER $gl_types{$_}->textContent() . "\n";
+    my $type = $gl_types{$_}->textContent();
+    foreach my $t (keys %khronos_types) { $type =~ s/\s(\Q$t\E)\s/ $khronos_types{$t} /; }
+    printf HEADER $type . "\n";
 }
 print HEADER "\n";
 
