@@ -5725,3 +5725,83 @@ void wined3d_raw_blitter_create(struct wined3d_blitter **next, const struct wine
     blitter->next = *next;
     *next = blitter;
 }
+
+static void vk_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_context *context)
+{
+    struct wined3d_blitter *next;
+
+    TRACE("blitter %p, context %p.\n", blitter, context);
+
+    if ((next = blitter->next))
+        next->ops->blitter_destroy(next, context);
+
+    heap_free(blitter);
+}
+
+static void vk_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
+        unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
+        const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+{
+    struct wined3d_blitter *next;
+
+    TRACE("blitter %p, device %p, rt_count %u, fb %p, rect_count %u, clear_rects %p, "
+            "draw_rect %s, flags %#x, colour %s, depth %.8e, stencil %#x.\n",
+            blitter, device, rt_count, fb, rect_count, clear_rects,
+            wine_dbgstr_rect(draw_rect), flags, debug_color(colour), depth, stencil);
+
+    if (!(next = blitter->next))
+    {
+        ERR("No blitter to handle clear.\n");
+        return;
+    }
+
+    TRACE("Forwarding to blitter %p.\n", next);
+    next->ops->blitter_clear(next, device, rt_count, fb, rect_count,
+            clear_rects, draw_rect, flags, colour, depth, stencil);
+}
+
+static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_op op,
+        struct wined3d_context *context, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
+        DWORD src_location, const RECT *src_rect, struct wined3d_texture *dst_texture,
+        unsigned int dst_sub_resource_idx, DWORD dst_location, const RECT *dst_rect,
+        const struct wined3d_color_key *colour_key, enum wined3d_texture_filter_type filter)
+{
+    struct wined3d_blitter *next;
+
+    TRACE("blitter %p, op %#x, context %p, src_texture %p, src_sub_resource_idx %u, src_location %s, src_rect %s, "
+            "dst_texture %p, dst_sub_resource_idx %u, dst_location %s, dst_rect %s, colour_key %p, filter %s.\n",
+            blitter, op, context, src_texture, src_sub_resource_idx, wined3d_debug_location(src_location),
+            wine_dbgstr_rect(src_rect), dst_texture, dst_sub_resource_idx, wined3d_debug_location(dst_location),
+            wine_dbgstr_rect(dst_rect), colour_key, debug_d3dtexturefiltertype(filter));
+
+    if (!(next = blitter->next))
+    {
+        ERR("No blitter to handle blit op %#x.\n", op);
+        return dst_location;
+    }
+
+    TRACE("Forwarding to blitter %p.\n", next);
+    return next->ops->blitter_blit(next, op, context, src_texture, src_sub_resource_idx, src_location,
+            src_rect, dst_texture, dst_sub_resource_idx, dst_location, dst_rect, colour_key, filter);
+}
+
+static const struct wined3d_blitter_ops vk_blitter_ops =
+{
+    .blitter_destroy = vk_blitter_destroy,
+    .blitter_clear = vk_blitter_clear,
+    .blitter_blit = vk_blitter_blit,
+};
+
+void wined3d_vk_blitter_create(struct wined3d_blitter **next)
+{
+    struct wined3d_blitter *blitter;
+
+    if (!(blitter = heap_alloc(sizeof(*blitter))))
+        return;
+
+    TRACE("Created blitter %p.\n", blitter);
+
+    blitter->ops = &vk_blitter_ops;
+    blitter->next = *next;
+    *next = blitter;
+}

@@ -675,6 +675,7 @@ static HRESULT adapter_vk_init_3d(struct wined3d_device *device)
         wined3d_context_vk_cleanup(context_vk);
         return E_FAIL;
     }
+    wined3d_vk_blitter_create(&device_vk->d.blitter);
 
     wined3d_device_create_default_samplers(device, &context_vk->c);
 

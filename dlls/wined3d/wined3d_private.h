@@ -2436,6 +2436,7 @@ struct wined3d_blitter *wined3d_glsl_blitter_create(struct wined3d_blitter **nex
         const struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_raw_blitter_create(struct wined3d_blitter **next,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+void wined3d_vk_blitter_create(struct wined3d_blitter **next) DECLSPEC_HIDDEN;
 
 BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other) DECLSPEC_HIDDEN;
 
