@@ -24,6 +24,7 @@
 #include "ole2.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
+#include "wine/strmbase.h"
 #include "wine/test.h"
 #include "qedit.h"
 #include "control.h"
@@ -128,6 +129,89 @@ static void test_aggregation(void)
     ref = IUnknown_Release(unk);
     ok(!ref, "Got unexpected refcount %d.\n", ref);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+}
+
+struct testfilter
+{
+    struct strmbase_filter filter;
+    struct strmbase_source source;
+};
+
+static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, filter);
+}
+
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+
+    return index ? NULL : &filter->source.pin;
+}
+
+static void testfilter_destroy(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+
+    strmbase_source_cleanup(&filter->source);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops testfilter_ops =
+{
+    .filter_get_pin = testfilter_get_pin,
+    .filter_destroy = testfilter_destroy,
+};
+
+static HRESULT testsource_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
+{
+    static const VIDEOINFOHEADER source_format =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 640,
+        .bmiHeader.biHeight = 480,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 24,
+        .bmiHeader.biCompression = BI_RGB,
+        .bmiHeader.biSizeImage = 640 * 480 * 3
+    };
+
+    if (index)
+        return S_FALSE;
+
+    mt->majortype = MEDIATYPE_Video;
+    mt->subtype = MEDIASUBTYPE_RGB24;
+    mt->bFixedSizeSamples = TRUE;
+    mt->bTemporalCompression = FALSE;
+    mt->lSampleSize = source_format.bmiHeader.biSizeImage;
+    mt->formattype = FORMAT_VideoInfo;
+    mt->pUnk = NULL;
+    mt->cbFormat = sizeof(source_format);
+    mt->pbFormat = CoTaskMemAlloc(mt->cbFormat);
+    memcpy(mt->pbFormat, &source_format, mt->cbFormat);
+    return S_OK;
+}
+
+static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *peer, IMemAllocator **allocator)
+{
+    return S_OK;
+}
+
+static const struct strmbase_source_ops testsource_ops =
+{
+    .base.pin_get_media_type = testsource_get_media_type,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = testsource_DecideAllocator,
+};
+
+static void testfilter_init(struct testfilter *filter)
+{
+    static const GUID clsid = {0xabacab};
+
+    memset(filter, 0, sizeof(*filter));
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
+    strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
 }
 
 static WCHAR test_avi_filename[MAX_PATH];
@@ -369,8 +453,6 @@ static void test_mediadet(void)
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
 
-    DeleteFileW(test_avi_filename);
-
     /* test_sound.avi has one video stream and one audio stream.  */
     hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMediaDet, (LPVOID*)&pM);
@@ -479,8 +561,125 @@ static void test_mediadet(void)
 
     hr = IMediaDet_Release(pM);
     ok(hr == 0, "IMediaDet_Release returned: %x\n", hr);
+}
 
-    DeleteFileW(test_sound_avi_filename);
+static void test_put_filter(void)
+{
+    struct testfilter testfilter, testfilter2;
+    IFilterGraph *graph;
+    IBaseFilter *filter;
+    IMediaDet *detector;
+    LONG index, count;
+    AM_MEDIA_TYPE mt;
+    IUnknown *unk;
+    BSTR filename;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaDet, (void **)&detector);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_put_Filter(detector, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_Filter(detector, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    testfilter_init(&testfilter);
+    hr = IMediaDet_put_Filter(detector, &testfilter.filter.IUnknown_inner);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_Filter(detector, &unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!unk, "Expected a non-NULL interface.\n");
+    hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter == &testfilter.filter.IBaseFilter_iface, "Expected the same filter.\n");
+    IBaseFilter_Release(filter);
+    IUnknown_Release(unk);
+
+    ok(!wcscmp(testfilter.filter.name, L"Source"), "Got name %s.\n",
+            debugstr_w(testfilter.filter.name));
+    graph = testfilter.filter.graph;
+    IFilterGraph_AddRef(graph);
+
+    testfilter_init(&testfilter2);
+    hr = IMediaDet_put_Filter(detector, &testfilter2.filter.IUnknown_inner);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_Filter(detector, &unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!unk, "Expected a non-NULL interface.\n");
+    hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter == &testfilter2.filter.IBaseFilter_iface, "Expected the same filter.\n");
+    IBaseFilter_Release(filter);
+    IUnknown_Release(unk);
+
+    ok(testfilter2.filter.graph != graph, "Expected a different graph.\n");
+
+    ref = IFilterGraph_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testfilter.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    count = 0xdeadbeef;
+    hr = IMediaDet_get_OutputStreams(detector, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got %d streams.\n", count);
+
+    index = 0xdeadbeef;
+    hr = IMediaDet_get_CurrentStream(detector, &index);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(index == 0, "Got stream %d.\n", index);
+
+    filename = (BSTR)0xdeadbeef;
+    hr = IMediaDet_get_Filename(detector, &filename);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!filename, "Got filename %s.\n", debugstr_w(filename));
+
+    ref = IMediaDet_Release(detector);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testfilter2.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = CoCreateInstance(&CLSID_MediaDet, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaDet, (void **)&detector);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    filename = SysAllocString(test_sound_avi_filename);
+    hr = IMediaDet_put_Filename(detector, filename);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SysFreeString(filename);
+
+    hr = IMediaDet_get_StreamMediaType(detector, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    FreeMediaType(&mt);
+
+    hr = IMediaDet_get_Filter(detector, &unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaDet_put_Filter(detector, unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    filename = (BSTR)0xdeadbeef;
+    hr = IMediaDet_get_Filename(detector, &filename);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!filename, "Got filename %s.\n", debugstr_w(filename));
+
+    count = 0xdeadbeef;
+    hr = IMediaDet_get_OutputStreams(detector, &count);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 2, "Got %d streams.\n", count);
+
+    index = 0xdeadbeef;
+    hr = IMediaDet_get_CurrentStream(detector, &index);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(index == 0, "Got stream %d.\n", index);
+
+    ref = IMediaDet_Release(detector);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static HRESULT WINAPI ms_QueryInterface(IMediaSample *iface, REFIID riid,
@@ -737,6 +936,7 @@ START_TEST(mediadet)
 {
     IMediaDet *detector;
     HRESULT hr;
+    BOOL ret;
 
     if (!init_tests())
     {
@@ -757,8 +957,14 @@ START_TEST(mediadet)
 
     test_aggregation();
     test_mediadet();
+    test_put_filter();
     test_samplegrabber();
     test_COM_sg_enumpins();
+
+    ret = DeleteFileW(test_avi_filename);
+    todo_wine ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+    ret = DeleteFileW(test_sound_avi_filename);
+    todo_wine ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 
     CoUninitialize();
 }
