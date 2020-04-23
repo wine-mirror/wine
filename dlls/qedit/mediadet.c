@@ -309,11 +309,50 @@ static HRESULT WINAPI MediaDet_get_Filter(IMediaDet *iface, IUnknown **filter)
     return S_OK;
 }
 
-static HRESULT WINAPI MediaDet_put_Filter(IMediaDet* iface, IUnknown *newVal)
+static HRESULT WINAPI MediaDet_put_Filter(IMediaDet *iface, IUnknown *unk)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p)->(%p): not implemented!\n", This, newVal);
-    return E_NOTIMPL;
+    MediaDetImpl *detector = impl_from_IMediaDet(iface);
+    IGraphBuilder *graph;
+    IBaseFilter *filter;
+    HRESULT hr;
+
+    TRACE("detector %p, unk %p.\n", detector, unk);
+
+    if (!unk)
+        return E_POINTER;
+
+    if (FAILED(hr = IUnknown_QueryInterface(unk, &IID_IBaseFilter, (void **)&filter)))
+    {
+        WARN("Object does not expose IBaseFilter.\n");
+        return hr;
+    }
+
+    if (detector->graph)
+        MD_cleanup(detector);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterGraph, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (void **)&graph)))
+    {
+        IBaseFilter_Release(filter);
+        return hr;
+    }
+
+    if (FAILED(hr = IGraphBuilder_AddFilter(graph, filter, L"Source")))
+    {
+        IGraphBuilder_Release(graph);
+        IBaseFilter_Release(filter);
+        return hr;
+    }
+
+    detector->graph = graph;
+    detector->source = filter;
+    if (FAILED(find_splitter(detector)))
+    {
+        detector->splitter = detector->source;
+        IBaseFilter_AddRef(detector->splitter);
+    }
+
+    return IMediaDet_put_CurrentStream(&detector->IMediaDet_iface, 0);
 }
 
 static HRESULT WINAPI MediaDet_get_OutputStreams(IMediaDet* iface, LONG *pVal)
