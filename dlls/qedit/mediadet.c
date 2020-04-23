@@ -70,6 +70,35 @@ static void MD_cleanup(MediaDetImpl *This)
     This->cur_stream = 0;
 }
 
+static HRESULT get_filter_info(IMoniker *moniker, GUID *clsid, VARIANT *var)
+{
+    IPropertyBag *prop_bag;
+    HRESULT hr;
+
+    if (FAILED(hr = IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IPropertyBag, (void **)&prop_bag)))
+    {
+        ERR("Failed to get property bag, hr %#x.\n", hr);
+        return hr;
+    }
+
+    VariantInit(var);
+    V_VT(var) = VT_BSTR;
+    if (FAILED(hr = IPropertyBag_Read(prop_bag, L"CLSID", var, NULL)))
+    {
+        ERR("Failed to get CLSID, hr %#x.\n", hr);
+        IPropertyBag_Release(prop_bag);
+        return hr;
+    }
+    CLSIDFromString(V_BSTR(var), clsid);
+    VariantClear(var);
+
+    if (FAILED(hr = IPropertyBag_Read(prop_bag, L"FriendlyName", var, NULL)))
+        ERR("Failed to get name, hr %#x.\n", hr);
+
+    IPropertyBag_Release(prop_bag);
+    return hr;
+}
+
 /* MediaDet inner IUnknown */
 static HRESULT WINAPI MediaDet_inner_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
@@ -372,40 +401,6 @@ static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
     return S_OK;
 }
 
-/* From quartz, 2008/04/07 */
-static HRESULT GetFilterInfo(IMoniker *pMoniker, GUID *pclsid, VARIANT *pvar)
-{
-    IPropertyBag *pPropBagCat = NULL;
-    HRESULT hr;
-
-    VariantInit(pvar);
-    V_VT(pvar) = VT_BSTR;
-
-    hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag,
-                                (LPVOID *) &pPropBagCat);
-
-    if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, L"CLSID", pvar, NULL);
-
-    if (SUCCEEDED(hr))
-    {
-        hr = CLSIDFromString(V_BSTR(pvar), pclsid);
-        VariantClear(pvar);
-        V_VT(pvar) = VT_BSTR;
-    }
-
-    if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, L"FriendlyName", pvar, NULL);
-
-    if (SUCCEEDED(hr))
-        TRACE("Moniker = %s - %s\n", debugstr_guid(pclsid), debugstr_w(V_BSTR(pvar)));
-
-    if (pPropBagCat)
-        IPropertyBag_Release(pPropBagCat);
-
-    return hr;
-}
-
 static HRESULT GetSplitter(MediaDetImpl *This)
 {
     IFileSourceFilter *file;
@@ -458,7 +453,7 @@ static HRESULT GetSplitter(MediaDetImpl *This)
     hr = E_NOINTERFACE;
     while (IEnumMoniker_Next(filters, 1, &mon, NULL) == S_OK)
     {
-        hr = GetFilterInfo(mon, &clsid, &var);
+        hr = get_filter_info(mon, &clsid, &var);
         IMoniker_Release(mon);
         if (FAILED(hr))
             continue;
