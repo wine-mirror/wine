@@ -855,7 +855,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
             VK_CALL(vkInvalidateMappedMemoryRanges(device_vk->vk_device, 1, &range));
         }
 
-        bo->command_buffer_id = context_vk->current_command_buffer.id;
+        wined3d_context_vk_reference_bo(context_vk, bo);
     }
 
     if (bo->command_buffer_id == context_vk->current_command_buffer.id)
@@ -971,8 +971,8 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, NULL, 2, vk_barrier, 0, NULL));
 
-        src_bo->command_buffer_id = context_vk->current_command_buffer.id;
-        dst_bo->command_buffer_id = context_vk->current_command_buffer.id;
+        wined3d_context_vk_reference_bo(context_vk, src_bo);
+        wined3d_context_vk_reference_bo(context_vk, dst_bo);
 
         return;
     }

@@ -4625,7 +4625,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, dst_texture_vk->layout,
             dst_texture_vk->vk_image, aspect_mask);
     dst_texture_vk->command_buffer_id = context_vk->current_command_buffer.id;
-    staging_bo.command_buffer_id = context_vk->current_command_buffer.id;
+    wined3d_context_vk_reference_bo(context_vk, &staging_bo);
     wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 }
 
@@ -4758,7 +4758,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             src_texture_vk->vk_image, aspect_mask);
 
     src_texture_vk->command_buffer_id = context_vk->current_command_buffer.id;
-    staging_bo.command_buffer_id = context_vk->current_command_buffer.id;
+    wined3d_context_vk_reference_bo(context_vk, &staging_bo);
     wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
     wined3d_context_vk_wait_command_buffer(context_vk, src_texture_vk->command_buffer_id);
 
