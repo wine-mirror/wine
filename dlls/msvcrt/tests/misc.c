@@ -240,7 +240,7 @@ static void test__get_doserrno(void)
     errno = EBADF;
     ret = p_get_doserrno(NULL);
     ok(ret == EINVAL, "Expected _get_doserrno to return EINVAL, got %d\n", ret);
-    ok(_doserrno == ERROR_INVALID_CMM, "Expected _doserrno to be ERROR_INVALID_CMM, got %d\n", _doserrno);
+    ok(_doserrno == ERROR_INVALID_CMM, "Expected _doserrno to be ERROR_INVALID_CMM, got %ld\n", _doserrno);
     ok(errno == EBADF, "Expected errno to be EBADF, got %d\n", errno);
 
     _doserrno = ERROR_INVALID_CMM;
@@ -287,19 +287,19 @@ static void test__set_doserrno(void)
     ret = p_set_doserrno(ERROR_FILE_NOT_FOUND);
     ok(ret == 0, "Expected _set_doserrno to return 0, got %d\n", ret);
     ok(_doserrno == ERROR_FILE_NOT_FOUND,
-       "Expected _doserrno to be ERROR_FILE_NOT_FOUND, got %d\n", _doserrno);
+       "Expected _doserrno to be ERROR_FILE_NOT_FOUND, got %ld\n", _doserrno);
 
     _doserrno = ERROR_INVALID_CMM;
     ret = p_set_doserrno(-1);
     ok(ret == 0, "Expected _set_doserrno to return 0, got %d\n", ret);
     ok(_doserrno == -1,
-       "Expected _doserrno to be -1, got %d\n", _doserrno);
+       "Expected _doserrno to be -1, got %ld\n", _doserrno);
 
     _doserrno = ERROR_INVALID_CMM;
     ret = p_set_doserrno(0xdeadbeef);
     ok(ret == 0, "Expected _set_doserrno to return 0, got %d\n", ret);
     ok(_doserrno == 0xdeadbeef,
-       "Expected _doserrno to be 0xdeadbeef, got %d\n", _doserrno);
+       "Expected _doserrno to be 0xdeadbeef, got %ld\n", _doserrno);
 }
 
 static void test__set_errno(void)

@@ -150,21 +150,21 @@ static void test_gmtime(void)
 
     gmt_tm->tm_wday = gmt_tm->tm_yday = 0;
     gmt = p_mkgmtime32(gmt_tm);
-    ok(gmt == valid, "gmt = %u\n", gmt);
+    ok(gmt == valid, "gmt = %lu\n", gmt);
     ok(gmt_tm->tm_wday == 4, "gmt_tm->tm_wday = %d\n", gmt_tm->tm_wday);
     ok(gmt_tm->tm_yday == 0, "gmt_tm->tm_yday = %d\n", gmt_tm->tm_yday);
 
     gmt_tm->tm_wday = gmt_tm->tm_yday = 0;
     gmt_tm->tm_isdst = -1;
     gmt = p_mkgmtime32(gmt_tm);
-    ok(gmt == valid, "gmt = %u\n", gmt);
+    ok(gmt == valid, "gmt = %lu\n", gmt);
     ok(gmt_tm->tm_wday == 4, "gmt_tm->tm_wday = %d\n", gmt_tm->tm_wday);
     ok(gmt_tm->tm_yday == 0, "gmt_tm->tm_yday = %d\n", gmt_tm->tm_yday);
 
     gmt_tm->tm_wday = gmt_tm->tm_yday = 0;
     gmt_tm->tm_isdst = 1;
     gmt = p_mkgmtime32(gmt_tm);
-    ok(gmt == valid, "gmt = %u\n", gmt);
+    ok(gmt == valid, "gmt = %lu\n", gmt);
     ok(gmt_tm->tm_wday == 4, "gmt_tm->tm_wday = %d\n", gmt_tm->tm_wday);
     ok(gmt_tm->tm_yday == 0, "gmt_tm->tm_yday = %d\n", gmt_tm->tm_yday);
 
@@ -177,13 +177,13 @@ static void test_gmtime(void)
 
     gmt_tm->tm_isdst = -1;
     gmt = p_mkgmtime32(gmt_tm);
-    ok(gmt == valid, "gmt = %u\n", gmt);
+    ok(gmt == valid, "gmt = %lu\n", gmt);
     ok(gmt_tm->tm_wday == 6, "gmt_tm->tm_wday = %d\n", gmt_tm->tm_wday);
     ok(gmt_tm->tm_yday == 2, "gmt_tm->tm_yday = %d\n", gmt_tm->tm_yday);
 
     gmt_tm->tm_isdst = 1;
     gmt = p_mkgmtime32(gmt_tm);
-    ok(gmt == valid, "gmt = %u\n", gmt);
+    ok(gmt == valid, "gmt = %lu\n", gmt);
 
     if(!p_gmtime32_s) {
         win_skip("Skipping _gmtime32_s tests\n");

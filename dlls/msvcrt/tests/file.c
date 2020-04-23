@@ -1185,7 +1185,7 @@ static void test_file_write_read( void )
 
   memset(btext, 0, LLEN);
   tempfd = _open(tempf,_O_APPEND|_O_RDWR); /* open for APPEND in default mode */
-  ok(tell(tempfd) == 0, "bad position %u expecting 0\n", tell(tempfd));
+  ok(tell(tempfd) == 0, "bad position %lu expecting 0\n", tell(tempfd));
   ok(_read(tempfd,btext,LLEN) == lstrlenA(mytext), "_read _O_APPEND got bad length\n");
   ok( memcmp(mytext,btext,strlen(mytext)) == 0, "problems with _O_APPEND _read\n");
   _close(tempfd);
@@ -1206,15 +1206,15 @@ static void test_file_write_read( void )
   _lseek(tempfd, -3, FILE_END);
   ret = _read(tempfd,btext,1);
   ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
-  ok(tell(tempfd) == 41, "bad position %u expecting 41\n", tell(tempfd));
+  ok(tell(tempfd) == 41, "bad position %lu expecting 41\n", tell(tempfd));
   _lseek(tempfd, -3, FILE_END);
   ret = _read(tempfd,btext,2);
   ok(ret == 1 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
-  ok(tell(tempfd) == 42, "bad position %u expecting 42\n", tell(tempfd));
+  ok(tell(tempfd) == 42, "bad position %lu expecting 42\n", tell(tempfd));
   _lseek(tempfd, -3, FILE_END);
   ret = _read(tempfd,btext,3);
   ok(ret == 2 && *btext == 'e', "_read expected 'e' got \"%.*s\" bad length: %d\n", ret, btext, ret);
-  ok(tell(tempfd) == 43, "bad position %u expecting 43\n", tell(tempfd));
+  ok(tell(tempfd) == 43, "bad position %lu expecting 43\n", tell(tempfd));
    _close(tempfd);
 
   ret = unlink(tempf);
@@ -1469,7 +1469,7 @@ static void test_file_inherit( const char* selfname )
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
     _spawnvp(_P_WAIT, selfname, arg_v);
-    ok(tell(fd) == 8, "bad position %u expecting 8\n", tell(fd));
+    ok(tell(fd) == 8, "bad position %lu expecting 8\n", tell(fd));
     lseek(fd, 0, SEEK_SET);
     ok(read(fd, buffer, sizeof (buffer)) == 8 && memcmp(buffer, "Success", 8) == 0, "Couldn't read back the data\n");
     close (fd);
@@ -1482,7 +1482,7 @@ static void test_file_inherit( const char* selfname )
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
     arg_v[4] = 0;
     _spawnvp(_P_WAIT, selfname, arg_v);
-    ok(tell(fd) == 0, "bad position %u expecting 0\n", tell(fd));
+    ok(tell(fd) == 0, "bad position %lu expecting 0\n", tell(fd));
     ok(read(fd, buffer, sizeof (buffer)) == 0, "Found unexpected data (%s)\n", buffer);
     close (fd);
     ok(unlink("fdopen.tst") == 0, "Couldn't unlink\n");

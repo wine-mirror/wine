@@ -5425,21 +5425,21 @@ static void test_istream(void)
     pis = call_func2(p_istream_seekg, &is1, 0);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
-    ok(_tell(fb1.fd) == 0, "expected 0 got %d\n", _tell(fb1.fd));
+    ok(_tell(fb1.fd) == 0, "expected 0 got %ld\n", _tell(fb1.fd));
     if (0) /* crashes on native */
         is1.base_ios.sb = NULL;
     pis = call_func2(p_istream_seekg, &is1, -5);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
-    ok(_tell(fb1.fd) == 0, "expected 0 got %d\n", _tell(fb1.fd));
+    ok(_tell(fb1.fd) == 0, "expected 0 got %ld\n", _tell(fb1.fd));
     fb1.base.epptr = fb1.base.ebuf;
     pis = call_func2(p_istream_seekg, &is1, 5);
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
     ok(fb1.base.epptr == NULL, "wrong put end, expected %p got %p\n", NULL, fb1.base.epptr);
-    ok(_tell(fb1.fd) == 5, "expected 5 got %d\n", _tell(fb1.fd));
+    ok(_tell(fb1.fd) == 5, "expected 5 got %ld\n", _tell(fb1.fd));
     is1.base_ios.state = IOSTATE_goodbit;
     fd = fb1.fd;
     fb1.fd = -1;
@@ -5466,7 +5466,7 @@ static void test_istream(void)
     ok(pis == &is1, "wrong return, expected %p got %p\n", &is1, pis);
     ok(is1.base_ios.state == IOSTATE_failbit, "expected %d got %d\n", IOSTATE_failbit, is1.base_ios.state);
     ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
-    ok(_tell(fb1.fd) == 24, "expected 24 got %d\n", _tell(fb1.fd));
+    ok(_tell(fb1.fd) == 24, "expected 24 got %ld\n", _tell(fb1.fd));
 
     /* sync */
     ret = (int) call_func1(p_istream_sync, &is1);
