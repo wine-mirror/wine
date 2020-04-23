@@ -317,8 +317,11 @@ if ($version eq "1.0") {
 #
 # Fetch the registry files
 #
--f "gl.xml" || system "wget https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/gl.xml" || die "cannot download gl.xml";
--f "wgl.xml" || system "wget https://raw.github.com/KhronosGroup/OpenGL-Registry/master/xml/wgl.xml" || die "cannot download wgl.xml";
+my $url="https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry";
+my $commit="9929a7296ffdbd9c17125e1aa319cde78d1032e6";
+
+-f "gl-$commit.xml" || system "wget", "-O", "gl-$commit.xml", "$url/$commit/xml/gl.xml" || die "cannot download gl.xml";
+-f "wgl-$commit.xml" || system "wget", "-O", "wgl-$commit.xml", "$url/$commit/xml/wgl.xml" || die "cannot download wgl.xml";
 
 
 #
@@ -559,8 +562,8 @@ sub parse_file($)
     }
 }
 
-parse_file( "gl.xml" );
-parse_file( "wgl.xml" );
+parse_file( "gl-$commit.xml" );
+parse_file( "wgl-$commit.xml" );
 parse_file( "winegl.xml" );
 
 #
