@@ -31,6 +31,24 @@ static IBaseFilter *create_file_writer(void)
     return filter;
 }
 
+static WCHAR *set_filename(IBaseFilter *filter)
+{
+    static WCHAR filename[MAX_PATH];
+    IFileSinkFilter *filesink;
+    WCHAR path[MAX_PATH];
+    HRESULT hr;
+
+    GetTempPathW(ARRAY_SIZE(path), path);
+    GetTempFileNameW(path, L"qfw", 0, filename);
+    DeleteFileW(filename);
+
+    IBaseFilter_QueryInterface(filter, &IID_IFileSinkFilter, (void **)&filesink);
+    hr = IFileSinkFilter_SetFileName(filesink, filename, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IFileSinkFilter_Release(filesink);
+    return filename;
+}
+
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
@@ -349,6 +367,112 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_media_types(void)
+{
+    IBaseFilter *filter = create_file_writer();
+    AM_MEDIA_TYPE mt = {{0}}, *pmt;
+    IEnumMediaTypes *enummt;
+    WCHAR *filename;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, L"in", &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Audio;
+    mt.subtype = MEDIASUBTYPE_PCM;
+    mt.formattype = FORMAT_WaveFormatEx;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    filename = set_filename(filter);
+
+    hr = IPin_EnumMediaTypes(pin, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
+
+    memset(&mt, 0, sizeof(AM_MEDIA_TYPE));
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Video;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Audio;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    mt.majortype = MEDIATYPE_Stream;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mt.subtype = MEDIASUBTYPE_PCM;
+    mt.formattype = FORMAT_WaveFormatEx;
+    hr = IPin_QueryAccept(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(GetFileAttributesW(filename) == INVALID_FILE_ATTRIBUTES, "File should not exist.\n");
+}
+
+static void test_enum_media_types(void)
+{
+    IBaseFilter *filter = create_file_writer();
+    IEnumMediaTypes *enum1, *enum2;
+    AM_MEDIA_TYPE *mts[2];
+    ULONG ref, count;
+    HRESULT hr;
+    IPin *pin;
+
+    IBaseFilter_FindPin(filter, L"in", &pin);
+
+    hr = IPin_EnumMediaTypes(pin, &enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!count, "Got count %u.\n", count);
+
+    hr = IEnumMediaTypes_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum1, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Clone(enum1, &enum2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Skip(enum1, 1);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumMediaTypes_Next(enum2, 1, mts, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumMediaTypes_Release(enum1);
+    IEnumMediaTypes_Release(enum2);
+    IPin_Release(pin);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(filewriter)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -358,6 +482,8 @@ START_TEST(filewriter)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_media_types();
+    test_enum_media_types();
 
     CoUninitialize();
 }

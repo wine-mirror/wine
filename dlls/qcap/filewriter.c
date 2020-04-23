@@ -54,9 +54,19 @@ static HRESULT file_writer_sink_query_interface(struct strmbase_pin *iface, REFI
     return S_OK;
 }
 
+static HRESULT file_writer_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct file_writer *filter = impl_from_strmbase_pin(iface);
+
+    if (filter->filename && !IsEqualGUID(&mt->majortype, &MEDIATYPE_Stream))
+        return S_FALSE;
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = file_writer_sink_query_interface,
+    .base.pin_query_accept = file_writer_sink_query_accept,
 };
 
 static inline struct file_writer *impl_from_strmbase_filter(struct strmbase_filter *iface)
