@@ -2860,6 +2860,10 @@ todo_wine
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);
     ok(hr == S_OK, "Failed to get a stream, hr %#x.\n", hr);
 
+    hr = IMFStreamSink_QueryInterface(stream_sink, &IID_IMFMediaEventGenerator, (void **)&unk);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!id, "Unexpected id.\n");

@@ -1106,6 +1106,7 @@ static HRESULT WINAPI audio_renderer_stream_QueryInterface(IMFStreamSink *iface,
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFStreamSink) ||
+            IsEqualIID(riid, &IID_IMFMediaEventGenerator) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = &renderer->IMFStreamSink_iface;
