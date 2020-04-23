@@ -41,6 +41,7 @@ typedef struct MediaDetImpl {
     IGraphBuilder *graph;
     IBaseFilter *source;
     IBaseFilter *splitter;
+    WCHAR *filename;
     LONG num_streams;
     LONG cur_stream;
     IPin *cur_pin;
@@ -66,6 +67,9 @@ static void MD_cleanup(MediaDetImpl *This)
     This->splitter = NULL;
     if (This->graph) IGraphBuilder_Release(This->graph);
     This->graph = NULL;
+    if (This->filename)
+        free(This->filename);
+    This->filename = NULL;
     This->num_streams = -1;
     This->cur_stream = 0;
 }
@@ -525,9 +529,6 @@ static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet* iface, double *pVal)
 static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
-    IFileSourceFilter *file;
-    LPOLESTR name;
-    HRESULT hr;
 
     TRACE("(%p)\n", This);
 
@@ -537,35 +538,24 @@ static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
     *pVal = NULL;
     /* MSDN says it should return E_FAIL if no file is open, but tests
        show otherwise.  */
-    if (!This->source)
+    if (!This->filename)
         return S_OK;
 
-    hr = IBaseFilter_QueryInterface(This->source, &IID_IFileSourceFilter,
-                                    (void **) &file);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IFileSourceFilter_GetCurFile(file, &name, NULL);
-    IFileSourceFilter_Release(file);
-    if (FAILED(hr))
-        return hr;
-
-    *pVal = SysAllocString(name);
-    CoTaskMemFree(name);
+    *pVal = SysAllocString(This->filename);
     if (!*pVal)
         return E_OUTOFMEMORY;
 
     return S_OK;
 }
 
-static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
+static HRESULT WINAPI MediaDet_put_Filename(IMediaDet *iface, BSTR filename)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
     IGraphBuilder *gb;
     IBaseFilter *bf;
     HRESULT hr;
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(newVal));
+    TRACE("detector %p, filename %s.\n", This, debugstr_w(filename));
 
     if (This->graph)
     {
@@ -578,10 +568,17 @@ static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
     if (FAILED(hr))
         return hr;
 
-    if (FAILED(hr = IGraphBuilder_AddSourceFilter(gb, newVal, L"Source", &bf)))
+    if (FAILED(hr = IGraphBuilder_AddSourceFilter(gb, filename, L"Source", &bf)))
     {
         IGraphBuilder_Release(gb);
         return hr;
+    }
+
+    if (!(This->filename = wcsdup(filename)))
+    {
+        IBaseFilter_Release(bf);
+        IGraphBuilder_Release(gb);
+        return E_OUTOFMEMORY;
     }
 
     This->graph = gb;

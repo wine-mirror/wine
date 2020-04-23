@@ -636,7 +636,7 @@ static void test_put_filter(void)
 
     filename = (BSTR)0xdeadbeef;
     hr = IMediaDet_get_Filename(detector, &filename);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!filename, "Got filename %s.\n", debugstr_w(filename));
 
     ref = IMediaDet_Release(detector);
@@ -666,7 +666,7 @@ static void test_put_filter(void)
     filename = (BSTR)0xdeadbeef;
     hr = IMediaDet_get_Filename(detector, &filename);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(!filename, "Got filename %s.\n", debugstr_w(filename));
+    ok(!filename, "Got filename %s.\n", debugstr_w(filename));
 
     count = 0xdeadbeef;
     hr = IMediaDet_get_OutputStreams(detector, &count);
