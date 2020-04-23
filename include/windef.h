@@ -239,13 +239,22 @@ extern "C" {
 
 /* Standard data types */
 
+#ifndef BASETYPES
+#define BASETYPES
+typedef unsigned char UCHAR, *PUCHAR;
+typedef unsigned short USHORT, *PUSHORT;
+#ifdef _MSC_VER
+typedef unsigned long ULONG, *PULONG;
+#else
+typedef unsigned int ULONG, *PULONG;
+#endif
+#endif
+
 typedef void                                   *LPVOID;
 typedef const void                             *LPCVOID;
 typedef int             BOOL,       *PBOOL,    *LPBOOL;
 typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
-typedef unsigned char   UCHAR,      *PUCHAR;
 typedef unsigned short  WORD,       *PWORD,    *LPWORD;
-typedef unsigned short  USHORT,     *PUSHORT;
 typedef int             INT,        *PINT,     *LPINT;
 typedef unsigned int    UINT,       *PUINT;
 typedef float           FLOAT,      *PFLOAT;
@@ -253,11 +262,9 @@ typedef char                        *PSZ;
 #ifdef _MSC_VER
 typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned long   ULONG,      *PULONG;
 #else
 typedef int                                    *LPLONG;
 typedef unsigned int    DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned int    ULONG,      *PULONG;
 #endif
 
 /* Macros to map Winelib names to the correct implementation name */
