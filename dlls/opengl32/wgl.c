@@ -950,6 +950,15 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
 }
 
 /***********************************************************************
+ *		wglGetDefaultProcAddress (OPENGL32.@)
+ */
+PROC WINAPI wglGetDefaultProcAddress( LPCSTR name )
+{
+    FIXME( "%s: stub\n", debugstr_a(name));
+    return NULL;
+}
+
+/***********************************************************************
  *		wglSwapLayerBuffers (OPENGL32.@)
  */
 BOOL WINAPI wglSwapLayerBuffers(HDC hdc,

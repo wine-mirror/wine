@@ -381,6 +381,8 @@ my %remapped_wgl_functions =
      "wglUseFontOutlines" => 0,
     );
 
+my @extra_wgl_functions = ( "wglGetDefaultProcAddress" );
+
 my %supported_wgl_extensions =
    (
     "WGL_ARB_create_context" => 1,
@@ -501,6 +503,10 @@ sub parse_file($)
                     $name = $remapped_wgl_functions{$name};
                 }
                 $wgl_functions{$name} = $functions{$cmd->{name}};
+            }
+            foreach my $name (@extra_wgl_functions)
+            {
+                $wgl_functions{$name} = $functions{$name} if defined $functions{$name};
             }
         }
         next unless defined $norm_categories{$feature->{name}};
