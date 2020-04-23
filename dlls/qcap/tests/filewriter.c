@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 #include "dshow.h"
+#include "wine/strmbase.h"
 #include "wine/test.h"
 
 static IBaseFilter *create_file_writer(void)
@@ -473,6 +474,180 @@ static void test_enum_media_types(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+struct testfilter
+{
+    struct strmbase_filter filter;
+    struct strmbase_source source;
+};
+
+static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, filter);
+}
+
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    if (!index)
+        return &filter->source.pin;
+    return NULL;
+}
+
+static void testfilter_destroy(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    strmbase_source_cleanup(&filter->source);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops testfilter_ops =
+{
+    .filter_get_pin = testfilter_get_pin,
+    .filter_destroy = testfilter_destroy,
+};
+
+static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
+        IMemInputPin *peer, IMemAllocator **allocator)
+{
+    return S_OK;
+}
+
+static const struct strmbase_source_ops testsource_ops =
+{
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideAllocator = testsource_DecideAllocator,
+};
+
+static void testfilter_init(struct testfilter *filter)
+{
+    static const GUID clsid = {0xabacab};
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
+    strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
+}
+
+static void test_allocator(IMemInputPin *input, IMemAllocator *allocator)
+{
+    ALLOCATOR_PROPERTIES props, ret_props;
+    IMemAllocator *ret_allocator;
+    HRESULT hr;
+
+    memset(&props, 0xcc, sizeof(props));
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!props.cBuffers, "Got %d buffers.\n", props.cBuffers);
+        ok(!props.cbBuffer, "Got size %d.\n", props.cbBuffer);
+        ok(props.cbAlign == 512, "Got alignment %d.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %d.\n", props.cbPrefix);
+    }
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_NotifyAllocator(input, NULL, TRUE);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    props.cBuffers = 1;
+    props.cbBuffer = 256;
+    props.cbAlign = 512;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_NotifyAllocator(input, allocator, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        IMemAllocator_Release(ret_allocator);
+}
+
+static void test_connect_pin(void)
+{
+    AM_MEDIA_TYPE req_mt =
+    {
+        .majortype = {0x1111},
+        .subtype = {0x2222},
+        .formattype = {0x3333},
+    };
+
+    IBaseFilter *filter = create_file_writer();
+    struct testfilter source;
+    IMemAllocator *allocator;
+    IMemInputPin *meminput;
+    IFilterGraph2 *graph;
+    AM_MEDIA_TYPE mt;
+    IPin *pin, *peer;
+    HRESULT hr;
+    ULONG ref;
+
+    set_filename(filter);
+
+    testfilter_init(&source);
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&graph);
+    hr = IFilterGraph2_AddFilter(graph, filter, L"filewriter");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
+    IBaseFilter_FindPin(filter, L"in", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&meminput);
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(pin, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(pin, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    req_mt.majortype = MEDIATYPE_Stream;
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ConnectedTo(pin, &peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(peer == &source.source.pin.IPin_iface, "Got peer %p.\n", peer);
+    IPin_Release(peer);
+
+    hr = IPin_ConnectionMediaType(pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!memcmp(&mt, &req_mt, sizeof(AM_MEDIA_TYPE)), "Media types didn't match.\n");
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&allocator);
+
+    test_allocator(meminput, allocator);
+
+    hr = IFilterGraph2_Disconnect(graph, pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, pin);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(source.source.pin.peer == pin, "Got peer %p.\n", source.source.pin.peer);
+    IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(pin, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(pin, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMemInputPin_Release(meminput);
+    IPin_Release(pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMemAllocator_Release(allocator);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(filewriter)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -484,6 +659,7 @@ START_TEST(filewriter)
     test_pin_info();
     test_media_types();
     test_enum_media_types();
+    test_connect_pin();
 
     CoUninitialize();
 }
