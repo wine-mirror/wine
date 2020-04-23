@@ -22,6 +22,7 @@
 #include "dshow.h"
 #include "qcap_main.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -31,6 +32,8 @@ struct file_writer
     IFileSinkFilter IFileSinkFilter_iface;
 
     struct strmbase_sink sink;
+
+    WCHAR *filename;
 };
 
 static inline struct file_writer *impl_from_strmbase_pin(struct strmbase_pin *iface)
@@ -87,6 +90,7 @@ static void file_writer_destroy(struct strmbase_filter *iface)
 {
     struct file_writer *filter = impl_from_strmbase_filter(iface);
 
+    heap_free(filter->filename);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
     heap_free(filter);
@@ -126,11 +130,21 @@ static HRESULT WINAPI filesinkfilter_SetFileName(IFileSinkFilter *iface,
         LPCOLESTR filename, const AM_MEDIA_TYPE *mt)
 {
     struct file_writer *filter = impl_from_IFileSinkFilter(iface);
+    WCHAR *new_filename;
 
-    FIXME("filter %p, filename %s, mt %p, stub!\n", filter, debugstr_w(filename), mt);
+    TRACE("filter %p, filename %s, mt %p, stub!\n", filter, debugstr_w(filename), mt);
     strmbase_dump_media_type(mt);
 
-    return E_NOTIMPL;
+    if (mt)
+        FIXME("Ignoring media type %p.\n", mt);
+
+    if (!(new_filename = heap_alloc((strlenW(filename) + 1) * sizeof(WCHAR))))
+        return E_OUTOFMEMORY;
+    strcpyW(new_filename, filename);
+
+    heap_free(filter->filename);
+    filter->filename = new_filename;
+    return S_OK;
 }
 
 static HRESULT WINAPI filesinkfilter_GetCurFile(IFileSinkFilter *iface,
