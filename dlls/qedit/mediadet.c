@@ -99,6 +99,124 @@ static HRESULT get_filter_info(IMoniker *moniker, GUID *clsid, VARIANT *var)
     return hr;
 }
 
+static HRESULT find_splitter(MediaDetImpl *detector)
+{
+    IPin *source_pin, *splitter_pin;
+    IFileSourceFilter *file_source;
+    IEnumMoniker *enum_moniker;
+    IFilterMapper2 *mapper;
+    IBaseFilter *splitter;
+    IEnumPins *enum_pins;
+    LPOLESTR filename;
+    AM_MEDIA_TYPE mt;
+    IMoniker *mon;
+    GUID type[2];
+    VARIANT var;
+    HRESULT hr;
+    GUID clsid;
+
+    if (FAILED(hr = IBaseFilter_QueryInterface(detector->source,
+            &IID_IFileSourceFilter, (void **)&file_source)))
+    {
+        ERR("Failed to get file source interface.\n");
+        return hr;
+    }
+
+    hr = IFileSourceFilter_GetCurFile(file_source, &filename, &mt);
+    IFileSourceFilter_Release(file_source);
+    CoTaskMemFree(filename);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get current file, hr %#x.\n", hr);
+        return hr;
+    }
+    type[0] = mt.majortype;
+    type[1] = mt.subtype;
+    FreeMediaType(&mt);
+
+    if (FAILED(hr = IBaseFilter_EnumPins(detector->source, &enum_pins)))
+    {
+        ERR("Failed to enumerate source pins, hr %#x.\n", hr);
+        return hr;
+    }
+    hr = IEnumPins_Next(enum_pins, 1, &source_pin, NULL);
+    IEnumPins_Release(enum_pins);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get source pin, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (void **)&mapper)))
+    {
+        IPin_Release(source_pin);
+        return hr;
+    }
+
+    hr = IFilterMapper2_EnumMatchingFilters(mapper, &enum_moniker, 0, TRUE,
+            MERIT_UNLIKELY, FALSE, 1, type, NULL, NULL, FALSE, TRUE, 0, NULL, NULL, NULL);
+    IFilterMapper2_Release(mapper);
+    if (FAILED(hr))
+    {
+        IPin_Release(source_pin);
+        return hr;
+    }
+
+    hr = E_NOINTERFACE;
+    while (IEnumMoniker_Next(enum_moniker, 1, &mon, NULL) == S_OK)
+    {
+        hr = get_filter_info(mon, &clsid, &var);
+        IMoniker_Release(mon);
+        if (FAILED(hr))
+            continue;
+
+        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IBaseFilter, (void **)&splitter);
+        if (FAILED(hr))
+        {
+            VariantClear(&var);
+            continue;
+        }
+
+        hr = IGraphBuilder_AddFilter(detector->graph, splitter, V_BSTR(&var));
+        VariantClear(&var);
+        if (FAILED(hr))
+        {
+            IBaseFilter_Release(splitter);
+            continue;
+        }
+
+        hr = IBaseFilter_EnumPins(splitter, &enum_pins);
+        if (FAILED(hr))
+        {
+            IBaseFilter_Release(splitter);
+            continue;
+        }
+        hr = IEnumPins_Next(enum_pins, 1, &splitter_pin, NULL);
+        IEnumPins_Release(enum_pins);
+        if (FAILED(hr))
+        {
+            IBaseFilter_Release(splitter);
+            continue;
+        }
+
+        hr = IPin_Connect(source_pin, splitter_pin, NULL);
+        IPin_Release(splitter_pin);
+        if (SUCCEEDED(hr))
+        {
+            detector->splitter = splitter;
+            break;
+        }
+
+        IBaseFilter_Release(splitter);
+    }
+
+    IEnumMoniker_Release(enum_moniker);
+    IPin_Release(source_pin);
+    return hr;
+}
+
 /* MediaDet inner IUnknown */
 static HRESULT WINAPI MediaDet_inner_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
@@ -401,115 +519,6 @@ static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)
     return S_OK;
 }
 
-static HRESULT GetSplitter(MediaDetImpl *This)
-{
-    IFileSourceFilter *file;
-    LPOLESTR name;
-    AM_MEDIA_TYPE mt;
-    GUID type[2];
-    IFilterMapper2 *map;
-    IEnumMoniker *filters;
-    IMoniker *mon;
-    VARIANT var;
-    GUID clsid;
-    IBaseFilter *splitter;
-    IEnumPins *pins;
-    IPin *source_pin, *splitter_pin;
-    HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IFilterMapper2, (void **) &map);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IBaseFilter_QueryInterface(This->source, &IID_IFileSourceFilter,
-                                    (void **) &file);
-    if (FAILED(hr))
-    {
-        IFilterMapper2_Release(map);
-        return hr;
-    }
-
-    hr = IFileSourceFilter_GetCurFile(file, &name, &mt);
-    IFileSourceFilter_Release(file);
-    CoTaskMemFree(name);
-    if (FAILED(hr))
-    {
-        IFilterMapper2_Release(map);
-        return hr;
-    }
-    type[0] = mt.majortype;
-    type[1] = mt.subtype;
-    CoTaskMemFree(mt.pbFormat);
-
-    hr = IFilterMapper2_EnumMatchingFilters(map, &filters, 0, TRUE,
-                                            MERIT_UNLIKELY, FALSE, 1, type,
-                                            NULL, NULL, FALSE, TRUE,
-                                            0, NULL, NULL, NULL);
-    IFilterMapper2_Release(map);
-    if (FAILED(hr))
-        return hr;
-
-    hr = E_NOINTERFACE;
-    while (IEnumMoniker_Next(filters, 1, &mon, NULL) == S_OK)
-    {
-        hr = get_filter_info(mon, &clsid, &var);
-        IMoniker_Release(mon);
-        if (FAILED(hr))
-            continue;
-
-        hr = CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER,
-                              &IID_IBaseFilter, (void **) &splitter);
-        if (FAILED(hr))
-        {
-            VariantClear(&var);
-            continue;
-        }
-
-        hr = IGraphBuilder_AddFilter(This->graph, splitter, V_BSTR(&var));
-        VariantClear(&var);
-        This->splitter = splitter;
-        if (FAILED(hr))
-            goto retry;
-
-        hr = IBaseFilter_EnumPins(This->source, &pins);
-        if (FAILED(hr))
-            goto retry;
-        IEnumPins_Next(pins, 1, &source_pin, NULL);
-        IEnumPins_Release(pins);
-
-        hr = IBaseFilter_EnumPins(splitter, &pins);
-        if (FAILED(hr))
-        {
-            IPin_Release(source_pin);
-            goto retry;
-        }
-        if (IEnumPins_Next(pins, 1, &splitter_pin, NULL) != S_OK)
-        {
-            IEnumPins_Release(pins);
-            IPin_Release(source_pin);
-            goto retry;
-        }
-        IEnumPins_Release(pins);
-
-        hr = IPin_Connect(source_pin, splitter_pin, NULL);
-        IPin_Release(source_pin);
-        IPin_Release(splitter_pin);
-        if (SUCCEEDED(hr))
-            break;
-
-retry:
-        IBaseFilter_Release(splitter);
-        This->splitter = NULL;
-    }
-
-    IEnumMoniker_Release(filters);
-    if (FAILED(hr))
-        return hr;
-
-    return S_OK;
-}
-
 static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
 {
     MediaDetImpl *This = impl_from_IMediaDet(iface);
@@ -538,7 +547,7 @@ static HRESULT WINAPI MediaDet_put_Filename(IMediaDet* iface, BSTR newVal)
 
     This->graph = gb;
     This->source = bf;
-    hr = GetSplitter(This);
+    hr = find_splitter(This);
     if (FAILED(hr))
         return hr;
 
