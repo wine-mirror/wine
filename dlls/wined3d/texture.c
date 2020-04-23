@@ -5807,12 +5807,6 @@ static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wine
         return false;
     }
 
-    if (wined3d_resource_get_sample_count(src_resource) > 1)
-    {
-        TRACE("Multi-sample source resource not supported.\n");
-        return false;
-    }
-
     if (op == WINED3D_BLIT_OP_RAW_BLIT)
         return true;
 
@@ -5846,7 +5840,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
     VkImageAspectFlags src_aspect, dst_aspect;
     VkCommandBuffer vk_command_buffer;
     struct wined3d_blitter *next;
-    VkImageCopy region;
+    bool resolve = false;
 
     TRACE("blitter %p, op %#x, context %p, src_texture %p, src_sub_resource_idx %u, src_location %s, src_rect %s, "
             "dst_texture %p, dst_sub_resource_idx %u, dst_location %s, dst_rect %s, colour_key %p, filter %s.\n",
@@ -5864,6 +5858,9 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         TRACE("Depth/stencil blits not supported.\n");
         goto next;
     }
+
+    if (wined3d_resource_get_sample_count(&src_texture_vk->t.resource) > 1)
+        resolve = true;
 
     src_level = src_sub_resource_idx % src_texture->level_count;
     src_layer = src_sub_resource_idx / src_texture->level_count;
@@ -5912,26 +5909,56 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             dst_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             dst_texture_vk->vk_image, dst_aspect);
 
-    region.srcSubresource.aspectMask = src_aspect;
-    region.srcSubresource.mipLevel = src_level;
-    region.srcSubresource.baseArrayLayer = src_layer;
-    region.srcSubresource.layerCount = 1;
-    region.srcOffset.x = src_rect->left;
-    region.srcOffset.y = src_rect->top;
-    region.srcOffset.z = 0;
-    region.dstSubresource.aspectMask = dst_aspect;
-    region.dstSubresource.mipLevel = dst_level;
-    region.dstSubresource.baseArrayLayer = dst_layer;
-    region.dstSubresource.layerCount = 1;
-    region.dstOffset.x = dst_rect->left;
-    region.dstOffset.y = dst_rect->top;
-    region.dstOffset.z = 0;
-    region.extent.width = src_rect->right - src_rect->left;
-    region.extent.height = src_rect->bottom - src_rect->top;
-    region.extent.depth = 1;
+    if (resolve)
+    {
+        VkImageResolve region;
 
-    VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            dst_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+        region.srcSubresource.aspectMask = src_aspect;
+        region.srcSubresource.mipLevel = src_level;
+        region.srcSubresource.baseArrayLayer = src_layer;
+        region.srcSubresource.layerCount = 1;
+        region.srcOffset.x = src_rect->left;
+        region.srcOffset.y = src_rect->top;
+        region.srcOffset.z = 0;
+        region.dstSubresource.aspectMask = dst_aspect;
+        region.dstSubresource.mipLevel = dst_level;
+        region.dstSubresource.baseArrayLayer = dst_layer;
+        region.dstSubresource.layerCount = 1;
+        region.dstOffset.x = dst_rect->left;
+        region.dstOffset.y = dst_rect->top;
+        region.dstOffset.z = 0;
+        region.extent.width = src_rect->right - src_rect->left;
+        region.extent.height = src_rect->bottom - src_rect->top;
+        region.extent.depth = 1;
+
+        VK_CALL(vkCmdResolveImage(vk_command_buffer, src_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                dst_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+    }
+    else
+    {
+        VkImageCopy region;
+
+        region.srcSubresource.aspectMask = src_aspect;
+        region.srcSubresource.mipLevel = src_level;
+        region.srcSubresource.baseArrayLayer = src_layer;
+        region.srcSubresource.layerCount = 1;
+        region.srcOffset.x = src_rect->left;
+        region.srcOffset.y = src_rect->top;
+        region.srcOffset.z = 0;
+        region.dstSubresource.aspectMask = dst_aspect;
+        region.dstSubresource.mipLevel = dst_level;
+        region.dstSubresource.baseArrayLayer = dst_layer;
+        region.dstSubresource.layerCount = 1;
+        region.dstOffset.x = dst_rect->left;
+        region.dstOffset.y = dst_rect->top;
+        region.dstOffset.z = 0;
+        region.extent.width = src_rect->right - src_rect->left;
+        region.extent.height = src_rect->bottom - src_rect->top;
+        region.extent.depth = 1;
+
+        VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                dst_texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+    }
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
