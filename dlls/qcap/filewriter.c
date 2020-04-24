@@ -34,6 +34,7 @@ struct file_writer
     struct strmbase_sink sink;
 
     WCHAR *filename;
+    HANDLE file;
 };
 
 static inline struct file_writer *impl_from_strmbase_pin(struct strmbase_pin *iface)
@@ -106,11 +107,36 @@ static void file_writer_destroy(struct strmbase_filter *iface)
     heap_free(filter);
 }
 
+static HRESULT file_writer_init_stream(struct strmbase_filter *iface)
+{
+    struct file_writer *filter = impl_from_strmbase_filter(iface);
+    HANDLE file;
+
+    if ((file = CreateFileW(filter->filename, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, CREATE_ALWAYS, 0, NULL)) == INVALID_HANDLE_VALUE)
+    {
+        ERR("Failed to create %s, error %u.\n", debugstr_w(filter->filename), GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    filter->file = file;
+    return S_OK;
+}
+
+static HRESULT file_writer_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct file_writer *filter = impl_from_strmbase_filter(iface);
+
+    CloseHandle(filter->file);
+    return S_OK;
+}
+
 static struct strmbase_filter_ops filter_ops =
 {
     .filter_query_interface = file_writer_query_interface,
     .filter_get_pin = file_writer_get_pin,
     .filter_destroy = file_writer_destroy,
+    .filter_init_stream = file_writer_init_stream,
+    .filter_cleanup_stream = file_writer_cleanup_stream,
 };
 
 static inline struct file_writer *impl_from_IFileSinkFilter(IFileSinkFilter *iface)

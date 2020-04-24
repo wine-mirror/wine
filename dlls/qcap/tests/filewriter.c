@@ -564,6 +564,58 @@ static void test_allocator(IMemInputPin *input, IMemAllocator *allocator)
         IMemAllocator_Release(ret_allocator);
 }
 
+static void test_filter_state(IMediaControl *control)
+{
+    OAFilterState state;
+    HRESULT hr;
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %u.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Running, "Got state %u.\n", state);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_GetState(control, 0, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Stopped, "Got state %u.\n", state);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -574,19 +626,21 @@ static void test_connect_pin(void)
     };
 
     IBaseFilter *filter = create_file_writer();
+    WCHAR *filename = set_filename(filter);
     struct testfilter source;
     IMemAllocator *allocator;
+    IMediaControl *control;
     IMemInputPin *meminput;
     IFilterGraph2 *graph;
     AM_MEDIA_TYPE mt;
     IPin *pin, *peer;
     HRESULT hr;
     ULONG ref;
-
-    set_filename(filter);
+    BOOL ret;
 
     testfilter_init(&source);
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&graph);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     hr = IFilterGraph2_AddFilter(graph, filter, L"filewriter");
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
@@ -620,6 +674,7 @@ static void test_connect_pin(void)
             &IID_IMemAllocator, (void **)&allocator);
 
     test_allocator(meminput, allocator);
+    test_filter_state(control);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -636,6 +691,9 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(pin, &mt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     IMemInputPin_Release(meminput);
