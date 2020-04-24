@@ -100,8 +100,8 @@ struct dwrite_font_data
     LOGFONTW lf;
 
     /* used to mark font as tested when scanning for simulation candidate */
-    BOOL bold_sim_tested : 1;
-    BOOL oblique_sim_tested : 1;
+    unsigned int bold_sim_tested : 1;
+    unsigned int oblique_sim_tested : 1;
 };
 
 struct dwrite_fontfamily_data
@@ -114,9 +114,9 @@ struct dwrite_fontfamily_data
     size_t size;
     size_t count;
 
-    BOOL has_normal_face : 1;
-    BOOL has_oblique_face : 1;
-    BOOL has_italic_face : 1;
+    unsigned int has_normal_face : 1;
+    unsigned int has_oblique_face : 1;
+    unsigned int has_italic_face : 1;
 };
 
 struct dwrite_fontcollection
