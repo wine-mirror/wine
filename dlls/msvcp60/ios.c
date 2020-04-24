@@ -675,9 +675,7 @@ DEFINE_RTTI_DATA8(strstream, sizeof(strstream),
         &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
         "?AVstrstream@std@@")
 
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
+__ASM_BLOCK_BEGIN(ios_vtables)
     __ASM_VTABLE(iosb,
             VTABLE_ADD_FUNC(iosb_vector_dtor));
     __ASM_VTABLE(ios_base,
@@ -940,9 +938,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ostrstream_vector_dtor));
     __ASM_VTABLE(strstream,
             VTABLE_ADD_FUNC(strstream_vector_dtor));
-#ifndef __GNUC__
-}
-#endif
+__ASM_BLOCK_END
 
 /* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z */
 /* ?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXPEAD00@Z */
