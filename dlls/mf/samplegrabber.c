@@ -446,7 +446,7 @@ static HRESULT stream_place_marker(struct sample_grabber *grabber, MFSTREAMSINK_
         const PROPVARIANT *context_value)
 {
     struct scheduled_item *item;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     if (list_empty(&grabber->items))
     {
@@ -460,7 +460,9 @@ static HRESULT stream_place_marker(struct sample_grabber *grabber, MFSTREAMSINK_
     item->type = ITEM_TYPE_MARKER;
     item->u.marker.type = marker_type;
     list_init(&item->entry);
-    hr = PropVariantCopy(&item->u.marker.context, context_value);
+    PropVariantInit(&item->u.marker.context);
+    if (context_value)
+        hr = PropVariantCopy(&item->u.marker.context, context_value);
     if (SUCCEEDED(hr))
         list_add_tail(&grabber->items, &item->entry);
     else
