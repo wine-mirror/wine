@@ -69,6 +69,7 @@ static struct list device_list = LIST_INIT(device_list);
 struct usb_device
 {
     struct list entry;
+    BOOL removed;
 
     DEVICE_OBJECT *device_obj;
 
@@ -126,6 +127,7 @@ static void add_usb_device(libusb_device *libusb_device)
 
     EnterCriticalSection(&wineusb_cs);
     list_add_tail(&device_list, &device->entry);
+    device->removed = FALSE;
     LeaveCriticalSection(&wineusb_cs);
 
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
@@ -142,15 +144,14 @@ static void remove_usb_device(libusb_device *libusb_device)
     {
         if (device->libusb_device == libusb_device)
         {
-            libusb_unref_device(device->libusb_device);
-            libusb_close(device->handle);
             list_remove(&device->entry);
-            IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-            IoDeleteDevice(device->device_obj);
+            device->removed = TRUE;
             break;
         }
     }
     LeaveCriticalSection(&wineusb_cs);
+
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
 static BOOL thread_shutdown;
@@ -378,8 +379,38 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 
         case IRP_MN_START_DEVICE:
         case IRP_MN_QUERY_CAPABILITIES:
+        case IRP_MN_SURPRISE_REMOVAL:
             ret = STATUS_SUCCESS;
             break;
+
+        case IRP_MN_REMOVE_DEVICE:
+        {
+            LIST_ENTRY *entry;
+
+            EnterCriticalSection(&wineusb_cs);
+            while ((entry = RemoveHeadList(&device->irp_list)) != &device->irp_list)
+            {
+                irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+                irp->IoStatus.Status = STATUS_CANCELLED;
+                irp->IoStatus.Information = 0;
+                IoCompleteRequest(irp, IO_NO_INCREMENT);
+            }
+            LeaveCriticalSection(&wineusb_cs);
+
+            if (device->removed)
+            {
+                libusb_unref_device(device->libusb_device);
+                libusb_close(device->handle);
+
+                irp->IoStatus.Status = STATUS_SUCCESS;
+                IoCompleteRequest(irp, IO_NO_INCREMENT);
+                IoDeleteDevice(device->device_obj);
+                return STATUS_SUCCESS;
+            }
+
+            ret = STATUS_SUCCESS;
+            break;
+        }
 
         default:
             FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
