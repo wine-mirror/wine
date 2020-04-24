@@ -596,6 +596,13 @@ static void test_res_protocol(void)
 
     IUnknown_Release(unk);
 
+    test_res_url("/blank.html");
+    test_res_url("/123");
+    test_res_url("/#23/blank.html");
+    test_res_url("/#23/123");
+    test_res_url("/23/blank.html");
+    test_res_url("/23/123");
+
     test_res_url("/jstest.html");
     test_res_url("/Test/res.html");
     test_res_url("/test/dir/dir2/res.html");
