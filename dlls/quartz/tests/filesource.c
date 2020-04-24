@@ -1240,11 +1240,6 @@ static const struct strmbase_filter_ops testsink_ops =
     .filter_destroy = testsink_destroy,
 };
 
-static HRESULT testsink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct testsink *filter = impl_sink_from_strmbase_filter(iface->filter);
@@ -1274,7 +1269,6 @@ static void testsink_disconnect(struct strmbase_sink *iface)
 
 static const struct strmbase_sink_ops testsink_pin_ops =
 {
-    .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
     .sink_connect = testsink_connect,
     .sink_disconnect = testsink_disconnect,

@@ -1126,11 +1126,6 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_destroy = testfilter_destroy,
 };
 
-static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
@@ -1167,8 +1162,6 @@ static HRESULT WINAPI testsource_AttemptConnection(struct strmbase_source *iface
 static const struct strmbase_source_ops testsource_ops =
 {
     .base.pin_query_interface = testsource_query_interface,
-    .base.pin_query_accept = testsource_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnAttemptConnection = testsource_AttemptConnection,
 };
 
