@@ -3456,8 +3456,8 @@ static void CALLBACK ldr_notify_callback1(ULONG reason, LDR_DLL_NOTIFICATION_DAT
     /* expect module to be last module listed in LdrData load order list */
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-    ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
-       data->Loaded.DllBase, mod->BaseAddress);
+    ok(mod->DllBase == data->Loaded.DllBase, "Expected base address %p, got %p\n",
+       data->Loaded.DllBase, mod->DllBase);
     ok(!lstrcmpiW(mod->BaseDllName.Buffer, expected_dll), "Expected %s, got %s\n",
        wine_dbgstr_w(expected_dll), wine_dbgstr_w(mod->BaseDllName.Buffer));
 
@@ -3517,9 +3517,9 @@ static void CALLBACK ldr_notify_callback_dll_main(ULONG reason, LDR_DLL_NOTIFICA
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-    ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
-       data->Loaded.DllBase, mod->BaseAddress);
-    if (mod->BaseAddress != data->Loaded.DllBase)
+    ok(mod->DllBase == data->Loaded.DllBase, "Expected base address %p, got %p\n",
+       data->Loaded.DllBase, mod->DllBase);
+    if (mod->DllBase != data->Loaded.DllBase)
        return;
 
     orig_entry = mod->EntryPoint;
@@ -3556,9 +3556,9 @@ static void CALLBACK ldr_notify_callback_fail(ULONG reason, LDR_DLL_NOTIFICATION
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-    ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
-       data->Loaded.DllBase, mod->BaseAddress);
-    if (mod->BaseAddress != data->Loaded.DllBase)
+    ok(mod->DllBase == data->Loaded.DllBase, "Expected base address %p, got %p\n",
+       data->Loaded.DllBase, mod->DllBase);
+    if (mod->DllBase != data->Loaded.DllBase)
        return;
 
     orig_entry = mod->EntryPoint;

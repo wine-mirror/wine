@@ -3382,7 +3382,7 @@ static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags, ULONG class )
         LdrLockLoaderLock( 0, NULL, &magic );
         if (!LdrFindEntryForAddress( *handle, &pldr ))
         {
-            if ((flags & QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE) && *handle != pldr->BaseAddress)
+            if ((flags & QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE) && *handle != pldr->DllBase)
                 status = STATUS_DLL_NOT_FOUND;
             else
                 *handle = pldr->ActivationContext;

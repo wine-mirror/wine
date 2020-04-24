@@ -160,9 +160,9 @@ static void fill_module( struct snapshot* snap, ULONG* offset, ULONG process,
         mod->th32ProcessID = process ? process : GetCurrentProcessId();
         mod->GlblcntUsage = 0xFFFF; /* FIXME */
         mod->ProccntUsage = 0xFFFF; /* FIXME */
-        mod->modBaseAddr = ldr_mod[i].BaseAddress;
+        mod->modBaseAddr = ldr_mod[i].DllBase;
         mod->modBaseSize = ldr_mod[i].SizeOfImage;
-        mod->hModule = ldr_mod[i].BaseAddress;
+        mod->hModule = ldr_mod[i].DllBase;
 
         l = min(ldr_mod[i].BaseDllName.Length, sizeof(mod->szModule) - sizeof(WCHAR));
         memcpy(mod->szModule, ldr_mod[i].BaseDllName.Buffer, l);

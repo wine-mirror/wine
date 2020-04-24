@@ -825,7 +825,7 @@ static void unload_driver( struct wine_rb_entry *entry, void *context )
 
     TRACE_(relay)( "\1Ret  driver unload %p (obj=%p)\n", driver->driver_obj.DriverUnload, &driver->driver_obj );
 
-    FreeLibrary( ldr->BaseAddress );
+    FreeLibrary( ldr->DllBase );
     IoDeleteDriver( &driver->driver_obj );
 
     set_service_status( service_handle, SERVICE_STOPPED, 0 );

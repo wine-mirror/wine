@@ -2322,7 +2322,7 @@ typedef struct _LDR_DATA_TABLE_ENTRY
     LIST_ENTRY          InLoadOrderModuleList;
     LIST_ENTRY          InMemoryOrderLinks;
     LIST_ENTRY          InInitializationOrderModuleList;
-    void*               BaseAddress;
+    void*               DllBase;
     void*               EntryPoint;
     ULONG               SizeOfImage;
     UNICODE_STRING      FullDllName;

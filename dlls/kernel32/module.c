@@ -507,7 +507,7 @@ static BOOL get_ldr_module(HANDLE process, HMODULE module, LDR_DATA_TABLE_ENTRY 
     while ((ret = module_iterator_next(&iter)) > 0)
         /* When hModule is NULL we return the process image - which will be
          * the first module since our iterator uses InLoadOrderModuleList */
-        if (!module || module == iter.ldr_module.BaseAddress)
+        if (!module || module == iter.ldr_module.DllBase)
         {
             *ldr_module = iter.ldr_module;
             return TRUE;
@@ -572,7 +572,7 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
                 ((PBYTE)entry - offsetof(LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList));
             if (cb >= sizeof(HMODULE))
             {
-                *lphModule++ = table_entry->BaseAddress;
+                *lphModule++ = table_entry->DllBase;
                 cb -= sizeof(HMODULE);
             }
             size += sizeof(HMODULE);
@@ -605,7 +605,7 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
             if (sizeof(void *) == 8 && iter.wow64)
                 *lphModule++ = (HMODULE) (DWORD_PTR)iter.ldr_module32.BaseAddress;
             else
-                *lphModule++ = iter.ldr_module.BaseAddress;
+                *lphModule++ = iter.ldr_module.DllBase;
             cb -= sizeof(HMODULE);
         }
         size += sizeof(HMODULE);
@@ -833,7 +833,7 @@ BOOL WINAPI K32GetModuleInformation(HANDLE process, HMODULE module,
         if (!get_ldr_module(process, module, &ldr_module))
             return FALSE;
 
-        modinfo->lpBaseOfDll = ldr_module.BaseAddress;
+        modinfo->lpBaseOfDll = ldr_module.DllBase;
         modinfo->SizeOfImage = ldr_module.SizeOfImage;
         modinfo->EntryPoint  = ldr_module.EntryPoint;
     }

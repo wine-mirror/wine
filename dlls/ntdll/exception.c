@@ -590,12 +590,12 @@ RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_
     /* PE module or wine module */
     if (!LdrFindEntryForAddress( (void *)pc, module ))
     {
-        *base = (ULONG_PTR)(*module)->BaseAddress;
-        if ((func = RtlImageDirectoryEntryToData( (*module)->BaseAddress, TRUE,
+        *base = (ULONG_PTR)(*module)->DllBase;
+        if ((func = RtlImageDirectoryEntryToData( (*module)->DllBase, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
         {
             /* lookup in function table */
-            func = find_function_info( pc, (ULONG_PTR)(*module)->BaseAddress, func, size/sizeof(*func) );
+            func = find_function_info( pc, (ULONG_PTR)(*module)->DllBase, func, size/sizeof(*func) );
         }
     }
     else

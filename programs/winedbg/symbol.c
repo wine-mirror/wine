@@ -167,7 +167,7 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         {
             if (!dbg_read_memory(CONTAINING_RECORD(current, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList),
                                  &ldr_module, sizeof(ldr_module))) goto tls_error;
-            if ((DWORD_PTR)ldr_module.BaseAddress == sym->ModBase)
+            if ((DWORD_PTR)ldr_module.DllBase == sym->ModBase)
             {
                 tlsindex = ldr_module.TlsIndex;
                 break;
