@@ -2317,7 +2317,7 @@ typedef enum _LDR_DLL_LOAD_REASON
     LoadReasonUnknown = -1
 } LDR_DLL_LOAD_REASON, *PLDR_DLL_LOAD_REASON;
 
-typedef struct _LDR_MODULE
+typedef struct _LDR_DATA_TABLE_ENTRY
 {
     LIST_ENTRY          InLoadOrderModuleList;
     LIST_ENTRY          InMemoryOrderModuleList;
@@ -2348,7 +2348,7 @@ typedef struct _LDR_MODULE
     LDR_DLL_LOAD_REASON LoadReason;
     ULONG               ImplicitPathOptions;
     ULONG               ReferenceCount;
-} LDR_MODULE, *PLDR_MODULE;
+} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
 
 typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA
 {
@@ -2376,7 +2376,7 @@ typedef union _LDR_DLL_NOTIFICATION_DATA
 
 typedef void (CALLBACK *PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG, LDR_DLL_NOTIFICATION_DATA*, void*);
 
-/* those defines are (some of the) regular LDR_MODULE.Flags values */
+/* those defines are (some of the) regular LDR_DATA_TABLE_ENTRY.Flags values */
 #define LDR_IMAGE_IS_DLL                0x00000004
 #define LDR_LOAD_IN_PROGRESS            0x00001000
 #define LDR_UNLOAD_IN_PROGRESS          0x00002000
@@ -2443,7 +2443,7 @@ NTSYSAPI NTSTATUS  WINAPI LdrAccessResource(HMODULE,const IMAGE_RESOURCE_DATA_EN
 NTSYSAPI NTSTATUS  WINAPI LdrAddDllDirectory(const UNICODE_STRING*,void**);
 NTSYSAPI NTSTATUS  WINAPI LdrAddRefDll(ULONG,HMODULE);
 NTSYSAPI NTSTATUS  WINAPI LdrDisableThreadCalloutsForDll(HMODULE);
-NTSYSAPI NTSTATUS  WINAPI LdrFindEntryForAddress(const void*, PLDR_MODULE*);
+NTSYSAPI NTSTATUS  WINAPI LdrFindEntryForAddress(const void*, PLDR_DATA_TABLE_ENTRY*);
 NTSYSAPI NTSTATUS  WINAPI LdrFindResourceDirectory_U(HMODULE,const LDR_RESOURCE_INFO*,ULONG,const IMAGE_RESOURCE_DIRECTORY**);
 NTSYSAPI NTSTATUS  WINAPI LdrFindResource_U(HMODULE,const LDR_RESOURCE_INFO*,ULONG,const IMAGE_RESOURCE_DATA_ENTRY**);
 NTSYSAPI NTSTATUS  WINAPI LdrGetDllDirectory(UNICODE_STRING*);

@@ -803,7 +803,7 @@ static void unload_driver( struct wine_rb_entry *entry, void *context )
 {
     struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
     SERVICE_STATUS_HANDLE service_handle = driver->service_handle;
-    LDR_MODULE *ldr;
+    LDR_DATA_TABLE_ENTRY *ldr;
 
     if (!service_handle) return;    /* not a service */
 
@@ -3355,10 +3355,10 @@ error:
     return STATUS_UNSUCCESSFUL;
 }
 
-/* find the LDR_MODULE corresponding to the driver module */
-static LDR_MODULE *find_ldr_module( HMODULE module )
+/* find the LDR_DATA_TABLE_ENTRY corresponding to the driver module */
+static LDR_DATA_TABLE_ENTRY *find_ldr_module( HMODULE module )
 {
-    LDR_MODULE *ldr;
+    LDR_DATA_TABLE_ENTRY *ldr;
     ULONG_PTR magic;
 
     LdrLockLoaderLock( 0, NULL, &magic );

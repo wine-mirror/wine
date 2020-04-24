@@ -821,7 +821,7 @@ static NTSTATUS get_module_filename( HMODULE module, UNICODE_STRING *str, unsign
 {
     NTSTATUS status;
     ULONG_PTR magic;
-    LDR_MODULE *pldr;
+    LDR_DATA_TABLE_ENTRY *pldr;
 
     LdrLockLoaderLock(0, NULL, &magic);
     status = LdrFindEntryForAddress( module, &pldr );
@@ -3375,7 +3375,7 @@ static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags, ULONG class )
     else if (flags & (QUERY_ACTCTX_FLAG_ACTCTX_IS_ADDRESS|QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE))
     {
         ULONG_PTR magic;
-        LDR_MODULE *pldr;
+        LDR_DATA_TABLE_ENTRY *pldr;
 
         if (!*handle) return STATUS_INVALID_PARAMETER;
 

@@ -104,7 +104,7 @@ static BOOL process_attach( HMODULE module )
     }
     else
     {
-        LDR_MODULE *ldr;
+        LDR_DATA_TABLE_ENTRY *ldr;
 
         if (LdrFindEntryForAddress( GetModuleHandleW( 0 ), &ldr ) || !(ldr->Flags & LDR_WINE_INTERNAL))
             LoadLibraryA( "krnl386.exe16" );

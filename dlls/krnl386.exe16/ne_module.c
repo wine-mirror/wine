@@ -971,7 +971,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                 /* if module has a 32-bit owner, match the load order of the owner */
                 if ((main_module = (void *)GetProcAddress( mod32, "__wine_spec_main_module" )))
                 {
-                    LDR_MODULE *ldr;
+                    LDR_DATA_TABLE_ENTRY *ldr;
                     HMODULE main_owner = LoadLibraryA( main_module );
 
                     if (!main_owner)

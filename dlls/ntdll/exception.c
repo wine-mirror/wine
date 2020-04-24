@@ -581,7 +581,7 @@ static RUNTIME_FUNCTION *find_function_info( ULONG_PTR pc, ULONG_PTR base,
 /**********************************************************************
  *           lookup_function_info
  */
-RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_MODULE **module )
+RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_DATA_TABLE_ENTRY **module )
 {
     RUNTIME_FUNCTION *func = NULL;
     struct dynamic_unwind_entry *entry;
@@ -628,7 +628,7 @@ RUNTIME_FUNCTION *lookup_function_info( ULONG_PTR pc, ULONG_PTR *base, LDR_MODUL
 PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
                                                  UNWIND_HISTORY_TABLE *table )
 {
-    LDR_MODULE *module;
+    LDR_DATA_TABLE_ENTRY *module;
     RUNTIME_FUNCTION *func;
 
     /* FIXME: should use the history table to make things faster */

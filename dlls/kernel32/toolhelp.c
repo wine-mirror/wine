@@ -73,7 +73,7 @@ static WCHAR *fetch_string( HANDLE hProcess, UNICODE_STRING* us)
     return local;
 }
 
-static BOOL fetch_module( DWORD process, DWORD flags, LDR_MODULE** ldr_mod, ULONG* num )
+static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr_mod, ULONG *num )
 {
     HANDLE                      hProcess;
     PROCESS_BASIC_INFORMATION   pbi;
@@ -109,19 +109,19 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_MODULE** ldr_mod, ULON
             while (curr != head)
             {
                 if (!*num)
-                    *ldr_mod = HeapAlloc( GetProcessHeap(), 0, sizeof(LDR_MODULE) );
+                    *ldr_mod = HeapAlloc( GetProcessHeap(), 0, sizeof(LDR_DATA_TABLE_ENTRY) );
                 else
                     *ldr_mod = HeapReAlloc( GetProcessHeap(), 0, *ldr_mod,
-                                            (*num + 1) * sizeof(LDR_MODULE) );
+                                            (*num + 1) * sizeof(LDR_DATA_TABLE_ENTRY) );
                 if (!*ldr_mod) break;
                 if (!ReadProcessMemory( hProcess,
-                                        CONTAINING_RECORD(curr, LDR_MODULE,
+                                        CONTAINING_RECORD(curr, LDR_DATA_TABLE_ENTRY,
                                                           InLoadOrderModuleList),
                                         &(*ldr_mod)[*num],
-                                        sizeof(LDR_MODULE), NULL))
+                                        sizeof(LDR_DATA_TABLE_ENTRY), NULL))
                     break;
                 curr = (*ldr_mod)[*num].InLoadOrderModuleList.Flink;
-                /* if we cannot fetch the strings, then just ignore this LDR_MODULE
+                /* if we cannot fetch the strings, then just ignore this LDR_DATA_TABLE_ENTRY
                  * and continue loading the other ones in the list
                  */
                 if (!fetch_string( hProcess, &(*ldr_mod)[*num].BaseDllName )) continue;
@@ -140,7 +140,7 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_MODULE** ldr_mod, ULON
 }
 
 static void fill_module( struct snapshot* snap, ULONG* offset, ULONG process,
-                         LDR_MODULE* ldr_mod, ULONG num )
+                         LDR_DATA_TABLE_ENTRY* ldr_mod, ULONG num )
 {
     MODULEENTRY32W*     mod;
     ULONG               i;
@@ -293,7 +293,7 @@ static void fill_thread( struct snapshot* snap, ULONG* offset, LPVOID info, ULON
 HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
 {
     SYSTEM_PROCESS_INFORMATION* spi = NULL;
-    LDR_MODULE*         mod = NULL;
+    LDR_DATA_TABLE_ENTRY *mod = NULL;
     ULONG               num_pcs, num_thd, num_mod;
     HANDLE              hSnapShot = 0;
 

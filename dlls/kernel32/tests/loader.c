@@ -3807,7 +3807,7 @@ static void test_InMemoryOrderModuleList(void)
     PEB_LDR_DATA *ldr = NtCurrentTeb()->Peb->LdrData;
     LIST_ENTRY *entry1, *mark1 = &ldr->InLoadOrderModuleList;
     LIST_ENTRY *entry2, *mark2 = &ldr->InMemoryOrderModuleList;
-    LDR_MODULE *module1, *module2;
+    LDR_DATA_TABLE_ENTRY *module1, *module2;
 
     ok(ldr->Initialized == TRUE, "expected TRUE, got %u\n", ldr->Initialized);
 
@@ -3815,8 +3815,8 @@ static void test_InMemoryOrderModuleList(void)
          entry1 != mark1 && entry2 != mark2;
          entry1 = entry1->Flink, entry2 = entry2->Flink)
     {
-        module1 = CONTAINING_RECORD(entry1, LDR_MODULE, InLoadOrderModuleList);
-        module2 = CONTAINING_RECORD(entry2, LDR_MODULE, InMemoryOrderModuleList);
+        module1 = CONTAINING_RECORD(entry1, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
+        module2 = CONTAINING_RECORD(entry2, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
         ok(module1 == module2, "expected module1 == module2, got %p and %p\n", module1, module2);
     }
     ok(entry1 == mark1, "expected entry1 == mark1, got %p and %p\n", entry1, mark1);

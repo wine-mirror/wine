@@ -1578,7 +1578,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, BOOL* got_info, ULONG64 *f
  */
 static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
-    LDR_MODULE *module;
+    LDR_DATA_TABLE_ENTRY *module;
     NTSTATUS status;
 
     dispatch->ImageBase = 0;

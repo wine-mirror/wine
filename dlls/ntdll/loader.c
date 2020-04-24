@@ -69,7 +69,7 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 #define ISOLATIONAWARE_MANIFEST_RESOURCE_ID ((ULONG_PTR)2)
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
-typedef void  (CALLBACK *LDRENUMPROC)(LDR_MODULE *, void *, BOOLEAN *);
+typedef void  (CALLBACK *LDRENUMPROC)(LDR_DATA_TABLE_ENTRY *, void *, BOOLEAN *);
 
 /* system directory with trailing backslash */
 const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
@@ -125,7 +125,7 @@ static const WCHAR dllW[] = {'.','d','l','l',0};
 /* internal representation of 32bit modules. per process. */
 typedef struct _wine_modref
 {
-    LDR_MODULE            ldr;
+    LDR_DATA_TABLE_ENTRY  ldr;
     dev_t                 dev;
     ino_t                 ino;
     void                 *so_handle;
@@ -209,7 +209,7 @@ static RTL_UNLOAD_EVENT_TRACE unload_traces[RTL_UNLOAD_EVENT_TRACE_NUMBER];
 static RTL_UNLOAD_EVENT_TRACE *unload_trace_ptr;
 static unsigned int unload_trace_seq;
 
-static void module_push_unload_trace( const LDR_MODULE *ldr )
+static void module_push_unload_trace( const LDR_DATA_TABLE_ENTRY *ldr )
 {
     RTL_UNLOAD_EVENT_TRACE *ptr = &unload_traces[unload_trace_seq];
     unsigned int len = min(sizeof(ptr->ImageName) - sizeof(WCHAR), ldr->BaseDllName.Length);
@@ -439,7 +439,7 @@ static inline ULONG_PTR allocate_stub( const char *dll, const char *name ) { ret
 #endif  /* __i386__ */
 
 /* call ldr notifications */
-static void call_ldr_notifications( ULONG reason, LDR_MODULE *module )
+static void call_ldr_notifications( ULONG reason, LDR_DATA_TABLE_ENTRY *module )
 {
     struct ldr_notification *notify, *notify_next;
     LDR_DLL_NOTIFICATION_DATA data;
@@ -471,14 +471,14 @@ static void call_ldr_notifications( ULONG reason, LDR_MODULE *module )
 static WINE_MODREF *get_modref( HMODULE hmod )
 {
     PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
+    PLDR_DATA_TABLE_ENTRY mod;
 
     if (cached_modref && cached_modref->ldr.BaseAddress == hmod) return cached_modref;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
         if (mod->BaseAddress == hmod)
             return cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
     }
@@ -505,7 +505,7 @@ static WINE_MODREF *find_basename_module( LPCWSTR name )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
         if (RtlEqualUnicodeString( &name_str, &mod->BaseDllName, TRUE ))
         {
             cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
@@ -537,7 +537,7 @@ static WINE_MODREF *find_fullname_module( const UNICODE_STRING *nt_name )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
         if (RtlEqualUnicodeString( &name, &mod->FullDllName, TRUE ))
         {
             cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
@@ -564,7 +564,7 @@ static WINE_MODREF *find_fileid_module( struct stat *st )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList );
         WINE_MODREF *wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
 
         if (wm->dev == st->st_dev && wm->ino == st->st_ino)
@@ -590,7 +590,7 @@ static WINE_MODREF *find_so_module( void *handle )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_MODULE *mod = CONTAINING_RECORD( entry, LDR_MODULE, InLoadOrderModuleList );
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList );
         WINE_MODREF *wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
 
         if (wm->so_handle == handle) return wm;
@@ -918,7 +918,7 @@ done:
 /***********************************************************************
  *           create_module_activation_context
  */
-static NTSTATUS create_module_activation_context( LDR_MODULE *module )
+static NTSTATUS create_module_activation_context( LDR_DATA_TABLE_ENTRY *module )
 {
     NTSTATUS status;
     LDR_RESOURCE_INFO info;
@@ -948,7 +948,7 @@ static NTSTATUS create_module_activation_context( LDR_MODULE *module )
  * Some dlls (corpol.dll from IE6 for instance) are incorrectly marked as native
  * while being perfectly normal DLLs.  This heuristic should catch such breakages.
  */
-static BOOL is_dll_native_subsystem( LDR_MODULE *mod, const IMAGE_NT_HEADERS *nt, LPCWSTR filename )
+static BOOL is_dll_native_subsystem( LDR_DATA_TABLE_ENTRY *mod, const IMAGE_NT_HEADERS *nt, LPCWSTR filename )
 {
     static const WCHAR ntdllW[]    = {'n','t','d','l','l','.','d','l','l',0};
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
@@ -985,7 +985,7 @@ static BOOL is_dll_native_subsystem( LDR_MODULE *mod, const IMAGE_NT_HEADERS *nt
  * Allocate a TLS slot for a newly-loaded module.
  * The loader_section must be locked while calling this function.
  */
-static SHORT alloc_tls_slot( LDR_MODULE *mod )
+static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
 {
     const IMAGE_TLS_DIRECTORY *dir;
     ULONG i, size;
@@ -1070,7 +1070,7 @@ static SHORT alloc_tls_slot( LDR_MODULE *mod )
  * Free the module TLS slot on unload.
  * The loader_section must be locked while calling this function.
  */
-static void free_tls_slot( LDR_MODULE *mod )
+static void free_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
 {
     ULONG i = (USHORT)mod->TlsIndex;
 
@@ -1526,7 +1526,7 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
         mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
         for (entry = mark->Flink; entry != mark; entry = entry->Flink)
         {
-            LDR_MODULE *mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+            LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
 
             if (!(mod->Flags & LDR_IMAGE_IS_DLL)) continue;
             if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
@@ -1549,14 +1549,14 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
 static void process_detach(void)
 {
     PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
+    PLDR_DATA_TABLE_ENTRY mod;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     do
     {
         for (entry = mark->Blink; entry != mark; entry = entry->Blink)
         {
-            mod = CONTAINING_RECORD(entry, LDR_MODULE, 
+            mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
                                     InInitializationOrderModuleList);
             /* Check whether to detach this DLL */
             if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
@@ -1587,12 +1587,12 @@ static void process_detach(void)
 static void thread_attach(void)
 {
     PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
+    PLDR_DATA_TABLE_ENTRY mod;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, 
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
                                 InInitializationOrderModuleList);
         if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
             continue;
@@ -1630,15 +1630,15 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
  *
  * The loader_section must be locked while calling this function
  */
-NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
+NTSTATUS WINAPI LdrFindEntryForAddress( const void *addr, PLDR_DATA_TABLE_ENTRY *pmod )
 {
     PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
+    PLDR_DATA_TABLE_ENTRY mod;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
         if (mod->BaseAddress <= addr &&
             (const char *)addr < (char*)mod->BaseAddress + mod->SizeOfImage)
         {
@@ -1655,7 +1655,7 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
 NTSTATUS WINAPI LdrEnumerateLoadedModules( void *unknown, LDRENUMPROC callback, void *context )
 {
     LIST_ENTRY *mark, *entry;
-    LDR_MODULE *mod;
+    LDR_DATA_TABLE_ENTRY *mod;
     BOOLEAN stop = FALSE;
 
     TRACE( "(%p, %p, %p)\n", unknown, callback, context );
@@ -1668,7 +1668,7 @@ NTSTATUS WINAPI LdrEnumerateLoadedModules( void *unknown, LDRENUMPROC callback, 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD( entry, LDR_MODULE, InMemoryOrderModuleList );
+        mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList );
         callback( mod, context, &stop );
         if (stop) break;
     }
@@ -3483,7 +3483,7 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
     ANSI_STRING         str;
     char*               ptr;
     PLIST_ENTRY         mark, entry;
-    PLDR_MODULE         mod;
+    LDR_DATA_TABLE_ENTRY *mod;
     WORD id = 0;
 
     smi->ModulesCount = 0;
@@ -3492,7 +3492,7 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
         size += sizeof(*sm);
         if (size <= buf_size)
         {
@@ -3743,7 +3743,7 @@ void WINAPI RtlExitUserProcess( DWORD status )
 void WINAPI LdrShutdownThread(void)
 {
     PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
+    LDR_DATA_TABLE_ENTRY *mod;
     UINT i;
     void **pointers;
 
@@ -3757,7 +3757,7 @@ void WINAPI LdrShutdownThread(void)
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     for (entry = mark->Blink; entry != mark; entry = entry->Blink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, 
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
                                 InInitializationOrderModuleList);
         if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
             continue;
@@ -3828,13 +3828,13 @@ static void free_modref( WINE_MODREF *wm )
 static void MODULE_FlushModrefs(void)
 {
     PLIST_ENTRY mark, entry, prev;
-    PLDR_MODULE mod;
+    LDR_DATA_TABLE_ENTRY *mod;
     WINE_MODREF*wm;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     for (entry = mark->Blink; entry != mark; entry = prev)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InInitializationOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InInitializationOrderModuleList);
         wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
         prev = entry->Blink;
         if (!mod->LoadCount) free_modref( wm );
@@ -3844,7 +3844,7 @@ static void MODULE_FlushModrefs(void)
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Blink; entry != mark; entry = prev)
     {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
         wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
         prev = entry->Blink;
         if (!mod->LoadCount) free_modref( wm );
@@ -4189,7 +4189,7 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
  */
 PVOID WINAPI RtlPcToFileHeader( PVOID pc, PVOID *address )
 {
-    LDR_MODULE *module;
+    LDR_DATA_TABLE_ENTRY *module;
     PVOID ret = NULL;
 
     RtlEnterCriticalSection( &loader_section );
