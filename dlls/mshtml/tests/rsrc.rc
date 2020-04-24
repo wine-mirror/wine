@@ -28,6 +28,9 @@ asyncscriptload.js HTML "asyncscriptload.js"
 /* @makedep: jstest.html */
 jstest.html HTML "jstest.html"
 
+/* @makedep: jstest.html */
+jstest-rtfile.html 2110 "jstest.html"
+
 /* @makedep: vbtest.html */
 vbtest.html HTML "vbtest.html"
 
