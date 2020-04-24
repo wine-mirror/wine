@@ -1568,7 +1568,6 @@ static void gstdemux_sink_disconnect(struct strmbase_sink *iface)
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .sink_connect = gstdemux_sink_connect,
     .sink_disconnect = gstdemux_sink_disconnect,
 };
@@ -2298,7 +2297,6 @@ static HRESULT wave_parser_sink_query_accept(struct strmbase_pin *iface, const A
 static const struct strmbase_sink_ops wave_parser_sink_ops =
 {
     .base.pin_query_accept = wave_parser_sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .sink_connect = gstdemux_sink_connect,
     .sink_disconnect = gstdemux_sink_disconnect,
 };
@@ -2415,7 +2413,6 @@ static HRESULT avi_splitter_sink_query_accept(struct strmbase_pin *iface, const 
 static const struct strmbase_sink_ops avi_splitter_sink_ops =
 {
     .base.pin_query_accept = avi_splitter_sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .sink_connect = gstdemux_sink_connect,
     .sink_disconnect = gstdemux_sink_disconnect,
 };
@@ -2536,7 +2533,6 @@ static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const
 static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 {
     .base.pin_query_accept = mpeg_splitter_sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .sink_connect = gstdemux_sink_connect,
     .sink_disconnect = gstdemux_sink_disconnect,
 };
