@@ -488,11 +488,11 @@ static int module_iterator_next(MODULE_ITERATOR *iter)
     }
 
     if (!ReadProcessMemory(iter->process,
-                           CONTAINING_RECORD(iter->current, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList),
+                           CONTAINING_RECORD(iter->current, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks),
                            &iter->ldr_module, sizeof(iter->ldr_module), NULL))
          return -1;
 
-    iter->current = iter->ldr_module.InLoadOrderModuleList.Flink;
+    iter->current = iter->ldr_module.InLoadOrderLinks.Flink;
     return 1;
 }
 
@@ -569,7 +569,7 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
         while (entry != head)
         {
             PLDR_DATA_TABLE_ENTRY table_entry = (PLDR_DATA_TABLE_ENTRY)
-                ((PBYTE)entry - offsetof(LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList));
+                ((PBYTE)entry - offsetof(LDR_DATA_TABLE_ENTRY, InLoadOrderLinks));
             if (cb >= sizeof(HMODULE))
             {
                 *lphModule++ = table_entry->DllBase;

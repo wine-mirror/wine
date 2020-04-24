@@ -116,11 +116,11 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
                 if (!*ldr_mod) break;
                 if (!ReadProcessMemory( hProcess,
                                         CONTAINING_RECORD(curr, LDR_DATA_TABLE_ENTRY,
-                                                          InLoadOrderModuleList),
+                                                          InLoadOrderLinks),
                                         &(*ldr_mod)[*num],
                                         sizeof(LDR_DATA_TABLE_ENTRY), NULL))
                     break;
-                curr = (*ldr_mod)[*num].InLoadOrderModuleList.Flink;
+                curr = (*ldr_mod)[*num].InLoadOrderLinks.Flink;
                 /* if we cannot fetch the strings, then just ignore this LDR_DATA_TABLE_ENTRY
                  * and continue loading the other ones in the list
                  */

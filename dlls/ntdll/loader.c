@@ -505,7 +505,7 @@ static WINE_MODREF *find_basename_module( LPCWSTR name )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         if (RtlEqualUnicodeString( &name_str, &mod->BaseDllName, TRUE ))
         {
             cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
@@ -537,7 +537,7 @@ static WINE_MODREF *find_fullname_module( const UNICODE_STRING *nt_name )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         if (RtlEqualUnicodeString( &name, &mod->FullDllName, TRUE ))
         {
             cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
@@ -564,7 +564,7 @@ static WINE_MODREF *find_fileid_module( struct stat *st )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList );
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks );
         WINE_MODREF *wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
 
         if (wm->dev == st->st_dev && wm->ino == st->st_ino)
@@ -590,7 +590,7 @@ static WINE_MODREF *find_so_module( void *handle )
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList );
+        LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks );
         WINE_MODREF *wm = CONTAINING_RECORD( mod, WINE_MODREF, ldr );
 
         if (wm->so_handle == handle) return wm;
@@ -1224,7 +1224,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     }
 
     InsertTailList(&NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList,
-                   &wm->ldr.InLoadOrderModuleList);
+                   &wm->ldr.InLoadOrderLinks);
     InsertTailList(&NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList,
                    &wm->ldr.InMemoryOrderLinks);
     /* wait until init is called for inserting into InInitializationOrderModuleList */
@@ -1474,9 +1474,9 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
         if ((status = process_attach( wm->deps[i], lpReserved )) != STATUS_SUCCESS) break;
     }
 
-    if (!wm->ldr.InInitializationOrderModuleList.Flink)
+    if (!wm->ldr.InInitializationOrderLinks.Flink)
         InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList,
-                &wm->ldr.InInitializationOrderModuleList);
+                &wm->ldr.InInitializationOrderLinks);
 
     /* Call DLL entry point */
     if (status == STATUS_SUCCESS)
@@ -1526,7 +1526,7 @@ static void attach_implicitly_loaded_dlls( LPVOID reserved )
         mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
         for (entry = mark->Flink; entry != mark; entry = entry->Flink)
         {
-            LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
+            LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
             if (!(mod->Flags & LDR_IMAGE_IS_DLL)) continue;
             if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
@@ -1557,7 +1557,7 @@ static void process_detach(void)
         for (entry = mark->Blink; entry != mark; entry = entry->Blink)
         {
             mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
-                                    InInitializationOrderModuleList);
+                                    InInitializationOrderLinks);
             /* Check whether to detach this DLL */
             if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
                 continue;
@@ -1593,7 +1593,7 @@ static void thread_attach(void)
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
         mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
-                                InInitializationOrderModuleList);
+                                InInitializationOrderLinks);
         if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
             continue;
         if ( mod->Flags & LDR_NO_DLL_CALLS )
@@ -2028,7 +2028,7 @@ static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRIN
         if ((status = fixup_imports( wm, load_path )))
         {
             /* the module has only been inserted in the load & memory order lists */
-            RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+            RemoveEntryList(&wm->ldr.InLoadOrderLinks);
             RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
             /* FIXME: free the modref */
             return status;
@@ -2571,7 +2571,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
         if (status != STATUS_SUCCESS)
         {
             /* the module has only be inserted in the load & memory order lists */
-            RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+            RemoveEntryList(&wm->ldr.InLoadOrderLinks);
             RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
 
             /* FIXME: there are several more dangling references
@@ -3492,7 +3492,7 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         size += sizeof(*sm);
         if (size <= buf_size)
         {
@@ -3758,7 +3758,7 @@ void WINAPI LdrShutdownThread(void)
     for (entry = mark->Blink; entry != mark; entry = entry->Blink)
     {
         mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY,
-                                InInitializationOrderModuleList);
+                                InInitializationOrderLinks);
         if ( !(mod->Flags & LDR_PROCESS_ATTACHED) )
             continue;
         if ( mod->Flags & LDR_NO_DLL_CALLS )
@@ -3789,10 +3789,10 @@ void WINAPI LdrShutdownThread(void)
  */
 static void free_modref( WINE_MODREF *wm )
 {
-    RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+    RemoveEntryList(&wm->ldr.InLoadOrderLinks);
     RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
-    if (wm->ldr.InInitializationOrderModuleList.Flink)
-        RemoveEntryList(&wm->ldr.InInitializationOrderModuleList);
+    if (wm->ldr.InInitializationOrderLinks.Flink)
+        RemoveEntryList(&wm->ldr.InInitializationOrderLinks);
 
     TRACE(" unloading %s\n", debugstr_w(wm->ldr.FullDllName.Buffer));
     if (!TRACE_ON(module))
@@ -3834,7 +3834,7 @@ static void MODULE_FlushModrefs(void)
     mark = &NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList;
     for (entry = mark->Blink; entry != mark; entry = prev)
     {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InInitializationOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InInitializationOrderLinks);
         wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
         prev = entry->Blink;
         if (!mod->LoadCount) free_modref( wm );
@@ -3844,7 +3844,7 @@ static void MODULE_FlushModrefs(void)
     mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
     for (entry = mark->Blink; entry != mark; entry = prev)
     {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         wm = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
         prev = entry->Blink;
         if (!mod->LoadCount) free_modref( wm );
@@ -4576,8 +4576,8 @@ void __wine_process_init(void)
     virtual_set_large_address_space();
 
     /* the main exe needs to be the first in the load order list */
-    RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
-    InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
+    RemoveEntryList( &wm->ldr.InLoadOrderLinks );
+    InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderLinks );
     RemoveEntryList( &wm->ldr.InMemoryOrderLinks );
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderLinks );
 
