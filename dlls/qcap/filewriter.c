@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 struct file_writer
 {
     struct strmbase_filter filter;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IFileSinkFilter IFileSinkFilter_iface;
 
     struct strmbase_sink sink;
@@ -105,7 +106,9 @@ static HRESULT file_writer_query_interface(struct strmbase_filter *iface, REFIID
 {
     struct file_writer *filter = impl_from_strmbase_filter(iface);
 
-    if (IsEqualGUID(iid, &IID_IFileSinkFilter))
+    if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
+        *out = &filter->IAMFilterMiscFlags_iface;
+    else if (IsEqualGUID(iid, &IID_IFileSinkFilter))
         *out = &filter->IFileSinkFilter_iface;
     else
         return E_NOINTERFACE;
@@ -228,6 +231,46 @@ static const IFileSinkFilterVtbl filesinkfilter_vtbl =
     filesinkfilter_GetCurFile,
 };
 
+static inline struct file_writer *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, struct file_writer, IAMFilterMiscFlags_iface);
+}
+
+static HRESULT WINAPI misc_flags_QueryInterface(IAMFilterMiscFlags *iface, REFIID iid, void **out)
+{
+    struct file_writer *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI misc_flags_AddRef(IAMFilterMiscFlags *iface)
+{
+    struct file_writer *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI misc_flags_Release(IAMFilterMiscFlags *iface)
+{
+    struct file_writer *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI misc_flags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
+    struct file_writer *filter = impl_from_IAMFilterMiscFlags(iface);
+
+    TRACE("filter %p.\n", filter);
+
+    return AM_FILTER_MISC_FLAGS_IS_RENDERER;
+}
+
+static const IAMFilterMiscFlagsVtbl misc_flags_vtbl =
+{
+    misc_flags_QueryInterface,
+    misc_flags_AddRef,
+    misc_flags_Release,
+    misc_flags_GetMiscFlags,
+};
+
 HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'i','n',0};
@@ -238,6 +281,7 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
 
     strmbase_filter_init(&object->filter, outer, &CLSID_FileWriter, &filter_ops);
     object->IFileSinkFilter_iface.lpVtbl = &filesinkfilter_vtbl;
+    object->IAMFilterMiscFlags_iface.lpVtbl = &misc_flags_vtbl;
 
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &sink_ops, NULL);
 

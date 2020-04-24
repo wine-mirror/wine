@@ -78,7 +78,7 @@ static void test_interfaces(void)
     ULONG ref;
     IPin *pin;
 
-    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IFileSinkFilter, TRUE);
     todo_wine check_interface(filter, &IID_IFileSinkFilter2, TRUE);
@@ -769,6 +769,22 @@ static void test_connect_pin(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_misc_flags(void)
+{
+    IBaseFilter *filter = create_file_writer();
+    IAMFilterMiscFlags *misc_flags;
+    ULONG flags, ref;
+
+    IBaseFilter_QueryInterface(filter, &IID_IAMFilterMiscFlags, (void **)&misc_flags);
+
+    flags = IAMFilterMiscFlags_GetMiscFlags(misc_flags);
+    ok(flags == AM_FILTER_MISC_FLAGS_IS_RENDERER, "Got flags %#x.\n", flags);
+
+    IAMFilterMiscFlags_Release(misc_flags);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(filewriter)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -781,6 +797,7 @@ START_TEST(filewriter)
     test_media_types();
     test_enum_media_types();
     test_connect_pin();
+    test_misc_flags();
 
     CoUninitialize();
 }
