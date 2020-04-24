@@ -600,6 +600,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
             struct DIPROPDWORD diprop_word;
             void *tmp;
             GUID guid = {0};
+            DIEFFECT effect_empty;
 
             hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
                                                &effect_data.guid);
@@ -658,7 +659,15 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
             hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
             ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
             ok(effect_status==0,"IDirectInputEffect_GetEffectStatus() reported effect as started\n");
-            hr = IDirectInputEffect_SetParameters(effect, &effect_data.eff, DIEP_START);
+            /* SetParameters with a zeroed-out DIEFFECT and flags=0 should do nothing. */
+            memset(&effect_empty, 0, sizeof(effect_empty));
+            effect_empty.dwSize = sizeof(effect_empty);
+            hr = IDirectInputEffect_SetParameters(effect, &effect_empty, 0);
+            todo_wine
+            ok(hr==DI_NOEFFECT,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
+            /* Start effect with SetParameters and a zeroed-out DIEFFECT. */
+            hr = IDirectInputEffect_SetParameters(effect, &effect_empty, DIEP_START);
+            todo_wine
             ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
             hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
             ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
