@@ -397,7 +397,6 @@ static void qt_splitter_sink_disconnect(struct strmbase_sink *iface)
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .sink_connect = qt_splitter_sink_connect,
     .sink_disconnect = qt_splitter_sink_disconnect,
 };

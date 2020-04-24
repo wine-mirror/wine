@@ -168,11 +168,6 @@ static HRESULT video_decoder_sink_query_interface(struct strmbase_pin *iface, RE
     return S_OK;
 }
 
-static HRESULT video_decoder_sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
-{
-    return S_OK;
-}
-
 static void trackingCallback(
                     void *decompressionTrackingRefCon,
                     OSStatus result,
@@ -462,8 +457,6 @@ static void video_decoder_sink_disconnect(struct strmbase_sink *iface)
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = video_decoder_sink_query_interface,
-    .base.pin_query_accept = video_decoder_sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = video_decoder_sink_Receive,
     .sink_connect = video_decoder_sink_connect,
     .sink_disconnect = video_decoder_sink_disconnect,
