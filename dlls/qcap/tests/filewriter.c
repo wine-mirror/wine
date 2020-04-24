@@ -549,7 +549,7 @@ static void test_allocator(IMemInputPin *input, IMemAllocator *allocator)
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     props.cBuffers = 1;
-    props.cbBuffer = 256;
+    props.cbBuffer = 512;
     props.cbAlign = 512;
     props.cbPrefix = 0;
     hr = IMemAllocator_SetProperties(allocator, &props, &ret_props);
@@ -616,6 +616,68 @@ static void test_filter_state(IMediaControl *control)
     ok(state == State_Stopped, "Got state %u.\n", state);
 }
 
+static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
+        IMemAllocator *allocator, const WCHAR *filename)
+{
+    REFERENCE_TIME start, stop;
+    IMediaSample *sample;
+    BYTE buffer[600];
+    FILE *file;
+    HRESULT hr;
+    BYTE *data;
+    LONG size;
+
+    hr = IMemInputPin_ReceiveCanBlock(input);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    size = IMediaSample_GetSize(sample);
+    ok(size == 512, "Got size %d.\n", size);
+    memset(data, 0xcc, size);
+    start = 0;
+    stop = 512;
+    hr = IMediaSample_SetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    strcpy((char *)data, "abcdefghi");
+    hr = IMediaSample_SetActualDataLength(sample, 9);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(data, 0xcc, size);
+    strcpy((char *)data, "123456");
+    hr = IMediaSample_SetActualDataLength(sample, 6);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    file = _wfopen(filename, L"rb");
+    ok(!!file, "Failed to open file: %s.\n", strerror(errno));
+    size = fread(buffer, 1, sizeof(buffer), file);
+    ok(size == 512, "Got size %d.\n", size);
+    ok(!memcmp(buffer, "123456\0\xcc\xcc\xcc", 10), "Got data %s.\n",
+            debugstr_an((char *)buffer, size));
+    fclose(file);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaSample_Release(sample);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -675,6 +737,7 @@ static void test_connect_pin(void)
 
     test_allocator(meminput, allocator);
     test_filter_state(control);
+    test_sample_processing(control, meminput, allocator, filename);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

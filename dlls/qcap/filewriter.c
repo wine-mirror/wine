@@ -64,10 +64,36 @@ static HRESULT file_writer_sink_query_accept(struct strmbase_pin *iface, const A
     return S_OK;
 }
 
+static HRESULT WINAPI file_writer_sink_receive(struct strmbase_sink *iface, IMediaSample *sample)
+{
+    struct file_writer *filter = impl_from_strmbase_pin(&iface->pin);
+    REFERENCE_TIME start, stop;
+    LARGE_INTEGER offset;
+    HRESULT hr;
+    DWORD size;
+    BYTE *data;
+
+    if ((hr = IMediaSample_GetTime(sample, &start, &stop)) != S_OK)
+        ERR("Failed to get sample time, hr %#x.\n", hr);
+
+    if ((hr = IMediaSample_GetPointer(sample, &data)) != S_OK)
+        ERR("Failed to get sample pointer, hr %#x.\n", hr);
+
+    offset.QuadPart = start;
+    if (!SetFilePointerEx(filter->file, offset, NULL, FILE_BEGIN)
+            || !WriteFile(filter->file, data, stop - start, &size, NULL))
+        ERR("Failed to write file, error %u.\n", GetLastError());
+    if (size != stop - start)
+        ERR("Short write, %u/%u.\n", size, (DWORD)(stop - start));
+
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = file_writer_sink_query_interface,
     .base.pin_query_accept = file_writer_sink_query_accept,
+    .pfnReceive = file_writer_sink_receive,
 };
 
 static inline struct file_writer *impl_from_strmbase_filter(struct strmbase_filter *iface)
