@@ -12737,9 +12737,7 @@ DEFINE_RTTI_DATA1(time_base, 0, &locale_facet_rtti_base_descriptor, ".?AUtime_ba
 DEFINE_RTTI_DATA2(time_get_char, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@")
 DEFINE_RTTI_DATA2(time_get_wchar, 0, &time_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, ".?AV?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@")
 
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
+__ASM_BLOCK_BEGIN(locale_vtables)
     __ASM_VTABLE(_Facet_base,
             VTABLE_ADD_FUNC(locale_facet_vector_dtor)
             VTABLE_ADD_FUNC(locale_facet__Incref)
@@ -13104,9 +13102,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(time_get_wchar_do_get)
 #endif
             );
-#ifndef __GNUC__
-}
-#endif
+__ASM_BLOCK_END
 
 void init_locale(void *base)
 {
