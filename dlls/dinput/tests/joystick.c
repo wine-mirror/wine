@@ -663,11 +663,9 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
             memset(&effect_empty, 0, sizeof(effect_empty));
             effect_empty.dwSize = sizeof(effect_empty);
             hr = IDirectInputEffect_SetParameters(effect, &effect_empty, 0);
-            todo_wine
             ok(hr==DI_NOEFFECT,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
             /* Start effect with SetParameters and a zeroed-out DIEFFECT. */
             hr = IDirectInputEffect_SetParameters(effect, &effect_empty, DIEP_START);
-            todo_wine
             ok(hr==DI_OK,"IDirectInputEffect_SetParameters failed: %08x\n", hr);
             hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
             ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
