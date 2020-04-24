@@ -739,14 +739,22 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
                     if (FAILED(hr = sample_grabber_report_sample(grabber, item->u.sample, &sample_delivered)))
                         WARN("Failed to report a sample, hr %#x.\n", hr);
                     stream_release_pending_item(item);
-                    item = stream_get_next_item(grabber);
-                    if (item && item->type == ITEM_TYPE_SAMPLE)
+
+                    /* Schedule next sample, skipping markers. */
+                    LIST_FOR_EACH_ENTRY(item, &grabber->items, struct scheduled_item, entry)
                     {
-                        if (FAILED(hr = stream_schedule_sample(grabber, item)))
-                            WARN("Failed to schedule a sample, hr %#x.\n", hr);
-                        sample_grabber_stream_request_sample(grabber);
-                        item = NULL;
+                        if (item->type == ITEM_TYPE_SAMPLE)
+                        {
+                            if (FAILED(hr = stream_schedule_sample(grabber, item)))
+                                WARN("Failed to schedule a sample, hr %#x.\n", hr);
+                            break;
+                        }
                     }
+
+                    if (sample_delivered)
+                        sample_grabber_stream_request_sample(grabber);
+
+                    item = NULL;
                     break;
                 case ITEM_TYPE_MARKER:
                     sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
