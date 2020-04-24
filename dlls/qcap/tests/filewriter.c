@@ -678,6 +678,57 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input,
     IMediaSample_Release(sample);
 }
 
+static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
+{
+    LONG_PTR param1, param2;
+    unsigned int ret = 0;
+    HRESULT hr;
+    LONG code;
+
+    while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, timeout)) == S_OK)
+    {
+        if (code == EC_COMPLETE)
+        {
+            ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
+            ok(!param2, "Got param2 %#lx.\n", param2);
+            ret++;
+        }
+        IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
+        timeout = 0;
+    }
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    return ret;
+}
+
+static void test_eos(IFilterGraph2 *graph, IMediaControl *control, IPin *pin)
+{
+    IMediaEvent *eventsrc;
+    HRESULT hr;
+    BOOL ret;
+
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_complete(eventsrc, 0);
+    ok(ret == 1, "Expected EC_COMPLETE.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaEvent_Release(eventsrc);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -738,6 +789,7 @@ static void test_connect_pin(void)
     test_allocator(meminput, allocator);
     test_filter_state(control);
     test_sample_processing(control, meminput, allocator, filename);
+    test_eos(graph, control, pin);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

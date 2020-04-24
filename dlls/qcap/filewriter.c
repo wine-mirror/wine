@@ -36,6 +36,8 @@ struct file_writer
 
     WCHAR *filename;
     HANDLE file;
+
+    BOOL eos;
 };
 
 static inline struct file_writer *impl_from_strmbase_pin(struct strmbase_pin *iface)
@@ -90,11 +92,40 @@ static HRESULT WINAPI file_writer_sink_receive(struct strmbase_sink *iface, IMed
     return S_OK;
 }
 
+static void deliver_ec_complete(struct file_writer *filter)
+{
+    IMediaEventSink *event_sink;
+
+    if (SUCCEEDED(IFilterGraph_QueryInterface(filter->filter.graph,
+            &IID_IMediaEventSink, (void **)&event_sink)))
+    {
+        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
+                (LONG_PTR)&filter->filter.IBaseFilter_iface);
+        IMediaEventSink_Release(event_sink);
+    }
+}
+
+static HRESULT file_writer_sink_eos(struct strmbase_sink *iface)
+{
+    struct file_writer *filter = impl_from_strmbase_pin(&iface->pin);
+
+    EnterCriticalSection(&filter->filter.csFilter);
+
+    if (filter->filter.state == State_Running)
+        deliver_ec_complete(filter);
+    else
+        filter->eos = TRUE;
+
+    LeaveCriticalSection(&filter->filter.csFilter);
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = file_writer_sink_query_interface,
     .base.pin_query_accept = file_writer_sink_query_accept,
     .pfnReceive = file_writer_sink_receive,
+    .sink_eos = file_writer_sink_eos,
 };
 
 static inline struct file_writer *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -151,6 +182,16 @@ static HRESULT file_writer_init_stream(struct strmbase_filter *iface)
     return S_OK;
 }
 
+static HRESULT file_writer_start_stream(struct strmbase_filter *iface, REFERENCE_TIME start)
+{
+    struct file_writer *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->eos)
+        deliver_ec_complete(filter);
+    filter->eos = FALSE;
+    return S_OK;
+}
+
 static HRESULT file_writer_cleanup_stream(struct strmbase_filter *iface)
 {
     struct file_writer *filter = impl_from_strmbase_filter(iface);
@@ -165,6 +206,7 @@ static struct strmbase_filter_ops filter_ops =
     .filter_get_pin = file_writer_get_pin,
     .filter_destroy = file_writer_destroy,
     .filter_init_stream = file_writer_init_stream,
+    .filter_start_stream = file_writer_start_stream,
     .filter_cleanup_stream = file_writer_cleanup_stream,
 };
 
