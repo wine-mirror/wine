@@ -2320,7 +2320,7 @@ typedef enum _LDR_DLL_LOAD_REASON
 typedef struct _LDR_DATA_TABLE_ENTRY
 {
     LIST_ENTRY          InLoadOrderModuleList;
-    LIST_ENTRY          InMemoryOrderModuleList;
+    LIST_ENTRY          InMemoryOrderLinks;
     LIST_ENTRY          InInitializationOrderModuleList;
     void*               BaseAddress;
     void*               EntryPoint;

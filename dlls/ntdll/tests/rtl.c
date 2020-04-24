@@ -3455,7 +3455,7 @@ static void CALLBACK ldr_notify_callback1(ULONG reason, LDR_DLL_NOTIFICATION_DAT
 
     /* expect module to be last module listed in LdrData load order list */
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-    mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
+    mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
     ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
        data->Loaded.DllBase, mod->BaseAddress);
     ok(!lstrcmpiW(mod->BaseDllName.Buffer, expected_dll), "Expected %s, got %s\n",
@@ -3516,7 +3516,7 @@ static void CALLBACK ldr_notify_callback_dll_main(ULONG reason, LDR_DLL_NOTIFICA
         return;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-    mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
+    mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
     ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
        data->Loaded.DllBase, mod->BaseAddress);
     if (mod->BaseAddress != data->Loaded.DllBase)
@@ -3555,7 +3555,7 @@ static void CALLBACK ldr_notify_callback_fail(ULONG reason, LDR_DLL_NOTIFICATION
         return;
 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-    mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
+    mod = CONTAINING_RECORD(mark->Blink, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
     ok(mod->BaseAddress == data->Loaded.DllBase, "Expected base address %p, got %p\n",
        data->Loaded.DllBase, mod->BaseAddress);
     if (mod->BaseAddress != data->Loaded.DllBase)

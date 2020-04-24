@@ -478,7 +478,7 @@ static WINE_MODREF *get_modref( HMODULE hmod )
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
         if (mod->BaseAddress == hmod)
             return cached_modref = CONTAINING_RECORD(mod, WINE_MODREF, ldr);
     }
@@ -1226,7 +1226,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     InsertTailList(&NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList,
                    &wm->ldr.InLoadOrderModuleList);
     InsertTailList(&NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList,
-                   &wm->ldr.InMemoryOrderModuleList);
+                   &wm->ldr.InMemoryOrderLinks);
     /* wait until init is called for inserting into InInitializationOrderModuleList */
 
     if (!(nt->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_NX_COMPAT))
@@ -1638,7 +1638,7 @@ NTSTATUS WINAPI LdrFindEntryForAddress( const void *addr, PLDR_DATA_TABLE_ENTRY 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
+        mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
         if (mod->BaseAddress <= addr &&
             (const char *)addr < (char*)mod->BaseAddress + mod->SizeOfImage)
         {
@@ -1668,7 +1668,7 @@ NTSTATUS WINAPI LdrEnumerateLoadedModules( void *unknown, LDRENUMPROC callback, 
     mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList );
+        mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks );
         callback( mod, context, &stop );
         if (stop) break;
     }
@@ -2029,7 +2029,7 @@ static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRIN
         {
             /* the module has only been inserted in the load & memory order lists */
             RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
-            RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
+            RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
             /* FIXME: free the modref */
             return status;
         }
@@ -2572,7 +2572,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
         {
             /* the module has only be inserted in the load & memory order lists */
             RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
-            RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
+            RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
 
             /* FIXME: there are several more dangling references
              * left. Including dlls loaded by this dll before the
@@ -3790,7 +3790,7 @@ void WINAPI LdrShutdownThread(void)
 static void free_modref( WINE_MODREF *wm )
 {
     RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
-    RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
+    RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
     if (wm->ldr.InInitializationOrderModuleList.Flink)
         RemoveEntryList(&wm->ldr.InInitializationOrderModuleList);
 
@@ -4578,8 +4578,8 @@ void __wine_process_init(void)
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderModuleList );
     InsertHeadList( &peb->LdrData->InLoadOrderModuleList, &wm->ldr.InLoadOrderModuleList );
-    RemoveEntryList( &wm->ldr.InMemoryOrderModuleList );
-    InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderModuleList );
+    RemoveEntryList( &wm->ldr.InMemoryOrderLinks );
+    InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderLinks );
 
     virtual_alloc_thread_stack( &stack, 0, 0, NULL );
     teb->Tib.StackBase = stack.StackBase;

@@ -3816,7 +3816,7 @@ static void test_InMemoryOrderModuleList(void)
          entry1 = entry1->Flink, entry2 = entry2->Flink)
     {
         module1 = CONTAINING_RECORD(entry1, LDR_DATA_TABLE_ENTRY, InLoadOrderModuleList);
-        module2 = CONTAINING_RECORD(entry2, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
+        module2 = CONTAINING_RECORD(entry2, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
         ok(module1 == module2, "expected module1 == module2, got %p and %p\n", module1, module2);
     }
     ok(entry1 == mark1, "expected entry1 == mark1, got %p and %p\n", entry1, mark1);
