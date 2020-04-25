@@ -102,14 +102,14 @@
 @ stdcall CloseEventLog (long)
 @ stdcall CloseServiceHandle(long)
 # @ stub CloseThreadWaitChainSession
-@ stdcall CloseTrace(int64)
+@ stdcall -import CloseTrace(int64)
 @ stdcall CommandLineFromMsiDescriptor(wstr ptr ptr)
 # @ stub ComputeAccessTokenFromCodeAuthzLevel
 @ stdcall ControlService(long long ptr)
 # @ stub ControlServiceExA
 # @ stub ControlServiceExW
-@ stdcall ControlTraceA(int64 str ptr long)
-@ stdcall ControlTraceW(int64 wstr ptr long)
+@ stdcall -import ControlTraceA(int64 str ptr long)
+@ stdcall -import ControlTraceW(int64 wstr ptr long)
 # @ stub ConvertAccessToSecurityDescriptorA
 # @ stub ConvertAccessToSecurityDescriptorW
 # @ stub ConvertSDToStringSDDomainW
@@ -265,7 +265,7 @@
 @ stub ElfReportEventW
 @ stdcall EnableTrace(long long long ptr int64)
 @ stdcall EnableTraceEx(ptr ptr int64 long long int64 int64 long ptr)
-@ stdcall EnableTraceEx2(int64 ptr long long int64 int64 long ptr)
+@ stdcall -import EnableTraceEx2(int64 ptr long long int64 int64 long ptr)
 @ stdcall EncryptFileA(str)
 @ stdcall EncryptFileW(wstr)
 # @ stub EncryptedFileKeyInfo
@@ -550,7 +550,7 @@
 @ stdcall -import OpenThreadToken(long long long ptr)
 # @ stub OpenThreadWaitChainSession
 @ stdcall -ret64 OpenTraceA(ptr)
-@ stdcall -ret64 OpenTraceW(ptr)
+@ stdcall -ret64 -import OpenTraceW(ptr)
 # @ stub OperationEnd
 # @ stub OperationStart
 # @ stub PerfAddCounters
@@ -587,9 +587,9 @@
 @ stdcall -import PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 # @ stub ProcessIdleTasks
 # @ stub ProcessIdleTasksW
-@ stdcall ProcessTrace(ptr long ptr ptr)
-@ stdcall QueryAllTracesA(ptr long ptr)
-@ stdcall QueryAllTracesW(ptr long ptr)
+@ stdcall -import ProcessTrace(ptr long ptr ptr)
+@ stdcall -import QueryAllTracesA(ptr long ptr)
+@ stdcall -import QueryAllTracesW(ptr long ptr)
 # @ stub QueryLocalUserServiceName
 # @ stub QueryRecoveryAgentsOnEncryptedFile
 # @ stub QuerySecurityAccessMask
@@ -772,10 +772,10 @@
 @ stdcall StartServiceCtrlDispatcherA(ptr)
 @ stdcall StartServiceCtrlDispatcherW(ptr)
 @ stdcall StartServiceW(long long ptr)
-@ stdcall StartTraceA(ptr str ptr)
-@ stdcall StartTraceW(ptr wstr ptr)
+@ stdcall -import StartTraceA(ptr str ptr)
+@ stdcall -import StartTraceW(ptr wstr ptr)
 @ stdcall StopTraceA(int64 str ptr)
-@ stdcall StopTraceW(int64 wstr ptr)
+@ stdcall -import StopTraceW(int64 wstr ptr)
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
 @ stdcall SystemFunction001(ptr ptr ptr)
 @ stdcall SystemFunction002(ptr ptr ptr)
@@ -820,7 +820,7 @@
 @ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage
 @ stdcall TraceMessageVa(int64 long ptr long ptr) ntdll.EtwTraceMessageVa
 # @ stub TraceQueryInformation
-@ stdcall TraceSetInformation(int64 long ptr long)
+@ stdcall -import TraceSetInformation(int64 long ptr long)
 # @ stub TreeResetNamedSecurityInfoA
 @ stdcall TreeResetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr long ptr long ptr)
 # @ stub TreeSetNamedSecurityInfoA

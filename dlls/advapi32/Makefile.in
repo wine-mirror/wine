@@ -1,7 +1,7 @@
 EXTRADEFS = -D_ADVAPI32_
 MODULE    = advapi32.dll
 IMPORTLIB = advapi32
-IMPORTS   = kernelbase
+IMPORTS   = kernelbase sechost
 DELAYIMPORTS = rpcrt4
 EXTRALIBS = $(SECURITY_LIBS)
 
