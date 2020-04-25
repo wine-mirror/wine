@@ -1175,6 +1175,20 @@ static void test_SetThreadContext(void)
     CloseHandle( thread );
 }
 
+static void test_GetThreadContext(void)
+{
+    CONTEXT ctx;
+    BOOL ret;
+
+    memset(&ctx, 0xcc, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    ret = GetThreadContext(GetCurrentThread(), &ctx);
+    ok(ret, "GetThreadContext failed: %u\n", GetLastError());
+    ok(ctx.ContextFlags == CONTEXT_DEBUG_REGISTERS, "ContextFlags = %x\n", ctx.ContextFlags);
+    ok(!ctx.Dr0, "Dr0 = %x\n", ctx.Dr0);
+    ok(!ctx.Dr1, "Dr0 = %x\n", ctx.Dr0);
+}
+
 static void test_GetThreadSelectorEntry(void)
 {
     LDT_ENTRY entry;
@@ -2379,6 +2393,7 @@ START_TEST(thread)
 #ifdef __i386__
    test_SetThreadContext();
    test_GetThreadSelectorEntry();
+   test_GetThreadContext();
 #endif
    test_QueueUserWorkItem();
    test_RegisterWaitForSingleObject();

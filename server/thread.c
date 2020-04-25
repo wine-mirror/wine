@@ -1848,7 +1848,7 @@ DECL_HANDLER(get_thread_context)
             {
                 assert( reply->self );
                 memset( context, 0, sizeof(context_t) );
-                context->cpu = thread_context->regs.cpu;
+                context->cpu = thread->process->cpu;
                 if (req->flags & system_flags)
                 {
                     get_thread_context( thread, context, req->flags & system_flags );
