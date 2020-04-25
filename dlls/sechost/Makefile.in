@@ -1,0 +1,3 @@
+MODULE    = sechost.dll
+
+EXTRADLLFLAGS = -mno-cygwin
