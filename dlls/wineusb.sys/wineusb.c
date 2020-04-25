@@ -498,8 +498,9 @@ static void transfer_cb(struct libusb_transfer *transfer)
 
 static void queue_irp(struct usb_device *device, IRP *irp, struct libusb_transfer *transfer)
 {
-    EnterCriticalSection(&wineusb_cs);
+    IoMarkIrpPending(irp);
     irp->Tail.Overlay.DriverContext[0] = transfer;
+    EnterCriticalSection(&wineusb_cs);
     InsertTailList(&device->irp_list, &irp->Tail.Overlay.ListEntry);
     LeaveCriticalSection(&wineusb_cs);
 }
@@ -729,11 +730,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device_obj, IRP *irp
                     code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
     }
 
-    if (status == STATUS_PENDING)
-    {
-        IoMarkIrpPending(irp);
-    }
-    else
+    if (status != STATUS_PENDING)
     {
         irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
