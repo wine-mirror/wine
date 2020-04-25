@@ -409,7 +409,6 @@ static void test_query_process(void)
             DWORD_PTR tid;
             DWORD j;
 
-            todo_wine_if(last_pid & 3)
             ok(!(last_pid & 3), "Unexpected PID low bits: %p\n", spi->UniqueProcessId);
             for ( j = 0; j < spi->dwThreadCount; j++) 
             {
@@ -419,7 +418,6 @@ static void test_query_process(void)
                      spi->ti[j].ClientId.UniqueProcess, spi->UniqueProcessId);
 
                 tid = (DWORD_PTR)spi->ti[j].ClientId.UniqueThread;
-                todo_wine_if(tid & 3)
                 ok(!(tid & 3), "Unexpected TID low bits: %p\n", spi->ti[j].ClientId.UniqueThread);
             }
         }
@@ -450,7 +448,6 @@ static void test_query_process(void)
         cid.UniqueThread = 0;
 
         status = NtOpenProcess( &handle, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
-        todo_wine_if( status != STATUS_SUCCESS )
         ok( status == STATUS_SUCCESS || broken( status == STATUS_ACCESS_DENIED ) /* wxppro */,
             "NtOpenProcess returned:%x\n", status );
         if (status != STATUS_SUCCESS) continue;
@@ -470,7 +467,6 @@ static void test_query_process(void)
         cid.UniqueThread = ULongToHandle(GetCurrentThreadId() + i);
 
         status = NtOpenThread( &handle, THREAD_QUERY_LIMITED_INFORMATION, &attr, &cid );
-        todo_wine_if( status != STATUS_SUCCESS )
         ok( status == STATUS_SUCCESS || broken( status == STATUS_ACCESS_DENIED ) /* wxppro */,
             "NtOpenThread returned:%x\n", status );
         if (status != STATUS_SUCCESS) continue;
