@@ -302,7 +302,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
 }
 
 /****************************************************************************
- * WCMD_HandleTildaModifiers
+ * WCMD_HandleTildeModifiers
  *
  * Handle the ~ modifiers when expanding %0-9 or (%a-z/A-Z in for command)
  *    %~xxxxxV  (V=0-9 or A-Z, a-z)
@@ -333,7 +333,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
  *  Hence search forwards until find an invalid modifier, and then
  *  backwards until find for variable or 0-9
  */
-void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute)
+void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
 {
 
 #define NUMMODIFIERS 11

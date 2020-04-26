@@ -853,7 +853,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
 
     /* Replace %~ modifications if in batch program */
     } else if (*(p+1) == '~') {
-      WCMD_HandleTildaModifiers(&p, atExecute);
+      WCMD_HandleTildeModifiers(&p, atExecute);
       p++;
 
     /* Replace use of %0...%9 if in batch program*/

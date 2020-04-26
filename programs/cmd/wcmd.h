@@ -115,7 +115,7 @@ WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, BOOL raw,
                                    BOOL wholecmdline, const WCHAR *delims);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
-void WCMD_HandleTildaModifiers(WCHAR **start, BOOL atExecute);
+void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute);
 
 WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
