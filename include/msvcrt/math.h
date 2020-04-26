@@ -205,7 +205,7 @@ static const union {
 #  endif
 #endif
 
-#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+#if (defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))) || defined(__clang__)
 # define INFINITY __builtin_inff()
 # define NAN      __builtin_nanf("")
 #else
