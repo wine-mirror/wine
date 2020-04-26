@@ -1802,7 +1802,7 @@ static COORD get_console_font_size(HANDLE hConsole, DWORD index)
     return c;
 }
 
-#if defined(__i386__) && !defined(__MINGW32__)
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 #undef GetConsoleFontSize
 DWORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 {

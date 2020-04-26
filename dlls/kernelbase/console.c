@@ -577,7 +577,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetConsoleTitleW( LPWSTR title, DWORD size )
 /***********************************************************************
  *	GetLargestConsoleWindowSize   (kernelbase.@)
  */
-#if defined(__i386__) && !defined(__MINGW32__)
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
 #undef GetLargestConsoleWindowSize
 DWORD WINAPI DECLSPEC_HOTPATCH GetLargestConsoleWindowSize( HANDLE handle )
 {
