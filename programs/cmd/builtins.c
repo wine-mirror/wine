@@ -1217,7 +1217,7 @@ static BOOL WCMD_delete_confirm_wildcard(const WCHAR *filename, BOOL *pPrompted)
 
         /* Convert path into actual directory spec */
         GetFullPathNameW(filename, ARRAY_SIZE(fpath), fpath, NULL);
-        WCMD_splitpath(fpath, drive, dir, fname, ext);
+        _wsplitpath(fpath, drive, dir, fname, ext);
 
         /* Only prompt for * and *.*, not *a, a*, *.a* etc */
         if ((lstrcmpW(fname, starW) == 0) &&
@@ -1352,7 +1352,7 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
 
       /* Convert path into actual directory spec */
       GetFullPathNameW(argCopy, ARRAY_SIZE(thisDir), thisDir, NULL);
-      WCMD_splitpath(thisDir, drive, dir, fname, ext);
+      _wsplitpath(thisDir, drive, dir, fname, ext);
 
       lstrcpyW(thisDir, drive);
       lstrcatW(thisDir, dir);
@@ -2986,7 +2986,7 @@ void WCMD_move (void)
              wine_dbgstr_w(param1), wine_dbgstr_w(output));
 
   /* Split into components */
-  WCMD_splitpath(input, drive, dir, fname, ext);
+  _wsplitpath(input, drive, dir, fname, ext);
 
   hff = FindFirstFileW(input, &fd);
   if (hff == INVALID_HANDLE_VALUE)
@@ -3207,7 +3207,7 @@ void WCMD_rename (void)
   dotDst = wcschr(param2, '.');
 
   /* Split into components */
-  WCMD_splitpath(input, drive, dir, fname, ext);
+  _wsplitpath(input, drive, dir, fname, ext);
 
   hff = FindFirstFileW(input, &fd);
   if (hff == INVALID_HANDLE_VALUE)
@@ -3492,7 +3492,7 @@ void WCMD_setshow_default (const WCHAR *args) {
 
           /* Convert path into actual directory spec */
           GetFullPathNameW(string, ARRAY_SIZE(fpath), fpath, NULL);
-          WCMD_splitpath(fpath, drive, dir, fname, ext);
+          _wsplitpath(fpath, drive, dir, fname, ext);
 
           /* Rebuild path */
           wsprintfW(string, fmt, drive, dir, fd.cFileName);

@@ -166,8 +166,8 @@ static int __cdecl WCMD_dir_sort (const void *a, const void *b)
       WCHAR extB[MAX_PATH];
 
       /* Split into components */
-      WCMD_splitpath(filea->cFileName, drive, dir, fname, extA);
-      WCMD_splitpath(fileb->cFileName, drive, dir, fname, extB);
+      _wsplitpath(filea->cFileName, drive, dir, fname, extA);
+      _wsplitpath(fileb->cFileName, drive, dir, fname, extB);
       result = lstrcmpiW(extA, extB);
   }
 
@@ -819,7 +819,7 @@ void WCMD_directory (WCHAR *args)
       thisEntry->next = NULL;
 
       /* Split into components */
-      WCMD_splitpath(path, drive, dir, fname, ext);
+      _wsplitpath(path, drive, dir, fname, ext);
       WINE_TRACE("Path Parts: drive: '%s' dir: '%s' name: '%s' ext:'%s'\n",
                  wine_dbgstr_w(drive), wine_dbgstr_w(dir),
                  wine_dbgstr_w(fname), wine_dbgstr_w(ext));
