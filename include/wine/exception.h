@@ -70,7 +70,7 @@ extern "C" {
  * -- AJ
  */
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__clang__)
 #define __attribute__(x) /* nothing */
 #endif
 
