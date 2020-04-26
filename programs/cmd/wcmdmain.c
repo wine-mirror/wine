@@ -2421,10 +2421,8 @@ void WCMD_free_commands(CMD_LIST *cmds) {
 
 int __cdecl wmain (int argc, WCHAR *argvW[])
 {
-  int     args;
   WCHAR  *cmdLine = NULL;
   WCHAR  *cmd     = NULL;
-  WCHAR  *argPos  = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
   BOOL promptNewLine = TRUE;
@@ -2440,6 +2438,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   RTL_OSVERSIONINFOEXW osv;
   char osver[50];
   STARTUPINFOW startupInfo;
+  const WCHAR *arg;
 
   if (!GetEnvironmentVariableW(comspecW, comspec, ARRAY_SIZE(comspec)))
   {
@@ -2467,56 +2466,54 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
    */
   cmdLine = GetCommandLineW();
   WINE_TRACE("Full commandline '%s'\n", wine_dbgstr_w(cmdLine));
-  args = 0;
+
+  while (*cmdLine && *cmdLine != '/') ++cmdLine;
 
   opt_c = opt_k = opt_q = opt_s = FALSE;
-  WCMD_parameter(cmdLine, args, &argPos, TRUE, TRUE);
-  while (argPos && argPos[0] != 0x00)
+
+  for (arg = cmdLine; *arg; ++arg)
   {
-      WCHAR c;
-      WINE_TRACE("Command line parm: '%s'\n", wine_dbgstr_w(argPos));
-      if (argPos[0]!='/' || argPos[1]=='\0') {
-          args++;
-          WCMD_parameter(cmdLine, args, &argPos, TRUE, TRUE);
-          continue;
-      }
+        if (arg[0] != '/')
+            continue;
 
-      c=argPos[1];
-      if (towlower(c)=='c') {
-          opt_c = TRUE;
-      } else if (towlower(c)=='q') {
-          opt_q = TRUE;
-      } else if (towlower(c)=='k') {
-          opt_k = TRUE;
-      } else if (towlower(c)=='s') {
-          opt_s = TRUE;
-      } else if (towlower(c)=='a') {
-          unicodeOutput = FALSE;
-      } else if (towlower(c)=='u') {
-          unicodeOutput = TRUE;
-      } else if (towlower(c)=='v' && argPos[2]==':') {
-          delayedsubst = wcsnicmp(&argPos[3], offW, 3);
-          if (delayedsubst) WINE_TRACE("Delayed substitution is on\n");
-      } else if (towlower(c)=='t' && argPos[2]==':') {
-          opt_t=wcstoul(&argPos[3], NULL, 16);
-      } else if (towlower(c)=='x' || towlower(c)=='y') {
-          /* Ignored for compatibility with Windows */
-      }
+        switch (towlower(arg[1]))
+        {
+        case 'a':
+            unicodeOutput = FALSE;
+            break;
+        case 'c':
+            opt_c = TRUE;
+            break;
+        case 'k':
+            opt_k = TRUE;
+            break;
+        case 'q':
+            opt_q = TRUE;
+            break;
+        case 's':
+            opt_s = TRUE;
+            break;
+        case 't':
+            if (arg[2] == ':')
+                opt_t = wcstoul(&arg[3], NULL, 16);
+            break;
+        case 'u':
+            unicodeOutput = TRUE;
+            break;
+        case 'v':
+            if (arg[2] == ':')
+                delayedsubst = wcsnicmp(&arg[3], L"OFF", 3);
+            break;
+        }
 
-      if (argPos[2]==0 || argPos[2]==' ' || argPos[2]=='\t' ||
-          towlower(c)=='v') {
-          args++;
-          WCMD_parameter(cmdLine, args, &argPos, TRUE, TRUE);
-      }
-      else /* handle `cmd /cnotepad.exe` and `cmd /x/c ...` */
-      {
-          /* Do not step to next parameter, instead carry on parsing this one */
-          argPos+=2;
-      }
-
-      if (opt_c || opt_k) /* break out of parsing immediately after c or k */
-          break;
+        if (opt_c || opt_k)
+        {
+            arg += 2;
+            break;
+        }
   }
+
+  while (*arg && wcschr(L" \t,=;", *arg)) arg++;
 
   if (opt_q) {
     WCMD_echo(offW);
@@ -2531,12 +2528,8 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       int     len;
       WCHAR   *q1 = NULL,*q2 = NULL,*p;
 
-      /* Handle very edge case error scenario, "cmd.exe /c" ie when there are no
-       * parameters after the /C or /K by pretending there was a single space     */
-      if (argPos == NULL) argPos = (WCHAR *)spaceW;
-
       /* Take a copy */
-      cmd = heap_strdupW(argPos);
+      cmd = heap_strdupW(arg);
 
       /* opt_s left unflagged if the command starts with and contains exactly
        * one quoted string (exactly two quote characters). The quoted string
@@ -2545,7 +2538,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
       if (!opt_s) {
         /* 1. Confirm there is at least one quote */
-        q1 = wcschr(argPos, '"');
+        q1 = wcschr(arg, '"');
         if (!q1) opt_s=1;
       }
 
