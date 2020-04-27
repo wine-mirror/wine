@@ -49,7 +49,8 @@ DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
 DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22);
 DEFINE_GUID(DUMMY_GUID3, 0x12345678,0x1234,0x1234,0x23,0x23,0x23,0x23,0x23,0x23,0x23,0x23);
-DEFINE_GUID(CLSID_FileSchemeHandler, 0x477ec299, 0x1421, 0x4bdd, 0x97, 0x1f, 0x7c, 0xcb, 0x93, 0x3f, 0x21, 0xad);
+
+extern const CLSID CLSID_FileSchemePlugin;
 
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC1, MAKEFOURCC('I','M','C','1'));
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_IMC2, MAKEFOURCC('I','M','C','2'));
@@ -634,7 +635,7 @@ skip_source_tests:
     ok(SUCCEEDED(hr), "Failed to initialize, hr %#x.\n", hr);
     do_uninit = hr == S_OK;
 
-    hr = CoCreateInstance(&CLSID_FileSchemeHandler, NULL, CLSCTX_INPROC_SERVER, &IID_IMFSchemeHandler,
+    hr = CoCreateInstance(&CLSID_FileSchemePlugin, NULL, CLSCTX_INPROC_SERVER, &IID_IMFSchemeHandler,
             (void **)&scheme_handler);
     ok(hr == S_OK, "Failed to create handler object, hr %#x.\n", hr);
 
