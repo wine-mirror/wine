@@ -621,14 +621,140 @@ HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *v
     return hr;
 }
 
+static VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type, uint32_t flags)
+{
+    switch (type)
+    {
+        case WINED3D_RTYPE_TEXTURE_1D:
+            if (flags & WINED3D_VIEW_TEXTURE_ARRAY)
+                return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+            else
+                return VK_IMAGE_VIEW_TYPE_1D;
+
+        case WINED3D_RTYPE_TEXTURE_2D:
+            if (flags & WINED3D_VIEW_TEXTURE_CUBE)
+            {
+                if (flags & WINED3D_VIEW_TEXTURE_ARRAY)
+                    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+                else
+                    return VK_IMAGE_VIEW_TYPE_CUBE;
+            }
+            if (flags & WINED3D_VIEW_TEXTURE_ARRAY)
+                return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            else
+                return VK_IMAGE_VIEW_TYPE_2D;
+
+        case WINED3D_RTYPE_TEXTURE_3D:
+            return VK_IMAGE_VIEW_TYPE_3D;
+
+        default:
+            ERR("Unhandled resource type %s.\n", debug_d3dresourcetype(type));
+            return ~0u;
+    }
+}
+
+static void wined3d_render_target_view_vk_cs_init(void *object)
+{
+    struct wined3d_rendertarget_view_vk *view_vk = object;
+    struct wined3d_view_desc *desc = &view_vk->v.desc;
+    const struct wined3d_format_vk *format_vk;
+    struct VkImageViewCreateInfo create_info;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_texture_vk *texture_vk;
+    struct wined3d_device_vk *device_vk;
+    struct wined3d_resource *resource;
+    struct wined3d_context *context;
+    uint32_t default_flags = 0;
+    VkResult vr;
+
+    resource = view_vk->v.resource;
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Buffer views not implemented.\n");
+        return;
+    }
+
+    texture_vk = wined3d_texture_vk(texture_from_resource(resource));
+    format_vk = wined3d_format_vk(view_vk->v.format);
+
+    if (texture_vk->t.layer_count > 1)
+        default_flags |= WINED3D_VIEW_TEXTURE_ARRAY;
+
+    if (resource->format->id == format_vk->f.id && desc->flags == default_flags
+            && !desc->u.texture.level_idx && desc->u.texture.level_count == texture_vk->t.level_count
+            && !desc->u.texture.layer_idx && desc->u.texture.layer_count == texture_vk->t.layer_count
+            && !is_stencil_view_format(&format_vk->f) && resource->type != WINED3D_RTYPE_TEXTURE_3D
+            && is_identity_fixup(format_vk->f.color_fixup))
+    {
+        TRACE("Creating identity render target view.\n");
+        return;
+    }
+
+    if (texture_vk->t.swapchain && texture_vk->t.swapchain->state.desc.backbuffer_count > 1)
+    {
+        FIXME("Swapchain views not supported.\n");
+        return;
+    }
+
+    device_vk = wined3d_device_vk(resource->device);
+    context = context_acquire(&device_vk->d, NULL, 0);
+    vk_info = wined3d_context_vk(context)->vk_info;
+
+    if (!wined3d_texture_vk_prepare_texture(texture_vk, wined3d_context_vk(context)))
+    {
+        ERR("Failed to prepare texture.\n");
+        context_release(context);
+        return;
+    }
+
+    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    create_info.pNext = NULL;
+    create_info.flags = 0;
+    create_info.image = texture_vk->vk_image;
+    create_info.viewType = vk_image_view_type_from_wined3d(resource->type, desc->flags);
+    if (create_info.viewType == VK_IMAGE_VIEW_TYPE_3D)
+    {
+        if (desc->u.texture.layer_count > 1)
+            create_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        else
+            create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    }
+    create_info.format = format_vk->vk_format;
+    create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.subresourceRange.aspectMask = vk_aspect_mask_from_format(&format_vk->f);
+    create_info.subresourceRange.baseMipLevel = desc->u.texture.level_idx;
+    create_info.subresourceRange.levelCount = desc->u.texture.level_count;
+    create_info.subresourceRange.baseArrayLayer = desc->u.texture.layer_idx;
+    create_info.subresourceRange.layerCount = desc->u.texture.layer_count;
+    if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &create_info, NULL, &view_vk->vk_image_view))) < 0)
+    {
+        ERR("Failed to create Vulkan image view, vr %d.\n", vr);
+        context_release(context);
+        return;
+    }
+    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(view_vk->vk_image_view));
+
+    context_release(context);
+}
+
 HRESULT wined3d_rendertarget_view_vk_init(struct wined3d_rendertarget_view_vk *view_vk,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
+    HRESULT hr;
+
     TRACE("view_vk %p, desc %s, resource %p, parent %p, parent_ops %p.\n",
             view_vk, wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops);
 
-    return wined3d_rendertarget_view_init(&view_vk->v, desc, resource, parent, parent_ops);
+    if (FAILED(hr = wined3d_rendertarget_view_init(&view_vk->v, desc, resource, parent, parent_ops)))
+        return hr;
+
+    wined3d_cs_init_object(resource->device->cs, wined3d_render_target_view_vk_cs_init, view_vk);
+
+    return hr;
 }
 
 HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_view_desc *desc,

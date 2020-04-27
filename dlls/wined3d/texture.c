@@ -4830,7 +4830,7 @@ static BOOL wined3d_texture_vk_load_sysmem(struct wined3d_texture_vk *texture_vk
     return TRUE;
 }
 
-static BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
+BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
         struct wined3d_context_vk *context_vk)
 {
     const struct wined3d_format_vk *format_vk;
@@ -4863,7 +4863,7 @@ static BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *textur
     create_info.pNext = NULL;
 
     create_info.flags = 0;
-    if (wined3d_format_is_typeless(&format_vk->f))
+    if (wined3d_format_is_typeless(&format_vk->f) || texture_vk->t.swapchain)
         create_info.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
 
     switch (resource->type)

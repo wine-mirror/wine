@@ -2228,6 +2228,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_BO_SLAB_SLICE_VK,
     WINED3D_RETIRED_BUFFER_VK,
     WINED3D_RETIRED_IMAGE_VK,
+    WINED3D_RETIRED_IMAGE_VIEW_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -2245,6 +2246,7 @@ struct wined3d_retired_object_vk
         } slice;
         VkBuffer vk_buffer;
         VkImage vk_image;
+        VkImageView vk_image_view;
     } u;
     uint64_t command_buffer_id;
 };
@@ -2296,6 +2298,8 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
         const struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
         VkImage vk_image, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_image_view(struct wined3d_context_vk *context_vk,
+        VkImageView vk_view, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
@@ -4002,6 +4006,8 @@ static inline struct wined3d_texture_vk *wined3d_texture_vk(struct wined3d_textu
 HRESULT wined3d_texture_vk_init(struct wined3d_texture_vk *texture_vk, struct wined3d_device *device,
         const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,
         uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
 struct wined3d_renderbuffer_entry
 {
@@ -4499,6 +4505,9 @@ HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *v
 struct wined3d_rendertarget_view_vk
 {
     struct wined3d_rendertarget_view v;
+
+    VkImageView vk_image_view;
+    uint64_t command_buffer_id;
 };
 
 static inline struct wined3d_rendertarget_view_vk *wined3d_rendertarget_view_vk(
