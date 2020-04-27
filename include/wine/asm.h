@@ -102,6 +102,7 @@
 
 #if defined(__i386__) && !defined(__MINGW32__) && (!defined(_MSC_VER) || !defined(__clang__))
 
+#define __ASM_USE_THISCALL_WRAPPER
 # ifdef _MSC_VER
 #  define DEFINE_THISCALL_WRAPPER(func,args) \
     __declspec(naked) void __thiscall_##func(void) \
