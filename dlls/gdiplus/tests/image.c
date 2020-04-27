@@ -5115,14 +5115,13 @@ static void test_supported_encoders(void)
     {
         LPCWSTR mime;
         const GUID *format;
-        BOOL todo;
     } td[] =
     {
-        { bmp_mimetype, &ImageFormatBMP, FALSE },
-        { jpeg_mimetype, &ImageFormatJPEG, FALSE },
-        { gif_mimetype, &ImageFormatGIF, TRUE },
-        { tiff_mimetype, &ImageFormatTIFF, FALSE },
-        { png_mimetype, &ImageFormatPNG, FALSE }
+        { bmp_mimetype, &ImageFormatBMP },
+        { jpeg_mimetype, &ImageFormatJPEG },
+        { gif_mimetype, &ImageFormatGIF },
+        { tiff_mimetype, &ImageFormatTIFF },
+        { png_mimetype, &ImageFormatPNG }
     };
     GUID format, clsid;
     BOOL ret;
@@ -5148,8 +5147,7 @@ static void test_supported_encoders(void)
         ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
 
         status = GdipSaveImageToStream((GpImage *)bm, stream, &clsid, NULL);
-        todo_wine_if (td[i].todo)
-            ok(status == Ok, "GdipSaveImageToStream error %d\n", status);
+        ok(status == Ok, "GdipSaveImageToStream error %d\n", status);
 
         IStream_Release(stream);
     }
