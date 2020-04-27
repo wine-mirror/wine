@@ -145,7 +145,7 @@ static HRESULT find_splitter(MediaDetImpl *detector)
     }
     hr = IEnumPins_Next(enum_pins, 1, &source_pin, NULL);
     IEnumPins_Release(enum_pins);
-    if (FAILED(hr))
+    if (hr != S_OK)
     {
         ERR("Failed to get source pin, hr %#x.\n", hr);
         return hr;
