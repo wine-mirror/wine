@@ -605,6 +605,10 @@ skip_source_tests:
     /* Create from URL. */
     callback.event = CreateEventA(NULL, FALSE, FALSE, NULL);
 
+    hr = IMFSourceResolver_CreateObjectFromURL(resolver, L"nonexisting.mp4", MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
+            (IUnknown **)&stream);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#x.\n", hr);
+
     hr = IMFSourceResolver_CreateObjectFromURL(resolver, filename, MF_RESOLUTION_BYTESTREAM, NULL, &obj_type,
             (IUnknown **)&stream);
     ok(hr == S_OK, "Failed to resolve url, hr %#x.\n", hr);

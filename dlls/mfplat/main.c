@@ -5883,6 +5883,7 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
         IRtwqAsyncResult *result)
 {
     IRtwqAsyncResult *inner_result = (IRtwqAsyncResult *)IRtwqAsyncResult_GetStateNoAddRef(result);
+    RTWQASYNCRESULT *data = (RTWQASYNCRESULT *)inner_result;
     struct resolver_queued_result *queued_result;
     union
     {
@@ -5891,7 +5892,8 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
         IMFSchemeHandler *scheme_handler;
     } handler;
 
-    queued_result = heap_alloc_zero(sizeof(*queued_result));
+    if (!(queued_result = heap_alloc_zero(sizeof(*queued_result))))
+        return E_OUTOFMEMORY;
 
     IRtwqAsyncResult_GetObject(inner_result, &handler.handler);
 
@@ -5911,37 +5913,30 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
 
     IUnknown_Release(handler.handler);
 
-    if (SUCCEEDED(queued_result->hr))
+    if (data->hEvent)
     {
-        RTWQASYNCRESULT *data = (RTWQASYNCRESULT *)inner_result;
+        queued_result->inner_result = inner_result;
+        IRtwqAsyncResult_AddRef(queued_result->inner_result);
+    }
 
-        if (data->hEvent)
+    /* Push resolved object type and created object, so we don't have to guess on End*() call. */
+    EnterCriticalSection(&resolver->cs);
+    list_add_tail(&resolver->pending, &queued_result->entry);
+    LeaveCriticalSection(&resolver->cs);
+
+    if (data->hEvent)
+        SetEvent(data->hEvent);
+    else
+    {
+        IUnknown *caller_state = IRtwqAsyncResult_GetStateNoAddRef(inner_result);
+        IRtwqAsyncResult *caller_result;
+
+        if (SUCCEEDED(RtwqCreateAsyncResult(queued_result->object, data->pCallback, caller_state, &caller_result)))
         {
-            queued_result->inner_result = inner_result;
-            IRtwqAsyncResult_AddRef(queued_result->inner_result);
-        }
-
-        /* Push resolved object type and created object, so we don't have to guess on End*() call. */
-        EnterCriticalSection(&resolver->cs);
-        list_add_tail(&resolver->pending, &queued_result->entry);
-        LeaveCriticalSection(&resolver->cs);
-
-        if (data->hEvent)
-            SetEvent(data->hEvent);
-        else
-        {
-            IUnknown *caller_state = IRtwqAsyncResult_GetStateNoAddRef(inner_result);
-            IRtwqAsyncResult *caller_result;
-
-            if (SUCCEEDED(RtwqCreateAsyncResult(queued_result->object, data->pCallback, caller_state, &caller_result)))
-            {
-                RtwqInvokeCallback(caller_result);
-                IRtwqAsyncResult_Release(caller_result);
-            }
+            RtwqInvokeCallback(caller_result);
+            IRtwqAsyncResult_Release(caller_result);
         }
     }
-    else
-        heap_free(queued_result);
 
     return S_OK;
 }
