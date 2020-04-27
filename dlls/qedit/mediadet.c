@@ -124,37 +124,16 @@ static HRESULT get_pin_media_type(IPin *pin, AM_MEDIA_TYPE *out)
 static HRESULT find_splitter(MediaDetImpl *detector)
 {
     IPin *source_pin, *splitter_pin;
-    IFileSourceFilter *file_source;
     IEnumMoniker *enum_moniker;
     IFilterMapper2 *mapper;
     IBaseFilter *splitter;
     IEnumPins *enum_pins;
-    LPOLESTR filename;
     AM_MEDIA_TYPE mt;
     IMoniker *mon;
     GUID type[2];
     VARIANT var;
     HRESULT hr;
     GUID clsid;
-
-    if (FAILED(hr = IBaseFilter_QueryInterface(detector->source,
-            &IID_IFileSourceFilter, (void **)&file_source)))
-    {
-        ERR("Failed to get file source interface.\n");
-        return hr;
-    }
-
-    hr = IFileSourceFilter_GetCurFile(file_source, &filename, &mt);
-    IFileSourceFilter_Release(file_source);
-    CoTaskMemFree(filename);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get current file, hr %#x.\n", hr);
-        return hr;
-    }
-    type[0] = mt.majortype;
-    type[1] = mt.subtype;
-    FreeMediaType(&mt);
 
     if (FAILED(hr = IBaseFilter_EnumPins(detector->source, &enum_pins)))
     {
@@ -168,6 +147,17 @@ static HRESULT find_splitter(MediaDetImpl *detector)
         ERR("Failed to get source pin, hr %#x.\n", hr);
         return hr;
     }
+
+    if (FAILED(hr = get_pin_media_type(source_pin, &mt)))
+    {
+        ERR("Failed to get media type, hr %#x.\n", hr);
+        IPin_Release(source_pin);
+        return hr;
+    }
+
+    type[0] = mt.majortype;
+    type[1] = mt.subtype;
+    FreeMediaType(&mt);
 
     if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL,
             CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (void **)&mapper)))
