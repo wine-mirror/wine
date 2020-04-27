@@ -522,7 +522,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetSelectionBarWidth(ITextHos
 }
 
 
-#if defined(__i386__) && !defined(__MINGW32__)  /* thiscall functions are i386-specific */
+#ifdef __ASM_USE_THISCALL_WRAPPER
 
 #define STDCALL(func) (void *) __stdcall_ ## func
 #ifdef _MSC_VER
