@@ -222,19 +222,6 @@ static struct regsvr_filter const filter_list[] = {
             { 0xFFFFFFFF },
         }
     },
-    {   &CLSID_DSoundRender,
-        &CLSID_LegacyAmFilterCategory,
-        L"Audio Renderer",
-        0x800000,
-        {   {   REG_PINFLAG_B_RENDERER,
-                {   { &MEDIATYPE_Audio, &MEDIASUBTYPE_PCM },
-/*                  { &MEDIATYPE_Audio, &MEDIASUBTYPE_IEEE_FLOAT }, */
-                    { NULL }
-                },
-            },
-            { 0xFFFFFFFF },
-        }
-    },
     {   &CLSID_AudioRender,
         &CLSID_LegacyAmFilterCategory,
         L"Audio Renderer",
