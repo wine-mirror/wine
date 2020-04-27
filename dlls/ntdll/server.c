@@ -116,6 +116,8 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 const char *build_dir = NULL;
 const char *data_dir = NULL;
 const char *config_dir = NULL;
+const char **dll_paths = NULL;
+size_t dll_path_maxlen = 0;
 static const char *server_dir;
 static const char *bin_dir;
 
@@ -1312,6 +1314,36 @@ static const char *init_config_dir(void)
 
 
 /***********************************************************************
+ *           build_dll_path
+ */
+static void build_dll_path( const char *dll_dir )
+{
+    const char *default_dlldir = DLLDIR;
+    char *p, *path = getenv( "WINEDLLPATH" );
+    int i, count = 0;
+
+    if (path) for (p = path, count = 1; *p; p++) if (*p == ':') count++;
+
+    dll_paths = malloc( (count + 2) * sizeof(*dll_paths) );
+    count = 0;
+
+    if (!build_dir && dll_dir) dll_paths[count++] = dll_dir;
+
+    if (path)
+    {
+        path = strdup(path);
+        for (p = strtok( path, ":" ); p; p = strtok( NULL, ":" )) dll_paths[count++] = strdup( p );
+        free( path );
+    }
+
+    if (!build_dir && !dll_dir) dll_paths[count++] = default_dlldir;
+
+    for (i = 0; i < count; i++) dll_path_maxlen = max( dll_path_maxlen, strlen(dll_paths[i]) );
+    dll_paths[count] = NULL;
+}
+
+
+/***********************************************************************
  *           init_paths
  */
 void init_paths(void)
@@ -1343,6 +1375,7 @@ void init_paths(void)
         data_dir = build_path( bin_dir, BIN_TO_DATADIR );
     }
 
+    build_dll_path( dll_dir );
     config_dir = init_config_dir();
 }
 

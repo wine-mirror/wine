@@ -2715,7 +2715,6 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
                                   void **module, pe_image_info_t *image_info, struct stat *st,
                                   char **so_name )
 {
-    const char *path;
     unsigned int i, pos, len, namelen, maxlen = 0;
     char *ptr, *file;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
@@ -2723,8 +2722,7 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
 
     len = wcslen( name );
     if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
-    for (i = 0; (path = wine_dll_enum_load_path( i )); i++) maxlen = max( maxlen, strlen(path)+1 );
-    maxlen += len + sizeof(".so");
+    maxlen = max( maxlen, dll_path_maxlen ) + len + sizeof(".so");
 
     if (!(file = RtlAllocateHeap( GetProcessHeap(), 0, maxlen ))) return STATUS_NO_MEMORY;
 
@@ -2763,10 +2761,10 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
         if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 
-    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
+    for (i = 0; dll_paths[i]; i++)
     {
         file[pos + len + 1] = 0;
-        ptr = prepend( file + pos, path, strlen(path) );
+        ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
         status = open_builtin_file( ptr, pwm, module, image_info, st, so_name );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;

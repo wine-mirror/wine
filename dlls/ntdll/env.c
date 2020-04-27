@@ -38,7 +38,6 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 #include "winnt.h"
@@ -412,10 +411,10 @@ static void set_wow64_environment( WCHAR **env )
     set_wine_path_variable( env, winehomedirW, home );
     set_wine_path_variable( env, winebuilddirW, build_dir );
     set_wine_path_variable( env, wineconfigdirW, config_dir );
-    for (i = 0; (p = wine_dll_enum_load_path( i )); i++)
+    for (i = 0; dll_paths[i]; i++)
     {
         NTDLL_swprintf( buf, winedlldirW, i );
-        set_wine_path_variable( env, buf, p );
+        set_wine_path_variable( env, buf, dll_paths[i] );
     }
     NTDLL_swprintf( buf, winedlldirW, i );
     set_wine_path_variable( env, buf, NULL );
