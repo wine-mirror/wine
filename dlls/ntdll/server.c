@@ -114,6 +114,7 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 #endif
 
 const char *config_dir = NULL;
+static const char *server_dir;
 
 unsigned int server_cpus = 0;
 BOOL is_wow64 = FALSE;
@@ -1216,6 +1217,38 @@ static void start_server(void)
 
 
 /***********************************************************************
+ *           init_server_dir
+ */
+static const char *init_server_dir( dev_t dev, ino_t ino )
+{
+    char *p, *dir;
+    size_t len = sizeof("/server-") + 2 * sizeof(dev) + 2 * sizeof(ino) + 2;
+
+#ifdef __ANDROID__  /* there's no /tmp dir on Android */
+    len += strlen( config_dir ) + sizeof("/.wineserver");
+    dir = malloc( len );
+    strcpy( dir, config_dir );
+    strcat( dir, "/.wineserver/server-" );
+#else
+    len += sizeof("/tmp/.wine-") + 12;
+    dir = malloc( len );
+    sprintf( dir, "/tmp/.wine-%u/server-", getuid() );
+#endif
+    p = dir + strlen( dir );
+    if (dev != (unsigned long)dev)
+        p += sprintf( p, "%lx%08lx-", (unsigned long)((unsigned long long)dev >> 32), (unsigned long)dev );
+    else
+        p += sprintf( p, "%lx-", (unsigned long)dev );
+
+    if (ino != (unsigned long)ino)
+        sprintf( p, "%lx%08lx", (unsigned long)((unsigned long long)ino >> 32), (unsigned long)ino );
+    else
+        sprintf( p, "%lx", (unsigned long)ino );
+    return dir;
+}
+
+
+/***********************************************************************
  *           init_config_dir
  */
 static const char *init_config_dir(void)
@@ -1277,6 +1310,8 @@ static int setup_config_dir(void)
     if (stat( ".", &st ) == -1) fatal_perror( "stat %s", config_dir );
     if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", config_dir );
 
+    server_dir = init_server_dir( st.st_dev, st.st_ino );
+
     if (!mkdir( "dosdevices", 0777 ))
     {
         mkdir( "drive_c", 0777 );
@@ -1332,26 +1367,24 @@ static void server_connect_error( const char *serverdir )
  */
 static int server_connect(void)
 {
-    const char *serverdir;
     struct sockaddr_un addr;
     struct stat st;
     int s, slen, retry, fd_cwd;
 
     fd_cwd = setup_config_dir();
-    serverdir = wine_get_server_dir();
 
     /* chdir to the server directory */
-    if (chdir( serverdir ) == -1)
+    if (chdir( server_dir ) == -1)
     {
-        if (errno != ENOENT) fatal_perror( "chdir to %s", serverdir );
+        if (errno != ENOENT) fatal_perror( "chdir to %s", server_dir );
         start_server();
-        if (chdir( serverdir ) == -1) fatal_perror( "chdir to %s", serverdir );
+        if (chdir( server_dir ) == -1) fatal_perror( "chdir to %s", server_dir );
     }
 
     /* make sure we are at the right place */
-    if (stat( ".", &st ) == -1) fatal_perror( "stat %s", serverdir );
-    if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", serverdir );
-    if (st.st_mode & 077) fatal_error( "'%s' must not be accessible by other users\n", serverdir );
+    if (stat( ".", &st ) == -1) fatal_perror( "stat %s", server_dir );
+    if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", server_dir );
+    if (st.st_mode & 077) fatal_error( "'%s' must not be accessible by other users\n", server_dir );
 
     for (retry = 0; retry < 6; retry++)
     {
@@ -1364,16 +1397,16 @@ static int server_connect(void)
         }
         else if (lstat( SOCKETNAME, &st ) == -1) /* check for an already existing socket */
         {
-            if (errno != ENOENT) fatal_perror( "lstat %s/%s", serverdir, SOCKETNAME );
+            if (errno != ENOENT) fatal_perror( "lstat %s/%s", server_dir, SOCKETNAME );
             start_server();
             if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
         }
 
         /* make sure the socket is sane (ISFIFO needed for Solaris) */
         if (!S_ISSOCK(st.st_mode) && !S_ISFIFO(st.st_mode))
-            fatal_error( "'%s/%s' is not a socket\n", serverdir, SOCKETNAME );
+            fatal_error( "'%s/%s' is not a socket\n", server_dir, SOCKETNAME );
         if (st.st_uid != getuid())
-            fatal_error( "'%s/%s' is not owned by you\n", serverdir, SOCKETNAME );
+            fatal_error( "'%s/%s' is not owned by you\n", server_dir, SOCKETNAME );
 
         /* try to connect to it */
         addr.sun_family = AF_UNIX;
@@ -1403,7 +1436,7 @@ static int server_connect(void)
         }
         close( s );
     }
-    server_connect_error( serverdir );
+    server_connect_error( server_dir );
 }
 
 
@@ -1426,7 +1459,7 @@ static void send_server_task_port(void)
 
     if (task_get_bootstrap_port(mach_task_self(), &bootstrap_port) != KERN_SUCCESS) return;
 
-    kret = bootstrap_look_up(bootstrap_port, (char*)wine_get_server_dir(), &wineserver_port);
+    kret = bootstrap_look_up(bootstrap_port, server_dir, &wineserver_port);
     if (kret != KERN_SUCCESS)
         fatal_error( "cannot find the server port: 0x%08x\n", kret );
 
