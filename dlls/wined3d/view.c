@@ -621,7 +621,7 @@ HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *v
     return hr;
 }
 
-static VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type, uint32_t flags)
+VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type, uint32_t flags)
 {
     switch (type)
     {

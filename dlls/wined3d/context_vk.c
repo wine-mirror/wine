@@ -296,6 +296,31 @@ static struct wined3d_retired_object_vk *wined3d_context_vk_get_retired_object_v
     return &retired->objects[retired->count++];
 }
 
+void wined3d_context_vk_destroy_framebuffer(struct wined3d_context_vk *context_vk,
+        VkFramebuffer vk_framebuffer, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkDestroyFramebuffer(device_vk->vk_device, vk_framebuffer, NULL));
+        TRACE("Destroyed framebuffer 0x%s.\n", wine_dbgstr_longlong(vk_framebuffer));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking framebuffer 0x%s.\n", wine_dbgstr_longlong(vk_framebuffer));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_FRAMEBUFFER_VK;
+    o->u.vk_framebuffer = vk_framebuffer;
+    o->command_buffer_id = command_buffer_id;
+}
+
 void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id)
 {
@@ -345,12 +370,12 @@ void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *conte
 }
 
 static void wined3d_bo_slab_vk_free_slice(struct wined3d_bo_slab_vk *slab,
-        size_t idx, struct wined3d_context_vk *context_vk)
+        SIZE_T idx, struct wined3d_context_vk *context_vk)
 {
     struct wined3d_bo_slab_vk_key key;
     struct wine_rb_entry *entry;
 
-    TRACE("slab %p, idx %zu, context_vk %p.\n", slab, idx, context_vk);
+    TRACE("slab %p, idx %lu, context_vk %p.\n", slab, idx, context_vk);
 
     if (!slab->map)
     {
@@ -372,7 +397,7 @@ static void wined3d_bo_slab_vk_free_slice(struct wined3d_bo_slab_vk *slab,
 }
 
 static void wined3d_context_vk_destroy_bo_slab_slice(struct wined3d_context_vk *context_vk,
-        struct wined3d_bo_slab_vk *slab, size_t idx, uint64_t command_buffer_id)
+        struct wined3d_bo_slab_vk *slab, SIZE_T idx, uint64_t command_buffer_id)
 {
     struct wined3d_retired_object_vk *o;
 
@@ -384,7 +409,7 @@ static void wined3d_context_vk_destroy_bo_slab_slice(struct wined3d_context_vk *
 
     if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
     {
-        ERR("Leaking slab %p, slice %#zx.\n", slab, idx);
+        ERR("Leaking slab %p, slice %#lx.\n", slab, idx);
         return;
     }
 
@@ -538,6 +563,11 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
                 /* Nothing to do. */
                 break;
 
+            case WINED3D_RETIRED_FRAMEBUFFER_VK:
+                VK_CALL(vkDestroyFramebuffer(device_vk->vk_device, o->u.vk_framebuffer, NULL));
+                TRACE("Destroyed framebuffer 0x%s.\n", wine_dbgstr_longlong(o->u.vk_framebuffer));
+                break;
+
             case WINED3D_RETIRED_MEMORY_VK:
                 VK_CALL(vkFreeMemory(device_vk->vk_device, o->u.vk_memory, NULL));
                 TRACE("Freed memory 0x%s.\n", wine_dbgstr_longlong(o->u.vk_memory));
@@ -599,6 +629,158 @@ static void wined3d_context_vk_destroy_bo_slab(struct wine_rb_entry *entry, void
     }
 }
 
+static void wined3d_render_pass_key_vk_init(struct wined3d_render_pass_key_vk *key,
+        const struct wined3d_fb_state *fb, unsigned int rt_count)
+{
+    struct wined3d_render_pass_attachment_vk *a;
+    struct wined3d_rendertarget_view *view;
+    unsigned int i;
+
+    memset(key, 0, sizeof(*key));
+
+    for (i = 0; i < rt_count; ++i)
+    {
+        if (!(view = fb->render_targets[i]) || view->format->id == WINED3DFMT_NULL)
+            continue;
+
+        a = &key->rt[i];
+        a->vk_format = wined3d_format_vk(view->format)->vk_format;
+        a->vk_samples = max(1, wined3d_resource_get_sample_count(view->resource));
+        a->vk_layout = wined3d_texture_vk(wined3d_texture_from_resource(view->resource))->layout;
+        key->rt_mask |= 1u << i;
+    }
+}
+
+static void wined3d_render_pass_vk_cleanup(struct wined3d_render_pass_vk *pass,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    VK_CALL(vkDestroyRenderPass(device_vk->vk_device, pass->vk_render_pass, NULL));
+}
+
+static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
+        struct wined3d_context_vk *context_vk, const struct wined3d_render_pass_key_vk *key)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    VkAttachmentReference attachment_references[WINED3D_MAX_RENDER_TARGETS];
+    VkAttachmentDescription attachments[WINED3D_MAX_RENDER_TARGETS + 1];
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    const struct wined3d_render_pass_attachment_vk *a;
+    unsigned int attachment_count, rt_count, i;
+    VkAttachmentDescription *attachment;
+    VkSubpassDescription sub_pass_desc;
+    VkRenderPassCreateInfo pass_desc;
+    uint32_t mask;
+    VkResult vr;
+
+    rt_count = 0;
+    attachment_count = 0;
+    mask = key->rt_mask & ((1u << WINED3D_MAX_RENDER_TARGETS) - 1);
+    while (mask)
+    {
+        i = wined3d_bit_scan(&mask);
+        a = &key->rt[i];
+
+        attachment = &attachments[attachment_count];
+        attachment->flags = 0;
+        attachment->format = a->vk_format;
+        attachment->samples = a->vk_samples;
+        attachment->loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachment->storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        attachment->stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachment->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachment->initialLayout = a->vk_layout;
+        attachment->finalLayout = a->vk_layout;
+
+        attachment_references[i].attachment = attachment_count;
+        attachment_references[i].layout = a->vk_layout;
+
+        ++attachment_count;
+        rt_count = i + 1;
+    }
+
+    mask = ~key->rt_mask & ((1u << rt_count) - 1);
+    while (mask)
+    {
+        i = wined3d_bit_scan(&mask);
+        attachment_references[i].attachment = VK_ATTACHMENT_UNUSED;
+        attachment_references[i].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+
+    sub_pass_desc.flags = 0;
+    sub_pass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    sub_pass_desc.inputAttachmentCount = 0;
+    sub_pass_desc.pInputAttachments = NULL;
+    sub_pass_desc.colorAttachmentCount = rt_count;
+    sub_pass_desc.pColorAttachments = attachment_references;
+    sub_pass_desc.pResolveAttachments = NULL;
+    sub_pass_desc.pDepthStencilAttachment = NULL;
+    sub_pass_desc.preserveAttachmentCount = 0;
+    sub_pass_desc.pPreserveAttachments = NULL;
+
+    pass_desc.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    pass_desc.pNext = NULL;
+    pass_desc.flags = 0;
+    pass_desc.attachmentCount = attachment_count;
+    pass_desc.pAttachments = attachments;
+    pass_desc.subpassCount = 1;
+    pass_desc.pSubpasses = &sub_pass_desc;
+    pass_desc.dependencyCount = 0;
+    pass_desc.pDependencies = NULL;
+
+    pass->key = *key;
+    if ((vr = VK_CALL(vkCreateRenderPass(device_vk->vk_device,
+            &pass_desc, NULL, &pass->vk_render_pass))) < 0)
+    {
+        WARN("Failed to create Vulkan render pass, vr %d.\n", vr);
+        return false;
+    }
+
+    return true;
+}
+
+VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *context_vk,
+        const struct wined3d_fb_state *fb, unsigned int rt_count)
+{
+    struct wined3d_render_pass_key_vk key;
+    struct wined3d_render_pass_vk *pass;
+    struct wine_rb_entry *entry;
+
+    wined3d_render_pass_key_vk_init(&key, fb, rt_count);
+    if ((entry = wine_rb_get(&context_vk->render_passes, &key)))
+        return WINE_RB_ENTRY_VALUE(entry, struct wined3d_render_pass_vk, entry)->vk_render_pass;
+
+    if (!(pass = heap_alloc(sizeof(*pass))))
+        return VK_NULL_HANDLE;
+
+    if (!wined3d_render_pass_vk_init(pass, context_vk, &key))
+    {
+        heap_free(pass);
+        return VK_NULL_HANDLE;
+    }
+
+    if (wine_rb_put(&context_vk->render_passes, &pass->key, &pass->entry) == -1)
+    {
+        ERR("Failed to insert render pass.\n");
+        wined3d_render_pass_vk_cleanup(pass, context_vk);
+        heap_free(pass);
+        return VK_NULL_HANDLE;
+    }
+
+    return pass->vk_render_pass;
+}
+
+static void wined3d_context_vk_destroy_render_pass(struct wine_rb_entry *entry, void *ctx)
+{
+    struct wined3d_render_pass_vk *pass = WINE_RB_ENTRY_VALUE(entry,
+            struct wined3d_render_pass_vk, entry);
+
+    wined3d_render_pass_vk_cleanup(pass, ctx);
+    heap_free(pass);
+}
+
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
 {
     struct wined3d_command_buffer_vk *buffer = &context_vk->current_command_buffer;
@@ -619,6 +801,8 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     wine_rb_destroy(&context_vk->bo_slab_available, wined3d_context_vk_destroy_bo_slab, context_vk);
     heap_free(context_vk->submitted.buffers);
     heap_free(context_vk->retired.objects);
+
+    wine_rb_destroy(&context_vk->render_passes, wined3d_context_vk_destroy_render_pass, context_vk);
 
     wined3d_context_cleanup(&context_vk->c);
 }
@@ -784,6 +968,15 @@ void wined3d_context_vk_image_barrier(struct wined3d_context_vk *context_vk,
     VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, src_stage_mask, dst_stage_mask, 0, 0, NULL, 0, NULL, 1, &barrier));
 }
 
+static int wined3d_render_pass_vk_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_render_pass_key_vk *k = key;
+    const struct wined3d_render_pass_vk *pass = WINE_RB_ENTRY_VALUE(entry,
+            const struct wined3d_render_pass_vk, entry);
+
+    return memcmp(k, &pass->key, sizeof(*k));
+}
+
 static int wined3d_bo_slab_vk_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct wined3d_bo_slab_vk *slab = WINE_RB_ENTRY_VALUE(entry, const struct wined3d_bo_slab_vk, entry);
@@ -824,6 +1017,7 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
     }
     context_vk->current_command_buffer.id = 1;
 
+    wine_rb_init(&context_vk->render_passes, wined3d_render_pass_vk_compare);
     wine_rb_init(&context_vk->bo_slab_available, wined3d_bo_slab_vk_compare);
 
     return WINED3D_OK;

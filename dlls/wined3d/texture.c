@@ -4484,6 +4484,57 @@ HRESULT wined3d_texture_no3d_init(struct wined3d_texture *texture_no3d, struct w
             flags, device, parent, parent_ops, &texture_no3d[1], &wined3d_texture_no3d_ops);
 }
 
+const VkDescriptorImageInfo *wined3d_texture_vk_get_default_image_info(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    const struct wined3d_format_vk *format_vk;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_device_vk *device_vk;
+    VkImageViewCreateInfo create_info;
+    uint32_t flags = 0;
+    VkResult vr;
+
+    if (texture_vk->default_image_info.imageView)
+        return &texture_vk->default_image_info;
+
+    format_vk = wined3d_format_vk(texture_vk->t.resource.format);
+    device_vk = wined3d_device_vk(texture_vk->t.resource.device);
+    vk_info = context_vk->vk_info;
+
+    if (texture_vk->t.layer_count > 1)
+        flags |= WINED3D_VIEW_TEXTURE_ARRAY;
+
+    wined3d_texture_vk_prepare_texture(texture_vk, context_vk);
+    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    create_info.pNext = NULL;
+    create_info.flags = 0;
+    create_info.image = texture_vk->vk_image;
+    create_info.viewType = vk_image_view_type_from_wined3d(texture_vk->t.resource.type, flags);
+    create_info.format = format_vk->vk_format;
+    create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.subresourceRange.aspectMask = vk_aspect_mask_from_format(&format_vk->f);
+    create_info.subresourceRange.baseMipLevel = 0;
+    create_info.subresourceRange.levelCount = texture_vk->t.level_count;
+    create_info.subresourceRange.baseArrayLayer = 0;
+    create_info.subresourceRange.layerCount = texture_vk->t.layer_count;
+    if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &create_info,
+            NULL, &texture_vk->default_image_info.imageView))) < 0)
+    {
+        ERR("Failed to create Vulkan image view, vr %s.\n", wined3d_debug_vkresult(vr));
+        return NULL;
+    }
+
+    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(texture_vk->default_image_info.imageView));
+
+    texture_vk->default_image_info.sampler = VK_NULL_HANDLE;
+    texture_vk->default_image_info.imageLayout = texture_vk->layout;
+
+    return &texture_vk->default_image_info;
+}
+
 static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
         const struct wined3d_const_bo_address *src_bo_addr, const struct wined3d_format *src_format,
         const struct wined3d_box *src_box, unsigned int src_row_pitch, unsigned int src_slice_pitch,
@@ -5042,6 +5093,13 @@ static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
     switch (location)
     {
         case WINED3D_LOCATION_TEXTURE_RGB:
+            if (texture_vk->default_image_info.imageView)
+            {
+                wined3d_context_vk_destroy_image_view(context_vk,
+                        texture_vk->default_image_info.imageView, texture_vk->command_buffer_id);
+                texture_vk->default_image_info.imageView = VK_NULL_HANDLE;
+            }
+
             if (texture_vk->vk_image)
             {
                 wined3d_context_vk_destroy_image(context_vk, texture_vk->vk_image, texture_vk->command_buffer_id);
@@ -5419,7 +5477,7 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
     context_release(context);
 }
 
-static bool ffp_blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
+static bool blitter_use_cpu_clear(struct wined3d_rendertarget_view *view)
 {
     struct wined3d_resource *resource;
     struct wined3d_texture *texture;
@@ -5458,7 +5516,7 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             if (!(view = fb->render_targets[i]))
                 continue;
 
-            if (ffp_blitter_use_cpu_clear(view)
+            if (blitter_use_cpu_clear(view)
                     || (!(view->resource->bind_flags & WINED3D_BIND_RENDER_TARGET)
                     && (wined3d_settings.offscreen_rendering_mode != ORM_FBO
                     || !(view->format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE))))
@@ -5478,7 +5536,7 @@ static void ffp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
     if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)) && (view = fb->depth_stencil)
             && (!view->format->depth_size || (flags & WINED3DCLEAR_ZBUFFER))
             && (!view->format->stencil_size || (flags & WINED3DCLEAR_STENCIL))
-            && ffp_blitter_use_cpu_clear(view))
+            && blitter_use_cpu_clear(view))
     {
         next_flags |= flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
         flags &= ~(WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
@@ -5978,16 +6036,242 @@ static void vk_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_c
     heap_free(blitter);
 }
 
+static inline VkImageView wined3d_rendertarget_view_vk_get_image_view(struct wined3d_rendertarget_view_vk *rtv_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_texture_vk *texture_vk;
+
+    if (rtv_vk->vk_image_view)
+        return rtv_vk->vk_image_view;
+
+    texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
+    return wined3d_texture_vk_get_default_image_info(texture_vk, context_vk)->imageView;
+}
+
+static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk, unsigned int rt_count,
+        const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects, const RECT *draw_rect,
+        uint32_t flags, const struct wined3d_color *colour, float depth, unsigned int stencil)
+{
+    VkClearValue clear_values[WINED3D_MAX_RENDER_TARGETS];
+    VkImageView views[WINED3D_MAX_RENDER_TARGETS];
+    struct wined3d_rendertarget_view_vk *rtv_vk;
+    struct wined3d_rendertarget_view *view;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_texture_vk *texture_vk;
+    struct wined3d_device_vk *device_vk;
+    VkCommandBuffer vk_command_buffer;
+    VkRenderPassBeginInfo begin_desc;
+    unsigned int i, attachment_count;
+    VkFramebufferCreateInfo fb_desc;
+    VkFramebuffer vk_framebuffer;
+    VkRenderPass vk_render_pass;
+    unsigned int layer_count;
+    VkClearColorValue *c;
+    VkResult vr;
+    RECT r;
+
+    TRACE("context_vk %p, rt_count %u, fb %p, rect_count %u, clear_rects %p, "
+            "draw_rect %s, flags %#x, colour %s, depth %.8e, stencil %#x.\n",
+            context_vk, rt_count, fb, rect_count, clear_rects,
+            wine_dbgstr_rect(draw_rect), flags, debug_color(colour), depth, stencil);
+
+    device_vk = wined3d_device_vk(context_vk->c.device);
+    vk_info = context_vk->vk_info;
+
+    for (i = 0, attachment_count = 0, layer_count = 1; i < rt_count; ++i)
+    {
+        if (!(view = fb->render_targets[i]))
+            continue;
+
+        if (!is_full_clear(view, draw_rect, clear_rects))
+            wined3d_rendertarget_view_load_location(view, &context_vk->c, view->resource->draw_binding);
+        else
+            wined3d_rendertarget_view_prepare_location(view, &context_vk->c, view->resource->draw_binding);
+        wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
+        wined3d_rendertarget_view_invalidate_location(view, ~view->resource->draw_binding);
+
+        rtv_vk = wined3d_rendertarget_view_vk(view);
+        views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
+
+        c = &clear_values[attachment_count].color;
+        if (view->format_flags & WINED3DFMT_FLAG_INTEGER)
+        {
+            c->int32[0] = colour->r;
+            c->int32[1] = colour->g;
+            c->int32[2] = colour->b;
+            c->int32[3] = colour->a;
+        }
+        else
+        {
+            c->float32[0] = colour->r;
+            c->float32[1] = colour->g;
+            c->float32[2] = colour->b;
+            c->float32[3] = colour->a;
+        }
+
+        if (view->layer_count > layer_count)
+            layer_count = view->layer_count;
+
+        ++attachment_count;
+    }
+
+    if (!(vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, fb, rt_count)))
+    {
+        ERR("Failed to get render pass.\n");
+        return;
+    }
+
+    if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+    {
+        ERR("Failed to get command buffer.\n");
+        return;
+    }
+
+    fb_desc.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    fb_desc.pNext = NULL;
+    fb_desc.flags = 0;
+    fb_desc.renderPass = vk_render_pass;
+    fb_desc.attachmentCount = attachment_count;
+    fb_desc.pAttachments = views;
+    fb_desc.width = draw_rect->right - draw_rect->left;
+    fb_desc.height = draw_rect->bottom - draw_rect->top;
+    fb_desc.layers = layer_count;
+    if ((vr = VK_CALL(vkCreateFramebuffer(device_vk->vk_device, &fb_desc, NULL, &vk_framebuffer))) < 0)
+    {
+        ERR("Failed to create Vulkan framebuffer, vr %s.\n", wined3d_debug_vkresult(vr));
+        return;
+    }
+
+    begin_desc.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    begin_desc.pNext = NULL;
+    begin_desc.renderPass = vk_render_pass;
+    begin_desc.framebuffer = vk_framebuffer;
+    begin_desc.clearValueCount = attachment_count;
+    begin_desc.pClearValues = clear_values;
+
+    for (i = 0; i < rect_count; ++i)
+    {
+        r.left = max(clear_rects[i].left, draw_rect->left);
+        r.top = max(clear_rects[i].top, draw_rect->top);
+        r.right = min(clear_rects[i].right, draw_rect->right);
+        r.bottom = min(clear_rects[i].bottom, draw_rect->bottom);
+
+        if (r.left >= r.right || r.top >= r.bottom)
+            continue;
+
+        begin_desc.renderArea.offset.x = r.left;
+        begin_desc.renderArea.offset.y = r.top;
+        begin_desc.renderArea.extent.width = r.right - r.left;
+        begin_desc.renderArea.extent.height = r.bottom - r.top;
+        VK_CALL(vkCmdBeginRenderPass(vk_command_buffer, &begin_desc, VK_SUBPASS_CONTENTS_INLINE));
+        VK_CALL(vkCmdEndRenderPass(vk_command_buffer));
+    }
+
+    wined3d_context_vk_destroy_framebuffer(context_vk, vk_framebuffer, context_vk->current_command_buffer.id);
+
+    for (i = 0; i < rt_count; ++i)
+    {
+        if (!(view = fb->render_targets[i]))
+            continue;
+
+        wined3d_context_vk_reference_rendertarget_view(context_vk, wined3d_rendertarget_view_vk(view));
+        texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(view->resource));
+        wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
+                texture_vk->layout, texture_vk->layout,
+                texture_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
+}
+
 static void vk_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(device);
+    struct wined3d_rendertarget_view *view, *previous = NULL;
+    struct wined3d_context_vk *context_vk;
+    bool have_identical_size = true;
+    struct wined3d_fb_state tmp_fb;
+    unsigned int next_rt_count = 0;
     struct wined3d_blitter *next;
+    uint32_t next_flags = 0;
+    unsigned int i;
 
     TRACE("blitter %p, device %p, rt_count %u, fb %p, rect_count %u, clear_rects %p, "
             "draw_rect %s, flags %#x, colour %s, depth %.8e, stencil %#x.\n",
             blitter, device, rt_count, fb, rect_count, clear_rects,
             wine_dbgstr_rect(draw_rect), flags, debug_color(colour), depth, stencil);
+
+    if (!rect_count)
+    {
+        rect_count = 1;
+        clear_rects = draw_rect;
+    }
+
+    if (flags & WINED3DCLEAR_TARGET)
+    {
+        for (i = 0; i < rt_count; ++i)
+        {
+            if (!(view = fb->render_targets[i]))
+                continue;
+
+            if (blitter_use_cpu_clear(view))
+            {
+                next_flags |= WINED3DCLEAR_TARGET;
+                flags &= ~WINED3DCLEAR_TARGET;
+                next_rt_count = rt_count;
+                rt_count = 0;
+                break;
+            }
+        }
+    }
+
+    if ((flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)) && fb->depth_stencil)
+    {
+        next_flags |= flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
+        flags &= ~(WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
+    }
+
+    if (flags)
+    {
+        context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
+
+        for (i = 0; i < rt_count; ++i)
+        {
+            if (!(view = fb->render_targets[i]))
+                continue;
+
+            if (previous && (previous->width != view->width || previous->height != view->height))
+                have_identical_size = false;
+            previous = view;
+        }
+
+        if (have_identical_size)
+        {
+            vk_blitter_clear_rendertargets(context_vk, rt_count, fb, rect_count,
+                    clear_rects, draw_rect, flags, colour, depth, stencil);
+        }
+        else
+        {
+            for (i = 0; i < rt_count; ++i)
+            {
+                if (!(view = fb->render_targets[i]))
+                    continue;
+
+                tmp_fb.render_targets[0] = view;
+                tmp_fb.depth_stencil = NULL;
+                vk_blitter_clear_rendertargets(context_vk, 1, &tmp_fb, rect_count,
+                        clear_rects, draw_rect, WINED3DCLEAR_TARGET, colour, depth, stencil);
+            }
+        }
+
+        context_release(&context_vk->c);
+    }
+
+    if (!next_flags)
+        return;
 
     if (!(next = blitter->next))
     {
@@ -5996,8 +6280,8 @@ static void vk_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_dev
     }
 
     TRACE("Forwarding to blitter %p.\n", next);
-    next->ops->blitter_clear(next, device, rt_count, fb, rect_count,
-            clear_rects, draw_rect, flags, colour, depth, stencil);
+    next->ops->blitter_clear(next, device, next_rt_count, fb, rect_count,
+            clear_rects, draw_rect, next_flags, colour, depth, stencil);
 }
 
 static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wined3d_context *context,
