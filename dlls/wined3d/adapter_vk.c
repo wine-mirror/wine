@@ -1414,6 +1414,12 @@ static void adapter_vk_flush_context(struct wined3d_context *context)
     TRACE("context %p.\n", context);
 }
 
+static void adapter_vk_dispatch_compute(struct wined3d_device *device,
+        const struct wined3d_state *state, const struct wined3d_dispatch_parameters *parameters)
+{
+    FIXME("device %p, state %p, parameters %p.\n", device, state, parameters);
+}
+
 void adapter_vk_clear_uav(struct wined3d_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
@@ -1422,36 +1428,37 @@ void adapter_vk_clear_uav(struct wined3d_context *context,
 
 static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
 {
-    adapter_vk_destroy,
-    adapter_vk_create_device,
-    adapter_vk_destroy_device,
-    adapter_vk_acquire_context,
-    adapter_vk_release_context,
-    adapter_vk_get_wined3d_caps,
-    adapter_vk_check_format,
-    adapter_vk_init_3d,
-    adapter_vk_uninit_3d,
-    adapter_vk_map_bo_address,
-    adapter_vk_unmap_bo_address,
-    adapter_vk_copy_bo_address,
-    adapter_vk_create_swapchain,
-    adapter_vk_destroy_swapchain,
-    adapter_vk_create_buffer,
-    adapter_vk_destroy_buffer,
-    adapter_vk_create_texture,
-    adapter_vk_destroy_texture,
-    adapter_vk_create_rendertarget_view,
-    adapter_vk_destroy_rendertarget_view,
-    adapter_vk_create_shader_resource_view,
-    adapter_vk_destroy_shader_resource_view,
-    adapter_vk_create_unordered_access_view,
-    adapter_vk_destroy_unordered_access_view,
-    adapter_vk_create_sampler,
-    adapter_vk_destroy_sampler,
-    adapter_vk_create_query,
-    adapter_vk_destroy_query,
-    adapter_vk_flush_context,
-    adapter_vk_clear_uav,
+    .adapter_destroy = adapter_vk_destroy,
+    .adapter_create_device = adapter_vk_create_device,
+    .adapter_destroy_device = adapter_vk_destroy_device,
+    .adapter_acquire_context = adapter_vk_acquire_context,
+    .adapter_release_context = adapter_vk_release_context,
+    .adapter_get_wined3d_caps = adapter_vk_get_wined3d_caps,
+    .adapter_check_format = adapter_vk_check_format,
+    .adapter_init_3d = adapter_vk_init_3d,
+    .adapter_uninit_3d = adapter_vk_uninit_3d,
+    .adapter_map_bo_address = adapter_vk_map_bo_address,
+    .adapter_unmap_bo_address = adapter_vk_unmap_bo_address,
+    .adapter_copy_bo_address = adapter_vk_copy_bo_address,
+    .adapter_create_swapchain = adapter_vk_create_swapchain,
+    .adapter_destroy_swapchain = adapter_vk_destroy_swapchain,
+    .adapter_create_buffer = adapter_vk_create_buffer,
+    .adapter_destroy_buffer = adapter_vk_destroy_buffer,
+    .adapter_create_texture = adapter_vk_create_texture,
+    .adapter_destroy_texture = adapter_vk_destroy_texture,
+    .adapter_create_rendertarget_view = adapter_vk_create_rendertarget_view,
+    .adapter_destroy_rendertarget_view = adapter_vk_destroy_rendertarget_view,
+    .adapter_create_shader_resource_view = adapter_vk_create_shader_resource_view,
+    .adapter_destroy_shader_resource_view = adapter_vk_destroy_shader_resource_view,
+    .adapter_create_unordered_access_view = adapter_vk_create_unordered_access_view,
+    .adapter_destroy_unordered_access_view = adapter_vk_destroy_unordered_access_view,
+    .adapter_create_sampler = adapter_vk_create_sampler,
+    .adapter_destroy_sampler = adapter_vk_destroy_sampler,
+    .adapter_create_query = adapter_vk_create_query,
+    .adapter_destroy_query = adapter_vk_destroy_query,
+    .adapter_flush_context = adapter_vk_flush_context,
+    .adapter_dispatch_compute = adapter_vk_dispatch_compute,
+    .adapter_clear_uav = adapter_vk_clear_uav,
 };
 
 static unsigned int wined3d_get_wine_vk_version(void)

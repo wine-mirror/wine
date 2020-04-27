@@ -3031,6 +3031,8 @@ struct wined3d_adapter_ops
             void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query);
     void (*adapter_destroy_query)(struct wined3d_query *query);
     void (*adapter_flush_context)(struct wined3d_context *context);
+    void (*adapter_dispatch_compute)(struct wined3d_device *device, const struct wined3d_state *state,
+            const struct wined3d_dispatch_parameters *parameters);
     void (*adapter_clear_uav)(struct wined3d_context *context,
             struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value);
 };
