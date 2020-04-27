@@ -1187,6 +1187,9 @@ static HRESULT WINAPI GifDecoder_CopyPalette(IWICBitmapDecoder *iface, IWICPalet
 
     TRACE("(%p,%p)\n", iface, palette);
 
+    if (!This->gif)
+        return WINCODEC_ERR_WRONGSTATE;
+
     cm = This->gif->SColorMap;
     if (cm)
     {
