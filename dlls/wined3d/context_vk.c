@@ -630,7 +630,7 @@ static void wined3d_context_vk_destroy_bo_slab(struct wine_rb_entry *entry, void
 }
 
 static void wined3d_render_pass_key_vk_init(struct wined3d_render_pass_key_vk *key,
-        const struct wined3d_fb_state *fb, unsigned int rt_count)
+        const struct wined3d_fb_state *fb, unsigned int rt_count, bool depth_stencil, uint32_t clear_flags)
 {
     struct wined3d_render_pass_attachment_vk *a;
     struct wined3d_rendertarget_view *view;
@@ -649,6 +649,17 @@ static void wined3d_render_pass_key_vk_init(struct wined3d_render_pass_key_vk *k
         a->vk_layout = wined3d_texture_vk(wined3d_texture_from_resource(view->resource))->layout;
         key->rt_mask |= 1u << i;
     }
+
+    if (depth_stencil && (view = fb->depth_stencil))
+    {
+        a = &key->ds;
+        a->vk_format = wined3d_format_vk(view->format)->vk_format;
+        a->vk_samples = max(1, wined3d_resource_get_sample_count(view->resource));
+        a->vk_layout = wined3d_texture_vk(wined3d_texture_from_resource(view->resource))->layout;
+        key->rt_mask |= 1u << WINED3D_MAX_RENDER_TARGETS;
+    }
+
+    key->clear_flags = clear_flags;
 }
 
 static void wined3d_render_pass_vk_cleanup(struct wined3d_render_pass_vk *pass,
@@ -668,6 +679,8 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
     VkAttachmentDescription attachments[WINED3D_MAX_RENDER_TARGETS + 1];
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_render_pass_attachment_vk *a;
+    VkAttachmentReference ds_attachment_reference;
+    VkAttachmentReference *ds_reference = NULL;
     unsigned int attachment_count, rt_count, i;
     VkAttachmentDescription *attachment;
     VkSubpassDescription sub_pass_desc;
@@ -687,7 +700,10 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
         attachment->flags = 0;
         attachment->format = a->vk_format;
         attachment->samples = a->vk_samples;
-        attachment->loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        if (key->clear_flags & WINED3DCLEAR_TARGET)
+            attachment->loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        else
+            attachment->loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
         attachment->storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         attachment->stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         attachment->stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -709,6 +725,34 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
         attachment_references[i].layout = VK_IMAGE_LAYOUT_UNDEFINED;
     }
 
+    if (key->rt_mask & (1u << WINED3D_MAX_RENDER_TARGETS))
+    {
+        a = &key->ds;
+
+        attachment = &attachments[attachment_count];
+        attachment->flags = 0;
+        attachment->format = a->vk_format;
+        attachment->samples = a->vk_samples;
+        if (key->clear_flags & WINED3DCLEAR_ZBUFFER)
+            attachment->loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        else
+            attachment->loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+        attachment->storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        if (key->clear_flags & WINED3DCLEAR_STENCIL)
+            attachment->stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        else
+            attachment->stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+        attachment->stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+        attachment->initialLayout = a->vk_layout;
+        attachment->finalLayout = a->vk_layout;
+
+        ds_reference = &ds_attachment_reference;
+        ds_reference->attachment = attachment_count;
+        ds_reference->layout = a->vk_layout;
+
+        ++attachment_count;
+    }
+
     sub_pass_desc.flags = 0;
     sub_pass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     sub_pass_desc.inputAttachmentCount = 0;
@@ -716,7 +760,7 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
     sub_pass_desc.colorAttachmentCount = rt_count;
     sub_pass_desc.pColorAttachments = attachment_references;
     sub_pass_desc.pResolveAttachments = NULL;
-    sub_pass_desc.pDepthStencilAttachment = NULL;
+    sub_pass_desc.pDepthStencilAttachment = ds_reference;
     sub_pass_desc.preserveAttachmentCount = 0;
     sub_pass_desc.pPreserveAttachments = NULL;
 
@@ -742,13 +786,13 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
 }
 
 VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *context_vk,
-        const struct wined3d_fb_state *fb, unsigned int rt_count)
+        const struct wined3d_fb_state *fb, unsigned int rt_count, bool depth_stencil, uint32_t clear_flags)
 {
     struct wined3d_render_pass_key_vk key;
     struct wined3d_render_pass_vk *pass;
     struct wine_rb_entry *entry;
 
-    wined3d_render_pass_key_vk_init(&key, fb, rt_count);
+    wined3d_render_pass_key_vk_init(&key, fb, rt_count, depth_stencil, clear_flags);
     if ((entry = wine_rb_get(&context_vk->render_passes, &key)))
         return WINE_RB_ENTRY_VALUE(entry, struct wined3d_render_pass_vk, entry)->vk_render_pass;
 
