@@ -9,7 +9,6 @@
 @ stdcall CStdStubBuffer_Invoke(ptr ptr ptr)
 @ stdcall CStdStubBuffer_IsIIDSupported(ptr ptr)
 @ stdcall CStdStubBuffer_QueryInterface(ptr ptr ptr)
-@ stub CreateServerInterfaceFromStub # wxp
 @ stdcall DceErrorInqTextA (long ptr)
 @ stdcall DceErrorInqTextW (long ptr)
 @ stdcall -private DllRegisterServer()
