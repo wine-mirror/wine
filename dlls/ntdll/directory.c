@@ -106,7 +106,6 @@
 #include "ntdll_misc.h"
 #include "wine/server.h"
 #include "wine/list.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 
@@ -564,7 +563,6 @@ unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] )
     RtlEnterCriticalSection( &dir_section );
     if (now != last_update)
     {
-        const char *config_dir = wine_get_config_dir();
         char *buffer, *p;
         struct stat st;
         unsigned int i;
@@ -1261,7 +1259,7 @@ static DWORD WINAPI init_options( RTL_RUN_ONCE *once, void *param, void **contex
     NtClose( root );
 
     /* a couple of directories that we don't want to return in directory searches */
-    ignore_file( wine_get_config_dir() );
+    ignore_file( config_dir );
     ignore_file( "/dev" );
     ignore_file( "/proc" );
 #ifdef linux
@@ -2219,7 +2217,6 @@ static unsigned int nb_redirects;
 static void init_redirects(void)
 {
     static const char windows_dir[] = "/dosdevices/c:/windows";
-    const char *config_dir = wine_get_config_dir();
     char *dir;
     struct stat st;
 
@@ -2322,7 +2319,6 @@ void init_directories(void)
  */
 static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *unix_name_ret )
 {
-    const char *config_dir = wine_get_config_dir();
     struct stat st;
     char *unix_name, *new_name, *dev;
     unsigned int i;
@@ -2747,7 +2743,6 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
 
     NTSTATUS status = STATUS_SUCCESS;
-    const char *config_dir = wine_get_config_dir();
     const WCHAR *name, *p;
     struct stat st;
     char *unix_name;

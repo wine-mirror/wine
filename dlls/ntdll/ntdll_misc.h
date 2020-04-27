@@ -104,6 +104,7 @@ extern char **__wine_main_argv;
 extern WCHAR **__wine_main_wargv;
 
 /* server support */
+extern const char *config_dir DECLSPEC_HIDDEN;
 extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;

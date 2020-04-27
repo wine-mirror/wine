@@ -396,7 +396,7 @@ static void set_wow64_environment( WCHAR **env )
     set_wine_path_variable( env, winedatadirW, wine_get_data_dir() );
     set_wine_path_variable( env, winehomedirW, getenv("HOME") );
     set_wine_path_variable( env, winebuilddirW, wine_get_build_dir() );
-    set_wine_path_variable( env, wineconfigdirW, wine_get_config_dir() );
+    set_wine_path_variable( env, wineconfigdirW, config_dir );
     for (i = 0; (p = wine_dll_enum_load_path( i )); i++)
     {
         NTDLL_swprintf( buf, winedlldirW, i );

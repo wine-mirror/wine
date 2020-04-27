@@ -34,6 +34,9 @@
 #ifdef HAVE_PTHREAD_NP_H
 # include <pthread_np.h>
 #endif
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -110,6 +113,8 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 #error Unsupported CPU
 #endif
 
+const char *config_dir = NULL;
+
 unsigned int server_cpus = 0;
 BOOL is_wow64 = FALSE;
 
@@ -171,6 +176,17 @@ static void fatal_perror( const char *err, ... )
     exit(1);
 }
 
+/* build a path from the specified dir and name */
+static char *build_path( const char *dir, const char *name )
+{
+    size_t len = strlen( dir );
+    char *ret = malloc( len + strlen( name ) + 2 );
+
+    memcpy( ret, dir, len );
+    if (len && ret[len - 1] != '/') ret[len++] = '/';
+    strcpy( ret + len, name );
+    return ret;
+}
 
 /***********************************************************************
  *           server_protocol_error
@@ -1200,52 +1216,75 @@ static void start_server(void)
 
 
 /***********************************************************************
+ *           init_config_dir
+ */
+static const char *init_config_dir(void)
+{
+    char *p, *dir;
+    const char *prefix = getenv( "WINEPREFIX" );
+
+    if (prefix)
+    {
+        if (prefix[0] != '/')
+            fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
+        dir = strdup( prefix );
+        for (p = dir + strlen(dir) - 1; p > dir && *p == '/'; p--) *p = 0;
+    }
+    else
+    {
+        const char *home = getenv( "HOME" );
+        if (!home)
+        {
+            struct passwd *pwd = getpwuid( getuid() );
+            if (pwd) home = pwd->pw_dir;
+        }
+        if (!home) fatal_error( "could not determine your home directory\n" );
+        if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
+        dir = build_path( home, ".wine" );
+    }
+    return dir;
+}
+
+
+/***********************************************************************
  *           setup_config_dir
  *
  * Setup the wine configuration dir.
  */
 static int setup_config_dir(void)
 {
-    const char *p, *config_dir = wine_get_config_dir();
+    char *p;
+    struct stat st;
     int fd_cwd = open( ".", O_RDONLY );
 
     if (chdir( config_dir ) == -1)
     {
-        if (errno != ENOENT) fatal_perror( "chdir to %s", config_dir );
-
+        if (errno != ENOENT) fatal_perror( "cannot use directory %s", config_dir );
         if ((p = strrchr( config_dir, '/' )) && p != config_dir)
         {
-            struct stat st;
-            char *tmp_dir;
-
-            if (!(tmp_dir = malloc( p + 1 - config_dir ))) fatal_error( "out of memory\n" );
-            memcpy( tmp_dir, config_dir, p - config_dir );
-            tmp_dir[p - config_dir] = 0;
-            if (!stat( tmp_dir, &st ) && st.st_uid != getuid())
+            while (p > config_dir + 1 && p[-1] == '/') p--;
+            *p = 0;
+            if (!stat( config_dir, &st ) && st.st_uid != getuid())
                 fatal_error( "'%s' is not owned by you, refusing to create a configuration directory there\n",
-                             tmp_dir );
-            free( tmp_dir );
+                             config_dir );
+            *p = '/';
         }
-
         mkdir( config_dir, 0777 );
         if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s", config_dir );
-
         MESSAGE( "wine: created the configuration directory '%s'\n", config_dir );
     }
 
-    if (mkdir( "dosdevices", 0777 ) == -1)
+    if (stat( ".", &st ) == -1) fatal_perror( "stat %s", config_dir );
+    if (st.st_uid != getuid()) fatal_error( "'%s' is not owned by you\n", config_dir );
+
+    if (!mkdir( "dosdevices", 0777 ))
     {
-        if (errno == EEXIST) goto done;
-        fatal_perror( "cannot create %s/dosdevices", config_dir );
+        mkdir( "drive_c", 0777 );
+        symlink( "../drive_c", "dosdevices/c:" );
+        symlink( "/", "dosdevices/z:" );
     }
+    else if (errno != EEXIST) fatal_perror( "cannot create %s/dosdevices", config_dir );
 
-    /* create the drive symlinks */
-
-    mkdir( "drive_c", 0777 );
-    symlink( "../drive_c", "dosdevices/c:" );
-    symlink( "/", "dosdevices/z:" );
-
-done:
     if (fd_cwd == -1) fd_cwd = open( "dosdevices/c:", O_RDONLY );
     fcntl( fd_cwd, F_SETFD, FD_CLOEXEC );
     return fd_cwd;
@@ -1452,6 +1491,8 @@ void server_init_process(void)
     obj_handle_t version;
     const char *env_socket = getenv( "WINESERVERSOCKET" );
 
+    config_dir = init_config_dir();
+
     server_pid = -1;
     if (env_socket)
     {
@@ -1610,19 +1651,15 @@ size_t server_init_thread( void *entry_point, BOOL *suspend )
         if (arch)
         {
             if (!strcmp( arch, "win32" ) && (is_win64 || is_wow64))
-                fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n",
-                             wine_get_config_dir() );
+                fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
             if (!strcmp( arch, "win64" ) && !is_win64 && !is_wow64)
-                fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n",
-                             wine_get_config_dir() );
+                fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
         }
         return info_size;
     case STATUS_INVALID_IMAGE_WIN_64:
-        fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n",
-                     wine_get_config_dir() );
+        fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );
     case STATUS_NOT_SUPPORTED:
-        fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n",
-                     wine_get_config_dir() );
+        fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n", config_dir );
     case STATUS_INVALID_IMAGE_FORMAT:
         fatal_error( "wineserver doesn't support the %s architecture\n", cpu_names[client_cpu] );
     default:
