@@ -547,11 +547,21 @@ AC_HEADER_STAT()
 
 dnl **** Checks for headers that depend on other ones ****
 
-AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/sysctl.h sys/user.h sys/vfs.h],,,
+AC_CHECK_HEADERS([sys/mount.h sys/statfs.h sys/user.h sys/vfs.h],,,
     [#include <sys/types.h>
      #ifdef HAVE_SYS_PARAM_H
      # include <sys/param.h>
      #endif])
+
+dnl check for broken Linux sysctl.h that causes deprecation warnings
+saved_sysctl_h_CFLAGS=$CFLAGS
+test "x${GCC}" != xyes || CFLAGS="$CFLAGS -Werror"
+AC_CHECK_HEADERS([sys/sysctl.h],,,
+    [#include <sys/types.h>
+     #ifdef HAVE_SYS_PARAM_H
+     # include <sys/param.h>
+     #endif])
+CFLAGS=$saved_sysctl_h_CFLAGS
 
 AC_CHECK_HEADERS(\
 	netinet/ip.h \

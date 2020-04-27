@@ -7559,7 +7559,7 @@ fi
 
 
 
-for ac_header in sys/mount.h sys/statfs.h sys/sysctl.h sys/user.h sys/vfs.h
+for ac_header in sys/mount.h sys/statfs.h sys/user.h sys/vfs.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#include <sys/types.h>
@@ -7576,6 +7576,26 @@ fi
 
 done
 
+
+saved_sysctl_h_CFLAGS=$CFLAGS
+test "x${GCC}" != xyes || CFLAGS="$CFLAGS -Werror"
+for ac_header in sys/sysctl.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "sys/sysctl.h" "ac_cv_header_sys_sysctl_h" "#include <sys/types.h>
+     #ifdef HAVE_SYS_PARAM_H
+     # include <sys/param.h>
+     #endif
+"
+if test "x$ac_cv_header_sys_sysctl_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_SYSCTL_H 1
+_ACEOF
+
+fi
+
+done
+
+CFLAGS=$saved_sysctl_h_CFLAGS
 
 for ac_header in \
 	netinet/ip.h \
