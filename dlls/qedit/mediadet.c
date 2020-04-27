@@ -524,11 +524,35 @@ static HRESULT WINAPI MediaDet_get_StreamTypeB(IMediaDet *iface, BSTR *bstr)
     return hr;
 }
 
-static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet* iface, double *pVal)
+static HRESULT WINAPI MediaDet_get_StreamLength(IMediaDet *iface, double *length)
 {
-    MediaDetImpl *This = impl_from_IMediaDet(iface);
-    FIXME("(%p): stub!\n", This);
-    return VFW_E_INVALIDMEDIATYPE;
+    MediaDetImpl *detector = impl_from_IMediaDet(iface);
+    IMediaSeeking *seeking;
+    HRESULT hr;
+
+    TRACE("detector %p, length %p.\n", detector, length);
+
+    if (!length)
+        return E_POINTER;
+
+    if (!detector->cur_pin)
+        return E_INVALIDARG;
+
+    if (SUCCEEDED(hr = IPin_QueryInterface(detector->cur_pin,
+                &IID_IMediaSeeking, (void **)&seeking)))
+    {
+        LONGLONG duration;
+
+        if (SUCCEEDED(hr = IMediaSeeking_GetDuration(seeking, &duration)))
+        {
+            /* Windows assumes the time format is TIME_FORMAT_MEDIA_TIME
+               and does not check it nor convert it, as tests show. */
+            *length = (REFTIME)duration / 10000000;
+        }
+        IMediaSeeking_Release(seeking);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI MediaDet_get_Filename(IMediaDet* iface, BSTR *pVal)

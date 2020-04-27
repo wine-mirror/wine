@@ -135,6 +135,7 @@ struct testfilter
 {
     struct strmbase_filter filter;
     struct strmbase_source source;
+    IMediaSeeking IMediaSeeking_iface;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -162,6 +163,11 @@ static const struct strmbase_filter_ops testfilter_ops =
     .filter_get_pin = testfilter_get_pin,
     .filter_destroy = testfilter_destroy,
 };
+
+static inline struct testfilter *impl_from_strmbase_pin(struct strmbase_pin *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, source.pin);
+}
 
 static HRESULT testsource_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
@@ -192,6 +198,19 @@ static HRESULT testsource_get_media_type(struct strmbase_pin *iface, unsigned in
     return S_OK;
 }
 
+static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown*)*out);
+    return S_OK;
+}
+
 static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
         IMemInputPin *peer, IMemAllocator **allocator)
 {
@@ -201,8 +220,162 @@ static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
 static const struct strmbase_source_ops testsource_ops =
 {
     .base.pin_get_media_type = testsource_get_media_type,
+    .base.pin_query_interface = testsource_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = testsource_DecideAllocator,
+};
+
+static inline struct testfilter *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IMediaSeeking_iface);
+}
+
+static HRESULT WINAPI testseek_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IPin_QueryInterface(&filter->source.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI testseek_AddRef(IMediaSeeking *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IPin_AddRef(&filter->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI testseek_Release(IMediaSeeking *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IPin_Release(&filter->source.pin.IPin_iface);
+}
+
+static HRESULT WINAPI testseek_GetCapabilities(IMediaSeeking *iface, DWORD *caps)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_CheckCapabilities(IMediaSeeking *iface, DWORD *caps)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_IsFormatSupported(IMediaSeeking *iface, const GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_QueryPreferredFormat(IMediaSeeking *iface, GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetTimeFormat(IMediaSeeking *iface, GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_IsUsingTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetDuration(IMediaSeeking *iface, LONGLONG *duration)
+{
+    if (winetest_debug > 1) trace("IMediaSeeking_GetDuration()\n");
+
+    *duration = 42000000;
+    return S_OK;
+}
+
+static HRESULT WINAPI testseek_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetCurrentPosition(IMediaSeeking *iface, LONGLONG *current)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *target,
+    const GUID *target_format, LONGLONG source, const GUID *source_format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetPositions(IMediaSeeking *iface, LONGLONG *current,
+    DWORD current_flags, LONGLONG *stop, DWORD stop_flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetPositions(IMediaSeeking *iface, LONGLONG *current, LONGLONG *stop)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetAvailable(IMediaSeeking *iface, LONGLONG *earliest, LONGLONG *latest)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetRate(IMediaSeeking *iface, double rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetRate(IMediaSeeking *iface, double *rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetPreroll(IMediaSeeking *iface, LONGLONG *preroll)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaSeekingVtbl testseek_vtbl =
+{
+    testseek_QueryInterface,
+    testseek_AddRef,
+    testseek_Release,
+    testseek_GetCapabilities,
+    testseek_CheckCapabilities,
+    testseek_IsFormatSupported,
+    testseek_QueryPreferredFormat,
+    testseek_GetTimeFormat,
+    testseek_IsUsingTimeFormat,
+    testseek_SetTimeFormat,
+    testseek_GetDuration,
+    testseek_GetStopPosition,
+    testseek_GetCurrentPosition,
+    testseek_ConvertTimeFormat,
+    testseek_SetPositions,
+    testseek_GetPositions,
+    testseek_GetAvailable,
+    testseek_SetRate,
+    testseek_GetRate,
+    testseek_GetPreroll
 };
 
 static void testfilter_init(struct testfilter *filter)
@@ -212,6 +385,7 @@ static void testfilter_init(struct testfilter *filter)
     memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
+    filter->IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
 }
 
 static WCHAR test_avi_filename[MAX_PATH];
@@ -571,6 +745,7 @@ static void test_put_filter(void)
     IMediaDet *detector;
     LONG index, count;
     AM_MEDIA_TYPE mt;
+    double duration;
     IUnknown *unk;
     BSTR filename;
     HRESULT hr;
@@ -585,6 +760,12 @@ static void test_put_filter(void)
 
     hr = IMediaDet_get_Filter(detector, NULL);
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_StreamLength(detector, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IMediaDet_get_StreamLength(detector, &duration);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     testfilter_init(&testfilter);
     hr = IMediaDet_put_Filter(detector, &testfilter.filter.IUnknown_inner);
@@ -638,6 +819,10 @@ static void test_put_filter(void)
     hr = IMediaDet_get_Filename(detector, &filename);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!filename, "Got filename %s.\n", debugstr_w(filename));
+
+    hr = IMediaDet_get_StreamLength(detector, &duration);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(duration == 4.2, "Got duration %.16e.\n", duration);
 
     ref = IMediaDet_Release(detector);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
