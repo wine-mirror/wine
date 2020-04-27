@@ -13410,6 +13410,75 @@ done:
     DestroyWindow(window);
 }
 
+static void check_vtbl_protection_(int line, const void *vtbl, SIZE_T size)
+{
+    MEMORY_BASIC_INFORMATION info;
+    SIZE_T ret = VirtualQuery(vtbl, &info, size);
+    ok_(__FILE__, line)(ret == sizeof(info), "Failed to query memory.\n");
+    ok_(__FILE__, line)(info.Protect & (PAGE_READWRITE | PAGE_WRITECOPY), "Got protection %#x.\n", info.Protect);
+}
+#define check_vtbl_protection(a) check_vtbl_protection_(__LINE__, a, sizeof(*(a)))
+
+static void test_vtbl_protection(void)
+{
+    PALETTEENTRY palette_entries[256];
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurface4 *surface4;
+    IDirectDrawSurface3 *surface3;
+    IDirectDrawSurface2 *surface2;
+    IDirectDrawSurface *surface1;
+    IDirectDrawPalette *palette;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface2, (void **)&surface2);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface3, (void **)&surface3);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface4, (void **)&surface4);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface7, (void **)&surface7);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(palette_entries, 0, sizeof(palette_entries));
+    hr = IDirectDraw_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
+            palette_entries, &palette, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    check_vtbl_protection(ddraw->lpVtbl);
+    check_vtbl_protection(palette->lpVtbl);
+    check_vtbl_protection(surface1->lpVtbl);
+    check_vtbl_protection(surface2->lpVtbl);
+    check_vtbl_protection(surface3->lpVtbl);
+    check_vtbl_protection(surface4->lpVtbl);
+    check_vtbl_protection(surface7->lpVtbl);
+
+    IDirectDrawPalette_Release(palette);
+    IDirectDrawSurface_Release(surface1);
+    IDirectDrawSurface2_Release(surface2);
+    IDirectDrawSurface3_Release(surface3);
+    IDirectDrawSurface4_Release(surface4);
+    IDirectDrawSurface7_Release(surface7);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "%u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -13523,4 +13592,5 @@ START_TEST(ddraw1)
     test_caps();
     test_d32_support();
     test_cursor_clipping();
+    test_vtbl_protection();
 }
