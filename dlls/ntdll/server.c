@@ -113,8 +113,11 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 #error Unsupported CPU
 #endif
 
+const char *build_dir = NULL;
+const char *data_dir = NULL;
 const char *config_dir = NULL;
 static const char *server_dir;
+static const char *bin_dir;
 
 unsigned int server_cpus = 0;
 BOOL is_wow64 = FALSE;
@@ -175,6 +178,35 @@ static void fatal_perror( const char *err, ... )
     perror( " " );
     va_end( args );
     exit(1);
+}
+
+/* canonicalize path and return its directory name */
+static char *realpath_dirname( const char *name )
+{
+    char *p, *fullpath = realpath( name, NULL );
+
+    if (fullpath)
+    {
+        p = strrchr( fullpath, '/' );
+        if (p == fullpath) p++;
+        if (p) *p = 0;
+    }
+    return fullpath;
+}
+
+/* if string ends with tail, remove it */
+static char *remove_tail( const char *str, const char *tail )
+{
+    size_t len = strlen( str );
+    size_t tail_len = strlen( tail );
+    char *ret;
+
+    if (len < tail_len) return NULL;
+    if (strcmp( str + len - tail_len, tail )) return NULL;
+    ret = malloc( len - tail_len + 1 );
+    memcpy( ret, str, len - tail_len );
+    ret[len - tail_len] = 0;
+    return ret;
 }
 
 /* build a path from the specified dir and name */
@@ -1280,6 +1312,42 @@ static const char *init_config_dir(void)
 
 
 /***********************************************************************
+ *           init_paths
+ */
+void init_paths(void)
+{
+    const char *dll_dir = NULL;
+
+#ifdef HAVE_DLADDR
+    Dl_info info;
+
+    if (dladdr( init_paths, &info ) && info.dli_fname[0] == '/')
+        dll_dir = realpath_dirname( info.dli_fname );
+#endif
+
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    bin_dir = realpath_dirname( "/proc/self/exe" );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    bin_dir = realpath_dirname( "/proc/curproc/file" );
+#else
+    bin_dir = realpath_dirname( __wine_main_argv[0] );
+#endif
+
+    if (dll_dir) build_dir = remove_tail( dll_dir, "/dlls/ntdll" );
+    else if (bin_dir) build_dir = remove_tail( bin_dir, "/loader" );
+
+    if (!build_dir)
+    {
+        if (!bin_dir) bin_dir = dll_dir ? build_path( dll_dir, DLL_TO_BINDIR ) : BINDIR;
+        else if (!dll_dir) dll_dir = build_path( bin_dir, BIN_TO_DLLDIR );
+        data_dir = build_path( bin_dir, BIN_TO_DATADIR );
+    }
+
+    config_dir = init_config_dir();
+}
+
+
+/***********************************************************************
  *           setup_config_dir
  *
  * Setup the wine configuration dir.
@@ -1523,8 +1591,6 @@ void server_init_process(void)
 {
     obj_handle_t version;
     const char *env_socket = getenv( "WINESERVERSOCKET" );
-
-    config_dir = init_config_dir();
 
     server_pid = -1;
     if (env_socket)

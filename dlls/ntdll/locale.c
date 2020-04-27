@@ -39,7 +39,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "ntdll_misc.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
@@ -758,8 +757,6 @@ static const struct { const char *name; UINT cp; } charset_names[] =
 
 static void load_unix_cptable( unsigned int cp )
 {
-    const char *build_dir = wine_get_build_dir();
-    const char *data_dir = wine_get_data_dir();
     const char *dir = build_dir ? build_dir : data_dir;
     struct stat st;
     char *name;

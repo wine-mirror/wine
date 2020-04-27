@@ -2715,7 +2715,7 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
                                   void **module, pe_image_info_t *image_info, struct stat *st,
                                   char **so_name )
 {
-    const char *path, *build_dir = wine_get_build_dir();
+    const char *path;
     unsigned int i, pos, len, namelen, maxlen = 0;
     char *ptr, *file;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;

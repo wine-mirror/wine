@@ -408,9 +408,9 @@ static void set_wow64_environment( WCHAR **env )
 
     /* set the Wine paths */
 
-    set_wine_path_variable( env, winedatadirW, wine_get_data_dir() );
+    set_wine_path_variable( env, winedatadirW, data_dir );
     set_wine_path_variable( env, winehomedirW, home );
-    set_wine_path_variable( env, winebuilddirW, wine_get_build_dir() );
+    set_wine_path_variable( env, winebuilddirW, build_dir );
     set_wine_path_variable( env, wineconfigdirW, config_dir );
     for (i = 0; (p = wine_dll_enum_load_path( i )); i++)
     {

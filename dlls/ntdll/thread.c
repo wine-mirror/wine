@@ -299,6 +299,7 @@ TEB *thread_init(void)
     signal_init_thread( teb );
     virtual_init_threading();
     debug_init();
+    init_paths();
     set_process_name( __wine_main_argc, __wine_main_argv );
 
     /* initialize time values in user_shared_data */
