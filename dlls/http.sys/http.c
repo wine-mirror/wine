@@ -1233,6 +1233,7 @@ static NTSTATUS http_receive_request(struct request_queue *queue, IRP *irp)
         }
         else
         {
+            IoMarkIrpPending(irp);
             InsertTailList(&queue->irp_queue, &irp->Tail.Overlay.ListEntry);
             ret = STATUS_PENDING;
         }
@@ -1362,8 +1363,6 @@ static NTSTATUS WINAPI dispatch_ioctl(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = ret;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
-    else
-        IoMarkIrpPending(irp);
     return ret;
 }
 
