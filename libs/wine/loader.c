@@ -94,7 +94,7 @@ static const IMAGE_NT_HEADERS *main_exe;
 
 static load_dll_callback_t load_dll_callback;
 
-static const char *build_dir;
+extern const char *build_dir;
 static const char *default_dlldir;
 static const char **dll_paths;
 static unsigned int nb_dll_paths;
@@ -132,7 +132,7 @@ static void build_dll_path(void)
         dll_path_maxlen = strlen(dlldir);
         dll_paths[nb_dll_paths++] = dlldir;
     }
-    else if ((build_dir = wine_get_build_dir()))
+    else if (build_dir)
     {
         dll_path_maxlen = strlen(build_dir) + sizeof("/programs");
     }
@@ -494,19 +494,19 @@ void wine_dll_set_callback( load_dll_callback_t load )
 }
 
 
+#ifdef __ASM_OBSOLETE
+
 /***********************************************************************
  *           wine_dll_enum_load_path
  *
  * Enumerate the dll load path.
  */
-const char *wine_dll_enum_load_path( unsigned int index )
+const char *wine_dll_enum_load_path_obsolete( unsigned int index )
 {
     if (index >= nb_dll_paths) return NULL;
     return dll_paths[index];
 }
 
-
-#ifdef __ASM_OBSOLETE
 
 /*
  * These functions provide wrappers around dlopen() and associated
@@ -789,6 +789,7 @@ int wine_dll_get_owner_obsolete( const char *name, char *buffer, int size, int *
 __ASM_OBSOLETE(wine_dlopen);
 __ASM_OBSOLETE(wine_dlsym);
 __ASM_OBSOLETE(wine_dlclose);
+__ASM_OBSOLETE(wine_dll_enum_load_path);
 __ASM_OBSOLETE(wine_dll_get_owner);
 __ASM_OBSOLETE(wine_dll_load);
 __ASM_OBSOLETE(wine_dll_load_main_exe);
