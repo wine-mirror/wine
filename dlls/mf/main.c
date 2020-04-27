@@ -26,11 +26,6 @@
 #include "mfidl.h"
 #include "rpcproxy.h"
 
-#include "initguid.h"
-#include "mf.h"
-
-#undef INITGUID
-#include <guiddef.h>
 #include "mfapi.h"
 #include "mferror.h"
 
@@ -43,6 +38,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 static HINSTANCE mf_instance;
+extern const GUID CLSID_FileSchemePlugin;
 
 struct activate_object
 {
@@ -1032,7 +1028,7 @@ static const struct class_object
 }
 class_objects[] =
 {
-    { &CLSID_FileSchemeHandler, &file_scheme_handler_factory.IClassFactory_iface },
+    { &CLSID_FileSchemePlugin, &file_scheme_handler_factory.IClassFactory_iface },
 };
 
 /*******************************************************************************
