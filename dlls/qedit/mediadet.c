@@ -197,7 +197,7 @@ static HRESULT find_splitter(MediaDetImpl *detector)
 
         hr = IEnumPins_Next(enum_pins, 1, &splitter_pin, NULL);
         IEnumPins_Release(enum_pins);
-        if (FAILED(hr))
+        if (hr != S_OK)
             goto next;
 
         hr = IPin_Connect(source_pin, splitter_pin, NULL);
