@@ -4645,7 +4645,6 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     VkCommandBuffer vk_command_buffer;
     struct wined3d_bo_vk staging_bo;
     VkImageAspectFlags aspect_mask;
-    struct wined3d_range range;
     VkBufferImageCopy region;
     void *map_ptr;
 
@@ -4776,9 +4775,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
             dst_bo_addr->addr, dst_row_pitch, dst_slice_pitch, src_box->right - src_box->left,
             src_box->bottom - src_box->top, src_box->back - src_box->front);
 
-    range.offset = 0;
-    range.size = sub_resource->size;
-    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 1, &range);
+    wined3d_context_unmap_bo_address(context, &staging_bo_addr, 0, NULL);
     wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
 }
 
