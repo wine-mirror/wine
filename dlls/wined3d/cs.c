@@ -888,7 +888,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
     }
     state->gl_patch_vertices = op->patch_vertex_count;
 
-    draw_primitive(cs->device, state, &op->parameters);
+    cs->device->adapter->adapter_ops->adapter_draw_primitive(cs->device, state, &op->parameters);
 
     if (op->parameters.indirect)
     {

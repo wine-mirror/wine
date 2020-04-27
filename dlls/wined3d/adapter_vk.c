@@ -1414,6 +1414,12 @@ static void adapter_vk_flush_context(struct wined3d_context *context)
     TRACE("context %p.\n", context);
 }
 
+static void adapter_vk_draw_primitive(struct wined3d_device *device,
+        const struct wined3d_state *state, const struct wined3d_draw_parameters *parameters)
+{
+    FIXME("device %p, state %p, parameters %p.\n", device, state, parameters);
+}
+
 static void adapter_vk_dispatch_compute(struct wined3d_device *device,
         const struct wined3d_state *state, const struct wined3d_dispatch_parameters *parameters)
 {
@@ -1457,6 +1463,7 @@ static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
     .adapter_create_query = adapter_vk_create_query,
     .adapter_destroy_query = adapter_vk_destroy_query,
     .adapter_flush_context = adapter_vk_flush_context,
+    .adapter_draw_primitive = adapter_vk_draw_primitive,
     .adapter_dispatch_compute = adapter_vk_dispatch_compute,
     .adapter_clear_uav = adapter_vk_clear_uav,
 };

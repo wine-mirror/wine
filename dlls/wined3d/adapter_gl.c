@@ -5101,6 +5101,7 @@ static const struct wined3d_adapter_ops wined3d_adapter_gl_ops =
     .adapter_create_query = adapter_gl_create_query,
     .adapter_destroy_query = adapter_gl_destroy_query,
     .adapter_flush_context = adapter_gl_flush_context,
+    .adapter_draw_primitive = draw_primitive,
     .adapter_dispatch_compute = dispatch_compute,
     .adapter_clear_uav = adapter_gl_clear_uav,
 };
