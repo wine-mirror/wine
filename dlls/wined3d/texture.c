@@ -5176,14 +5176,10 @@ static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3
     }
 }
 
-static bool is_full_clear(const struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        const RECT *draw_rect, const RECT *clear_rect)
+static bool is_full_clear(const struct wined3d_rendertarget_view *rtv, const RECT *draw_rect, const RECT *clear_rect)
 {
-    unsigned int width, height, level;
-
-    level = sub_resource_idx % texture->level_count;
-    width = wined3d_texture_get_level_width(texture, level);
-    height = wined3d_texture_get_level_height(texture, level);
+    unsigned int height = rtv->height;
+    unsigned int width = rtv->width;
 
     /* partial draw rect */
     if (draw_rect->left || draw_rect->top || draw_rect->right < width || draw_rect->bottom < height)
@@ -5256,8 +5252,7 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
         {
             struct wined3d_texture *rt = wined3d_texture_from_resource(rtv->resource);
 
-            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(rt, rtv->sub_resource_idx,
-                    draw_rect, rect_count ? clear_rect : NULL))
+            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(rtv, draw_rect, rect_count ? clear_rect : NULL))
                 wined3d_texture_load_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
             else
                 wined3d_texture_prepare_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
@@ -5284,7 +5279,7 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
         struct wined3d_texture *ds = wined3d_texture_from_resource(dsv->resource);
 
         if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)
-                && !is_full_clear(ds, dsv->sub_resource_idx, draw_rect, rect_count ? clear_rect : NULL))
+                && !is_full_clear(dsv, draw_rect, rect_count ? clear_rect : NULL))
             wined3d_texture_load_location(ds, dsv->sub_resource_idx, context, ds_location);
         else
             wined3d_texture_prepare_location(ds, dsv->sub_resource_idx, context, ds_location);
