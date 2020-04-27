@@ -492,7 +492,8 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
 
     case RIDI_PREPARSEDDATA:
         avail_bytes = *data_size;
-        if (handle == WINE_MOUSE_HANDLE || handle == WINE_KEYBOARD_HANDLE)
+        if (handle == WINE_MOUSE_HANDLE || handle == WINE_KEYBOARD_HANDLE ||
+            device->info.dwType != RIM_TYPEHID)
         {
             to_copy_bytes = 0;
             *data_size = 0;
