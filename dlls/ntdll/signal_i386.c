@@ -2436,46 +2436,6 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
                                     LDT_FLAGS_ALLOCATED);
 }
 
-WORD ldt_alloc_fs( TEB *teb, int first_thread )
-{
-    LDT_ENTRY entry;
-    int idx;
-
-    if (gdt_fs_sel) return gdt_fs_sel;
-
-    entry = ldt_make_entry( teb, teb_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
-
-    if (first_thread)  /* no locking for first thread */
-    {
-        /* leave some space if libc is using the LDT for %gs */
-        if (!is_gdt_sel( get_gs() )) first_ldt_entry = 512;
-        idx = first_ldt_entry;
-        ldt_set_entry( (idx << 3) | 7, entry );
-    }
-    else
-    {
-        ldt_lock();
-        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
-        {
-            if (__wine_ldt_copy.flags[idx]) continue;
-            ldt_set_entry( (idx << 3) | 7, entry );
-            break;
-        }
-        ldt_unlock();
-        if (idx == LDT_SIZE) return 0;
-    }
-    return (idx << 3) | 7;
-}
-
-static void ldt_free_fs( WORD sel )
-{
-    if (sel == gdt_fs_sel) return;
-
-    ldt_lock();
-    __wine_ldt_copy.flags[sel >> 3] = 0;
-    ldt_unlock();
-}
-
 static void ldt_set_fs( WORD sel, TEB *teb )
 {
     if (sel == gdt_fs_sel)
@@ -2588,30 +2548,41 @@ void signal_init_threading(void)
 /**********************************************************************
  *		signal_alloc_thread
  */
-NTSTATUS signal_alloc_thread( TEB **teb )
+NTSTATUS signal_alloc_thread( TEB *teb )
 {
-    struct x86_thread_data *thread_data;
-    SIZE_T size = signal_stack_mask + 1;
-    void *addr = NULL;
-    NTSTATUS status;
-    static int first_thread = 1;
+    struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
 
-    if (!(status = virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
-                                          PAGE_READWRITE, signal_stack_align )))
+    if (!gdt_fs_sel)
     {
-        *teb = addr;
-        (*teb)->Tib.Self = &(*teb)->Tib;
-        (*teb)->Tib.ExceptionList = (void *)~0UL;
-        thread_data = (struct x86_thread_data *)(*teb)->SystemReserved2;
-        if (!(thread_data->fs = ldt_alloc_fs( *teb, first_thread )))
+        static int first_thread = 1;
+        int idx;
+        LDT_ENTRY entry = ldt_make_entry( teb, teb_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+
+        if (first_thread)  /* no locking for first thread */
         {
-            size = 0;
-            NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
-            status = STATUS_TOO_MANY_THREADS;
+            /* leave some space if libc is using the LDT for %gs */
+            if (!is_gdt_sel( get_gs() )) first_ldt_entry = 512;
+            idx = first_ldt_entry;
+            ldt_set_entry( (idx << 3) | 7, entry );
+            first_thread = 0;
         }
-        first_thread = 0;
+        else
+        {
+            ldt_lock();
+            for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+            {
+                if (__wine_ldt_copy.flags[idx]) continue;
+                ldt_set_entry( (idx << 3) | 7, entry );
+                break;
+            }
+            ldt_unlock();
+            if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
+        }
+        thread_data->fs = (idx << 3) | 7;
     }
-    return status;
+    else thread_data->fs = gdt_fs_sel;
+
+    return STATUS_SUCCESS;
 }
 
 
@@ -2620,11 +2591,13 @@ NTSTATUS signal_alloc_thread( TEB **teb )
  */
 void signal_free_thread( TEB *teb )
 {
-    SIZE_T size = 0;
     struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
 
-    ldt_free_fs( thread_data->fs );
-    NtFreeVirtualMemory( NtCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
+    if (gdt_fs_sel) return;
+
+    ldt_lock();
+    __wine_ldt_copy.flags[thread_data->fs >> 3] = 0;
+    ldt_unlock();
 }
 
 

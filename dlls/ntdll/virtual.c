@@ -162,7 +162,7 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 SIZE_T signal_stack_size = 0;
 SIZE_T signal_stack_mask = 0;
-SIZE_T signal_stack_align = 0;
+static SIZE_T signal_stack_align;
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -2090,6 +2090,58 @@ NTSTATUS virtual_create_builtin_view( void *module )
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
+}
+
+
+/***********************************************************************
+ *           virtual_alloc_teb
+ */
+NTSTATUS virtual_alloc_teb( TEB **ret_teb )
+{
+    SIZE_T size = signal_stack_mask + 1;
+    void *addr = NULL;
+    TEB *teb;
+    NTSTATUS status;
+
+    if ((status = virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
+                                         PAGE_READWRITE, signal_stack_align )))
+        return status;
+
+    *ret_teb = teb = addr;
+    teb->Tib.Self = &teb->Tib;
+    teb->Tib.ExceptionList = (void *)~0UL;
+    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    if ((status = signal_alloc_thread( teb )))
+    {
+        size = 0;
+        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+    }
+    return status;
+}
+
+
+/***********************************************************************
+ *           virtual_free_teb
+ */
+void virtual_free_teb( TEB *teb )
+{
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+    SIZE_T size;
+
+    signal_free_thread( teb );
+    if (teb->DeallocationStack)
+    {
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
+    }
+    if (thread_data->start_stack)
+    {
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->start_stack, &size, MEM_RELEASE );
+    }
+    size = 0;
+    NtFreeVirtualMemory( NtCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
 }
 
 

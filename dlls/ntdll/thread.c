@@ -285,11 +285,9 @@ TEB *thread_init(void)
     /* allocate and initialize the initial TEB */
 
     signal_init_threading();
-    signal_alloc_thread( &teb );
+    virtual_alloc_teb( &teb );
     teb->Peb = peb;
     teb->Tib.StackBase = (void *)~0UL;
-    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
-    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd = -1;
@@ -317,28 +315,6 @@ TEB *thread_init(void)
     user_shared_data->NumberOfPhysicalPages = sbi.MmNumberOfPhysicalPages;
 
     return teb;
-}
-
-
-/***********************************************************************
- *           free_thread_data
- */
-static void free_thread_data( TEB *teb )
-{
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    SIZE_T size;
-
-    if (teb->DeallocationStack)
-    {
-        size = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), &teb->DeallocationStack, &size, MEM_RELEASE );
-    }
-    if (thread_data->start_stack)
-    {
-        size = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->start_stack, &size, MEM_RELEASE );
-    }
-    signal_free_thread( teb );
 }
 
 
@@ -404,7 +380,7 @@ void WINAPI RtlExitUserThread( ULONG status )
         if (thread_data->pthread_id)
         {
             pthread_join( thread_data->pthread_id, NULL );
-            free_thread_data( teb );
+            virtual_free_teb( teb );
         }
     }
 
@@ -539,13 +515,11 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
 
-    if ((status = signal_alloc_thread( &teb ))) goto error;
+    if ((status = virtual_alloc_teb( &teb ))) goto error;
 
     teb->Peb = NtCurrentTeb()->Peb;
     teb->ClientId.UniqueProcess = ULongToHandle(GetCurrentProcessId());
     teb->ClientId.UniqueThread  = ULongToHandle(tid);
-    teb->StaticUnicodeString.Buffer        = teb->StaticUnicodeBuffer;
-    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
 
     /* create default activation context frame for new thread */
     RtlGetActiveActivationContext(&actctx);
@@ -602,7 +576,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     return STATUS_SUCCESS;
 
 error:
-    if (teb) free_thread_data( teb );
+    if (teb) virtual_free_teb( teb );
     if (handle) NtClose( handle );
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );
