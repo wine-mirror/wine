@@ -1840,7 +1840,7 @@ DECL_HANDLER(get_thread_context)
             if (thread->context)
             {
                 /* make sure that system regs are valid in thread context */
-                if (req->flags & system_flags & ~thread->context->regs.flags)
+                if (thread->unix_tid != -1 && (req->flags & system_flags & ~thread->context->regs.flags))
                     get_thread_context( thread, &thread->context->regs, req->flags & system_flags );
                 if (!get_error()) thread_context = (struct context *)grab_object( thread->context );
             }
