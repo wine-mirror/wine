@@ -371,6 +371,13 @@ typedef struct WICDdsParameters {
     WICDdsAlphaMode AlphaMode;
 } WICDdsParameters;
 
+typedef struct WICDdsFormatInfo {
+    DXGI_FORMAT DxgiFormat;
+    UINT BytesPerBlock;
+    UINT BlockWidth;
+    UINT BlockHeight;
+} WICDdsFormatInfo;
+
 typedef UINT32 WICColor;
 
 interface ID2D1Device;
@@ -1188,6 +1195,27 @@ interface IWICDdsDecoder : IUnknown
         [in] UINT sliceIndex,
         [out, retval] IWICBitmapFrameDecode **bitmapFrame);
 };
+
+[
+    object,
+    uuid(3d4c0c61-18a4-41e4-bd80-481a4fc9f464)
+]
+interface IWICDdsFrameDecode : IUnknown
+{
+    HRESULT GetSizeInBlocks(
+        [out] UINT *widthInBlocks,
+        [out] UINT *heightInBlocks);
+
+    HRESULT GetFormatInfo(
+        [out] WICDdsFormatInfo *formatInfo);
+
+    HRESULT CopyBlocks(
+        [in, unique] const WICRect *boundsInBlocks,
+        [in] UINT stride,
+        [in] UINT bufferSize,
+        [out, size_is(bufferSize)] BYTE *buffer);
+};
+
 
 cpp_quote("HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitmapSource *pISrc, IWICBitmapSource **ppIDst);")
 cpp_quote("HRESULT WINAPI WICCreateBitmapFromSection(UINT width, UINT height, REFWICPixelFormatGUID format, HANDLE section, UINT stride, UINT offset, IWICBitmap **bitmap);")
