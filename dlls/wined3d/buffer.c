@@ -1649,6 +1649,7 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
     const struct wined3d_range *range;
     struct wined3d_bo_address dst;
     unsigned int i = range_count;
+    uint32_t flags;
     void *map_ptr;
 
     if (!range_count)
@@ -1657,7 +1658,10 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
     dst.buffer_object = buffer->buffer_object;
     dst.addr = NULL;
 
-    if (!(map_ptr = wined3d_context_map_bo_address(context, &dst, resource->size, WINED3D_MAP_WRITE)))
+    flags = WINED3D_MAP_WRITE;
+    if (!ranges->offset && ranges->size == resource->size)
+        flags |= WINED3D_MAP_DISCARD;
+    if (!(map_ptr = wined3d_context_map_bo_address(context, &dst, resource->size, flags)))
     {
         FIXME("Failed to map buffer.\n");
         return;
