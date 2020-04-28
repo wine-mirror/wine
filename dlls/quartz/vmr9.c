@@ -91,6 +91,11 @@ struct quartz_vmr
     HANDLE run_event;
 };
 
+static inline BOOL is_vmr9(const struct quartz_vmr *filter)
+{
+    return IsEqualGUID(&filter->renderer.filter.clsid, &CLSID_VideoMixingRenderer9);
+}
+
 static inline struct quartz_vmr *impl_from_video_window(struct video_window *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, baseControlWindow);
@@ -435,7 +440,7 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *filter, BOOL force, const AM_M
         return E_FAIL;
     }
 
-    if (IsEqualGUID(&filter->renderer.filter.clsid, &CLSID_VideoMixingRenderer))
+    if (!is_vmr9(filter))
     {
         switch (filter->bmiheader.biBitCount)
         {
@@ -621,7 +626,8 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IVMRMonitorConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig9))
         *out = &filter->IVMRMonitorConfig9_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify) && filter->mode == (VMR9Mode)VMRMode_Renderless)
+    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify)
+            && filter->mode == (VMR9Mode)VMRMode_Renderless && !is_vmr9(filter))
         *out = &filter->IVMRSurfaceAllocatorNotify_iface;
     else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify9) && filter->mode == VMR9Mode_Renderless)
         *out = &filter->IVMRSurfaceAllocatorNotify9_iface;
