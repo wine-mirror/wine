@@ -635,7 +635,8 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
     else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl)
             && filter->mode == (VMR9Mode)VMRMode_Windowless && !is_vmr9(filter))
         *out = &filter->IVMRWindowlessControl_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl9) && filter->mode == VMR9Mode_Windowless)
+    else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl9)
+            && filter->mode == VMR9Mode_Windowless && is_vmr9(filter))
         *out = &filter->IVMRWindowlessControl9_iface;
     else
         return E_NOINTERFACE;

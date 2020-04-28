@@ -273,7 +273,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
     check_interface(filter, &IID_IVMRMixerControl9, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
