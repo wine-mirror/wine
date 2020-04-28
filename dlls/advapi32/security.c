@@ -415,16 +415,15 @@ static inline DWORD get_security_file( LPCWSTR full_file_name, DWORD access, HAN
 /* helper function for SE_SERVICE objects in [Get|Set]NamedSecurityInfo */
 static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access, HANDLE *service )
 {
-    SC_HANDLE manager = 0;
-    DWORD err;
-
-    err = SERV_OpenSCManagerW( NULL, NULL, access, (SC_HANDLE *)&manager );
-    if (err == ERROR_SUCCESS)
+    SC_HANDLE manager = OpenSCManagerW( NULL, NULL, access );
+    if (manager)
     {
-        err = SERV_OpenServiceW( manager, full_service_name, access, (SC_HANDLE *)service );
+        *service = OpenServiceW( manager, full_service_name, access);
         CloseServiceHandle( manager );
+        if (*service)
+            return ERROR_SUCCESS;
     }
-    return err;
+    return GetLastError();
 }
 
 /* helper function for SE_REGISTRY_KEY objects in [Get|Set]NamedSecurityInfo */
@@ -1779,16 +1778,13 @@ BOOL WINAPI PrivilegedServiceAuditAlarmA( LPCSTR SubsystemName, LPCSTR ServiceNa
  * RETURNS
  *  ERROR_SUCCESS if all's well, and a WIN32 error code otherwise.
  */
-DWORD WINAPI GetSecurityInfo(
-    HANDLE hObject, SE_OBJECT_TYPE ObjectType,
-    SECURITY_INFORMATION SecurityInfo, PSID *ppsidOwner,
-    PSID *ppsidGroup, PACL *ppDacl, PACL *ppSacl,
-    PSECURITY_DESCRIPTOR *ppSecurityDescriptor
-)
+DWORD WINAPI GetSecurityInfo( HANDLE handle, SE_OBJECT_TYPE type, SECURITY_INFORMATION SecurityInfo,
+                              PSID *ppsidOwner, PSID *ppsidGroup, PACL *ppDacl, PACL *ppSacl,
+                              PSECURITY_DESCRIPTOR *ppSecurityDescriptor )
 {
     PSECURITY_DESCRIPTOR sd;
     NTSTATUS status;
-    ULONG n1, n2;
+    ULONG size;
     BOOL present, defaulted;
 
     /* A NULL descriptor is allowed if any one of the other pointers is not NULL */
@@ -1802,35 +1798,33 @@ DWORD WINAPI GetSecurityInfo(
     ||  ((SecurityInfo & SACL_SECURITY_INFORMATION)  && !ppSacl)  ))
         return ERROR_INVALID_PARAMETER;
 
-    switch (ObjectType)
+    if (type == SE_SERVICE)
     {
-    case SE_SERVICE:
-        status = SERV_QueryServiceObjectSecurity(hObject, SecurityInfo, NULL, 0, &n1);
-        break;
-    default:
-        status = NtQuerySecurityObject(hObject, SecurityInfo, NULL, 0, &n1);
-        break;
-    }
-    if (status != STATUS_BUFFER_TOO_SMALL && status != STATUS_SUCCESS)
-        return RtlNtStatusToDosError(status);
+        if (!QueryServiceObjectSecurity( handle, SecurityInfo, NULL, 0, &size )
+            && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return GetLastError();
 
-    sd = LocalAlloc(0, n1);
-    if (!sd)
-        return ERROR_NOT_ENOUGH_MEMORY;
+        if (!(sd = LocalAlloc( 0, size ))) return ERROR_NOT_ENOUGH_MEMORY;
 
-    switch (ObjectType)
-    {
-    case SE_SERVICE:
-        status = SERV_QueryServiceObjectSecurity(hObject, SecurityInfo, sd, n1, &n2);
-        break;
-    default:
-        status = NtQuerySecurityObject(hObject, SecurityInfo, sd, n1, &n2);
-        break;
+        if (!QueryServiceObjectSecurity( handle, SecurityInfo, sd, size, &size ))
+        {
+            LocalFree(sd);
+            return GetLastError();
+        }
     }
-    if (status != STATUS_SUCCESS)
+    else
     {
-        LocalFree(sd);
-        return RtlNtStatusToDosError(status);
+        status = NtQuerySecurityObject( handle, SecurityInfo, NULL, 0, &size );
+        if (status != STATUS_SUCCESS && status != STATUS_BUFFER_TOO_SMALL)
+            return RtlNtStatusToDosError( status );
+
+        if (!(sd = LocalAlloc( 0, size ))) return ERROR_NOT_ENOUGH_MEMORY;
+
+        if ((status = NtQuerySecurityObject( handle, SecurityInfo, sd, size, &size )))
+        {
+            LocalFree(sd);
+            return RtlNtStatusToDosError( status );
+        }
     }
 
     if (ppsidOwner)

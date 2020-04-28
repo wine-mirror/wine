@@ -897,7 +897,7 @@ SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
  *
  * See OpenSCManagerA.
  */
-DWORD SERV_OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
+static DWORD SERV_OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                            DWORD dwDesiredAccess, SC_HANDLE *handle )
 {
     DWORD r;
@@ -1049,7 +1049,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
  *
  * See OpenServiceA.
  */
-DWORD SERV_OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
+static DWORD SERV_OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                          DWORD dwDesiredAccess, SC_HANDLE *handle )
 {
     DWORD err;
@@ -2484,7 +2484,7 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
     return err == ERROR_SUCCESS;
 }
 
-NTSTATUS SERV_QueryServiceObjectSecurity(SC_HANDLE hService,
+static NTSTATUS SERV_QueryServiceObjectSecurity(SC_HANDLE hService,
        SECURITY_INFORMATION dwSecurityInformation,
        PSECURITY_DESCRIPTOR lpSecurityDescriptor,
        DWORD cbBufSize, LPDWORD pcbBytesNeeded)
