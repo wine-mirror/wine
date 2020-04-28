@@ -1015,7 +1015,7 @@ GetFileSecurityA( LPCSTR lpFileName,
     BOOL r;
     LPWSTR name;
 
-    name = SERV_dup(lpFileName);
+    name = strdupAW(lpFileName);
     r = GetFileSecurityW( name, RequestedInformation, pSecurityDescriptor,
                           nLength, lpnLengthNeeded );
     heap_free( name );
@@ -1044,7 +1044,7 @@ LookupAccountSidA(
     DWORD accountSizeW = *accountSize;
     DWORD domainSizeW = *domainSize;
 
-    systemW = SERV_dup(system);
+    systemW = strdupAW(system);
     if (account)
         accountW = heap_alloc( accountSizeW * sizeof(WCHAR) );
     if (domain)
@@ -1299,7 +1299,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
     BOOL r;
     LPWSTR name;
 
-    name = SERV_dup(lpFileName);
+    name = strdupAW(lpFileName);
     r = SetFileSecurityW( name, RequestedInformation, pSecurityDescriptor );
     heap_free( name );
 
@@ -2228,7 +2228,7 @@ static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR *
     {
     case TRUSTEE_IS_NAME:
     {
-        *ptrustee_nameW = SERV_dup(trustee_nameA);
+        *ptrustee_nameW = strdupAW(trustee_nameA);
         return ERROR_SUCCESS;
     }
     case TRUSTEE_IS_OBJECTS_AND_NAME:
@@ -2243,9 +2243,9 @@ static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR *
 
             objW->ObjectsPresent = objA->ObjectsPresent;
             objW->ObjectType = objA->ObjectType;
-            objW->ObjectTypeName = SERV_dup(objA->ObjectTypeName);
-            objW->InheritedObjectTypeName = SERV_dup(objA->InheritedObjectTypeName);
-            objW->ptstrName = SERV_dup(objA->ptstrName);
+            objW->ObjectTypeName = strdupAW(objA->ObjectTypeName);
+            objW->InheritedObjectTypeName = strdupAW(objA->InheritedObjectTypeName);
+            objW->ptstrName = strdupAW(objA->ptstrName);
         }
 
         *ptrustee_nameW = (WCHAR *)objW;
@@ -2625,7 +2625,7 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     TRACE("%s %d %d %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
 
-    wstr = SERV_dup(pObjectName);
+    wstr = strdupAW(pObjectName);
     r = SetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, psidOwner,
                            psidGroup, pDacl, pSacl );
 
@@ -3300,7 +3300,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
     if(!StringSecurityDescriptor)
         return FALSE;
 
-    StringSecurityDescriptorW = SERV_dup(StringSecurityDescriptor);
+    StringSecurityDescriptorW = strdupAW(StringSecurityDescriptor);
     ret = ConvertStringSecurityDescriptorToSecurityDescriptorW(StringSecurityDescriptorW,
                                                                StringSDRevision, SecurityDescriptor,
                                                                SecurityDescriptorSize);
@@ -3841,7 +3841,7 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
         SetLastError(ERROR_INVALID_PARAMETER);
     else
     {
-        WCHAR *wStringSid = SERV_dup(StringSid);
+        WCHAR *wStringSid = strdupAW(StringSid);
         bret = ConvertStringSidToSidW(wStringSid, Sid);
         heap_free(wStringSid);
     }
@@ -4104,7 +4104,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
     TRACE("%s %d %d %p %p %p %p %p\n", pObjectName, ObjectType, SecurityInfo,
         ppsidOwner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
 
-    wstr = SERV_dup(pObjectName);
+    wstr = strdupAW(pObjectName);
     r = GetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, ppsidOwner,
                            ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor );
 

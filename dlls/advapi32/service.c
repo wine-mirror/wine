@@ -113,24 +113,6 @@ static BOOL stop_service;
 
 extern HANDLE CDECL __wine_make_process_system(void);
 
-/******************************************************************************
- * String management functions (same behaviour as strdup)
- * NOTE: the caller of those functions is responsible for calling HeapFree
- * in order to release the memory allocated by those functions.
- */
-LPWSTR SERV_dup( LPCSTR str )
-{
-    UINT len;
-    LPWSTR wstr;
-
-    if( !str )
-        return NULL;
-    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    wstr = heap_alloc( len*sizeof (WCHAR) );
-    MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
-    return wstr;
-}
-
 static inline LPWSTR SERV_dupmulti(LPCSTR str)
 {
     UINT len = 0, n = 0;
@@ -884,8 +866,8 @@ SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
     LPWSTR machineW, databaseW;
     SC_HANDLE ret;
 
-    machineW = SERV_dup(lpMachineName);
-    databaseW = SERV_dup(lpDatabaseName);
+    machineW = strdupAW(lpMachineName);
+    databaseW = strdupAW(lpDatabaseName);
     ret = OpenSCManagerW(machineW, databaseW, dwDesiredAccess);
     heap_free(databaseW);
     heap_free(machineW);
@@ -1037,7 +1019,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     TRACE("%p %s 0x%08x\n", hSCManager, debugstr_a(lpServiceName), dwDesiredAccess);
 
-    lpServiceNameW = SERV_dup(lpServiceName);
+    lpServiceNameW = strdupAW(lpServiceName);
     ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
     heap_free(lpServiceNameW);
     return ret;
@@ -1171,13 +1153,13 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     TRACE("%p %s %s\n", hSCManager,
           debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
 
-    lpServiceNameW = SERV_dup( lpServiceName );
-    lpDisplayNameW = SERV_dup( lpDisplayName );
-    lpBinaryPathNameW = SERV_dup( lpBinaryPathName );
-    lpLoadOrderGroupW = SERV_dup( lpLoadOrderGroup );
+    lpServiceNameW = strdupAW( lpServiceName );
+    lpDisplayNameW = strdupAW( lpDisplayName );
+    lpBinaryPathNameW = strdupAW( lpBinaryPathName );
+    lpLoadOrderGroupW = strdupAW( lpLoadOrderGroup );
     lpDependenciesW = SERV_dupmulti( lpDependencies );
-    lpServiceStartNameW = SERV_dup( lpServiceStartName );
-    lpPasswordW = SERV_dup( lpPassword );
+    lpServiceStartNameW = strdupAW( lpServiceStartName );
+    lpPasswordW = strdupAW( lpPassword );
 
     r = CreateServiceW( hSCManager, lpServiceNameW, lpDisplayNameW,
             dwDesiredAccess, dwServiceType, dwStartType, dwErrorControl,
@@ -1269,7 +1251,7 @@ BOOL WINAPI StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
         lpwstr = heap_alloc( dwNumServiceArgs*sizeof(LPWSTR) );
 
     for(i=0; i<dwNumServiceArgs; i++)
-        lpwstr[i]=SERV_dup(lpServiceArgVectors[i]);
+        lpwstr[i]=strdupAW(lpServiceArgVectors[i]);
 
     r = StartServiceW(hService, dwNumServiceArgs, (LPCWSTR *)lpwstr);
 
@@ -2108,7 +2090,7 @@ BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_a(lpDisplayName), lpServiceName, lpcchBuffer);
 
-    lpDisplayNameW = SERV_dup(lpDisplayName);
+    lpDisplayNameW = strdupAW(lpDisplayName);
     if (lpServiceName)
         lpServiceNameW = heap_alloc(*lpcchBuffer * sizeof(WCHAR));
     else
@@ -2231,7 +2213,7 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_a(lpServiceName), lpDisplayName, lpcchBuffer);
 
-    lpServiceNameW = SERV_dup(lpServiceName);
+    lpServiceNameW = strdupAW(lpServiceName);
     if (lpDisplayName)
         lpDisplayNameW = heap_alloc(*lpcchBuffer * sizeof(WCHAR));
     else
@@ -2374,12 +2356,12 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
           lpdwTagId, lpDependencies, debugstr_a(lpServiceStartName),
           debugstr_a(lpPassword), debugstr_a(lpDisplayName) );
 
-    wBinaryPathName = SERV_dup( lpBinaryPathName );
-    wLoadOrderGroup = SERV_dup( lpLoadOrderGroup );
+    wBinaryPathName = strdupAW( lpBinaryPathName );
+    wLoadOrderGroup = strdupAW( lpLoadOrderGroup );
     wDependencies = SERV_dupmulti( lpDependencies );
-    wServiceStartName = SERV_dup( lpServiceStartName );
-    wPassword = SERV_dup( lpPassword );
-    wDisplayName = SERV_dup( lpDisplayName );
+    wServiceStartName = strdupAW( lpServiceStartName );
+    wPassword = strdupAW( lpPassword );
+    wDisplayName = strdupAW( lpDisplayName );
 
     r = ChangeServiceConfigW( hService, dwServiceType,
             dwStartType, dwErrorControl, wBinaryPathName,
@@ -2411,7 +2393,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
         LPSERVICE_DESCRIPTIONA sd = lpInfo;
         SERVICE_DESCRIPTIONW sdw;
 
-        sdw.lpDescription = SERV_dup( sd->lpDescription );
+        sdw.lpDescription = strdupAW( sd->lpDescription );
 
         r = ChangeServiceConfig2W( hService, dwInfoLevel, &sdw );
 
@@ -2423,8 +2405,8 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
         SERVICE_FAILURE_ACTIONSW faw;
 
         faw.dwResetPeriod = fa->dwResetPeriod;
-        faw.lpRebootMsg = SERV_dup( fa->lpRebootMsg );
-        faw.lpCommand = SERV_dup( fa->lpCommand );
+        faw.lpRebootMsg = strdupAW( fa->lpRebootMsg );
+        faw.lpCommand = strdupAW( fa->lpCommand );
         faw.cActions = fa->cActions;
         faw.lpsaActions = fa->lpsaActions;
 
@@ -2589,7 +2571,7 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR name, LPHANDL
     LPWSTR nameW;
     SERVICE_STATUS_HANDLE ret;
 
-    nameW = SERV_dup(name);
+    nameW = strdupAW(name);
     ret = RegisterServiceCtrlHandlerExW( nameW, handler, context );
     heap_free( nameW );
     return ret;

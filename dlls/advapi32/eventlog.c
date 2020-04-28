@@ -57,7 +57,7 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
     LPWSTR backupW;
     BOOL ret;
 
-    backupW = SERV_dup(lpBackupFileName);
+    backupW = strdupAW(lpBackupFileName);
     ret = BackupEventLogW(hEventLog, backupW);
     heap_free(backupW);
 
@@ -114,7 +114,7 @@ BOOL WINAPI ClearEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
     LPWSTR backupW;
     BOOL ret;
 
-    backupW = SERV_dup(lpBackupFileName);
+    backupW = strdupAW(lpBackupFileName);
     ret = ClearEventLogW(hEventLog, backupW);
     heap_free(backupW);
 
@@ -392,8 +392,8 @@ HANDLE WINAPI OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
     LPWSTR uncnameW, filenameW;
     HANDLE handle;
 
-    uncnameW = SERV_dup(lpUNCServerName);
-    filenameW = SERV_dup(lpFileName);
+    uncnameW = strdupAW(lpUNCServerName);
+    filenameW = strdupAW(lpFileName);
     handle = OpenBackupEventLogW(uncnameW, filenameW);
     heap_free(uncnameW);
     heap_free(filenameW);
@@ -451,8 +451,8 @@ HANDLE WINAPI OpenEventLogA( LPCSTR uncname, LPCSTR source )
     LPWSTR uncnameW, sourceW;
     HANDLE handle;
 
-    uncnameW = SERV_dup(uncname);
-    sourceW = SERV_dup(source);
+    uncnameW = strdupAW(uncname);
+    sourceW = strdupAW(source);
     handle = OpenEventLogW(uncnameW, sourceW);
     heap_free(uncnameW);
     heap_free(sourceW);
