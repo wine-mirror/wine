@@ -4203,6 +4203,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         {WINED3DFMT_D32_FLOAT_S8X24_UINT,       VK_FORMAT_D32_SFLOAT_S8_UINT,      },
         {WINED3DFMT_R32_FLOAT_X8X24_TYPELESS,   VK_FORMAT_D32_SFLOAT_S8_UINT,      },
         {WINED3DFMT_X32_TYPELESS_G8X24_UINT,    VK_FORMAT_D32_SFLOAT_S8_UINT,      },
+        {WINED3DFMT_D24_UNORM_S8_UINT,          VK_FORMAT_D32_SFLOAT_S8_UINT,      },
     };
     VkFormat vk_format = VK_FORMAT_UNDEFINED;
     VkImageFormatProperties image_properties;
