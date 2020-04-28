@@ -93,9 +93,19 @@ static BOOL video_init(void)
 #endif
 }
 
+struct caps
+{
+    __u32 pixelformat;
+    AM_MEDIA_TYPE media_type;
+    VIDEOINFOHEADER video_info;
+    VIDEO_STREAM_CONFIG_CAPS config;
+};
+
 struct _Capture
 {
     UINT width, height, bitDepth, fps, outputwidth, outputheight;
+    struct caps *caps;
+    LONG caps_count;
     BOOL swresize;
 
     struct strmbase_source *pin;
@@ -116,13 +126,14 @@ static int xioctl(int fd, int request, void * arg)
     return r;
 }
 
-HRESULT qcap_driver_destroy(Capture *capBox)
+HRESULT qcap_driver_destroy(Capture *device)
 {
-    TRACE("%p\n", capBox);
+    if (device->fd != -1)
+        video_close(device->fd);
+    if (device->caps_count)
+        heap_free(device->caps);
+    heap_free(device);
 
-    if( capBox->fd != -1 )
-        video_close(capBox->fd);
-    CoTaskMemFree(capBox);
     return S_OK;
 }
 
@@ -495,18 +506,55 @@ void qcap_driver_cleanup_stream(Capture *device)
         ERR("Failed to decommit allocator, hr %#x.\n", hr);
 }
 
+
+static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
+        __u32 max_fps, __u32 min_fps, struct caps *caps)
+{
+    LONG depth = 24;
+
+    caps->video_info.dwBitRate = width * height * depth * max_fps;
+    caps->video_info.bmiHeader.biSize = sizeof(caps->video_info.bmiHeader);
+    caps->video_info.bmiHeader.biWidth = width;
+    caps->video_info.bmiHeader.biHeight = height;
+    caps->video_info.bmiHeader.biPlanes = 1;
+    caps->video_info.bmiHeader.biBitCount = depth;
+    caps->video_info.bmiHeader.biCompression = BI_RGB;
+    caps->video_info.bmiHeader.biSizeImage = width * height * depth / 8;
+    caps->media_type.majortype = MEDIATYPE_Video;
+    caps->media_type.subtype = MEDIASUBTYPE_RGB24;
+    caps->media_type.bFixedSizeSamples = TRUE;
+    caps->media_type.bTemporalCompression = FALSE;
+    caps->media_type.lSampleSize = width * height * depth / 8;
+    caps->media_type.formattype = FORMAT_VideoInfo;
+    caps->media_type.pUnk = NULL;
+    caps->media_type.cbFormat = sizeof(VIDEOINFOHEADER);
+    /* We reallocate the caps array, so pbFormat has to be set after all caps
+     * have been enumerated. */
+    caps->config.MaxFrameInterval = 10000000 * max_fps;
+    caps->config.MinFrameInterval = 10000000 * min_fps;
+    caps->config.MaxOutputSize.cx = width;
+    caps->config.MaxOutputSize.cy = height;
+    caps->config.MinOutputSize.cx = width;
+    caps->config.MinOutputSize.cy = height;
+    caps->config.guid = FORMAT_VideoInfo;
+    caps->config.MinBitsPerSecond = width * height * depth * min_fps;
+    caps->config.MaxBitsPerSecond = width * height * depth * max_fps;
+    caps->pixelformat = pixelformat;
+}
+
 Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
 {
+    struct v4l2_frmsizeenum frmsize = {0};
     struct v4l2_capability caps = {{0}};
     struct v4l2_format format = {0};
     Capture *device = NULL;
     BOOL have_libv4l2;
     char path[20];
-    int fd;
+    int fd, i;
 
     have_libv4l2 = video_init();
 
-    if (!(device = CoTaskMemAlloc(sizeof(*device))))
+    if (!(device = heap_alloc_zero(sizeof(*device))))
         return NULL;
 
     sprintf(path, "/dev/video%i", card);
@@ -558,6 +606,70 @@ Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
         ERR("Failed to get device format: %s\n", strerror(errno));
         goto error;
     }
+
+    format.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
+    if (xioctl(fd, VIDIOC_TRY_FMT, &format) == -1
+            || format.fmt.pix.pixelformat != V4L2_PIX_FMT_BGR24)
+    {
+        ERR("This device doesn't support V4L2_PIX_FMT_BGR24 format.\n");
+        goto error;
+    }
+
+    frmsize.pixel_format = V4L2_PIX_FMT_BGR24;
+    while (xioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) != -1)
+    {
+        struct v4l2_frmivalenum frmival = {0};
+        __u32 max_fps = 30, min_fps = 30;
+        struct caps *new_caps;
+
+        frmival.pixel_format = format.fmt.pix.pixelformat;
+        if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE)
+        {
+            frmival.width = frmsize.discrete.width;
+            frmival.height = frmsize.discrete.height;
+        }
+        else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE)
+        {
+            frmival.width = frmsize.stepwise.max_width;
+            frmival.height = frmsize.stepwise.min_height;
+        }
+        else
+        {
+            FIXME("Unhandled frame size type: %d.\n", frmsize.type);
+            continue;
+        }
+
+        if (xioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) != -1)
+        {
+            if (frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
+            {
+                max_fps = frmival.discrete.denominator / frmival.discrete.numerator;
+                min_fps = max_fps;
+            }
+            else if (frmival.type == V4L2_FRMIVAL_TYPE_STEPWISE
+                    || frmival.type == V4L2_FRMIVAL_TYPE_CONTINUOUS)
+            {
+                max_fps = frmival.stepwise.max.denominator / frmival.stepwise.max.numerator;
+                min_fps = frmival.stepwise.min.denominator / frmival.stepwise.min.numerator;
+            }
+        }
+        else
+            ERR("Failed to get fps: %s.\n", strerror(errno));
+
+        new_caps = heap_realloc(device->caps, (device->caps_count + 1) * sizeof(*device->caps));
+        if (!new_caps)
+            goto error;
+        device->caps = new_caps;
+        fill_caps(format.fmt.pix.pixelformat, frmsize.discrete.width, frmsize.discrete.height,
+                max_fps, min_fps, &device->caps[device->caps_count]);
+        device->caps_count++;
+
+        frmsize.index++;
+    }
+
+    /* We reallocate the caps array, so we have to delay setting pbFormat. */
+    for (i = 0; i < device->caps_count; ++i)
+        device->caps[i].media_type.pbFormat = (BYTE *)&device->caps[i].video_info;
 
     format.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
     if (xioctl(fd, VIDIOC_S_FMT, &format) == -1
