@@ -5615,6 +5615,75 @@ static void test_png_color_formats(void)
 #undef PNG_COLOR_TYPE_GRAY_ALPHA
 #undef PNG_COLOR_TYPE_RGB_ALPHA
 
+static void test_png_save_palette(void)
+{
+    GpStatus status;
+    GpBitmap *bitmap;
+    HGLOBAL hglob;
+    BOOL result;
+    IStream *stream;
+    GUID enc_format, clsid;
+    LARGE_INTEGER seek;
+    ULARGE_INTEGER pos;
+    UINT i, ptr;
+    BYTE *data;
+
+    PixelFormat formats[] = {
+        PixelFormat1bppIndexed,
+        PixelFormat4bppIndexed,
+        PixelFormat8bppIndexed,
+        PixelFormat16bppGrayScale,
+        PixelFormat16bppRGB555,
+        PixelFormat16bppRGB565,
+        PixelFormat16bppARGB1555,
+        PixelFormat24bppRGB,
+        PixelFormat32bppRGB,
+        PixelFormat32bppARGB,
+        PixelFormat32bppPARGB,
+    };
+
+    result = get_encoder_clsid(L"image/png", &enc_format, &clsid);
+    ok(result, "getting PNG encoding clsid failed");
+
+    hglob = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD | GMEM_ZEROINIT, 1024);
+
+    for (i = 0; i < ARRAY_SIZE(formats); i++)
+    {
+        status = GdipCreateBitmapFromScan0(8, 8, 0, formats[i], NULL, &bitmap);
+        ok(status == Ok, "Unexpected return value %d creating bitmap for PixelFormat %#x\n", status, formats[i]);
+
+        CreateStreamOnHGlobal(hglob, FALSE, &stream);
+        status = GdipSaveImageToStream((GpImage *)bitmap, stream, &clsid, NULL);
+        GdipDisposeImage((GpImage*)bitmap);
+
+        todo_wine_if(formats[i] == PixelFormat16bppGrayScale)
+        ok(formats[i] == PixelFormat16bppGrayScale ?
+                (status == GenericError || status == Win32Error) : status == Ok,
+            "Unexpected return value %d saving image for PixelFormat %#x\n", status, formats[i]);
+
+        if (status == Ok)
+        {
+            data = GlobalLock(hglob);
+            seek.QuadPart = 0;
+            IStream_Seek(stream, seek, STREAM_SEEK_CUR, &pos);
+            for (ptr = 0; ptr < pos.QuadPart - 4; ptr++)
+                if (!memcmp(data + ptr, "PLTE", 4))
+                    break;
+            memset(data, 0, 1024);
+            GlobalUnlock(hglob);
+
+            if (IsIndexedPixelFormat(formats[i]))
+                ok(ptr < pos.QuadPart - 4, "Expected palette not found for PixelFormat %#x\n", formats[i]);
+            else
+                ok(ptr >= pos.QuadPart - 4, "Unexpected palette found for PixelFormat %#x\n", formats[i]);
+        }
+
+        IStream_Release(stream);
+    }
+
+    GlobalFree(hglob);
+}
+
 static void test_GdipLoadImageFromStream(void)
 {
     IStream *stream;
@@ -5858,6 +5927,7 @@ START_TEST(image)
 
     test_GdipInitializePalette();
     test_png_color_formats();
+    test_png_save_palette();
     test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
