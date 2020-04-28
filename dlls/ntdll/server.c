@@ -113,6 +113,8 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 #error Unsupported CPU
 #endif
 
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
 const char *build_dir = NULL;
 const char *data_dir = NULL;
 const char *config_dir = NULL;
@@ -1217,6 +1219,51 @@ int server_pipe( int fd[2] )
 
 
 /***********************************************************************
+ *           exec_wineserver
+ *
+ * Exec a new wine server.
+ */
+static void exec_wineserver( char **argv )
+{
+    char *path;
+
+    if (build_dir)
+    {
+        if (!is_win64)  /* look for 64-bit server */
+        {
+            char *loader = realpath_dirname( build_path( build_dir, "loader/wine64" ));
+            if (loader)
+            {
+                argv[0] = build_path( loader, "../server/wineserver" );
+                execv( argv[0], argv );
+            }
+        }
+        argv[0] = build_path( build_dir, "server/wineserver" );
+        execv( argv[0], argv );
+        return;
+    }
+
+    argv[0] = build_path( bin_dir, "wineserver" );
+    execv( argv[0], argv );
+
+    argv[0] = getenv( "WINESERVER" );
+    if (argv[0]) execv( argv[0], argv );
+
+    if ((path = getenv( "PATH" )))
+    {
+        for (path = strtok( strdup( path ), ":" ); path; path = strtok( NULL, ":" ))
+        {
+            argv[0] = build_path( path, "wineserver" );
+            execvp( argv[0], argv );
+        }
+    }
+
+    argv[0] = build_path( BINDIR, "wineserver" );
+    execv( argv[0], argv );
+}
+
+
+/***********************************************************************
  *           start_server
  *
  * Start a new wine server.
@@ -1225,7 +1272,6 @@ static void start_server(void)
 {
     static BOOL started;  /* we only try once */
     char *argv[3];
-    static char wineserver[] = "server/wineserver";
     static char debug[] = "-d";
 
     if (!started)
@@ -1235,10 +1281,9 @@ static void start_server(void)
         if (pid == -1) fatal_perror( "fork" );
         if (!pid)
         {
-            argv[0] = wineserver;
             argv[1] = TRACE_ON(server) ? debug : NULL;
             argv[2] = NULL;
-            wine_exec_wine_binary( argv[0], argv, getenv("WINESERVER") );
+            exec_wineserver( argv );
             fatal_error( "could not exec wineserver\n" );
         }
         waitpid( pid, &status, 0 );
@@ -1732,7 +1777,6 @@ void server_init_process_done(void)
 size_t server_init_thread( void *entry_point, BOOL *suspend )
 {
     static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
-    static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
     const char *arch = getenv( "WINEARCH" );
     int ret;
     int reply_pipe[2];
