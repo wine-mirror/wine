@@ -2704,12 +2704,12 @@ static void test_renderless_present(IFilterGraph2 *graph, IMemInputPin *input)
     thread = send_frame(input);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(allocator_got_PresentImage == 1, "Got %u calls to PresentImage().\n", allocator_got_PresentImage);
 
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = join_thread(thread);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(allocator_got_PresentImage == 1, "Got %u calls to PresentImage().\n", allocator_got_PresentImage);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
