@@ -207,6 +207,9 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
         return E_POINTER;
     }
 
+    if (!IsEqualGUID(&pmt->majortype, &MEDIATYPE_Video))
+        return E_FAIL;
+
     if (This->source.pin.peer)
     {
         hr = IPin_QueryAccept(This->source.pin.peer, pmt);

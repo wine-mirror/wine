@@ -103,7 +103,8 @@ struct caps
 
 struct _Capture
 {
-    UINT width, height, bitDepth, fps, outputwidth, outputheight;
+    UINT outputwidth, outputheight;
+    const struct caps *current_caps;
     struct caps *caps;
     LONG caps_count;
     BOOL swresize;
@@ -137,126 +138,95 @@ HRESULT qcap_driver_destroy(Capture *device)
     return S_OK;
 }
 
+static const struct caps *find_caps(Capture *device, const AM_MEDIA_TYPE *mt)
+{
+    const VIDEOINFOHEADER *video_info = (VIDEOINFOHEADER *)mt->pbFormat;
+    LONG index;
+
+    if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !video_info)
+        return NULL;
+
+    for (index = 0; index < device->caps_count; index++)
+    {
+        struct caps *caps = &device->caps[index];
+
+        if (IsEqualGUID(&mt->formattype, &caps->media_type.formattype)
+                && video_info->bmiHeader.biWidth == caps->video_info.bmiHeader.biWidth
+                && video_info->bmiHeader.biHeight == caps->video_info.bmiHeader.biHeight)
+            return caps;
+    }
+    return NULL;
+}
+
 HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt)
 {
-    HRESULT hr;
     TRACE("device %p, mt %p.\n", device, mt);
 
     if (!mt)
         return E_POINTER;
 
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
-        return S_FALSE;
+        return E_FAIL;
 
-    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo) && mt->pbFormat
-            && mt->cbFormat >= sizeof(VIDEOINFOHEADER))
+    if (find_caps(device, mt))
+        return S_OK;
+
+    return E_FAIL;
+}
+
+static BOOL set_caps(Capture *device, const struct caps *caps)
+{
+    struct v4l2_format format = {0};
+    LONG width, height;
+
+    width = caps->video_info.bmiHeader.biWidth;
+    height = caps->video_info.bmiHeader.biHeight;
+
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    format.fmt.pix.pixelformat = caps->pixelformat;
+    format.fmt.pix.width = width;
+    format.fmt.pix.height = height;
+    if (xioctl(device->fd, VIDIOC_S_FMT, &format) == -1
+            || format.fmt.pix.pixelformat != caps->pixelformat
+            || format.fmt.pix.width != width
+            || format.fmt.pix.height != height)
     {
-        VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
-        if (vih->bmiHeader.biBitCount == 24 && vih->bmiHeader.biCompression == BI_RGB)
-            hr = S_OK;
-        else
-        {
-            FIXME("Unsupported compression %#x, bpp %u.\n", vih->bmiHeader.biCompression,
-                    vih->bmiHeader.biBitCount);
-            hr = S_FALSE;
-        }
+        ERR("Failed to set pixel format: %s.\n", strerror(errno));
+        return FALSE;
     }
-    else
-        hr = VFW_E_INVALIDMEDIATYPE;
 
-    return hr;
+    device->current_caps = caps;
+    device->outputwidth = width;
+    device->outputheight = height;
+    device->swresize = FALSE;
+
+    return TRUE;
 }
 
 HRESULT qcap_driver_set_format(Capture *device, AM_MEDIA_TYPE *mt)
 {
-    struct v4l2_format format = {0};
-    int newheight, newwidth;
-    VIDEOINFOHEADER *vih;
-    int fd = device->fd;
-    HRESULT hr;
+    const struct caps *caps;
 
-    if (FAILED(hr = qcap_driver_check_format(device, mt)))
-        return hr;
-    vih = (VIDEOINFOHEADER *)mt->pbFormat;
+    caps = find_caps(device, mt);
+    if (!caps)
+        return E_FAIL;
 
-    newwidth = vih->bmiHeader.biWidth;
-    newheight = vih->bmiHeader.biHeight;
-
-    if (device->height == newheight && device->width == newwidth)
+    if (device->current_caps == caps)
         return S_OK;
 
-    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    if (xioctl(fd, VIDIOC_G_FMT, &format) == -1)
-    {
-        ERR("Failed to get current format: %s\n", strerror(errno));
+    if (!set_caps(device, caps))
         return VFW_E_TYPE_NOT_ACCEPTED;
-    }
 
-    format.fmt.pix.width = newwidth;
-    format.fmt.pix.height = newheight;
-
-    if (!xioctl(fd, VIDIOC_S_FMT, &format)
-            && format.fmt.pix.width == newwidth
-            && format.fmt.pix.height == newheight)
-    {
-        device->width = newwidth;
-        device->height = newheight;
-        device->swresize = FALSE;
-    }
-    else
-    {
-        TRACE("Using software resize: %dx%d -> %dx%d.\n",
-               format.fmt.pix.width, format.fmt.pix.height, device->width, device->height);
-        device->swresize = TRUE;
-    }
-    device->outputwidth = format.fmt.pix.width;
-    device->outputheight = format.fmt.pix.height;
     return S_OK;
 }
 
-HRESULT qcap_driver_get_format(const Capture *capBox, AM_MEDIA_TYPE ** mT)
+HRESULT qcap_driver_get_format(const Capture *device, AM_MEDIA_TYPE **mt)
 {
-    VIDEOINFOHEADER *vi;
+    *mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
+    if (!*mt)
+        return E_OUTOFMEMORY;
 
-    mT[0] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-    if (!mT[0])
-        return E_OUTOFMEMORY;
-    vi = CoTaskMemAlloc(sizeof(VIDEOINFOHEADER));
-    mT[0]->cbFormat = sizeof(VIDEOINFOHEADER);
-    if (!vi)
-    {
-        CoTaskMemFree(mT[0]);
-        mT[0] = NULL;
-        return E_OUTOFMEMORY;
-    }
-    mT[0]->majortype = MEDIATYPE_Video;
-    mT[0]->subtype = MEDIASUBTYPE_RGB24;
-    mT[0]->formattype = FORMAT_VideoInfo;
-    mT[0]->bFixedSizeSamples = TRUE;
-    mT[0]->bTemporalCompression = FALSE;
-    mT[0]->pUnk = NULL;
-    mT[0]->lSampleSize = capBox->outputwidth * capBox->outputheight * capBox->bitDepth / 8;
-    TRACE("Output format: %dx%d - %d bits = %u KB\n", capBox->outputwidth,
-          capBox->outputheight, capBox->bitDepth, mT[0]->lSampleSize/1024);
-    vi->rcSource.left = 0; vi->rcSource.top = 0;
-    vi->rcTarget.left = 0; vi->rcTarget.top = 0;
-    vi->rcSource.right = capBox->width; vi->rcSource.bottom = capBox->height;
-    vi->rcTarget.right = capBox->outputwidth; vi->rcTarget.bottom = capBox->outputheight;
-    vi->dwBitRate = capBox->fps * mT[0]->lSampleSize;
-    vi->dwBitErrorRate = 0;
-    vi->AvgTimePerFrame = (LONGLONG)10000000.0 / (LONGLONG)capBox->fps;
-    vi->bmiHeader.biSize = 40;
-    vi->bmiHeader.biWidth = capBox->outputwidth;
-    vi->bmiHeader.biHeight = capBox->outputheight;
-    vi->bmiHeader.biPlanes = 1;
-    vi->bmiHeader.biBitCount = 24;
-    vi->bmiHeader.biCompression = BI_RGB;
-    vi->bmiHeader.biSizeImage = mT[0]->lSampleSize;
-    vi->bmiHeader.biClrUsed = vi->bmiHeader.biClrImportant = 0;
-    vi->bmiHeader.biXPelsPerMeter = 100;
-    vi->bmiHeader.biYPelsPerMeter = 100;
-    mT[0]->pbFormat = (void *)vi;
-    return S_OK;
+    return CopyMediaType(*mt, &device->current_caps->media_type);
 }
 
 static __u32 v4l2_cid_from_qcap_property(VideoProcAmpProperty property)
@@ -336,13 +306,18 @@ HRESULT qcap_driver_set_prop(Capture *device, VideoProcAmpProperty property,
 
 static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
 {
+    UINT width, height, bitdepth, depth;
+
+    width = capBox->current_caps->video_info.bmiHeader.biWidth;
+    height = capBox->current_caps->video_info.bmiHeader.biHeight;
+    bitdepth = capBox->current_caps->video_info.bmiHeader.biBitCount;
+    depth = bitdepth / 8;
     /* the whole image needs to be reversed,
        because the dibs are messed up in windows */
     if (!capBox->swresize)
     {
-        int depth = capBox->bitDepth / 8;
-        int inoffset = 0, outoffset = capBox->height * capBox->width * depth;
-        int ow = capBox->width * depth;
+        int inoffset = 0, outoffset = width * height * depth;
+        int ow = width * depth;
         while (outoffset > 0)
         {
             int x;
@@ -356,7 +331,6 @@ static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
     {
         HDC dc_s, dc_d;
         HBITMAP bmp_s, bmp_d;
-        int depth = capBox->bitDepth / 8;
         int inoffset = 0, outoffset = (capBox->outputheight) * capBox->outputwidth * depth;
         int ow = capBox->outputwidth * depth;
         LPBYTE myarray;
@@ -366,12 +340,12 @@ static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
         myarray = CoTaskMemAlloc(capBox->outputwidth * capBox->outputheight * depth);
         dc_s = CreateCompatibleDC(NULL);
         dc_d = CreateCompatibleDC(NULL);
-        bmp_s = CreateBitmap(capBox->width, capBox->height, 1, capBox->bitDepth, input);
-        bmp_d = CreateBitmap(capBox->outputwidth, capBox->outputheight, 1, capBox->bitDepth, NULL);
+        bmp_s = CreateBitmap(width, height, 1, bitdepth, input);
+        bmp_d = CreateBitmap(capBox->outputwidth, capBox->outputheight, 1, bitdepth, NULL);
         SelectObject(dc_s, bmp_s);
         SelectObject(dc_d, bmp_d);
         StretchBlt(dc_d, 0, 0, capBox->outputwidth, capBox->outputheight,
-                   dc_s, 0, 0, capBox->width, capBox->height, SRCCOPY);
+                   dc_s, 0, 0, width, height, SRCCOPY);
         GetBitmapBits(bmp_d, capBox->outputwidth * capBox->outputheight * depth, myarray);
         while (outoffset > 0)
         {
@@ -398,8 +372,12 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
     ULONG framecount = 0;
     unsigned char *pTarget, *image_data;
     unsigned int image_size;
+    UINT width, height, depth;
 
-    image_size = capBox->height * capBox->width * 3;
+    width = capBox->current_caps->video_info.bmiHeader.biWidth;
+    height = capBox->current_caps->video_info.bmiHeader.biHeight;
+    depth = capBox->current_caps->video_info.bmiHeader.biBitCount / 8;
+    image_size = width * height * depth;
     if (!(image_data = heap_alloc(image_size)))
     {
         ERR("Failed to allocate memory.\n");
@@ -417,9 +395,9 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             int len;
             
             if (!capBox->swresize)
-                len = capBox->height * capBox->width * capBox->bitDepth / 8;
+                len = width * height * depth;
             else
-                len = capBox->outputheight * capBox->outputwidth * capBox->bitDepth / 8;
+                len = capBox->outputheight * capBox->outputwidth * depth;
             IMediaSample_SetActualDataLength(pSample, len);
 
             len = IMediaSample_GetActualDataLength(pSample);
@@ -459,10 +437,10 @@ void qcap_driver_init_stream(Capture *device)
 
     req_props.cBuffers = 3;
     if (!device->swresize)
-        req_props.cbBuffer = device->width * device->height;
+        req_props.cbBuffer = device->current_caps->video_info.bmiHeader.biWidth * device->current_caps->video_info.bmiHeader.biHeight;
     else
         req_props.cbBuffer = device->outputwidth * device->outputheight;
-    req_props.cbBuffer = (req_props.cbBuffer * device->bitDepth) / 8;
+    req_props.cbBuffer = (req_props.cbBuffer * device->current_caps->video_info.bmiHeader.biBitCount) / 8;
     req_props.cbAlign = 1;
     req_props.cbPrefix = 0;
 
@@ -671,9 +649,7 @@ Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
     for (i = 0; i < device->caps_count; ++i)
         device->caps[i].media_type.pbFormat = (BYTE *)&device->caps[i].video_info;
 
-    format.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
-    if (xioctl(fd, VIDIOC_S_FMT, &format) == -1
-            || format.fmt.pix.pixelformat != V4L2_PIX_FMT_BGR24)
+    if (!set_caps(device, &device->caps[0]))
     {
         ERR("Failed to set pixel format: %s\n", strerror(errno));
         if (!have_libv4l2)
@@ -681,16 +657,13 @@ Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
         goto error;
     }
 
-    device->outputwidth = device->width = format.fmt.pix.width;
-    device->outputheight = device->height = format.fmt.pix.height;
-    device->swresize = FALSE;
-    device->bitDepth = 24;
     device->pin = pin;
-    device->fps = 3;
     device->state = State_Stopped;
     device->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-    TRACE("Format: %d bpp - %dx%d.\n", device->bitDepth, device->width, device->height);
+    TRACE("Format: %d bpp - %dx%d.\n", device->current_caps->video_info.bmiHeader.biBitCount,
+            device->current_caps->video_info.bmiHeader.biWidth,
+            device->current_caps->video_info.bmiHeader.biHeight);
 
     return device;
 
