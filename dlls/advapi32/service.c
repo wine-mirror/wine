@@ -1749,109 +1749,91 @@ done:
  * EnumServicesStatusW [ADVAPI32.@]
  */
 BOOL WINAPI
-EnumServicesStatusW( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_STATUSW
-                     services, DWORD size, LPDWORD needed, LPDWORD returned,
-                     LPDWORD resume_handle )
+EnumServicesStatusW( SC_HANDLE manager, DWORD type, DWORD state, ENUM_SERVICE_STATUSW *status,
+                     DWORD size, DWORD *ret_size, DWORD *ret_count, DWORD *resume_handle )
 {
-    DWORD err, i, offset, buflen, count, total_size = 0;
-    struct enum_service_status *entry;
-    const WCHAR *str;
-    BYTE *buf;
+    ENUM_SERVICE_STATUS_PROCESSW *status_ex;
+    DWORD alloc_size, count, i;
+    WCHAR *p;
 
-    TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", hmngr, type, state, services, size, needed,
-          returned, resume_handle);
+    TRACE("%p 0x%x 0x%x %p %u %p %p %p\n", manager, type, state, status, size,
+          ret_size, ret_count, resume_handle);
 
-    if (!hmngr)
+    if (!manager)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    if (!needed || !returned)
+
+    if (!ret_size || !ret_count)
     {
-        SetLastError( ERROR_INVALID_ADDRESS );
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    /* make sure we pass a valid pointer */
-    buflen = max( size, sizeof(*services) );
-    if (!(buf = heap_alloc( buflen )))
+    *ret_size = 0;
+    *ret_count = 0;
+    if (!EnumServicesStatusExW( manager, SC_ENUM_PROCESS_INFO, type, state,
+                                NULL, 0, &alloc_size, &count, resume_handle, NULL )
+            && GetLastError() != ERROR_MORE_DATA)
+        return FALSE;
+
+    if (!(status_ex = heap_alloc( alloc_size )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
-    __TRY
+    if (!EnumServicesStatusExW( manager, SC_ENUM_PROCESS_INFO, type, state, (BYTE *)status_ex,
+                                alloc_size, &alloc_size, &count, resume_handle, NULL )
+            && GetLastError() != ERROR_MORE_DATA)
     {
-        err = svcctl_EnumServicesStatusW( hmngr, type, state, buf, buflen, needed, &count, resume_handle );
-    }
-    __EXCEPT(rpc_filter)
-    {
-        err = map_exception_code( GetExceptionCode() );
-    }
-    __ENDTRY
-
-    *returned = 0;
-    if (err != ERROR_SUCCESS)
-    {
-        /* double the needed size to fit the potentially larger ENUM_SERVICE_STATUSW */
-        if (err == ERROR_MORE_DATA) *needed *= 2;
-        heap_free( buf );
-        SetLastError( err );
+        heap_free( status_ex );
         return FALSE;
     }
 
-    entry = (struct enum_service_status *)buf;
     for (i = 0; i < count; i++)
     {
-        total_size += sizeof(*services);
-        if (entry->service_name)
-        {
-            str = (const WCHAR *)(buf + entry->service_name);
-            total_size += (strlenW( str ) + 1) * sizeof(WCHAR);
-        }
-        if (entry->display_name)
-        {
-            str = (const WCHAR *)(buf + entry->display_name);
-            total_size += (strlenW( str ) + 1) * sizeof(WCHAR);
-        }
-        entry++;
+        *ret_size += sizeof(ENUM_SERVICE_STATUSW);
+        *ret_size += (strlenW( status_ex[i].lpServiceName ) + 1) * sizeof(WCHAR);
+        if (status_ex[i].lpDisplayName)
+            *ret_size += (strlenW( status_ex[i].lpDisplayName ) + 1) * sizeof(WCHAR);
+
+        if (*ret_size <= size)
+            ++*ret_count;
     }
 
-    if (total_size > size)
+    p = (WCHAR *)(status + *ret_count);
+    for (i = 0; i < *ret_count; i++)
     {
-        heap_free( buf );
-        *needed = total_size;
+        strcpyW( p, status_ex[i].lpServiceName );
+        status[i].lpServiceName = (WCHAR *)p;
+        p += strlenW( p ) + 1;
+        if (status_ex[i].lpDisplayName)
+        {
+            strcpyW( p, status_ex[i].lpDisplayName );
+            status[i].lpDisplayName = (WCHAR *)p;
+            p += strlenW( p ) + 1;
+        }
+        else status[i].lpDisplayName = NULL;
+
+        status[i].ServiceStatus.dwServiceType             = status_ex[i].ServiceStatusProcess.dwServiceType;
+        status[i].ServiceStatus.dwCurrentState            = status_ex[i].ServiceStatusProcess.dwCurrentState;
+        status[i].ServiceStatus.dwControlsAccepted        = status_ex[i].ServiceStatusProcess.dwControlsAccepted;
+        status[i].ServiceStatus.dwWin32ExitCode           = status_ex[i].ServiceStatusProcess.dwWin32ExitCode;
+        status[i].ServiceStatus.dwServiceSpecificExitCode = status_ex[i].ServiceStatusProcess.dwServiceSpecificExitCode;
+        status[i].ServiceStatus.dwCheckPoint              = status_ex[i].ServiceStatusProcess.dwCheckPoint;
+        status[i].ServiceStatus.dwWaitHint                = status_ex[i].ServiceStatusProcess.dwWaitHint;
+    }
+
+    heap_free( status_ex );
+    if (*ret_size > size)
+    {
         SetLastError( ERROR_MORE_DATA );
         return FALSE;
     }
 
-    offset = count * sizeof(*services);
-    entry = (struct enum_service_status *)buf;
-    for (i = 0; i < count; i++)
-    {
-        DWORD str_size;
-        str = (const WCHAR *)(buf + entry->service_name);
-        str_size = (strlenW( str ) + 1) * sizeof(WCHAR);
-        services[i].lpServiceName = (WCHAR *)((char *)services + offset);
-        memcpy( services[i].lpServiceName, str, str_size );
-        offset += str_size;
-
-        if (!entry->display_name) services[i].lpDisplayName = NULL;
-        else
-        {
-            str = (const WCHAR *)(buf + entry->display_name);
-            str_size = (strlenW( str ) + 1) * sizeof(WCHAR);
-            services[i].lpDisplayName = (WCHAR *)((char *)services + offset);
-            memcpy( services[i].lpDisplayName, str, str_size );
-            offset += str_size;
-        }
-        services[i].ServiceStatus = entry->service_status;
-        entry++;
-    }
-
-    heap_free( buf );
-    *needed = 0;
-    *returned = count;
+    *ret_size = 0;
     return TRUE;
 }
 

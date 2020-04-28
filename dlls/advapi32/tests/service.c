@@ -1339,7 +1339,7 @@ static void test_enum_svc(void)
                               services, bufsize, &needed, &returned, &resume);
     ok(ret, "Expected success, got error %u\n", GetLastError());
     ok(needed == 0, "Expected needed buffer to be 0 as we are done\n");
-    ok(returned == missing, "Expected %u services to be returned\n", missing);
+    todo_wine ok(returned == missing, "Expected %u services to be returned\n", missing);
     ok(resume == 0, "Expected the resume handle to be 0\n");
     HeapFree(GetProcessHeap(), 0, services);
 
