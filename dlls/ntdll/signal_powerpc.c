@@ -1027,22 +1027,12 @@ void signal_init_threading(void)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_alignment;
-    SIZE_T size;
+    SIZE_T size = signal_stack_mask + 1;
     NTSTATUS status;
 
-    if (!sigstack_alignment)
-    {
-        size_t min_size = page_size;  /* this is just for the TEB, we don't use a signal stack yet */
-        /* find the first power of two not smaller than min_size */
-        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
-        assert( sizeof(TEB) <= min_size );
-    }
-
-    size = 1 << sigstack_alignment;
     *teb = NULL;
     if (!(status = virtual_alloc_aligned( (void **)teb, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
-                                          PAGE_READWRITE, sigstack_alignment )))
+                                          PAGE_READWRITE, signal_stack_align )))
     {
         (*teb)->Tib.Self = &(*teb)->Tib;
         (*teb)->Tib.ExceptionList = (void *)~0UL;

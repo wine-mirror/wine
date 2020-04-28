@@ -282,7 +282,6 @@ enum i386_trap_code
 };
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
-static size_t signal_stack_size;
 
 typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
@@ -3120,24 +3119,12 @@ void signal_init_threading(void)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_alignment;
-    SIZE_T size;
+    SIZE_T size = signal_stack_mask + 1;
     NTSTATUS status;
 
-    if (!sigstack_alignment)
-    {
-        size_t min_size = teb_size + max( MINSIGSTKSZ, 8192 );
-        /* find the first power of two not smaller than min_size */
-        sigstack_alignment = 12;
-        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
-        signal_stack_size = (1 << sigstack_alignment) - teb_size;
-        assert( sizeof(TEB) <= teb_size );
-    }
-
-    size = 1 << sigstack_alignment;
     *teb = NULL;
     if (!(status = virtual_alloc_aligned( (void **)teb, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
-                                          PAGE_READWRITE, sigstack_alignment )))
+                                          PAGE_READWRITE, signal_stack_align )))
     {
         (*teb)->Tib.Self = &(*teb)->Tib;
         (*teb)->Tib.ExceptionList = (void *)~0UL;

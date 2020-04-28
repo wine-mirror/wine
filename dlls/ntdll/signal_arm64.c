@@ -111,7 +111,6 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 #endif /* linux */
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
-static const size_t signal_stack_size = max( MINSIGSTKSZ, 8192 );
 
 /* stack layout when calling an exception raise function */
 struct stack_layout

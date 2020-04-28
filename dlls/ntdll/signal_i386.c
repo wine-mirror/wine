@@ -474,8 +474,6 @@ struct stack_layout
 typedef int (*wine_signal_handler)(unsigned int sig);
 
 static const size_t teb_size = 4096;  /* we reserve one page for the TEB */
-static size_t signal_stack_mask;
-static size_t signal_stack_size;
 
 static ULONG first_ldt_entry = 32;
 
@@ -2592,26 +2590,14 @@ void signal_init_threading(void)
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
 {
-    static size_t sigstack_alignment;
     struct x86_thread_data *thread_data;
-    SIZE_T size;
+    SIZE_T size = signal_stack_mask + 1;
     void *addr = NULL;
     NTSTATUS status;
-    int first_thread = !sigstack_alignment;
+    static int first_thread = 1;
 
-    if (!sigstack_alignment)
-    {
-        size_t min_size = teb_size + max( MINSIGSTKSZ, 8192 );
-        /* find the first power of two not smaller than min_size */
-        sigstack_alignment = 12;
-        while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
-        signal_stack_mask = (1 << sigstack_alignment) - 1;
-        signal_stack_size = (1 << sigstack_alignment) - teb_size;
-    }
-
-    size = signal_stack_mask + 1;
     if (!(status = virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
-                                          PAGE_READWRITE, sigstack_alignment )))
+                                          PAGE_READWRITE, signal_stack_align )))
     {
         *teb = addr;
         (*teb)->Tib.Self = &(*teb)->Tib;
@@ -2623,6 +2609,7 @@ NTSTATUS signal_alloc_thread( TEB **teb )
             NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
             status = STATUS_TOO_MANY_THREADS;
         }
+        first_thread = 0;
     }
     return status;
 }

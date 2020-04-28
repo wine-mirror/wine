@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
@@ -158,6 +159,10 @@ static void *working_set_limit;
 static void *address_space_start = (void *)0x10000;
 #endif  /* __i386__ */
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
+SIZE_T signal_stack_size = 0;
+SIZE_T signal_stack_mask = 0;
+SIZE_T signal_stack_align = 0;
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -1973,6 +1978,13 @@ void virtual_init(void)
                 address_space_start = min( address_space_start, preload_reserve_start );
         }
     }
+
+    size = ROUND_SIZE( 0, sizeof(TEB) ) + max( MINSIGSTKSZ, 8192 );
+    /* find the first power of two not smaller than size */
+    signal_stack_align = page_shift;
+    while ((1u << signal_stack_align) < size) signal_stack_align++;
+    signal_stack_mask = (1 << signal_stack_align) - 1;
+    signal_stack_size = (1 << signal_stack_align) - ROUND_SIZE( 0, sizeof(TEB) );
 
     /* try to find space in a reserved area for the views and pages protection table */
 #ifdef _WIN64
