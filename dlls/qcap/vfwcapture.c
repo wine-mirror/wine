@@ -515,16 +515,16 @@ static HRESULT source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *pin,
-        unsigned int iPosition, AM_MEDIA_TYPE *pmt)
+        unsigned int index, AM_MEDIA_TYPE *pmt)
 {
     VfwCapture *filter = impl_from_strmbase_pin(pin);
     AM_MEDIA_TYPE *vfw_pmt;
     HRESULT hr;
 
-    if (iPosition > 0)
+    if (index >= qcap_driver_get_caps_count(filter->driver_info))
         return VFW_S_NO_MORE_ITEMS;
 
-    hr = qcap_driver_get_format(filter->driver_info, &vfw_pmt);
+    hr = qcap_driver_get_caps(filter->driver_info, index, &vfw_pmt, NULL);
     if (SUCCEEDED(hr)) {
         CopyMediaType(pmt, vfw_pmt);
         DeleteMediaType(vfw_pmt);
