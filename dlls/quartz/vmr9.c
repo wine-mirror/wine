@@ -629,7 +629,8 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
     else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify)
             && filter->mode == (VMR9Mode)VMRMode_Renderless && !is_vmr9(filter))
         *out = &filter->IVMRSurfaceAllocatorNotify_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify9) && filter->mode == VMR9Mode_Renderless)
+    else if (IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorNotify9)
+            && filter->mode == VMR9Mode_Renderless && is_vmr9(filter))
         *out = &filter->IVMRSurfaceAllocatorNotify9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRWindowlessControl) && filter->mode == (VMR9Mode)VMRMode_Windowless)
         *out = &filter->IVMRWindowlessControl_iface;

@@ -300,7 +300,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
