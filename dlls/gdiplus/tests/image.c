@@ -5106,22 +5106,17 @@ static void test_CloneBitmapArea(void)
 
 static void test_supported_encoders(void)
 {
-    static const WCHAR bmp_mimetype[] = { 'i', 'm', 'a','g', 'e', '/', 'b', 'm', 'p',0 };
-    static const WCHAR jpeg_mimetype[] = { 'i','m','a','g','e','/','j','p','e','g',0 };
-    static const WCHAR gif_mimetype[] = { 'i','m','a','g','e','/','g','i','f',0 };
-    static const WCHAR tiff_mimetype[] = { 'i','m','a','g','e','/','t','i','f','f',0 };
-    static const WCHAR png_mimetype[] = { 'i','m','a','g','e','/','p','n','g',0 };
     static const struct test_data
     {
         LPCWSTR mime;
         const GUID *format;
     } td[] =
     {
-        { bmp_mimetype, &ImageFormatBMP },
-        { jpeg_mimetype, &ImageFormatJPEG },
-        { gif_mimetype, &ImageFormatGIF },
-        { tiff_mimetype, &ImageFormatTIFF },
-        { png_mimetype, &ImageFormatPNG }
+        { L"image/bmp", &ImageFormatBMP },
+        { L"image/jpeg", &ImageFormatJPEG },
+        { L"image/gif", &ImageFormatGIF },
+        { L"image/tiff", &ImageFormatTIFF },
+        { L"image/png", &ImageFormatPNG }
     };
     GUID format, clsid;
     BOOL ret;
@@ -5147,7 +5142,7 @@ static void test_supported_encoders(void)
         ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
 
         status = GdipSaveImageToStream((GpImage *)bm, stream, &clsid, NULL);
-        ok(status == Ok, "GdipSaveImageToStream error %d\n", status);
+        ok(status == Ok, "%s encoder, GdipSaveImageToStream error %d\n", wine_dbgstr_w(td[i].mime), status);
 
         IStream_Release(stream);
     }
