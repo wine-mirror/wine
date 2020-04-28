@@ -555,8 +555,8 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
             if((nch!=MSVCRT_WEOF) && (nch < '0' || nch > '9')) unget(ctx);
             e *= s;
 
-            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
-            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+            if(e<0 && exp<INT_MIN-e) exp = INT_MIN;
+            else if(e>0 && exp>INT_MAX-e) exp = INT_MAX;
             else exp += e;
         } else {
             if(nch != MSVCRT_WEOF) unget(ctx);
@@ -784,8 +784,8 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
             if(nch != MSVCRT_WEOF) unget(ctx);
             e *= s;
 
-            if(exp<0 && e<0 && exp+e>=0) exp = INT_MIN;
-            else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+            if(e<0 && exp<INT_MIN-e) exp = INT_MIN;
+            else if(e>0 && exp>INT_MAX-e) exp = INT_MAX;
             else exp += e;
         } else {
             if(nch != MSVCRT_WEOF) unget(ctx);
