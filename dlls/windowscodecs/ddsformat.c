@@ -86,6 +86,7 @@ typedef struct {
 
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
+    IWICDdsDecoder IWICDdsDecoder_iface;
     LONG ref;
     BOOL initialized;
     IStream *stream;
@@ -108,6 +109,11 @@ static inline BOOL has_extended_header(DDS_HEADER *header)
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsDecoder, IWICBitmapDecoder_iface);
+}
+
+static inline DdsDecoder *impl_from_IWICDdsDecoder(IWICDdsDecoder *iface)
+{
+    return CONTAINING_RECORD(iface, DdsDecoder, IWICDdsDecoder_iface);
 }
 
 static inline DdsFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
@@ -259,12 +265,11 @@ static HRESULT WINAPI DdsDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID
     if (!ppv) return E_INVALIDARG;
 
     if (IsEqualIID(&IID_IUnknown, iid) ||
-        IsEqualIID(&IID_IWICBitmapDecoder, iid))
-    {
+        IsEqualIID(&IID_IWICBitmapDecoder, iid)) {
         *ppv = &This->IWICBitmapDecoder_iface;
-    }
-    else
-    {
+    } else if (IsEqualIID(&IID_IWICDdsDecoder, iid)) {
+        *ppv = &This->IWICDdsDecoder_iface;
+    } else {
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -498,6 +503,50 @@ static const IWICBitmapDecoderVtbl DdsDecoder_Vtbl = {
         DdsDecoder_GetFrame
 };
 
+static HRESULT WINAPI DdsDecoder_Dds_QueryInterface(IWICDdsDecoder *iface,
+                                                    REFIID iid, void **ppv)
+{
+    DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
+    return DdsDecoder_QueryInterface(&This->IWICBitmapDecoder_iface, iid, ppv);
+}
+
+static ULONG WINAPI DdsDecoder_Dds_AddRef(IWICDdsDecoder *iface)
+{
+    DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
+    return DdsDecoder_AddRef(&This->IWICBitmapDecoder_iface);
+}
+
+static ULONG WINAPI DdsDecoder_Dds_Release(IWICDdsDecoder *iface)
+{
+    DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
+    return DdsDecoder_Release(&This->IWICBitmapDecoder_iface);
+}
+
+static HRESULT WINAPI DdsDecoder_Dds_GetParameters(IWICDdsDecoder *iface,
+                                                   WICDdsParameters *parameters)
+{
+    TRACE("(%p,%p): Stub.\n", iface, parameters);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
+                                              UINT arrayIndex, UINT mipLevel, UINT sliceIndex,
+                                              IWICBitmapFrameDecode **bitmapFrame)
+{
+    TRACE("(%p,%u,%u,%u,%p): Stub.\n", iface, arrayIndex, mipLevel, sliceIndex, bitmapFrame);
+
+    return E_NOTIMPL;
+}
+
+static const IWICDdsDecoderVtbl DdsDecoder_Dds_Vtbl = {
+    DdsDecoder_Dds_QueryInterface,
+    DdsDecoder_Dds_AddRef,
+    DdsDecoder_Dds_Release,
+    DdsDecoder_Dds_GetParameters,
+    DdsDecoder_Dds_GetFrame
+};
+
 HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     DdsDecoder *This;
@@ -511,6 +560,7 @@ HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapDecoder_iface.lpVtbl = &DdsDecoder_Vtbl;
+    This->IWICDdsDecoder_iface.lpVtbl = &DdsDecoder_Dds_Vtbl;
     This->ref = 1;
     This->initialized = FALSE;
     This->stream = NULL;

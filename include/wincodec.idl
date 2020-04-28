@@ -19,6 +19,7 @@
 import "wtypes.idl";
 import "propidl.idl";
 import "ocidl.idl";
+import "dxgiformat.idl";
 
 cpp_quote ("#include \"dcommon.h\"")
 
@@ -195,6 +196,23 @@ typedef enum WICSectionAccessLevel {
     WICSectionAccessLevel_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICSectionAccessLevel;
 
+typedef enum WICDdsDimension {
+    WICDdsTexture1D = 0x00000000,
+    WICDdsTexture2D = 0x00000001,
+    WICDdsTexture3D = 0x00000002,
+    WICDdsTextureCube = 0x00000003,
+    WICDDSTEXTURE_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICDdsDimension;
+
+typedef enum WICDdsAlphaMode {
+    WICDdsAlphaModeUnknown = 0x00000000,
+    WICDdsAlphaModeStraight = 0x00000001,
+    WICDdsAlphaModePremultiplied = 0x00000002,
+    WICDdsAlphaModeOpaque = 0x00000003,
+    WICDdsAlphaModeCustom = 0x00000004,
+    WICDDSALPHAMODE_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICDdsAlphaMode;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
@@ -341,6 +359,17 @@ typedef struct WICImageParameters
     UINT32 PixelWidth;
     UINT32 PixelHeight;
 } WICImageParameters;
+
+typedef struct WICDdsParameters {
+    UINT Width;
+    UINT Height;
+    UINT Depth;
+    UINT MipLevels;
+    UINT ArraySize;
+    DXGI_FORMAT DxgiFormat;
+    WICDdsDimension Dimension;
+    WICDdsAlphaMode AlphaMode;
+} WICDdsParameters;
 
 typedef UINT32 WICColor;
 
@@ -1143,6 +1172,22 @@ interface IWICEnumMetadataItem : IUnknown
     HRESULT Clone(
         [out] IWICEnumMetadataItem **ppIEnumMetadataItem);
 }
+
+[
+    object,
+    uuid(409cd537-8532-40cb-9774-e2feb2df4e9c)
+]
+interface IWICDdsDecoder : IUnknown
+{
+    HRESULT GetParameters(
+        [out] WICDdsParameters *parameters);
+
+    HRESULT GetFrame(
+        [in] UINT arrayIndex,
+        [in] UINT mipLevel,
+        [in] UINT sliceIndex,
+        [out, retval] IWICBitmapFrameDecode **bitmapFrame);
+};
 
 cpp_quote("HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitmapSource *pISrc, IWICBitmapSource **ppIDst);")
 cpp_quote("HRESULT WINAPI WICCreateBitmapFromSection(UINT width, UINT height, REFWICPixelFormatGUID format, HANDLE section, UINT stride, UINT offset, IWICBitmap **bitmap);")
