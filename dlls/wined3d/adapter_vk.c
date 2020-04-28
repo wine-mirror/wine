@@ -813,8 +813,8 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     struct wined3d_device_vk *device_vk;
     VkCommandBuffer vk_command_buffer;
     VkBufferMemoryBarrier vk_barrier;
+    struct wined3d_bo_vk *bo, tmp;
     VkMappedMemoryRange range;
-    struct wined3d_bo_vk *bo;
     void *map_ptr;
 
     if (!(bo = (struct wined3d_bo_vk *)data->buffer_object))
@@ -825,6 +825,19 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
 
     if (map_flags & WINED3D_MAP_NOOVERWRITE)
         goto map;
+
+    if ((map_flags & WINED3D_MAP_DISCARD) && bo->command_buffer_id > context_vk->completed_command_buffer_id)
+    {
+        if (wined3d_context_vk_create_bo(context_vk, bo->size, bo->usage, bo->memory_type, &tmp))
+        {
+            wined3d_context_vk_destroy_bo(context_vk, bo);
+            *bo = tmp;
+
+            goto map;
+        }
+
+        ERR("Failed to create new buffer object.\n");
+    }
 
     if (map_flags & WINED3D_MAP_READ)
     {
