@@ -257,12 +257,14 @@ static HRESULT WINAPI AMStreamConfig_GetNumberOfCapabilities(IAMStreamConfig *if
     return S_OK;
 }
 
-static HRESULT WINAPI
-AMStreamConfig_GetStreamCaps( IAMStreamConfig *iface, int iIndex,
-                              AM_MEDIA_TYPE **pmt, BYTE *pSCC )
+static HRESULT WINAPI AMStreamConfig_GetStreamCaps(IAMStreamConfig *iface,
+        int index, AM_MEDIA_TYPE **pmt, BYTE *vscc)
 {
-    FIXME("%p: %d %p %p - stub, intentional\n", iface, iIndex, pmt, pSCC);
-    return E_NOTIMPL; /* Not implemented for this interface */
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+
+    TRACE("filter %p, index %d, pmt %p, vscc %p.\n", filter, index, pmt, vscc);
+
+    return qcap_driver_get_caps(filter->driver_info, index, pmt, (VIDEO_STREAM_CONFIG_CAPS *)vscc);
 }
 
 static const IAMStreamConfigVtbl IAMStreamConfig_VTable =

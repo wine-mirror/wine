@@ -624,6 +624,21 @@ error:
     return NULL;
 }
 
+HRESULT qcap_driver_get_caps(Capture *device, LONG index, AM_MEDIA_TYPE **type,
+        VIDEO_STREAM_CONFIG_CAPS *vscc)
+{
+    if (index >= device->caps_count)
+        return S_FALSE;
+
+    *type = CreateMediaType(&device->caps[index].media_type);
+    if (!*type)
+        return E_OUTOFMEMORY;
+
+    if (vscc)
+        memcpy(vscc, &device->caps[index].config, sizeof(VIDEO_STREAM_CONFIG_CAPS));
+    return S_OK;
+}
+
 LONG qcap_driver_get_caps_count(Capture *device)
 {
     return device->caps_count;
@@ -701,6 +716,12 @@ void qcap_driver_stop_stream(Capture *device)
 void qcap_driver_cleanup_stream(Capture *device)
 {
     ERR("v4l absent: shouldn't be called\n");
+}
+
+HRESULT qcap_driver_get_caps(Capture *device, LONG index, AM_MEDIA_TYPE **type,
+        VIDEO_STREAM_CONFIG_CAPS *vscc)
+{
+    FAIL_WITH_ERR;
 }
 
 LONG qcap_driver_get_caps_count(Capture *device)

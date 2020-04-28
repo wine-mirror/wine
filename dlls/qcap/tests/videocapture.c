@@ -64,6 +64,7 @@ static void test_stream_config(IPin *pin)
 {
     VIDEOINFOHEADER *video_info, *video_info2;
     AM_MEDIA_TYPE *format, *format2;
+    VIDEO_STREAM_CONFIG_CAPS vscc;
     IAMStreamConfig *stream_config;
     LONG depth, compression;
     LONG count, size;
@@ -127,12 +128,33 @@ static void test_stream_config(IPin *pin)
 
         hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, NULL, &size);
         ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, NULL, (BYTE *)&vscc);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, &format, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     }
 
     hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, &count, &size);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(count != 0xdeadbeef, "Got wrong count: %d.\n", count);
     ok(size == sizeof(VIDEO_STREAM_CONFIG_CAPS), "Got wrong size: %d.\n", size);
+
+    hr = IAMStreamConfig_GetStreamCaps(stream_config, 100000, NULL, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IAMStreamConfig_GetStreamCaps(stream_config, 100000, &format, (BYTE *)&vscc);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IAMStreamConfig_GetStreamCaps(stream_config, 0, &format, (BYTE *)&vscc);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&format->majortype, &MEDIATYPE_Video), "Got wrong majortype: %s.\n",
+            debugstr_guid(&MEDIATYPE_Video));
+    ok(IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo)
+            || IsEqualGUID(&vscc.guid, &FORMAT_VideoInfo2), "Got wrong guid: %s.\n",
+            debugstr_guid(&vscc.guid));
+    FreeMediaType(format);
 
     IAMStreamConfig_Release(stream_config);
 }
