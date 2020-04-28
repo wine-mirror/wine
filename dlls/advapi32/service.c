@@ -741,54 +741,20 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
 /******************************************************************************
  * LockServiceDatabase  [ADVAPI32.@]
  */
-SC_LOCK WINAPI LockServiceDatabase (SC_HANDLE hSCManager)
+SC_LOCK WINAPI LockServiceDatabase( SC_HANDLE manager )
 {
-    SC_RPC_LOCK hLock = NULL;
-    DWORD err;
-
-    TRACE("%p\n",hSCManager);
-
-    __TRY
-    {
-        err = svcctl_LockServiceDatabase(hSCManager, &hLock);
-    }
-    __EXCEPT(rpc_filter)
-    {
-        err = map_exception_code(GetExceptionCode());
-    }
-    __ENDTRY
-    if (err != ERROR_SUCCESS)
-    {
-        SetLastError(err);
-        return NULL;
-    }
-    return hLock;
+    /* this function is a no-op in Vista and above */
+    TRACE("%p\n", manager);
+    return (SC_LOCK)0xdeadbeef;
 }
 
 /******************************************************************************
  * UnlockServiceDatabase  [ADVAPI32.@]
  */
-BOOL WINAPI UnlockServiceDatabase (SC_LOCK ScLock)
+BOOL WINAPI UnlockServiceDatabase( SC_LOCK lock )
 {
-    DWORD err;
-    SC_RPC_LOCK hRpcLock = ScLock;
-
-    TRACE("%p\n",ScLock);
-
-    __TRY
-    {
-        err = svcctl_UnlockServiceDatabase(&hRpcLock);
-    }
-    __EXCEPT(rpc_filter)
-    {
-        err = map_exception_code(GetExceptionCode());
-    }
-    __ENDTRY
-    if (err != ERROR_SUCCESS)
-    {
-        SetLastError(err);
-        return FALSE;
-    }
+    /* this function is a no-op in Vista and above */
+    TRACE("%p\n", lock);
     return TRUE;
 }
 
