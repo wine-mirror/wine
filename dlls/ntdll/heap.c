@@ -726,7 +726,8 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     LPVOID address = NULL;
 
     if (block_size < size) return NULL;  /* overflow */
-    if (virtual_alloc_aligned( &address, 0, &block_size, MEM_COMMIT, get_protection_type( flags ), 5 ))
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &block_size,
+                                 MEM_COMMIT, get_protection_type( flags )))
     {
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
