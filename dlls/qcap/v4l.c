@@ -103,11 +103,9 @@ struct caps
 
 struct _Capture
 {
-    UINT outputwidth, outputheight;
     const struct caps *current_caps;
     struct caps *caps;
     LONG caps_count;
-    BOOL swresize;
 
     struct strmbase_source *pin;
     int fd, mmap;
@@ -196,9 +194,6 @@ static BOOL set_caps(Capture *device, const struct caps *caps)
     }
 
     device->current_caps = caps;
-    device->outputwidth = width;
-    device->outputheight = height;
-    device->swresize = FALSE;
 
     return TRUE;
 }
@@ -304,63 +299,26 @@ HRESULT qcap_driver_set_prop(Capture *device, VideoProcAmpProperty property,
     return S_OK;
 }
 
-static void Resize(const Capture * capBox, LPBYTE output, const BYTE *input)
+static void reverse_image(const Capture *device, LPBYTE output, const BYTE *input)
 {
-    UINT width, height, bitdepth, depth;
+    int inoffset, outoffset, pitch;
+    UINT width, height, depth;
 
-    width = capBox->current_caps->video_info.bmiHeader.biWidth;
-    height = capBox->current_caps->video_info.bmiHeader.biHeight;
-    bitdepth = capBox->current_caps->video_info.bmiHeader.biBitCount;
-    depth = bitdepth / 8;
+    width = device->current_caps->video_info.bmiHeader.biWidth;
+    height = device->current_caps->video_info.bmiHeader.biHeight;
+    depth = device->current_caps->video_info.bmiHeader.biBitCount / 8;
     /* the whole image needs to be reversed,
        because the dibs are messed up in windows */
-    if (!capBox->swresize)
+    outoffset = width * height * depth;
+    pitch = width * depth;
+    inoffset = 0;
+    while (outoffset > 0)
     {
-        int inoffset = 0, outoffset = width * height * depth;
-        int ow = width * depth;
-        while (outoffset > 0)
-        {
-            int x;
-            outoffset -= ow;
-            for (x = 0; x < ow; x++)
-                output[outoffset + x] = input[inoffset + x];
-            inoffset += ow;
-        }
-    }
-    else
-    {
-        HDC dc_s, dc_d;
-        HBITMAP bmp_s, bmp_d;
-        int inoffset = 0, outoffset = (capBox->outputheight) * capBox->outputwidth * depth;
-        int ow = capBox->outputwidth * depth;
-        LPBYTE myarray;
-
-        /* FIXME: Improve software resizing: add error checks and optimize */
-
-        myarray = CoTaskMemAlloc(capBox->outputwidth * capBox->outputheight * depth);
-        dc_s = CreateCompatibleDC(NULL);
-        dc_d = CreateCompatibleDC(NULL);
-        bmp_s = CreateBitmap(width, height, 1, bitdepth, input);
-        bmp_d = CreateBitmap(capBox->outputwidth, capBox->outputheight, 1, bitdepth, NULL);
-        SelectObject(dc_s, bmp_s);
-        SelectObject(dc_d, bmp_d);
-        StretchBlt(dc_d, 0, 0, capBox->outputwidth, capBox->outputheight,
-                   dc_s, 0, 0, width, height, SRCCOPY);
-        GetBitmapBits(bmp_d, capBox->outputwidth * capBox->outputheight * depth, myarray);
-        while (outoffset > 0)
-        {
-            int i;
-
-            outoffset -= ow;
-            for (i = 0; i < ow; i++)
-                output[outoffset + i] = myarray[inoffset + i];
-            inoffset += ow;
-        }
-        CoTaskMemFree(myarray);
-        DeleteObject(dc_s);
-        DeleteObject(dc_d);
-        DeleteObject(bmp_s);
-        DeleteObject(bmp_d);
+        int x;
+        outoffset -= pitch;
+        for (x = 0; x < pitch; x++)
+            output[outoffset + x] = input[inoffset + x];
+        inoffset += pitch;
     }
 }
 
@@ -394,10 +352,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         {
             int len;
             
-            if (!capBox->swresize)
-                len = width * height * depth;
-            else
-                len = capBox->outputheight * capBox->outputwidth * depth;
+            len = width * height * depth;
             IMediaSample_SetActualDataLength(pSample, len);
 
             len = IMediaSample_GetActualDataLength(pSample);
@@ -414,7 +369,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
                 }
             }
 
-            Resize(capBox, pTarget, image_data);
+            reverse_image(capBox, pTarget, image_data);
             hr = IMemInputPin_Receive(capBox->pin->pMemInputPin, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
@@ -436,10 +391,7 @@ void qcap_driver_init_stream(Capture *device)
     HRESULT hr;
 
     req_props.cBuffers = 3;
-    if (!device->swresize)
-        req_props.cbBuffer = device->current_caps->video_info.bmiHeader.biWidth * device->current_caps->video_info.bmiHeader.biHeight;
-    else
-        req_props.cbBuffer = device->outputwidth * device->outputheight;
+    req_props.cbBuffer = device->current_caps->video_info.bmiHeader.biWidth * device->current_caps->video_info.bmiHeader.biHeight;
     req_props.cbBuffer = (req_props.cbBuffer * device->current_caps->video_info.bmiHeader.biBitCount) / 8;
     req_props.cbAlign = 1;
     req_props.cbPrefix = 0;
