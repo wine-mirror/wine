@@ -25,6 +25,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -569,101 +570,120 @@ static double strtod16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
 }
 #endif
 
-struct u128 {
-   ULONGLONG u[2];
+#define LIMB_DIGITS 9           /* each DWORD stores up to 9 digits */
+#define LIMB_MAX 1000000000     /* 10^9 */
+#define BNUM_IDX(i) ((i) & 127)
+/* bnum represents real number with fixed decimal point (after 2 limbs) */
+struct bnum {
+    DWORD data[128]; /* circular buffer, base 10 number */
+    int b; /* least significant digit position */
+    int e; /* most significant digit position + 1 */
 };
 
-static inline struct u128 u128_lshift(struct u128 *u)
+/* Returns integral part of bnum */
+static inline ULONGLONG bnum_to_mant(struct bnum *b)
 {
-    struct u128 r;
-
-    r.u[0] = u->u[0] << 1;
-    r.u[1] = (u->u[1] << 1) + (u->u[0] >> (sizeof(u->u[0])*8-1));
-    return r;
+    ULONGLONG ret = (ULONGLONG)b->data[BNUM_IDX(b->e-1)] * LIMB_MAX;
+    if(b->b != b->e-1) ret += b->data[BNUM_IDX(b->e-2)];
+    return ret;
 }
 
-static inline struct u128 u128_rshift(struct u128 *u)
+/* Returns TRUE if new most significant limb was added */
+static inline BOOL bnum_lshift(struct bnum *b, int shift)
 {
-    struct u128 r;
+    DWORD rest = 0;
+    ULONGLONG tmp;
+    int i;
 
-    r.u[0] = (u->u[0] >> 1) + ((u->u[1] & 1) << (sizeof(u->u[1])*8-1));
-    r.u[1] = u->u[1] >> 1;
-    return r;
+    /* The limbs number can change by up to 1 so shift <= 29 */
+    assert(shift <= 29);
+
+    for(i=b->b; i<b->e; i++) {
+        tmp = ((ULONGLONG)b->data[BNUM_IDX(i)] << shift) + rest;
+        rest = tmp / LIMB_MAX;
+        b->data[BNUM_IDX(i)] = tmp % LIMB_MAX;
+
+        if(i == b->b && !b->data[BNUM_IDX(i)])
+            b->b++;
+    }
+
+    if(rest) {
+        b->data[BNUM_IDX(b->e)] = rest;
+        b->e++;
+
+        if(BNUM_IDX(b->b) == BNUM_IDX(b->e)) {
+            if(b->data[BNUM_IDX(b->b)]) b->data[BNUM_IDX(b->b+1)] |= 1;
+            b->b++;
+        }
+        return TRUE;
+    }
+    return FALSE;
 }
 
-static inline void u128_mul10(struct u128 *u)
+/* Returns TRUE if most significant limb was removed */
+static inline BOOL bnum_rshift(struct bnum *b, int shift)
 {
-    struct u128 tmp;
+    DWORD tmp, rest = 0;
+    BOOL ret = FALSE;
+    int i;
 
-    tmp = u128_lshift(u);
-    *u = u128_lshift(&tmp);
-    *u = u128_lshift(u);
+    /* Compute LIMB_MAX << shift without accuracy loss */
+    assert(shift <= 9);
 
-    u->u[0] += tmp.u[0];
-    u->u[1] += tmp.u[1];
-    if (u->u[0] < tmp.u[0]) u->u[1]++;
-}
-
-static inline void u128_div10(struct u128 *u)
-{
-    ULONGLONG h, l, r;
-
-    r = u->u[1] % 10;
-    u->u[1] /= 10;
-
-    h = (r << 32) + (u->u[0] >> 32);
-    r = h % 10;
-    h /= 10;
-
-    l = (r << 32) + (u->u[0] & 0xffffffff);
-    l /= 10;
-    u->u[0] = (h << 32) + l;
-}
-
-static double convert_e10_to_e2(int sign, int e10, ULONGLONG m, int *err)
-{
-    int e2 = 0;
-    struct u128 u128;
-
-    u128.u[0] = m;
-    u128.u[1] = 0;
-
-    while(e10 > 0)
-    {
-        u128_mul10(&u128);
-        e10--;
-
-        while(u128.u[1] > MSVCRT_UI64_MAX/16)
-        {
-            u128 = u128_rshift(&u128);
-            e2++;
+    for(i=b->e-1; i>=b->b; i--) {
+        tmp = b->data[BNUM_IDX(i)] & ((1<<shift)-1);
+        b->data[BNUM_IDX(i)] = (b->data[BNUM_IDX(i)] >> shift) + rest;
+        rest = (LIMB_MAX >> shift) * tmp;
+        if(i==b->e-1 && !b->data[BNUM_IDX(i)]) {
+            b->e--;
+            ret = TRUE;
         }
     }
 
-    while(e10 < 0)
-    {
-        while(!(u128.u[1] & (1 << (sizeof(u128.u[1])-1))))
-        {
-            u128 = u128_lshift(&u128);
-            e2--;
+    if(rest) {
+        if(BNUM_IDX(b->b-1) == BNUM_IDX(b->e)) {
+            if(rest) b->data[BNUM_IDX(b->b)] |= 1;
+        } else {
+            b->b--;
+            b->data[BNUM_IDX(b->b)] = rest;
         }
+    }
+    return ret;
+}
 
-        u128_div10(&u128);
-        e10++;
+static inline void bnum_mult(struct bnum *b, int mult)
+{
+    DWORD rest = 0;
+    ULONGLONG tmp;
+    int i;
+
+    assert(mult <= LIMB_MAX);
+
+    for(i=b->b; i<b->e; i++) {
+        tmp = ((ULONGLONG)b->data[BNUM_IDX(i)] * mult) + rest;
+        rest = tmp / LIMB_MAX;
+        b->data[BNUM_IDX(i)] = tmp % LIMB_MAX;
+
+        if(i == b->b && !b->data[BNUM_IDX(i)])
+            b->b++;
     }
 
-    while(u128.u[1])
-    {
-        u128 = u128_rshift(&u128);
-        e2++;
-    }
+    if(rest) {
+        b->data[BNUM_IDX(b->e)] = rest;
+        b->e++;
 
-    return make_double(sign, e2, u128.u[0], ROUND_DOWN, err);
+        if(BNUM_IDX(b->b) == BNUM_IDX(b->e)) {
+            if(b->data[BNUM_IDX(b->b)]) b->data[BNUM_IDX(b->b+1)] |= 1;
+            b->b++;
+        }
+    }
 }
 
 double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         void *ctx, MSVCRT_pthreadlocinfo locinfo, int *err)
 {
+    static const int p10s[] = { 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
+
 #if _MSVCR_VER >= 140
     MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
     MSVCRT_wchar_t _nan[] = { 'n', 'a', 'n', 0 };
@@ -671,9 +691,10 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     int matched=0;
 #endif
     BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;
-    unsigned __int64 d=0, hlp;
+    int e2 = 0, dp=0, sign=1, off, limb_digits = 0, i;
+    enum round round = ROUND_ZERO;
     MSVCRT_wchar_t nch;
-    int exp=0, sign=1;
+    struct bnum b;
 
     nch = get(ctx);
     if(nch == '-') {
@@ -710,7 +731,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
             unget(ctx);
         }
 
-        return make_double(sign, exp, d, ROUND_ZERO, err);
+        return 0.0;
     }
 
     if(nch == '0') {
@@ -721,19 +742,31 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     }
 #endif
 
+    while(nch == '0') nch = get(ctx);
+
+    b.data[0] = 0;
+    b.b = 0;
+    b.e = 1;
     while(nch>='0' && nch<='9') {
         found_digit = TRUE;
-        hlp = d * 10 + nch - '0';
+        if(limb_digits == LIMB_DIGITS) {
+            if(BNUM_IDX(b.b-1) == BNUM_IDX(b.e)) break;
+            else {
+                b.b--;
+                b.data[BNUM_IDX(b.b)] = 0;
+                limb_digits = 0;
+            }
+        }
+
+        b.data[BNUM_IDX(b.b)] = b.data[BNUM_IDX(b.b)] * 10 + nch - '0';
+        limb_digits++;
         nch = get(ctx);
-        if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
-            exp++;
-            break;
-        } else
-            d = hlp;
+        dp++;
     }
     while(nch>='0' && nch<='9') {
-        exp++;
+        if(nch != '0') b.data[BNUM_IDX(b.b)] |= 1;
         nch = get(ctx);
+        dp++;
     }
 
     if(nch == *locinfo->lconv->decimal_point) {
@@ -741,17 +774,34 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         nch = get(ctx);
     }
 
+    /* skip leading '0' */
+    if(nch=='0' && !limb_digits && !b.b) {
+        found_digit = TRUE;
+        while(nch == '0') {
+            nch = get(ctx);
+            dp--;
+        }
+    }
+
     while(nch>='0' && nch<='9') {
         found_digit = TRUE;
-        hlp = d * 10 + nch - '0';
+        if(limb_digits == LIMB_DIGITS) {
+            if(BNUM_IDX(b.b-1) == BNUM_IDX(b.e)) break;
+            else {
+                b.b--;
+                b.data[BNUM_IDX(b.b)] = 0;
+                limb_digits = 0;
+            }
+        }
+
+        b.data[BNUM_IDX(b.b)] = b.data[BNUM_IDX(b.b)] * 10 + nch - '0';
+        limb_digits++;
         nch = get(ctx);
-        if(d>MSVCRT_UI64_MAX/10 || hlp<d)
-            break;
-        d = hlp;
-        exp--;
     }
-    while(nch>='0' && nch<='9')
+    while(nch>='0' && nch<='9') {
+        if(nch != '0') b.data[BNUM_IDX(b.b)] |= 1;
         nch = get(ctx);
+    }
 
     if(!found_digit) {
         if(nch != MSVCRT_WEOF) unget(ctx);
@@ -784,9 +834,9 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
             if(nch != MSVCRT_WEOF) unget(ctx);
             e *= s;
 
-            if(e<0 && exp<INT_MIN-e) exp = INT_MIN;
-            else if(e>0 && exp>INT_MAX-e) exp = INT_MAX;
-            else exp += e;
+            if(e<0 && dp<INT_MIN-e) dp = INT_MIN;
+            else if(e>0 && dp>INT_MAX-e) dp = INT_MAX;
+            else dp += e;
         } else {
             if(nch != MSVCRT_WEOF) unget(ctx);
             if(found_sign) unget(ctx);
@@ -796,16 +846,54 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         unget(ctx);
     }
 
+    if(!b.data[BNUM_IDX(b.e-1)]) return make_double(sign, 0, 0, ROUND_ZERO, err);
+
+    /* Fill last limb with 0 if needed */
+    if(b.b+1 != b.e) {
+        for(; limb_digits != LIMB_DIGITS; limb_digits++)
+            b.data[BNUM_IDX(b.b)] *= 10;
+    }
+    for(; BNUM_IDX(b.b) < BNUM_IDX(b.e); b.b++) {
+        if(b.data[BNUM_IDX(b.b)]) break;
+    }
+
+    /* move decimal point to limb boundry */
+    if(limb_digits==dp && b.b==b.e-1)
+        return make_double(sign, 0, b.data[BNUM_IDX(b.e-1)], ROUND_ZERO, err);
+    off = (dp - limb_digits) % LIMB_DIGITS;
+    if(off < 0) off += LIMB_DIGITS;
+    if(off) bnum_mult(&b, p10s[off-1]);
+
     if(!err) err = MSVCRT__errno();
-    if(!d) return make_double(sign, exp, d, ROUND_ZERO, err);
-    if(exp > MSVCRT_DBL_MAX_10_EXP)
-        return make_double(sign, INT_MAX, d, ROUND_ZERO, err);
+    if(dp-1 > MSVCRT_DBL_MAX_10_EXP)
+        return make_double(sign, INT_MAX, 1, ROUND_ZERO, err);
     /* Count part of exponent stored in denormalized mantissa. */
     /* Increase exponent range to handle subnormals. */
-    if(exp < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
-        return make_double(sign, INT_MIN, d, ROUND_ZERO, err);
+    if(dp-1 < MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18)
+        return make_double(sign, INT_MIN, 1, ROUND_ZERO, err);
 
-    return convert_e10_to_e2(sign, exp, d, err);
+    while(dp > 2*LIMB_DIGITS) {
+        if(bnum_rshift(&b, 9)) dp -= LIMB_DIGITS;
+        e2 += 9;
+    }
+    while(dp <= LIMB_DIGITS) {
+        if(bnum_lshift(&b, 29)) dp += LIMB_DIGITS;
+        e2 -= 29;
+    }
+    while(b.data[BNUM_IDX(b.e-1)] < LIMB_MAX/10) {
+        bnum_lshift(&b, 1);
+        e2--;
+    }
+
+    /* Check if fractional part is non-zero */
+    /* Caution: it's only correct because bnum_to_mant returns more then 53 bits */
+    for(i=b.e-3; i>=b.b; i--) {
+        if (!b.data[BNUM_IDX(b.b)]) continue;
+        round = ROUND_DOWN;
+        break;
+    }
+
+    return make_double(sign, e2, bnum_to_mant(&b), round, err);
 }
 
 static MSVCRT_wchar_t strtod_str_get(void *ctx)

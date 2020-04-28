@@ -77,19 +77,16 @@ static BOOL local_isnan(double d)
     return d != d;
 }
 
-#define test_strtod_str(string, value, length) _test_strtod_str(__LINE__, string, value, length, FALSE)
-#define test_strtod_str_todo(string, value, length) _test_strtod_str(__LINE__, string, value, length, TRUE)
-static void _test_strtod_str(int line, const char* string, double value, int length, BOOL todo)
+#define test_strtod_str(string, value, length) _test_strtod_str(__LINE__, string, value, length)
+static void _test_strtod_str(int line, const char* string, double value, int length)
 {
     char *end;
     double d;
     d = strtod(string, &end);
-    todo_wine_if(todo) {
-        if (local_isnan(value))
-            ok_(__FILE__, line)(local_isnan(d), "d = %.16le (\"%s\")\n", d, string);
-        else
-            ok_(__FILE__, line)(d == value, "d = %.16le (\"%s\")\n", d, string);
-    }
+    if (local_isnan(value))
+        ok_(__FILE__, line)(local_isnan(d), "d = %.16le (\"%s\")\n", d, string);
+    else
+        ok_(__FILE__, line)(d == value, "d = %.16le (\"%s\")\n", d, string);
     ok_(__FILE__, line)(end == string + length, "incorrect end (%d, \"%s\")\n", (int)(end - string), string);
 }
 
@@ -139,7 +136,7 @@ static void test_strtod(void)
     test_strtod_str("0x1fffffffffffff.80000000000000000001", 9007199254740992.0, 37);
 
     test_strtod_str("4.0621786324484881721115322e-53", 4.0621786324484881721115322e-53, 31);
-    test_strtod_str_todo("1.8905590910042396899370942", 1.8905590910042396899370942, 27);
+    test_strtod_str("1.8905590910042396899370942", 1.8905590910042396899370942, 27);
     test_strtod_str("2.2250738585072014e-308", 2.2250738585072014e-308, 23);
     test_strtod_str("4.9406564584124654e-324", 4.9406564584124654e-324, 23);
 }
