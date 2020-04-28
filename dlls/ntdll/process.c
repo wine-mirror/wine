@@ -51,7 +51,6 @@
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/exception.h"
-#include "wine/library.h"
 #include "wine/server.h"
 
 #ifdef HAVE_MACH_MACH_H
@@ -68,10 +67,6 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
 
-static inline BOOL is_64bit_arch( client_cpu_t cpu )
-{
-    return (cpu == CPU_x86_64 || cpu == CPU_ARM64);
-}
 
 /*
  *	Process object
@@ -995,51 +990,6 @@ static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *p
 }
 
 
-/***********************************************************************
- *           get_alternate_loader
- *
- * Get the name of the alternate (32 or 64 bit) Wine loader.
- */
-static const char *get_alternate_loader( char **ret_env )
-{
-    char *env;
-    const char *loader = NULL;
-    const char *loader_env = getenv( "WINELOADER" );
-
-    *ret_env = NULL;
-
-    if (build_dir) loader = is_win64 ? "loader/wine" : "loader/wine64";
-
-    if (loader_env)
-    {
-        int len = strlen( loader_env );
-        if (!is_win64)
-        {
-            if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("WINELOADER=") + len + 2 ))) return NULL;
-            strcpy( env, "WINELOADER=" );
-            strcat( env, loader_env );
-            strcat( env, "64" );
-        }
-        else
-        {
-            if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("WINELOADER=") + len ))) return NULL;
-            strcpy( env, "WINELOADER=" );
-            strcat( env, loader_env );
-            len += sizeof("WINELOADER=") - 1;
-            if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
-        }
-        if (!loader)
-        {
-            if ((loader = strrchr( env, '/' ))) loader++;
-            else loader = env;
-        }
-        *ret_env = env;
-    }
-    if (!loader) loader = is_win64 ? "wine" : "wine64";
-    return loader;
-}
-
-
 #ifdef __APPLE__
 /***********************************************************************
  *           terminate_main_thread
@@ -1117,15 +1067,10 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
 {
     pid_t pid;
     int stdin_fd = -1, stdout_fd = -1;
-    char *wineloader = NULL;
-    const char *loader = NULL;
     char **argv;
     NTSTATUS status = STATUS_SUCCESS;
 
-    argv = build_argv( &params->CommandLine, 1 );
-
-    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
-        loader = get_alternate_loader( &wineloader );
+    argv = build_argv( &params->CommandLine, 2 );
 
     wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
     wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
@@ -1134,10 +1079,6 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
     {
         if (!(pid = fork()))  /* grandchild */
         {
-            char preloader_reserve[64], socket_env[64];
-            ULONGLONG res_start = pe_info->base;
-            ULONGLONG res_end   = pe_info->base + pe_info->map_size;
-
             if (params->ConsoleFlags ||
                 params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
                 (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
@@ -1150,20 +1091,10 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
             if (stdin_fd != -1) close( stdin_fd );
             if (stdout_fd != -1) close( stdout_fd );
 
-            /* Reset signals that we previously set to SIG_IGN */
-            signal( SIGPIPE, SIG_DFL );
-
-            sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
-            sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
-                     (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
-
-            putenv( preloader_reserve );
-            putenv( socket_env );
             if (winedebug) putenv( winedebug );
-            if (wineloader) putenv( wineloader );
             if (unixdir) chdir( unixdir );
 
-            if (argv) wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+            exec_wineloader( argv, socketfd, pe_info );
             _exit(1);
         }
 
@@ -1182,53 +1113,8 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
 
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
-    RtlFreeHeap( GetProcessHeap(), 0, wineloader );
     RtlFreeHeap( GetProcessHeap(), 0, argv );
     return status;
-}
-
-
-/***********************************************************************
- *           exec_loader
- */
-static NTSTATUS exec_loader( const UNICODE_STRING *cmdline, int socketfd, const pe_image_info_t *pe_info )
-{
-    char *wineloader = NULL;
-    const char *loader = NULL;
-    char **argv;
-    char preloader_reserve[64], socket_env[64];
-    ULONGLONG res_start = pe_info->base;
-    ULONGLONG res_end   = pe_info->base + pe_info->map_size;
-
-    if (!(argv = build_argv( cmdline, 1 ))) return STATUS_NO_MEMORY;
-
-    if (!is_win64 ^ !is_64bit_arch( pe_info->cpu ))
-        loader = get_alternate_loader( &wineloader );
-
-    /* Reset signals that we previously set to SIG_IGN */
-    signal( SIGPIPE, SIG_DFL );
-
-    sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
-    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
-             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
-
-    putenv( preloader_reserve );
-    putenv( socket_env );
-    if (wineloader) putenv( wineloader );
-
-    do
-    {
-        wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
-    }
-#ifdef __APPLE__
-    while (errno == ENOTSUP && terminate_main_thread());
-#else
-    while (0);
-#endif
-
-    RtlFreeHeap( GetProcessHeap(), 0, wineloader );
-    RtlFreeHeap( GetProcessHeap(), 0, argv );
-    return STATUS_INVALID_IMAGE_FORMAT;
 }
 
 
@@ -1636,7 +1522,24 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     }
     SERVER_END_REQ;
 
-    if (!status) status = exec_loader( &strW, socketfd[0], &pe_info );
+    if (!status)
+    {
+        char **argv = build_argv( &strW, 2 );
+        if (argv)
+        {
+            do
+            {
+                status = exec_wineloader( argv, socketfd[0], &pe_info );
+            }
+#ifdef __APPLE__
+            while (errno == ENOTSUP && terminate_main_thread());
+#else
+            while (0);
+#endif
+            RtlFreeHeap( GetProcessHeap(), 0, argv );
+        }
+        else status = STATUS_NO_MEMORY;
+    }
     close( socketfd[0] );
     return status;
 }

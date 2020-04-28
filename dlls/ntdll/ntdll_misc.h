@@ -113,6 +113,7 @@ extern size_t dll_path_maxlen DECLSPEC_HIDDEN;
 extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
+extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
 extern void server_init_process_done(void) DECLSPEC_HIDDEN;
 extern size_t server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
