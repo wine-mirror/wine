@@ -49,6 +49,21 @@ static IBaseFilter *create_vmr9(DWORD mode)
     return filter;
 }
 
+static HRESULT set_mixing_mode(IBaseFilter *filter, DWORD count)
+{
+    IVMRFilterConfig9 *config;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRFilterConfig9_SetNumberOfStreams(config, count);
+    todo_wine_if (count != 1) ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IVMRFilterConfig9_Release(config);
+    return hr;
+}
+
 static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
 {
     return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
@@ -198,17 +213,13 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOO
     return hr;
 }
 
-static void test_interfaces(void)
+static void test_common_interfaces(IBaseFilter *filter)
 {
-    IBaseFilter *filter = create_vmr9(0);
-    ULONG ref;
     IPin *pin;
 
     check_interface(filter, &IID_IAMCertifiedOutputProtection, TRUE);
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
-    check_interface(filter, &IID_IBasicVideo, TRUE);
-    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
     todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
     check_interface(filter, &IID_IMediaPosition, TRUE);
@@ -217,14 +228,10 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IQualityControl, TRUE);
     todo_wine check_interface(filter, &IID_IQualProp, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
-    check_interface(filter, &IID_IVideoWindow, TRUE);
     todo_wine check_interface(filter, &IID_IVMRAspectRatioControl9, TRUE);
     todo_wine check_interface(filter, &IID_IVMRDeinterlaceControl9, TRUE);
     check_interface(filter, &IID_IVMRFilterConfig9, TRUE);
     todo_wine check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
-    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
-     * insufficient support. */
-    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
 
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IDirectDrawVideo, FALSE);
@@ -236,12 +243,9 @@ static void test_interfaces(void)
     todo_wine check_interface(filter, &IID_IVMRFilterConfig, FALSE);
     check_interface(filter, &IID_IVMRMixerBitmap, FALSE);
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
-    check_interface(filter, &IID_IVMRMixerControl9, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
-    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
@@ -256,68 +260,79 @@ static void test_interfaces(void)
     check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
+}
 
-    IBaseFilter_Release(filter);
+static void test_interfaces(void)
+{
+    IBaseFilter *filter = create_vmr9(0);
+    ULONG ref;
+
+    test_common_interfaces(filter);
+
+    check_interface(filter, &IID_IBasicVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+    check_interface(filter, &IID_IVideoWindow, TRUE);
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
+    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
+
+    check_interface(filter, &IID_IVMRMixerControl9, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
     filter = create_vmr9(VMR9Mode_Windowless);
+    test_common_interfaces(filter);
 
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
     check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
     check_interface(filter, &IID_IVMRWindowlessControl9, TRUE);
 
     todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IBasicVideo2, FALSE);
     todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
-    check_interface(filter, &IID_IVMRMixerControl, FALSE);
     check_interface(filter, &IID_IVMRMixerControl9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
-    check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
 
-    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-    check_interface(pin, &IID_IMemInputPin, TRUE);
-    check_interface(pin, &IID_IOverlay, TRUE);
-    check_interface(pin, &IID_IPin, TRUE);
-    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
-    check_interface(pin, &IID_IUnknown, TRUE);
-
-    check_interface(pin, &IID_IKsPropertySet, FALSE);
-    check_interface(pin, &IID_IMediaPosition, FALSE);
-    check_interface(pin, &IID_IMediaSeeking, FALSE);
-
-    IPin_Release(pin);
-
-    IBaseFilter_Release(filter);
     filter = create_vmr9(VMR9Mode_Renderless);
+    test_common_interfaces(filter);
 
     check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, TRUE);
 
     todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IBasicVideo2, FALSE);
     todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
-    check_interface(filter, &IID_IVMRMixerControl, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
-    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
-    check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
-
-    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
-
-    check_interface(pin, &IID_IMemInputPin, TRUE);
-    check_interface(pin, &IID_IOverlay, TRUE);
-    check_interface(pin, &IID_IPin, TRUE);
-    todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
-    check_interface(pin, &IID_IUnknown, TRUE);
-
-    check_interface(pin, &IID_IKsPropertySet, FALSE);
-    check_interface(pin, &IID_IMediaPosition, FALSE);
-    check_interface(pin, &IID_IMediaSeeking, FALSE);
-
-    IPin_Release(pin);
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    filter = create_vmr9(VMR9Mode_Windowed);
+    if (SUCCEEDED(set_mixing_mode(filter, 1)))
+    {
+        test_common_interfaces(filter);
+
+        check_interface(filter, &IID_IBasicVideo, TRUE);
+        todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+        check_interface(filter, &IID_IVideoWindow, TRUE);
+        todo_wine check_interface(filter, &IID_IVMRMixerControl9, TRUE);
+        /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+         * insufficient support. */
+        check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
+
+        check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+        check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+
+        ref = IBaseFilter_Release(filter);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+    }
 }
 
 static const GUID test_iid = {0x33333333};
@@ -414,21 +429,6 @@ static void test_aggregation(void)
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
-static HRESULT set_mixing_mode(IBaseFilter *filter)
-{
-    IVMRFilterConfig9 *config;
-    HRESULT hr;
-
-    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    IVMRFilterConfig9_Release(config);
-    return hr;
-}
-
 static void test_enum_pins(void)
 {
     IBaseFilter *filter = create_vmr9(0);
@@ -515,7 +515,7 @@ static void test_enum_pins(void)
 
     IEnumPins_Release(enum2);
 
-    if (SUCCEEDED(set_mixing_mode(filter)))
+    if (SUCCEEDED(set_mixing_mode(filter, 2)))
     {
         hr = IEnumPins_Next(enum1, 1, pins, NULL);
         ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -585,7 +585,7 @@ static void test_find_pin(void)
     hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
-    if (SUCCEEDED(set_mixing_mode(filter)))
+    if (SUCCEEDED(set_mixing_mode(filter, 2)))
     {
         IEnumPins_Reset(enum_pins);
 
@@ -645,7 +645,7 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    if (SUCCEEDED(set_mixing_mode(filter)))
+    if (SUCCEEDED(set_mixing_mode(filter, 2)))
     {
         IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
         hr = IPin_QueryPinInfo(pin, &info);
