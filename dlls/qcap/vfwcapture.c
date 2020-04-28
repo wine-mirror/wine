@@ -167,7 +167,6 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_cleanup_stream = vfw_capture_cleanup_stream,
 };
 
-/* AMStreamConfig interface, we only need to implement {G,S}etFormat */
 static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID iid, void **out)
 {
     VfwCapture *filter = impl_from_IAMStreamConfig(iface);
@@ -242,13 +241,20 @@ AMStreamConfig_GetFormat( IAMStreamConfig *iface, AM_MEDIA_TYPE **pmt )
     return hr;
 }
 
-static HRESULT WINAPI
-AMStreamConfig_GetNumberOfCapabilities( IAMStreamConfig *iface, int *piCount,
-                                        int *piSize )
+static HRESULT WINAPI AMStreamConfig_GetNumberOfCapabilities(IAMStreamConfig *iface,
+        int *count, int *size)
 {
-    FIXME("%p: %p %p - stub, intentional\n", iface, piCount, piSize);
-    *piCount = 0;
-    return E_NOTIMPL; /* Not implemented for this interface */
+    VfwCapture *filter = impl_from_IAMStreamConfig(iface);
+
+    TRACE("filter %p, count %p, size %p.\n", filter, count, size);
+
+    if (!count || !size)
+        return E_POINTER;
+
+    *count = qcap_driver_get_caps_count(filter->driver_info);
+    *size = sizeof(VIDEO_STREAM_CONFIG_CAPS);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI

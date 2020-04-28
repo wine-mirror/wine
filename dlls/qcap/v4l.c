@@ -624,6 +624,11 @@ error:
     return NULL;
 }
 
+LONG qcap_driver_get_caps_count(Capture *device)
+{
+    return device->caps_count;
+}
+
 #else
 
 Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card)
@@ -696,6 +701,12 @@ void qcap_driver_stop_stream(Capture *device)
 void qcap_driver_cleanup_stream(Capture *device)
 {
     ERR("v4l absent: shouldn't be called\n");
+}
+
+LONG qcap_driver_get_caps_count(Capture *device)
+{
+    ERR("v4l absent: shouldn't be called\n");
+    return 0;
 }
 
 #endif /* defined(VIDIOCMCAPTURE) */

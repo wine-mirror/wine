@@ -66,6 +66,7 @@ static void test_stream_config(IPin *pin)
     AM_MEDIA_TYPE *format, *format2;
     IAMStreamConfig *stream_config;
     LONG depth, compression;
+    LONG count, size;
     HRESULT hr;
 
     hr = IPin_QueryInterface(pin, &IID_IAMStreamConfig, (void **)&stream_config);
@@ -115,6 +116,23 @@ static void test_stream_config(IPin *pin)
     hr = IAMStreamConfig_SetFormat(stream_config, format);
     ok(hr == E_FAIL, "Got hr %#x.\n", hr);
     FreeMediaType(format);
+
+    count = 0xdeadbeef;
+    size = 0xdeadbeef;
+    /* Crash on Windows */
+    if (0)
+    {
+        hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, &count, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+        hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, NULL, &size);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IAMStreamConfig_GetNumberOfCapabilities(stream_config, &count, &size);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count != 0xdeadbeef, "Got wrong count: %d.\n", count);
+    ok(size == sizeof(VIDEO_STREAM_CONFIG_CAPS), "Got wrong size: %d.\n", size);
 
     IAMStreamConfig_Release(stream_config);
 }
