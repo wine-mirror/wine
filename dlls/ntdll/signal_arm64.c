@@ -1251,6 +1251,15 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /**********************************************************************
+ *             signal_init_threading
+ */
+void signal_init_threading(void)
+{
+    pthread_key_create( &teb_key, NULL );
+}
+
+
+/**********************************************************************
  *             signal_alloc_thread
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
@@ -1286,14 +1295,7 @@ void signal_free_thread( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
-    static BOOL init_done;
     stack_t ss;
-
-    if (!init_done)
-    {
-        pthread_key_create( &teb_key, NULL );
-        init_done = TRUE;
-    }
 
     ss.ss_sp    = (char *)teb + teb_size;
     ss.ss_size  = signal_stack_size;

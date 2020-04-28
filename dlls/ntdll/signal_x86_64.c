@@ -3108,6 +3108,14 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /**********************************************************************
+ *             signal_init_threading
+ */
+void signal_init_threading(void)
+{
+}
+
+
+/**********************************************************************
  *		signal_alloc_thread
  */
 NTSTATUS signal_alloc_thread( TEB **teb )

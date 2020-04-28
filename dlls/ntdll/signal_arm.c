@@ -953,6 +953,15 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 
 
 /**********************************************************************
+ *             signal_init_threading
+ */
+void signal_init_threading(void)
+{
+    pthread_key_create( &teb_key, NULL );
+}
+
+
+/**********************************************************************
  *             signal_alloc_thread
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
@@ -997,14 +1006,6 @@ void signal_free_thread( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
-    static BOOL init_done;
-
-    if (!init_done)
-    {
-        pthread_key_create( &teb_key, NULL );
-        init_done = TRUE;
-    }
-
 #if defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_8A__)
     /* Win32/ARM applications expect the TEB pointer to be in the TPIDRURW register. */
     __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );

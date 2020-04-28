@@ -2438,25 +2438,6 @@ static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
                                     LDT_FLAGS_ALLOCATED);
 }
 
-static void ldt_init(void)
-{
-#ifdef __linux__
-    /* the preloader may have allocated it already */
-    gdt_fs_sel = get_fs();
-    if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
-    {
-        struct modify_ldt_s ldt_info = { -1 };
-
-        ldt_info.seg_32bit = 1;
-        ldt_info.usable = 1;
-        if (set_thread_area( &ldt_info ) >= 0) gdt_fs_sel = (ldt_info.entry_number << 3) | 3;
-        else gdt_fs_sel = 0;
-    }
-#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
-    gdt_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
-#endif
-}
-
 WORD ldt_alloc_fs( TEB *teb, int first_thread )
 {
     LDT_ENTRY entry;
@@ -2584,6 +2565,29 @@ NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_E
 
 
 /**********************************************************************
+ *             signal_init_threading
+ */
+void signal_init_threading(void)
+{
+#ifdef __linux__
+    /* the preloader may have allocated it already */
+    gdt_fs_sel = get_fs();
+    if (!gdt_fs_sel || !is_gdt_sel( gdt_fs_sel ))
+    {
+        struct modify_ldt_s ldt_info = { -1 };
+
+        ldt_info.seg_32bit = 1;
+        ldt_info.usable = 1;
+        if (set_thread_area( &ldt_info ) >= 0) gdt_fs_sel = (ldt_info.entry_number << 3) | 3;
+        else gdt_fs_sel = 0;
+    }
+#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
+    gdt_fs_sel = GSEL( GUFS_SEL, SEL_UPL );
+#endif
+}
+
+
+/**********************************************************************
  *		signal_alloc_thread
  */
 NTSTATUS signal_alloc_thread( TEB **teb )
@@ -2603,7 +2607,6 @@ NTSTATUS signal_alloc_thread( TEB **teb )
         while ((1u << sigstack_alignment) < min_size) sigstack_alignment++;
         signal_stack_mask = (1 << sigstack_alignment) - 1;
         signal_stack_size = (1 << sigstack_alignment) - teb_size;
-        ldt_init();
     }
 
     size = signal_stack_mask + 1;

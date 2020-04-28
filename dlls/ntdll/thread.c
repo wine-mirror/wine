@@ -284,6 +284,7 @@ TEB *thread_init(void)
 
     /* allocate and initialize the initial TEB */
 
+    signal_init_threading();
     signal_alloc_thread( &teb );
     teb->Peb = peb;
     teb->Tib.StackBase = (void *)~0UL;
