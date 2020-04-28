@@ -305,7 +305,6 @@ static void run_find_file_multi(void)
         "File not found - %s\r\n",
         path_temp_file1, path_temp_file2, path_temp_file3);
 
-    todo_wine
     run_find_stdin_(commandline_new, (BYTE*)"", 0, (BYTE*)out_expected, strlen(out_expected), 0, __FILE__, __LINE__);
 
     CloseHandle(handle_file);
@@ -322,7 +321,6 @@ static void test_errors(void)
     todo_wine /* Quotes are not properly passed into wine yet */
     run_find_stdin_str("\"test", "", "FIND: Parameter format not correct\r\n", 2);
     run_find_stdin_str("\"test\" /XYZ", "", "FIND: Invalid switch\r\n", 2);
-    todo_wine
     run_find_stdin_str("\"test\" C:\\doesnotexist.dat", "", "File not found - C:\\DOESNOTEXIST.DAT\r\n", 1);
 }
 
@@ -398,19 +396,12 @@ static void test_unicode_support_stdin(void)
 
 static void test_file_search(void)
 {
-    todo_wine
     run_find_file_str("\"\"", "test", "", 1);
-    todo_wine
     run_find_file_str("\"test\"", "", "", 1);
-    todo_wine
     run_find_file_str("\"test\"", "test",  "test\r\n", 0);
-    todo_wine
     run_find_file_str("\"test\"", "test2", "test2\r\n", 0);
-    todo_wine
     run_find_file_str("\"test\"", "test\r2", "test\r2\r\n", 0);
-    todo_wine
     run_find_file_str("\"test2\"", "test",  "", 1);
-    todo_wine
     run_find_file_str("\"test\"", "test\nother\ntest2\ntest3", "test\r\ntest2\r\ntest3\r\n", 0);
 }
 
@@ -419,31 +410,21 @@ static void test_unicode_support_file(void)
     /* Test unicode support on files */
 
     /* Test UTF-8 BOM */
-    todo_wine
     run_find_file_unicode(str_en_utf8_nobom, str_en_utf8_nobom, 0);
-    todo_wine
     run_find_file_unicode(str_en_utf8_bom, str_en_utf8_bom,  0);
 
     /* Test russian characters */
-    todo_wine
     run_find_file_unicode(str_rus_utf8_bom, str_rus_utf8_bom, 0);
-    todo_wine
     run_find_file_unicode(str_rus_utf8_nobom, str_rus_utf8_nobom, 0);
 
     /* Test japanese characters */
-    todo_wine
     run_find_file_unicode(str_jap_utf8_nobom, str_jap_utf8_nobom, 0);
-    todo_wine
     run_find_file_unicode(str_jap_utf8_bom, str_jap_utf8_bom, 0);
-    todo_wine
     run_find_file_unicode(str_jap_shiftjis, str_jap_shiftjis, 0);
 
     /* Test unsupported encodings */
-    todo_wine
     run_find_file_unicode(str_jap_utf16le_nobom, str_empty, 1);
-    todo_wine
     run_find_file_unicode(str_jap_utf16be_bom,   str_empty, 1);
-    todo_wine
     run_find_file_unicode(str_jap_utf16be_nobom, str_empty, 1);
 
     /* Test utf16le */

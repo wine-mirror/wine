@@ -22,4 +22,5 @@ STRINGTABLE
 {
     IDS_INVALID_PARAMETER "FIND: Parameter format not correct\r\n"
     IDS_INVALID_SWITCH    "FIND: Invalid switch\r\n"
+    IDS_FILE_NOT_FOUND    "File not found - %s\r\n"
 }
