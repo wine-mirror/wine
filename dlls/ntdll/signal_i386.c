@@ -2328,29 +2328,8 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": ldt_section") }
 };
 static RTL_CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-static sigset_t ldt_sigset;
 
 static const LDT_ENTRY null_entry;
-
-static void ldt_lock(void)
-{
-    sigset_t sigset;
-
-    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
-    RtlEnterCriticalSection( &ldt_section );
-    if (ldt_section.RecursionCount == 1) ldt_sigset = sigset;
-}
-
-static void ldt_unlock(void)
-{
-    if (ldt_section.RecursionCount == 1)
-    {
-        sigset_t sigset = ldt_sigset;
-        RtlLeaveCriticalSection( &ldt_section );
-        pthread_sigmask( SIG_SETMASK, &sigset, NULL );
-    }
-    else RtlLeaveCriticalSection( &ldt_section );
-}
 
 static inline void *ldt_get_base( LDT_ENTRY ent )
 {
@@ -2510,14 +2489,16 @@ NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_
  */
 NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
 {
+    sigset_t sigset;
+
     if (sel1 >> 16 || sel2 >> 16) return STATUS_INVALID_LDT_DESCRIPTOR;
     if (sel1 && (sel1 >> 3) < first_ldt_entry) return STATUS_INVALID_LDT_DESCRIPTOR;
     if (sel2 && (sel2 >> 3) < first_ldt_entry) return STATUS_INVALID_LDT_DESCRIPTOR;
 
-    ldt_lock();
+    server_enter_uninterrupted_section( &ldt_section, &sigset );
     if (sel1) ldt_set_entry( sel1, entry1 );
     if (sel2) ldt_set_entry( sel2, entry2 );
-    ldt_unlock();
+    server_leave_uninterrupted_section( &ldt_section, &sigset );
    return STATUS_SUCCESS;
 }
 
@@ -2555,6 +2536,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
     if (!gdt_fs_sel)
     {
         static int first_thread = 1;
+        sigset_t sigset;
         int idx;
         LDT_ENTRY entry = ldt_make_entry( teb, teb_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
 
@@ -2568,14 +2550,14 @@ NTSTATUS signal_alloc_thread( TEB *teb )
         }
         else
         {
-            ldt_lock();
+            server_enter_uninterrupted_section( &ldt_section, &sigset );
             for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
             {
                 if (__wine_ldt_copy.flags[idx]) continue;
                 ldt_set_entry( (idx << 3) | 7, entry );
                 break;
             }
-            ldt_unlock();
+            server_leave_uninterrupted_section( &ldt_section, &sigset );
             if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
         }
         thread_data->fs = (idx << 3) | 7;
@@ -2592,12 +2574,13 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 void signal_free_thread( TEB *teb )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
+    sigset_t sigset;
 
     if (gdt_fs_sel) return;
 
-    ldt_lock();
+    server_enter_uninterrupted_section( &ldt_section, &sigset );
     __wine_ldt_copy.flags[thread_data->fs >> 3] = 0;
-    ldt_unlock();
+    server_leave_uninterrupted_section( &ldt_section, &sigset );
 }
 
 
