@@ -19,6 +19,5 @@ C_SRCS = \
 	service.c \
 	wmi.c
 
-IDL_SRCS = svcctl.idl
 
 RC_SRCS = version.rc
