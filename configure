@@ -20760,6 +20760,7 @@ wine_fn_config_makefile dlls/msado15 enable_msado15
 wine_fn_config_makefile dlls/msado15/tests enable_tests
 wine_fn_config_makefile dlls/msadp32.acm enable_msadp32_acm
 wine_fn_config_makefile dlls/msasn1 enable_msasn1
+wine_fn_config_makefile dlls/msasn1/tests enable_tests
 wine_fn_config_makefile dlls/mscat32 enable_mscat32
 wine_fn_config_makefile dlls/mscms enable_mscms
 wine_fn_config_makefile dlls/mscms/tests enable_tests
