@@ -2124,7 +2124,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
         return VFW_E_WRONG_STATE;
     }
 
-    if (allocinfo->dwFlags & VMR9AllocFlag_OffscreenSurface)
+    if (allocinfo->dwFlags == VMR9AllocFlag_OffscreenSurface)
     {
         ERR("Creating offscreen surface\n");
         for (i = 0; i < *numbuffers; ++i)
@@ -2135,7 +2135,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
                 break;
         }
     }
-    else if (allocinfo->dwFlags & VMR9AllocFlag_TextureSurface)
+    else if (allocinfo->dwFlags == VMR9AllocFlag_TextureSurface)
     {
         TRACE("Creating texture surface\n");
         for (i = 0; i < *numbuffers; ++i)
@@ -2150,10 +2150,20 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
             IDirect3DTexture9_Release(texture);
         }
     }
+    else if (allocinfo->dwFlags == VMR9AllocFlag_3DRenderTarget)
+    {
+        for (i = 0; i < *numbuffers; ++i)
+        {
+            if (FAILED(hr = IDirect3DDevice9_CreateRenderTarget(This->allocator_d3d9_dev,
+                    allocinfo->dwWidth, allocinfo->dwHeight, allocinfo->Format,
+                    D3DMULTISAMPLE_NONE, 0, FALSE, &surface[i], NULL)))
+                break;
+        }
+    }
     else
     {
-         FIXME("Could not allocate for type %08x\n", allocinfo->dwFlags);
-         return E_NOTIMPL;
+        FIXME("Unhandled flags %#x.\n", allocinfo->dwFlags);
+        return E_NOTIMPL;
     }
 
     if (i >= allocinfo->MinBuffers)
