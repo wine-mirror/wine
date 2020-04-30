@@ -298,7 +298,7 @@ static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVIN
     {
         if (!SetupDiCallClassInstaller(dif_list[i], set, sp_device) && GetLastError() != ERROR_DI_DO_DEFAULT)
         {
-            ERR("Install function %#x failed, error %#x.\n", dif_list[i], GetLastError());
+            WARN("Install function %#x failed, error %#x.\n", dif_list[i], GetLastError());
             return FALSE;
         }
     }
