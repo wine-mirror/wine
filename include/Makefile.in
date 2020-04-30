@@ -238,6 +238,7 @@ SOURCES = \
 	dshow.h \
 	dsound.h \
 	dsrole.h \
+	dvdif.idl \
 	dvdmedia.h \
 	dvoice.h \
 	dwmapi.h \
