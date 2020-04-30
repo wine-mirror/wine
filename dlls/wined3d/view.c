@@ -653,6 +653,38 @@ VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type,
     }
 }
 
+static VkBufferView wined3d_view_vk_create_buffer_view(struct wined3d_context_vk *context_vk,
+        const struct wined3d_view_desc *desc, struct wined3d_buffer_vk *buffer_vk,
+        const struct wined3d_format_vk *view_format_vk)
+{
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    VkBufferViewCreateInfo create_info;
+    struct wined3d_device_vk *device_vk;
+    VkBufferView vk_buffer_view;
+    unsigned int offset, size;
+    VkResult vr;
+
+    get_buffer_view_range(&buffer_vk->b, desc, &view_format_vk->f, &offset, &size);
+    wined3d_buffer_prepare_location(&buffer_vk->b, &context_vk->c, WINED3D_LOCATION_BUFFER);
+
+    create_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+    create_info.pNext = NULL;
+    create_info.flags = 0;
+    create_info.buffer = buffer_vk->bo.vk_buffer;
+    create_info.format = view_format_vk->vk_format;
+    create_info.offset = buffer_vk->bo.buffer_offset + offset;
+    create_info.range = size;
+
+    device_vk = wined3d_device_vk(buffer_vk->b.resource.device);
+    if ((vr = VK_CALL(vkCreateBufferView(device_vk->vk_device, &create_info, NULL, &vk_buffer_view))) < 0)
+    {
+        ERR("Failed to create buffer view, vr %s.\n", wined3d_debug_vkresult(vr));
+        return VK_NULL_HANDLE;
+    }
+
+    return vk_buffer_view;
+}
+
 static VkImageView wined3d_view_vk_create_texture_view(struct wined3d_context_vk *context_vk,
         const struct wined3d_view_desc *desc, struct wined3d_texture_vk *texture_vk,
         const struct wined3d_format_vk *view_format_vk, struct color_fixup_desc fixup, bool srv)
@@ -987,6 +1019,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
     const struct wined3d_format *format;
     struct wined3d_resource *resource;
     struct wined3d_context *context;
+    VkBufferView vk_buffer_view;
     uint32_t default_flags = 0;
     VkImageView vk_image_view;
 
@@ -995,7 +1028,18 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        FIXME("Buffer views not implemented.\n");
+        context = context_acquire(resource->device, NULL, 0);
+        vk_buffer_view = wined3d_view_vk_create_buffer_view(wined3d_context_vk(context),
+                desc, wined3d_buffer_vk(buffer_from_resource(resource)), wined3d_format_vk(format));
+        context_release(context);
+
+        if (!vk_buffer_view)
+            return;
+
+        TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
+
+        srv_vk->view_vk.u.vk_buffer_view = vk_buffer_view;
+
         return;
     }
 
@@ -1026,9 +1070,9 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
     TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(vk_image_view));
 
-    srv_vk->view_vk.vk_image_info.imageView = vk_image_view;
-    srv_vk->view_vk.vk_image_info.sampler = VK_NULL_HANDLE;
-    srv_vk->view_vk.vk_image_info.imageLayout = texture_vk->layout;
+    srv_vk->view_vk.u.vk_image_info.imageView = vk_image_view;
+    srv_vk->view_vk.u.vk_image_info.sampler = VK_NULL_HANDLE;
+    srv_vk->view_vk.u.vk_image_info.imageLayout = texture_vk->layout;
 }
 
 HRESULT wined3d_shader_resource_view_vk_init(struct wined3d_shader_resource_view_vk *view_vk,

@@ -598,7 +598,7 @@ static void buffer_conversion_upload(struct wined3d_buffer *buffer, struct wined
     heap_free(data);
 }
 
-static BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
+BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, unsigned int location)
 {
     return buffer->buffer_ops->buffer_prepare_location(buffer, context, location);
