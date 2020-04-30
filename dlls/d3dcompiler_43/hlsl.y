@@ -808,6 +808,13 @@ static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, s
     return list;
 }
 
+static DWORD get_array_size(const struct hlsl_type *type)
+{
+    if (type->type == HLSL_CLASS_ARRAY)
+        return get_array_size(type->e.array.type) * type->e.array.elements_count;
+    return 1;
+}
+
 static struct hlsl_type *new_struct_type(const char *name, struct list *fields)
 {
     struct hlsl_type *type = d3dcompiler_alloc(sizeof(*type));
@@ -822,13 +829,15 @@ static struct hlsl_type *new_struct_type(const char *name, struct list *fields)
     type->type = HLSL_CLASS_STRUCT;
     type->base_type = HLSL_TYPE_VOID;
     type->name = name;
-    type->dimx = type->dimy = 1;
+    type->dimx = 0;
+    type->dimy = 1;
     type->e.elements = fields;
 
     LIST_FOR_EACH_ENTRY(field, fields, struct hlsl_struct_field, entry)
     {
         field->reg_offset = reg_size;
         reg_size += field->type->reg_size;
+        type->dimx += field->type->dimx * field->type->dimy * get_array_size(field->type);
     }
     type->reg_size = reg_size;
 
