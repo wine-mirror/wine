@@ -2523,6 +2523,28 @@ static void test_allocate_surface_helper(void)
     ok(!surfaces[0], "Surface 0 was allocated.\n");
     ok(!surfaces[1], "Surface 1 was allocated.\n");
 
+    info.Format = 0;
+    info.dwFlags = VMR9AllocFlag_3DRenderTarget;
+    count = 1;
+    hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 1, "Got count %u.\n", count);
+    ok(!!surfaces[0], "Surface 0 was not allocated.\n");
+    ok(info.Format != 0, "Expected a format.\n");
+
+    hr = IDirect3DSurface9_GetDesc(surfaces[0], &desc);
+    ok(hr == D3D_OK, "Got hr %#x.\n", hr);
+    ok(desc.Format == info.Format, "Expected format %#x, got %#x.\n", info.Format, desc.Format);
+    ok(desc.Type == D3DRTYPE_SURFACE, "Got type %u.\n", desc.Type);
+    ok(desc.Usage == D3DUSAGE_RENDERTARGET, "Got usage %#x.\n", desc.Usage);
+    ok(desc.Pool == D3DPOOL_DEFAULT, "Got pool %u.\n", desc.Pool);
+    ok(desc.MultiSampleType == D3DMULTISAMPLE_NONE, "Got multisample type %u.\n", desc.MultiSampleType);
+    ok(!desc.MultiSampleQuality, "Got multisample quality %u.\n", desc.MultiSampleQuality);
+    ok(desc.Width == 32, "Got width %u.\n", desc.Width);
+    ok(desc.Height == 16, "Got height %u.\n", desc.Height);
+
+    IDirect3DSurface9_Release(surfaces[0]);
+
 out:
     IVMRSurfaceAllocatorNotify9_Release(notify);
     ref = IBaseFilter_Release(filter);

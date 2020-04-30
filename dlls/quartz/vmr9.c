@@ -2112,6 +2112,18 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
     if (!allocinfo || !numbuffers || !surface)
         return E_POINTER;
 
+    if (!allocinfo->Format)
+    {
+        IDirect3DSurface9 *backbuffer;
+        D3DSURFACE_DESC desc;
+
+        IDirect3DDevice9_GetBackBuffer(This->allocator_d3d9_dev, 0, 0,
+                D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+        IDirect3DSurface9_GetDesc(backbuffer, &desc);
+        IDirect3DSurface9_Release(backbuffer);
+        allocinfo->Format = desc.Format;
+    }
+
     if (!*numbuffers || *numbuffers < allocinfo->MinBuffers)
     {
         ERR("Invalid number of buffers?\n");
