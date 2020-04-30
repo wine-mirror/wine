@@ -841,6 +841,8 @@ struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int arra
     type->e.array.elements_count = array_size;
     type->e.array.type = basic_type;
     type->reg_size = basic_type->reg_size * array_size;
+    type->dimx = basic_type->dimx;
+    type->dimy = basic_type->dimy;
     return type;
 }
 

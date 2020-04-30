@@ -894,12 +894,12 @@ static void test_constant_table(void)
         "#pragma pack_matrix(row_major)\n"
         "    float2x2 d;\n"
         "} f;\n"
-        "uniform float g[5];\n"
+        "uniform float2 g[5];\n"
         "uniform matrix_t i;\n"
         "uniform struct matrix_record j;\n"
         "float4 main(uniform float4 h) : COLOR\n"
         "{\n"
-        "    return a + b + c._31 + d._31 + f.d._22 + g[e] + h + i._33 + j.a._33;\n"
+        "    return a + b + c._31 + d._31 + f.d._22 + g[e].x + h + i._33 + j.a._33;\n"
         "}";
 
     D3DXCONSTANTTABLE_DESC table_desc;
@@ -920,7 +920,7 @@ static void test_constant_table(void)
         {"d", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
         {"e", D3DXRS_FLOAT4, 0, 1, D3DXPC_SCALAR, D3DXPT_INT, 1, 1, 1, 0, 4},
         {"f", D3DXRS_FLOAT4, 0, 6, D3DXPC_STRUCT, D3DXPT_VOID, 1, 10, 1, 4, 40},
-        {"g", D3DXRS_FLOAT4, 0, 5, D3DXPC_SCALAR, D3DXPT_FLOAT, 1, 1, 5, 0, 20},
+        {"g", D3DXRS_FLOAT4, 0, 5, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 2, 5, 0, 40},
         {"i", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 1, 0, 36},
         {"j", D3DXRS_FLOAT4, 0, 3, D3DXPC_STRUCT, D3DXPT_VOID, 1, 9, 1, 1, 36},
     };
