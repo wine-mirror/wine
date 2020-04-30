@@ -505,11 +505,9 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         size = call->virtual_alloc.size;
         if ((ULONG_PTR)addr == call->virtual_alloc.addr && size == call->virtual_alloc.size)
         {
-            result->virtual_alloc.status = virtual_alloc_aligned( &addr,
-                                                                  call->virtual_alloc.zero_bits_64, &size,
-                                                                  call->virtual_alloc.op_type,
-                                                                  call->virtual_alloc.prot,
-                                                                  0 );
+            result->virtual_alloc.status = virtual_alloc( &addr, call->virtual_alloc.zero_bits_64, &size,
+                                                          call->virtual_alloc.op_type,
+                                                          call->virtual_alloc.prot );
             result->virtual_alloc.addr = wine_server_client_ptr( addr );
             result->virtual_alloc.size = size;
         }
