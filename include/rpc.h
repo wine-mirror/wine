@@ -25,11 +25,7 @@
 #ifndef __WINE_RPC_H
 #define __WINE_RPC_H
 
-#if defined(__powerpc__) || defined(_MAC) /* ? */
-# define __RPC_MAC__
- /* Also define __RPC_WIN32__ to ensure compatibility */
-# define __RPC_WIN32__
-#elif defined(_WIN64)
+#ifdef _WIN64
 # define __RPC_WIN64__
 #else
 # define __RPC_WIN32__

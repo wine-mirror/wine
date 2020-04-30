@@ -49,59 +49,18 @@ extern "C" {
 #endif
 #endif
 
-/* stupid #if can't handle casts... this __stupidity
-   is just a workaround for that limitation */
-
-#define __NDR_CHAR_REP_MASK  0x000f
-#define __NDR_INT_REP_MASK   0x00f0
-#define __NDR_FLOAT_REP_MASK 0xff00
-
-#define __NDR_IEEE_FLOAT     0x0000
-#define __NDR_VAX_FLOAT      0x0100
-#define __NDR_IBM_FLOAT      0x0300
-
-#define __NDR_ASCII_CHAR     0x0000
-#define __NDR_EBCDIC_CHAR    0x0001
-
-#define __NDR_LITTLE_ENDIAN  0x0010
-#define __NDR_BIG_ENDIAN     0x0000
-
-/* Mac's are special */
-#if defined(__RPC_MAC__)
-# define __NDR_LOCAL_DATA_REPRESENTATION \
-    (__NDR_IEEE_FLOAT | __NDR_ASCII_CHAR | __NDR_BIG_ENDIAN)
-#else
-# define __NDR_LOCAL_DATA_REPRESENTATION \
-    (__NDR_IEEE_FLOAT | __NDR_ASCII_CHAR | __NDR_LITTLE_ENDIAN)
-#endif
-
-#define __NDR_LOCAL_ENDIAN \
-  (__NDR_LOCAL_DATA_REPRESENTATION & __NDR_INT_REP_MASK)
-
-/* for convenience, define NDR_LOCAL_IS_BIG_ENDIAN iff it is */
-#if __NDR_LOCAL_ENDIAN == __NDR_BIG_ENDIAN
-# define NDR_LOCAL_IS_BIG_ENDIAN
-#elif __NDR_LOCAL_ENDIAN == __NDR_LITTLE_ENDIAN
-# undef NDR_LOCAL_IS_BIG_ENDIAN
-#else
-# error alien NDR_LOCAL_ENDIAN - Greg botched the defines again, please report
-#endif
-
-/* finally, do the casts like Microsoft */
-
-#define NDR_CHAR_REP_MASK             ((ULONG) __NDR_CHAR_REP_MASK)
-#define NDR_INT_REP_MASK              ((ULONG) __NDR_INT_REP_MASK)
-#define NDR_FLOAT_REP_MASK            ((ULONG) __NDR_FLOAT_REP_MASK)
-#define NDR_IEEE_FLOAT                ((ULONG) __NDR_IEEE_FLOAT)
-#define NDR_VAX_FLOAT                 ((ULONG) __NDR_VAX_FLOAT)
-#define NDR_IBM_FLOAT                 ((ULONG) __NDR_IBM_FLOAT)
-#define NDR_ASCII_CHAR                ((ULONG) __NDR_ASCII_CHAR)
-#define NDR_EBCDIC_CHAR               ((ULONG) __NDR_EBCDIC_CHAR)
-#define NDR_LITTLE_ENDIAN             ((ULONG) __NDR_LITTLE_ENDIAN)
-#define NDR_BIG_ENDIAN                ((ULONG) __NDR_BIG_ENDIAN)
-#define NDR_LOCAL_DATA_REPRESENTATION ((ULONG) __NDR_LOCAL_DATA_REPRESENTATION)
-#define NDR_LOCAL_ENDIAN              ((ULONG) __NDR_LOCAL_ENDIAN)
-
+#define NDR_CHAR_REP_MASK             ((ULONG)0x000f)
+#define NDR_INT_REP_MASK              ((ULONG)0x00f0)
+#define NDR_FLOAT_REP_MASK            ((ULONG)0xff00)
+#define NDR_IEEE_FLOAT                ((ULONG)0x0000)
+#define NDR_VAX_FLOAT                 ((ULONG)0x0100)
+#define NDR_IBM_FLOAT                 ((ULONG)0x0300)
+#define NDR_ASCII_CHAR                ((ULONG)0x0000)
+#define NDR_EBCDIC_CHAR               ((ULONG)0x0001)
+#define NDR_LITTLE_ENDIAN             ((ULONG)0x0010)
+#define NDR_BIG_ENDIAN                ((ULONG)0x0000)
+#define NDR_LOCAL_DATA_REPRESENTATION NDR_LITTLE_ENDIAN
+#define NDR_LOCAL_ENDIAN              NDR_LITTLE_ENDIAN
 
 #define TARGET_IS_NT50_OR_LATER 1
 #define TARGET_IS_NT40_OR_LATER 1
