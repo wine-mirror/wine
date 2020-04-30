@@ -214,7 +214,7 @@ static void declare_predefined_types(struct hlsl_scope *scope)
         {
             for (x = 1; x <= 4; ++x)
             {
-                sprintf(name, "%s%ux%u", names[bt], x, y);
+                sprintf(name, "%s%ux%u", names[bt], y, x);
                 type = new_hlsl_type(d3dcompiler_strdup(name), HLSL_CLASS_MATRIX, bt, x, y);
                 add_type_to_scope(scope, type);
 
@@ -427,13 +427,13 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
             {
                 if (swizzle[i + 1] != 'm')
                     return NULL;
-                x = swizzle[i + 2] - '0';
-                y = swizzle[i + 3] - '0';
+                y = swizzle[i + 2] - '0';
+                x = swizzle[i + 3] - '0';
             }
             else
             {
-                x = swizzle[i + 1] - '1';
-                y = swizzle[i + 2] - '1';
+                y = swizzle[i + 1] - '1';
+                x = swizzle[i + 2] - '1';
             }
 
             if (x >= value->data_type->dimx || y >= value->data_type->dimy)
