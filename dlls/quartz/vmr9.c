@@ -2107,10 +2107,14 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
     DWORD i;
     HRESULT hr = S_OK;
 
-    FIXME("(%p/%p)->(%p, %p => %u, %p) semi-stub\n", iface, This, allocinfo, numbuffers, (numbuffers ? *numbuffers : 0), surface);
+    TRACE("filter %p, allocinfo %p, numbuffers %p, surface %p.\n", This, numbuffers, allocinfo, surface);
 
     if (!allocinfo || !numbuffers || !surface)
         return E_POINTER;
+
+    TRACE("Flags %#x, size %ux%u, format %u (%#x), pool %u, minimum buffers %u.\n",
+            allocinfo->dwFlags, allocinfo->dwWidth, allocinfo->dwHeight,
+            allocinfo->Format, allocinfo->Format, allocinfo->Pool, allocinfo->MinBuffers);
 
     if (!allocinfo->Format)
     {
@@ -2126,19 +2130,19 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
 
     if (!*numbuffers || *numbuffers < allocinfo->MinBuffers)
     {
-        ERR("Invalid number of buffers?\n");
+        WARN("%u surfaces requested (minimum %u); returning E_INVALIDARG.\n",
+                *numbuffers, allocinfo->MinBuffers);
         return E_INVALIDARG;
     }
 
     if (!This->allocator_d3d9_dev)
     {
-        ERR("No direct3d device when requested to allocate a surface!\n");
+        WARN("No Direct3D device; returning VFW_E_WRONG_STATE.\n");
         return VFW_E_WRONG_STATE;
     }
 
     if (allocinfo->dwFlags == VMR9AllocFlag_OffscreenSurface)
     {
-        ERR("Creating offscreen surface\n");
         for (i = 0; i < *numbuffers; ++i)
         {
             hr = IDirect3DDevice9_CreateOffscreenPlainSurface(This->allocator_d3d9_dev,  allocinfo->dwWidth, allocinfo->dwHeight,
@@ -2149,7 +2153,6 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
     }
     else if (allocinfo->dwFlags == VMR9AllocFlag_TextureSurface)
     {
-        TRACE("Creating texture surface\n");
         for (i = 0; i < *numbuffers; ++i)
         {
             IDirect3DTexture9 *texture;
@@ -2177,6 +2180,9 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AllocateSurfaceHelper(IVMRSurfa
         FIXME("Unhandled flags %#x.\n", allocinfo->dwFlags);
         return E_NOTIMPL;
     }
+
+    if (FAILED(hr))
+        WARN("%u/%u surfaces allocated, hr %#x.\n", i, *numbuffers, hr);
 
     if (i >= allocinfo->MinBuffers)
     {
