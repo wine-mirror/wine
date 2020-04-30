@@ -4671,6 +4671,9 @@ struct wined3d_unordered_access_view_vk
 {
     struct wined3d_unordered_access_view v;
     struct wined3d_view_vk view_vk;
+
+    VkBufferView vk_counter_view;
+    struct wined3d_bo_vk counter_bo;
 };
 
 static inline struct wined3d_unordered_access_view_vk *wined3d_unordered_access_view_vk(

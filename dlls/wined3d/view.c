@@ -1459,13 +1459,16 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
     struct wined3d_view_vk *view_vk = &uav_vk->view_vk;
     struct wined3d_view_desc *desc = &uav_vk->v.desc;
     const struct wined3d_format_vk *format_vk;
+    const struct wined3d_vk_info *vk_info;
     struct wined3d_texture_vk *texture_vk;
     struct wined3d_context_vk *context_vk;
     struct wined3d_device_vk *device_vk;
+    VkBufferViewCreateInfo create_info;
     struct wined3d_resource *resource;
     VkBufferView vk_buffer_view;
     uint32_t default_flags = 0;
     VkImageView vk_image_view;
+    VkResult vr;
 
     resource = uav_vk->v.resource;
     device_vk = wined3d_device_vk(resource->device);
@@ -1474,16 +1477,53 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
-        vk_buffer_view = wined3d_view_vk_create_buffer_view(context_vk,
-                desc, wined3d_buffer_vk(buffer_from_resource(resource)), format_vk);
+        vk_info = context_vk->vk_info;
+
+        if ((vk_buffer_view = wined3d_view_vk_create_buffer_view(context_vk,
+                desc, wined3d_buffer_vk(buffer_from_resource(resource)), format_vk)))
+        {
+            TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
+
+            uav_vk->view_vk.u.vk_buffer_view = vk_buffer_view;
+        }
+
+        if (desc->flags & (WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_BUFFER_APPEND))
+        {
+            if (!wined3d_context_vk_create_bo(context_vk, sizeof(uint32_t), VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+                    | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &uav_vk->counter_bo))
+            {
+                ERR("Failed to create counter bo.\n");
+                context_release(&context_vk->c);
+
+                return;
+            }
+
+            VK_CALL(vkCmdFillBuffer(wined3d_context_vk_get_command_buffer(context_vk),
+                    uav_vk->counter_bo.vk_buffer, uav_vk->counter_bo.buffer_offset, sizeof(uint32_t), 0));
+            wined3d_context_vk_reference_bo(context_vk, &uav_vk->counter_bo);
+
+            create_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+            create_info.pNext = NULL;
+            create_info.flags = 0;
+            create_info.buffer = uav_vk->counter_bo.vk_buffer;
+            create_info.format = VK_FORMAT_R32_UINT;
+            create_info.offset = uav_vk->counter_bo.buffer_offset;
+            create_info.range = sizeof(uint32_t);
+            if ((vr = VK_CALL(vkCreateBufferView(device_vk->vk_device,
+                    &create_info, NULL, &uav_vk->vk_counter_view))) < 0)
+            {
+                ERR("Failed to create counter buffer view, vr %s.\n", wined3d_debug_vkresult(vr));
+            }
+            else
+            {
+                TRACE("Created counter buffer view 0x%s.\n", wine_dbgstr_longlong(uav_vk->vk_counter_view));
+
+                uav_vk->v.counter_bo = (uintptr_t)&uav_vk->counter_bo;
+            }
+        }
+
         context_release(&context_vk->c);
-
-        if (!vk_buffer_view)
-            return;
-
-        TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
-
-        uav_vk->view_vk.u.vk_buffer_view = vk_buffer_view;
 
         return;
     }
