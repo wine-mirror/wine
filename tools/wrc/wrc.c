@@ -37,7 +37,6 @@
 
 #include "wrc.h"
 #include "utils.h"
-#include "readres.h"
 #include "dumpres.h"
 #include "genres.h"
 #include "newstruc.h"
