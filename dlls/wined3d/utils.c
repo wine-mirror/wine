@@ -4229,6 +4229,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     }
 
     format->vk_format = vk_format;
+    format->f.color_fixup = COLOR_FIXUP_IDENTITY;
 
     VK_CALL(vkGetPhysicalDeviceFormatProperties(vk_physical_device, vk_format, &properties));
 

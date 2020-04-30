@@ -1318,11 +1318,12 @@ static HRESULT adapter_vk_create_shader_resource_view(const struct wined3d_view_
 
 static void adapter_vk_destroy_shader_resource_view(struct wined3d_shader_resource_view *view)
 {
-    struct wined3d_shader_resource_view_vk *view_vk = wined3d_shader_resource_view_vk(view);
-    struct wined3d_device *device = view_vk->v.resource->device;
+    struct wined3d_shader_resource_view_vk *srv_vk = wined3d_shader_resource_view_vk(view);
+    struct wined3d_device *device = srv_vk->v.resource->device;
     unsigned int swapchain_count = device->swapchain_count;
+    struct wined3d_view_vk *view_vk = &srv_vk->view_vk;
 
-    TRACE("view_vk %p.\n", view_vk);
+    TRACE("srv_vk %p.\n", srv_vk);
 
     /* Take a reference to the device, in case releasing the view's resource
      * would cause the device to be destroyed. However, swapchain resources
@@ -1330,8 +1331,8 @@ static void adapter_vk_destroy_shader_resource_view(struct wined3d_shader_resour
      * the refcount on a device that's in the process of being destroyed. */
     if (swapchain_count)
         wined3d_device_incref(device);
-    wined3d_shader_resource_view_cleanup(&view_vk->v);
-    wined3d_cs_destroy_object(device->cs, heap_free, view_vk);
+    wined3d_shader_resource_view_cleanup(&srv_vk->v);
+    wined3d_view_vk_destroy(device, &view_vk->vk_image_info.imageView, &view_vk->command_buffer_id, srv_vk);
     if (swapchain_count)
         wined3d_device_decref(device);
 }

@@ -4484,6 +4484,24 @@ HRESULT wined3d_texture_no3d_init(struct wined3d_texture *texture_no3d, struct w
             flags, device, parent, parent_ops, &texture_no3d[1], &wined3d_texture_no3d_ops);
 }
 
+void wined3d_vk_swizzle_from_color_fixup(VkComponentMapping *mapping, struct color_fixup_desc fixup)
+{
+    static const VkComponentSwizzle swizzle_source[] =
+    {
+        VK_COMPONENT_SWIZZLE_ZERO,  /* CHANNEL_SOURCE_ZERO */
+        VK_COMPONENT_SWIZZLE_ONE,   /* CHANNEL_SOURCE_ONE */
+        VK_COMPONENT_SWIZZLE_R,     /* CHANNEL_SOURCE_X */
+        VK_COMPONENT_SWIZZLE_G,     /* CHANNEL_SOURCE_Y */
+        VK_COMPONENT_SWIZZLE_B,     /* CHANNEL_SOURCE_Z */
+        VK_COMPONENT_SWIZZLE_A,     /* CHANNEL_SOURCE_W */
+    };
+
+    mapping->r = swizzle_source[fixup.x_source];
+    mapping->g = swizzle_source[fixup.y_source];
+    mapping->b = swizzle_source[fixup.z_source];
+    mapping->a = swizzle_source[fixup.w_source];
+}
+
 const VkDescriptorImageInfo *wined3d_texture_vk_get_default_image_info(struct wined3d_texture_vk *texture_vk,
         struct wined3d_context_vk *context_vk)
 {

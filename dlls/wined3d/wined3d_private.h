@@ -3946,6 +3946,7 @@ HRESULT wined3d_texture_no3d_init(struct wined3d_texture *texture_no3d, struct w
         uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 void wined3d_gl_texture_swizzle_from_color_fixup(GLint swizzle[4], struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
+void wined3d_vk_swizzle_from_color_fixup(VkComponentMapping *mapping, struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 
 struct gl_texture
 {
@@ -4593,9 +4594,16 @@ HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
+struct wined3d_view_vk
+{
+    VkDescriptorImageInfo vk_image_info;
+    uint64_t command_buffer_id;
+};
+
 struct wined3d_shader_resource_view_vk
 {
     struct wined3d_shader_resource_view v;
+    struct wined3d_view_vk view_vk;
 };
 
 static inline struct wined3d_shader_resource_view_vk *wined3d_shader_resource_view_vk(
