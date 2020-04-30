@@ -164,6 +164,11 @@ SIZE_T signal_stack_size = 0;
 SIZE_T signal_stack_mask = 0;
 static SIZE_T signal_stack_align;
 
+/* TEB allocation blocks */
+static TEB *teb_block;
+static TEB *next_free_teb;
+static int teb_block_pos;
+
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 
@@ -2012,15 +2017,6 @@ void virtual_init(void)
 
 
 /***********************************************************************
- *           virtual_init_threading
- */
-void virtual_init_threading(void)
-{
-    use_locks = TRUE;
-}
-
-
-/***********************************************************************
  *           virtual_get_system_info
  */
 void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
@@ -2094,28 +2090,89 @@ NTSTATUS virtual_create_builtin_view( void *module )
 
 
 /***********************************************************************
+ *           virtual_alloc_first_teb
+ */
+TEB *virtual_alloc_first_teb(void)
+{
+    TEB *teb;
+    PEB *peb;
+    SIZE_T peb_size = page_size;
+    SIZE_T teb_size = signal_stack_mask + 1;
+    SIZE_T total = 32 * teb_size;
+
+    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb_block, 0, &total,
+                             MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
+    teb_block_pos = 30;
+    teb = (TEB *)((char *)teb_block + 30 * teb_size);
+    peb = (PEB *)((char *)teb_block + 32 * teb_size - peb_size);
+    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &teb_size, MEM_COMMIT, PAGE_READWRITE );
+    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&peb, 0, &peb_size, MEM_COMMIT, PAGE_READWRITE );
+
+    teb->Peb = peb;
+    teb->Tib.Self = &teb->Tib;
+    teb->Tib.ExceptionList = (void *)~0ul;
+    teb->Tib.StackBase = (void *)~0ul;
+    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    signal_init_threading();
+    signal_alloc_thread( teb );
+    signal_init_thread( teb );
+    use_locks = TRUE;
+    return teb;
+}
+
+
+/***********************************************************************
  *           virtual_alloc_teb
  */
 NTSTATUS virtual_alloc_teb( TEB **ret_teb )
 {
-    SIZE_T size = signal_stack_mask + 1;
-    void *addr = NULL;
-    TEB *teb;
-    NTSTATUS status;
+    sigset_t sigset;
+    TEB *teb = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    SIZE_T teb_size = signal_stack_mask + 1;
 
-    if ((status = virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN,
-                                         PAGE_READWRITE, signal_stack_align )))
-        return status;
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if (next_free_teb)
+    {
+        teb = next_free_teb;
+        next_free_teb = *(TEB **)teb;
+        memset( teb, 0, sizeof(*teb) );
+    }
+    else
+    {
+        if (!teb_block_pos)
+        {
+            void *addr = NULL;
+            SIZE_T total = 32 * teb_size;
 
-    *ret_teb = teb = addr;
+            if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &total,
+                                                   MEM_RESERVE, PAGE_READWRITE )))
+            {
+                server_leave_uninterrupted_section( &csVirtual, &sigset );
+                return status;
+            }
+            teb_block = addr;
+            teb_block_pos = 32;
+        }
+        teb = (TEB *)((char *)teb_block + --teb_block_pos * teb_size);
+        NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &teb_size,
+                                 MEM_COMMIT, PAGE_READWRITE );
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+
+    *ret_teb = teb;
+    teb->Peb = NtCurrentTeb()->Peb;
     teb->Tib.Self = &teb->Tib;
     teb->Tib.ExceptionList = (void *)~0UL;
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     if ((status = signal_alloc_thread( teb )))
     {
-        size = 0;
-        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+        server_enter_uninterrupted_section( &csVirtual, &sigset );
+        *(TEB **)teb = next_free_teb;
+        next_free_teb = teb;
+        server_leave_uninterrupted_section( &csVirtual, &sigset );
     }
     return status;
 }
@@ -2128,6 +2185,7 @@ void virtual_free_teb( TEB *teb )
 {
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     SIZE_T size;
+    sigset_t sigset;
 
     signal_free_thread( teb );
     if (teb->DeallocationStack)
@@ -2140,8 +2198,11 @@ void virtual_free_teb( TEB *teb )
         size = 0;
         NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->start_stack, &size, MEM_RELEASE );
     }
-    size = 0;
-    NtFreeVirtualMemory( NtCurrentProcess(), (void **)&teb, &size, MEM_RELEASE );
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    *(TEB **)teb = next_free_teb;
+    next_free_teb = teb;
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 }
 
 

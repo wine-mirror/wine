@@ -246,13 +246,10 @@ TEB *thread_init(void)
     user_shared_data = addr;
     memcpy( user_shared_data->NtSystemRoot, default_windirW, sizeof(default_windirW) );
 
-    /* allocate and initialize the PEB */
+    /* allocate and initialize the PEB and initial TEB */
 
-    addr = NULL;
-    size = sizeof(*peb);
-    virtual_alloc_aligned( &addr, 0, &size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_READWRITE, 1 );
-    peb = addr;
-
+    teb = virtual_alloc_first_teb();
+    peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
     peb->TlsBitmap          = &tls_bitmap;
     peb->TlsExpansionBitmap = &tls_expansion_bitmap;
@@ -282,21 +279,12 @@ TEB *thread_init(void)
      */
     peb->SessionId = 1;
 
-    /* allocate and initialize the initial TEB */
-
-    signal_init_threading();
-    virtual_alloc_teb( &teb );
-    teb->Peb = peb;
-    teb->Tib.StackBase = (void *)~0UL;
-
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd = -1;
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
     thread_data->wait_fd[1] = -1;
 
-    signal_init_thread( teb );
-    virtual_init_threading();
     debug_init();
     init_paths();
     set_process_name( __wine_main_argc, __wine_main_argv );
@@ -517,7 +505,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
 
     if ((status = virtual_alloc_teb( &teb ))) goto error;
 
-    teb->Peb = NtCurrentTeb()->Peb;
     teb->ClientId.UniqueProcess = ULongToHandle(GetCurrentProcessId());
     teb->ClientId.UniqueThread  = ULongToHandle(tid);
 
