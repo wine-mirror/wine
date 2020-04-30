@@ -45,9 +45,6 @@
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
 #endif
-#ifdef HAVE_SYS_SYSCTL_H
-# include <sys/sysctl.h>
-#endif
 #ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
 #endif
@@ -2592,14 +2589,6 @@ void signal_init_thread( TEB *teb )
     const WORD fpu_cw = 0x27f;
     struct x86_thread_data *thread_data = (struct x86_thread_data *)teb->SystemReserved2;
     stack_t ss;
-
-#ifdef __APPLE__
-    int mib[2], val = 1;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_THALTSTACK;
-    sysctl( mib, 2, NULL, NULL, &val, sizeof(val) );
-#endif
 
     ss.ss_sp    = (char *)teb + teb_size;
     ss.ss_size  = signal_stack_size;
