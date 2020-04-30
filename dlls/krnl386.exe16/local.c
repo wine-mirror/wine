@@ -78,8 +78,6 @@ typedef struct
 /*
  * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
  * in case something actually relies on this.
- * Note that if the architecture does not allow unaligned accesses, we make
- * addr = 4n + 4 to avoid returning unaligned pointers from LocalAlloc etc.
  *
  * An unused handle has lock = flags = 0xff. In windows addr is that of next
  * free handle, at the moment in wine we set it to 0.
@@ -88,12 +86,7 @@ typedef struct
  * (LMEM_DISCARDED >> 8)
  */
 
-#ifdef ALLOW_UNALIGNED_ACCESS
-# define MOVEABLE_PREFIX sizeof(HLOCAL16)
-#else
-# define MOVEABLE_PREFIX sizeof(int)
-#endif
-
+#define MOVEABLE_PREFIX sizeof(HLOCAL16)
 
 #include "pshpack1.h"
 
