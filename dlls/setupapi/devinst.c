@@ -4739,7 +4739,7 @@ BOOL WINAPI SetupDiSelectBestCompatDrv(HDEVINFO devinfo, SP_DEVINFO_DATA *device
 
     if (!device->driver_count)
     {
-        ERR("No compatible drivers were enumerated for device %s.\n", debugstr_w(device->instanceId));
+        WARN("No compatible drivers were enumerated for device %s.\n", debugstr_w(device->instanceId));
         SetLastError(ERROR_NO_COMPAT_DRIVERS);
         return FALSE;
     }
