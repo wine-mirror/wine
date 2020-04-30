@@ -1453,14 +1453,76 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
     return hr;
 }
 
+static void wined3d_unordered_access_view_vk_cs_init(void *object)
+{
+    struct wined3d_unordered_access_view_vk *uav_vk = object;
+    struct wined3d_view_vk *view_vk = &uav_vk->view_vk;
+    struct wined3d_view_desc *desc = &uav_vk->v.desc;
+    const struct wined3d_format_vk *format_vk;
+    struct wined3d_texture_vk *texture_vk;
+    struct wined3d_context_vk *context_vk;
+    struct wined3d_device_vk *device_vk;
+    struct wined3d_resource *resource;
+    uint32_t default_flags = 0;
+    VkImageView vk_image_view;
+
+    resource = uav_vk->v.resource;
+    device_vk = wined3d_device_vk(resource->device);
+    format_vk = wined3d_format_vk(uav_vk->v.format);
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Buffer views not implemented.\n");
+        return;
+    }
+
+    texture_vk = wined3d_texture_vk(texture_from_resource(resource));
+
+    if (texture_vk->t.layer_count > 1)
+        default_flags |= WINED3D_VIEW_TEXTURE_ARRAY;
+
+    if (resource->format->id == format_vk->f.id && desc->flags == default_flags
+            && !desc->u.texture.level_idx && desc->u.texture.level_count == texture_vk->t.level_count
+            && !desc->u.texture.layer_idx && desc->u.texture.layer_count == texture_vk->t.layer_count
+            && !(resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL) && resource->type != WINED3D_RTYPE_TEXTURE_3D)
+    {
+        TRACE("Creating identity unordered access view.\n");
+        return;
+    }
+
+    if (texture_vk->t.swapchain && texture_vk->t.swapchain->state.desc.backbuffer_count > 1)
+        FIXME("Swapchain unordered access views not supported.\n");
+
+    context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
+    vk_image_view = wined3d_view_vk_create_texture_view(context_vk, desc,
+            texture_vk, format_vk, format_vk->f.color_fixup, false);
+    context_release(&context_vk->c);
+
+    if (!vk_image_view)
+        return;
+
+    TRACE("Created image view 0x%s.\n", wine_dbgstr_longlong(vk_image_view));
+
+    view_vk->u.vk_image_info.imageView = vk_image_view;
+    view_vk->u.vk_image_info.sampler = VK_NULL_HANDLE;
+    view_vk->u.vk_image_info.imageLayout = texture_vk->layout;
+}
+
 HRESULT wined3d_unordered_access_view_vk_init(struct wined3d_unordered_access_view_vk *view_vk,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
+    HRESULT hr;
+
     TRACE("view_vk %p, desc %s, resource %p, parent %p, parent_ops %p.\n",
             view_vk, wined3d_debug_view_desc(desc, resource), resource, parent, parent_ops);
 
-    return wined3d_unordered_access_view_init(&view_vk->v, desc, resource, parent, parent_ops);
+    if (FAILED(hr = wined3d_unordered_access_view_init(&view_vk->v, desc, resource, parent, parent_ops)))
+        return hr;
+
+    wined3d_cs_init_object(resource->device->cs, wined3d_unordered_access_view_vk_cs_init, view_vk);
+
+    return hr;
 }
 
 HRESULT CDECL wined3d_unordered_access_view_create(const struct wined3d_view_desc *desc,

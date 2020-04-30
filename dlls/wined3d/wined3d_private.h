@@ -4670,6 +4670,7 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
 struct wined3d_unordered_access_view_vk
 {
     struct wined3d_unordered_access_view v;
+    struct wined3d_view_vk view_vk;
 };
 
 static inline struct wined3d_unordered_access_view_vk *wined3d_unordered_access_view_vk(
