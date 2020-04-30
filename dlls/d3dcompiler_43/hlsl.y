@@ -789,7 +789,10 @@ static struct list *gen_struct_fields(struct hlsl_type *type, DWORD modifiers, s
             d3dcompiler_free(v);
             return list;
         }
-        field->type = type;
+        if (v->array_size)
+            field->type = new_array_type(type, v->array_size);
+        else
+            field->type = type;
         field->name = v->name;
         field->modifiers = modifiers;
         field->semantic = v->semantic;
