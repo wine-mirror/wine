@@ -434,11 +434,6 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *filter, BOOL force, const AM_M
     info.szNativeSize.cy = filter->bmiheader.biHeight;
 
     filter->cur_surface = 0;
-    if (filter->num_surfaces)
-    {
-        ERR("num_surfaces or d3d9_surfaces not 0\n");
-        return E_FAIL;
-    }
 
     if (!is_vmr9(filter))
     {
