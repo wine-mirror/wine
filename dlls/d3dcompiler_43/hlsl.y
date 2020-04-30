@@ -817,6 +817,7 @@ static struct hlsl_type *new_struct_type(const char *name, struct list *fields)
         return NULL;
     }
     type->type = HLSL_CLASS_STRUCT;
+    type->base_type = HLSL_TYPE_VOID;
     type->name = name;
     type->dimx = type->dimy = 1;
     type->e.elements = fields;
