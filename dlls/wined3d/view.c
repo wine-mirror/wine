@@ -1463,6 +1463,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
     struct wined3d_context_vk *context_vk;
     struct wined3d_device_vk *device_vk;
     struct wined3d_resource *resource;
+    VkBufferView vk_buffer_view;
     uint32_t default_flags = 0;
     VkImageView vk_image_view;
 
@@ -1472,7 +1473,18 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
-        FIXME("Buffer views not implemented.\n");
+        context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
+        vk_buffer_view = wined3d_view_vk_create_buffer_view(context_vk,
+                desc, wined3d_buffer_vk(buffer_from_resource(resource)), format_vk);
+        context_release(&context_vk->c);
+
+        if (!vk_buffer_view)
+            return;
+
+        TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
+
+        uav_vk->view_vk.u.vk_buffer_view = vk_buffer_view;
+
         return;
     }
 

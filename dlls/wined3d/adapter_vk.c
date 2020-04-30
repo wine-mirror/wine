@@ -1392,6 +1392,7 @@ static void adapter_vk_destroy_unordered_access_view(struct wined3d_unordered_ac
     struct wined3d_device *device = uav_vk->v.resource->device;
     unsigned int swapchain_count = device->swapchain_count;
     struct wined3d_view_vk *view_vk = &uav_vk->view_vk;
+    VkBufferView *vk_buffer_view = NULL;
     VkImageView *vk_image_view = NULL;
 
     TRACE("uav_vk %p.\n", uav_vk);
@@ -1402,10 +1403,12 @@ static void adapter_vk_destroy_unordered_access_view(struct wined3d_unordered_ac
      * the refcount on a device that's in the process of being destroyed. */
     if (swapchain_count)
         wined3d_device_incref(device);
-    if (uav_vk->v.resource->type != WINED3D_RTYPE_BUFFER)
+    if (uav_vk->v.resource->type == WINED3D_RTYPE_BUFFER)
+        vk_buffer_view = &view_vk->u.vk_buffer_view;
+    else
         vk_image_view = &view_vk->u.vk_image_info.imageView;
     wined3d_unordered_access_view_cleanup(&uav_vk->v);
-    wined3d_view_vk_destroy(device, NULL, vk_image_view, &view_vk->command_buffer_id, uav_vk);
+    wined3d_view_vk_destroy(device, vk_buffer_view, vk_image_view, &view_vk->command_buffer_id, uav_vk);
     if (swapchain_count)
         wined3d_device_decref(device);
 }
