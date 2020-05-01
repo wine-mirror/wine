@@ -1439,7 +1439,7 @@ static void adapter_vk_destroy_unordered_access_view(struct wined3d_unordered_ac
 static HRESULT adapter_vk_create_sampler(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler)
 {
-    struct wined3d_sampler *sampler_vk;
+    struct wined3d_sampler_vk *sampler_vk;
 
     TRACE("device %p, desc %p, parent %p, parent_ops %p, sampler %p.\n",
             device, desc, parent, parent_ops, sampler);
@@ -1450,16 +1450,31 @@ static HRESULT adapter_vk_create_sampler(struct wined3d_device *device, const st
     wined3d_sampler_vk_init(sampler_vk, device, desc, parent, parent_ops);
 
     TRACE("Created sampler %p.\n", sampler_vk);
-    *sampler = sampler_vk;
+    *sampler = &sampler_vk->s;
 
     return WINED3D_OK;
 }
 
+static void wined3d_sampler_vk_destroy_object(void *object)
+{
+    struct wined3d_sampler_vk *sampler_vk = object;
+    struct wined3d_context_vk *context_vk;
+
+    context_vk = wined3d_context_vk(context_acquire(sampler_vk->s.device, NULL, 0));
+
+    wined3d_context_vk_destroy_sampler(context_vk, sampler_vk->vk_image_info.sampler, sampler_vk->command_buffer_id);
+    heap_free(sampler_vk);
+
+    context_release(&context_vk->c);
+}
+
 static void adapter_vk_destroy_sampler(struct wined3d_sampler *sampler)
 {
-    TRACE("sampler %p.\n", sampler);
+    struct wined3d_sampler_vk *sampler_vk = wined3d_sampler_vk(sampler);
 
-    wined3d_cs_destroy_object(sampler->device->cs, heap_free, sampler);
+    TRACE("sampler_vk %p.\n", sampler_vk);
+
+    wined3d_cs_destroy_object(sampler->device->cs, wined3d_sampler_vk_destroy_object, sampler_vk);
 }
 
 static HRESULT adapter_vk_create_query(struct wined3d_device *device, enum wined3d_query_type type,

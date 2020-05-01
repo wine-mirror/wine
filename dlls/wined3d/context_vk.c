@@ -29,6 +29,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+VkCompareOp vk_compare_op_from_wined3d(enum wined3d_cmp_func op)
+{
+    switch (op)
+    {
+        case WINED3D_CMP_NEVER:
+            return VK_COMPARE_OP_NEVER;
+        case WINED3D_CMP_LESS:
+            return VK_COMPARE_OP_LESS;
+        case WINED3D_CMP_EQUAL:
+            return VK_COMPARE_OP_EQUAL;
+        case WINED3D_CMP_LESSEQUAL:
+            return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case WINED3D_CMP_GREATER:
+            return VK_COMPARE_OP_GREATER;
+        case WINED3D_CMP_NOTEQUAL:
+            return VK_COMPARE_OP_NOT_EQUAL;
+        case WINED3D_CMP_GREATEREQUAL:
+            return VK_COMPARE_OP_GREATER_OR_EQUAL;
+        case WINED3D_CMP_ALWAYS:
+            return VK_COMPARE_OP_ALWAYS;
+        default:
+            if (!op)
+                WARN("Unhandled compare operation %#x.\n", op);
+            else
+                FIXME("Unhandled compare operation %#x.\n", op);
+            return VK_COMPARE_OP_NEVER;
+    }
+}
+
 void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
         struct wined3d_context_vk *context_vk)
 {
@@ -519,6 +548,31 @@ void wined3d_context_vk_destroy_image_view(struct wined3d_context_vk *context_vk
     o->command_buffer_id = command_buffer_id;
 }
 
+void wined3d_context_vk_destroy_sampler(struct wined3d_context_vk *context_vk,
+        VkSampler vk_sampler, uint64_t command_buffer_id)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_retired_object_vk *o;
+
+    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    {
+        VK_CALL(vkDestroySampler(device_vk->vk_device, vk_sampler, NULL));
+        TRACE("Destroyed sampler 0x%s.\n", wine_dbgstr_longlong(vk_sampler));
+        return;
+    }
+
+    if (!(o = wined3d_context_vk_get_retired_object_vk(context_vk)))
+    {
+        ERR("Leaking sampler 0x%s.\n", wine_dbgstr_longlong(vk_sampler));
+        return;
+    }
+
+    o->type = WINED3D_RETIRED_SAMPLER_VK;
+    o->u.vk_sampler = vk_sampler;
+    o->command_buffer_id = command_buffer_id;
+}
+
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)
 {
     size_t object_size, idx;
@@ -625,6 +679,11 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
             case WINED3D_RETIRED_IMAGE_VIEW_VK:
                 VK_CALL(vkDestroyImageView(device_vk->vk_device, o->u.vk_image_view, NULL));
                 TRACE("Destroyed image view 0x%s.\n", wine_dbgstr_longlong(o->u.vk_image_view));
+                break;
+
+            case WINED3D_RETIRED_SAMPLER_VK:
+                VK_CALL(vkDestroySampler(device_vk->vk_device, o->u.vk_sampler, NULL));
+                TRACE("Destroyed sampler 0x%s.\n", wine_dbgstr_longlong(o->u.vk_sampler));
                 break;
 
             default:

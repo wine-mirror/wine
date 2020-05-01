@@ -300,6 +300,7 @@ extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
 
 GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f) DECLSPEC_HIDDEN;
 VkAccessFlags vk_access_mask_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
+VkCompareOp vk_compare_op_from_wined3d(enum wined3d_cmp_func op) DECLSPEC_HIDDEN;
 VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type, uint32_t flags) DECLSPEC_HIDDEN;
 
 static inline enum wined3d_cmp_func wined3d_sanitize_cmp_func(enum wined3d_cmp_func func)
@@ -2232,6 +2233,7 @@ enum wined3d_retired_object_type_vk
     WINED3D_RETIRED_IMAGE_VK,
     WINED3D_RETIRED_BUFFER_VIEW_VK,
     WINED3D_RETIRED_IMAGE_VIEW_VK,
+    WINED3D_RETIRED_SAMPLER_VK,
 };
 
 struct wined3d_retired_object_vk
@@ -2252,6 +2254,7 @@ struct wined3d_retired_object_vk
         VkImage vk_image;
         VkBufferView vk_buffer_view;
         VkImageView vk_image_view;
+        VkSampler vk_sampler;
     } u;
     uint64_t command_buffer_id;
 };
@@ -2334,6 +2337,8 @@ void wined3d_context_vk_destroy_image_view(struct wined3d_context_vk *context_vk
         VkImageView vk_view, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_sampler(struct wined3d_context_vk *context_vk,
+        VkSampler vk_sampler, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *context_vk,
         const struct wined3d_fb_state *fb, unsigned int rt_count,
@@ -4113,7 +4118,20 @@ void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl,
         struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-void wined3d_sampler_vk_init(struct wined3d_sampler *sampler_vk,
+struct wined3d_sampler_vk
+{
+    struct wined3d_sampler s;
+
+    VkDescriptorImageInfo vk_image_info;
+    uint64_t command_buffer_id;
+};
+
+static inline struct wined3d_sampler_vk *wined3d_sampler_vk(struct wined3d_sampler *sampler)
+{
+    return CONTAINING_RECORD(sampler, struct wined3d_sampler_vk, s);
+}
+
+void wined3d_sampler_vk_init(struct wined3d_sampler_vk *sampler_vk,
         struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
