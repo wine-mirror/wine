@@ -43,17 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define MAX_PATHNAME_LEN        1024
 
-/* check if a file name is for an executable file (.exe or .com) */
-static inline BOOL is_executable( const WCHAR *name )
-{
-    static const WCHAR exeW[] = {'.','e','x','e',0};
-    static const WCHAR comW[] = {'.','c','o','m',0};
-    int len = strlenW(name);
-
-    if (len < 4) return FALSE;
-    return (!strcmpiW( name + len - 4, exeW ) || !strcmpiW( name + len - 4, comW ));
-}
-
 /***********************************************************************
  *           copy_filename_WtoA
  *
