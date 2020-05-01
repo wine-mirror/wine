@@ -2896,6 +2896,93 @@ out:
     DestroyWindow(window);
 }
 
+static void test_mixing_mode(void)
+{
+    IVMRWindowlessControl9 *windowless_control;
+    IVMRMixerControl9 *mixer_control;
+    IVMRFilterConfig9 *config;
+    DWORD stream_count = 0;
+    IBaseFilter *filter;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+
+    static const VMR9Mode modes[] =
+    {
+        0,
+        VMR9Mode_Windowed,
+        VMR9Mode_Windowless,
+        VMR9Mode_Renderless,
+    };
+
+    for (i = 0; i < ARRAY_SIZE(modes); ++i)
+    {
+        filter = create_vmr9(modes[i]);
+        IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+
+        hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+        ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+        todo_wine ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_SetNumberOfStreams(config, 1);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(stream_count == 1, "Got %u streams.\n", stream_count);
+
+        hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        if (hr == S_OK)
+            IVMRMixerControl9_Release(mixer_control);
+
+        hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
+        todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+        hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+        todo_wine ok(stream_count == 1, "Got %u streams.\n", stream_count);
+
+        IVMRFilterConfig9_Release(config);
+        ref = IBaseFilter_Release(filter);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+    }
+
+    filter = create_vmr9(VMR9Mode_Windowless);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRFilterConfig9, (void **)&config);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl9, (void **)&windowless_control);
+
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(stream_count == 4, "Got %u streams.\n", stream_count);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+        IVMRMixerControl9_Release(mixer_control);
+
+    hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(stream_count == 4, "Got %u streams.\n", stream_count);
+
+    IVMRWindowlessControl9_Release(windowless_control);
+    IVMRFilterConfig9_Release(config);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -2925,6 +3012,7 @@ START_TEST(vmr9)
     test_video_window();
     test_allocate_surface_helper();
     test_renderless_formats();
+    test_mixing_mode();
 
     CoUninitialize();
 }
