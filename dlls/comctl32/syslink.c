@@ -165,10 +165,6 @@ static VOID SYSLINK_ClearDoc (SYSLINK_INFO *infoPtr)
  */
 static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 {
-    static const WCHAR SL_LINKOPEN[] =  { '<','a' };
-    static const WCHAR SL_HREF[] =      { 'h','r','e','f','=','\"' };
-    static const WCHAR SL_ID[] =        { 'i','d','=','\"' };
-    static const WCHAR SL_LINKCLOSE[] = { '<','/','a','>' };
     LPCWSTR current, textstart = NULL, linktext = NULL, firsttag = NULL;
     int taglen = 0, textlen = 0, linklen = 0, docitems = 0;
     PDOC_ITEM Last = NULL;
@@ -182,7 +178,7 @@ static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
     {
         if(*current == '<')
         {
-            if(!wcsnicmp(current, SL_LINKOPEN, ARRAY_SIZE(SL_LINKOPEN)) && (CurrentType == slText))
+            if(!wcsnicmp(current, L"<a", 2) && (CurrentType == slText))
             {
                 BOOL ValidParam = FALSE, ValidLink = FALSE;
 
@@ -210,14 +206,14 @@ static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
                     
 CheckParameter:
                     /* compare the current position with all known parameters */
-                    if(!wcsnicmp(tmp, SL_HREF, ARRAY_SIZE(SL_HREF)))
+                    if(!wcsnicmp(tmp, L"href=\"", 6))
                     {
                         taglen += 6;
                         ValidParam = TRUE;
                         CurrentParameter = &lpUrl;
                         CurrentParameterLen = &lenUrl;
                     }
-                    else if(!wcsnicmp(tmp, SL_ID, ARRAY_SIZE(SL_ID)))
+                    else if(!wcsnicmp(tmp, L"id=\"", 4))
                     {
                         taglen += 4;
                         ValidParam = TRUE;
@@ -291,7 +287,7 @@ CheckParameter:
                     }
                 }
             }
-            else if(!wcsnicmp(current, SL_LINKCLOSE, ARRAY_SIZE(SL_LINKCLOSE)) && (CurrentType == slLink) && firsttag)
+            else if (!wcsnicmp(current, L"</a>", 4) && (CurrentType == slLink) && firsttag)
             {
                 /* there's a <a...> tag opened, first add the previous text, if present */
                 if(textstart != NULL && textlen > 0 && firsttag > textstart)
