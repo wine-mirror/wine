@@ -6,6 +6,7 @@ DELAYIMPORTS = rpcrt4
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	security.c \
 	service.c \
 	trace.c
 
