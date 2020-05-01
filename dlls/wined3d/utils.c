@@ -4135,6 +4135,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     {
         enum wined3d_format_id id;
         VkFormat vk_format;
+        const char *fixup;
     }
     vulkan_formats[] =
     {
@@ -4182,7 +4183,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         {WINED3DFMT_R8_UINT,                    VK_FORMAT_R8_UINT,                 },
         {WINED3DFMT_R8_SNORM,                   VK_FORMAT_R8_SNORM,                },
         {WINED3DFMT_R8_SINT,                    VK_FORMAT_R8_SINT,                 },
-        {WINED3DFMT_A8_UNORM,                   VK_FORMAT_R8_UNORM,                },
+        {WINED3DFMT_A8_UNORM,                   VK_FORMAT_R8_UNORM,                "000X"},
         {WINED3DFMT_B8G8R8A8_UNORM,             VK_FORMAT_B8G8R8A8_UNORM,          },
         {WINED3DFMT_B8G8R8A8_UNORM_SRGB,        VK_FORMAT_B8G8R8A8_SRGB,           },
         {WINED3DFMT_BC1_UNORM,                  VK_FORMAT_BC1_RGBA_UNORM_BLOCK,    },
@@ -4211,6 +4212,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     VkFormatProperties properties;
     VkImageUsageFlags vk_usage;
     unsigned int flags;
+    const char *fixup;
     unsigned int i;
     VkResult vr;
 
@@ -4219,6 +4221,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         if (vulkan_formats[i].id == format->f.id)
         {
             vk_format = vulkan_formats[i].vk_format;
+            fixup = vulkan_formats[i].fixup;
             break;
         }
     }
@@ -4229,7 +4232,10 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     }
 
     format->vk_format = vk_format;
-    format->f.color_fixup = COLOR_FIXUP_IDENTITY;
+    if (fixup)
+        format->f.color_fixup = create_color_fixup_desc_from_string(fixup);
+    else
+        format->f.color_fixup = COLOR_FIXUP_IDENTITY;
 
     VK_CALL(vkGetPhysicalDeviceFormatProperties(vk_physical_device, vk_format, &properties));
 
