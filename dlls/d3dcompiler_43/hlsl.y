@@ -277,7 +277,7 @@ static BOOL append_conditional_break(struct list *cond_list)
         ERR("Out of memory.\n");
         return FALSE;
     }
-    iff->node.type = HLSL_IR_IF;
+    init_node(&iff->node, HLSL_IR_IF, NULL, condition->loc);
     iff->condition = not;
     list_add_tail(cond_list, &iff->node.entry);
 
@@ -293,7 +293,7 @@ static BOOL append_conditional_break(struct list *cond_list)
         ERR("Out of memory.\n");
         return FALSE;
     }
-    jump->node.type = HLSL_IR_JUMP;
+    init_node(&jump->node, HLSL_IR_JUMP, NULL, condition->loc);
     jump->type = HLSL_IR_JUMP_BREAK;
     list_add_head(iff->then_instrs, &jump->node.entry);
     return TRUE;
@@ -324,8 +324,7 @@ static struct list *create_loop(enum loop_type type, struct list *init, struct l
     loop = d3dcompiler_alloc(sizeof(*loop));
     if (!loop)
         goto oom;
-    loop->node.type = HLSL_IR_LOOP;
-    loop->node.loc = loc;
+    init_node(&loop->node, HLSL_IR_LOOP, NULL, loc);
     list_add_tail(list, &loop->node.entry);
     loop->body = d3dcompiler_alloc(sizeof(*loop->body));
     if (!loop->body)
@@ -390,9 +389,8 @@ static struct hlsl_ir_swizzle *new_swizzle(DWORD s, unsigned int components,
 
     if (!swizzle)
         return NULL;
-    swizzle->node.type = HLSL_IR_SWIZZLE;
-    swizzle->node.loc = *loc;
-    swizzle->node.data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, val->data_type->base_type, components, 1);
+    init_node(&swizzle->node, HLSL_IR_SWIZZLE,
+            new_hlsl_type(NULL, HLSL_CLASS_VECTOR, val->data_type->base_type, components, 1), *loc);
     swizzle->val = val;
     swizzle->swizzle = s;
     return swizzle;
@@ -489,8 +487,7 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source
         ERR("Out of memory\n");
         return NULL;
     }
-    jump->node.type = HLSL_IR_JUMP;
-    jump->node.loc = loc;
+    init_node(&jump->node, HLSL_IR_JUMP, NULL, loc);
     jump->type = HLSL_IR_JUMP_RETURN;
     if (value)
     {
@@ -508,6 +505,38 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source
     }
 
     return jump;
+}
+
+static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct source_location loc)
+{
+    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+
+    if (!deref)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    init_node(&deref->node, HLSL_IR_DEREF, var->data_type, loc);
+    deref->src.type = HLSL_IR_DEREF_VAR;
+    deref->src.v.var = var;
+    return deref;
+}
+
+static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
+        struct hlsl_struct_field *field, const struct source_location loc)
+{
+    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+
+    if (!deref)
+    {
+        ERR("Out of memory.\n");
+        return NULL;
+    }
+    init_node(&deref->node, HLSL_IR_DEREF, field->type, loc);
+    deref->src.type = HLSL_IR_DEREF_RECORD;
+    deref->src.v.record.record = record;
+    deref->src.v.record.field = field;
+    return deref;
 }
 
 static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
@@ -540,13 +569,12 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
         }
         if (components_count_type(field->type) == components_count_type(node->data_type))
         {
-            deref = new_record_deref(&new_var_deref(var)->node, field);
+            deref = new_record_deref(&new_var_deref(var, var->loc)->node, field, node->loc);
             if (!deref)
             {
                 ERR("Out of memory.\n");
                 break;
             }
-            deref->node.loc = node->loc;
             list_add_tail(list, &deref->node.entry);
             assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, node);
             list_add_tail(list, &assignment->entry);
@@ -695,7 +723,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             list_move_tail(statements_list, v->initializer.instrs);
             d3dcompiler_free(v->initializer.instrs);
 
-            deref = new_var_deref(var);
+            deref = new_var_deref(var, var->loc);
             list_add_tail(statements_list, &deref->node.entry);
             assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
@@ -1982,8 +2010,7 @@ selection_statement:      KW_IF '(' expr ')' if_body
                                     ERR("Out of memory\n");
                                     YYABORT;
                                 }
-                                instr->node.type = HLSL_IR_IF;
-                                instr->node.loc = get_location(&@1);
+                                init_node(&instr->node, HLSL_IR_IF, NULL, get_location(&@1));
                                 instr->condition = node_from_list($3);
                                 instr->then_instrs = $5.then_instrs;
                                 instr->else_instrs = $5.else_instrs;
@@ -2047,9 +2074,8 @@ primary_expr:             C_FLOAT
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
-                                c->node.type = HLSL_IR_CONSTANT;
-                                c->node.loc = get_location(&@1);
-                                c->node.data_type = new_hlsl_type(d3dcompiler_strdup("float"), HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1);
+                                init_node(&c->node, HLSL_IR_CONSTANT, new_hlsl_type(d3dcompiler_strdup("float"),
+                                        HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1), get_location(&@1));
                                 c->v.value.f[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
@@ -2062,9 +2088,8 @@ primary_expr:             C_FLOAT
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
-                                c->node.type = HLSL_IR_CONSTANT;
-                                c->node.loc = get_location(&@1);
-                                c->node.data_type = new_hlsl_type(d3dcompiler_strdup("int"), HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
+                                init_node(&c->node, HLSL_IR_CONSTANT, new_hlsl_type(d3dcompiler_strdup("int"),
+                                        HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1), get_location(&@1));
                                 c->v.value.i[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
@@ -2077,9 +2102,8 @@ primary_expr:             C_FLOAT
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
-                                c->node.type = HLSL_IR_CONSTANT;
-                                c->node.loc = get_location(&@1);
-                                c->node.data_type = new_hlsl_type(d3dcompiler_strdup("bool"), HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1);
+                                init_node(&c->node, HLSL_IR_CONSTANT, new_hlsl_type(d3dcompiler_strdup("bool"),
+                                        HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1), get_location(&@1));
                                 c->v.value.b[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
@@ -2096,9 +2120,8 @@ primary_expr:             C_FLOAT
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
                                     YYABORT;
                                 }
-                                if ((deref = new_var_deref(var)))
+                                if ((deref = new_var_deref(var, get_location(&@1))))
                                 {
-                                    deref->node.loc = get_location(&@1);
                                     if (!($$ = make_list(&deref->node)))
                                         YYABORT;
                                 }
@@ -2164,14 +2187,13 @@ postfix_expr:             primary_expr
                                     {
                                         if (!strcmp($3, field->name))
                                         {
-                                            struct hlsl_ir_deref *deref = new_record_deref(node, field);
+                                            struct hlsl_ir_deref *deref = new_record_deref(node, field, loc);
 
                                             if (!deref)
                                             {
                                                 ERR("Out of memory\n");
                                                 YYABORT;
                                             }
-                                            deref->node.loc = loc;
                                             $$ = append_unop($1, &deref->node);
                                             break;
                                         }
@@ -2208,28 +2230,23 @@ postfix_expr:             primary_expr
                                 /* This may be an array dereference or a vector/matrix
                                  * subcomponent access.
                                  * We store it as an array dereference in any case. */
-                                struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
-                                struct hlsl_type *expr_type = node_from_list($1)->data_type;
+                                const struct hlsl_type *expr_type = node_from_list($1)->data_type;
+                                struct hlsl_ir_deref *deref;
+                                struct hlsl_type *data_type;
 
                                 TRACE("Array dereference from type %s\n", debug_hlsl_type(expr_type));
-                                if (!deref)
-                                {
-                                    ERR("Out of memory\n");
-                                    YYABORT;
-                                }
-                                deref->node.type = HLSL_IR_DEREF;
-                                deref->node.loc = get_location(&@2);
+
                                 if (expr_type->type == HLSL_CLASS_ARRAY)
                                 {
-                                    deref->node.data_type = expr_type->e.array.type;
+                                    data_type = expr_type->e.array.type;
                                 }
                                 else if (expr_type->type == HLSL_CLASS_MATRIX)
                                 {
-                                    deref->node.data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, expr_type->base_type, expr_type->dimx, 1);
+                                    data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, expr_type->base_type, expr_type->dimx, 1);
                                 }
                                 else if (expr_type->type == HLSL_CLASS_VECTOR)
                                 {
-                                    deref->node.data_type = new_hlsl_type(NULL, HLSL_CLASS_SCALAR, expr_type->base_type, 1, 1);
+                                    data_type = new_hlsl_type(NULL, HLSL_CLASS_SCALAR, expr_type->base_type, 1, 1);
                                 }
                                 else
                                 {
@@ -2237,19 +2254,26 @@ postfix_expr:             primary_expr
                                         hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "array-indexed expression is scalar");
                                     else
                                         hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "expression is not array-indexable");
-                                    d3dcompiler_free(deref);
                                     free_instr_list($1);
                                     free_instr_list($3);
                                     YYABORT;
                                 }
+
                                 if (node_from_list($3)->data_type->type != HLSL_CLASS_SCALAR)
                                 {
                                     hlsl_report_message(get_location(&@3), HLSL_LEVEL_ERROR, "array index is not scalar");
-                                    d3dcompiler_free(deref);
                                     free_instr_list($1);
                                     free_instr_list($3);
                                     YYABORT;
                                 }
+
+                                if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
+                                {
+                                    free_instr_list($1);
+                                    free_instr_list($3);
+                                    YYABORT;
+                                }
+                                init_node(&deref->node, HLSL_IR_DEREF, data_type, get_location(&@2));
                                 deref->src.type = HLSL_IR_DEREF_ARRAY;
                                 deref->src.v.array.array = node_from_list($1);
                                 deref->src.v.array.index = node_from_list($3);
@@ -2287,9 +2311,7 @@ postfix_expr:             primary_expr
                                 assert($4.args_count <= ARRAY_SIZE(constructor->args));
 
                                 constructor = d3dcompiler_alloc(sizeof(*constructor));
-                                constructor->node.type = HLSL_IR_CONSTRUCTOR;
-                                constructor->node.loc = get_location(&@3);
-                                constructor->node.data_type = $2;
+                                init_node(&constructor->node, HLSL_IR_CONSTRUCTOR, $2, get_location(&@3));
                                 constructor->args_count = $4.args_count;
                                 memcpy(constructor->args, $4.args, $4.args_count * sizeof(*$4.args));
                                 d3dcompiler_free($4.args);

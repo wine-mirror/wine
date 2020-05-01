@@ -1327,17 +1327,10 @@ struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_
 struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **operands,
         struct source_location *loc)
 {
-    struct hlsl_ir_expr *expr = d3dcompiler_alloc(sizeof(*expr));
+    struct hlsl_ir_expr *expr;
     struct hlsl_type *type;
     unsigned int i;
 
-    if (!expr)
-    {
-        ERR("Out of memory\n");
-        return NULL;
-    }
-    expr->node.type = HLSL_IR_EXPR;
-    expr->node.loc = *loc;
     type = operands[0]->data_type;
     for (i = 1; i <= 2; ++i)
     {
@@ -1345,10 +1338,7 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
             break;
         type = expr_common_type(type, operands[i]->data_type, loc);
         if (!type)
-        {
-            d3dcompiler_free(expr);
             return NULL;
-        }
     }
     for (i = 0; i <= 2; ++i)
     {
@@ -1366,14 +1356,14 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
         }
 
         if (!(cast = new_cast(operands[i], type, &operands[i]->loc)))
-        {
-            d3dcompiler_free(expr);
             return NULL;
-        }
         list_add_after(&operands[i]->entry, &cast->node.entry);
         operands[i] = &cast->node;
     }
-    expr->node.data_type = type;
+
+    if (!(expr = d3dcompiler_alloc(sizeof(*expr))))
+        return NULL;
+    init_node(&expr->node, HLSL_IR_EXPR, type, *loc);
     expr->op = op;
     expr->operands[0] = operands[0];
     expr->operands[1] = operands[1];
@@ -1391,39 +1381,6 @@ struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
     if (cast)
         cast->data_type = type;
     return expr_from_node(cast);
-}
-
-struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var)
-{
-    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
-
-    if (!deref)
-    {
-        ERR("Out of memory.\n");
-        return NULL;
-    }
-    deref->node.type = HLSL_IR_DEREF;
-    deref->node.data_type = var->data_type;
-    deref->src.type = HLSL_IR_DEREF_VAR;
-    deref->src.v.var = var;
-    return deref;
-}
-
-struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record, struct hlsl_struct_field *field)
-{
-    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
-
-    if (!deref)
-    {
-        ERR("Out of memory.\n");
-        return NULL;
-    }
-    deref->node.type = HLSL_IR_DEREF;
-    deref->node.data_type = field->type;
-    deref->src.type = HLSL_IR_DEREF_RECORD;
-    deref->src.v.record.record = record;
-    deref->src.v.record.field = field;
-    return deref;
 }
 
 static enum hlsl_ir_expr_op op_from_assignment(enum parse_assign_op op)
@@ -1593,9 +1550,8 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
             type_class = lhs->data_type->type;
         type = new_hlsl_type(NULL, type_class, lhs->data_type->base_type, dimx, 1);
     }
-    assign->node.type = HLSL_IR_ASSIGNMENT;
-    assign->node.loc = lhs->loc;
-    assign->node.data_type = type;
+
+    init_node(&assign->node, HLSL_IR_ASSIGNMENT, type, lhs->loc);
     assign->writemask = writemask;
 
     rhs = implicit_conversion(rhs, type, &rhs->loc);
