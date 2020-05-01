@@ -1493,7 +1493,11 @@ static void adapter_vk_destroy_query(struct wined3d_query *query)
 
 static void adapter_vk_flush_context(struct wined3d_context *context)
 {
-    TRACE("context %p.\n", context);
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+
+    TRACE("context_vk %p.\n", context_vk);
+
+    wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
 }
 
 static void adapter_vk_draw_primitive(struct wined3d_device *device,
