@@ -85,7 +85,11 @@ static HRESULT WINAPI file_writer_sink_receive(struct strmbase_sink *iface, IMed
     offset.QuadPart = start;
     if (!SetFilePointerEx(filter->file, offset, NULL, FILE_BEGIN)
             || !WriteFile(filter->file, data, stop - start, &size, NULL))
+    {
         ERR("Failed to write file, error %u.\n", GetLastError());
+        return HRESULT_FROM_WIN32(hr);
+    }
+
     if (size != stop - start)
         ERR("Short write, %u/%u.\n", size, (DWORD)(stop - start));
 
