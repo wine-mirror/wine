@@ -2306,11 +2306,6 @@ static NTSTATUS fast_sleep_cs_cv( RTL_CONDITION_VARIABLE *variable,
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS fast_wait_cv( RTL_CONDITION_VARIABLE *variable, int val, const LARGE_INTEGER *timeout )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS fast_wake_cv( RTL_CONDITION_VARIABLE *variable, int count )
 {
     return STATUS_NOT_IMPLEMENTED;
