@@ -130,8 +130,8 @@ static const WCHAR allowedformatchars[] = {'d', 'h', 'H', 'm', 'M', 's', 't', 'y
 static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1};
 
 /* valid date limits */
-static const SYSTEMTIME max_allowed_date = { /* wYear */ 9999, /* wMonth */ 12, /* wDayOfWeek */ 0, /* wDay */ 31 };
-static const SYSTEMTIME min_allowed_date = { /* wYear */ 1752, /* wMonth */ 9,  /* wDayOfWeek */ 0, /* wDay */ 14 };
+static const SYSTEMTIME max_allowed_date = { .wYear = 9999, .wMonth = 12, .wDayOfWeek = 0, .wDay = 31 };
+static const SYSTEMTIME min_allowed_date = { .wYear = 1752, .wMonth = 9, .wDayOfWeek = 0, .wDay = 14 };
 
 static DWORD
 DATETIME_GetSystemTime (const DATETIME_INFO *infoPtr, SYSTEMTIME *systime)
