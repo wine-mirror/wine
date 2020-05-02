@@ -294,6 +294,10 @@ extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
 NTSTATUS WINAPI RtlHashUnicodeString(PCUNICODE_STRING,BOOLEAN,ULONG,ULONG*);
 void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+#define InterlockedCompareExchange64(dest,xchg,cmp) RtlInterlockedCompareExchange64(dest,xchg,cmp)
+#endif
+
 /* string functions */
 int    __cdecl NTDLL_tolower( int c );
 int    __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );

@@ -40,16 +40,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-static inline LONG interlocked_inc( PLONG dest )
-{
-    return interlocked_xchg_add( dest, 1 ) + 1;
-}
-
-static inline LONG interlocked_dec( PLONG dest )
-{
-    return interlocked_xchg_add( dest, -1 ) - 1;
-}
-
 static inline void small_pause(void)
 {
 #ifdef __i386__
@@ -108,7 +98,7 @@ static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
 
     timespec.tv_sec  = timeout;
     timespec.tv_nsec = 0;
-    while ((val = interlocked_cmpxchg( (int *)&crit->LockSemaphore, 0, 1 )) != 1)
+    while ((val = InterlockedCompareExchange( (int *)&crit->LockSemaphore, 0, 1 )) != 1)
     {
         /* note: this may wait longer than specified in case of signals or */
         /*       multiple wake-ups, but that shouldn't be a problem */
@@ -145,7 +135,7 @@ static inline semaphore_t get_mach_semaphore( RTL_CRITICAL_SECTION *crit )
     {
         semaphore_t sem;
         if (semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, 0 )) return 0;
-        if (!(ret = interlocked_cmpxchg( (int *)&crit->LockSemaphore, sem, 0 )))
+        if (!(ret = InterlockedCompareExchange( (int *)&crit->LockSemaphore, sem, 0 )))
             ret = sem;
         else
             semaphore_destroy( mach_task_self(), sem );  /* somebody beat us to it */
@@ -217,7 +207,7 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
     {
         HANDLE sem;
         if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
-        if (!(ret = interlocked_cmpxchg_ptr( &crit->LockSemaphore, sem, 0 )))
+        if (!(ret = InterlockedCompareExchangePointer( &crit->LockSemaphore, sem, 0 )))
             ret = sem;
         else
             NtClose(sem);  /* somebody beat us to it */
@@ -565,13 +555,13 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
             if (crit->LockCount > 0) break;  /* more than one waiter, don't bother spinning */
             if (crit->LockCount == -1)       /* try again */
             {
-                if (interlocked_cmpxchg( &crit->LockCount, 0, -1 ) == -1) goto done;
+                if (InterlockedCompareExchange( &crit->LockCount, 0, -1 ) == -1) goto done;
             }
             small_pause();
         }
     }
 
-    if (interlocked_inc( &crit->LockCount ))
+    if (InterlockedIncrement( &crit->LockCount ))
     {
         if (crit->OwningThread == ULongToHandle(GetCurrentThreadId()))
         {
@@ -610,7 +600,7 @@ done:
 BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     BOOL ret = FALSE;
-    if (interlocked_cmpxchg( &crit->LockCount, 0, -1 ) == -1)
+    if (InterlockedCompareExchange( &crit->LockCount, 0, -1 ) == -1)
     {
         crit->OwningThread   = ULongToHandle(GetCurrentThreadId());
         crit->RecursionCount = 1;
@@ -618,7 +608,7 @@ BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
     }
     else if (crit->OwningThread == ULongToHandle(GetCurrentThreadId()))
     {
-        interlocked_inc( &crit->LockCount );
+        InterlockedIncrement( &crit->LockCount );
         crit->RecursionCount++;
         ret = TRUE;
     }
@@ -684,13 +674,13 @@ NTSTATUS WINAPI RtlLeaveCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
     if (--crit->RecursionCount)
     {
-        if (crit->RecursionCount > 0) interlocked_dec( &crit->LockCount );
+        if (crit->RecursionCount > 0) InterlockedDecrement( &crit->LockCount );
         else ERR( "section %p is not acquired\n", crit );
     }
     else
     {
         crit->OwningThread = 0;
-        if (interlocked_dec( &crit->LockCount ) >= 0)
+        if (InterlockedDecrement( &crit->LockCount ) >= 0)
         {
             /* someone is waiting */
             RtlpUnWaitCriticalSection( crit );

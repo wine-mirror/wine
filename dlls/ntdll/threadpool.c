@@ -379,16 +379,6 @@ static void tp_object_prepare_shutdown( struct threadpool_object *object );
 static BOOL tp_object_release( struct threadpool_object *object );
 static struct threadpool *default_threadpool = NULL;
 
-static inline LONG interlocked_inc( PLONG dest )
-{
-    return interlocked_xchg_add( dest, 1 ) + 1;
-}
-
-static inline LONG interlocked_dec( PLONG dest )
-{
-    return interlocked_xchg_add( dest, -1 ) - 1;
-}
-
 static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
 {
     unsigned int new_capacity, max_capacity;
@@ -605,14 +595,14 @@ static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
                     wait_work_item->Context );
                 TimerOrWaitFired = TRUE;
             }
-            interlocked_xchg( &wait_work_item->CallbackInProgress, TRUE );
+            InterlockedExchange( &wait_work_item->CallbackInProgress, TRUE );
             if (wait_work_item->CompletionEvent)
             {
                 TRACE( "Work has been canceled.\n" );
                 break;
             }
             wait_work_item->Callback( wait_work_item->Context, TimerOrWaitFired );
-            interlocked_xchg( &wait_work_item->CallbackInProgress, FALSE );
+            InterlockedExchange( &wait_work_item->CallbackInProgress, FALSE );
 
             if (wait_work_item->Flags & WT_EXECUTEONLYONCE)
                 break;
@@ -622,7 +612,7 @@ static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
     }
 
 
-    if (interlocked_inc( &wait_work_item->DeleteCount ) == 2 )
+    if (InterlockedIncrement( &wait_work_item->DeleteCount ) == 2 )
     {
         completion_event = wait_work_item->CompletionEvent;
         delete_wait_work_item( wait_work_item );
@@ -725,7 +715,7 @@ NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
     if (WaitHandle == NULL)
         return STATUS_INVALID_HANDLE;
 
-    interlocked_xchg_ptr( &wait_work_item->CompletionEvent, INVALID_HANDLE_VALUE );
+    InterlockedExchangePointer( &wait_work_item->CompletionEvent, INVALID_HANDLE_VALUE );
     CallbackInProgress = wait_work_item->CallbackInProgress;
     TRACE( "callback in progress %u\n", CallbackInProgress );
     if (CompletionEvent == INVALID_HANDLE_VALUE || !CallbackInProgress)
@@ -733,16 +723,16 @@ NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
         status = NtCreateEvent( &LocalEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
         if (status != STATUS_SUCCESS)
             return status;
-        interlocked_xchg_ptr( &wait_work_item->CompletionEvent, LocalEvent );
+        InterlockedExchangePointer( &wait_work_item->CompletionEvent, LocalEvent );
     }
     else if (CompletionEvent != NULL)
     {
-        interlocked_xchg_ptr( &wait_work_item->CompletionEvent, CompletionEvent );
+        InterlockedExchangePointer( &wait_work_item->CompletionEvent, CompletionEvent );
     }
 
     NtSetEvent( wait_work_item->CancelEvent, NULL );
 
-    if (interlocked_inc( &wait_work_item->DeleteCount ) == 2 )
+    if (InterlockedIncrement( &wait_work_item->DeleteCount ) == 2 )
     {
         status = STATUS_SUCCESS;
         delete_wait_work_item( wait_work_item );
@@ -1107,8 +1097,7 @@ static struct timer_queue *get_timer_queue(HANDLE TimerQueue)
             NTSTATUS status = RtlCreateTimerQueue(&q);
             if (status == STATUS_SUCCESS)
             {
-                PVOID p = interlocked_cmpxchg_ptr(
-                    (void **) &default_timer_queue, q, NULL);
+                PVOID p = InterlockedCompareExchangePointer( (void **) &default_timer_queue, q, NULL );
                 if (p)
                     /* Got beat to the punch.  */
                     RtlDeleteTimerQueueEx(q, NULL);
@@ -1384,7 +1373,7 @@ static NTSTATUS tp_new_worker_thread( struct threadpool *pool )
                                   threadpool_worker_proc, pool, &thread, NULL );
     if (status == STATUS_SUCCESS)
     {
-        interlocked_inc( &pool->refcount );
+        InterlockedIncrement( &pool->refcount );
         pool->num_workers++;
         pool->num_busy_workers++;
         NtClose( thread );
@@ -1506,7 +1495,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                     timeout.QuadPart = wait->u.wait.timeout;
 
                 assert( num_handles < MAXIMUM_WAITQUEUE_OBJECTS );
-                interlocked_inc( &wait->refcount );
+                InterlockedIncrement( &wait->refcount );
                 objects[num_handles] = wait;
                 handles[num_handles] = wait->u.wait.handle;
                 num_handles++;
@@ -1899,7 +1888,7 @@ static BOOL tp_threadpool_release( struct threadpool *pool )
 {
     unsigned int i;
 
-    if (interlocked_dec( &pool->refcount ))
+    if (InterlockedDecrement( &pool->refcount ))
         return FALSE;
 
     TRACE( "destroying threadpool %p\n", pool );
@@ -1957,7 +1946,7 @@ static NTSTATUS tp_threadpool_lock( struct threadpool **out, TP_CALLBACK_ENVIRON
             if (status != STATUS_SUCCESS)
                 return status;
 
-            if (interlocked_cmpxchg_ptr( (void *)&default_threadpool, pool, NULL ) != NULL)
+            if (InterlockedCompareExchangePointer( (void *)&default_threadpool, pool, NULL ) != NULL)
             {
                 tp_threadpool_shutdown( pool );
                 tp_threadpool_release( pool );
@@ -1977,7 +1966,7 @@ static NTSTATUS tp_threadpool_lock( struct threadpool **out, TP_CALLBACK_ENVIRON
      * last thread doesn't terminate. */
     if (status == STATUS_SUCCESS)
     {
-        interlocked_inc( &pool->refcount );
+        InterlockedIncrement( &pool->refcount );
         pool->objcount++;
     }
 
@@ -2047,7 +2036,7 @@ static void tp_group_shutdown( struct threadpool_group *group )
  */
 static BOOL tp_group_release( struct threadpool_group *group )
 {
-    if (interlocked_dec( &group->refcount ))
+    if (InterlockedDecrement( &group->refcount ))
         return FALSE;
 
     TRACE( "destroying group %p\n", group );
@@ -2134,7 +2123,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
     if (object->group)
     {
         struct threadpool_group *group = object->group;
-        interlocked_inc( &group->refcount );
+        InterlockedIncrement( &group->refcount );
 
         RtlEnterCriticalSection( &group->cs );
         list_add_tail( &group->members, &object->group_entry );
@@ -2173,7 +2162,7 @@ static void tp_object_submit( struct threadpool_object *object, BOOL signaled )
         status = tp_new_worker_thread( pool );
 
     /* Queue work item and increment refcount. */
-    interlocked_inc( &object->refcount );
+    InterlockedIncrement( &object->refcount );
     if (!object->num_pending_callbacks++)
         tp_object_prio_queue( object );
 
@@ -2275,7 +2264,7 @@ static void tp_object_prepare_shutdown( struct threadpool_object *object )
  */
 static BOOL tp_object_release( struct threadpool_object *object )
 {
-    if (interlocked_dec( &object->refcount ))
+    if (InterlockedDecrement( &object->refcount ))
         return FALSE;
 
     TRACE( "destroying object %p of type %u\n", object, object->type );
@@ -2920,11 +2909,11 @@ VOID WINAPI TpReleaseCleanupGroupMembers( TP_CLEANUP_GROUP *group, BOOL cancel_p
         assert( object->group == this );
         assert( object->is_group_member );
 
-        if (interlocked_inc( &object->refcount ) == 1)
+        if (InterlockedIncrement( &object->refcount ) == 1)
         {
             /* Object is basically already destroyed, but group reference
              * was not deleted yet. We can safely ignore this object. */
-            interlocked_dec( &object->refcount );
+            InterlockedDecrement( &object->refcount );
             list_remove( &object->group_entry );
             object->is_group_member = FALSE;
             continue;

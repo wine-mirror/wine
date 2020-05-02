@@ -312,7 +312,7 @@ TEB *thread_init(void)
 void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( get_unix_exit_code( status ));
+    if (InterlockedDecrement( &nb_threads ) <= 0) _exit( get_unix_exit_code( status ));
     signal_exit_thread( status );
 }
 
@@ -349,7 +349,7 @@ void WINAPI RtlExitUserThread( ULONG status )
         SERVER_END_REQ;
     }
 
-    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1)
+    if (InterlockedDecrement( &nb_threads ) <= 0)
     {
         LdrShutdownProcess();
         pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
@@ -361,7 +361,7 @@ void WINAPI RtlExitUserThread( ULONG status )
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
-    if ((teb = interlocked_xchg_ptr( &prev_teb, NtCurrentTeb() )))
+    if ((teb = InterlockedExchangePointer( &prev_teb, NtCurrentTeb() )))
     {
         struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
 
@@ -545,10 +545,10 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
                          (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
     pthread_attr_setguardsize( &attr, 0 );
     pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
-    interlocked_xchg_add( &nb_threads, 1 );
+    InterlockedIncrement( &nb_threads );
     if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))
     {
-        interlocked_xchg_add( &nb_threads, -1 );
+        InterlockedDecrement( &nb_threads );
         pthread_attr_destroy( &attr );
         status = STATUS_NO_MEMORY;
         goto error;

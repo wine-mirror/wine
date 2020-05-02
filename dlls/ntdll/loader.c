@@ -1055,7 +1055,7 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
                (ULONG_PTR)teb->ClientId.UniqueThread, i, size, dir->SizeOfZeroFill, new_ptr );
 
         RtlFreeHeap( GetProcessHeap(), 0,
-                     interlocked_xchg_ptr( (void **)teb->ThreadLocalStoragePointer + i, new_ptr ));
+                     InterlockedExchangePointer( (void **)teb->ThreadLocalStoragePointer + i, new_ptr ));
     }
 
     *(DWORD *)dir->AddressOfIndex = i;
@@ -4371,7 +4371,7 @@ NTSTATUS WINAPI RtlSetSearchPathMode( ULONG flags )
         val = 0;
         break;
     case BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT:
-        interlocked_xchg( (int *)&path_safe_mode, 2 );
+        InterlockedExchange( (int *)&path_safe_mode, 2 );
         return STATUS_SUCCESS;
     default:
         return STATUS_INVALID_PARAMETER;
@@ -4381,7 +4381,7 @@ NTSTATUS WINAPI RtlSetSearchPathMode( ULONG flags )
     {
         int prev = path_safe_mode;
         if (prev == 2) break;  /* permanently set */
-        if (interlocked_cmpxchg( (int *)&path_safe_mode, val, prev ) == prev) return STATUS_SUCCESS;
+        if (InterlockedCompareExchange( (int *)&path_safe_mode, val, prev ) == prev) return STATUS_SUCCESS;
     }
     return STATUS_ACCESS_DENIED;
 }

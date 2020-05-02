@@ -283,7 +283,7 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
  */
 static void set_cpu_context( const CONTEXT *context )
 {
-    interlocked_xchg_ptr( (void **)&arm64_thread_data()->context, (void *)context );
+    InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
     raise( SIGUSR2 );
 }
 
@@ -1229,7 +1229,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    CONTEXT *context = interlocked_xchg_ptr( (void **)&arm64_thread_data()->context, NULL );
+    CONTEXT *context = InterlockedExchangePointer( (void **)&arm64_thread_data()->context, NULL );
     if (!context) return;
     if ((context->ContextFlags & ~CONTEXT_ARM64) & CONTEXT_FLOATING_POINT)
         restore_fpu( context, sigcontext );

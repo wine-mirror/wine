@@ -97,6 +97,25 @@ static const DWORD CRC_table[256] =
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+
+#if defined(_WIN64) && !defined(_MSC_VER)
+static inline unsigned char _InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
+{
+    unsigned char ret;
+#ifdef __x86_64__
+    __asm__ __volatile__( "lock cmpxchg16b %0; setz %b2"
+                          : "=m" (dest[0]), "=m" (dest[1]), "=r" (ret),
+                            "=a" (compare[0]), "=d" (compare[1])
+                          : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
+                            "c" (xchg_high), "b" (xchg_low) );
+#else
+    ret = __sync_bool_compare_and_swap( (__int128 *)dest, (__int128 *)compare,
+                                        ((__int128)xchg_high << 64) | xchg_low );
+#endif
+    return ret;
+}
+#endif
+
 /*
  *	resource functions
  */
@@ -1216,7 +1235,7 @@ static DWORD_PTR get_pointer_obfuscator( void )
         /* set the high bits so dereferencing obfuscated pointers will (usually) crash */
         rand |= (ULONG_PTR)0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
 
-        interlocked_cmpxchg_ptr( (void**) &pointer_obfuscator, (void*) rand, NULL );
+        InterlockedCompareExchangePointer( (void**) &pointer_obfuscator, (void*) rand, NULL );
     }
 
     return pointer_obfuscator;
@@ -1289,7 +1308,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
     {
         old = *list;
         new.Header16.Sequence = old.Header16.Sequence + 1;
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
     if (!list->s.Next.Next) return NULL;
@@ -1298,8 +1317,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER list)
     {
         old = *list;
         new.s.Sequence = old.s.Sequence + 1;
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
 }
@@ -1319,7 +1338,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER list, PSLIST_ENTR
         entry->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
         new.Header16.Depth = old.Header16.Depth + 1;
         new.Header16.Sequence = old.Header16.Sequence + 1;
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
     new.s.Next.Next = entry;
@@ -1329,8 +1348,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER list, PSLIST_ENTR
         entry->Next = old.s.Next.Next;
         new.s.Depth = old.s.Depth + 1;
         new.s.Sequence = old.s.Sequence + 1;
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
 }
@@ -1359,7 +1378,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
         {
         }
         __ENDTRY
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
 #else
     do
     {
@@ -1376,8 +1395,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
         {
         }
         __ENDTRY
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
 #endif
     return entry;
 }
@@ -1398,7 +1417,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
         new.Header16.Depth = old.Header16.Depth + count;
         new.Header16.Sequence = old.Header16.Sequence + 1;
         last->Next = (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
-    } while (!interlocked_cmpxchg128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
+    } while (!_InterlockedCompareExchange128((__int64 *)list, new.s.Region, new.s.Alignment, (__int64 *)&old));
     return (SLIST_ENTRY *)((ULONG_PTR)old.Header16.NextEntry << 4);
 #else
     new.s.Next.Next = first;
@@ -1408,8 +1427,8 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENT
         new.s.Depth = old.s.Depth + count;
         new.s.Sequence = old.s.Sequence + 1;
         last->Next = old.s.Next.Next;
-    } while (interlocked_cmpxchg64((__int64 *)&list->Alignment, new.Alignment,
-                                   old.Alignment) != old.Alignment);
+    } while (InterlockedCompareExchange64((__int64 *)&list->Alignment, new.Alignment,
+                                          old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
 }

@@ -237,7 +237,7 @@ static NTSTATUS load_norm_table( ULONG form, const struct norm_table **info )
             if (i && tables[i] < tables[i-1]) goto invalid;
         }
 
-        if (interlocked_cmpxchg_ptr( (void **)&norm_tables[form], data, NULL ))
+        if (InterlockedCompareExchangePointer( (void **)&norm_tables[form], data, NULL ))
             RtlFreeHeap( GetProcessHeap(), 0, data );
     }
     *info = norm_tables[form];

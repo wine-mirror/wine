@@ -159,10 +159,10 @@ static RTL_CRITICAL_SECTION fd_cache_section = { &critsect_debug, -1, 0, 0, 0, 0
 static inline LONG64 interlocked_xchg64( LONG64 *dest, LONG64 val )
 {
 #ifdef _WIN64
-    return (LONG64)interlocked_xchg_ptr( (void **)dest, (void *)val );
+    return (LONG64)InterlockedExchangePointer( (void **)dest, (void *)val );
 #else
     LONG64 tmp = *dest;
-    while (interlocked_cmpxchg64( dest, val, tmp ) != tmp) tmp = *dest;
+    while (InterlockedCompareExchange64( dest, val, tmp ) != tmp) tmp = *dest;
     return tmp;
 #endif
 }
@@ -1032,7 +1032,7 @@ static inline NTSTATUS get_cached_fd( HANDLE handle, int *fd, enum server_fd_typ
 
     if (entry >= FD_CACHE_ENTRIES || !fd_cache[entry]) return STATUS_INVALID_HANDLE;
 
-    cache.data = interlocked_cmpxchg64( &fd_cache[entry][idx].data, 0, 0 );
+    cache.data = InterlockedCompareExchange64( &fd_cache[entry][idx].data, 0, 0 );
     if (!cache.data) return STATUS_INVALID_HANDLE;
 
     /* if fd type is invalid, fd stores an error value */
