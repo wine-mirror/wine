@@ -5,7 +5,6 @@ C_SRCS = \
 	ffs.c \
 	fstatvfs.c \
 	getopt.c \
-	interlocked.c \
 	isfinite.c \
 	isinf.c \
 	isnan.c \
