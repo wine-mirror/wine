@@ -1852,12 +1852,16 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowles
 
     TRACE("(%p/%p)->(%p)\n", iface, This, hwnd);
 
+    if (!IsWindow(hwnd))
+    {
+        WARN("Invalid window %p, returning E_INVALIDARG.\n", hwnd);
+        return E_INVALIDARG;
+    }
+
     EnterCriticalSection(&This->renderer.filter.csFilter);
     This->hWndClippingWindow = hwnd;
     if (This->renderer.sink.pin.peer)
         VMR9_maybe_init(This, FALSE, &This->renderer.sink.pin.mt);
-    if (!hwnd)
-        IVMRSurfaceAllocatorEx9_TerminateDevice(This->allocator, This->cookie);
     LeaveCriticalSection(&This->renderer.filter.csFilter);
     return S_OK;
 }

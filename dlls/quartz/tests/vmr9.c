@@ -3226,9 +3226,9 @@ static void test_clipping_window(void)
     ok(!!window, "Failed to create a window.\n");
 
     hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
     hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, (HWND)0xdeadbeef);
-    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
