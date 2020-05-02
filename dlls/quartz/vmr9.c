@@ -484,8 +484,6 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
 
     TRACE("(%p)\n", This);
 
-    if (This->renderer.sink.pin.peer)
-        VMR9_maybe_init(This, TRUE, &This->renderer.sink.pin.mt);
     IVMRImagePresenter9_StartPresenting(This->presenter, This->cookie);
     SetWindowPos(This->baseControlWindow.hwnd, NULL,
         This->source_rect.left,
