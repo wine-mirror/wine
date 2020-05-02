@@ -433,7 +433,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
                  * (like Adobe Photoshop CS5) expect that changes to the async key state
                  * are also immediately available in other threads. */
                 if (prev_key_state != key_state_info->state[key])
-                    counter = interlocked_xchg_add( &global_key_state_counter, 1 ) + 1;
+                    counter = InterlockedIncrement( &global_key_state_counter );
 
                 key_state_info->time    = GetTickCount();
                 key_state_info->counter = counter;
