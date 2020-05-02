@@ -8414,8 +8414,10 @@ static BOOL CDECL freetype_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastC
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     for(c = firstChar; c <= lastChar; c++) {
-        get_glyph_outline( physdev->font, c, GGO_METRICS, &gm, &abc, 0, NULL, &identity );
-        buffer[c - firstChar] = abc.abcA + abc.abcB + abc.abcC;
+        if (get_glyph_outline( physdev->font, c, GGO_METRICS, &gm, &abc, 0, NULL, &identity ) == GDI_ERROR)
+            buffer[c - firstChar] = 0;
+        else
+            buffer[c - firstChar] = abc.abcA + abc.abcB + abc.abcC;
     }
     LeaveCriticalSection( &freetype_cs );
     return TRUE;
