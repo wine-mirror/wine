@@ -387,7 +387,7 @@ static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *
     return hr;
 }
 
-static HRESULT VMR9_maybe_init(struct quartz_vmr *filter, BOOL force, const AM_MEDIA_TYPE *mt)
+static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE *mt)
 {
     VMR9AllocationInfo info = {};
     HRESULT hr = E_FAIL;
@@ -418,11 +418,9 @@ static HRESULT VMR9_maybe_init(struct quartz_vmr *filter, BOOL force, const AM_M
 
     TRACE("Initializing in mode %u, our window %p, clipping window %p.\n",
             filter->mode, filter->baseControlWindow.hwnd, filter->hWndClippingWindow);
-    if (filter->num_surfaces)
-        return S_OK;
 
     if (filter->mode == VMR9Mode_Windowless && !filter->hWndClippingWindow)
-        return (force ? VFW_E_RUNTIME_ERROR : S_OK);
+        return S_OK;
 
     info.dwWidth = filter->source_rect.right;
     info.dwHeight = filter->source_rect.bottom;
@@ -542,7 +540,7 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
 
     if (filter->mode
             || SUCCEEDED(hr = IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, VMR9Mode_Windowed)))
-        hr = VMR9_maybe_init(filter, FALSE, mt);
+        hr = allocate_surfaces(filter, mt);
 
     return hr;
 }
