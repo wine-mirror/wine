@@ -3191,6 +3191,68 @@ static void test_mixing_mode(void)
     DestroyWindow(window);
 }
 
+static void test_clipping_window(void)
+{
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+        .bmiHeader.biBitCount = 32,
+    };
+    AM_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Windowless);
+    IVMRWindowlessControl9 *windowless_control;
+    IFilterGraph2 *graph = create_graph();
+    struct testfilter source;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl9, (void **)&windowless_control);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"vmr9");
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, (HWND)0xdeadbeef);
+    todo_wine ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IVMRWindowlessControl9_Release(windowless_control);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -3221,6 +3283,7 @@ START_TEST(vmr9)
     test_allocate_surface_helper();
     test_renderless_formats();
     test_mixing_mode();
+    test_clipping_window();
 
     CoUninitialize();
 }
