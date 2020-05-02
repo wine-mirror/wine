@@ -3234,7 +3234,7 @@ static void test_clipping_window(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRWindowlessControl9_SetVideoClippingWindow(windowless_control, window);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

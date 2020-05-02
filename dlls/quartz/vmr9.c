@@ -1846,23 +1846,30 @@ static HRESULT WINAPI VMR9WindowlessControl_SetAspectRatioMode(IVMRWindowlessCon
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl9 *iface, HWND hwnd)
+static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl9 *iface, HWND window)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
 
-    TRACE("(%p/%p)->(%p)\n", iface, This, hwnd);
+    TRACE("filter %p, window %p.\n", filter, window);
 
-    if (!IsWindow(hwnd))
+    if (!IsWindow(window))
     {
-        WARN("Invalid window %p, returning E_INVALIDARG.\n", hwnd);
+        WARN("Invalid window %p, returning E_INVALIDARG.\n", window);
         return E_INVALIDARG;
     }
 
-    EnterCriticalSection(&This->renderer.filter.csFilter);
-    This->hWndClippingWindow = hwnd;
-    if (This->renderer.sink.pin.peer)
-        VMR9_maybe_init(This, FALSE, &This->renderer.sink.pin.mt);
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+
+    if (filter->renderer.sink.pin.peer)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        WARN("Attempt to set the clipping window while connected; returning VFW_E_WRONG_STATE.\n");
+        return VFW_E_WRONG_STATE;
+    }
+
+    filter->hWndClippingWindow = window;
+
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
     return S_OK;
 }
 
