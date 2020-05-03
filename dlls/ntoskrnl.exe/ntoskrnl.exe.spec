@@ -416,6 +416,7 @@
 @ stdcall IoInitializeTimer(ptr ptr ptr)
 @ stdcall IoInvalidateDeviceRelations(ptr long)
 @ stub IoInvalidateDeviceState
+@ stdcall -arch=win64 IoIs32bitProcess(ptr)
 @ stub IoIsFileOriginRemote
 @ stub IoIsOperationSynchronous
 @ stub IoIsSystemThread

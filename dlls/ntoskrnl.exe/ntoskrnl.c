@@ -2196,6 +2196,7 @@ static void *create_process_object( HANDLE handle )
     process->header.Type = 3;
     process->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
     NtQueryInformationProcess( handle, ProcessBasicInformation, &process->info, sizeof(process->info), NULL );
+    IsWow64Process( handle, &process->wow64 );
     return process;
 }
 
@@ -3934,6 +3935,17 @@ PEPROCESS WINAPI IoGetRequestorProcess(IRP *irp)
     TRACE("irp %p.\n", irp);
     return irp->Tail.Overlay.Thread->kthread.process;
 }
+
+#ifdef _WIN64
+/***********************************************************************
+ *           IoIs32bitProcess   (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI IoIs32bitProcess(IRP *irp)
+{
+    TRACE("irp %p.\n", irp);
+    return irp->Tail.Overlay.Thread->kthread.process->wow64;
+}
+#endif
 
 /***********************************************************************
  *           RtlIsNtDdiVersionAvailable   (NTOSKRNL.EXE.@)
