@@ -27,7 +27,6 @@
 #include "tom.h"
 #include "imm.h"
 #include "textserv.h"
-#include "wine/asm.h"
 #include "wine/debug.h"
 #include "editstr.h"
 
