@@ -3378,16 +3378,13 @@ static inline void *get_rva( HMODULE module, DWORD va )
     return (void *)((char *)module + va);
 }
 
-/* Copied from ntdll with checks for page alignment and characteristics removed */
-static NTSTATUS perform_relocations( void *module, SIZE_T len )
+static NTSTATUS perform_relocations( void *module, SIZE_T len, ULONG page_size )
 {
     IMAGE_NT_HEADERS *nt;
     char *base;
     IMAGE_BASE_RELOCATION *rel, *end;
     const IMAGE_DATA_DIRECTORY *relocs;
-    const IMAGE_SECTION_HEADER *sec;
     INT_PTR delta;
-    ULONG protect_old[96], i;
 
     nt = RtlImageNtHeader( module );
     base = (char *)nt->OptionalHeader.ImageBase;
@@ -3406,19 +3403,6 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
     if (!relocs->Size) return STATUS_SUCCESS;
     if (!relocs->VirtualAddress) return STATUS_CONFLICTING_ADDRESSES;
 
-    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( protect_old ))
-        return STATUS_INVALID_IMAGE_FORMAT;
-
-    sec = (const IMAGE_SECTION_HEADER *)((const char *)&nt->OptionalHeader +
-                                         nt->FileHeader.SizeOfOptionalHeader);
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-    {
-        void *addr = get_rva( module, sec[i].VirtualAddress );
-        SIZE_T size = sec[i].SizeOfRawData;
-        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
-                                &size, PAGE_READWRITE, &protect_old[i] );
-    }
-
     TRACE( "relocating from %p-%p to %p-%p\n",
            base, base + len, module, (char *)module + len );
 
@@ -3428,23 +3412,22 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
 
     while (rel < end - 1 && rel->SizeOfBlock)
     {
+        void *page = get_rva( module, rel->VirtualAddress );
+        DWORD old_prot;
+
         if (rel->VirtualAddress >= len)
         {
             WARN( "invalid address %p in relocation %p\n", get_rva( module, rel->VirtualAddress ), rel );
             return STATUS_ACCESS_VIOLATION;
         }
-        rel = LdrProcessRelocationBlock( get_rva( module, rel->VirtualAddress ),
-                                         (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
-                                         (USHORT *)(rel + 1), delta );
-        if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
-    }
 
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-    {
-        void *addr = get_rva( module, sec[i].VirtualAddress );
-        SIZE_T size = sec[i].SizeOfRawData;
-        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
-                                &size, protect_old[i], &protect_old[i] );
+        /* Relocation entries may hang over the end of the page, so we need to
+         * protect two pages. */
+        VirtualProtect( page, page_size * 2, PAGE_READWRITE, &old_prot );
+        rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
+                                         (USHORT *)(rel + 1), delta );
+        VirtualProtect( page, page_size * 2, old_prot, &old_prot );
+        if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
     }
 
     return STATUS_SUCCESS;
@@ -3475,7 +3458,7 @@ static HMODULE load_driver_module( const WCHAR *name )
     if (nt->OptionalHeader.SectionAlignment < info.PageSize ||
         !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
-        status = perform_relocations(module, nt->OptionalHeader.SizeOfImage);
+        status = perform_relocations( module, nt->OptionalHeader.SizeOfImage, info.PageSize );
         if (status != STATUS_SUCCESS)
             goto error;
 
