@@ -2938,8 +2938,14 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList)
   int test;   /* Condition evaluation result */
   WCHAR *command;
 
+  /* Function evaluate_if_condition relies on the global variables quals, param1 and param2
+     set in a call to WCMD_parse before */
   if (evaluate_if_condition(p, &command, &test, &negate) == -1)
       goto syntax_err;
+
+  WINE_TRACE("p: %s, quals: %s, param1: %s, param2: %s, command: %s\n",
+             wine_dbgstr_w(p), wine_dbgstr_w(quals), wine_dbgstr_w(param1),
+             wine_dbgstr_w(param2), wine_dbgstr_w(command));
 
   /* Process rest of IF statement which is on the same line
      Note: This may process all or some of the cmdList (eg a GOTO) */
