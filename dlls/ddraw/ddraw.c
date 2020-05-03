@@ -3174,6 +3174,9 @@ static HRESULT CALLBACK EnumSurfacesCallback2Thunk(IDirectDrawSurface7 *surface,
     struct ddraw_surface *surface_impl = impl_from_IDirectDrawSurface7(surface);
     struct surfacescallback2_context *cbcontext = context;
 
+    if (!surface)
+        return cbcontext->func(NULL, surface_desc, cbcontext->context);
+
     IDirectDrawSurface4_AddRef(&surface_impl->IDirectDrawSurface4_iface);
     IDirectDrawSurface7_Release(surface);
 
@@ -3187,11 +3190,42 @@ static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
     struct ddraw_surface *surface_impl = impl_from_IDirectDrawSurface7(surface);
     struct surfacescallback_context *cbcontext = context;
 
+    if (!surface)
+        return cbcontext->func(NULL, (DDSURFACEDESC *)surface_desc, cbcontext->context);
+
     IDirectDrawSurface_AddRef(&surface_impl->IDirectDrawSurface_iface);
     IDirectDrawSurface7_Release(surface);
 
     return cbcontext->func(&surface_impl->IDirectDrawSurface_iface,
             (DDSURFACEDESC *)surface_desc, cbcontext->context);
+}
+
+struct enum_surface_mode_params
+{
+    IDirectDraw7 *ddraw;
+    const DDSURFACEDESC2 *desc;
+    LPDDENUMSURFACESCALLBACK7 callback;
+    void *context;
+};
+
+static HRESULT CALLBACK enum_surface_mode_callback(DDSURFACEDESC2 *surface_desc, void *context)
+{
+    const struct enum_surface_mode_params *params = context;
+    DDSURFACEDESC2 desc = *params->desc;
+    IDirectDrawSurface7 *surface;
+
+    desc.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_PIXELFORMAT;
+    desc.dwWidth = surface_desc->dwWidth;
+    desc.dwHeight = surface_desc->dwHeight;
+    desc.u1.lPitch = surface_desc->u1.lPitch;
+    desc.u4.ddpfPixelFormat = surface_desc->u4.ddpfPixelFormat;
+
+    if (SUCCEEDED(ddraw7_CreateSurface(params->ddraw, &desc, &surface, NULL)))
+    {
+        IDirectDrawSurface7_Release(surface);
+        return params->callback(NULL, &desc, params->context);
+    }
+    return DDENUMRET_OK;
 }
 
 /*****************************************************************************
@@ -3214,52 +3248,101 @@ static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD flags,
-        DDSURFACEDESC2 *DDSD, void *Context, LPDDENUMSURFACESCALLBACK7 Callback)
+        DDSURFACEDESC2 *surface_desc, void *context, LPDDENUMSURFACESCALLBACK7 callback)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    struct ddraw_surface *surf;
-    BOOL all, nomatch;
-    DDSURFACEDESC2 desc;
-    struct list *entry, *entry2;
+    HRESULT hr = DD_OK;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
-            iface, flags, DDSD, Context, Callback);
+            iface, flags, surface_desc, context, callback);
 
-    all = flags & DDENUMSURFACES_ALL;
-    nomatch = !!(flags & DDENUMSURFACES_NOMATCH);
-
-    if (!Callback)
+    if (!callback)
         return DDERR_INVALIDPARAMS;
 
-    wined3d_mutex_lock();
-
-    /* Use the _SAFE enumeration, the app may destroy enumerated surfaces */
-    LIST_FOR_EACH_SAFE(entry, entry2, &ddraw->surface_list)
+    if (flags & DDENUMSURFACES_CANBECREATED)
     {
-        surf = LIST_ENTRY(entry, struct ddraw_surface, surface_list_entry);
+        IDirectDrawSurface7 *surface;
 
-        if (!surf->iface_count)
-        {
-            WARN("Not enumerating surface %p because it doesn't have any references.\n", surf);
-            continue;
-        }
+        if ((flags & (DDENUMSURFACES_ALL | DDENUMSURFACES_MATCH | DDENUMSURFACES_NOMATCH)) != DDENUMSURFACES_MATCH)
+            return DDERR_INVALIDPARAMS;
 
-        if (all || (nomatch != ddraw_match_surface_desc(DDSD, &surf->surface_desc)))
+        wined3d_mutex_lock();
+
+        if (surface_desc->dwFlags & (DDSD_WIDTH | DDSD_HEIGHT))
         {
-            TRACE("Enumerating surface %p.\n", surf);
-            desc = surf->surface_desc;
-            IDirectDrawSurface7_AddRef(&surf->IDirectDrawSurface7_iface);
-            if (Callback(&surf->IDirectDrawSurface7_iface, &desc, Context) != DDENUMRET_OK)
+            if (SUCCEEDED(ddraw7_CreateSurface(iface, surface_desc, &surface, NULL)))
             {
-                wined3d_mutex_unlock();
-                return DD_OK;
+                struct ddraw_surface *surface_impl = impl_from_IDirectDrawSurface7(surface);
+                callback(NULL, &surface_impl->surface_desc, context);
+                IDirectDrawSurface7_Release(surface);
             }
         }
+        else
+        {
+            DDSURFACEDESC2 desc =
+            {
+                .dwSize = sizeof(desc),
+                .dwFlags = DDSD_PIXELFORMAT,
+                .u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT),
+            };
+            struct enum_surface_mode_params params =
+            {
+                .ddraw = iface,
+                .desc = surface_desc,
+                .callback = callback,
+                .context = context,
+            };
+            struct wined3d_display_mode mode;
+
+            if (FAILED(hr = wined3d_output_get_display_mode(ddraw->wined3d_output, &mode, NULL)))
+            {
+                ERR("Failed to get display mode, hr %#x.\n", hr);
+                wined3d_mutex_unlock();
+                return hr_ddraw_from_wined3d(hr);
+            }
+
+            ddrawformat_from_wined3dformat(&desc.u4.ddpfPixelFormat, mode.format_id);
+            hr = ddraw7_EnumDisplayModes(iface, 0, &desc, &params, enum_surface_mode_callback);
+        }
+
+        wined3d_mutex_unlock();
+    }
+    else if (flags & DDENUMSURFACES_DOESEXIST)
+    {
+        struct ddraw_surface *surface, *cursor;
+        BOOL nomatch = !!(flags & DDENUMSURFACES_NOMATCH);
+
+        wined3d_mutex_lock();
+
+        /* Use the safe enumeration, as the callback may destroy surfaces. */
+        LIST_FOR_EACH_ENTRY_SAFE(surface, cursor, &ddraw->surface_list, struct ddraw_surface, surface_list_entry)
+        {
+            if (!surface->iface_count)
+            {
+                WARN("Not enumerating surface %p because it doesn't have any references.\n", surface);
+                continue;
+            }
+
+            if ((flags & DDENUMSURFACES_ALL)
+                    || nomatch != ddraw_match_surface_desc(surface_desc, &surface->surface_desc))
+            {
+                DDSURFACEDESC2 desc = surface->surface_desc;
+
+                TRACE("Enumerating surface %p.\n", surface);
+                IDirectDrawSurface7_AddRef(&surface->IDirectDrawSurface7_iface);
+                if (callback(&surface->IDirectDrawSurface7_iface, &desc, context) != DDENUMRET_OK)
+                    break;
+            }
+        }
+
+        wined3d_mutex_unlock();
+    }
+    else
+    {
+        return DDERR_INVALIDPARAMS;
     }
 
-    wined3d_mutex_unlock();
-
-    return DD_OK;
+    return hr;
 }
 
 static HRESULT WINAPI ddraw4_EnumSurfaces(IDirectDraw4 *iface, DWORD flags,

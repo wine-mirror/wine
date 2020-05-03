@@ -15746,11 +15746,11 @@ static void test_enum_surfaces(void)
     ok(hr == DD_OK, "Failed to set cooperative level, hr %#x.\n", hr);
 
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_ALL, NULL, NULL, enum_surfaces_cb);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_ALL,
             NULL, NULL, enum_surfaces_cb);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     memset(&desc, 0, sizeof(desc));
     desc.dwSize = sizeof(desc);
@@ -15825,15 +15825,15 @@ static void test_enum_surfaces(void)
 
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_ALL,
             &desc, &param, enum_surfaces_create_cb);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
 
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_NOMATCH,
             &desc, &param, enum_surfaces_create_cb);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
 
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED,
             &desc, &param, enum_surfaces_create_cb);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
+    ok(hr == DDERR_INVALIDPARAMS, "Failed to enumerate surfaces, hr %#x.\n", hr);
 
     /* When not passed width and height, the callback is called with every
      * available display resolution. */
@@ -15849,7 +15849,7 @@ static void test_enum_surfaces(void)
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_MATCH,
             &desc, &param, enum_surfaces_create_cb);
     ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
-    todo_wine ok(param.count == param.mode_count, "Expected %u surfaces, got %u.\n", param.mode_count, param.count);
+    ok(param.count == param.mode_count, "Expected %u surfaces, got %u.\n", param.mode_count, param.count);
 
     desc.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
     desc.dwWidth = desc.dwHeight = 32;
@@ -15860,7 +15860,7 @@ static void test_enum_surfaces(void)
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_MATCH,
             &desc, &param, enum_surfaces_create_cb);
     ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
-    todo_wine ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+    ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
 
     hr = IDirectDraw4_CreateSurface(ddraw, &desc, &param.surfaces[0], NULL);
     ok(hr == DD_OK, "Failed to create surface, hr %#x.\n", hr);
@@ -15868,7 +15868,7 @@ static void test_enum_surfaces(void)
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_CANBECREATED | DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_MATCH,
             &desc, &param, enum_surfaces_create_cb);
     ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
-    todo_wine ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+    ok(param.count == 1, "Got unexpected number of enumerated surfaces %u.\n", param.count);
     IDirectDrawSurface4_Release(param.surfaces[0]);
 
     desc.dwFlags |= DDSD_PIXELFORMAT;
