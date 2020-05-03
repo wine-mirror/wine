@@ -15793,7 +15793,7 @@ static void test_enum_surfaces(void)
     hr = IDirectDraw4_EnumSurfaces(ddraw, DDENUMSURFACES_DOESEXIST | DDENUMSURFACES_NOMATCH,
             &desc, &param, enum_surfaces_cb);
     ok(hr == DD_OK, "Failed to enumerate surfaces, hr %#x.\n", hr);
-    todo_wine ok(param.count == 2, "Got unexpected number of enumerated surfaces %u.\n", param.count);
+    ok(param.count == 2, "Got unexpected number of enumerated surfaces %u.\n", param.count);
 
     desc.dwFlags = 0;
     param.count = 0;

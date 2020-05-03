@@ -3213,7 +3213,7 @@ static HRESULT CALLBACK EnumSurfacesCallbackThunk(IDirectDrawSurface7 *surface,
  *  DD_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
+static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD flags,
         DDSURFACEDESC2 *DDSD, void *Context, LPDDENUMSURFACESCALLBACK7 Callback)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
@@ -3223,10 +3223,10 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
     struct list *entry, *entry2;
 
     TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
-            iface, Flags, DDSD, Context, Callback);
+            iface, flags, DDSD, Context, Callback);
 
-    all = Flags & DDENUMSURFACES_ALL;
-    nomatch = Flags & DDENUMSURFACES_NOMATCH;
+    all = flags & DDENUMSURFACES_ALL;
+    nomatch = !!(flags & DDENUMSURFACES_NOMATCH);
 
     if (!Callback)
         return DDERR_INVALIDPARAMS;
