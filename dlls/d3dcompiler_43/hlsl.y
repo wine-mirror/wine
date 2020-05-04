@@ -619,13 +619,10 @@ static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
     {
         data_type = expr_type->e.array.type;
     }
-    else if (expr_type->type == HLSL_CLASS_MATRIX)
+    else if (expr_type->type == HLSL_CLASS_MATRIX || expr_type->type == HLSL_CLASS_VECTOR)
     {
-        data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, expr_type->base_type, expr_type->dimx, 1);
-    }
-    else if (expr_type->type == HLSL_CLASS_VECTOR)
-    {
-        data_type = new_hlsl_type(NULL, HLSL_CLASS_SCALAR, expr_type->base_type, 1, 1);
+        FIXME("Index of matrix or vector type.\n");
+        return NULL;
     }
     else
     {
@@ -2337,9 +2334,6 @@ postfix_expr:             primary_expr
                             }
                         | postfix_expr '[' expr ']'
                             {
-                                /* This may be an array dereference or a vector/matrix
-                                 * subcomponent access.
-                                 * We store it as an array dereference in any case. */
                                 struct hlsl_ir_deref *deref;
 
                                 if (node_from_list($3)->data_type->type != HLSL_CLASS_SCALAR)
