@@ -744,7 +744,10 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     }
 #endif
 
-    while(nch == '0') nch = get(ctx);
+    while(nch == '0') {
+        found_digit = TRUE;
+        nch = get(ctx);
+    }
 
     b.data[0] = 0;
     b.b = 0;
