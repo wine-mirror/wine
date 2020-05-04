@@ -2769,7 +2769,7 @@ static D3DFORMAT allocator_format;
 static DWORD allocator_accept_flags;
 static IDirect3DSurface9 *allocator_surfaces[5];
 static IVMRSurfaceAllocatorNotify9 *allocator_notify;
-static unsigned int allocator_got_PresentImage;
+static unsigned int allocator_got_PresentImage, allocator_got_TerminateDevice;
 
 static HRESULT WINAPI presenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID iid, void **out)
 {
@@ -2882,6 +2882,7 @@ static HRESULT WINAPI allocator_TerminateDevice(IVMRSurfaceAllocator9 *iface, DW
     if (winetest_debug > 1) trace("TerminateDevice()\n");
     ok(cookie == 0xabacab, "Got cookie %#lx.\n", cookie);
     /* Don't dereference the surfaces here, to mimic How to Survive. */
+    ++allocator_got_TerminateDevice;
     return E_NOTIMPL;
 }
 
@@ -3253,6 +3254,32 @@ static void test_clipping_window(void)
     DestroyWindow(window);
 }
 
+static void test_surface_allocator_notify_refcount(void)
+{
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
+    IVMRSurfaceAllocatorNotify9 *notify;
+    HRESULT hr;
+    ULONG ref;
+
+    allocator_got_TerminateDevice = 0;
+
+    set_mixing_mode(filter, 2);
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
+
+    hr = IVMRSurfaceAllocatorNotify9_AdviseSurfaceAllocator(notify, 0xabacab, &allocator_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IBaseFilter_Release(filter);
+    todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
+    todo_wine ok(allocator_got_TerminateDevice == 1, "Got %u calls to TerminateDevice().\n",
+            allocator_got_TerminateDevice);
+    todo_wine ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
+
+    ref = IVMRSurfaceAllocatorNotify9_Release(notify);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -3284,6 +3311,7 @@ START_TEST(vmr9)
     test_renderless_formats();
     test_mixing_mode();
     test_clipping_window();
+    test_surface_allocator_notify_refcount();
 
     CoUninitialize();
 }
