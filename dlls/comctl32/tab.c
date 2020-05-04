@@ -152,7 +152,7 @@ typedef struct
 #define TAB_HOTTRACK_TIMER            1
 #define TAB_HOTTRACK_TIMER_INTERVAL   100   /* milliseconds */
 
-static const WCHAR themeClass[] = { 'T','a','b',0 };
+static const WCHAR themeClass[] = L"Tab";
 
 static inline TAB_ITEM* TAB_GetItem(const TAB_INFO *infoPtr, INT i)
 {
@@ -1013,7 +1013,6 @@ static void TAB_SetupScrolling(
   TAB_INFO*   infoPtr,
   const RECT* clientRect)
 {
-  static const WCHAR emptyW[] = { 0 };
   INT maxRange = 0;
 
   if (infoPtr->needsScrolling)
@@ -1044,7 +1043,7 @@ static void TAB_SetupScrolling(
      */
     if (infoPtr->hwndUpDown==0)
     {
-      infoPtr->hwndUpDown = CreateWindowW(UPDOWN_CLASSW, emptyW,
+      infoPtr->hwndUpDown = CreateWindowW(UPDOWN_CLASSW, L"",
 					  WS_VISIBLE | WS_CHILD | UDS_HORZ,
 					  controlPos.left, controlPos.top,
 					  controlPos.right - controlPos.left,
