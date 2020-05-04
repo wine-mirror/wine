@@ -395,7 +395,9 @@ class VkEnum(object):
             if not value.is_alias() and v.value == value.value:
                 LOGGER.debug("Adding duplicate enum value {0} to {1}".format(v, self.name))
                 return
-        self.values.append(value)
+        # Avoid adding duplicate aliases multiple times
+        if not any(x.name == value.name for x in self.values):
+            self.values.append(value)
 
     def definition(self):
         if self.is_alias():
