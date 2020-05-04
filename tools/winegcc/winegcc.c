@@ -1292,6 +1292,9 @@ static void build(struct options* opts)
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
+    if (is_pe && opts->use_msvcrt && !entry_point && (opts->shared || opts->win16_app))
+        entry_point = opts->target_cpu == CPU_x86 ? "DllMainCRTStartup@12" : "DllMainCRTStartup";
+
     if (is_pe && entry_point)
         strarray_add(link_args, strmake("-Wl,--entry,%s%s",
                                         is_pe && opts->target_cpu == CPU_x86 ? "_" : "",
