@@ -1185,14 +1185,9 @@ static void build(struct options* opts)
     if (!opts->entry_point)
     {
         if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
-            entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "_DriverEntry@8" : "DriverEntry";
+            entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "DriverEntry@8" : "DriverEntry";
         else if (opts->use_msvcrt && !opts->shared && !opts->win16_app)
-        {
-            if (opts->unicode_app)
-                entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "_wmainCRTStartup" : "wmainCRTStartup";
-            else
-                entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "_mainCRTStartup" : "mainCRTStartup";
-        }
+            entry_point = opts->unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
         else if (!is_pe && !opts->shared && opts->unicode_app)
             entry_point = "__wine_spec_exe_wentry";
     }
@@ -1297,7 +1292,10 @@ static void build(struct options* opts)
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
-    if (is_pe && entry_point) strarray_add(link_args, strmake("-Wl,--entry,%s", entry_point));
+    if (is_pe && entry_point)
+        strarray_add(link_args, strmake("-Wl,--entry,%s%s",
+                                        is_pe && opts->target_cpu == CPU_x86 ? "_" : "",
+                                        entry_point));
 
     strarray_add(link_args, spec_o_name);
 
