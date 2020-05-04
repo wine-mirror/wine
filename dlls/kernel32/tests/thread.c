@@ -1218,10 +1218,12 @@ static void test_GetThreadSelectorEntry(void)
     SetLastError( 0xdeadbeef );
     ret = GetThreadSelectorEntry(GetCurrentThread(), 0xdeadbeef, &entry);
     ok(!ret, "GetThreadSelectorEntry(invalid) succeeded\n");
-    ok( GetLastError() == ERROR_GEN_FAILURE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_GEN_FAILURE
+        || GetLastError() == ERROR_INVALID_THREAD_ID /* 32-bit */, "wrong error %u\n", GetLastError() );
     ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegDs + 0x100, &entry);
     ok(!ret, "GetThreadSelectorEntry(invalid) succeeded\n");
-    ok( GetLastError() == ERROR_GEN_FAILURE, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_GEN_FAILURE
+        || GetLastError() == ERROR_NOACCESS /* 32-bit */, "wrong error %u\n", GetLastError() );
 
     memset(&entry, 0x11, sizeof(entry));
     ret = GetThreadSelectorEntry(GetCurrentThread(), ctx.SegFs, &entry);
