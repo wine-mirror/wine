@@ -6653,17 +6653,29 @@ static void test_NLSVersion(void)
         win_skip( "GetNLSVersion not available\n" );
         return;
     }
+
+    SetLastError( 0xdeadbeef );
+    memset( &info, 0xcc, sizeof(info) );
+    info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+    ret = pGetNLSVersion( COMPARE_STRING, MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+                          (NLSVERSIONINFO *)&info );
+    ok( ret, "GetNLSVersion failed err %u\n", GetLastError() );
+
     SetLastError( 0xdeadbeef );
     memset( &info, 0xcc, sizeof(info) );
     info.dwNLSVersionInfoSize = sizeof(info);
     ret = pGetNLSVersion( COMPARE_STRING, MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
                           (NLSVERSIONINFO *)&info );
-    ok( ret, "GetNLSVersion failed err %u\n", GetLastError() );
-    ok( info.dwEffectiveId == MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
-        "wrong id %x\n", info.dwEffectiveId );
-    ok( IsEqualIID( &info.guidCustomVersion, &guid_fr ) ||
-        broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
-        "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+    ok( ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER /* < Vista */,
+        "GetNLSVersion failed err %u\n", GetLastError() );
+    if (ret)
+    {
+        ok( info.dwEffectiveId == MAKELANGID( LANG_FRENCH, SUBLANG_FRENCH_CANADIAN ),
+            "wrong id %x\n", info.dwEffectiveId );
+        ok( IsEqualIID( &info.guidCustomVersion, &guid_fr ) ||
+            broken( IsEqualIID( &info.guidCustomVersion, &guid_null )),  /* <= win7 */
+            "wrong guid %s\n", debugstr_guid(&info.guidCustomVersion) );
+    }
 
     SetLastError( 0xdeadbeef );
     info.dwNLSVersionInfoSize = 8;
