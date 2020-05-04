@@ -139,8 +139,7 @@ typedef struct
  * Defines and global variables
  */
 
-static const WCHAR PropSheetInfoStr[] =
-    {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
+static const WCHAR PropSheetInfoStr[] = L"PropertySheetInfo";
 
 #define PSP_INTERNAL_UNICODE 0x80000000
 
@@ -546,7 +545,6 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   {
     WCHAR szTitle[256];
     const WCHAR *pTitle;
-    static const WCHAR pszNull[] = { '(','n','u','l','l',')',0 };
 
     if (IS_INTRESOURCE( lppsp->pszTitle ))
     {
@@ -555,7 +553,7 @@ static BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
       else if (*p)
         pTitle = p;
       else
-        pTitle = pszNull;
+        pTitle = L"(null)";
     }
     else
       pTitle = lppsp->pszTitle;
