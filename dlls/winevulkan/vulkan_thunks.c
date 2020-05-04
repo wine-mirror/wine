@@ -2642,6 +2642,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceCustomBorderColorFeaturesEXT *in = (const VkPhysicalDeviceCustomBorderColorFeaturesEXT *)in_header;
+            VkPhysicalDeviceCustomBorderColorFeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->customBorderColors = in->customBorderColors;
+            out->customBorderColorWithoutFormat = in->customBorderColorWithoutFormat;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV:
         {
             const VkPhysicalDeviceDiagnosticsConfigFeaturesNV *in = (const VkPhysicalDeviceDiagnosticsConfigFeaturesNV *)in_header;
@@ -3888,6 +3905,12 @@ VkResult WINAPI wine_vkCreatePipelineLayout(VkDevice device, const VkPipelineLay
     return device->funcs.p_vkCreatePipelineLayout(device->device, pCreateInfo, NULL, pPipelineLayout);
 }
 
+static VkResult WINAPI wine_vkCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataSlotCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkPrivateDataSlotEXT *pPrivateDataSlot)
+{
+    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pPrivateDataSlot);
+    return device->funcs.p_vkCreatePrivateDataSlotEXT(device->device, pCreateInfo, NULL, pPrivateDataSlot);
+}
+
 VkResult WINAPI wine_vkCreateQueryPool(VkDevice device, const VkQueryPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkQueryPool *pQueryPool)
 {
     TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pQueryPool);
@@ -4083,6 +4106,12 @@ void WINAPI wine_vkDestroyPipelineLayout(VkDevice device, VkPipelineLayout pipel
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(pipelineLayout), pAllocator);
     device->funcs.p_vkDestroyPipelineLayout(device->device, pipelineLayout, NULL);
+}
+
+static void WINAPI wine_vkDestroyPrivateDataSlotEXT(VkDevice device, VkPrivateDataSlotEXT privateDataSlot, const VkAllocationCallbacks *pAllocator)
+{
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(privateDataSlot), pAllocator);
+    device->funcs.p_vkDestroyPrivateDataSlotEXT(device->device, privateDataSlot, NULL);
 }
 
 void WINAPI wine_vkDestroyQueryPool(VkDevice device, VkQueryPool queryPool, const VkAllocationCallbacks *pAllocator)
@@ -4949,6 +4978,12 @@ static VkResult WINAPI wine_vkGetPipelineExecutableStatisticsKHR(VkDevice device
 #endif
 }
 
+static void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlotEXT privateDataSlot, uint64_t *pData)
+{
+    TRACE("%p, %#x, 0x%s, 0x%s, %p\n", device, objectType, wine_dbgstr_longlong(objectHandle), wine_dbgstr_longlong(privateDataSlot), pData);
+    device->funcs.p_vkGetPrivateDataEXT(device->device, objectType, objectHandle, privateDataSlot, pData);
+}
+
 VkResult WINAPI wine_vkGetQueryPoolResults(VkDevice device, VkQueryPool queryPool, uint32_t firstQuery, uint32_t queryCount, size_t dataSize, void *pData, VkDeviceSize stride, VkQueryResultFlags flags)
 {
     TRACE("%p, 0x%s, %u, %u, 0x%s, %p, 0x%s, %#x\n", device, wine_dbgstr_longlong(queryPool), firstQuery, queryCount, wine_dbgstr_longlong(dataSize), pData, wine_dbgstr_longlong(stride), flags);
@@ -5139,6 +5174,12 @@ VkResult WINAPI wine_vkSetEvent(VkDevice device, VkEvent event)
 {
     TRACE("%p, 0x%s\n", device, wine_dbgstr_longlong(event));
     return device->funcs.p_vkSetEvent(device->device, event);
+}
+
+static VkResult WINAPI wine_vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlotEXT privateDataSlot, uint64_t data)
+{
+    TRACE("%p, %#x, 0x%s, 0x%s, 0x%s\n", device, objectType, wine_dbgstr_longlong(objectHandle), wine_dbgstr_longlong(privateDataSlot), wine_dbgstr_longlong(data));
+    return device->funcs.p_vkSetPrivateDataEXT(device->device, objectType, objectHandle, privateDataSlot, data);
 }
 
 VkResult WINAPI wine_vkSignalSemaphore(VkDevice device, const VkSemaphoreSignalInfo *pSignalInfo)
@@ -5377,6 +5418,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateIndirectCommandsLayoutNV", &wine_vkCreateIndirectCommandsLayoutNV},
     {"vkCreatePipelineCache", &wine_vkCreatePipelineCache},
     {"vkCreatePipelineLayout", &wine_vkCreatePipelineLayout},
+    {"vkCreatePrivateDataSlotEXT", &wine_vkCreatePrivateDataSlotEXT},
     {"vkCreateQueryPool", &wine_vkCreateQueryPool},
     {"vkCreateRayTracingPipelinesNV", &wine_vkCreateRayTracingPipelinesNV},
     {"vkCreateRenderPass", &wine_vkCreateRenderPass},
@@ -5407,6 +5449,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroyPipeline", &wine_vkDestroyPipeline},
     {"vkDestroyPipelineCache", &wine_vkDestroyPipelineCache},
     {"vkDestroyPipelineLayout", &wine_vkDestroyPipelineLayout},
+    {"vkDestroyPrivateDataSlotEXT", &wine_vkDestroyPrivateDataSlotEXT},
     {"vkDestroyQueryPool", &wine_vkDestroyQueryPool},
     {"vkDestroyRenderPass", &wine_vkDestroyRenderPass},
     {"vkDestroySampler", &wine_vkDestroySampler},
@@ -5460,6 +5503,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetPipelineExecutableInternalRepresentationsKHR", &wine_vkGetPipelineExecutableInternalRepresentationsKHR},
     {"vkGetPipelineExecutablePropertiesKHR", &wine_vkGetPipelineExecutablePropertiesKHR},
     {"vkGetPipelineExecutableStatisticsKHR", &wine_vkGetPipelineExecutableStatisticsKHR},
+    {"vkGetPrivateDataEXT", &wine_vkGetPrivateDataEXT},
     {"vkGetQueryPoolResults", &wine_vkGetQueryPoolResults},
     {"vkGetQueueCheckpointDataNV", &wine_vkGetQueueCheckpointDataNV},
     {"vkGetRayTracingShaderGroupHandlesNV", &wine_vkGetRayTracingShaderGroupHandlesNV},
@@ -5489,6 +5533,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkResetQueryPool", &wine_vkResetQueryPool},
     {"vkResetQueryPoolEXT", &wine_vkResetQueryPoolEXT},
     {"vkSetEvent", &wine_vkSetEvent},
+    {"vkSetPrivateDataEXT", &wine_vkSetPrivateDataEXT},
     {"vkSignalSemaphore", &wine_vkSignalSemaphore},
     {"vkSignalSemaphoreKHR", &wine_vkSignalSemaphoreKHR},
     {"vkTrimCommandPool", &wine_vkTrimCommandPool},
@@ -5613,6 +5658,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_buffer_device_address",
     "VK_EXT_conditional_rendering",
     "VK_EXT_conservative_rasterization",
+    "VK_EXT_custom_border_color",
     "VK_EXT_depth_clip_enable",
     "VK_EXT_depth_range_unrestricted",
     "VK_EXT_descriptor_indexing",
@@ -5631,6 +5677,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_pci_bus_info",
     "VK_EXT_pipeline_creation_cache_control",
     "VK_EXT_post_depth_coverage",
+    "VK_EXT_private_data",
     "VK_EXT_queue_family_foreign",
     "VK_EXT_robustness2",
     "VK_EXT_sample_locations",

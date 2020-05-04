@@ -1258,6 +1258,7 @@ struct vulkan_device_funcs
 #endif
     VkResult (*p_vkCreatePipelineCache)(VkDevice, const VkPipelineCacheCreateInfo *, const VkAllocationCallbacks *, VkPipelineCache *);
     VkResult (*p_vkCreatePipelineLayout)(VkDevice, const VkPipelineLayoutCreateInfo *, const VkAllocationCallbacks *, VkPipelineLayout *);
+    VkResult (*p_vkCreatePrivateDataSlotEXT)(VkDevice, const VkPrivateDataSlotCreateInfoEXT *, const VkAllocationCallbacks *, VkPrivateDataSlotEXT *);
     VkResult (*p_vkCreateQueryPool)(VkDevice, const VkQueryPoolCreateInfo *, const VkAllocationCallbacks *, VkQueryPool *);
 #if defined(USE_STRUCT_CONVERSION)
     VkResult (*p_vkCreateRayTracingPipelinesNV)(VkDevice, VkPipelineCache, uint32_t, const VkRayTracingPipelineCreateInfoNV_host *, const VkAllocationCallbacks *, VkPipeline *);
@@ -1296,6 +1297,7 @@ struct vulkan_device_funcs
     void (*p_vkDestroyPipeline)(VkDevice, VkPipeline, const VkAllocationCallbacks *);
     void (*p_vkDestroyPipelineCache)(VkDevice, VkPipelineCache, const VkAllocationCallbacks *);
     void (*p_vkDestroyPipelineLayout)(VkDevice, VkPipelineLayout, const VkAllocationCallbacks *);
+    void (*p_vkDestroyPrivateDataSlotEXT)(VkDevice, VkPrivateDataSlotEXT, const VkAllocationCallbacks *);
     void (*p_vkDestroyQueryPool)(VkDevice, VkQueryPool, const VkAllocationCallbacks *);
     void (*p_vkDestroyRenderPass)(VkDevice, VkRenderPass, const VkAllocationCallbacks *);
     void (*p_vkDestroySampler)(VkDevice, VkSampler, const VkAllocationCallbacks *);
@@ -1436,6 +1438,7 @@ struct vulkan_device_funcs
 #else
     VkResult (*p_vkGetPipelineExecutableStatisticsKHR)(VkDevice, const VkPipelineExecutableInfoKHR *, uint32_t *, VkPipelineExecutableStatisticKHR *);
 #endif
+    void (*p_vkGetPrivateDataEXT)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlotEXT, uint64_t *);
     VkResult (*p_vkGetQueryPoolResults)(VkDevice, VkQueryPool, uint32_t, uint32_t, size_t, void *, VkDeviceSize, VkQueryResultFlags);
     void (*p_vkGetQueueCheckpointDataNV)(VkQueue, uint32_t *, VkCheckpointDataNV *);
     VkResult (*p_vkGetRayTracingShaderGroupHandlesNV)(VkDevice, VkPipeline, uint32_t, uint32_t, size_t, void *);
@@ -1473,6 +1476,7 @@ struct vulkan_device_funcs
     void (*p_vkResetQueryPool)(VkDevice, VkQueryPool, uint32_t, uint32_t);
     void (*p_vkResetQueryPoolEXT)(VkDevice, VkQueryPool, uint32_t, uint32_t);
     VkResult (*p_vkSetEvent)(VkDevice, VkEvent);
+    VkResult (*p_vkSetPrivateDataEXT)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlotEXT, uint64_t);
 #if defined(USE_STRUCT_CONVERSION)
     VkResult (*p_vkSignalSemaphore)(VkDevice, const VkSemaphoreSignalInfo_host *);
 #else
@@ -1720,6 +1724,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCreateIndirectCommandsLayoutNV) \
     USE_VK_FUNC(vkCreatePipelineCache) \
     USE_VK_FUNC(vkCreatePipelineLayout) \
+    USE_VK_FUNC(vkCreatePrivateDataSlotEXT) \
     USE_VK_FUNC(vkCreateQueryPool) \
     USE_VK_FUNC(vkCreateRayTracingPipelinesNV) \
     USE_VK_FUNC(vkCreateRenderPass) \
@@ -1750,6 +1755,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkDestroyPipeline) \
     USE_VK_FUNC(vkDestroyPipelineCache) \
     USE_VK_FUNC(vkDestroyPipelineLayout) \
+    USE_VK_FUNC(vkDestroyPrivateDataSlotEXT) \
     USE_VK_FUNC(vkDestroyQueryPool) \
     USE_VK_FUNC(vkDestroyRenderPass) \
     USE_VK_FUNC(vkDestroySampler) \
@@ -1802,6 +1808,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetPipelineExecutableInternalRepresentationsKHR) \
     USE_VK_FUNC(vkGetPipelineExecutablePropertiesKHR) \
     USE_VK_FUNC(vkGetPipelineExecutableStatisticsKHR) \
+    USE_VK_FUNC(vkGetPrivateDataEXT) \
     USE_VK_FUNC(vkGetQueryPoolResults) \
     USE_VK_FUNC(vkGetQueueCheckpointDataNV) \
     USE_VK_FUNC(vkGetRayTracingShaderGroupHandlesNV) \
@@ -1831,6 +1838,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkResetQueryPool) \
     USE_VK_FUNC(vkResetQueryPoolEXT) \
     USE_VK_FUNC(vkSetEvent) \
+    USE_VK_FUNC(vkSetPrivateDataEXT) \
     USE_VK_FUNC(vkSignalSemaphore) \
     USE_VK_FUNC(vkSignalSemaphoreKHR) \
     USE_VK_FUNC(vkTrimCommandPool) \
