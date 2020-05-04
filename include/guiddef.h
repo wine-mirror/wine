@@ -30,7 +30,7 @@ typedef struct
 #else
 typedef struct _GUID
 {
-#ifdef _MSC_VER
+#ifdef WINE_USE_LONG
     unsigned long  Data1;
 #else
     unsigned int   Data1;
