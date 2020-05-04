@@ -27,6 +27,7 @@ static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPD
 static NTSTATUS (WINAPI *pRtlCreateEnvironment)(BOOLEAN, PWSTR*);
 static NTSTATUS (WINAPI *pRtlDestroyEnvironment)(PWSTR);
 static NTSTATUS (WINAPI *pRtlQueryEnvironmentVariable_U)(PWSTR, PUNICODE_STRING, PUNICODE_STRING);
+static NTSTATUS (WINAPI* pRtlQueryEnvironmentVariable)(WCHAR*, WCHAR*, SIZE_T, WCHAR*, SIZE_T, SIZE_T*);
 static void     (WINAPI *pRtlSetCurrentEnvironment)(PWSTR, PWSTR*);
 static NTSTATUS (WINAPI *pRtlSetEnvironmentVariable)(PWSTR*, PUNICODE_STRING, PUNICODE_STRING);
 static NTSTATUS (WINAPI *pRtlExpandEnvironmentStrings_U)(LPWSTR, PUNICODE_STRING, PUNICODE_STRING, PULONG);
@@ -95,6 +96,9 @@ static void testQuery(void)
     UNICODE_STRING      name;
     UNICODE_STRING      value;
     NTSTATUS            nts;
+    SIZE_T              name_length;
+    SIZE_T              value_length;
+    SIZE_T              return_length;
     unsigned int i;
 
     for (i = 0; tests[i].var; i++)
@@ -130,6 +134,39 @@ static void testQuery(void)
             break;
         }
     }
+
+    if (pRtlQueryEnvironmentVariable)
+    {
+        for (i = 0; tests[i].var; i++)
+        {
+            const struct test* test = &tests[i];
+            name_length = strlen(test->var);
+            value_length = test->len;
+            value.Buffer = bv;
+            bv[test->len] = '@';
+
+            pRtlMultiByteToUnicodeN(bn, sizeof(bn), NULL, test->var, strlen(test->var) + 1);
+            nts = pRtlQueryEnvironmentVariable(small_env, bn, name_length, bv, value_length, &return_length);
+            ok(nts == test->status || (test->alt && nts == test->alt),
+                "[%d]: Wrong status for '%s', expecting %x got %x\n",
+                i, test->var, test->status, nts);
+            if (nts == test->status) switch (nts)
+            {
+            case STATUS_SUCCESS:
+                pRtlMultiByteToUnicodeN(bn, sizeof(bn), NULL, test->val, strlen(test->val) + 1);
+                ok(return_length == strlen(test->val), "Wrong length %ld for %s\n",
+                    return_length, test->var);
+                ok(!memcmp(bv, bn, return_length), "Wrong result for %s/%d\n", test->var, test->len);
+                ok(bv[test->len] == '@', "Writing too far away in the buffer for %s/%d\n", test->var, test->len);
+                break;
+            case STATUS_BUFFER_TOO_SMALL:
+                ok(return_length == (strlen(test->val) + 1),
+                    "Wrong returned length %ld (too small buffer) for %s\n", return_length, test->var);
+                break;
+            }
+        }
+    }
+    else win_skip("RtlQueryEnvironmentVariable not available, skipping tests\n");
 }
 
 static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATUS ret, NTSTATUS alt)
@@ -591,6 +628,7 @@ START_TEST(env)
     pRtlCreateEnvironment = (void*)GetProcAddress(mod, "RtlCreateEnvironment");
     pRtlDestroyEnvironment = (void*)GetProcAddress(mod, "RtlDestroyEnvironment");
     pRtlQueryEnvironmentVariable_U = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable_U");
+    pRtlQueryEnvironmentVariable = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable");
     pRtlSetCurrentEnvironment = (void*)GetProcAddress(mod, "RtlSetCurrentEnvironment");
     pRtlSetEnvironmentVariable = (void*)GetProcAddress(mod, "RtlSetEnvironmentVariable");
     pRtlExpandEnvironmentStrings_U = (void*)GetProcAddress(mod, "RtlExpandEnvironmentStrings_U");

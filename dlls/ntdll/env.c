@@ -981,6 +981,48 @@ NTSTATUS WINAPI RtlQueryEnvironmentVariable_U(PWSTR env,
     return nts;
 }
 
+
+/******************************************************************
+ *		RtlQueryEnvironmentVariable   [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlQueryEnvironmentVariable( WCHAR *env, const WCHAR *name, SIZE_T namelen,
+                                             WCHAR *value, SIZE_T value_length, SIZE_T *return_length )
+{
+    NTSTATUS nts = STATUS_VARIABLE_NOT_FOUND;
+    SIZE_T len = 0;
+    const WCHAR *var;
+
+    if (!namelen) return nts;
+
+    if (!env)
+    {
+        RtlAcquirePebLock();
+        var = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    }
+    else var = env;
+
+    var = ENV_FindVariable(var, name, namelen);
+    if (var != NULL)
+    {
+        len = wcslen(var);
+        if (len <= value_length)
+        {
+            memcpy(value, var, min(len + 1, value_length) * sizeof(WCHAR));
+            nts = STATUS_SUCCESS;
+        }
+        else
+        {
+            len++;
+            nts = STATUS_BUFFER_TOO_SMALL;
+        }
+    }
+    *return_length = len;
+
+    if (!env) RtlReleasePebLock();
+
+    return nts;
+}
+
 /******************************************************************
  *		RtlSetCurrentEnvironment        [NTDLL.@]
  *

@@ -863,6 +863,7 @@
 @ stdcall RtlQueryDepthSList(ptr)
 @ stdcall RtlQueryDynamicTimeZoneInformation(ptr)
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
+@ stdcall RtlQueryEnvironmentVariable(ptr ptr long ptr long ptr)
 @ stdcall RtlQueryHeapInformation(long long ptr long ptr)
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stdcall RtlQueryInformationActivationContext(long long ptr long ptr long ptr)
