@@ -253,7 +253,10 @@ class VkBaseType(object):
     def definition(self):
         # Definition is similar for alias or non-alias as type
         # is already set to alias.
-        return "typedef {0} {1};\n".format(self.type, self.name)
+        if not self.type is None:
+            return "typedef {0} {1};\n".format(self.type, self.name)
+        else:
+            return "struct {0};\n".format(self.name)
 
     def is_alias(self):
         return bool(self.alias)
@@ -2953,7 +2956,9 @@ class VkRegistry(object):
 
             if type_info["category"] == "basetype":
                 name = t.find("name").text
-                _type = t.find("type").text
+                _type = None
+                if not t.find("type") is None:
+                    _type = t.find("type").text
                 basetype = VkBaseType(name, _type)
                 base_types.append(basetype)
                 type_info["data"] = basetype
