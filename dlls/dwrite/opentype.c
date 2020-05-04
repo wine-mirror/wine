@@ -507,6 +507,18 @@ enum gpos_lookup_type
     GPOS_LOOKUP_EXTENSION_POSITION = 9,
 };
 
+enum gsub_lookup_type
+{
+    GSUB_LOOKUP_SINGLE_SUBST = 1,
+    GSUB_LOOKUP_MULTIPLE_SUBST = 2,
+    GSUB_LOOKUP_ALTERNATE_SUBST = 3,
+    GSUB_LOOKUP_LIGATURE_SUBST = 4,
+    GSUB_LOOKUP_CONTEXTUAL_SUBST = 5,
+    GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST = 6,
+    GSUB_LOOKUP_EXTENSION_SUBST = 7,
+    GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST = 8,
+};
+
 enum gpos_value_format
 {
     GPOS_VALUE_X_PLACEMENT = 0x1,
@@ -528,11 +540,26 @@ enum OPENTYPE_PLATFORM_ID
     OPENTYPE_PLATFORM_CUSTOM
 };
 
-struct ot_gpos_extensionpos_format1
+struct ot_gsubgpos_extensionpos_format1
 {
-    WORD format;
-    WORD lookup_type;
+    UINT16 format;
+    UINT16 lookup_type;
     DWORD extension_offset;
+};
+
+struct ot_gsub_singlesubst_format1
+{
+    UINT16 format;
+    UINT16 coverage;
+    short delta;
+};
+
+struct ot_gsub_singlesubst_format2
+{
+    UINT16 format;
+    UINT16 coverage;
+    UINT16 count;
+    UINT16 substitutes[1];
 };
 
 struct ot_feature
@@ -739,12 +766,6 @@ typedef struct {
 } GSUB_ExtensionPosFormat1;
 
 #include "poppack.h"
-
-enum gsub_lookup_type
-{
-    GSUB_LOOKUP_SINGLE_SUBST = 1,
-    GSUB_LOOKUP_EXTENSION_SUBST = 7,
-};
 
 enum TT_NAME_WINDOWS_ENCODING_ID
 {
@@ -3286,7 +3307,23 @@ static unsigned int opentype_layout_get_gpos_subtable(const struct scriptshaping
             FIELD_OFFSET(struct ot_lookup_table, subtable[subtable]));
     if (lookup_type == GPOS_LOOKUP_EXTENSION_POSITION)
     {
-        const struct ot_gpos_extensionpos_format1 *format1 = table_read_ensure(&cache->gpos.table,
+        const struct ot_gsubgpos_extensionpos_format1 *format1 = table_read_ensure(&cache->gpos.table,
+                lookup_offset + subtable_offset, sizeof(*format1));
+        subtable_offset += GET_BE_DWORD(format1->extension_offset);
+    }
+
+    return lookup_offset + subtable_offset;
+}
+
+static unsigned int opentype_layout_get_gsub_subtable(const struct scriptshaping_cache *cache,
+        unsigned int lookup_offset, unsigned int subtable)
+{
+    UINT16 lookup_type = table_read_be_word(&cache->gsub.table, lookup_offset);
+    unsigned int subtable_offset = table_read_be_word(&cache->gsub.table, lookup_offset +
+            FIELD_OFFSET(struct ot_lookup_table, subtable[subtable]));
+    if (lookup_type == GSUB_LOOKUP_EXTENSION_SUBST)
+    {
+        const struct ot_gsubgpos_extensionpos_format1 *format1 = table_read_ensure(&cache->gsub.table,
                 lookup_offset + subtable_offset, sizeof(*format1));
         subtable_offset += GET_BE_DWORD(format1->extension_offset);
     }
@@ -3971,7 +4008,7 @@ static void opentype_layout_apply_gpos_lookup(struct scriptshaping_context *cont
     lookup_type = GET_BE_WORD(lookup_table->lookup_type);
     if (lookup_type == GPOS_LOOKUP_EXTENSION_POSITION)
     {
-        const struct ot_gpos_extensionpos_format1 *extension = table_read_ensure(&cache->gpos.table,
+        const struct ot_gsubgpos_extensionpos_format1 *extension = table_read_ensure(&cache->gpos.table,
                 lookup.offset + GET_BE_WORD(lookup_table->subtable[0]), sizeof(*extension));
         WORD format;
 
@@ -4157,9 +4194,115 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     heap_free(lookups.indexes);
 }
 
+static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    struct scriptshaping_cache *cache = iter->context->cache;
+    UINT16 format, coverage;
+    unsigned int i;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gsub_subtable(cache, lookup->offset, i);
+        UINT16 glyph = iter->context->u.subst.glyphs[iter->pos];
+        unsigned int coverage_index;
+
+        format = table_read_be_word(&cache->gsub.table, subtable_offset);
+
+        coverage = table_read_be_word(&cache->gsub.table, subtable_offset +
+                FIELD_OFFSET(struct ot_gsub_singlesubst_format1, coverage));
+
+        if (format == 1)
+        {
+            const struct ot_gsub_singlesubst_format1 *format1 = table_read_ensure(&cache->gsub.table, subtable_offset,
+                    sizeof(*format1));
+
+            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            if (coverage_index == GLYPH_NOT_COVERED)
+                continue;
+
+            iter->context->u.subst.glyphs[iter->pos] = glyph + GET_BE_WORD(format1->delta);
+            break;
+        }
+        else if (format == 2)
+        {
+            UINT16 count = table_read_be_word(&cache->gsub.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count));
+            const struct ot_gsub_singlesubst_format2 *format2 = table_read_ensure(&cache->gsub.table, subtable_offset,
+                    FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count) + count * sizeof(UINT16));
+
+            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            if (coverage_index == GLYPH_NOT_COVERED || coverage_index >= count)
+                continue;
+
+            iter->context->u.subst.glyphs[iter->pos] = GET_BE_WORD(format2->substitutes[coverage_index]);
+            break;
+        }
+        else
+            WARN("Unknown single substitution format %u.\n", format);
+    }
+
+    return FALSE;
+}
+
 static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
         unsigned int glyph_count, int lookup_index)
 {
+    struct ot_gsubgpos_table *table = &context->cache->gsub;
+    const struct ot_lookup_table *lookup_table;
+    struct glyph_iterator iter;
+    struct lookup lookup;
+    WORD lookup_type;
+
+    lookup.offset = table_read_be_word(&table->table, table->lookup_list + FIELD_OFFSET(struct ot_lookup_list, lookup[lookup_index]));
+    if (!lookup.offset)
+        return;
+
+    lookup.offset += table->lookup_list;
+
+    if (!(lookup_table = table_read_ensure(&table->table, lookup.offset, sizeof(*lookup_table))))
+        return;
+
+    lookup.subtable_count = GET_BE_WORD(lookup_table->subtable_count);
+    if (!lookup.subtable_count)
+        return;
+
+    lookup_type = GET_BE_WORD(lookup_table->lookup_type);
+    lookup.flags = GET_BE_WORD(lookup_table->flags);
+
+    glyph_iterator_init(context, lookup.flags, first_glyph, glyph_count, &iter);
+
+    while (iter.pos < first_glyph + iter.len)
+    {
+        BOOL ret;
+
+        if (!glyph_iterator_match(&iter))
+        {
+            ++iter.pos;
+            continue;
+        }
+
+        switch (lookup_type)
+        {
+            case GSUB_LOOKUP_SINGLE_SUBST:
+                ret = opentype_layout_apply_gsub_single_substitution(&iter, &lookup);
+                break;
+            case GSUB_LOOKUP_MULTIPLE_SUBST:
+            case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
+            case GSUB_LOOKUP_ALTERNATE_SUBST:
+            case GSUB_LOOKUP_LIGATURE_SUBST:
+            case GSUB_LOOKUP_CONTEXTUAL_SUBST:
+            case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
+                WARN("Unimplemented lookup %d.\n", lookup_type);
+                break;
+            default:
+                WARN("Unknown lookup type %u.\n", lookup_type);
+                return;
+        }
+
+        /* Some lookups update position after making changes. */
+        if (!ret)
+            ++iter.pos;
+    }
 }
 
 HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,

@@ -1252,6 +1252,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.length = length;
     context.is_rtl = is_rtl;
     context.is_sideways = is_sideways;
+    context.u.subst.glyphs = glyphs;
+    context.u.subst.glyph_props = glyph_props;
+    context.u.subst.max_glyph_count = max_glyph_count;
+    context.glyph_count = g;
     context.language_tag = get_opentype_language(locale);
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;

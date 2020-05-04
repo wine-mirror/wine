@@ -478,6 +478,12 @@ struct scriptshaping_context
             const UINT16 *glyphs;
             const DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
         } pos;
+        struct
+        {
+            UINT16 *glyphs;
+            DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            unsigned int max_glyph_count;
+        } subst;
     } u;
 
     unsigned int glyph_count;
