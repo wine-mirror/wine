@@ -49,6 +49,7 @@ enum target_platform
     PLATFORM_ANDROID,
     PLATFORM_SOLARIS,
     PLATFORM_WINDOWS,
+    PLATFORM_MINGW,
     PLATFORM_CYGWIN
 };
 

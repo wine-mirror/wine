@@ -181,14 +181,15 @@ static const struct
     enum target_platform platform;
 } platform_names[] =
 {
-    { "macos",   PLATFORM_APPLE },
-    { "darwin",  PLATFORM_APPLE },
-    { "android", PLATFORM_ANDROID },
-    { "solaris", PLATFORM_SOLARIS },
-    { "cygwin",  PLATFORM_CYGWIN },
-    { "mingw32", PLATFORM_WINDOWS },
-    { "windows", PLATFORM_WINDOWS },
-    { "winnt",   PLATFORM_WINDOWS }
+    { "macos",       PLATFORM_APPLE },
+    { "darwin",      PLATFORM_APPLE },
+    { "android",     PLATFORM_ANDROID },
+    { "solaris",     PLATFORM_SOLARIS },
+    { "cygwin",      PLATFORM_CYGWIN },
+    { "mingw32",     PLATFORM_MINGW },
+    { "windows-gnu", PLATFORM_MINGW },
+    { "windows",     PLATFORM_WINDOWS },
+    { "winnt",       PLATFORM_MINGW }
 };
 
 struct options
@@ -258,7 +259,7 @@ static enum target_platform build_platform = PLATFORM_SOLARIS;
 #elif defined(__CYGWIN__)
 static enum target_platform build_platform = PLATFORM_CYGWIN;
 #elif defined(_WIN32)
-static enum target_platform build_platform = PLATFORM_WINDOWS;
+static enum target_platform build_platform = PLATFORM_MINGW;
 #else
 static enum target_platform build_platform = PLATFORM_UNSPECIFIED;
 #endif
@@ -487,6 +488,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         break;
 
     case PLATFORM_WINDOWS:
+    case PLATFORM_MINGW:
     case PLATFORM_CYGWIN:
         if (opts->shared || opts->win16_app)
         {
@@ -729,7 +731,7 @@ static void compile(struct options* opts, const char* lang)
             break;
     }
 
-    if (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN)
+    if (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN || opts->target_platform == PLATFORM_MINGW)
         goto no_compat_defines;
 
     if (opts->processor != proc_cpp)
@@ -1043,7 +1045,7 @@ static void build(struct options* opts)
     int generate_app_loader = 1;
     const char *crt_lib = NULL, *entry_point = NULL;
     int fake_module = 0;
-    int is_pe = (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN);
+    int is_pe = (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN || opts->target_platform == PLATFORM_MINGW);
     unsigned int j;
 
     /* NOTE: for the files array we'll use the following convention:
