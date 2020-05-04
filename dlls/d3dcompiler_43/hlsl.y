@@ -562,32 +562,39 @@ static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct
     return deref;
 }
 
+static struct hlsl_ir_node *get_var_deref(struct hlsl_ir_node *node)
+{
+    struct hlsl_ir_assignment *assign;
+    struct hlsl_ir_deref *deref;
+    struct hlsl_ir_var *var;
+    char name[27];
+
+    if (node->type == HLSL_IR_DEREF)
+        return node;
+
+    sprintf(name, "<deref-%p>", node);
+    if (!(var = new_synthetic_var(name, node->data_type, node->loc)))
+        return NULL;
+
+    TRACE("Synthesized variable %p for %s node.\n", var, debug_node_type(node->type));
+
+    if (!(assign = make_simple_assignment(var, node)))
+        return NULL;
+    list_add_after(&node->entry, &assign->node.entry);
+
+    if (!(deref = new_var_deref(var, var->loc)))
+        return NULL;
+    list_add_after(&assign->node.entry, &deref->node.entry);
+    return &deref->node;
+}
+
 static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
         struct hlsl_struct_field *field, const struct source_location loc)
 {
     struct hlsl_ir_deref *deref;
 
-    if (record->type != HLSL_IR_DEREF)
-    {
-        struct hlsl_ir_assignment *assign;
-        struct hlsl_ir_var *var;
-        char name[27];
-
-        sprintf(name, "<deref-%p>", record);
-        if (!(var = new_synthetic_var(name, record->data_type, record->loc)))
-            return NULL;
-
-        TRACE("Synthesized variable %p for %s node.\n", var, debug_node_type(record->type));
-
-        if (!(assign = make_simple_assignment(var, record)))
-            return NULL;
-        list_add_after(&record->entry, &assign->node.entry);
-
-        if (!(deref = new_var_deref(var, var->loc)))
-            return NULL;
-        list_add_after(&assign->node.entry, &deref->node.entry);
-        record = &deref->node;
-    }
+    if (!(record = get_var_deref(record)))
+        return NULL;
 
     if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
         return NULL;
@@ -596,6 +603,49 @@ static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
     deref->src.type = HLSL_IR_DEREF_RECORD;
     deref->src.v.record.record = record;
     deref->src.v.record.field = field;
+    return deref;
+}
+
+static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
+        struct hlsl_ir_node *index, const struct source_location loc)
+{
+    const struct hlsl_type *expr_type = array->data_type;
+    struct hlsl_ir_deref *deref;
+    struct hlsl_type *data_type;
+
+    TRACE("Array dereference from type %s.\n", debug_hlsl_type(expr_type));
+
+    if (expr_type->type == HLSL_CLASS_ARRAY)
+    {
+        data_type = expr_type->e.array.type;
+    }
+    else if (expr_type->type == HLSL_CLASS_MATRIX)
+    {
+        data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, expr_type->base_type, expr_type->dimx, 1);
+    }
+    else if (expr_type->type == HLSL_CLASS_VECTOR)
+    {
+        data_type = new_hlsl_type(NULL, HLSL_CLASS_SCALAR, expr_type->base_type, 1, 1);
+    }
+    else
+    {
+        if (expr_type->type == HLSL_CLASS_SCALAR)
+            hlsl_report_message(loc, HLSL_LEVEL_ERROR, "array-indexed expression is scalar");
+        else
+            hlsl_report_message(loc, HLSL_LEVEL_ERROR, "expression is not array-indexable");
+        return NULL;
+    }
+
+    if (!(array = get_var_deref(array)))
+        return NULL;
+
+    if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
+        return NULL;
+
+    init_node(&deref->node, HLSL_IR_DEREF, data_type, loc);
+    deref->src.type = HLSL_IR_DEREF_ARRAY;
+    deref->src.v.array.array = array;
+    deref->src.v.array.index = index;
     return deref;
 }
 
@@ -2290,34 +2340,7 @@ postfix_expr:             primary_expr
                                 /* This may be an array dereference or a vector/matrix
                                  * subcomponent access.
                                  * We store it as an array dereference in any case. */
-                                const struct hlsl_type *expr_type = node_from_list($1)->data_type;
                                 struct hlsl_ir_deref *deref;
-                                struct hlsl_type *data_type;
-
-                                TRACE("Array dereference from type %s\n", debug_hlsl_type(expr_type));
-
-                                if (expr_type->type == HLSL_CLASS_ARRAY)
-                                {
-                                    data_type = expr_type->e.array.type;
-                                }
-                                else if (expr_type->type == HLSL_CLASS_MATRIX)
-                                {
-                                    data_type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, expr_type->base_type, expr_type->dimx, 1);
-                                }
-                                else if (expr_type->type == HLSL_CLASS_VECTOR)
-                                {
-                                    data_type = new_hlsl_type(NULL, HLSL_CLASS_SCALAR, expr_type->base_type, 1, 1);
-                                }
-                                else
-                                {
-                                    if (expr_type->type == HLSL_CLASS_SCALAR)
-                                        hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "array-indexed expression is scalar");
-                                    else
-                                        hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "expression is not array-indexable");
-                                    free_instr_list($1);
-                                    free_instr_list($3);
-                                    YYABORT;
-                                }
 
                                 if (node_from_list($3)->data_type->type != HLSL_CLASS_SCALAR)
                                 {
@@ -2327,17 +2350,12 @@ postfix_expr:             primary_expr
                                     YYABORT;
                                 }
 
-                                if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
+                                if (!(deref = new_array_deref(node_from_list($1), node_from_list($3), get_location(&@2))))
                                 {
                                     free_instr_list($1);
                                     free_instr_list($3);
                                     YYABORT;
                                 }
-                                init_node(&deref->node, HLSL_IR_DEREF, data_type, get_location(&@2));
-                                deref->src.type = HLSL_IR_DEREF_ARRAY;
-                                deref->src.v.array.array = node_from_list($1);
-                                deref->src.v.array.index = node_from_list($3);
-
                                 $$ = append_binop($1, $3, &deref->node);
                             }
                           /* "var_modifiers" doesn't make sense in this case, but it's needed
