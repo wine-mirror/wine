@@ -1282,7 +1282,7 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
 
-    if ((opts->nodefaultlibs || opts->use_msvcrt) && is_pe)
+    if ((opts->nodefaultlibs || opts->use_msvcrt) && opts->target_platform == PLATFORM_MINGW)
     {
         libgcc = find_libgcc(opts->prefix, link_args);
         if (!libgcc) libgcc = "-lgcc";
