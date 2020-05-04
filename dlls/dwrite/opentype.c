@@ -562,6 +562,14 @@ struct ot_gsub_singlesubst_format2
     UINT16 substitutes[1];
 };
 
+struct ot_gsub_chaincontext_subst_format1
+{
+    UINT16 format;
+    UINT16 coverage;
+    UINT16 ruleset_count;
+    UINT16 rulesets[1];
+};
+
 struct ot_feature
 {
     WORD feature_params;
@@ -2994,14 +3002,11 @@ void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache)
 unsigned int opentype_layout_find_script(const struct scriptshaping_cache *cache, unsigned int kind, DWORD script,
         unsigned int *script_index)
 {
-    const struct ot_gsubgpos_table *table = &cache->gpos;
+    const struct ot_gsubgpos_table *table = kind == MS_GSUB_TAG ? &cache->gsub : &cache->gpos;
     UINT16 script_count;
     unsigned int i;
 
     *script_index = ~0u;
-
-    if (kind != MS_GPOS_TAG)
-        return 0;
 
     script_count = table_read_be_word(&table->table, table->script_list);
     if (!script_count)
@@ -3027,14 +3032,11 @@ unsigned int opentype_layout_find_script(const struct scriptshaping_cache *cache
 unsigned int opentype_layout_find_language(const struct scriptshaping_cache *cache, unsigned int kind, DWORD language,
         unsigned int script_index, unsigned int *language_index)
 {
-    const struct ot_gsubgpos_table *table = &cache->gpos;
+    const struct ot_gsubgpos_table *table = kind == MS_GSUB_TAG ? &cache->gsub : &cache->gpos;
     UINT16 table_offset, lang_count;
     unsigned int i;
 
     *language_index = ~0u;
-
-    if (kind != MS_GPOS_TAG)
-        return 0;
 
     table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
             script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
@@ -3340,13 +3342,13 @@ struct lookup
 
 struct glyph_iterator
 {
-    const struct scriptshaping_context *context;
+    struct scriptshaping_context *context;
     unsigned int flags;
     unsigned int pos;
     unsigned int len;
 };
 
-static void glyph_iterator_init(const struct scriptshaping_context *context, unsigned int flags, unsigned int pos,
+static void glyph_iterator_init(struct scriptshaping_context *context, unsigned int flags, unsigned int pos,
         unsigned int len, struct glyph_iterator *iter)
 {
     iter->context = context;
@@ -3757,7 +3759,7 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
     return FALSE;
 }
 
-static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(const struct scriptshaping_context *context,
+static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
     struct scriptshaping_cache *cache = context->cache;
@@ -3840,7 +3842,7 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(const struct scri
     return FALSE;
 }
 
-static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(const struct scriptshaping_context *context,
+static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
     struct scriptshaping_cache *cache = context->cache;
@@ -3886,7 +3888,7 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(const struct scrip
     return FALSE;
 }
 
-static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(const struct scriptshaping_context *context,
+static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshaping_context *context,
         struct glyph_iterator *iter, const struct lookup *lookup)
 {
     struct scriptshaping_cache *cache = context->cache;
@@ -4244,6 +4246,188 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator
     return FALSE;
 }
 
+static BOOL opentype_layout_context_match_input(struct glyph_iterator *iter, unsigned int subtable_offset,
+        unsigned int count, const UINT16 *input)
+{
+    struct scriptshaping_cache *cache = iter->context->cache;
+    unsigned int i, pos;
+
+    if (iter->pos + count > iter->len)
+        return FALSE;
+
+    pos = iter->pos;
+
+    for (i = 0; i < count; ++i, ++pos)
+    {
+        UINT16 glyph = iter->context->u.subst.glyphs[pos];
+        if (opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(input[i]),
+                glyph) == GLYPH_NOT_COVERED)
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL opentype_layout_context_match_backtrack(struct glyph_iterator *iter, unsigned int subtable_offset,
+        unsigned int count, const UINT16 *backtrack)
+{
+    struct scriptshaping_cache *cache = iter->context->cache;
+    unsigned int i;
+
+    if (iter->pos < count)
+        return FALSE;
+
+    for (i = 0; i < count; ++i)
+    {
+        UINT16 glyph = iter->context->u.subst.glyphs[iter->pos - i - 1];
+
+        if (opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(backtrack[i]),
+                glyph) == GLYPH_NOT_COVERED)
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static BOOL opentype_layout_context_match_lookahead(struct glyph_iterator *iter, unsigned int subtable_offset,
+        unsigned int count, const UINT16 *lookahead, unsigned int offset)
+{
+    struct scriptshaping_cache *cache = iter->context->cache;
+    unsigned int i, pos;
+
+    if (iter->pos + offset + count > iter->len)
+        return FALSE;
+
+    pos = iter->pos + offset;
+
+    for (i = 0; i < count; ++i, ++pos)
+    {
+        UINT16 glyph = iter->context->u.subst.glyphs[pos];
+        if (opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(lookahead[i]),
+                glyph) == GLYPH_NOT_COVERED)
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
+        unsigned int glyph_count, int lookup_index);
+
+static BOOL opentype_layout_context_gsub_apply_lookup(struct glyph_iterator *iter, unsigned int count,
+        unsigned int lookup_count, const UINT16 *lookup_records)
+{
+    if (lookup_count > 1)
+        FIXME("Only first lookup used.\n");
+
+    opentype_layout_apply_gsub_lookup(iter->context, iter->pos + GET_BE_WORD(lookup_records[0]), count,
+            GET_BE_WORD(lookup_records[1]));
+
+    return TRUE;
+}
+
+static BOOL opentype_layout_apply_gsub_chain_context_lookup(struct glyph_iterator *iter, unsigned int subtable_offset,
+        unsigned int backtrack_count, const UINT16 *backtrack, unsigned int input_count, const UINT16 *input,
+        unsigned int lookahead_count, const UINT16 *lookahead, unsigned int lookup_count, const UINT16 *lookup_records)
+{
+    return opentype_layout_context_match_input(iter, subtable_offset, input_count, input) &&
+            opentype_layout_context_match_backtrack(iter, subtable_offset, backtrack_count, backtrack) &&
+            opentype_layout_context_match_lookahead(iter, subtable_offset, lookahead_count, lookahead, input_count) &&
+            opentype_layout_context_gsub_apply_lookup(iter, input_count, lookup_count, lookup_records);
+}
+
+static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct glyph_iterator *iter, const struct lookup *lookup)
+{
+    struct scriptshaping_cache *cache = iter->context->cache;
+    UINT16 format, coverage;
+    unsigned int i;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gsub_subtable(cache, lookup->offset, i);
+        UINT16 glyph = iter->context->u.subst.glyphs[iter->pos];
+        unsigned int coverage_index = GLYPH_NOT_COVERED;
+
+        format = table_read_be_word(&cache->gsub.table, subtable_offset);
+
+        if (format == 1)
+        {
+            coverage = table_read_be_word(&cache->gsub.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
+
+            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            if (coverage_index == GLYPH_NOT_COVERED)
+                continue;
+
+            WARN("Chaining contextual substitution (1) is not supported.\n");
+            break;
+        }
+        else if (format == 2)
+        {
+            coverage = table_read_be_word(&cache->gsub.table, subtable_offset +
+                    FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
+
+            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            if (coverage_index == GLYPH_NOT_COVERED)
+                continue;
+
+            WARN("Chaining contextual substitution (2) is not supported.\n");
+            break;
+        }
+        else if (format == 3)
+        {
+            unsigned int backtrack_count, input_count, lookahead_count, lookup_count;
+            const UINT16 *backtrack, *lookahead, *input, *lookup_records;
+
+            unsigned int offset = subtable_offset + 2 /* format */;
+
+            backtrack_count = table_read_be_word(&cache->gsub.table, offset);
+            offset += 2;
+            backtrack = table_read_ensure(&cache->gsub.table, offset, backtrack_count * sizeof(*backtrack));
+            offset += backtrack_count * sizeof(*backtrack);
+
+            input_count = table_read_be_word(&cache->gsub.table, offset);
+            offset += 2;
+            input = table_read_ensure(&cache->gsub.table, offset, input_count * sizeof(*input));
+            offset += input_count * sizeof(*input);
+
+            lookahead_count = table_read_be_word(&cache->gsub.table, offset);
+            offset += 2;
+            lookahead = table_read_ensure(&cache->gsub.table, offset, lookahead_count * sizeof(*lookahead));
+            offset += lookahead_count * sizeof(*lookahead);
+
+            lookup_count = table_read_be_word(&cache->gsub.table, offset);
+            offset += 2;
+            lookup_records = table_read_ensure(&cache->gsub.table, offset, lookup_count * 2 * sizeof(*lookup_records));
+
+            if (input)
+            {
+                coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(input[0]),
+                        glyph);
+            }
+
+            if (coverage_index == GLYPH_NOT_COVERED)
+                continue;
+
+            if (opentype_layout_apply_gsub_chain_context_lookup(iter, subtable_offset, backtrack_count, backtrack,
+                input_count, input, lookahead_count, lookahead, lookup_count, lookup_records))
+            {
+                break;
+            }
+        }
+        else
+            WARN("Unknown chaining contextual substitution format %u.\n", format);
+    }
+
+    return FALSE;
+}
+
 static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
         unsigned int glyph_count, int lookup_index)
 {
@@ -4286,8 +4470,10 @@ static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             case GSUB_LOOKUP_SINGLE_SUBST:
                 ret = opentype_layout_apply_gsub_single_substitution(&iter, &lookup);
                 break;
-            case GSUB_LOOKUP_MULTIPLE_SUBST:
             case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
+                ret = opentype_layout_apply_gsub_chain_context_substitution(&iter, &lookup);
+                break;
+            case GSUB_LOOKUP_MULTIPLE_SUBST:
             case GSUB_LOOKUP_ALTERNATE_SUBST:
             case GSUB_LOOKUP_LIGATURE_SUBST:
             case GSUB_LOOKUP_CONTEXTUAL_SUBST:
