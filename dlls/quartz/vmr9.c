@@ -56,6 +56,12 @@ struct quartz_vmr
     IVMRWindowlessControl IVMRWindowlessControl_iface;
     IVMRWindowlessControl9 IVMRWindowlessControl9_iface;
 
+    /* Devil May Cry 3 releases the last IBaseFilter reference while still
+     * holding an IVMRSurfaceAllocatorNotify9 reference, and depends on
+     * IVMRSurfaceAllocator9::TerminateDevice() being called as a result.
+     * Native uses a separate reference count for IVMRSurfaceAllocatorNotify9. */
+    LONG IVMRSurfaceAllocatorNotify9_refcount;
+
     IOverlay IOverlay_iface;
 
     IVMRSurfaceAllocatorEx9 *allocator;
@@ -571,11 +577,22 @@ static HRESULT WINAPI VMR9_BreakConnect(struct strmbase_renderer *This)
     return hr;
 }
 
+static void vmr_free(struct quartz_vmr *filter)
+{
+    free(filter);
+    InterlockedDecrement(&object_locks);
+}
+
 static void vmr_destroy(struct strmbase_renderer *iface)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     video_window_cleanup(&filter->baseControlWindow);
+
+    /* Devil May Cry 3 releases the IVMRSurfaceAllocatorNotify9 interface from
+     * TerminateDevice(). Artificially increase the reference count so that we
+     * don't free the filter yet. */
+    InterlockedIncrement(&filter->renderer.filter.refcount);
 
     if (filter->allocator)
         IVMRSurfaceAllocatorEx9_Release(filter->allocator);
@@ -592,9 +609,8 @@ static void vmr_destroy(struct strmbase_renderer *iface)
     CloseHandle(filter->run_event);
     FreeLibrary(filter->hD3d9);
     strmbase_renderer_cleanup(&filter->renderer);
-    free(filter);
-
-    InterlockedDecrement(&object_locks);
+    if (!filter->IVMRSurfaceAllocatorNotify9_refcount)
+        vmr_free(filter);
 }
 
 static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, void **out)
@@ -2044,14 +2060,25 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_QueryInterface(IVMRSurfaceAlloc
 
 static ULONG WINAPI VMR9SurfaceAllocatorNotify_AddRef(IVMRSurfaceAllocatorNotify9 *iface)
 {
-    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
-    return IUnknown_AddRef(This->renderer.filter.outer_unk);
+    struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    ULONG refcount = InterlockedIncrement(&filter->IVMRSurfaceAllocatorNotify9_refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI VMR9SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotify9 *iface)
 {
-    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
-    return IUnknown_Release(This->renderer.filter.outer_unk);
+    struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    ULONG refcount = InterlockedDecrement(&filter->IVMRSurfaceAllocatorNotify9_refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount && !filter->renderer.filter.refcount)
+        vmr_free(filter);
+
+    return refcount;
 }
 
 static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurfaceAllocatorNotify9 *iface, DWORD_PTR id, IVMRSurfaceAllocator9 *alloc)

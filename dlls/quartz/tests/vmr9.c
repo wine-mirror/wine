@@ -3271,10 +3271,10 @@ static void test_surface_allocator_notify_refcount(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = IBaseFilter_Release(filter);
-    todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     todo_wine ok(allocator_got_TerminateDevice == 1, "Got %u calls to TerminateDevice().\n",
             allocator_got_TerminateDevice);
-    todo_wine ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
+    ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
 
     ref = IVMRSurfaceAllocatorNotify9_Release(notify);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
