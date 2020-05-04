@@ -595,7 +595,10 @@ static void vmr_destroy(struct strmbase_renderer *iface)
     InterlockedIncrement(&filter->renderer.filter.refcount);
 
     if (filter->allocator)
+    {
+        IVMRSurfaceAllocatorEx9_TerminateDevice(filter->allocator, filter->cookie);
         IVMRSurfaceAllocatorEx9_Release(filter->allocator);
+    }
     if (filter->presenter)
         IVMRImagePresenter9_Release(filter->presenter);
 

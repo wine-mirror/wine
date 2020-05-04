@@ -3272,7 +3272,7 @@ static void test_surface_allocator_notify_refcount(void)
 
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
-    todo_wine ok(allocator_got_TerminateDevice == 1, "Got %u calls to TerminateDevice().\n",
+    ok(allocator_got_TerminateDevice == 1, "Got %u calls to TerminateDevice().\n",
             allocator_got_TerminateDevice);
     ok(allocator_refcount == 1, "Got outstanding refcount %d.\n", allocator_refcount);
 
