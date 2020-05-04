@@ -2962,10 +2962,11 @@ void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache)
         cache->gdef.classdef = table_read_be_word(&cache->gdef.table, FIELD_OFFSET(struct gdef_header, classdef));
 }
 
-DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD kind, DWORD script,
+unsigned int opentype_layout_find_script(const struct scriptshaping_cache *cache, unsigned int kind, DWORD script,
         unsigned int *script_index)
 {
-    WORD script_count;
+    const struct ot_gsubgpos_table *table = &cache->gpos;
+    UINT16 script_count;
     unsigned int i;
 
     *script_index = ~0u;
@@ -2973,14 +2974,14 @@ DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD
     if (kind != MS_GPOS_TAG)
         return 0;
 
-    script_count = table_read_be_word(&cache->gpos.table, cache->gpos.script_list);
+    script_count = table_read_be_word(&table->table, table->script_list);
     if (!script_count)
         return 0;
 
     for (i = 0; i < script_count; i++)
     {
-        DWORD tag = table_read_dword(&cache->gpos.table, cache->gpos.script_list +
-                FIELD_OFFSET(struct ot_script_list, scripts) + i * sizeof(struct ot_script_record));
+        unsigned int tag = table_read_dword(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
+                i * sizeof(struct ot_script_record));
         if (!tag)
             continue;
 
@@ -2994,10 +2995,11 @@ DWORD opentype_layout_find_script(const struct scriptshaping_cache *cache, DWORD
     return 0;
 }
 
-DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWORD kind, DWORD language,
+unsigned int opentype_layout_find_language(const struct scriptshaping_cache *cache, unsigned int kind, DWORD language,
         unsigned int script_index, unsigned int *language_index)
 {
-    WORD table_offset, lang_count;
+    const struct ot_gsubgpos_table *table = &cache->gpos;
+    UINT16 table_offset, lang_count;
     unsigned int i;
 
     *language_index = ~0u;
@@ -3005,17 +3007,16 @@ DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWO
     if (kind != MS_GPOS_TAG)
         return 0;
 
-    table_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list +
-            FIELD_OFFSET(struct ot_script_list, scripts) + script_index * sizeof(struct ot_script_record) +
-            FIELD_OFFSET(struct ot_script_record, script));
+    table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
+            script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
     if (!table_offset)
         return 0;
 
-    lang_count = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+    lang_count = table_read_be_word(&table->table, table->script_list + table_offset +
             FIELD_OFFSET(struct ot_script, langsys_count));
     for (i = 0; i < lang_count; i++)
     {
-        DWORD tag = table_read_dword(&cache->gpos.table, cache->gpos.script_list + table_offset +
+        unsigned int tag = table_read_dword(&table->table, table->script_list + table_offset +
                 FIELD_OFFSET(struct ot_script, langsys) + i * sizeof(struct ot_langsys_record));
 
         if (tag == language)
@@ -3026,7 +3027,7 @@ DWORD opentype_layout_find_language(const struct scriptshaping_cache *cache, DWO
     }
 
     /* Try 'defaultLangSys' if it's set. */
-    if (table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset))
+    if (table_read_be_word(&table->table, table->script_list + table_offset))
         return ~0u;
 
     return 0;

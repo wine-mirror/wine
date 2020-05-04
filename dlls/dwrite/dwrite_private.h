@@ -434,19 +434,21 @@ enum SCRIPT_JUSTIFY
     SCRIPT_JUSTIFY_ARABIC_SEEN_M
 };
 
+struct ot_gsubgpos_table
+{
+    struct dwrite_fonttable table;
+    unsigned int script_list;
+    unsigned int feature_list;
+    unsigned int lookup_list;
+};
+
 struct scriptshaping_cache
 {
     const struct shaping_font_ops *font;
     void *context;
     UINT16 upem;
 
-    struct
-    {
-        struct dwrite_fonttable table;
-        unsigned int script_list;
-        unsigned int feature_list;
-        unsigned int lookup_list;
-    } gpos;
+    struct ot_gsubgpos_table gpos;
 
     struct
     {
