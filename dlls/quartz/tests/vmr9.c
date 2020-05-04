@@ -231,7 +231,7 @@ static void test_common_interfaces(IBaseFilter *filter)
     todo_wine check_interface(filter, &IID_IVMRAspectRatioControl9, TRUE);
     todo_wine check_interface(filter, &IID_IVMRDeinterlaceControl9, TRUE);
     check_interface(filter, &IID_IVMRFilterConfig9, TRUE);
-    todo_wine check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
+    check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
 
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IDirectDrawVideo, FALSE);

@@ -39,6 +39,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+static inline const char *debugstr_normalized_rect(const VMR9NormalizedRect *rect)
+{
+    if (!rect) return "(null)";
+    return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom);
+}
+
 struct quartz_vmr
 {
     struct strmbase_renderer renderer;
@@ -49,6 +55,7 @@ struct quartz_vmr
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IVMRFilterConfig IVMRFilterConfig_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
+    IVMRMixerBitmap9 IVMRMixerBitmap9_iface;
     IVMRMonitorConfig IVMRMonitorConfig_iface;
     IVMRMonitorConfig9 IVMRMonitorConfig9_iface;
     IVMRSurfaceAllocatorNotify IVMRSurfaceAllocatorNotify_iface;
@@ -632,6 +639,8 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IVMRFilterConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRFilterConfig9))
         *out = &filter->IVMRFilterConfig9_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRMixerBitmap9) && is_vmr9(filter))
+        *out = &filter->IVMRMixerBitmap9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig))
         *out = &filter->IVMRMonitorConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig9))
@@ -2254,6 +2263,63 @@ static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
     VMR9SurfaceAllocatorNotify_NotifyEvent
 };
 
+static inline struct quartz_vmr *impl_from_IVMRMixerBitmap9(IVMRMixerBitmap9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRMixerBitmap9_iface);
+}
+
+static HRESULT WINAPI mixer_bitmap9_QueryInterface(IVMRMixerBitmap9 *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerBitmap9(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI mixer_bitmap9_AddRef(IVMRMixerBitmap9 *iface)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerBitmap9(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI mixer_bitmap9_Release(IVMRMixerBitmap9 *iface)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerBitmap9(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI mixer_bitmap9_SetAlphaBitmap(IVMRMixerBitmap9 *iface,
+        const VMR9AlphaBitmap *bitmap)
+{
+    FIXME("iface %p, bitmap %p, stub!\n", iface, bitmap);
+    TRACE("dwFlags %#x, hdc %p, pDDS %p, rSrc %s, rDest %s, fAlpha %.8e, clrSrcKey #%06x, dwFilterMode %#x.\n",
+            bitmap->dwFlags, bitmap->hdc, bitmap->pDDS, wine_dbgstr_rect(&bitmap->rSrc),
+            debugstr_normalized_rect(&bitmap->rDest), bitmap->fAlpha, bitmap->clrSrcKey, bitmap->dwFilterMode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_bitmap9_UpdateAlphaBitmapParameters(IVMRMixerBitmap9 *iface,
+        const VMR9AlphaBitmap *bitmap)
+{
+    FIXME("iface %p, bitmap %p, stub!\n", iface, bitmap);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_bitmap9_GetAlphaBitmapParameters(IVMRMixerBitmap9 *iface,
+        VMR9AlphaBitmap *bitmap)
+{
+    FIXME("iface %p, bitmap %p, stub!\n", iface, bitmap);
+    return E_NOTIMPL;
+}
+
+static const IVMRMixerBitmap9Vtbl mixer_bitmap9_vtbl =
+{
+    mixer_bitmap9_QueryInterface,
+    mixer_bitmap9_AddRef,
+    mixer_bitmap9_Release,
+    mixer_bitmap9_SetAlphaBitmap,
+    mixer_bitmap9_UpdateAlphaBitmapParameters,
+    mixer_bitmap9_GetAlphaBitmapParameters,
+};
+
 static inline struct quartz_vmr *impl_from_IOverlay(IOverlay *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, IOverlay_iface);
@@ -2379,6 +2445,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     object->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
     object->IVMRFilterConfig_iface.lpVtbl = &VMR7_FilterConfig_Vtbl;
     object->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
+    object->IVMRMixerBitmap9_iface.lpVtbl = &mixer_bitmap9_vtbl;
     object->IVMRMonitorConfig_iface.lpVtbl = &VMR7_MonitorConfig_Vtbl;
     object->IVMRMonitorConfig9_iface.lpVtbl = &VMR9_MonitorConfig_Vtbl;
     object->IVMRSurfaceAllocatorNotify_iface.lpVtbl = &VMR7_SurfaceAllocatorNotify_Vtbl;
