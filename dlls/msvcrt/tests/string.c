@@ -1934,48 +1934,44 @@ static inline BOOL compare_double(double f, double g, unsigned int ulps)
 
 static void test__strtod(void)
 {
-    const char double1[] = "12.1";
-    const char double2[] = "-13.721";
-    const char double3[] = "INF";
-    const char double4[] = ".21e12";
-    const char double5[] = "214353e-3";
-    const char double6[] = "NAN";
+    static const struct {
+        const char *str;
+        int len;
+        double ret;
+    } tests[] = {
+        { "12.1", 4, 12.1 },
+        { "-13.721", 7, -13.721 },
+        { "INF", 0, 0 },
+        { ".21e12", 6, 210000000000.0 },
+        { "214353e-3", 9, 214.353 },
+        { "NAN", 0, 0 },
+        { "12.1d2", 6, 12.1e2 },
+        { "  d10", 0, 0 },
+        { "0.1", 3, 0.1 },
+        { "-0.1", 4, -0.1 },
+        { "0.1281832188491894198128921", 27, 0.1281832188491894198128921 },
+        { "0.82181281288121", 16, 0.82181281288121 },
+        { "21921922352523587651128218821", 29, 21921922352523587651128218821.0 },
+        { "0.1d238", 7, 0.1e238 },
+        { "0.1D-4736", 9, 0 },
+        { "3.4028234663852887e38", 21, FLT_MAX },
+        { "1.7976931348623158e+308", 23, DBL_MAX },
+    };
     const char overflow[] = "1d9999999999999999999";
-    const char white_chars[] = "  d10";
 
     char *end;
     double d;
+    int i;
 
-    d = strtod(double1, &end);
-    ok(d == 12.1, "d = %.16e\n", d);
-    ok(end == double1+4, "incorrect end (%d)\n", (int)(end-double1));
-
-    d = strtod(double2, &end);
-    ok(d == -13.721, "d = %.16e\n", d);
-    ok(end == double2+7, "incorrect end (%d)\n", (int)(end-double2));
-
-    d = strtod(double3, &end);
-    ok(d == 0, "d = %.16e\n", d);
-    ok(end == double3, "incorrect end (%d)\n", (int)(end-double3));
-
-    d = strtod(double4, &end);
-    ok(d == 210000000000.0, "d = %.16e\n", d);
-    ok(end == double4+6, "incorrect end (%d)\n", (int)(end-double4));
-
-    d = strtod(double5, &end);
-    ok(d == 214.353, "d = %.16e\n", d);
-    ok(end == double5+9, "incorrect end (%d)\n", (int)(end-double5));
-
-    d = strtod(double6, &end);
-    ok(d == 0, "d = %.16e\n", d);
-    ok(end == double6, "incorrect end (%d)\n", (int)(end-double6));
-
-    d = strtod("12.1d2", NULL);
-    ok(d == 12.1e2, "d = %.16e\n", d);
-
-    d = strtod(white_chars, &end);
-    ok(d == 0, "d = %.16e\n", d);
-    ok(end == white_chars, "incorrect end (%d)\n", (int)(end-white_chars));
+    for (i=0; i<ARRAY_SIZE(tests); i++)
+    {
+        errno = 0xdeadbeef;
+        d = strtod(tests[i].str, &end);
+        ok(d == tests[i].ret, "%d) d = %.16e\n", i, d);
+        ok(end == tests[i].str + tests[i].len, "%d) len = %d\n",
+                i, (int)(end - tests[i].str));
+        ok(errno = 0xdeadbeef, "%d) errno = %d\n", i, errno);
+    }
 
     if (!p__strtod_l)
         win_skip("_strtod_l not found\n");
@@ -2013,22 +2009,6 @@ static void test__strtod(void)
 
     setlocale(LC_ALL, "C");
 
-    /* Precision tests */
-    d = strtod("0.1", NULL);
-    ok(d == 0.1, "d = %.16e\n", d);
-    d = strtod("-0.1", NULL);
-    ok(d == -0.1, "d = %.16e\n", d);
-    d = strtod("0.1281832188491894198128921", NULL);
-    ok(d == 0.1281832188491894198128921, "d = %.16e\n", d);
-    d = strtod("0.82181281288121", NULL);
-    ok(d == 0.82181281288121, "d = %.16e\n", d);
-    d = strtod("21921922352523587651128218821", NULL);
-    ok(d == 21921922352523587651128218821.0, "d = %.16e\n", d);
-    d = strtod("0.1d238", NULL);
-    ok(d == 0.1e238, "d = %.16e\n", d);
-    d = strtod("0.1D-4736", NULL);
-    ok(d == 0.0, "d = %.16e\n", d);
-
     errno = 0xdeadbeef;
     strtod(overflow, &end);
     ok(errno == ERANGE, "errno = %x\n", errno);
@@ -2037,12 +2017,6 @@ static void test__strtod(void)
     errno = 0xdeadbeef;
     strtod("-1d309", NULL);
     ok(errno == ERANGE, "errno = %x\n", errno);
-
-    d = strtod("3.4028234663852887e38", NULL);
-    ok(d <= FLT_MAX, "d = %e\n", d);
-
-    d = strtod("1.7976931348623158e+308", NULL);
-    ok(d == DBL_MAX, "d = %le\n", d);
 }
 
 static void test_mbstowcs(void)
