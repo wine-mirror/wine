@@ -448,6 +448,7 @@ struct scriptshaping_cache
     void *context;
     UINT16 upem;
 
+    struct ot_gsubgpos_table gsub;
     struct ot_gsubgpos_table gpos;
 
     struct

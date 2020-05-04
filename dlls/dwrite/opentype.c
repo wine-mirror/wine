@@ -2942,6 +2942,16 @@ DWRITE_CONTAINER_TYPE opentype_analyze_container_type(void const *data, UINT32 d
 
 void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache)
 {
+    cache->font->grab_font_table(cache->context, MS_GSUB_TAG, &cache->gsub.table.data, &cache->gsub.table.size,
+            &cache->gsub.table.context);
+
+    if (cache->gsub.table.data)
+    {
+        cache->gsub.script_list = table_read_be_word(&cache->gsub.table, FIELD_OFFSET(struct gpos_gsub_header, script_list));
+        cache->gsub.feature_list = table_read_be_word(&cache->gsub.table, FIELD_OFFSET(struct gpos_gsub_header, feature_list));
+        cache->gsub.lookup_list = table_read_be_word(&cache->gsub.table, FIELD_OFFSET(struct gpos_gsub_header, lookup_list));
+    }
+
     cache->font->grab_font_table(cache->context, MS_GPOS_TAG, &cache->gpos.table.data, &cache->gpos.table.size,
             &cache->gpos.table.context);
 

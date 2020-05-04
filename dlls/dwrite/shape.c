@@ -52,6 +52,7 @@ void release_scriptshaping_cache(struct scriptshaping_cache *cache)
         return;
 
     cache->font->release_font_table(cache->context, cache->gdef.table.context);
+    cache->font->release_font_table(cache->context, cache->gsub.table.context);
     cache->font->release_font_table(cache->context, cache->gpos.table.context);
     heap_free(cache);
 }
