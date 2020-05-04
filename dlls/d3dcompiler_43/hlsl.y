@@ -125,6 +125,11 @@ static void check_invalid_matrix_modifiers(DWORD modifiers, struct source_locati
     }
 }
 
+static BOOL type_is_single_reg(const struct hlsl_type *type)
+{
+    return type->type == HLSL_CLASS_SCALAR || type->type == HLSL_CLASS_VECTOR;
+}
+
 static BOOL declare_variable(struct hlsl_ir_var *decl, BOOL local)
 {
     BOOL ret;
@@ -507,6 +512,41 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source
     return jump;
 }
 
+static struct hlsl_ir_var *new_synthetic_var(const char *name, struct hlsl_type *type,
+        const struct source_location loc)
+{
+    struct hlsl_ir_var *var;
+
+    if (!(var = d3dcompiler_alloc(sizeof(*var))))
+    {
+        hlsl_ctx.status = PARSE_ERR;
+        return NULL;
+    }
+
+    var->name = strdup(name);
+    var->data_type = type;
+    var->loc = loc;
+    list_add_tail(&hlsl_ctx.globals->vars, &var->scope_entry);
+    return var;
+}
+
+static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs, struct hlsl_ir_node *rhs)
+{
+    struct hlsl_ir_assignment *assign;
+
+    if (!(assign = d3dcompiler_alloc(sizeof(*assign))))
+        return NULL;
+
+    init_node(&assign->node, HLSL_IR_ASSIGNMENT, rhs->data_type, rhs->loc);
+    assign->lhs.type = HLSL_IR_DEREF_VAR;
+    assign->lhs.v.var = lhs;
+    assign->rhs = rhs;
+    if (type_is_single_reg(lhs->data_type))
+        assign->writemask = (1 << lhs->data_type->dimx) - 1;
+
+    return assign;
+}
+
 static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct source_location loc)
 {
     struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
@@ -525,13 +565,33 @@ static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct
 static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
         struct hlsl_struct_field *field, const struct source_location loc)
 {
-    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+    struct hlsl_ir_deref *deref;
 
-    if (!deref)
+    if (record->type != HLSL_IR_DEREF)
     {
-        ERR("Out of memory.\n");
-        return NULL;
+        struct hlsl_ir_assignment *assign;
+        struct hlsl_ir_var *var;
+        char name[27];
+
+        sprintf(name, "<deref-%p>", record);
+        if (!(var = new_synthetic_var(name, record->data_type, record->loc)))
+            return NULL;
+
+        TRACE("Synthesized variable %p for %s node.\n", var, debug_node_type(record->type));
+
+        if (!(assign = make_simple_assignment(var, record)))
+            return NULL;
+        list_add_after(&record->entry, &assign->node.entry);
+
+        if (!(deref = new_var_deref(var, var->loc)))
+            return NULL;
+        list_add_after(&assign->node.entry, &deref->node.entry);
+        record = &deref->node;
     }
+
+    if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
+        return NULL;
+
     init_node(&deref->node, HLSL_IR_DEREF, field->type, loc);
     deref->src.type = HLSL_IR_DEREF_RECORD;
     deref->src.v.record.record = record;
