@@ -34,8 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_POST_TAG DWRITE_MAKE_OPENTYPE_TAG('p','o','s','t')
 #define MS_TTCF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','t','c','f')
 #define MS_GDEF_TAG DWRITE_MAKE_OPENTYPE_TAG('G','D','E','F')
-#define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
-#define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 #define MS_GLYF_TAG DWRITE_MAKE_OPENTYPE_TAG('g','l','y','f')
 #define MS_CFF__TAG DWRITE_MAKE_OPENTYPE_TAG('C','F','F',' ')
@@ -4107,7 +4105,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
             if (feature_index >= total_feature_count)
                 continue;
 
-            if (feature_list->features[feature_index].tag == features->tags[i])
+            if (feature_list->features[feature_index].tag == features->features[i].tag)
             {
                 WORD feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
                 WORD lookup_count;
@@ -4151,4 +4149,10 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
     }
 
     heap_free(lookups.indexes);
+}
+
+HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
+        unsigned int language_index, const struct shaping_features *features)
+{
+    return S_OK;
 }

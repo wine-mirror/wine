@@ -27,8 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-#define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
-
 struct scriptshaping_cache *create_scriptshaping_cache(void *context, const struct shaping_font_ops *font_ops)
 {
     struct scriptshaping_cache *cache;
@@ -165,11 +163,11 @@ static HRESULT latn_set_text_glyphs_props(struct scriptshaping_context *context,
     return hr;
 }
 
-static const DWORD std_gpos_tags[] =
+static struct shaping_feature std_gpos_tags[] =
 {
-    DWRITE_FONT_FEATURE_TAG_KERNING,
-    DWRITE_FONT_FEATURE_TAG_MARK_POSITIONING,
-    DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING,
+    { DWRITE_FONT_FEATURE_TAG_KERNING },
+    { DWRITE_FONT_FEATURE_TAG_MARK_POSITIONING },
+    { DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING },
 };
 
 static const struct shaping_features std_gpos_features =
@@ -265,6 +263,76 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *
     for (i = 0; i < context->glyph_count; ++i)
         if (context->u.pos.glyph_props[i].isZeroWidthSpace)
             context->advances[i] = 0.0f;
+
+    return S_OK;
+}
+
+static void shape_add_feature(struct shaping_features *features, unsigned int tag)
+{
+    if (!dwrite_array_reserve((void **)&features->features, &features->capacity, features->count + 1,
+            sizeof(*features->features)))
+        return;
+
+    features->features[features->count++].tag = tag;
+}
+
+static unsigned int shape_get_script_lang_index(struct scriptshaping_context *context, const unsigned int *scripts,
+        unsigned int table, unsigned int *script_index, unsigned int *language_index)
+{
+    unsigned int script;
+
+    /* Resolve script tag to actually supported script. */
+    if ((script = shape_select_script(context->cache, table, scripts, script_index)))
+    {
+        unsigned int language = context->language_tag;
+
+        if ((language = shape_select_language(context->cache, table, *script_index, language, language_index)))
+            return script;
+    }
+
+    return 0;
+}
+
+HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned int *scripts)
+{
+    static const unsigned int common_features[] =
+    {
+        DWRITE_FONT_FEATURE_TAG_GLYPH_COMPOSITION_DECOMPOSITION,
+        DWRITE_FONT_FEATURE_TAG_LOCALIZED_FORMS,
+        DWRITE_FONT_FEATURE_TAG_REQUIRED_LIGATURES,
+    };
+    static const unsigned int horizontal_features[] =
+    {
+        DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES,
+        DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_LIGATURES,
+        DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES,
+        DWRITE_MAKE_OPENTYPE_TAG('r','c','l','t'),
+    };
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int script_index, language_index, script;
+    struct shaping_features features = { 0 };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(common_features); ++i)
+        shape_add_feature(&features, common_features[i]);
+
+    /* Horizontal features */
+    if (!context->is_sideways)
+    {
+        for (i = 0; i < ARRAY_SIZE(horizontal_features); ++i)
+            shape_add_feature(&features, horizontal_features[i]);
+    }
+
+    /* Resolve script tag to actually supported script. */
+    if (cache->gsub.table.data)
+    {
+        if ((script = shape_get_script_lang_index(context, scripts, MS_GSUB_TAG, &script_index, &language_index)))
+        {
+            opentype_layout_apply_gsub_features(context, script_index, language_index, &features);
+        }
+    }
+
+    heap_free(features.features);
 
     return S_OK;
 }

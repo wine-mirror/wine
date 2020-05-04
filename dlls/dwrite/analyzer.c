@@ -1149,21 +1149,22 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     BOOL is_rtl, DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale,
     IDWriteNumberSubstitution* substitution, DWRITE_TYPOGRAPHIC_FEATURES const** features,
     UINT32 const* feature_range_lengths, UINT32 feature_ranges, UINT32 max_glyph_count,
-    UINT16* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* text_props, UINT16* glyph_indices,
+    UINT16* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* text_props, UINT16 *glyphs,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
+    const struct dwritescript_properties *scriptprops;
     DWRITE_NUMBER_SUBSTITUTION_METHOD method;
     struct scriptshaping_context context;
     struct dwrite_fontface *font_obj;
     WCHAR digits[NATIVE_DIGITS_LEN];
+    unsigned int i, g, script;
     BOOL update_cluster;
     WCHAR *string;
-    UINT32 i, g;
     HRESULT hr = S_OK;
 
     TRACE("(%s:%u %p %d %d %s %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
         length, fontface, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), substitution,
-        features, feature_range_lengths, feature_ranges, max_glyph_count, clustermap, text_props, glyph_indices,
+        features, feature_range_lengths, feature_ranges, max_glyph_count, clustermap, text_props, glyphs,
         glyph_props, actual_glyph_count);
 
     analyzer_dump_user_features(features, feature_range_lengths, feature_ranges);
@@ -1225,7 +1226,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
             else
                 update_cluster = TRUE;
 
-            hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyph_indices[g]);
+            hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyphs[g]);
             if (FAILED(hr))
                 goto done;
 
@@ -1250,11 +1251,15 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.text = text;
     context.length = length;
     context.is_rtl = is_rtl;
+    context.is_sideways = is_sideways;
     context.language_tag = get_opentype_language(locale);
 
-    /* FIXME: apply default features */
-
-    hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyph_indices, *actual_glyph_count, text_props, glyph_props);
+    script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
+    scriptprops = &dwritescripts_properties[script];
+    hr = shape_get_glyphs(&context, scriptprops->scripttags);
+    if (SUCCEEDED(hr))
+        hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyphs, *actual_glyph_count,
+                text_props, glyph_props);
 
 done:
     heap_free(string);
