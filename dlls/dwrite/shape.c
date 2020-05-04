@@ -189,7 +189,7 @@ const struct scriptshaping_ops default_shaping_ops =
     default_set_text_glyphs_props
 };
 
-static DWORD shape_select_script(const struct scriptshaping_cache *cache, DWORD kind, const DWORD *scripts,
+static unsigned int shape_select_script(const struct scriptshaping_cache *cache, DWORD kind, const DWORD *scripts,
         unsigned int *script_index)
 {
     static const DWORD fallback_scripts[] =
@@ -199,10 +199,10 @@ static DWORD shape_select_script(const struct scriptshaping_cache *cache, DWORD 
         DWRITE_MAKE_OPENTYPE_TAG('l','a','t','n'),
         0,
     };
-    DWORD script;
+    unsigned int script;
 
     /* Passed scripts in ascending priority. */
-    while (*scripts)
+    while (scripts && *scripts)
     {
         if ((script = opentype_layout_find_script(cache, kind, *scripts, script_index)))
             return script;

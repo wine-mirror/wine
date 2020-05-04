@@ -4054,43 +4054,41 @@ static int lookups_sorting_compare(const void *left, const void *right)
     return *(int *)left - *(int *)right;
 };
 
-void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
-        unsigned int script_index, unsigned int language_index, const struct shaping_features *features)
+static void opentype_layout_collect_lookups(struct scriptshaping_context *context, unsigned int script_index,
+        unsigned int language_index, const struct shaping_features *features, struct ot_gsubgpos_table *table,
+        struct lookups *lookups)
 {
-    WORD table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
-    struct scriptshaping_cache *cache = context->cache;
+    UINT16 table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
     const struct ot_feature_list *feature_list;
-    struct lookups lookups = { 0 };
     unsigned int i, j, l;
 
     /* ScriptTable offset. */
-    table_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list +
-            FIELD_OFFSET(struct ot_script_list, scripts) + script_index * sizeof(struct ot_script_record) +
-            FIELD_OFFSET(struct ot_script_record, script));
+    table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
+            script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
     if (!table_offset)
         return;
 
     if (language_index == ~0u)
-        langsys_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset);
+        langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset);
     else
-        langsys_offset = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+        langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset +
                 FIELD_OFFSET(struct ot_script, langsys) + language_index * sizeof(struct ot_langsys_record) +
                 FIELD_OFFSET(struct ot_langsys_record, langsys));
 
-    script_feature_count = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
-            langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_count));
+    script_feature_count = table_read_be_word(&table->table, table->script_list + table_offset + langsys_offset +
+            FIELD_OFFSET(struct ot_langsys, feature_count));
     if (!script_feature_count)
         return;
 
-    total_feature_count = table_read_be_word(&cache->gpos.table, cache->gpos.feature_list);
+    total_feature_count = table_read_be_word(&table->table, table->feature_list);
     if (!total_feature_count)
         return;
 
-    total_lookup_count = table_read_be_word(&cache->gpos.table, cache->gpos.lookup_list);
+    total_lookup_count = table_read_be_word(&table->table, table->lookup_list);
     if (!total_lookup_count)
         return;
 
-    feature_list = table_read_ensure(&cache->gpos.table, cache->gpos.feature_list,
+    feature_list = table_read_ensure(&table->table, table->feature_list,
             FIELD_OFFSET(struct ot_feature_list, features[total_feature_count]));
     if (!feature_list)
         return;
@@ -4100,7 +4098,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
     {
         for (j = 0; j < script_feature_count; ++j)
         {
-            WORD feature_index = table_read_be_word(&cache->gpos.table, cache->gpos.script_list + table_offset +
+            UINT16 feature_index = table_read_be_word(&table->table, table->script_list + table_offset +
                     langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_index[j]));
             if (feature_index >= total_feature_count)
                 continue;
@@ -4110,49 +4108,78 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context,
                 WORD feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
                 WORD lookup_count;
 
-                lookup_count = table_read_be_word(&cache->gpos.table, cache->gpos.feature_list + feature_offset +
+                lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
                         FIELD_OFFSET(struct ot_feature, lookup_count));
                 if (!lookup_count)
                     continue;
 
-                if (!dwrite_array_reserve((void **)&lookups.indexes, &lookups.capacity, lookups.count + lookup_count,
-                        sizeof(*lookups.indexes)))
+                if (!dwrite_array_reserve((void **)&lookups->indexes, &lookups->capacity, lookups->count + lookup_count,
+                        sizeof(*lookups->indexes)))
                 {
-                    heap_free(lookups.indexes);
                     return;
                 }
 
                 for (l = 0; l < lookup_count; ++l)
                 {
-                    WORD lookup_index = table_read_be_word(&cache->gpos.table, cache->gpos.feature_list +
-                            feature_offset + FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
+                    UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
+                            FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
 
                     if (lookup_index >= total_lookup_count)
                         continue;
 
-                    lookups.indexes[lookups.count++] = lookup_index;
+                    lookups->indexes[lookups->count++] = lookup_index;
                 }
             }
         }
     }
 
     /* Sort lookups. */
-    qsort(lookups.indexes, lookups.count, sizeof(*lookups.indexes), lookups_sorting_compare);
+    qsort(lookups->indexes, lookups->count, sizeof(*lookups->indexes), lookups_sorting_compare);
+}
 
-    for (l = 0; l < lookups.count; ++l)
+void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
+        unsigned int language_index, const struct shaping_features *features)
+{
+    struct lookups lookups = { 0 };
+    unsigned int i;
+
+    opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
+
+    for (i = 0; i < lookups.count; ++i)
     {
         /* Skip duplicates. */
-        if (l && lookups.indexes[l] == lookups.indexes[l - 1])
+        if (i && lookups.indexes[i] == lookups.indexes[i - 1])
             continue;
 
-        opentype_layout_apply_gpos_lookup(context, lookups.indexes[l]);
+        opentype_layout_apply_gpos_lookup(context, lookups.indexes[i]);
     }
 
     heap_free(lookups.indexes);
 }
 
+static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
+        unsigned int glyph_count, int lookup_index)
+{
+}
+
 HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features)
 {
+    struct lookups lookups = { 0 };
+    unsigned int i;
+
+    opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gsub, &lookups);
+
+    for (i = 0; i < lookups.count; ++i)
+    {
+        /* Skip duplicates. */
+        if (i && lookups.indexes[i] == lookups.indexes[i - 1])
+            continue;
+
+        opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, lookups.indexes[i]);
+    }
+
+    heap_free(lookups.indexes);
+
     return S_OK;
 }
