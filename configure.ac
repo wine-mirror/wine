@@ -1057,6 +1057,7 @@ then
 
             dnl Check if cross compiler supports -target argument
             llvm_target=$CROSSTARGET
+            llvm_cflags="-fuse-ld=lld"
             if test -z "$llvm_target"
             then
                 case $host_cpu in
@@ -1064,11 +1065,14 @@ then
                 *) llvm_target=$host_cpu-windows-gnu ;;
                 esac
             fi
-            WINE_TRY_CROSSCFLAGS([-target $llvm_target -fuse-ld=lld],
+            case $llvm_target in
+            *windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
+            esac
+            WINE_TRY_CROSSCFLAGS([-target $llvm_target $llvm_cflags],
                                  [CROSSTARGET=$llvm_target
                                   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
                                   AC_SUBST(DELAYLOADFLAG,["-Wl,-delayload,"])
-                                  CFLAGS="$CFLAGS -fuse-ld=lld"])
+                                  CFLAGS="$CFLAGS $llvm_cflags"])
         fi
         WINE_TRY_CROSSCFLAGS([-fno-strict-aliasing])
         dnl clang needs to be told to fail on unknown options
