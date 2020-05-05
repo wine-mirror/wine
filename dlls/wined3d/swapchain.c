@@ -1472,7 +1472,9 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
         struct wined3d_output *output, const struct wined3d_display_mode *mode)
 {
     struct wined3d_display_mode actual_mode;
+    struct wined3d_output_desc output_desc;
     RECT original_window_rect, window_rect;
+    int x, y, width, height;
     HWND window;
     HRESULT hr;
 
@@ -1488,37 +1490,42 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
         AdjustWindowRectEx(&window_rect,
                 GetWindowLongW(window, GWL_STYLE), FALSE,
                 GetWindowLongW(window, GWL_EXSTYLE));
-        SetRect(&window_rect, 0, 0,
-                window_rect.right - window_rect.left, window_rect.bottom - window_rect.top);
         GetWindowRect(window, &original_window_rect);
-        OffsetRect(&window_rect, original_window_rect.left, original_window_rect.top);
-    }
-    else if (state->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
-    {
-        actual_mode = *mode;
-        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, output, &actual_mode)))
-        {
-            wined3d_mutex_unlock();
-            return hr;
-        }
-        SetRect(&window_rect, 0, 0, actual_mode.width, actual_mode.height);
+
+        x = original_window_rect.left;
+        y = original_window_rect.top;
+        width = window_rect.right - window_rect.left;
+        height = window_rect.bottom - window_rect.top;
     }
     else
     {
-        if (FAILED(hr = wined3d_output_get_display_mode(output, &actual_mode, NULL)))
+        if (state->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
         {
-            ERR("Failed to get display mode, hr %#x.\n", hr);
+            actual_mode = *mode;
+            if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, output, &actual_mode)))
+            {
+                ERR("Failed to set display mode, hr %#x.\n", hr);
+                wined3d_mutex_unlock();
+                return hr;
+            }
+        }
+
+        if (FAILED(hr = wined3d_output_get_desc(output, &output_desc)))
+        {
+            ERR("Failed to get output description, hr %#x.\n", hr);
             wined3d_mutex_unlock();
             return hr;
         }
 
-        SetRect(&window_rect, 0, 0, actual_mode.width, actual_mode.height);
+        x = output_desc.desktop_rect.left;
+        y = output_desc.desktop_rect.top;
+        width = output_desc.desktop_rect.right - output_desc.desktop_rect.left;
+        height = output_desc.desktop_rect.bottom - output_desc.desktop_rect.top;
     }
 
     wined3d_mutex_unlock();
 
-    MoveWindow(window, window_rect.left, window_rect.top,
-            window_rect.right - window_rect.left, window_rect.bottom - window_rect.top, TRUE);
+    MoveWindow(window, x, y, width, height, TRUE);
 
     return WINED3D_OK;
 }
