@@ -257,7 +257,7 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
     };
 
     GLint type, name, samples, width, height, old_texture, level, face, fmt, tex_target;
-    const char *tex_type_str;
+    const char *tex_type_str = NULL;
     unsigned int i;
 
     gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv(target, attachment,
@@ -310,8 +310,6 @@ static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, G
         }
         else
         {
-            tex_type_str = NULL;
-
             for (i = 0; i < ARRAY_SIZE(texture_type); ++i)
             {
                 if (!gl_info->supported[texture_type[i].extension])
