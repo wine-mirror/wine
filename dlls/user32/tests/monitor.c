@@ -46,6 +46,23 @@ static void init_function_pointers(void)
 #undef GET_PROC
 }
 
+static void flush_events(void)
+{
+    int diff = 1000;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 200, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
 static BOOL CALLBACK monitor_enum_proc(HMONITOR hmon, HDC hdc, LPRECT lprc,
                                        LPARAM lparam)
 {
@@ -290,12 +307,6 @@ static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD te
     dm.dmSize = sizeof(dm);
     SetLastError(0xdeadbeef);
     ret = EnumDisplaySettingsA(device, ENUM_CURRENT_SETTINGS, &dm);
-    /* On win10 TestBot, after many resolution changes, EnumDisplaySettingsA fails sometimes for unknown reasons */
-    if (!ret)
-    {
-        win_skip_(__FILE__, line)("EnumDisplaySettingsA failed.\n");
-        return;
-    }
     ok_(__FILE__, line)(ret, "Device %s test %d EnumDisplaySettingsA failed, error %#x\n", device, test, GetLastError());
 
     ok(get_primary_adapter(primary_adapter), "Failed to get primary adapter name.\n");
@@ -649,6 +660,7 @@ static void test_ChangeDisplaySettingsEx(void)
                 continue;
             }
 
+            flush_events();
             expect_dm(dm, devices[device].name, mode);
         }
 
@@ -662,14 +674,7 @@ static void test_ChangeDisplaySettingsEx(void)
         memset(&dm, 0, sizeof(dm));
         dm.dmSize = sizeof(dm);
         res = EnumDisplaySettingsA(devices[device].name, ENUM_CURRENT_SETTINGS, &dm);
-        /* After many resolution changes, EnumDisplaySettingsA may fail on win10 TestBot */
-        ok(res || broken(!res), "EnumDisplaySettingsA %s failed, error %#x\n",
-                devices[device].name, GetLastError());
-        if (!res)
-        {
-            win_skip("EnumDisplaySettingsA %s failed, error %#x\n", devices[device].name, GetLastError());
-            continue;
-        }
+        ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[device].name, GetLastError());
         position.x = dm.dmPosition.x + dm.dmPelsWidth;
     }
 
@@ -679,13 +684,7 @@ static void test_ChangeDisplaySettingsEx(void)
         memset(&dm, 0, sizeof(dm));
         dm.dmSize = sizeof(dm);
         res = EnumDisplaySettingsA(devices[device].name, ENUM_CURRENT_SETTINGS, &dm);
-        /* After many resolution changes, EnumDisplaySettingsA may fail on win10 TestBot */
-        ok(res || broken(!res), "EnumDisplaySettingsA %s failed, error %#x\n", devices[device].name, GetLastError());
-        if (!res)
-        {
-            win_skip("EnumDisplaySettingsA %s failed, error %#x\n", devices[device].name, GetLastError());
-            continue;
-        }
+        ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[device].name, GetLastError());
 
         /* Find a mode that's different from the current mode */
         memset(&dm2, 0, sizeof(dm2));
@@ -714,6 +713,7 @@ static void test_ChangeDisplaySettingsEx(void)
             continue;
         }
 
+        flush_events();
         expect_dm(dm, devices[device].name, 0);
     }
 
@@ -744,8 +744,7 @@ static void test_ChangeDisplaySettingsEx(void)
         memset(&dm, 0, sizeof(dm));
         dm.dmSize = sizeof(dm);
         res = EnumDisplaySettingsA(devices[0].name, ENUM_CURRENT_SETTINGS, &dm);
-        /* After many resolution changes, EnumDisplaySettingsA may fail on win10 TestBot */
-        ok(res || broken(!res), "EnumDisplaySettingsA %s failed, error %#x\n", devices[0].name, GetLastError());
+        ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[0].name, GetLastError());
 
         if (res)
         {
@@ -753,8 +752,7 @@ static void test_ChangeDisplaySettingsEx(void)
             memset(&dm2, 0, sizeof(dm2));
             dm2.dmSize = sizeof(dm2);
             res = EnumDisplaySettingsA(devices[1].name, ENUM_CURRENT_SETTINGS, &dm2);
-            /* After many resolution changes, EnumDisplaySettingsA may fail on win10 TestBot */
-            ok(res || broken(!res), "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
+            ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
         }
 
         if (res)
@@ -769,9 +767,8 @@ static void test_ChangeDisplaySettingsEx(void)
             memset(&dm2, 0, sizeof(dm2));
             dm2.dmSize = sizeof(dm2);
             res = EnumDisplaySettingsA(devices[1].name, ENUM_CURRENT_SETTINGS, &dm2);
-            /* After many resolution changes, EnumDisplaySettingsA may fail on win10 TestBot */
-            ok(res || broken(!res), "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
-            todo_wine ok(dm2.dmPosition.x != dm.dmPosition.x || broken(!res), "Expect position change not applied.\n");
+            ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
+            todo_wine ok(dm2.dmPosition.x != dm.dmPosition.x, "Expect position change not applied.\n");
 
             /* Test position with extra space. The extra space will be removed */
             dm2.dmPosition.x = dm.dmPosition.x - dm2.dmPelsWidth - dm2.dmPelsWidth / 2;
@@ -818,6 +815,7 @@ static void test_ChangeDisplaySettingsEx(void)
                     continue;
                 }
 
+                flush_events();
                 expect_dm(dm2, devices[1].name, side);
             }
 
@@ -841,9 +839,8 @@ static void test_ChangeDisplaySettingsEx(void)
             memset(&dm2, 0, sizeof(dm2));
             dm2.dmSize = sizeof(dm2);
             res = EnumDisplaySettingsA(devices[1].name, ENUM_CURRENT_SETTINGS, &dm2);
-            /* After many resolution changes, EnumDisplaySettingsA may fail on win10 TestBot */
-            ok(res || broken(!res), "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
-            todo_wine ok(dm2.dmPosition.x == dm.dmPelsWidth || broken(!res), "Expect dmPosition.x %d, got %d\n",
+            ok(res, "EnumDisplaySettingsA %s failed, error %#x\n", devices[1].name, GetLastError());
+            todo_wine ok(dm2.dmPosition.x == dm.dmPelsWidth, "Expect dmPosition.x %d, got %d\n",
                     dm.dmPelsWidth, dm2.dmPosition.x);
         }
         else
