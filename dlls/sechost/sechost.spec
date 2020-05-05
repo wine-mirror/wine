@@ -108,14 +108,14 @@
 @ stub I_ScIsSecurityProcess
 @ stub I_ScPnPGetServiceName
 @ stub I_ScQueryServiceConfig
-@ stub I_ScRegisterDeviceNotification
+@ stdcall I_ScRegisterDeviceNotification(ptr ptr long)
 @ stub I_ScRegisterPreshutdownRestart
 @ stub I_ScReparseServiceDatabase
 @ stub I_ScRpcBindA
 @ stub I_ScRpcBindW
 @ stub I_ScSendPnPMessage
 @ stub I_ScSendTSMessage
-@ stub I_ScUnregisterDeviceNotification
+@ stdcall I_ScUnregisterDeviceNotification(ptr)
 @ stub I_ScValidatePnPService
 @ stub LocalGetConditionForString
 @ stub LocalGetReferencedTokenTypesForCondition

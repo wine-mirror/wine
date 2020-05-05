@@ -11,4 +11,5 @@ C_SRCS = \
 	trace.c
 
 IDL_SRCS = \
+	plugplay.idl \
 	svcctl.idl

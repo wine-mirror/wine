@@ -26,6 +26,8 @@
 #include "winbase.h"
 #include "winsvc.h"
 #include "winternl.h"
+#include "winuser.h"
+#include "dbt.h"
 
 #include "wine/debug.h"
 #include "wine/exception.h"
@@ -33,6 +35,7 @@
 #include "wine/list.h"
 
 #include "svcctl.h"
+#include "plugplay.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
@@ -1966,4 +1969,149 @@ BOOL WINAPI DECLSPEC_HOTPATCH StartServiceCtrlDispatcherW( const SERVICE_TABLE_E
     }
 
     return service_run_main_thread();
+}
+
+struct device_notification_details
+{
+    DWORD (CALLBACK *cb)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
+    HANDLE handle;
+};
+
+static HANDLE device_notify_thread;
+static struct list device_notify_list = LIST_INIT(device_notify_list);
+
+struct device_notify_registration
+{
+    struct list entry;
+    struct device_notification_details details;
+};
+
+static DWORD WINAPI device_notify_proc( void *arg )
+{
+    WCHAR endpoint[] = L"\\pipe\\wine_plugplay";
+    WCHAR protseq[] = L"ncalrpc";
+    RPC_WSTR binding_str;
+    DWORD err = ERROR_SUCCESS;
+    struct device_notify_registration *registration;
+    plugplay_rpc_handle handle = NULL;
+    DWORD code = 0;
+    unsigned int size;
+    BYTE *buf;
+
+    if ((err = RpcStringBindingComposeW( NULL, protseq, NULL, endpoint, NULL, &binding_str )))
+    {
+        ERR("RpcStringBindingCompose() failed, error %#x\n", err);
+        return err;
+    }
+    err = RpcBindingFromStringBindingW( binding_str, &plugplay_binding_handle );
+    RpcStringFreeW( &binding_str );
+    if (err)
+    {
+        ERR("RpcBindingFromStringBinding() failed, error %#x\n", err);
+        return err;
+    }
+
+    __TRY
+    {
+        handle = plugplay_register_listener();
+    }
+    __EXCEPT(rpc_filter)
+    {
+        err = map_exception_code( GetExceptionCode() );
+    }
+    __ENDTRY
+
+    if (!handle)
+    {
+        ERR("failed to open RPC handle, error %u\n", err);
+        return 1;
+    }
+
+    for (;;)
+    {
+        buf = NULL;
+        __TRY
+        {
+            code = plugplay_get_event( handle, &buf, &size );
+            err = ERROR_SUCCESS;
+        }
+        __EXCEPT(rpc_filter)
+        {
+            err = map_exception_code( GetExceptionCode() );
+        }
+        __ENDTRY
+
+        if (err)
+        {
+            ERR("failed to get event, error %u\n", err);
+            break;
+        }
+
+        EnterCriticalSection( &service_cs );
+        LIST_FOR_EACH_ENTRY(registration, &device_notify_list, struct device_notify_registration, entry)
+        {
+            registration->details.cb( registration->details.handle, code, (DEV_BROADCAST_HDR *)buf );
+        }
+        LeaveCriticalSection(&service_cs);
+        MIDL_user_free(buf);
+    }
+
+    __TRY
+    {
+        plugplay_unregister_listener( handle );
+    }
+    __EXCEPT(rpc_filter)
+    {
+    }
+    __ENDTRY
+
+    RpcBindingFree( &plugplay_binding_handle );
+    return 0;
+}
+
+/******************************************************************************
+ *     I_ScRegisterDeviceNotification   (sechost.@)
+ */
+HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_details *details,
+        void *filter, DWORD flags )
+{
+    struct device_notify_registration *registration;
+
+    TRACE("callback %p, handle %p, filter %p, flags %#x\n", details->cb, details->handle, filter, flags);
+
+    if (filter) FIXME("Notification filters are not yet implemented.\n");
+
+    if (!(registration = heap_alloc(sizeof(struct device_notify_registration))))
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return NULL;
+    }
+
+    registration->details = *details;
+
+    EnterCriticalSection( &service_cs );
+    list_add_tail( &device_notify_list, &registration->entry );
+
+    if (!device_notify_thread)
+        device_notify_thread = CreateThread( NULL, 0, device_notify_proc, NULL, 0, NULL );
+
+    LeaveCriticalSection( &service_cs );
+
+    return registration;
+}
+
+/******************************************************************************
+ *     I_ScUnregisterDeviceNotification   (sechost.@)
+ */
+BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
+{
+    struct device_notify_registration *registration = handle;
+
+    TRACE("%p\n", handle);
+
+    EnterCriticalSection( &service_cs );
+    list_remove( &registration->entry );
+    LeaveCriticalSection(&service_cs);
+    heap_free( registration );
+    return TRUE;
 }
