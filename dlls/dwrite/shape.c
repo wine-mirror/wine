@@ -148,41 +148,6 @@ static HRESULT default_set_text_glyphs_props(struct scriptshaping_context *conte
     return S_OK;
 }
 
-static HRESULT latn_set_text_glyphs_props(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices,
-                                     UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props)
-{
-    HRESULT hr;
-    UINT32 i;
-
-    hr = default_set_text_glyphs_props(context, clustermap, glyph_indices, glyphcount, text_props, glyph_props);
-
-    for (i = 0; i < glyphcount; i++)
-        if (glyph_props[i].isZeroWidthSpace)
-            glyph_props[i].justification = SCRIPT_JUSTIFY_NONE;
-
-    return hr;
-}
-
-static struct shaping_feature std_gpos_tags[] =
-{
-    { DWRITE_FONT_FEATURE_TAG_KERNING },
-    { DWRITE_FONT_FEATURE_TAG_MARK_POSITIONING },
-    { DWRITE_FONT_FEATURE_TAG_MARK_TO_MARK_POSITIONING },
-};
-
-static const struct shaping_features std_gpos_features =
-{
-    std_gpos_tags,
-    ARRAY_SIZE(std_gpos_tags),
-};
-
-const struct scriptshaping_ops latn_shaping_ops =
-{
-    NULL,
-    latn_set_text_glyphs_props,
-    &std_gpos_features,
-};
-
 const struct scriptshaping_ops default_shaping_ops =
 {
     NULL,
@@ -236,13 +201,43 @@ static DWORD shape_select_language(const struct scriptshaping_cache *cache, DWOR
     return 0;
 }
 
-HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *scripts,
-        const struct shaping_features *features)
+static void shape_add_feature(struct shaping_features *features, unsigned int tag)
 {
+    if (!dwrite_array_reserve((void **)&features->features, &features->capacity, features->count + 1,
+            sizeof(*features->features)))
+        return;
+
+    features->features[features->count++].tag = tag;
+}
+
+HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts)
+{
+    static const unsigned int common_features[] =
+    {
+        DWRITE_MAKE_OPENTYPE_TAG('a','b','v','m'),
+        DWRITE_MAKE_OPENTYPE_TAG('b','l','w','m'),
+        DWRITE_MAKE_OPENTYPE_TAG('m','a','r','k'),
+        DWRITE_MAKE_OPENTYPE_TAG('m','k','m','k'),
+    };
+    static const unsigned int horizontal_features[] =
+    {
+        DWRITE_MAKE_OPENTYPE_TAG('c','u','r','s'),
+        DWRITE_MAKE_OPENTYPE_TAG('d','i','s','t'),
+        DWRITE_MAKE_OPENTYPE_TAG('k','e','r','n'),
+    };
     struct scriptshaping_cache *cache = context->cache;
-    unsigned int script_index, language_index;
-    unsigned int i;
-    DWORD script;
+    unsigned int script_index, language_index, script, i;
+    struct shaping_features features = { 0 };
+
+    for (i = 0; i < ARRAY_SIZE(common_features); ++i)
+        shape_add_feature(&features, common_features[i]);
+
+    /* Horizontal features */
+    if (!context->is_sideways)
+    {
+        for (i = 0; i < ARRAY_SIZE(horizontal_features); ++i)
+            shape_add_feature(&features, horizontal_features[i]);
+    }
 
     /* Resolve script tag to actually supported script. */
     if (cache->gpos.table.data)
@@ -253,9 +248,9 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *
 
             if ((language = shape_select_language(cache, MS_GPOS_TAG, script_index, language, &language_index)))
             {
-                TRACE("script %s, language %s.\n", debugstr_tag(script),
-                        language != ~0u ? debugstr_tag(language) : "deflangsys");
-                opentype_layout_apply_gpos_features(context, script_index, language_index, features);
+                TRACE("script %s, language %s.\n", debugstr_tag(script), language != ~0u ?
+                        debugstr_tag(language) : "deflangsys");
+                opentype_layout_apply_gpos_features(context, script_index, language_index, &features);
             }
         }
     }
@@ -264,16 +259,9 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *
         if (context->u.pos.glyph_props[i].isZeroWidthSpace)
             context->advances[i] = 0.0f;
 
+    heap_free(features.features);
+
     return S_OK;
-}
-
-static void shape_add_feature(struct shaping_features *features, unsigned int tag)
-{
-    if (!dwrite_array_reserve((void **)&features->features, &features->capacity, features->count + 1,
-            sizeof(*features->features)))
-        return;
-
-    features->features[features->count++].tag = tag;
 }
 
 static unsigned int shape_get_script_lang_index(struct scriptshaping_context *context, const unsigned int *scripts,

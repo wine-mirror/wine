@@ -94,7 +94,7 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
     { /* Khar */ { 0x7261684b, 305, 15, 0x0020, 1, 0, 1, 0, 0, 0, 0 }, { _OT('k','h','a','r') } },
     { /* Khmr */ { 0x726d684b, 355,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('k','h','m','r') }, TRUE },
     { /* Laoo */ { 0x6f6f614c, 356,  8, 0x0020, 1, 0, 1, 0, 1, 0, 0 }, { _OT('l','a','o',' ') }, TRUE },
-    { /* Latn */ { 0x6e74614c, 215,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('l','a','t','n') }, FALSE, &latn_shaping_ops },
+    { /* Latn */ { 0x6e74614c, 215,  1, 0x0020, 0, 1, 1, 0, 0, 0, 0 }, { _OT('l','a','t','n') } },
     { /* Lepc */ { 0x6370654c, 335,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('l','e','p','c') } },
     { /* Limb */ { 0x626d694c, 336,  8, 0x0020, 1, 1, 1, 0, 0, 0, 0 }, { _OT('l','i','m','b') } },
     { /* Linb */ { 0x626e694c, 401,  1, 0x0020, 0, 0, 1, 1, 0, 0, 0 }, { _OT('l','i','n','b') } },
@@ -1279,9 +1279,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     UINT32 const* feature_range_lengths, UINT32 feature_ranges, float *advances, DWRITE_GLYPH_OFFSET *offsets)
 {
     const struct dwritescript_properties *scriptprops;
+    struct scriptshaping_context context;
     struct dwrite_fontface *font_obj;
     unsigned int i, script;
-    HRESULT hr = S_OK;
 
     TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
@@ -1307,29 +1307,23 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     }
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
-
     scriptprops = &dwritescripts_properties[script];
-    if (scriptprops->ops && scriptprops->ops->gpos_features)
-    {
-        struct scriptshaping_context context;
 
-        context.cache = fontface_get_shaping_cache(font_obj);
-        context.text = text;
-        context.length = text_len;
-        context.is_rtl = is_rtl;
-        context.u.pos.glyphs = glyphs;
-        context.u.pos.glyph_props = glyph_props;
-        context.glyph_count = glyph_count;
-        context.emsize = emSize;
-        context.measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
-        context.advances = advances;
-        context.offsets = offsets;
-        context.language_tag = get_opentype_language(locale);
+    context.cache = fontface_get_shaping_cache(font_obj);
+    context.text = text;
+    context.length = text_len;
+    context.is_rtl = is_rtl;
+    context.is_sideways = is_sideways;
+    context.u.pos.glyphs = glyphs;
+    context.u.pos.glyph_props = glyph_props;
+    context.glyph_count = glyph_count;
+    context.emsize = emSize;
+    context.measuring_mode = DWRITE_MEASURING_MODE_NATURAL;
+    context.advances = advances;
+    context.offsets = offsets;
+    context.language_tag = get_opentype_language(locale);
 
-        hr = shape_get_positions(&context, scriptprops->scripttags, scriptprops->ops->gpos_features);
-    }
-
-    return hr;
+    return shape_get_positions(&context, scriptprops->scripttags);
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,
@@ -1341,10 +1335,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     UINT32 const* feature_range_lengths, UINT32 feature_ranges, float *advances, DWRITE_GLYPH_OFFSET *offsets)
 {
     const struct dwritescript_properties *scriptprops;
+    struct scriptshaping_context context;
     DWRITE_MEASURING_MODE measuring_mode;
     struct dwrite_fontface *font_obj;
     unsigned int i, script;
-    HRESULT hr = S_OK;
 
     TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, ppdip,
@@ -1372,29 +1366,23 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     }
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
-
     scriptprops = &dwritescripts_properties[script];
-    if (scriptprops->ops && scriptprops->ops->gpos_features)
-    {
-        struct scriptshaping_context context;
 
-        context.cache = fontface_get_shaping_cache(font_obj);
-        context.text = text;
-        context.length = text_len;
-        context.is_rtl = is_rtl;
-        context.u.pos.glyphs = glyphs;
-        context.u.pos.glyph_props = glyph_props;
-        context.glyph_count = glyph_count;
-        context.emsize = emSize * ppdip;
-        context.measuring_mode = measuring_mode;
-        context.advances = advances;
-        context.offsets = offsets;
-        context.language_tag = get_opentype_language(locale);
+    context.cache = fontface_get_shaping_cache(font_obj);
+    context.text = text;
+    context.length = text_len;
+    context.is_rtl = is_rtl;
+    context.is_sideways = is_sideways;
+    context.u.pos.glyphs = glyphs;
+    context.u.pos.glyph_props = glyph_props;
+    context.glyph_count = glyph_count;
+    context.emsize = emSize * ppdip;
+    context.measuring_mode = measuring_mode;
+    context.advances = advances;
+    context.offsets = offsets;
+    context.language_tag = get_opentype_language(locale);
 
-        hr = shape_get_positions(&context, scriptprops->scripttags, scriptprops->ops->gpos_features);
-    }
-
-    return hr;
+    return shape_get_positions(&context, scriptprops->scripttags);
 }
 
 static HRESULT apply_cluster_spacing(float leading_spacing, float trailing_spacing, float min_advance_width,

@@ -536,8 +536,6 @@ struct scriptshaping_ops
 };
 
 extern const struct scriptshaping_ops default_shaping_ops DECLSPEC_HIDDEN;
-extern const struct scriptshaping_ops latn_shaping_ops DECLSPEC_HIDDEN;
 
 extern HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
-extern HRESULT shape_get_positions(struct scriptshaping_context *context, const DWORD *scripts,
-        const struct shaping_features *features) DECLSPEC_HIDDEN;
+extern HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
