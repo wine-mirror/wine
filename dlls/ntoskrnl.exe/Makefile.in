@@ -1,7 +1,7 @@
 MODULE    = ntoskrnl.exe
 IMPORTLIB = ntoskrnl
 IMPORTS   = advapi32 hal msvcrt
-DELAYIMPORTS = setupapi user32
+DELAYIMPORTS = rpcrt4 setupapi user32
 
 EXTRADLLFLAGS = -mno-cygwin
 
@@ -12,3 +12,6 @@ C_SRCS = \
 	sync.c
 
 RC_SRCS = ntoskrnl.rc
+
+IDL_SRCS = \
+	plugplay.idl

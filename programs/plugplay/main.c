@@ -136,6 +136,34 @@ void __cdecl plugplay_unregister_listener( plugplay_rpc_handle handle )
     destroy_listener( handle );
 }
 
+void __cdecl plugplay_send_event( DWORD code, const BYTE *data, unsigned int size )
+{
+    struct listener *listener;
+    struct event *event;
+
+    EnterCriticalSection( &plugplay_cs );
+
+    LIST_FOR_EACH_ENTRY(listener, &listener_list, struct listener, entry)
+    {
+        if (!(event = malloc( sizeof(*event) )))
+            break;
+
+        if (!(event->data = malloc( size )))
+        {
+            free( event );
+            break;
+        }
+
+        event->code = code;
+        memcpy( event->data, data, size );
+        event->size = size;
+        list_add_tail( &listener->events, &event->entry );
+        WakeConditionVariable( &listener->cv );
+    }
+
+    LeaveCriticalSection( &plugplay_cs );
+}
+
 static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_data, LPVOID context )
 {
     SERVICE_STATUS status;
