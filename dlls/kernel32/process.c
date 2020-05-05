@@ -760,20 +760,6 @@ BOOL WINAPI K32GetProcessMemoryInfo(HANDLE process,
 }
 
 /***********************************************************************
- * ProcessIdToSessionId   (KERNEL32.@)
- * This function is available on Terminal Server 4SP4 and Windows 2000
- */
-BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
-{
-    if (procid != GetCurrentProcessId())
-        FIXME("Unsupported for other processes.\n");
-
-    *sessionid_ptr = NtCurrentTeb()->Peb->SessionId;
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		RegisterServiceProcess (KERNEL32.@)
  *
  * A service process calls this function to ensure that it continues to run
@@ -886,15 +872,6 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
 {
     FIXME("%p, %p, %d, %d: stub, faking success\n", callback, param, pingint, flags);
     return S_OK;
-}
-
-/***********************************************************************
- *           GetApplicationRestartSettings       (KERNEL32.@)
- */
-HRESULT WINAPI GetApplicationRestartSettings(HANDLE process, WCHAR *cmdline, DWORD *size, DWORD *flags)
-{
-    FIXME("%p, %p, %p, %p)\n", process, cmdline, size, flags);
-    return E_NOTIMPL;
 }
 
 /**********************************************************************
@@ -1131,15 +1108,5 @@ BOOL WINAPI UmsThreadYield(void *param)
 {
     FIXME( "%p: stub\n", param );
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
-}
-
-/**********************************************************************
- *           BaseFlushAppcompatCache     (KERNEL32.@)
- */
-BOOL WINAPI BaseFlushAppcompatCache(void)
-{
-    FIXME(": stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

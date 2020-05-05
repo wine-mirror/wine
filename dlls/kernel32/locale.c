@@ -534,31 +534,3 @@ INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, L
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return data_len < len ? 0 : len;
 }
-
-
-/******************************************************************************
- *           GetFileMUIPath (KERNEL32.@)
- */
-
-BOOL WINAPI GetFileMUIPath(DWORD flags, PCWSTR filepath, PWSTR language, PULONG languagelen,
-                           PWSTR muipath, PULONG muipathlen, PULONGLONG enumerator)
-{
-    FIXME("stub: 0x%x, %s, %s, %p, %p, %p, %p\n", flags, debugstr_w(filepath),
-           debugstr_w(language), languagelen, muipath, muipathlen, enumerator);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
-    return FALSE;
-}
-
-/******************************************************************************
- *           GetFileMUIInfo (KERNEL32.@)
- */
-
-BOOL WINAPI GetFileMUIInfo(DWORD flags, PCWSTR path, FILEMUIINFO *info, DWORD *size)
-{
-    FIXME("stub: %u, %s, %p, %p\n", flags, debugstr_w(path), info, size);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}

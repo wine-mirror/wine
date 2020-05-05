@@ -379,6 +379,18 @@ DWORD WINAPI DECLSPEC_HOTPATCH QueueUserAPC( PAPCFUNC func, HANDLE thread, ULONG
 }
 
 
+/***********************************************************************
+ *           QueryThreadCycleTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryThreadCycleTime( HANDLE thread, ULONG64 *cycle )
+{
+    static int once;
+    if (!once++) FIXME( "(%p,%p): stub!\n", thread, cycle );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
 /**********************************************************************
  *           ResumeThread   (kernelbase.@)
  */

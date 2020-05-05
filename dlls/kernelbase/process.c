@@ -626,6 +626,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH FlushInstructionCache( HANDLE process, LPCVOID add
 
 
 /***********************************************************************
+ *           GetApplicationRestartSettings   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ GetApplicationRestartSettings( HANDLE process, WCHAR *cmdline,
+                                                                      DWORD *size, DWORD *flags )
+{
+    FIXME( "%p, %p, %p, %p)\n", process, cmdline, size, flags );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
  *           GetCurrentProcess   (kernelbase.@)
  */
 HANDLE WINAPI kernelbase_GetCurrentProcess(void)
@@ -866,6 +877,29 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenProcess( DWORD access, BOOL inherit, DWORD i
 
 
 /***********************************************************************
+ *           ProcessIdToSessionId   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH ProcessIdToSessionId( DWORD procid, DWORD *sessionid )
+{
+    if (procid != GetCurrentProcessId()) FIXME( "Unsupported for other process %x\n", procid );
+    *sessionid = NtCurrentTeb()->Peb->SessionId;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           QueryProcessCycleTime   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH QueryProcessCycleTime( HANDLE process, ULONG64 *cycle )
+{
+    static int once;
+    if (!once++) FIXME( "(%p,%p): stub!\n", process, cycle );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           SetErrorMode   (kernelbase.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH SetErrorMode( UINT mode )
@@ -1039,6 +1073,17 @@ void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params )
 
     command_lineW = params->CommandLine.Buffer;
     if (!RtlUnicodeStringToAnsiString( &ansi, &params->CommandLine, TRUE )) command_lineA = ansi.Buffer;
+}
+
+
+/**********************************************************************
+ *           BaseFlushAppcompatCache   (kernelbase.@)
+ */
+BOOL WINAPI BaseFlushAppcompatCache(void)
+{
+    FIXME( "stub\n" );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
 
 

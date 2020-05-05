@@ -3986,6 +3986,33 @@ done:
 
 
 /******************************************************************************
+ *	GetFileMUIInfo   (kernelbase.@)
+ */
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetFileMUIInfo( DWORD flags, const WCHAR *path,
+                                                    FILEMUIINFO *info, DWORD *size )
+{
+    FIXME( "stub: %u, %s, %p, %p\n", flags, debugstr_w(path), info, size );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
+/******************************************************************************
+ *	GetFileMUIPath   (kernelbase.@)
+ */
+BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetFileMUIPath( DWORD flags, const WCHAR *filepath,
+                                                    WCHAR *language, ULONG *languagelen,
+                                                    WCHAR *muipath, ULONG *muipathlen,
+                                                    ULONGLONG *enumerator )
+{
+    FIXME( "stub: 0x%x, %s, %s, %p, %p, %p, %p\n", flags, debugstr_w(filepath),
+           debugstr_w(language), languagelen, muipath, muipathlen, enumerator );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
+/******************************************************************************
  *	GetGeoInfoW   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, int count, LANGID lang )

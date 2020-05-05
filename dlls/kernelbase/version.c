@@ -1504,3 +1504,43 @@ BOOL WINAPI GetVersionExW( OSVERSIONINFOW *info )
     }
     return TRUE;
 }
+
+
+/***********************************************************************
+ *         GetCurrentPackageFamilyName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageFamilyName( UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p): stub\n", length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetCurrentPackageFullName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageFullName( UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p): stub\n", length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetCurrentPackageId   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageId( UINT32 *len, BYTE *buffer )
+{
+    FIXME( "(%p %p): stub\n", len, buffer );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
+ *         GetPackageFullName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFullName( HANDLE process, UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p %p): stub\n", process, length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}

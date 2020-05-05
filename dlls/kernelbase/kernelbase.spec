@@ -74,7 +74,7 @@
 @ stub BaseDllFreeResourceId
 @ stub BaseDllMapResourceIdW
 @ stub BaseDumpAppcompatCache
-@ stdcall BaseFlushAppcompatCache() kernel32.BaseFlushAppcompatCache
+@ stdcall BaseFlushAppcompatCache()
 # @ stub BaseFormatObjectAttributes
 # @ stub BaseFreeAppCompatDataForProcess
 @ stdcall BaseGetNamedObjectDirectory(ptr)
@@ -360,7 +360,7 @@
 # @ stub FindFirstFileNameW
 @ stdcall FindFirstFileW(wstr ptr)
 @ stdcall FindFirstFreeAce(ptr ptr)
-@ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
+@ stdcall FindFirstStreamW(wstr long ptr long)
 @ stdcall FindFirstVolumeW(ptr long)
 @ stdcall FindNLSString(long long wstr long wstr long ptr)
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
@@ -368,7 +368,7 @@
 @ stdcall FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr)
-@ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
+@ stdcall FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeW(long ptr long)
 # @ stub FindPackagesByPackageFamily
 @ stdcall FindResourceExW(long wstr wstr long)
@@ -414,7 +414,7 @@
 # @ stub GetAppDataFolder
 # @ stub GetAppModelVersion
 # @ stub GetApplicationRecoveryCallback
-@ stdcall GetApplicationRestartSettings(long ptr ptr ptr) kernel32.GetApplicationRestartSettings
+@ stdcall GetApplicationRestartSettings(long ptr ptr ptr)
 # @ stub GetApplicationUserModelId
 # @ stub GetApplicationUserModelIdFromToken
 # @ stub GetAppliedGPOListInternalA
@@ -457,9 +457,9 @@
 # @ stub GetCurrentPackageApplicationContext
 # @ stub GetCurrentPackageApplicationResourcesContext
 # @ stub GetCurrentPackageContext
-@ stdcall GetCurrentPackageFamilyName(ptr ptr) kernel32.GetCurrentPackageFamilyName
-@ stdcall GetCurrentPackageFullName(ptr ptr) kernel32.GetCurrentPackageFullName
-@ stdcall GetCurrentPackageId(ptr ptr) kernel32.GetCurrentPackageId
+@ stdcall GetCurrentPackageFamilyName(ptr ptr)
+@ stdcall GetCurrentPackageFullName(ptr ptr)
+@ stdcall GetCurrentPackageId(ptr ptr)
 # @ stub GetCurrentPackageInfo
 # @ stub GetCurrentPackagePath
 # @ stub GetCurrentPackageResourcesContext
@@ -508,8 +508,8 @@
 @ stdcall GetFileAttributesW(wstr)
 @ stdcall GetFileInformationByHandle(long ptr)
 @ stdcall GetFileInformationByHandleEx(long long ptr long)
-@ stdcall GetFileMUIInfo(long wstr ptr ptr) kernel32.GetFileMUIInfo
-@ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr) kernel32.GetFileMUIPath
+@ stdcall GetFileMUIInfo(long wstr ptr ptr)
+@ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr)
 @ stdcall GetFileSecurityW(wstr long ptr long ptr)
 @ stdcall GetFileSize(long ptr)
 @ stdcall GetFileSizeEx(long ptr)
@@ -593,7 +593,7 @@
 # @ stub GetPackageContext
 # @ stub GetPackageFamilyName
 # @ stub GetPackageFamilyNameFromToken
-@ stdcall GetPackageFullName(long ptr ptr) kernel32.GetPackageFullName
+@ stdcall GetPackageFullName(long ptr ptr)
 # @ stub GetPackageFullNameFromToken
 # @ stub GetPackageId
 # @ stub GetPackageInfo
@@ -1164,7 +1164,7 @@
 @ stub PrivCopyFileExW
 @ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
-@ stdcall ProcessIdToSessionId(long ptr) kernel32.ProcessIdToSessionId
+@ stdcall ProcessIdToSessionId(long ptr)
 # @ stub ProductIdFromPackageFamilyName
 # @ stub PsmCreateKey
 # @ stub PsmCreateKeyWithDynamicId
@@ -1206,13 +1206,13 @@
 @ stdcall QueryPerformanceCounter(ptr) ntdll.RtlQueryPerformanceCounter
 @ stdcall QueryPerformanceFrequency(ptr) ntdll.RtlQueryPerformanceFrequency
 @ stub QueryProcessAffinityUpdateMode
-@ stdcall QueryProcessCycleTime(long ptr) kernel32.QueryProcessCycleTime
+@ stdcall QueryProcessCycleTime(long ptr)
 # @ stub QueryProtectedPolicy
 @ stub QuerySecurityAccessMask
 # @ stub QueryStateAtomValueInfo
 # @ stub QueryStateContainerCreatedNew
 # @ stub QueryStateContainerItemInfo
-@ stdcall QueryThreadCycleTime(long ptr) kernel32.QueryThreadCycleTime
+@ stdcall QueryThreadCycleTime(long ptr)
 @ stdcall QueryThreadpoolStackInformation(ptr ptr)
 @ stdcall QueryUnbiasedInterruptTime(ptr) ntdll.RtlQueryUnbiasedInterruptTime
 # @ stub QueryUnbiasedInterruptTimePrecise

@@ -171,7 +171,7 @@
 @ stub BaseCleanupAppcompatCacheSupport
 # @ stub BaseDllReadWriteIniFile
 @ stub BaseDumpAppcompatCache
-@ stdcall BaseFlushAppcompatCache()
+@ stdcall -import BaseFlushAppcompatCache()
 # @ stub BaseFormatObjectAttributes
 # @ stub BaseFormatTimeOut
 # @ stub BaseGenerateAppCompatData
@@ -488,7 +488,7 @@
 # @ stub FindFirstFileTransactedW
 @ stdcall -import FindFirstFileW(wstr ptr)
 # @ stub FindFirstStreamTransactedW
-@ stdcall FindFirstStreamW(wstr long ptr long)
+@ stdcall -import FindFirstStreamW(wstr long ptr long)
 @ stdcall FindFirstVolumeA(ptr long)
 @ stdcall FindFirstVolumeMountPointA(str ptr long)
 @ stdcall FindFirstVolumeMountPointW(wstr ptr long)
@@ -497,7 +497,7 @@
 @ stdcall -import FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
 @ stdcall -import FindNextFileW(long ptr)
-@ stdcall FindNextStreamW(long ptr)
+@ stdcall -import FindNextStreamW(long ptr)
 @ stdcall FindNextVolumeA(long ptr long)
 @ stub FindNextVolumeMountPointA
 @ stub FindNextVolumeMountPointW
@@ -541,7 +541,7 @@
 @ stdcall GetActiveProcessorCount(long)
 @ stdcall GetActiveProcessorGroupCount()
 # @ stub GetApplicationRecoveryCallback
-@ stdcall GetApplicationRestartSettings(long ptr ptr ptr)
+@ stdcall -import GetApplicationRestartSettings(long ptr ptr ptr)
 @ stdcall GetAtomNameA(long ptr long)
 @ stdcall GetAtomNameW(long ptr long)
 @ stdcall GetBinaryType(str ptr) GetBinaryTypeA
@@ -626,9 +626,9 @@
 @ stdcall GetCurrentConsoleFontEx(long long ptr)
 @ stdcall -import GetCurrentDirectoryA(long ptr)
 @ stdcall -import GetCurrentDirectoryW(long ptr)
-@ stdcall GetCurrentPackageFamilyName(ptr ptr)
-@ stdcall GetCurrentPackageFullName(ptr ptr)
-@ stdcall GetCurrentPackageId(ptr ptr)
+@ stdcall GetCurrentPackageFamilyName(ptr ptr) kernelbase.GetCurrentPackageFamilyName
+@ stdcall GetCurrentPackageFullName(ptr ptr) kernelbase.GetCurrentPackageFullName
+@ stdcall GetCurrentPackageId(ptr ptr) kernelbase.GetCurrentPackageId
 @ stdcall -norelay GetCurrentProcess() KERNEL32_GetCurrentProcess
 @ stdcall -norelay GetCurrentProcessId() KERNEL32_GetCurrentProcessId
 @ stdcall GetCurrentProcessorNumber() ntdll.NtGetCurrentProcessorNumber
@@ -678,8 +678,8 @@
 # @ stub GetFileBandwidthReservation
 @ stdcall -import GetFileInformationByHandle(long ptr)
 @ stdcall -import GetFileInformationByHandleEx(long long ptr long)
-@ stdcall GetFileMUIInfo(long wstr ptr ptr)
-@ stdcall GetFileMUIPath(long wstr wstr ptr ptr ptr ptr)
+@ stdcall -import GetFileMUIInfo(long wstr ptr ptr)
+@ stdcall -import GetFileMUIPath(long wstr wstr ptr ptr ptr ptr)
 @ stdcall -import GetFileSize(long ptr)
 @ stdcall -import GetFileSizeEx(long ptr)
 @ stdcall -import GetFileTime(long ptr ptr ptr)
@@ -762,7 +762,7 @@
 @ stdcall -import GetOverlappedResult(long ptr ptr long)
 @ stdcall -import GetOverlappedResultEx(long ptr ptr long long)
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr)
-@ stdcall GetPackageFullName(long ptr ptr)
+@ stdcall GetPackageFullName(long ptr ptr) kernelbase.GetPackageFullName
 @ stdcall -import GetPhysicallyInstalledSystemMemory(ptr)
 @ stdcall -import GetPriorityClass(long)
 @ stdcall GetPrivateProfileIntA(str str long str)
@@ -1156,7 +1156,7 @@
 @ stdcall Process32FirstW (ptr ptr)
 @ stdcall Process32Next (ptr ptr)
 @ stdcall Process32NextW (ptr ptr)
-@ stdcall ProcessIdToSessionId(long ptr)
+@ stdcall -import ProcessIdToSessionId(long ptr)
 @ stdcall -import PulseEvent(long)
 @ stdcall -import PurgeComm(long long)
 @ stdcall -i386 -private -norelay QT_Thunk() krnl386.exe16.QT_Thunk
@@ -1176,8 +1176,8 @@
 @ stdcall -import QueryPerformanceCounter(ptr)
 @ stdcall -import QueryPerformanceFrequency(ptr)
 # @ stub QueryProcessAffinityUpdateMode
-@ stdcall QueryProcessCycleTime(long ptr)
-@ stdcall QueryThreadCycleTime(long ptr)
+@ stdcall -import QueryProcessCycleTime(long ptr)
+@ stdcall -import QueryThreadCycleTime(long ptr)
 # @ stub QueryThreadProfiling
 @ stdcall -import QueryThreadpoolStackInformation(ptr ptr)
 @ stdcall -arch=x86_64 QueryUmsThreadInformation(ptr long ptr long ptr)

@@ -1302,6 +1302,17 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileW( const WCHAR *filename, WIN32_FIN
 }
 
 
+/**************************************************************************
+ *	FindFirstStreamW   (kernelbase.@)
+ */
+HANDLE WINAPI FindFirstStreamW( const WCHAR *filename, STREAM_INFO_LEVELS level, void *data, DWORD flags )
+{
+    FIXME("(%s, %d, %p, %x): stub!\n", debugstr_w(filename), level, data, flags);
+    SetLastError( ERROR_HANDLE_EOF );
+    return INVALID_HANDLE_VALUE;
+}
+
+
 /******************************************************************************
  *	FindNextFileA   (kernelbase.@)
  */
@@ -1411,6 +1422,17 @@ BOOL WINAPI DECLSPEC_HOTPATCH FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *da
 
     RtlLeaveCriticalSection( &info->cs );
     return ret;
+}
+
+
+/**************************************************************************
+ *	FindNextStreamW   (kernelbase.@)
+ */
+BOOL WINAPI FindNextStreamW( HANDLE handle, void *data )
+{
+    FIXME( "(%p, %p): stub!\n", handle, data );
+    SetLastError( ERROR_HANDLE_EOF );
+    return FALSE;
 }
 
 

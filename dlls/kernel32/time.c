@@ -389,30 +389,6 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
     return TRUE;
 }
 
-/***********************************************************************
- *           QueryProcessCycleTime   (KERNEL32.@)
- */
-BOOL WINAPI QueryProcessCycleTime(HANDLE process, PULONG64 cycle)
-{
-    static int once;
-    if (!once++)
-        FIXME("(%p,%p): stub!\n", process, cycle);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-/***********************************************************************
- *           QueryThreadCycleTime   (KERNEL32.@)
- */
-BOOL WINAPI QueryThreadCycleTime(HANDLE thread, PULONG64 cycle)
-{
-    static int once;
-    if (!once++)
-        FIXME("(%p,%p): stub!\n", thread, cycle);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
 /******************************************************************************
  *           GetTickCount64       (KERNEL32.@)
  */
