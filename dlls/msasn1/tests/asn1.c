@@ -46,10 +46,39 @@ static void test_CreateModule(void)
     ok(!mod, "Expected Failure.\n");
 
     mod = ASN1_CreateModule(0, 0, 0, 0, encfn, decfn, freefn, size, 0);
-    todo_wine ok(!!mod, "Failed to create module.\n");
+    ok(!!mod, "Failed to create module.\n");
+    ok(mod->nModuleName==0, "Got Module name = %d\n.",mod->nModuleName);
+    ok(mod->eRule==0, "Got eRule = %08x\n.",mod->eRule);
+    ok(mod->dwFlags==0, "Got Flags = %08x\n.",mod->dwFlags);
+    ok(mod->cPDUs==0, "Got PDUs = %08x\n.",mod->cPDUs);
+    ok(mod->apfnFreeMemory==freefn, "Free function = %p.\n",mod->apfnFreeMemory);
+    ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
+    ok(!mod->PER.apfnEncoder, "Encoder function should not be s et.\n");
+    ok(!mod->PER.apfnDecoder, "Decoder function should not be set.\n");
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
-    todo_wine ok(!!mod, "Failed to create module.\n");
+    ok(!!mod, "Failed to create module.\n");
+    ok(mod->nModuleName==name, "Got Module name = %d\n.",mod->nModuleName);
+    ok(mod->eRule==ASN1_BER_RULE_DER, "Got eRule = %08x\n.",mod->eRule);
+    ok(mod->cPDUs==1, "Got PDUs = %08x\n.",mod->cPDUs);
+    ok(mod->dwFlags==ASN1FLAGS_NOASSERT, "Got Flags = %08x\n.",mod->dwFlags);
+    ok(mod->apfnFreeMemory==freefn, "Free function = %p.\n",mod->apfnFreeMemory);
+    ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
+    ok(mod->BER.apfnEncoder==(ASN1BerEncFun_t *)encfn, "Encoder function = %p.\n",mod->BER.apfnEncoder);
+    ok(mod->BER.apfnDecoder==(ASN1BerDecFun_t *)decfn, "Decoder function = %p.\n",mod->BER.apfnDecoder);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
+    ok(!!mod, "Failed to create module.\n");
+    ok(mod->nModuleName==name, "Got Module name = %d\n.",mod->nModuleName);
+    ok(mod->eRule==ASN1_PER_RULE_ALIGNED, "Got eRule = %08x\n.",mod->eRule);
+    ok(mod->cPDUs==1, "Got PDUs = %08x\n.",mod->cPDUs);
+    ok(mod->dwFlags==ASN1FLAGS_NOASSERT, "Got Flags = %08x\n.",mod->dwFlags);
+    ok(mod->apfnFreeMemory==freefn, "Free function = %p.\n",mod->apfnFreeMemory);
+    ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
+    ok(mod->PER.apfnEncoder==(ASN1PerEncFun_t *)encfn /* WINXP & WIN2008 */ ||
+       broken(!mod->PER.apfnEncoder), "Encoder function = %p.\n",mod->PER.apfnEncoder);
+    ok(mod->PER.apfnDecoder==(ASN1PerDecFun_t *)decfn /* WINXP & WIN2008 */ ||
+       broken(!mod->PER.apfnDecoder), "Decoder function = %p.\n",mod->PER.apfnDecoder);
 }
 
 START_TEST(asn1)

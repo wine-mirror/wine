@@ -23,6 +23,7 @@
 #include "winbase.h"
 #include "msasn1.h"
 
+#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msasn1);
@@ -49,10 +50,37 @@ ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t ver, ASN1encodingrule_e rule,
 {
     ASN1module_t module = NULL;
 
-    FIXME("(%08x %08x %08x %u %p %p %p %p %u): Stub!\n", ver, rule, flags, pdu, encoder, decoder, freemem, size, magic);
+    TRACE("(%08x %08x %08x %u %p %p %p %p %u)\n", ver, rule, flags, pdu, encoder, decoder, freemem, size, magic);
 
     if (!encoder || !decoder || !freemem || !size)
         return module;
+
+    module = heap_alloc(sizeof(module));
+    if (module)
+    {
+        module->nModuleName = magic;
+        module->eRule = rule;
+        module->dwFlags = flags;
+        module->cPDUs = pdu;
+        module->apfnFreeMemory = freemem;
+        module->acbStructSize = size;
+
+        if (rule & ASN1_PER_RULE)
+        {
+            module->PER.apfnEncoder = (ASN1PerEncFun_t *)encoder;
+            module->PER.apfnDecoder = (ASN1PerDecFun_t *)decoder;
+        }
+        else if (rule & ASN1_BER_RULE)
+        {
+            module->BER.apfnEncoder = (ASN1BerEncFun_t *)encoder;
+            module->BER.apfnDecoder = (ASN1BerDecFun_t *)decoder;
+        }
+        else
+        {
+            module->PER.apfnEncoder = NULL;
+            module->PER.apfnDecoder = NULL;
+        }
+    }
 
     return module;
 }
