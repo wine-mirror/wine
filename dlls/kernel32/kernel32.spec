@@ -518,7 +518,7 @@
 @ stdcall FlushConsoleInputBuffer(long)
 @ stdcall FlushFileBuffers(long) KERNEL32_FlushFileBuffers
 @ stdcall -import FlushInstructionCache(long long long)
-@ stdcall FlushProcessWriteBuffers()
+@ stdcall FlushProcessWriteBuffers() ntdll.NtFlushProcessWriteBuffers
 @ stdcall -import FlushViewOfFile(ptr long)
 @ stdcall FoldStringA(long str long ptr long)
 @ stdcall -import FoldStringW(long wstr long ptr long)

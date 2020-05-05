@@ -212,6 +212,7 @@
 @ stdcall NtFlushBuffersFile(long ptr)
 @ stdcall NtFlushInstructionCache(long ptr long)
 @ stdcall NtFlushKey(long)
+@ stdcall NtFlushProcessWriteBuffers()
 @ stdcall NtFlushVirtualMemory(long ptr ptr long)
 @ stub NtFlushWriteBuffer
 # @ stub NtFreeUserPhysicalPages

@@ -992,17 +992,6 @@ BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
     return TRUE;
 }
 
-/**********************************************************************
- *           FlushProcessWriteBuffers     (KERNEL32.@)
- */
-VOID WINAPI FlushProcessWriteBuffers(void)
-{
-    static int once = 0;
-
-    if (!once++)
-        FIXME(": stub\n");
-}
-
 /***********************************************************************
  *           UnregisterApplicationRestart       (KERNEL32.@)
  */

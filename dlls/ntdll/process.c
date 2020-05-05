@@ -737,6 +737,15 @@ NTSTATUS WINAPI NtFlushInstructionCache( HANDLE handle, const void *addr, SIZE_T
     return STATUS_SUCCESS;
 }
 
+/**********************************************************************
+ * NtFlushProcessWriteBuffers [NTDLL.@]
+ */
+void WINAPI NtFlushProcessWriteBuffers(void)
+{
+    static int once = 0;
+    if (!once++) FIXME( "stub\n" );
+}
+
 /******************************************************************
  *		NtOpenProcess [NTDLL.@]
  *		ZwOpenProcess [NTDLL.@]
