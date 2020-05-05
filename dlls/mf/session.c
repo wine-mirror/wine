@@ -4289,6 +4289,7 @@ static HRESULT WINAPI present_clock_timer_callback_Invoke(IMFAsyncCallback *ifac
 
     EnterCriticalSection(&clock->cs);
     list_remove(&timer->entry);
+    IUnknown_Release(&timer->IUnknown_iface);
     LeaveCriticalSection(&clock->cs);
 
     IMFAsyncCallback_Invoke(timer->callback, timer->result);
