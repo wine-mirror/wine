@@ -129,6 +129,24 @@ static void get_virtual_rect(RECT *rect)
     rect->bottom = rect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 }
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    int diff = 200;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
 #define check_interface(a, b, c, d) check_interface_(__LINE__, a, b, c, d)
 static HRESULT check_interface_(unsigned int line, void *iface, REFIID iid,
         BOOL supported, BOOL is_broken)
@@ -4276,6 +4294,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
             skip("Test %u: Could not change fullscreen state.\n", i);
             continue;
         }
+        flush_events();
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
@@ -4427,6 +4446,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         todo_wine ok(!fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
 
         DestroyWindow(occluding_window);
+        flush_events();
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
@@ -4901,24 +4921,6 @@ static void test_object_wrapping(void)
     ok(!refcount, "Adapter has %u references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-}
-
-/* try to make sure pending X events have been processed before continuing */
-static void flush_events(void)
-{
-    int diff = 200;
-    DWORD time;
-    MSG msg;
-
-    time = GetTickCount() + diff;
-    while (diff > 0)
-    {
-        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
-            break;
-        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
-            DispatchMessageA(&msg);
-        diff = time - GetTickCount();
-    }
 }
 
 struct adapter_info
