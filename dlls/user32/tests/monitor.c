@@ -29,6 +29,9 @@
 
 static HMODULE hdll;
 static LONG (WINAPI *pGetDisplayConfigBufferSizes)(UINT32,UINT32*,UINT32*);
+static LONG (WINAPI *pQueryDisplayConfig)(UINT32,UINT32*,DISPLAYCONFIG_PATH_INFO*,UINT32*,
+                                          DISPLAYCONFIG_MODE_INFO*,DISPLAYCONFIG_TOPOLOGY_ID*);
+static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
 static void init_function_pointers(void)
@@ -41,6 +44,8 @@ static void init_function_pointers(void)
       trace("GetProcAddress(%s) failed\n", #func);
 
     GET_PROC(GetDisplayConfigBufferSizes)
+    GET_PROC(QueryDisplayConfig)
+    GET_PROC(DisplayConfigGetDeviceInfo)
     GET_PROC(SetThreadDpiAwarenessContext)
 
 #undef GET_PROC
@@ -1102,16 +1107,10 @@ static void test_work_area(void)
     DestroyWindow(hwnd);
 }
 
-static void test_display_config(void)
+static void test_get_display_config_buffer_sizes(void)
 {
     UINT32 paths, modes;
     LONG ret;
-
-    if (!pGetDisplayConfigBufferSizes)
-    {
-        win_skip("GetDisplayConfigBufferSizes is not supported\n");
-        return;
-    }
 
     ret = pGetDisplayConfigBufferSizes(QDC_ALL_PATHS, NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
@@ -1267,6 +1266,174 @@ static void test_EnumDisplayMonitors(void)
         ok(ret, "EnumDisplayMonitors failed.\n");
         ok(error == 0xdeadbeef, "Expected error %#x, got %#x.\n", 0xdeadbeef, error);
     }
+}
+
+static void test_query_display_config(void)
+{
+    UINT32 paths, modes;
+    DISPLAYCONFIG_PATH_INFO pi[10];
+    DISPLAYCONFIG_MODE_INFO mi[20];
+    LONG ret;
+
+    todo_wine
+    {
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, NULL, NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 0;
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, NULL, &modes, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 0;
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, pi, &modes, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 0;
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, NULL, &modes, mi, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 0;
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, pi, &modes, mi, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = 0;
+    modes = 1;
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, pi, &modes, mi, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+    ok (paths == 0, "got %u\n", paths);
+    ok (modes == 1, "got %u\n", modes);
+
+    /* Crashes on Windows 10 */
+    if (0)
+    {
+        ret = pQueryDisplayConfig(QDC_ALL_PATHS, NULL, pi, NULL, mi, NULL);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+        ret = pQueryDisplayConfig(QDC_ALL_PATHS, NULL, pi, &modes, mi, NULL);
+        ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+    }
+
+    paths = modes = 1;
+    ret = pQueryDisplayConfig(0, &paths, pi, &modes, mi, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 1;
+    memset(pi, 0xFF, sizeof(pi[0]));
+    memset(mi, 0xFF, sizeof(mi[0]));
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, pi, &modes, mi, NULL);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+    ok (paths == 1, "got %u\n", paths);
+    ok (modes == 1, "got %u\n", modes);
+    }
+}
+
+static void test_display_config_get_device_info(void)
+{
+    LONG ret;
+    DISPLAYCONFIG_SOURCE_DEVICE_NAME source_name;
+    DISPLAYCONFIG_TARGET_DEVICE_NAME target_name;
+    DISPLAYCONFIG_TARGET_PREFERRED_MODE preferred_mode;
+    DISPLAYCONFIG_ADAPTER_NAME adapter_name;
+
+    todo_wine
+    {
+    ret = pDisplayConfigGetDeviceInfo(NULL);
+    ok(ret == ERROR_GEN_FAILURE, "got %d\n", ret);
+
+    source_name.header.type = 0xFFFF;
+    source_name.header.size = 0;
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_GEN_FAILURE, "got %d\n", ret);
+
+    source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+    source_name.header.size = 0;
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_GEN_FAILURE, "got %d\n", ret);
+
+    source_name.header.type = 0xFFFF;
+    source_name.header.size = sizeof(source_name.header);
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+    source_name.header.size = sizeof(source_name.header);
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    source_name.header.type = 0xFFFF;
+    source_name.header.size = sizeof(source_name);
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+    source_name.header.size = sizeof(source_name) - 1;
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+    }
+
+    source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+    source_name.header.size = sizeof(source_name);
+    source_name.header.adapterId.LowPart = 0xFFFF;
+    source_name.header.adapterId.HighPart = 0xFFFF;
+    source_name.header.id = 0;
+    ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+    ok(ret == ERROR_GEN_FAILURE || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+
+    target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+    target_name.header.size = sizeof(target_name) - 1;
+    ret = pDisplayConfigGetDeviceInfo(&target_name.header);
+    todo_wine
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+    target_name.header.size = sizeof(target_name);
+    target_name.header.adapterId.LowPart = 0xFFFF;
+    target_name.header.adapterId.HighPart = 0xFFFF;
+    target_name.header.id = 0;
+    ret = pDisplayConfigGetDeviceInfo(&target_name.header);
+    ok(ret == ERROR_GEN_FAILURE || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+
+    preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
+    preferred_mode.header.size = sizeof(preferred_mode) - 1;
+    ret = pDisplayConfigGetDeviceInfo(&preferred_mode.header);
+    todo_wine
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
+    preferred_mode.header.size = sizeof(preferred_mode);
+    preferred_mode.header.adapterId.LowPart = 0xFFFF;
+    preferred_mode.header.adapterId.HighPart = 0xFFFF;
+    preferred_mode.header.id = 0;
+    ret = pDisplayConfigGetDeviceInfo(&preferred_mode.header);
+    ok(ret == ERROR_GEN_FAILURE || ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+
+    adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+    adapter_name.header.size = sizeof(adapter_name) - 1;
+    ret = pDisplayConfigGetDeviceInfo(&adapter_name.header);
+    todo_wine
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+    adapter_name.header.size = sizeof(adapter_name);
+    adapter_name.header.adapterId.LowPart = 0xFFFF;
+    adapter_name.header.adapterId.HighPart = 0xFFFF;
+    ret = pDisplayConfigGetDeviceInfo(&adapter_name.header);
+    ok(ret == ERROR_GEN_FAILURE || ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+}
+
+static void test_display_config(void)
+{
+    if (!pGetDisplayConfigBufferSizes ||
+        !pQueryDisplayConfig ||
+        !pDisplayConfigGetDeviceInfo)
+    {
+        win_skip("DisplayConfig APIs are not supported\n");
+        return;
+    }
+
+    test_get_display_config_buffer_sizes();
+    test_query_display_config();
+    test_display_config_get_device_info();
 }
 
 START_TEST(monitor)
