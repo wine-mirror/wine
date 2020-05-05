@@ -21,6 +21,7 @@
 #define NONAMELESSSTRUCT
 
 #include <stdarg.h>
+#include <intrin.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -3038,46 +3039,14 @@ done:
     return status;
 }
 
-extern void do_cpuid( unsigned int ax, unsigned int *p );
-#if defined(_MSC_VER)
-void do_cpuid( unsigned int ax, unsigned int *p )
+void do_cpuid( unsigned int ax, int *p )
 {
+#if defined(__i386__) || defined(__x86_64__)
     __cpuid( p, ax );
-}
-#elif defined(__i386__)
-__ASM_GLOBAL_FUNC( do_cpuid,
-                   "pushl %esi\n\t"
-                   "pushl %ebx\n\t"
-                   "movl 12(%esp),%eax\n\t"
-                   "movl 16(%esp),%esi\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%esi)\n\t"
-                   "movl %ebx,4(%esi)\n\t"
-                   "movl %ecx,8(%esi)\n\t"
-                   "movl %edx,12(%esi)\n\t"
-                   "popl %ebx\n\t"
-                   "popl %esi\n\t"
-                   "ret" )
-#elif defined(__x86_64__)
-__ASM_GLOBAL_FUNC( do_cpuid,
-                   "pushq %rsi\n\t"
-                   "pushq %rbx\n\t"
-                   "movq %rcx,%rax\n\t"
-                   "movq %rdx,%rsi\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%rsi)\n\t"
-                   "movl %ebx,4(%rsi)\n\t"
-                   "movl %ecx,8(%rsi)\n\t"
-                   "movl %edx,12(%rsi)\n\t"
-                   "popq %rbx\n\t"
-                   "popq %rsi\n\t"
-                   "ret" )
 #else
-void do_cpuid( unsigned int ax, unsigned int *p )
-{
     FIXME("\n");
-}
 #endif
+}
 
 static unsigned int get_processor_model( unsigned int reg0, unsigned int *stepping, unsigned int *family )
 {
@@ -3093,7 +3062,7 @@ static unsigned int get_processor_model( unsigned int reg0, unsigned int *steppi
     *stepping = reg0 & 0x0f;
     return model;
 }
-static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
+static void regs_to_str( int *regs, unsigned int len, WCHAR *buffer )
 {
     unsigned int i;
     unsigned char *p = (unsigned char *)regs;
@@ -3103,7 +3072,7 @@ static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
 }
 static void get_processor_manufacturer( WCHAR *manufacturer, UINT len )
 {
-    unsigned int tmp, regs[4] = {0, 0, 0, 0};
+    int tmp, regs[4] = {0, 0, 0, 0};
 
     do_cpuid( 0, regs );
     tmp = regs[2];      /* swap edx and ecx */
@@ -3123,7 +3092,8 @@ static void get_processor_caption( WCHAR *caption, UINT len )
 {
     const WCHAR *arch;
     WCHAR manufacturer[13];
-    unsigned int regs[4] = {0, 0, 0, 0}, family, model, stepping;
+    int regs[4] = {0, 0, 0, 0};
+    unsigned int family, model, stepping;
 
     get_processor_manufacturer( manufacturer, ARRAY_SIZE( manufacturer ) );
     if (!wcscmp( get_osarchitecture(), L"32-bit" )) arch = L"x86";
@@ -3137,7 +3107,8 @@ static void get_processor_caption( WCHAR *caption, UINT len )
 }
 static void get_processor_version( WCHAR *version, UINT len )
 {
-    unsigned int regs[4] = {0, 0, 0, 0}, model, stepping;
+    int regs[4] = {0, 0, 0, 0};
+    unsigned int model, stepping;
 
     do_cpuid( 1, regs );
 
@@ -3146,20 +3117,20 @@ static void get_processor_version( WCHAR *version, UINT len )
 }
 static UINT16 get_processor_revision(void)
 {
-    unsigned int regs[4] = {0, 0, 0, 0};
+    int regs[4] = {0, 0, 0, 0};
     do_cpuid( 1, regs );
     return regs[0];
 }
 static void get_processor_id( WCHAR *processor_id, UINT len )
 {
-    unsigned int regs[4] = {0, 0, 0, 0};
+    int regs[4] = {0, 0, 0, 0};
 
     do_cpuid( 1, regs );
     swprintf( processor_id, len, L"%08X%08X", regs[3], regs[0] );
 }
 static void get_processor_name( WCHAR *name )
 {
-    unsigned int regs[4] = {0, 0, 0, 0};
+    int regs[4] = {0, 0, 0, 0};
     int i;
 
     do_cpuid( 0x80000000, regs );
