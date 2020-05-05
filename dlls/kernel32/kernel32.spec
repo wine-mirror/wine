@@ -1589,14 +1589,14 @@
 @ stdcall -import WaitNamedPipeW (wstr long)
 @ stdcall WakeAllConditionVariable(ptr) ntdll.RtlWakeAllConditionVariable
 @ stdcall WakeConditionVariable(ptr) ntdll.RtlWakeConditionVariable
-# @ stub WerGetFlags
-@ stdcall WerRegisterFile(wstr long long)
-@ stdcall WerRegisterMemoryBlock(ptr long)
-@ stdcall WerRegisterRuntimeExceptionModule(wstr ptr)
-@ stdcall WerSetFlags(long)
-# @ stub WerUnregisterFile
-@ stdcall WerUnregisterMemoryBlock(ptr)
-@ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr)
+@ stdcall -import WerGetFlags(ptr ptr)
+@ stdcall -import WerRegisterFile(wstr long long)
+@ stdcall -import WerRegisterMemoryBlock(ptr long)
+@ stdcall -import WerRegisterRuntimeExceptionModule(wstr ptr)
+@ stdcall -import WerSetFlags(long)
+@ stdcall -import WerUnregisterFile(wstr)
+@ stdcall -import WerUnregisterMemoryBlock(ptr)
+@ stdcall -import WerUnregisterRuntimeExceptionModule(wstr ptr)
 # @ stub WerpCleanupMessageMapping
 # @ stub WerpInitiateRemoteRecovery
 # @ stub WerpNotifyLoadStringResource

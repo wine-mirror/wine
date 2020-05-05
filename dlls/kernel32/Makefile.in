@@ -37,8 +37,7 @@ C_SRCS = \
 	toolhelp.c \
 	version.c \
 	virtual.c \
-	volume.c \
-	wer.c
+	volume.c
 
 RC_SRCS = \
 	locale_rc.rc \

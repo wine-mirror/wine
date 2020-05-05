@@ -1701,14 +1701,14 @@
 @ stdcall WakeByAddressAll(ptr) ntdll.RtlWakeAddressAll
 @ stdcall WakeByAddressSingle(ptr) ntdll.RtlWakeAddressSingle
 @ stdcall WakeConditionVariable(ptr) ntdll.RtlWakeConditionVariable
-# @ stub WerGetFlags
-@ stdcall WerRegisterFile(wstr long long) kernel32.WerRegisterFile
-@ stdcall WerRegisterMemoryBlock(ptr long) kernel32.WerRegisterMemoryBlock
-@ stdcall WerRegisterRuntimeExceptionModule(wstr ptr) kernel32.WerRegisterRuntimeExceptionModule
-@ stdcall WerSetFlags(long) kernel32.WerSetFlags
-# @ stub WerUnregisterFile
-@ stdcall WerUnregisterMemoryBlock(ptr) kernel32.WerUnregisterMemoryBlock
-@ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr) kernel32.WerUnregisterRuntimeExceptionModule
+@ stdcall WerGetFlags(ptr ptr)
+@ stdcall WerRegisterFile(wstr long long)
+@ stdcall WerRegisterMemoryBlock(ptr long)
+@ stdcall WerRegisterRuntimeExceptionModule(wstr ptr)
+@ stdcall WerSetFlags(long)
+@ stdcall WerUnregisterFile(wstr)
+@ stdcall WerUnregisterMemoryBlock(ptr)
+@ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr)
 # @ stub WerpNotifyLoadStringResource
 # @ stub WerpNotifyUseStringResource
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)

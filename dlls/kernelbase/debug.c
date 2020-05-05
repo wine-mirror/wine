@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "werapi.h"
 
 #include "wine/exception.h"
 #include "wine/server.h"
@@ -766,4 +767,85 @@ LONG WINAPI UnhandledExceptionFilter( EXCEPTION_POINTERS *epointers )
             return EXCEPTION_EXECUTE_HANDLER;
     }
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+
+/***********************************************************************
+ *         WerGetFlags   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerGetFlags( HANDLE process, DWORD *flags )
+{
+    FIXME( "(%p, %p) stub\n", process, flags );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerRegisterFile   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterFile( const WCHAR *file, WER_REGISTER_FILE_TYPE type,
+                                                        DWORD flags )
+{
+    FIXME( "(%s, %d, %d) stub\n", debugstr_w(file), type, flags );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerRegisterMemoryBlock   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterMemoryBlock( void *block, DWORD size )
+{
+    FIXME( "(%p %d) stub\n", block, size );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerRegisterRuntimeExceptionModule   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerRegisterRuntimeExceptionModule( const WCHAR *dll, void *context )
+{
+    FIXME( "(%s, %p) stub\n", debugstr_w(dll), context );
+    return S_OK;
+}
+
+
+/***********************************************************************
+ *         WerSetFlags   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerSetFlags( DWORD flags )
+{
+    FIXME("(%d) stub\n", flags);
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerUnregisterFile   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterFile( const WCHAR *file )
+{
+    FIXME( "(%s) stub\n", debugstr_w(file) );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerUnregisterMemoryBlock   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterMemoryBlock( void *block )
+{
+    FIXME( "(%p) stub\n", block );
+    return E_NOTIMPL;
+}
+
+
+/***********************************************************************
+ *         WerUnregisterRuntimeExceptionModule   (kernelbase.@)
+ */
+HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterRuntimeExceptionModule( const WCHAR *dll, void *context )
+{
+    FIXME( "(%s, %p) stub\n", debugstr_w(dll), context );
+    return S_OK;
 }
