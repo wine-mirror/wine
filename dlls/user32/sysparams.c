@@ -4509,7 +4509,17 @@ LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCON
                                DISPLAYCONFIG_TOPOLOGY_ID *topologyid)
 {
     FIXME("(%08x %p %p %p %p %p)\n", flags, numpathelements, pathinfo, numinfoelements, modeinfo, topologyid);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (!numpathelements || !numinfoelements)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!*numpathelements || !*numinfoelements)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!flags)
+        return ERROR_INVALID_PARAMETER;
+
+    return ERROR_NOT_SUPPORTED;
 }
 
 /***********************************************************************

@@ -1275,8 +1275,6 @@ static void test_query_display_config(void)
     DISPLAYCONFIG_MODE_INFO mi[20];
     LONG ret;
 
-    todo_wine
-    {
     ret = pQueryDisplayConfig(QDC_ALL_PATHS, NULL, NULL, NULL, NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
@@ -1324,7 +1322,6 @@ static void test_query_display_config(void)
     ok(ret == ERROR_INSUFFICIENT_BUFFER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
     ok (paths == 1, "got %u\n", paths);
     ok (modes == 1, "got %u\n", modes);
-    }
 }
 
 static void test_display_config_get_device_info(void)
