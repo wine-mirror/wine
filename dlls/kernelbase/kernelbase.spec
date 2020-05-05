@@ -168,7 +168,7 @@
 # @ stub CopyFile2
 @ stdcall CopyFileExW(wstr wstr ptr ptr ptr long)
 @ stdcall CopyFileW(wstr wstr long)
-# @ stub -arch=x86_64 CopyMemoryNonTemporal
+@ stdcall -arch=x86_64 CopyMemoryNonTemporal(ptr ptr long) ntdll.RtlCopyMemoryNonTemporal
 @ stdcall CopySid(long ptr ptr)
 # @ stub CouldMultiUserAppsBehaviorBePossibleForPackage
 @ stdcall CreateActCtxW(ptr)
