@@ -1332,8 +1332,6 @@ static void test_display_config_get_device_info(void)
     DISPLAYCONFIG_TARGET_PREFERRED_MODE preferred_mode;
     DISPLAYCONFIG_ADAPTER_NAME adapter_name;
 
-    todo_wine
-    {
     ret = pDisplayConfigGetDeviceInfo(NULL);
     ok(ret == ERROR_GEN_FAILURE, "got %d\n", ret);
 
@@ -1366,7 +1364,6 @@ static void test_display_config_get_device_info(void)
     source_name.header.size = sizeof(source_name) - 1;
     ret = pDisplayConfigGetDeviceInfo(&source_name.header);
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
-    }
 
     source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
     source_name.header.size = sizeof(source_name);
@@ -1379,7 +1376,6 @@ static void test_display_config_get_device_info(void)
     target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
     target_name.header.size = sizeof(target_name) - 1;
     ret = pDisplayConfigGetDeviceInfo(&target_name.header);
-    todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
     target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
@@ -1393,7 +1389,6 @@ static void test_display_config_get_device_info(void)
     preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
     preferred_mode.header.size = sizeof(preferred_mode) - 1;
     ret = pDisplayConfigGetDeviceInfo(&preferred_mode.header);
-    todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
     preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
@@ -1407,7 +1402,6 @@ static void test_display_config_get_device_info(void)
     adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
     adapter_name.header.size = sizeof(adapter_name) - 1;
     ret = pDisplayConfigGetDeviceInfo(&adapter_name.header);
-    todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
     adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;

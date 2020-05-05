@@ -4528,5 +4528,53 @@ LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCON
 LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
 {
     FIXME("stub: %p\n", packet);
-    return ERROR_NOT_SUPPORTED;
+
+    if (!packet || packet->size < sizeof(*packet))
+        return ERROR_GEN_FAILURE;
+
+    switch (packet->type)
+    {
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME:
+    {
+        DISPLAYCONFIG_SOURCE_DEVICE_NAME *source_name = (DISPLAYCONFIG_SOURCE_DEVICE_NAME *)packet;
+        if (packet->size < sizeof(*source_name))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME:
+    {
+        DISPLAYCONFIG_TARGET_DEVICE_NAME *target_name = (DISPLAYCONFIG_TARGET_DEVICE_NAME *)packet;
+        if (packet->size < sizeof(*target_name))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE:
+    {
+        DISPLAYCONFIG_TARGET_PREFERRED_MODE *preferred_mode = (DISPLAYCONFIG_TARGET_PREFERRED_MODE *)packet;
+        if (packet->size < sizeof(*preferred_mode))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME:
+    {
+        DISPLAYCONFIG_ADAPTER_NAME *adapter_name = (DISPLAYCONFIG_ADAPTER_NAME *)packet;
+        if (packet->size < sizeof(*adapter_name))
+            return ERROR_INVALID_PARAMETER;
+
+        return ERROR_NOT_SUPPORTED;
+    }
+    case DISPLAYCONFIG_DEVICE_INFO_SET_TARGET_PERSISTENCE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_BASE_TYPE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SUPPORT_VIRTUAL_RESOLUTION:
+    case DISPLAYCONFIG_DEVICE_INFO_SET_SUPPORT_VIRTUAL_RESOLUTION:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO:
+    case DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE:
+    case DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL:
+    default:
+        FIXME("Unimplemented packet type: %u\n", packet->type);
+        return ERROR_INVALID_PARAMETER;
+    }
 }
