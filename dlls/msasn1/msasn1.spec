@@ -219,7 +219,7 @@
 @ stub ASN1_CloseDecoder
 @ stub ASN1_CloseEncoder2
 @ stub ASN1_CloseEncoder
-@ stub ASN1_CloseModule
+@ stdcall ASN1_CloseModule(ptr)
 @ stub ASN1_CreateDecoder
 @ stub ASN1_CreateDecoderEx
 @ stub ASN1_CreateEncoder

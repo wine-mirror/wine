@@ -55,6 +55,7 @@ static void test_CreateModule(void)
     ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
     ok(!mod->PER.apfnEncoder, "Encoder function should not be s et.\n");
     ok(!mod->PER.apfnDecoder, "Decoder function should not be set.\n");
+    ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
     ok(!!mod, "Failed to create module.\n");
@@ -66,6 +67,7 @@ static void test_CreateModule(void)
     ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
     ok(mod->BER.apfnEncoder==(ASN1BerEncFun_t *)encfn, "Encoder function = %p.\n",mod->BER.apfnEncoder);
     ok(mod->BER.apfnDecoder==(ASN1BerDecFun_t *)decfn, "Decoder function = %p.\n",mod->BER.apfnDecoder);
+    ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
     ok(!!mod, "Failed to create module.\n");
@@ -79,6 +81,7 @@ static void test_CreateModule(void)
        broken(!mod->PER.apfnEncoder), "Encoder function = %p.\n",mod->PER.apfnEncoder);
     ok(mod->PER.apfnDecoder==(ASN1PerDecFun_t *)decfn /* WINXP & WIN2008 */ ||
        broken(!mod->PER.apfnDecoder), "Decoder function = %p.\n",mod->PER.apfnDecoder);
+    ASN1_CloseModule(mod);
 }
 
 START_TEST(asn1)

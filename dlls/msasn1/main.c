@@ -84,3 +84,10 @@ ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t ver, ASN1encodingrule_e rule,
 
     return module;
 }
+
+void WINAPI ASN1_CloseModule(ASN1module_t module)
+{
+    TRACE("(%p)\n", module);
+
+    heap_free(module);
+}
