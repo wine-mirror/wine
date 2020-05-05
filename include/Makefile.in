@@ -450,6 +450,7 @@ SOURCES = \
 	msvcrt/fenv.h \
 	msvcrt/float.h \
 	msvcrt/fpieee.h \
+	msvcrt/intrin.h \
 	msvcrt/inttypes.h \
 	msvcrt/io.h \
 	msvcrt/limits.h \
