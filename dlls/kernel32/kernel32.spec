@@ -258,10 +258,10 @@
 # @ stub CopyContext
 @ stdcall CopyFileA(str str long)
 @ stdcall CopyFileExA (str str ptr ptr ptr long)
-@ stdcall CopyFileExW (wstr wstr ptr ptr ptr long)
+@ stdcall -import CopyFileExW(wstr wstr ptr ptr ptr long)
 # @ stub CopyFileTransactedA
 # @ stub CopyFileTransactedW
-@ stdcall CopyFileW(wstr wstr long)
+@ stdcall -import CopyFileW(wstr wstr long)
 @ stdcall CopyLZFile(long long) LZCopy
 @ stdcall CreateActCtxA(ptr)
 @ stdcall -import CreateActCtxW(ptr)
@@ -287,10 +287,10 @@
 @ stdcall -import CreateFileMappingNumaW(long ptr long long long wstr long)
 @ stdcall -import CreateFileMappingW(long ptr long long long wstr)
 @ stdcall -import CreateFileW(wstr long long ptr long long long)
-@ stdcall CreateHardLinkA(str str ptr)
+@ stdcall -import CreateHardLinkA(str str ptr)
 @ stdcall CreateHardLinkTransactedA(str str ptr ptr)
 @ stdcall CreateHardLinkTransactedW(wstr wstr ptr ptr)
-@ stdcall CreateHardLinkW(wstr wstr ptr)
+@ stdcall -import CreateHardLinkW(wstr wstr ptr)
 @ stdcall -import CreateIoCompletionPort(long long long long)
 @ stdcall CreateJobObjectA(ptr str)
 @ stdcall CreateJobObjectW(ptr wstr)
@@ -326,7 +326,7 @@
 @ stdcall CreateSymbolicLinkA(str str long)
 # @ stub CreateSymbolicLinkTransactedA
 # @ stub CreateSymbolicLinkTransactedW
-@ stdcall CreateSymbolicLinkW(wstr wstr long)
+@ stdcall -import CreateSymbolicLinkW(wstr wstr long)
 @ stdcall CreateTapePartition(long long long long)
 @ stdcall -import CreateThread(ptr long ptr long long ptr)
 @ stdcall -import CreateThreadpool(ptr)
@@ -684,8 +684,8 @@
 @ stdcall -import GetFileSizeEx(long ptr)
 @ stdcall -import GetFileTime(long ptr ptr ptr)
 @ stdcall -import GetFileType(long)
-@ stdcall GetFinalPathNameByHandleA(long ptr long long)
-@ stdcall GetFinalPathNameByHandleW(long ptr long long)
+@ stdcall -import GetFinalPathNameByHandleA(long ptr long long)
+@ stdcall -import GetFinalPathNameByHandleW(long ptr long long)
 @ stdcall GetFirmwareEnvironmentVariableA(str str ptr long)
 @ stdcall GetFirmwareEnvironmentVariableW(wstr wstr ptr long)
 @ stdcall -import GetFullPathNameA(str long ptr ptr)
@@ -1091,12 +1091,12 @@
 @ stdcall Module32NextW(long ptr)
 @ stdcall MoveFileA(str str)
 @ stdcall MoveFileExA(str str long)
-@ stdcall MoveFileExW(wstr wstr long)
+@ stdcall -import MoveFileExW(wstr wstr long)
 @ stdcall MoveFileTransactedA(str str ptr ptr long ptr)
 @ stdcall MoveFileTransactedW(wstr wstr ptr ptr long ptr)
 @ stdcall MoveFileW(wstr wstr)
 @ stdcall MoveFileWithProgressA(str str ptr ptr long)
-@ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
+@ stdcall -import MoveFileWithProgressW(wstr wstr ptr ptr long)
 @ stdcall MulDiv(long long long)
 @ stdcall -import MultiByteToWideChar(long long str long ptr long)
 @ stdcall -import NeedCurrentDirectoryForExePathA(str)
@@ -1273,9 +1273,9 @@
 @ stdcall RemoveVectoredContinueHandler(ptr) ntdll.RtlRemoveVectoredContinueHandler
 @ stdcall RemoveVectoredExceptionHandler(ptr) ntdll.RtlRemoveVectoredExceptionHandler
 @ stdcall -import ReOpenFile(ptr long long long) ReOpenFile
-@ stdcall ReplaceFile(wstr wstr wstr long ptr ptr) ReplaceFileW
+@ stdcall -import ReplaceFile(wstr wstr wstr long ptr ptr) ReplaceFileW
 @ stdcall ReplaceFileA(str str str long ptr ptr)
-@ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr)
+@ stdcall -import ReplaceFileW(wstr wstr wstr long ptr ptr)
 # @ stub RemoveDirectoryTransactedA
 # @ stub RemoveDirectoryTransactedW
 @ stdcall -import RemoveDllDirectory(ptr)

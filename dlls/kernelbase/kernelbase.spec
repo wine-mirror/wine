@@ -166,8 +166,8 @@
 @ stdcall ConvertToAutoInheritPrivateObjectSecurity(ptr ptr ptr ptr long ptr)
 # @ stub CopyContext
 # @ stub CopyFile2
-@ stdcall CopyFileExW(wstr wstr ptr ptr ptr long) kernel32.CopyFileExW
-@ stdcall CopyFileW(wstr wstr long) kernel32.CopyFileW
+@ stdcall CopyFileExW(wstr wstr ptr ptr ptr long)
+@ stdcall CopyFileW(wstr wstr long)
 # @ stub -arch=x86_64 CopyMemoryNonTemporal
 @ stdcall CopySid(long ptr ptr)
 # @ stub CouldMultiUserAppsBehaviorBePossibleForPackage
@@ -191,8 +191,8 @@
 @ stdcall CreateFileMappingNumaW(long ptr long long long wstr long)
 @ stdcall CreateFileMappingW(long ptr long long long wstr)
 @ stdcall CreateFileW(wstr long long ptr long long long)
-@ stdcall CreateHardLinkA(str str ptr) kernel32.CreateHardLinkA
-@ stdcall CreateHardLinkW(wstr wstr ptr) kernel32.CreateHardLinkW
+@ stdcall CreateHardLinkA(str str ptr)
+@ stdcall CreateHardLinkW(wstr wstr ptr)
 @ stdcall CreateIoCompletionPort(long long long long)
 @ stdcall CreateMemoryResourceNotification(long)
 @ stdcall CreateMutexA(ptr long str)
@@ -221,7 +221,7 @@
 # @ stub CreateStateContainer
 # @ stub CreateStateLock
 # @ stub CreateStateSubcontainer
-@ stdcall CreateSymbolicLinkW(wstr wstr long) kernel32.CreateSymbolicLinkW
+@ stdcall CreateSymbolicLinkW(wstr wstr long)
 @ stdcall CreateThread(ptr long ptr long long ptr)
 @ stdcall CreateThreadpool(ptr)
 @ stdcall CreateThreadpoolCleanupGroup()
@@ -524,8 +524,8 @@
 @ stdcall GetFileVersionInfoSizeExW(long wstr ptr)
 @ stdcall GetFileVersionInfoSizeW(wstr ptr)
 @ stdcall GetFileVersionInfoW(wstr long long ptr)
-@ stdcall GetFinalPathNameByHandleA(long ptr long long) kernel32.GetFinalPathNameByHandleA
-@ stdcall GetFinalPathNameByHandleW(long ptr long long) kernel32.GetFinalPathNameByHandleW
+@ stdcall GetFinalPathNameByHandleA(long ptr long long)
+@ stdcall GetFinalPathNameByHandleW(long ptr long long)
 @ stdcall GetFullPathNameA(str long ptr ptr)
 @ stdcall GetFullPathNameW(wstr long ptr ptr)
 # @ stub GetGPOListInternalA
@@ -953,9 +953,9 @@
 @ stdcall MapViewOfFileEx(long long long long long ptr)
 @ stdcall MapViewOfFileExNuma(long long long long long ptr long)
 # @ stub MapViewOfFileFromApp
-@ stdcall MoveFileExW(wstr wstr long) kernel32.MoveFileExW
+@ stdcall MoveFileExW(wstr wstr long)
 # @ stub MoveFileWithProgressTransactedW
-@ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long) kernel32.MoveFileWithProgressW
+@ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
 @ stdcall MulDiv(long long long) kernel32.MulDiv
 @ stdcall MultiByteToWideChar(long long str long ptr long)
 # @ stub NamedPipeEventEnum
@@ -1339,7 +1339,7 @@
 @ stdcall RemoveVectoredContinueHandler(ptr) ntdll.RtlRemoveVectoredContinueHandler
 @ stdcall RemoveVectoredExceptionHandler(ptr) ntdll.RtlRemoveVectoredExceptionHandler
 # @ stub ReplaceFileExInternal
-@ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr) kernel32.ReplaceFileW
+@ stdcall ReplaceFileW(wstr wstr wstr long ptr ptr)
 @ stdcall ResetEvent(long)
 # @ stub ResetState
 @ stdcall ResetWriteWatch(ptr long)
