@@ -1023,7 +1023,7 @@ enable_winemac_drv=${enable_winemac_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl Check for cross compiler to build test programs
-AC_SUBST(CROSSTARGET,"")
+AC_SUBST(CROSSTARGET)
 if test "x$with_mingw" != xno
 then
     case "x$with_mingw" in
