@@ -3050,7 +3050,7 @@ __ASM_STDCALL_FUNC( NtCurrentTeb, 0, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
 /**************************************************************************
  *           _chkstk   (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( _chkstk, 0,
+__ASM_GLOBAL_FUNC( _chkstk,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
                    "xchgl %esp,%eax\n\t"
@@ -3061,7 +3061,7 @@ __ASM_STDCALL_FUNC( _chkstk, 0,
 /**************************************************************************
  *           _alloca_probe   (NTDLL.@)
  */
-__ASM_STDCALL_FUNC( _alloca_probe, 0,
+__ASM_GLOBAL_FUNC( _alloca_probe,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
                    "xchgl %esp,%eax\n\t"

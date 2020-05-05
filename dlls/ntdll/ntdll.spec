@@ -1413,7 +1413,7 @@
 @ cdecl -private -arch=i386 _CIsin() NTDLL__CIsin
 @ cdecl -private -arch=i386 _CIsqrt() NTDLL__CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
-@ stdcall -private -arch=arm,x86_64 -norelay __chkstk()
+@ cdecl -arch=arm,x86_64 -norelay __chkstk()
 @ cdecl __isascii(long) NTDLL___isascii
 @ cdecl __iscsym(long) NTDLL___iscsym
 @ cdecl __iscsymf(long) NTDLL___iscsymf
@@ -1430,7 +1430,7 @@
 @ stdcall -arch=i386 -norelay _aulldvrm(int64 int64)
 @ stdcall -arch=i386 -ret64 _aullrem(int64 int64)
 @ stdcall -arch=i386 -ret64 _aullshr(int64 long)
-@ stdcall -private -arch=i386 -norelay _chkstk()
+@ cdecl -arch=i386 -norelay _chkstk()
 @ stub _fltused
 @ cdecl -arch=i386 -ret64 _ftol() NTDLL__ftol
 @ cdecl _i64toa(int64 ptr long)
