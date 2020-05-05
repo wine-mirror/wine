@@ -57,6 +57,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <intrin.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <windows.h>
@@ -195,44 +196,7 @@ static DWORD set_reg_value_dword( HKEY hkey, const WCHAR *name, DWORD value )
 
 #if defined(__i386__) || defined(__x86_64__)
 
-#if defined(_MSC_VER)
-static void do_cpuid( unsigned int ax, unsigned int *p )
-{
-    __cpuid( p, ax );
-}
-#elif defined(__i386__)
-extern void __cdecl do_cpuid( unsigned int ax, unsigned int *p );
-__ASM_GLOBAL_FUNC( do_cpuid,
-                   "pushl %esi\n\t"
-                   "pushl %ebx\n\t"
-                   "movl 12(%esp),%eax\n\t"
-                   "movl 16(%esp),%esi\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%esi)\n\t"
-                   "movl %ebx,4(%esi)\n\t"
-                   "movl %ecx,8(%esi)\n\t"
-                   "movl %edx,12(%esi)\n\t"
-                   "popl %ebx\n\t"
-                   "popl %esi\n\t"
-                   "ret" )
-#else
-extern void __cdecl do_cpuid( unsigned int ax, unsigned int *p );
-__ASM_GLOBAL_FUNC( do_cpuid,
-                   "pushq %rsi\n\t"
-                   "pushq %rbx\n\t"
-                   "movq %rcx,%rax\n\t"
-                   "movq %rdx,%rsi\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%rsi)\n\t"
-                   "movl %ebx,4(%rsi)\n\t"
-                   "movl %ecx,8(%rsi)\n\t"
-                   "movl %edx,12(%rsi)\n\t"
-                   "popq %rbx\n\t"
-                   "popq %rsi\n\t"
-                   "ret" )
-#endif
-
-static void regs_to_str( unsigned int *regs, unsigned int len, WCHAR *buffer )
+static void regs_to_str( int *regs, unsigned int len, WCHAR *buffer )
 {
     unsigned int i;
     unsigned char *p = (unsigned char *)regs;
@@ -259,18 +223,19 @@ static void get_identifier( WCHAR *buf, size_t size, const WCHAR *arch )
 {
     static const WCHAR fmtW[] = {'%','s',' ','F','a','m','i','l','y',' ','%','u',' ','M','o','d','e','l',
                                  ' ','%','u',' ','S','t','e','p','p','i','n','g',' ','%','u',0};
-    unsigned int regs[4] = {0, 0, 0, 0}, family, model, stepping;
+    unsigned int family, model, stepping;
+    int regs[4] = {0, 0, 0, 0};
 
-    do_cpuid( 1, regs );
+    __cpuid( regs, 1 );
     model = get_model( regs[0], &stepping, &family );
     swprintf( buf, size, fmtW, arch, family, model, stepping );
 }
 
 static void get_vendorid( WCHAR *buf )
 {
-    unsigned int tmp, regs[4] = {0, 0, 0, 0};
+    int tmp, regs[4] = {0, 0, 0, 0};
 
-    do_cpuid( 0, regs );
+    __cpuid( regs, 0 );
     tmp = regs[2];      /* swap edx and ecx */
     regs[2] = regs[3];
     regs[3] = tmp;
@@ -280,17 +245,17 @@ static void get_vendorid( WCHAR *buf )
 
 static void get_namestring( WCHAR *buf )
 {
-    unsigned int regs[4] = {0, 0, 0, 0};
+    int regs[4] = {0, 0, 0, 0};
     int i;
 
-    do_cpuid( 0x80000000, regs );
+    __cpuid( regs, 0x80000000 );
     if (regs[0] >= 0x80000004)
     {
-        do_cpuid( 0x80000002, regs );
+        __cpuid( regs, 0x80000002 );
         regs_to_str( regs, 16, buf );
-        do_cpuid( 0x80000003, regs );
+        __cpuid( regs, 0x80000003 );
         regs_to_str( regs, 16, buf + 16 );
-        do_cpuid( 0x80000004, regs );
+        __cpuid( regs, 0x80000004 );
         regs_to_str( regs, 16, buf + 32 );
     }
     for (i = lstrlenW(buf) - 1; i >= 0 && buf[i] == ' '; i--) buf[i] = 0;
