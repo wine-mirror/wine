@@ -1045,6 +1045,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   WCHAR  pathext[MAXSTRING];
   WCHAR *firstParam;
   BOOL  extensionsupplied = FALSE;
+  BOOL  explicit_path = FALSE;
   BOOL  status;
   DWORD len;
   static const WCHAR envPath[] = {'P','A','T','H','\0'};
@@ -1084,6 +1085,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
     /* Reduce pathtosearch to a path with trailing '\' to support c:\a.bat and
        c:\windows\a.bat syntax                                                 */
     if (lastSlash) *(lastSlash + 1) = 0x00;
+    explicit_path = TRUE;
   }
 
   /* Now extract PATHEXT */
@@ -1103,37 +1105,48 @@ void WCMD_run_program (WCHAR *command, BOOL called)
     BOOL  found             = FALSE;
     BOOL inside_quotes      = FALSE;
 
-    /* Work on the first directory on the search path */
-    pos = pathposn;
-    while ((inside_quotes || *pos != ';') && *pos != 0)
+    if (explicit_path)
     {
-        if (*pos == '"')
-            inside_quotes = !inside_quotes;
-        pos++;
+        lstrcpyW(thisDir, pathposn);
+        pathposn = NULL;
     }
-
-    if (*pos) { /* Reached semicolon */
-      memcpy(thisDir, pathposn, (pos-pathposn) * sizeof(WCHAR));
-      thisDir[(pos-pathposn)] = 0x00;
-      pathposn = pos+1;
-    } else {    /* Reached string end */
-      lstrcpyW(thisDir, pathposn);
-      pathposn = NULL;
-    }
-
-    /* Remove quotes */
-    length = lstrlenW(thisDir);
-    if (thisDir[length - 1] == '"')
-        thisDir[length - 1] = 0;
-
-    if (*thisDir != '"')
-        lstrcpyW(temp, thisDir);
     else
-        lstrcpyW(temp, thisDir + 1);
+    {
+        /* Work on the next directory on the search path */
+        pos = pathposn;
+        while ((inside_quotes || *pos != ';') && *pos != 0)
+        {
+            if (*pos == '"')
+                inside_quotes = !inside_quotes;
+            pos++;
+        }
 
-    /* Since you can have eg. ..\.. on the path, need to expand
-       to full information                                      */
-    GetFullPathNameW(temp, MAX_PATH, thisDir, NULL);
+        if (*pos)  /* Reached semicolon */
+        {
+            memcpy(thisDir, pathposn, (pos-pathposn) * sizeof(WCHAR));
+            thisDir[(pos-pathposn)] = 0x00;
+            pathposn = pos+1;
+        }
+        else       /* Reached string end */
+        {
+            lstrcpyW(thisDir, pathposn);
+            pathposn = NULL;
+        }
+
+        /* Remove quotes */
+        length = lstrlenW(thisDir);
+        if (thisDir[length - 1] == '"')
+            thisDir[length - 1] = 0;
+
+        if (*thisDir != '"')
+            lstrcpyW(temp, thisDir);
+        else
+            lstrcpyW(temp, thisDir + 1);
+
+        /* Since you can have eg. ..\.. on the path, need to expand
+           to full information                                      */
+        GetFullPathNameW(temp, MAX_PATH, thisDir, NULL);
+    }
 
     /* 1. If extension supplied, see if that file exists */
     lstrcatW(thisDir, slashW);
