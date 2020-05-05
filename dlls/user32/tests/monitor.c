@@ -1154,11 +1154,127 @@ static void test_display_config(void)
     ok((modes == 0 || modes == 100) && paths == 0, "got %u, %u\n", modes, paths);
 }
 
+static BOOL CALLBACK test_EnumDisplayMonitors_normal_cb(HMONITOR monitor, HDC hdc, LPRECT rect,
+        LPARAM lparam)
+{
+    MONITORINFO mi;
+    LONG ret;
+
+    mi.cbSize = sizeof(mi);
+    ret = GetMonitorInfoA(monitor, &mi);
+    ok(ret, "GetMonitorInfoA failed, error %#x.\n", GetLastError());
+    ok(EqualRect(rect, &mi.rcMonitor), "Expected rect %s, got %s.\n",
+            wine_dbgstr_rect(&mi.rcMonitor), wine_dbgstr_rect(rect));
+
+    return TRUE;
+}
+
+static BOOL CALLBACK test_EnumDisplayMonitors_return_false_cb(HMONITOR monitor, HDC hdc,
+        LPRECT rect, LPARAM lparam)
+{
+    return FALSE;
+}
+
+static BOOL CALLBACK test_EnumDisplayMonitors_invalid_handle_cb(HMONITOR monitor, HDC hdc,
+        LPRECT rect, LPARAM lparam)
+{
+    MONITORINFOEXA mi, mi2;
+    DEVMODEA old_dm, dm;
+    INT count;
+    LONG ret;
+
+    mi.cbSize = sizeof(mi);
+    ret = GetMonitorInfoA(monitor, (MONITORINFO *)&mi);
+    ok(ret, "GetMonitorInfoA failed, error %#x.\n", GetLastError());
+
+    /* Test that monitor handle is invalid after the monitor is detached */
+    if (!(mi.dwFlags & MONITORINFOF_PRIMARY))
+    {
+        count = GetSystemMetrics(SM_CMONITORS);
+
+        /* Save current display settings */
+        memset(&old_dm, 0, sizeof(old_dm));
+        old_dm.dmSize = sizeof(old_dm);
+        ret = EnumDisplaySettingsA(mi.szDevice, ENUM_CURRENT_SETTINGS, &old_dm);
+        ok(ret, "EnumDisplaySettingsA %s failed, error %#x.\n", mi.szDevice, GetLastError());
+
+        /* Detach monitor */
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        dm.dmFields = DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT;
+        dm.dmPosition.x = mi.rcMonitor.left;
+        dm.dmPosition.y = mi.rcMonitor.top;
+        ret = ChangeDisplaySettingsExA(mi.szDevice, &dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET,
+                NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                mi.szDevice, ret);
+        ret = ChangeDisplaySettingsExA(mi.szDevice, NULL, NULL, 0, NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                mi.szDevice, ret);
+
+        /* Check if it's really detached */
+        if (GetSystemMetrics(SM_CMONITORS) != count - 1)
+        {
+            skip("Failed to detach %s.\n", mi.szDevice);
+            return TRUE;
+        }
+
+        /* The monitor handle should be invalid now */
+        mi2.cbSize = sizeof(mi2);
+        ret = GetMonitorInfoA(monitor, (MONITORINFO *)&mi2);
+        ok(!ret, "GetMonitorInfoA succeeded.\n");
+
+        /* Restore the original display settings */
+        ret = ChangeDisplaySettingsExA(mi.szDevice, &old_dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET,
+                NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                mi.szDevice, ret);
+        ret = ChangeDisplaySettingsExA(mi.szDevice, NULL, NULL, 0, NULL);
+        ok(ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                mi.szDevice, ret);
+    }
+
+    return TRUE;
+}
+
+static void test_EnumDisplayMonitors(void)
+{
+    DWORD error;
+    INT count;
+    BOOL ret;
+
+    ret = EnumDisplayMonitors(NULL, NULL, test_EnumDisplayMonitors_normal_cb, 0);
+    ok(ret, "EnumDisplayMonitors failed, error %#x.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = EnumDisplayMonitors(NULL, NULL, test_EnumDisplayMonitors_return_false_cb, 0);
+    error = GetLastError();
+    ok(!ret, "EnumDisplayMonitors succeeded.\n");
+    ok(error == 0xdeadbeef, "Expected error %#x, got %#x.\n", 0xdeadbeef, error);
+
+    count = GetSystemMetrics(SM_CMONITORS);
+    SetLastError(0xdeadbeef);
+    ret = EnumDisplayMonitors(NULL, NULL, test_EnumDisplayMonitors_invalid_handle_cb, 0);
+    error = GetLastError();
+    if (count >= 2)
+    {
+        todo_wine ok(!ret, "EnumDisplayMonitors succeeded.\n");
+        todo_wine ok(error == ERROR_INVALID_MONITOR_HANDLE || error == ERROR_INVALID_HANDLE,
+                "Expected error %#x, got %#x.\n", ERROR_INVALID_MONITOR_HANDLE, error);
+    }
+    else
+    {
+        ok(ret, "EnumDisplayMonitors failed.\n");
+        ok(error == 0xdeadbeef, "Expected error %#x, got %#x.\n", 0xdeadbeef, error);
+    }
+}
+
 START_TEST(monitor)
 {
     init_function_pointers();
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx();
+    test_EnumDisplayMonitors();
     test_monitors();
     test_work_area();
     test_display_config();
