@@ -285,15 +285,15 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
 {
     static const unsigned int common_features[] =
     {
-        DWRITE_FONT_FEATURE_TAG_GLYPH_COMPOSITION_DECOMPOSITION,
-        DWRITE_FONT_FEATURE_TAG_LOCALIZED_FORMS,
-        DWRITE_FONT_FEATURE_TAG_REQUIRED_LIGATURES,
+        DWRITE_MAKE_OPENTYPE_TAG('c','c','m','p'),
+        DWRITE_MAKE_OPENTYPE_TAG('l','o','c','l'),
+        DWRITE_MAKE_OPENTYPE_TAG('r','l','i','g'),
     };
     static const unsigned int horizontal_features[] =
     {
-        DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_ALTERNATES,
-        DWRITE_FONT_FEATURE_TAG_CONTEXTUAL_LIGATURES,
-        DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES,
+        DWRITE_MAKE_OPENTYPE_TAG('c','a','l','t'),
+        DWRITE_MAKE_OPENTYPE_TAG('c','l','i','g'),
+        DWRITE_MAKE_OPENTYPE_TAG('l','i','g','a'),
         DWRITE_MAKE_OPENTYPE_TAG('r','c','l','t'),
     };
     struct scriptshaping_cache *cache = context->cache;
