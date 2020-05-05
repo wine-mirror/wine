@@ -9869,7 +9869,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   eval "$as_ac_var=yes"
@@ -9888,6 +9888,8 @@ $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   CROSSTARGET=$llvm_target
                                   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
+                                  DELAYLOADFLAG="-Wl,-delayload,"
+
                                   CFLAGS="$CFLAGS -fuse-ld=lld"
 fi
         fi
@@ -9904,7 +9906,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__fno_strict_aliasing=yes
@@ -9935,7 +9937,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Werror_unknown_warning_option=yes
@@ -9966,7 +9968,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wdeclaration_after_statement=yes
@@ -9997,7 +9999,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wempty_body=yes
@@ -10028,7 +10030,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wignored_qualifiers=yes
@@ -10059,7 +10061,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wpacked_not_aligned=yes
@@ -10090,7 +10092,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wpragma_pack=yes
@@ -10121,7 +10123,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wshift_overflow_2=yes
@@ -10152,7 +10154,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wstrict_prototypes=yes
@@ -10183,7 +10185,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wtype_limits=yes
@@ -10214,7 +10216,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wunused_but_set_parameter=yes
@@ -10245,7 +10247,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wvla=yes
@@ -10276,7 +10278,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wwrite_strings=yes
@@ -10307,7 +10309,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wpointer_arith=yes
@@ -10338,7 +10340,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wlogical_op=yes
@@ -10369,7 +10371,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wincompatible_library_redeclaration=yes
@@ -10402,7 +10404,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__fno_omit_frame_pointer=yes
@@ -10433,7 +10435,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wno_format=yes
@@ -10464,7 +10466,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wformat_overflow=yes
@@ -10495,7 +10497,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Wnonnull=yes
@@ -10530,7 +10532,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__gdwarf_2=yes
@@ -10561,7 +10563,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__gstrict_dwarf=yes
@@ -10582,39 +10584,6 @@ fi ;;
           esac
         done
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,-delayload,autoconftest.dll" >&5
-$as_echo_n "checking whether the cross-compiler supports -Wl,-delayload,autoconftest.dll... " >&6; }
-if ${ac_cv_crosscflags__Wl__delayload_autoconftest_dll+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wl,-delayload,autoconftest.dll"
-CC="$CROSSCC"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_crosscflags__Wl__delayload_autoconftest_dll=yes
-else
-  ac_cv_crosscflags__Wl__delayload_autoconftest_dll=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
-ac_exeext=$ac_wine_try_cflags_saved_exeext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wl__delayload_autoconftest_dll" >&5
-$as_echo "$ac_cv_crosscflags__Wl__delayload_autoconftest_dll" >&6; }
-if test "x$ac_cv_crosscflags__Wl__delayload_autoconftest_dll" = xyes; then :
-  DELAYLOADFLAG="-Wl,-delayload,"
-
-fi
-
         if test "x$enable_werror" = "xyes"
         then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror" >&5
@@ -10630,7 +10599,7 @@ CC="$CROSSCC"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-void __stdcall __delayLoadHelper2(void *descr, void *addr) {} int __cdecl mainCRTStartup(void) { return 0; }
+int __cdecl mainCRTStartup(void) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_crosscflags__Werror=yes

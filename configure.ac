@@ -1067,6 +1067,7 @@ then
             WINE_TRY_CROSSCFLAGS([-target $llvm_target -fuse-ld=lld],
                                  [CROSSTARGET=$llvm_target
                                   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -target $CROSSTARGET"
+                                  AC_SUBST(DELAYLOADFLAG,["-Wl,-delayload,"])
                                   CFLAGS="$CFLAGS -fuse-ld=lld"])
         fi
         WINE_TRY_CROSSCFLAGS([-fno-strict-aliasing])
@@ -1102,8 +1103,6 @@ then
                 WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
           esac
         done
-
-        WINE_TRY_CROSSCFLAGS([-Wl,-delayload,autoconftest.dll], [AC_SUBST(DELAYLOADFLAG,["-Wl,-delayload,"])])
 
         if test "x$enable_werror" = "xyes"
         then
