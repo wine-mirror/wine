@@ -20,6 +20,7 @@ C_SRCS = \
 	string.c \
 	sync.c \
 	thread.c \
-	version.c
+	version.c \
+	volume.c
 
 RC_SRCS = kernelbase.rc

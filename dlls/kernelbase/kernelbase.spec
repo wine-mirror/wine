@@ -243,7 +243,7 @@
 @ stdcall DecodePointer(ptr) ntdll.RtlDecodePointer
 # @ stub DecodeRemotePointer
 @ stdcall DecodeSystemPointer(ptr) ntdll.RtlDecodeSystemPointer
-@ stdcall DefineDosDeviceW(long wstr wstr) kernel32.DefineDosDeviceW
+@ stdcall DefineDosDeviceW(long wstr wstr)
 @ stdcall DelayLoadFailureHook(str str)
 # @ stub DelayLoadFailureHookLookup
 @ stdcall DeleteAce(ptr long)
@@ -259,7 +259,7 @@
 # @ stub DeleteSynchronizationBarrier
 @ stdcall DeleteTimerQueueEx(long long)
 @ stdcall DeleteTimerQueueTimer(long long long)
-@ stdcall DeleteVolumeMountPointW(wstr) kernel32.DeleteVolumeMountPointW
+@ stdcall DeleteVolumeMountPointW(wstr)
 @ stdcall DestroyPrivateObjectSecurity(ptr)
 @ stdcall DeviceIoControl(long long ptr long ptr long ptr ptr)
 @ stdcall DisablePredefinedHandleTableInternal(long)
@@ -361,7 +361,7 @@
 @ stdcall FindFirstFileW(wstr ptr)
 @ stdcall FindFirstFreeAce(ptr ptr)
 @ stdcall FindFirstStreamW(wstr long ptr long) kernel32.FindFirstStreamW
-@ stdcall FindFirstVolumeW(ptr long) kernel32.FindFirstVolumeW
+@ stdcall FindFirstVolumeW(ptr long)
 @ stdcall FindNLSString(long long wstr long wstr long ptr)
 @ stdcall FindNLSStringEx(wstr long wstr long wstr long ptr ptr ptr long)
 @ stdcall FindNextChangeNotification(long)
@@ -369,12 +369,12 @@
 # @ stub FindNextFileNameW
 @ stdcall FindNextFileW(long ptr)
 @ stdcall FindNextStreamW(long ptr) kernel32.FindNextStreamW
-@ stdcall FindNextVolumeW(long ptr long) kernel32.FindNextVolumeW
+@ stdcall FindNextVolumeW(long ptr long)
 # @ stub FindPackagesByPackageFamily
 @ stdcall FindResourceExW(long wstr wstr long)
 @ stdcall FindResourceW(long wstr wstr)
 @ stdcall FindStringOrdinal(long wstr long wstr long long)
-@ stdcall FindVolumeClose(ptr) kernel32.FindVolumeClose
+@ stdcall FindVolumeClose(ptr)
 @ stdcall FlsAlloc(ptr)
 @ stdcall FlsFree(long)
 @ stdcall FlsGetValue(long)
@@ -479,12 +479,12 @@
 # @ stub GetDeviceDriverBaseNameW
 # @ stub GetDeviceDriverFileNameA
 # @ stub GetDeviceDriverFileNameW
-@ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) kernel32.GetDiskFreeSpaceA
-@ stdcall GetDiskFreeSpaceExA(str ptr ptr ptr) kernel32.GetDiskFreeSpaceExA
-@ stdcall GetDiskFreeSpaceExW(wstr ptr ptr ptr) kernel32.GetDiskFreeSpaceExW
-@ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) kernel32.GetDiskFreeSpaceW
-@ stdcall GetDriveTypeA(str) kernel32.GetDriveTypeA
-@ stdcall GetDriveTypeW(wstr) kernel32.GetDriveTypeW
+@ stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr)
+@ stdcall GetDiskFreeSpaceExA(str ptr ptr ptr)
+@ stdcall GetDiskFreeSpaceExW(wstr ptr ptr ptr)
+@ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr)
+@ stdcall GetDriveTypeA(str)
+@ stdcall GetDriveTypeW(wstr)
 # @ stub GetDurationFormatEx
 @ stdcall GetDynamicTimeZoneInformation(ptr)
 @ stdcall GetDynamicTimeZoneInformationEffectiveYears(ptr ptr ptr)
@@ -545,8 +545,8 @@
 @ stdcall GetLocaleInfoEx(wstr long ptr long)
 @ stub GetLocaleInfoHelper
 @ stdcall GetLocaleInfoW(long long ptr long)
-@ stdcall GetLogicalDriveStringsW(long ptr) kernel32.GetLogicalDriveStringsW
-@ stdcall GetLogicalDrives() kernel32.GetLogicalDrives
+@ stdcall GetLogicalDriveStringsW(long ptr)
+@ stdcall GetLogicalDrives()
 @ stdcall GetLogicalProcessorInformation(ptr ptr)
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr)
 @ stdcall GetLongPathNameA(str ptr long)
@@ -752,12 +752,12 @@
 @ stdcall GetVersion()
 @ stdcall GetVersionExA(ptr)
 @ stdcall GetVersionExW(ptr)
-@ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationA
-@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationByHandleW
-@ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long) kernel32.GetVolumeInformationW
-@ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long) kernel32.GetVolumeNameForVolumeMountPointW
-@ stdcall GetVolumePathNameW(wstr ptr long) kernel32.GetVolumePathNameW
-@ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr) kernel32.GetVolumePathNamesForVolumeNameW
+@ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long)
+@ stdcall GetVolumeInformationByHandleW(ptr ptr long ptr ptr ptr ptr long)
+@ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long)
+@ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long)
+@ stdcall GetVolumePathNameW(wstr ptr long)
+@ stdcall GetVolumePathNamesForVolumeNameW(wstr ptr long ptr)
 @ stdcall GetWindowsAccountDomainSid(ptr ptr ptr)
 @ stdcall GetWindowsDirectoryA(ptr long)
 @ stdcall GetWindowsDirectoryW(ptr long)
@@ -1194,7 +1194,7 @@
 @ stdcall QueryActCtxSettingsW(long ptr wstr wstr ptr long ptr)
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
 @ stdcall QueryDepthSList(ptr) ntdll.RtlQueryDepthSList
-@ stdcall QueryDosDeviceW(wstr ptr long) kernel32.QueryDosDeviceW
+@ stdcall QueryDosDeviceW(wstr ptr long)
 @ stdcall QueryFullProcessImageNameA(ptr long ptr ptr) kernel32.QueryFullProcessImageNameA
 @ stdcall QueryFullProcessImageNameW(ptr long ptr ptr) kernel32.QueryFullProcessImageNameW
 # @ stub QueryIdleProcessorCycleTime
