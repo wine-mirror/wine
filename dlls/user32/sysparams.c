@@ -4126,28 +4126,34 @@ static BOOL CALLBACK enum_mon_callback( HMONITOR monitor, HDC hdc, LPRECT rect, 
 
 BOOL CDECL nulldrv_EnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp )
 {
-    RECT default_rect = {0, 0, 640, 480};
-    DWORD i;
+    RECT monitor_rect;
+    DWORD i = 0;
 
     TRACE("(%p, %p, %p, 0x%lx)\n", hdc, rect, proc, lp);
 
     if (update_monitor_cache())
     {
-        EnterCriticalSection( &monitors_section );
-        for (i = 0; i < monitor_count; i++)
+        while (TRUE)
         {
-            if (!proc( (HMONITOR)(UINT_PTR)(i + 1), hdc, &monitors[i].rcMonitor, lp ))
+            EnterCriticalSection( &monitors_section );
+            if (i >= monitor_count)
             {
                 LeaveCriticalSection( &monitors_section );
-                return FALSE;
+                return TRUE;
             }
+            monitor_rect = monitors[i].rcMonitor;
+            LeaveCriticalSection( &monitors_section );
+
+            if (!proc( (HMONITOR)(UINT_PTR)(i + 1), hdc, &monitor_rect, lp ))
+                return FALSE;
+
+            ++i;
         }
-        LeaveCriticalSection( &monitors_section );
-        return TRUE;
     }
 
     /* Fallback to report one monitor if using SetupAPI failed */
-    if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &default_rect, lp ))
+    SetRect( &monitor_rect, 0, 0, 640, 480 );
+    if (!proc( NULLDRV_DEFAULT_HMONITOR, hdc, &monitor_rect, lp ))
         return FALSE;
     return TRUE;
 }
