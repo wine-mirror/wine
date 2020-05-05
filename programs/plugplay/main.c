@@ -141,6 +141,8 @@ void __cdecl plugplay_send_event( DWORD code, const BYTE *data, unsigned int siz
     struct listener *listener;
     struct event *event;
 
+    BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
+
     EnterCriticalSection( &plugplay_cs );
 
     LIST_FOR_EACH_ENTRY(listener, &listener_list, struct listener, entry)

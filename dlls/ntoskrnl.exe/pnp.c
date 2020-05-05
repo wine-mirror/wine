@@ -670,7 +670,6 @@ static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
 
 static void send_devicechange( DWORD code, void *data, unsigned int size )
 {
-    BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
     __TRY
     {
         plugplay_send_event( code, data, size );
