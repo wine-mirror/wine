@@ -3741,7 +3741,7 @@ __ASM_GLOBAL_FUNC( __chkstk, "ret" );
 /**************************************************************************
  *           _chkstk   (NTOSKRNL.@)
  */
-__ASM_STDCALL_FUNC( _chkstk, 0,
+__ASM_GLOBAL_FUNC( _chkstk,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
                    "xchgl %esp,%eax\n\t"
