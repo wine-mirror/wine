@@ -381,9 +381,7 @@ static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *
         }
     }
 
-    SetRect(&filter->source_rect, 0, 0, filter->bmiheader.biWidth, filter->bmiheader.biHeight);
     filter->num_surfaces = buffer_count;
-
     return hr;
 }
 
@@ -483,14 +481,7 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
     TRACE("(%p)\n", This);
 
     IVMRImagePresenter9_StartPresenting(This->presenter, This->cookie);
-    SetWindowPos(This->baseControlWindow.hwnd, NULL,
-        This->source_rect.left,
-        This->source_rect.top,
-        This->source_rect.right - This->source_rect.left,
-        This->source_rect.bottom - This->source_rect.top,
-        SWP_NOZORDER|SWP_NOMOVE|SWP_DEFERERASE);
     ShowWindow(This->baseControlWindow.hwnd, SW_SHOW);
-    GetClientRect(This->baseControlWindow.hwnd, &This->target_rect);
     SetEvent(This->run_event);
 }
 
@@ -518,12 +509,20 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
+    HWND window = filter->baseControlWindow.hwnd;
     HRESULT hr;
+    RECT rect;
 
     filter->bmiheader = *bitmap_header;
     filter->VideoWidth = bitmap_header->biWidth;
     filter->VideoHeight = bitmap_header->biHeight;
-    SetRect(&filter->source_rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    SetRect(&rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    filter->source_rect = filter->target_rect = rect;
+
+    AdjustWindowRectEx(&rect, GetWindowLongW(window, GWL_STYLE), FALSE,
+            GetWindowLongW(window, GWL_EXSTYLE));
+    SetWindowPos(window, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
     if (filter->mode
             || SUCCEEDED(hr = IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, VMR9Mode_Windowed)))
