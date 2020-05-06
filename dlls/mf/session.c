@@ -4093,15 +4093,19 @@ static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags,
         hr = MF_S_CLOCK_STOPPED;
 
     if (SUCCEEDED(hr))
+    {
         list_add_tail(&clock->timers, &clock_timer->entry);
+        if (cancel_key)
+        {
+            *cancel_key = &clock_timer->IUnknown_iface;
+            IUnknown_AddRef(*cancel_key);
+        }
+    }
 
     LeaveCriticalSection(&clock->cs);
 
-    if (SUCCEEDED(hr) && cancel_key)
-    {
-        *cancel_key = &clock_timer->IUnknown_iface;
-        IUnknown_AddRef(*cancel_key);
-    }
+    if (FAILED(hr))
+        IUnknown_Release(&clock_timer->IUnknown_iface);
 
     return hr;
 }
