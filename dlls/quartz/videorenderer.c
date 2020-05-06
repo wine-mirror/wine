@@ -79,6 +79,14 @@ static inline struct video_renderer *impl_from_BaseControlVideo(BaseControlVideo
     return CONTAINING_RECORD(iface, struct video_renderer, baseControlVideo);
 }
 
+static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        return &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+}
+
 static void VideoRenderer_AutoShowWindow(struct video_renderer *This)
 {
     if (!This->init && (!This->WindowPos.right || !This->WindowPos.top))
@@ -144,9 +152,7 @@ static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer
 static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *pSample)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
-    const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
     LPBYTE pbSrcStream = NULL;
-    BITMAPINFOHEADER *bih;
     HRESULT hr;
     HDC dc;
 
@@ -159,11 +165,6 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
         return hr;
     }
 
-    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
-        bih = &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
-    else
-        bih = &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
-
     dc = GetDC(filter->baseControlWindow.hwnd);
     StretchDIBits(dc, filter->DestRect.left, filter->DestRect.top,
             filter->DestRect.right - filter->DestRect.left,
@@ -171,7 +172,7 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
             filter->SourceRect.left, filter->SourceRect.top,
             filter->SourceRect.right - filter->SourceRect.left,
             filter->SourceRect.bottom - filter->SourceRect.top,
-            pbSrcStream, (BITMAPINFO *)bih, DIB_RGB_COLORS, SRCCOPY);
+            pbSrcStream, (BITMAPINFO *)get_bitmap_header(&filter->renderer.sink.pin.mt), DIB_RGB_COLORS, SRCCOPY);
     ReleaseDC(filter->baseControlWindow.hwnd, dc);
 
     if (filter->renderer.filter.state == State_Paused)
@@ -190,53 +191,31 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI VideoRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
-    struct video_renderer *This = impl_from_strmbase_renderer(iface);
+    struct video_renderer *filter = impl_from_strmbase_renderer(iface);
+    const BITMAPINFOHEADER *bitmap_header;
 
-    if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video))
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
         return S_FALSE;
 
-    if (IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB32) ||
-        IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB24) ||
-        IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB565) ||
-        IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB8))
-    {
-        LONG height;
+    if (!IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB32)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB24)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB565)
+            && !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8))
+        return S_FALSE;
 
-        if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
-        {
-            VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)pmt->pbFormat;
-            This->SourceRect.left = 0;
-            This->SourceRect.top = 0;
-            This->SourceRect.right = This->VideoWidth = format->bmiHeader.biWidth;
-            height = format->bmiHeader.biHeight;
-            if (height < 0)
-                This->SourceRect.bottom = This->VideoHeight = -height;
-            else
-                This->SourceRect.bottom = This->VideoHeight = height;
-        }
-        else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2))
-        {
-            VIDEOINFOHEADER2 *format2 = (VIDEOINFOHEADER2 *)pmt->pbFormat;
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
+            && !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
+        return S_FALSE;
 
-            This->SourceRect.left = 0;
-            This->SourceRect.top = 0;
-            This->SourceRect.right = This->VideoWidth = format2->bmiHeader.biWidth;
-            height = format2->bmiHeader.biHeight;
-            if (height < 0)
-                This->SourceRect.bottom = This->VideoHeight = -height;
-            else
-                This->SourceRect.bottom = This->VideoHeight = height;
-        }
-        else
-        {
-            WARN("Format type %s not supported\n", debugstr_guid(&pmt->formattype));
-            return S_FALSE;
-        }
-        return S_OK;
-    }
-    return S_FALSE;
+    bitmap_header = get_bitmap_header(mt);
+
+    filter->VideoWidth = bitmap_header->biWidth;
+    filter->VideoHeight = abs(bitmap_header->biHeight);
+    SetRect(&filter->SourceRect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+
+    return S_OK;
 }
 
 static void video_renderer_destroy(struct strmbase_renderer *iface)
@@ -360,7 +339,6 @@ static HRESULT WINAPI VideoRenderer_GetSourceRect(BaseControlVideo* iface, RECT 
 static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo *iface, LONG *size, LONG *image)
 {
     struct video_renderer *filter = impl_from_BaseControlVideo(iface);
-    const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
     const BITMAPINFOHEADER *bih;
     size_t image_size;
     BYTE *sample_data;
@@ -369,10 +347,7 @@ static HRESULT WINAPI VideoRenderer_GetStaticImage(BaseControlVideo *iface, LONG
 
     EnterCriticalSection(&filter->renderer.csRenderLock);
 
-    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
-        bih = &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
-    else /* if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2)) */
-        bih = &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+    bih = get_bitmap_header(&filter->renderer.sink.pin.mt);
     image_size = bih->biWidth * bih->biHeight * bih->biBitCount / 8;
 
     if (!image)
