@@ -1250,6 +1250,8 @@ static void build(struct options* opts)
         if (opts->large_address_aware) strarray_add( spec_args, "--large-address-aware" );
     }
 
+    if (opts->target_platform == PLATFORM_WINDOWS) strarray_add(spec_args, "--safeseh");
+
     if (entry_point)
     {
         strarray_add(spec_args, "--entry");
