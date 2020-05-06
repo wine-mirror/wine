@@ -193,9 +193,6 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
 
 static HRESULT WINAPI VideoRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
-    struct video_renderer *filter = impl_from_strmbase_renderer(iface);
-    const BITMAPINFOHEADER *bitmap_header;
-
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
         return S_FALSE;
 
@@ -208,12 +205,6 @@ static HRESULT WINAPI VideoRenderer_CheckMediaType(struct strmbase_renderer *ifa
     if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
             && !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
         return S_FALSE;
-
-    bitmap_header = get_bitmap_header(mt);
-
-    filter->VideoWidth = bitmap_header->biWidth;
-    filter->VideoHeight = abs(bitmap_header->biHeight);
-    SetRect(&filter->SourceRect, 0, 0, filter->VideoWidth, filter->VideoHeight);
 
     return S_OK;
 }
@@ -285,6 +276,18 @@ static void video_renderer_init_stream(struct strmbase_renderer *iface)
     VideoRenderer_AutoShowWindow(filter);
 }
 
+static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct video_renderer *filter = impl_from_strmbase_renderer(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
+
+    filter->VideoWidth = bitmap_header->biWidth;
+    filter->VideoHeight = abs(bitmap_header->biHeight);
+    SetRect(&filter->SourceRect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+
+    return S_OK;
+}
+
 static RECT video_renderer_get_default_rect(struct video_window *iface)
 {
     struct video_renderer *This = impl_from_video_window(iface);
@@ -321,6 +324,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_destroy = video_renderer_destroy,
     .renderer_query_interface = video_renderer_query_interface,
     .renderer_pin_query_interface = video_renderer_pin_query_interface,
+    .renderer_connect = video_renderer_connect,
 };
 
 static const struct video_window_ops window_ops =
