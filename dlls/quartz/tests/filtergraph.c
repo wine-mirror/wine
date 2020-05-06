@@ -246,8 +246,8 @@ static void test_basic_video(IFilterGraph2 *graph)
     ok(hr == S_OK, "Cannot get destination position returned: %x\n", hr);
     ok(left == 0, "expected 0, got %d\n", left);
     ok(top == 0, "expected 0, got %d\n", top);
-    todo_wine ok(width == window_width, "expected %d, got %d\n", window_width, width);
-    todo_wine ok(height == video_height, "expected %d, got %d\n", video_height, height);
+    ok(width == window_width, "expected %d, got %d\n", window_width, width);
+    ok(height == video_height, "expected %d, got %d\n", video_height, height);
 
     hr = IBasicVideo_SetDestinationPosition(pbv, 0, 0, 0, 0);
     ok(hr==E_INVALIDARG, "IBasicVideo_SetDestinationPosition returned: %x\n", hr);

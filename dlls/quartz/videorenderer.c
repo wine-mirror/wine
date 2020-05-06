@@ -44,11 +44,8 @@ struct video_renderer
 
     IOverlay IOverlay_iface;
 
-    BOOL init;
-
     RECT SourceRect;
     RECT DestRect;
-    RECT WindowPos;
     LONG VideoWidth;
     LONG VideoHeight;
     LONG FullScreenMode;
@@ -89,53 +86,6 @@ static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
 
 static void VideoRenderer_AutoShowWindow(struct video_renderer *This)
 {
-    if (!This->init && (!This->WindowPos.right || !This->WindowPos.top))
-    {
-        DWORD style = GetWindowLongW(This->baseControlWindow.hwnd, GWL_STYLE);
-        DWORD style_ex = GetWindowLongW(This->baseControlWindow.hwnd, GWL_EXSTYLE);
-
-        if (!This->WindowPos.right)
-        {
-            if (This->DestRect.right)
-            {
-                This->WindowPos.left = This->DestRect.left;
-                This->WindowPos.right = This->DestRect.right;
-            }
-            else
-            {
-                This->WindowPos.left = This->SourceRect.left;
-                This->WindowPos.right = This->SourceRect.right;
-            }
-        }
-        if (!This->WindowPos.bottom)
-        {
-            if (This->DestRect.bottom)
-            {
-                This->WindowPos.top = This->DestRect.top;
-                This->WindowPos.bottom = This->DestRect.bottom;
-            }
-            else
-            {
-                This->WindowPos.top = This->SourceRect.top;
-                This->WindowPos.bottom = This->SourceRect.bottom;
-            }
-        }
-
-        AdjustWindowRectEx(&This->WindowPos, style, FALSE, style_ex);
-
-        TRACE("WindowPos: %s\n", wine_dbgstr_rect(&This->WindowPos));
-        SetWindowPos(This->baseControlWindow.hwnd, NULL,
-            This->WindowPos.left,
-            This->WindowPos.top,
-            This->WindowPos.right - This->WindowPos.left,
-            This->WindowPos.bottom - This->WindowPos.top,
-            SWP_NOZORDER|SWP_NOMOVE|SWP_DEFERERASE);
-
-        GetClientRect(This->baseControlWindow.hwnd, &This->DestRect);
-    }
-    else if (!This->init)
-        This->DestRect = This->WindowPos;
-    This->init = TRUE;
     if (This->baseControlWindow.AutoShow)
         ShowWindow(This->baseControlWindow.hwnd, SW_SHOW);
 }
@@ -280,10 +230,18 @@ static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
     const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
+    HWND window = filter->baseControlWindow.hwnd;
+    RECT rect;
 
     filter->VideoWidth = bitmap_header->biWidth;
     filter->VideoHeight = abs(bitmap_header->biHeight);
-    SetRect(&filter->SourceRect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    SetRect(&rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
+    filter->SourceRect = filter->DestRect = rect;
+
+    AdjustWindowRectEx(&rect, GetWindowLongW(window, GWL_STYLE), FALSE,
+            GetWindowLongW(window, GWL_EXSTYLE));
+    SetWindowPos(window, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
     return S_OK;
 }
@@ -511,7 +469,6 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG f
         SetWindowPos(filter->baseControlWindow.hwnd, HWND_TOP, 0, 0,
                 GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW);
         GetWindowRect(filter->baseControlWindow.hwnd, &filter->DestRect);
-        filter->WindowPos = filter->DestRect;
     }
     else
     {
@@ -521,7 +478,6 @@ static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG f
         GetClientRect(filter->baseControlWindow.hwnd, &filter->DestRect);
         SetWindowPos(filter->baseControlWindow.hwnd, 0, filter->DestRect.left, filter->DestRect.top,
                 filter->DestRect.right, filter->DestRect.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
-        filter->WindowPos = filter->DestRect;
     }
     filter->FullScreenMode = fullscreen;
 
