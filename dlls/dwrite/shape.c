@@ -301,6 +301,17 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
     struct shaping_features features = { 0 };
     unsigned int i;
 
+    if (!context->is_sideways)
+    {
+        if (context->is_rtl)
+            shape_add_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','a'));
+        else
+        {
+            shape_add_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('l','t','r','a'));
+            shape_add_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('l','t','r','m'));
+        }
+    }
+
     for (i = 0; i < ARRAY_SIZE(common_features); ++i)
         shape_add_feature(&features, common_features[i]);
 
