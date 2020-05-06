@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "dbt.h"
+#include "commctrl.h"
 
 #include "wine/test.h"
 
@@ -17881,6 +17882,37 @@ static void test_invalid_window(void)
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError());
 }
 
+static void test_button_style(void)
+{
+    DWORD type, expected_type;
+    HWND button;
+    LRESULT ret;
+    DWORD i, j;
+
+    for (i = BS_PUSHBUTTON; i <= BS_DEFCOMMANDLINK; ++i)
+    {
+        button = CreateWindowA(WC_BUTTONA, "test", i, 0, 0, 50, 50, NULL, 0, 0, NULL);
+        ok(button != NULL, "Expected button not null.\n");
+
+        type = GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+        expected_type = (i == BS_USERBUTTON ? BS_PUSHBUTTON : i);
+        ok(type == expected_type, "Expected type %#x, got %#x.\n", expected_type, type);
+
+        for (j = BS_PUSHBUTTON; j <= BS_DEFCOMMANDLINK; ++j)
+        {
+            ret = SendMessageA(button, BM_SETSTYLE, j, FALSE);
+            ok(ret == 0, "Expected %#x, got %#lx.\n", 0, ret);
+
+            type = GetWindowLongW(button, GWL_STYLE) & BS_TYPEMASK;
+            expected_type = j;
+
+            ok(type == expected_type, "Original type %#x, expected new type %#x, got %#x.\n", i,
+                    expected_type, type);
+        }
+        DestroyWindow(button);
+    }
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -17964,6 +17996,7 @@ START_TEST(msg)
     test_mdi_messages();
     test_button_messages();
     test_button_bm_get_set_image();
+    test_button_style();
     test_autoradio_BM_CLICK();
     test_autoradio_kbd_move();
     test_static_messages();
