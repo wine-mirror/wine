@@ -515,6 +515,72 @@ static void test_process_params(void)
     }
 }
 
+static NTSTATUS set_env_var(WCHAR **env, const WCHAR *var, const WCHAR *value)
+{
+    UNICODE_STRING var_string, value_string;
+    RtlInitUnicodeString(&var_string, var);
+    RtlInitUnicodeString(&value_string, value);
+    return RtlSetEnvironmentVariable(env, &var_string, &value_string);
+}
+
+static void check_env_var_(int line, const char *var, const char *value)
+{
+    char buffer[20];
+    DWORD size = GetEnvironmentVariableA(var, buffer, sizeof(buffer));
+    if (value)
+    {
+        ok_(__FILE__, line)(size == strlen(value), "wrong size %u\n", size);
+        ok_(__FILE__, line)(!strcmp(buffer, value), "wrong value %s\n", debugstr_a(buffer));
+    }
+    else
+    {
+        ok_(__FILE__, line)(!size, "wrong size %u\n", size);
+        ok_(__FILE__, line)(GetLastError() == ERROR_ENVVAR_NOT_FOUND, "got error %u\n", GetLastError());
+    }
+}
+#define check_env_var(a, b) check_env_var_(__LINE__, a, b)
+
+static void test_RtlSetCurrentEnvironment(void)
+{
+    NTSTATUS status;
+    WCHAR *old_env, *env, *prev;
+    BOOL ret;
+
+    status = RtlCreateEnvironment(FALSE, &env);
+    ok(!status, "got %#x\n", status);
+
+    ret = SetEnvironmentVariableA("testenv1", "heis");
+    ok(ret, "got error %u\n", GetLastError());
+    ret = SetEnvironmentVariableA("testenv2", "dyo");
+    ok(ret, "got error %u\n", GetLastError());
+
+    status = set_env_var(&env, L"testenv1", L"unus");
+    ok(!status, "got %#x\n", status);
+    status = set_env_var(&env, L"testenv3", L"tres");
+    ok(!status, "got %#x\n", status);
+
+    old_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+
+    RtlSetCurrentEnvironment(env, &prev);
+    ok(prev == old_env, "got wrong previous env %p\n", prev);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == env, "got wrong current env\n");
+
+    check_env_var("testenv1", "unus");
+    check_env_var("testenv2", NULL);
+    check_env_var("testenv3", "tres");
+    check_env_var("PATH", NULL);
+
+    RtlSetCurrentEnvironment(old_env, NULL);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == old_env, "got wrong current env\n");
+
+    check_env_var("testenv1", "heis");
+    check_env_var("testenv2", "dyo");
+    check_env_var("testenv3", NULL);
+
+    SetEnvironmentVariableA("testenv1", NULL);
+    SetEnvironmentVariableA("testenv2", NULL);
+}
+
 START_TEST(env)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
@@ -535,4 +601,5 @@ START_TEST(env)
     testSet();
     testExpand();
     test_process_params();
+    test_RtlSetCurrentEnvironment();
 }
