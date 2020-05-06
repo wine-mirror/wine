@@ -219,6 +219,9 @@ and will automatically be handled correctly (though the
 .B \-r
 option will also work for Win32 files).
 .TP
+.B --safeseh
+Mark object files as SEH compatible.
+.TP
 .B --save-temps
 Do not delete the various temporary files that \fBwinebuild\fR generates.
 .TP

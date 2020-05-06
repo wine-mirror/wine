@@ -684,6 +684,12 @@ void output_standard_file_header(void)
     else
         output( "/* File generated automatically; do not edit! */\n" );
     output( "/* This file can be copied, modified and distributed without restriction. */\n\n" );
+    if (safe_seh)
+    {
+        output( "\t.def    @feat.00; .scl 3; .type 0; .endef\n" );
+        output( "\t.globl  @feat.00\n" );
+        output( ".set @feat.00, 1\n" );
+    }
 }
 
 /* dump a byte stream into the assembly code */
