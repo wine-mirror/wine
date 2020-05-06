@@ -652,8 +652,8 @@ static void test_WM_NEXTDLGCTL(void)
      * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
      * the style of default button changed to BS_PUSHBUTTON.
      */
-    ok(get_button_style(g_hwndTestDlgBut1) == BS_DEFPUSHBUTTON, "Button1's style not set to BS_DEFPUSHBUTTON");
-    ok(get_button_style(g_hwndTestDlgBut2) == BS_PUSHBUTTON, "Button2's style not set to BS_PUSHBUTTON");
+    ok(get_button_style(g_hwndTestDlgBut1) == BS_DEFPUSHBUTTON, "Button1's style not set to BS_DEFPUSHBUTTON\n");
+    ok(get_button_style(g_hwndTestDlgBut2) == BS_PUSHBUTTON, "Button2's style not set to BS_PUSHBUTTON\n");
 
     /* Move focus to Button2 using "WM_NEXTDLGCTL" */
     DefDlgProcA(g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0);
@@ -667,8 +667,8 @@ static void test_WM_NEXTDLGCTL(void)
      * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
      * the style of button which lost the focus changed to BS_PUSHBUTTON.
      */
-    ok(get_button_style(g_hwndTestDlgBut1) == BS_PUSHBUTTON, "Button1's style not set to BS_PUSHBUTTON");
-    ok(get_button_style(g_hwndTestDlgBut2) == BS_DEFPUSHBUTTON, "Button2's style not set to BS_DEFPUSHBUTTON");
+    ok(get_button_style(g_hwndTestDlgBut1) == BS_PUSHBUTTON, "Button1's style not set to BS_PUSHBUTTON\n");
+    ok(get_button_style(g_hwndTestDlgBut2) == BS_DEFPUSHBUTTON, "Button2's style not set to BS_DEFPUSHBUTTON\n");
 
     /* Move focus to Edit control using "WM_NEXTDLGCTL" */
     DefDlgProcA(g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0);
