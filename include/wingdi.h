@@ -3637,10 +3637,30 @@ typedef struct DISPLAYCONFIG_SDR_WHITE_LEVEL {
     ULONG                            SDRWhiteLevel;
 } DISPLAYCONFIG_SDR_WHITE_LEVEL;
 
+#define DISPLAYCONFIG_PATH_MODE_IDX_INVALID             0xffffffff
+#define DISPLAYCONFIG_PATH_TARGET_MODE_IDX_INVALID      0xffff
+#define DISPLAYCONFIG_PATH_DESKTOP_IMAGE_IDX_INVALID    0xffff
+#define DISPLAYCONFIG_PATH_SOURCE_MODE_IDX_INVALID      0xffff
+#define DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID          0xffff
+
+#define DISPLAYCONFIG_SOURCE_IN_USE                     0x00000001
+
+#define DISPLAYCONFIG_TARGET_IN_USE                     0x00000001
+#define DISPLAYCONFIG_TARGET_FORCIBLE                   0x00000002
+#define DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_BOOT   0x00000004
+#define DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_PATH   0x00000008
+#define DISPLAYCONFIG_TARGET_FORCED_AVAILABILITY_SYSTEM 0x00000010
+#define DISPLAYCONFIG_TARGET_IS_HMD                     0x00000020
+
+#define DISPLAYCONFIG_PATH_ACTIVE                       0x00000001
+#define DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE         0x00000008
+
 /* For GetDisplayConfigBufferSizes */
 #define QDC_ALL_PATHS                           0x00000001
 #define QDC_ONLY_ACTIVE_PATHS                   0x00000002
 #define QDC_DATABASE_CURRENT                    0x00000004
+#define QDC_VIRTUAL_MODE_AWARE                  0x00000010
+#define QDC_INCLUDE_HMD                         0x00000020
 
 #define GDI_ERROR                               (~0u)
 #define HGDI_ERROR                              ((HANDLE)~(ULONG_PTR)0)
