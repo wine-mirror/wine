@@ -1107,7 +1107,7 @@ static void test_work_area(void)
     DestroyWindow(hwnd);
 }
 
-static void test_get_display_config_buffer_sizes(void)
+static void test_GetDisplayConfigBufferSizes(void)
 {
     UINT32 paths, modes;
     LONG ret;
@@ -1268,7 +1268,7 @@ static void test_EnumDisplayMonitors(void)
     }
 }
 
-static void test_query_display_config(void)
+static void test_QueryDisplayConfig(void)
 {
     UINT32 paths, modes;
     DISPLAYCONFIG_PATH_INFO pi[10];
@@ -1324,7 +1324,7 @@ static void test_query_display_config(void)
     ok (modes == 1, "got %u\n", modes);
 }
 
-static void test_display_config_get_device_info(void)
+static void test_DisplayConfigGetDeviceInfo(void)
 {
     LONG ret;
     DISPLAYCONFIG_SOURCE_DEVICE_NAME source_name;
@@ -1422,9 +1422,9 @@ static void test_display_config(void)
         return;
     }
 
-    test_get_display_config_buffer_sizes();
-    test_query_display_config();
-    test_display_config_get_device_info();
+    test_GetDisplayConfigBufferSizes();
+    test_QueryDisplayConfig();
+    test_DisplayConfigGetDeviceInfo();
 }
 
 START_TEST(monitor)
