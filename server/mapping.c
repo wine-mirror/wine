@@ -579,7 +579,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         } opt;
     } nt;
     off_t pos;
-    int size;
+    int size, opt_size;
     size_t mz_size, clr_va, clr_size;
     unsigned int i, cpu_mask = get_supported_cpu_mask();
 
@@ -595,7 +595,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     size = pread( unix_fd, &nt, sizeof(nt), pos );
     if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_PROTECT;
     /* zero out Optional header in the case it's not present or partial */
-    size = min( size, sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader );
+    opt_size = max( nt.FileHeader.SizeOfOptionalHeader, offsetof( IMAGE_OPTIONAL_HEADER32, CheckSum ));
+    size = min( size, sizeof(nt.Signature) + sizeof(nt.FileHeader) + opt_size );
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
     if (nt.Signature != IMAGE_NT_SIGNATURE)
     {
