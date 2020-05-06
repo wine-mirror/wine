@@ -15,7 +15,7 @@
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr) kernel32.SearchPathW
 @ stdcall SetCurrentDirectoryA(str) kernel32.SetCurrentDirectoryA
 @ stdcall SetCurrentDirectoryW(wstr) kernel32.SetCurrentDirectoryW
-@ stub SetEnvironmentStringsW
+@ stdcall SetEnvironmentStringsW(wstr) kernel32.SetEnvironmentStringsW
 @ stdcall SetEnvironmentVariableA(str str) kernel32.SetEnvironmentVariableA
 @ stdcall SetEnvironmentVariableW(wstr wstr) kernel32.SetEnvironmentVariableW
 @ stdcall SetStdHandle(long long) kernel32.SetStdHandle

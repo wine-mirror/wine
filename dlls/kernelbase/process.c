@@ -1275,6 +1275,72 @@ LPWSTR WINAPI DECLSPEC_HOTPATCH GetEnvironmentStringsW(void)
 
 
 /***********************************************************************
+ *           SetEnvironmentStringsA   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetEnvironmentStringsA( char *env )
+{
+    WCHAR *envW;
+    const char *p = env;
+    DWORD len;
+    BOOL ret;
+
+    for (p = env; *p; p += strlen( p ) + 1);
+
+    len = MultiByteToWideChar( CP_ACP, 0, env, p - env, NULL, 0 );
+    if (!(envW = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    MultiByteToWideChar( CP_ACP, 0, env, p - env, envW, len );
+    ret = SetEnvironmentStringsW( envW );
+    HeapFree( GetProcessHeap(), 0, envW );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetEnvironmentStringsW   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetEnvironmentStringsW( WCHAR *env )
+{
+    WCHAR *p;
+    WCHAR *new_env;
+    NTSTATUS status;
+
+    for (p = env; *p; p += wcslen( p ) + 1)
+    {
+        const WCHAR *eq = wcschr( p, '=' );
+        if (!eq || eq == p)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+    }
+
+    if ((status = RtlCreateEnvironment( FALSE, &new_env )))
+        return set_ntstatus( status );
+
+    for (p = env; *p; p += wcslen( p ) + 1)
+    {
+        const WCHAR *eq = wcschr( p, '=' );
+        UNICODE_STRING var, value;
+        var.Buffer = p;
+        var.Length = (eq - p) * sizeof(WCHAR);
+        RtlInitUnicodeString( &value, eq + 1 );
+        if ((status = RtlSetEnvironmentVariable( &new_env, &var, &value )))
+        {
+            RtlDestroyEnvironment( new_env );
+            return set_ntstatus( status );
+        }
+    }
+
+    RtlSetCurrentEnvironment( new_env, NULL );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           GetEnvironmentVariableA   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )

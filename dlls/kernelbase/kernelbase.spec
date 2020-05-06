@@ -1422,7 +1422,8 @@
 @ stdcall SetDefaultDllDirectories(long)
 # @ stub SetDynamicTimeZoneInformation
 @ stdcall SetEndOfFile(long)
-@ stub SetEnvironmentStringsW
+@ stdcall SetEnvironmentStringsA(str)
+@ stdcall SetEnvironmentStringsW(wstr)
 @ stdcall SetEnvironmentVariableA(str str)
 @ stdcall SetEnvironmentVariableW(wstr wstr)
 @ stdcall SetErrorMode(long)

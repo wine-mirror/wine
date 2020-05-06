@@ -1388,8 +1388,8 @@
 @ stdcall SetDllDirectoryW(wstr)
 # @ stub SetDynamicTimeZoneInformation
 @ stdcall -import SetEndOfFile(long)
-# @ stub SetEnvironmentStringsA
-# @ stub SetEnvironmentStringsW
+@ stdcall -import SetEnvironmentStringsA(str)
+@ stdcall -import SetEnvironmentStringsW(wstr)
 @ stdcall -import SetEnvironmentVariableA(str str)
 @ stdcall -import SetEnvironmentVariableW(wstr wstr)
 @ stdcall -import SetErrorMode(long)
