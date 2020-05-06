@@ -847,8 +847,14 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         break;
 
     case BM_SETSTYLE:
-        btn_type = wParam & BS_TYPEMASK;
-        style = (style & ~BS_TYPEMASK) | btn_type;
+    {
+        DWORD new_btn_type;
+
+        new_btn_type= wParam & BS_TYPEMASK;
+        if (btn_type >= BS_SPLITBUTTON && new_btn_type <= BS_DEFPUSHBUTTON)
+            new_btn_type = (btn_type & ~BS_DEFPUSHBUTTON) | new_btn_type;
+
+        style = (style & ~BS_TYPEMASK) | new_btn_type;
         SetWindowLongW( hWnd, GWL_STYLE, style );
 
         /* Only redraw if lParam flag is set.*/
@@ -856,7 +862,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             InvalidateRect( hWnd, NULL, TRUE );
 
         break;
-
+    }
     case BM_CLICK:
 	SendMessageW( hWnd, WM_LBUTTONDOWN, 0, 0 );
 	SendMessageW( hWnd, WM_LBUTTONUP, 0, 0 );

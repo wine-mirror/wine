@@ -2303,7 +2303,6 @@ static void test_style(void)
             else
                 expected_type = j;
 
-            todo_wine_if(i >= BS_SPLITBUTTON && j <= BS_DEFPUSHBUTTON)
             ok(type == expected_type || broken(type == j), /* XP */
                     "Original type %#x, expected new type %#x, got %#x.\n", i, expected_type, type);
         }
