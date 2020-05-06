@@ -546,7 +546,9 @@ typedef struct DWRITE_TYPOGRAPHIC_FEATURES
 typedef struct DWRITE_SHAPING_TEXT_PROPERTIES
 {
     UINT16 isShapedAlone : 1;
-    UINT16 reserved : 15;
+    UINT16 reserved1 : 1;
+    UINT16 canBreakShapingAfter : 1;
+    UINT16 reserved : 13;
 } DWRITE_SHAPING_TEXT_PROPERTIES;
 
 typedef struct DWRITE_SHAPING_GLYPH_PROPERTIES

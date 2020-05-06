@@ -1178,6 +1178,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 
     method = get_number_substitutes(substitution, digits);
 
+    /* FIXME: have the shaping engine set this */
+    memset(text_props, 0, length * sizeof(*text_props));
+
     for (i = 0; i < length; i++) {
         /* FIXME: set to better values */
         glyph_props[i].justification = text[i] == ' ' ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
@@ -1185,10 +1188,6 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         glyph_props[i].isDiacritic = 0;
         glyph_props[i].isZeroWidthSpace = 0;
         glyph_props[i].reserved = 0;
-
-        /* FIXME: have the shaping engine set this */
-        text_props[i].isShapedAlone = 0;
-        text_props[i].reserved = 0;
 
         clustermap[i] = i;
 
