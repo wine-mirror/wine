@@ -45,6 +45,14 @@ static inline const char *debugstr_normalized_rect(const VMR9NormalizedRect *rec
     return wine_dbg_sprintf("(%.8e,%.8e)-(%.8e,%.8e)", rect->left, rect->top, rect->right, rect->bottom);
 }
 
+static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
+{
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        return &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+}
+
 struct quartz_vmr
 {
     struct strmbase_renderer renderer;
@@ -210,30 +218,13 @@ static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
 static DWORD VMR9_SendSampleData(struct quartz_vmr *This, VMR9PresentationInfo *info, LPBYTE data,
                                  DWORD size)
 {
-    AM_MEDIA_TYPE *amt;
+    const BITMAPINFOHEADER *bmiHeader = get_bitmap_header(&This->renderer.sink.pin.mt);
     HRESULT hr = S_OK;
     int width;
     int height;
-    BITMAPINFOHEADER *bmiHeader;
     D3DLOCKED_RECT lock;
 
     TRACE("%p %p %d\n", This, data, size);
-
-    amt = &This->renderer.sink.pin.mt;
-
-    if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo))
-    {
-        bmiHeader = &((VIDEOINFOHEADER *)amt->pbFormat)->bmiHeader;
-    }
-    else if (IsEqualIID(&amt->formattype, &FORMAT_VideoInfo2))
-    {
-        bmiHeader = &((VIDEOINFOHEADER2 *)amt->pbFormat)->bmiHeader;
-    }
-    else
-    {
-        FIXME("Unknown type %s\n", debugstr_guid(&amt->subtype));
-        return VFW_E_RUNTIME_ERROR;
-    }
 
     width = bmiHeader->biWidth;
     height = bmiHeader->biHeight;
@@ -347,8 +338,6 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
 
 static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
-    const VIDEOINFOHEADER *vih;
-
     if (!IsEqualIID(&mt->majortype, &MEDIATYPE_Video) || !mt->pbFormat)
         return S_FALSE;
 
@@ -356,9 +345,7 @@ static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const
             && !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
         return S_FALSE;
 
-    vih = (VIDEOINFOHEADER *)mt->pbFormat;
-
-    if (vih->bmiHeader.biCompression != BI_RGB)
+    if (get_bitmap_header(mt)->biCompression != BI_RGB)
         return S_FALSE;
     return S_OK;
 }
@@ -530,26 +517,13 @@ static HRESULT WINAPI VMR9_ShouldDrawSampleNow(struct strmbase_renderer *iface,
 static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
     HRESULT hr;
 
-    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
-    {
-        VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)mt->pbFormat;
-
-        filter->bmiheader = format->bmiHeader;
-        filter->VideoWidth = format->bmiHeader.biWidth;
-        filter->VideoHeight = format->bmiHeader.biHeight;
-        SetRect(&filter->source_rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
-    }
-    else if (IsEqualIID(&mt->formattype, &FORMAT_VideoInfo2))
-    {
-        VIDEOINFOHEADER2 *format = (VIDEOINFOHEADER2 *)mt->pbFormat;
-
-        filter->bmiheader = format->bmiHeader;
-        filter->VideoWidth = format->bmiHeader.biWidth;
-        filter->VideoHeight = format->bmiHeader.biHeight;
-        SetRect(&filter->source_rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
-    }
+    filter->bmiheader = *bitmap_header;
+    filter->VideoWidth = bitmap_header->biWidth;
+    filter->VideoHeight = bitmap_header->biHeight;
+    SetRect(&filter->source_rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
 
     if (filter->mode
             || SUCCEEDED(hr = IVMRFilterConfig9_SetRenderingMode(&filter->IVMRFilterConfig9_iface, VMR9Mode_Windowed)))
@@ -732,7 +706,6 @@ static HRESULT WINAPI VMR9_GetSourceRect(BaseControlVideo* This, RECT *pSourceRe
 static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo *iface, LONG *size, LONG *image)
 {
     struct quartz_vmr *filter = impl_from_BaseControlVideo(iface);
-    const AM_MEDIA_TYPE *mt = &filter->renderer.sink.pin.mt;
     IDirect3DSurface9 *rt = NULL, *surface = NULL;
     D3DLOCKED_RECT locked_rect;
     IDirect3DDevice9 *device;
@@ -747,10 +720,7 @@ static HRESULT WINAPI VMR9_GetStaticImage(BaseControlVideo *iface, LONG *size, L
     EnterCriticalSection(&filter->renderer.csRenderLock);
     device = filter->allocator_d3d9_dev;
 
-    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
-        bih = ((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
-    else if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
-        bih = ((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+    bih = *get_bitmap_header(&filter->renderer.sink.pin.mt);
     bih.biSizeImage = bih.biWidth * bih.biHeight * bih.biBitCount / 8;
 
     if (!image)
