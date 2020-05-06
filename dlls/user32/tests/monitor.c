@@ -1268,6 +1268,98 @@ static void test_EnumDisplayMonitors(void)
     }
 }
 
+static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
+{
+    UINT32 i;
+    LONG ret;
+    DISPLAYCONFIG_SOURCE_DEVICE_NAME source_name;
+    DISPLAYCONFIG_TARGET_DEVICE_NAME target_name;
+    DISPLAYCONFIG_TARGET_PREFERRED_MODE preferred_mode;
+    DISPLAYCONFIG_ADAPTER_NAME adapter_name;
+
+    for (i = 0; i < paths; i++)
+    {
+        source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
+        source_name.header.size = sizeof(source_name);
+        source_name.header.adapterId = pi[i].sourceInfo.adapterId;
+        source_name.header.id = pi[i].sourceInfo.id;
+        source_name.viewGdiDeviceName[0] = '\0';
+        ret = pDisplayConfigGetDeviceInfo(&source_name.header);
+        ok(!ret, "Expected 0, got %d\n", ret);
+        ok(source_name.viewGdiDeviceName[0] != '\0', "Expected GDI device name, got empty string\n");
+
+        target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
+        target_name.header.size = sizeof(target_name);
+        target_name.header.adapterId = pi[i].targetInfo.adapterId;
+        target_name.header.id = pi[i].targetInfo.id;
+        target_name.monitorDevicePath[0] = '\0';
+        ret = pDisplayConfigGetDeviceInfo(&target_name.header);
+        ok(!ret, "Expected 0, got %d\n", ret);
+        ok(target_name.monitorDevicePath[0] != '\0', "Expected monitor device path, got empty string\n");
+
+        preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
+        preferred_mode.header.size = sizeof(preferred_mode);
+        preferred_mode.header.adapterId = pi[i].targetInfo.adapterId;
+        preferred_mode.header.id = pi[i].targetInfo.id;
+        preferred_mode.width = preferred_mode.height = 0;
+        ret = pDisplayConfigGetDeviceInfo(&preferred_mode.header);
+        ok(!ret, "Expected 0, got %d\n", ret);
+        ok(preferred_mode.width > 0 && preferred_mode.height > 0, "Expected non-zero height/width, got %ux%u\n",
+                preferred_mode.width, preferred_mode.height);
+
+        adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
+        adapter_name.header.size = sizeof(adapter_name);
+        adapter_name.header.adapterId = pi[i].sourceInfo.adapterId;
+        adapter_name.adapterDevicePath[0] = '\0';
+        ret = pDisplayConfigGetDeviceInfo(&adapter_name.header);
+        ok(!ret, "Expected 0, got %d\n", ret);
+        ok(adapter_name.adapterDevicePath[0] != '\0', "Expected adapter device path, got empty string\n");
+
+        /* Check corresponding modes */
+        if (pi[i].sourceInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+        {
+            skip("Path doesn't contain source modeInfoIdx");
+            continue;
+        }
+        ok(pi[i].sourceInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].sourceInfo.modeInfoIdx);
+        if (pi[i].sourceInfo.modeInfoIdx >= modes)
+            continue;
+
+        ok(mi[pi[i].sourceInfo.modeInfoIdx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[pi[i].sourceInfo.modeInfoIdx].infoType);
+        ok(pi[i].sourceInfo.id == mi[pi[i].sourceInfo.modeInfoIdx].id, "Expected id %u, got %u\n",
+                pi[i].sourceInfo.id, mi[pi[i].sourceInfo.modeInfoIdx].id);
+        ok(pi[i].sourceInfo.adapterId.HighPart == mi[pi[i].sourceInfo.modeInfoIdx].adapterId.HighPart &&
+           pi[i].sourceInfo.adapterId.LowPart == mi[pi[i].sourceInfo.modeInfoIdx].adapterId.LowPart,
+                "Expected LUID %08x:%08x, got %08x:%08x\n",
+                pi[i].sourceInfo.adapterId.HighPart, pi[i].sourceInfo.adapterId.LowPart,
+                mi[pi[i].sourceInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].sourceInfo.modeInfoIdx].adapterId.LowPart);
+        ok(mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.width > 0 && mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.height > 0,
+                "Expected non-zero height/width, got %ux%u\n",
+                mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.width, mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.height);
+
+
+        if (pi[i].targetInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+        {
+            skip("Path doesn't contain target modeInfoIdx");
+            continue;
+        }
+        ok(pi[i].targetInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].targetInfo.modeInfoIdx);
+        if (pi[i].targetInfo.modeInfoIdx >= modes)
+            continue;
+
+        ok(mi[pi[i].targetInfo.modeInfoIdx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[pi[i].targetInfo.modeInfoIdx].infoType);
+        ok(pi[i].targetInfo.id == mi[pi[i].targetInfo.modeInfoIdx].id, "Expected id %u, got %u\n",
+                pi[i].targetInfo.id, mi[pi[i].targetInfo.modeInfoIdx].id);
+        ok(pi[i].targetInfo.adapterId.HighPart == mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart &&
+           pi[i].targetInfo.adapterId.LowPart == mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart,
+                "Expected LUID %08x:%08x, got %08x:%08x\n",
+                pi[i].targetInfo.adapterId.HighPart, pi[i].targetInfo.adapterId.LowPart,
+                mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart);
+    }
+}
+
 static void test_QueryDisplayConfig(void)
 {
     UINT32 paths, modes;
@@ -1315,13 +1407,30 @@ static void test_QueryDisplayConfig(void)
     ret = pQueryDisplayConfig(0, &paths, pi, &modes, mi, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
+    /* Below this point, test functionality that requires a WDDM driver on Windows */
     paths = modes = 1;
     memset(pi, 0xFF, sizeof(pi[0]));
     memset(mi, 0xFF, sizeof(mi[0]));
     ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, pi, &modes, mi, NULL);
-    ok(ret == ERROR_INSUFFICIENT_BUFFER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+    if (ret == ERROR_NOT_SUPPORTED)
+    {
+        todo_wine
+        win_skip("QueryDisplayConfig() functionality is unsupported\n");
+        return;
+    }
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "got %d\n", ret);
     ok (paths == 1, "got %u\n", paths);
     ok (modes == 1, "got %u\n", modes);
+
+    paths = ARRAY_SIZE(pi);
+    modes = ARRAY_SIZE(mi);
+    memset(pi, 0xFF, sizeof(pi));
+    memset(mi, 0xFF, sizeof(mi));
+    ret = pQueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, &paths, pi, &modes, mi, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
+    if (!ret && paths > 0 && modes > 0)
+        test_QueryDisplayConfig_result(paths, pi, modes, mi);
 }
 
 static void test_DisplayConfigGetDeviceInfo(void)
