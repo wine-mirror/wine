@@ -352,22 +352,6 @@ static HRESULT WINAPI VideoRenderer_GetTargetRect(BaseControlVideo* iface, RECT 
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_IsDefaultSourceRect(BaseControlVideo* iface)
-{
-    struct video_renderer *This = impl_from_BaseControlVideo(iface);
-    FIXME("(%p/%p)->(): stub !!!\n", This, iface);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI VideoRenderer_IsDefaultTargetRect(BaseControlVideo* iface)
-{
-    struct video_renderer *This = impl_from_BaseControlVideo(iface);
-    FIXME("(%p/%p)->(): stub !!!\n", This, iface);
-
-    return S_OK;
-}
-
 static HRESULT WINAPI VideoRenderer_SetDefaultSourceRect(BaseControlVideo* iface)
 {
     struct video_renderer *This = impl_from_BaseControlVideo(iface);
@@ -408,8 +392,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VideoRenderer_GetSourceRect,
     VideoRenderer_GetStaticImage,
     VideoRenderer_GetTargetRect,
-    VideoRenderer_IsDefaultSourceRect,
-    VideoRenderer_IsDefaultTargetRect,
     VideoRenderer_SetDefaultSourceRect,
     VideoRenderer_SetDefaultTargetRect,
     VideoRenderer_SetSourceRect,

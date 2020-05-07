@@ -772,22 +772,6 @@ static HRESULT WINAPI VMR9_GetTargetRect(BaseControlVideo* This, RECT *pTargetRe
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9_IsDefaultSourceRect(BaseControlVideo* This)
-{
-    struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
-    FIXME("(%p/%p)->(): stub !!!\n", pVMR9, This);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI VMR9_IsDefaultTargetRect(BaseControlVideo* This)
-{
-    struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
-    FIXME("(%p/%p)->(): stub !!!\n", pVMR9, This);
-
-    return S_OK;
-}
-
 static HRESULT WINAPI VMR9_SetDefaultSourceRect(BaseControlVideo* This)
 {
     struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
@@ -828,8 +812,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VMR9_GetSourceRect,
     VMR9_GetStaticImage,
     VMR9_GetTargetRect,
-    VMR9_IsDefaultSourceRect,
-    VMR9_IsDefaultTargetRect,
     VMR9_SetDefaultSourceRect,
     VMR9_SetDefaultTargetRect,
     VMR9_SetSourceRect,

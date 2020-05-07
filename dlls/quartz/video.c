@@ -592,16 +592,16 @@ static HRESULT WINAPI basic_video_GetCurrentImage(IBasicVideo *iface, LONG *pBuf
 
 static HRESULT WINAPI basic_video_IsUsingDefaultSource(IBasicVideo *iface)
 {
-    BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    FIXME("iface %p, stub!\n", iface);
 
-    return This->pFuncsTable->pfnIsDefaultSourceRect(This);
+    return S_OK;
 }
 
 static HRESULT WINAPI basic_video_IsUsingDefaultDestination(IBasicVideo *iface)
 {
-    BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    FIXME("iface %p, stub!\n", iface);
 
-    return This->pFuncsTable->pfnIsDefaultTargetRect(This);
+    return S_OK;
 }
 
 static const IBasicVideoVtbl basic_video_vtbl =
