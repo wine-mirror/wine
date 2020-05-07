@@ -8452,10 +8452,7 @@ static void test_fullscreen(void)
         if (rc.right - rc.left == 100 && rc.bottom - rc.top == 100)
             break;
     }
-    /* FVWM used by TestBots are not EWMH compliant. So this bug doesn't appear. */
-    todo_wine_if(rc.right - rc.left != 100)
     ok(rc.right - rc.left == 100, "Expect width %d, got %d.\n", 100, rc.right - rc.left);
-    todo_wine_if(rc.bottom - rc.top != 100)
     ok(rc.bottom - rc.top == 100, "Expect height %d, got %d.\n", 100, rc.bottom - rc.top);
     DestroyWindow(hwnd);
 

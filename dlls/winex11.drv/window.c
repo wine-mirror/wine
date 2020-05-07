@@ -1262,6 +1262,7 @@ static void sync_window_position( struct x11drv_win_data *data,
 
     set_size_hints( data, style );
     set_mwm_hints( data, style, ex_style );
+    update_net_wm_states( data );
     data->configure_serial = NextRequest( data->display );
     XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
 #ifdef HAVE_LIBXSHAPE
