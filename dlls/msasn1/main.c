@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 Austin English
+ * Copyright 2020 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -90,4 +91,49 @@ void WINAPI ASN1_CloseModule(ASN1module_t module)
     TRACE("(%p)\n", module);
 
     heap_free(module);
+}
+
+ASN1error_e WINAPI ASN1_CreateEncoder(ASN1module_t module, ASN1encoding_t *encoder, ASN1octet_t *buf,
+                                      ASN1uint32_t bufsize, ASN1encoding_t parent)
+{
+    ASN1encoding_t enc;
+
+    TRACE("(%p %p %p %u %p)\n", module, encoder, buf, bufsize, parent);
+
+    if (!module || !encoder)
+        return ASN1_ERR_BADARGS;
+
+    enc = heap_alloc(sizeof(enc));
+    if (!enc)
+    {
+        return ASN1_ERR_MEMORY;
+    }
+
+    if (parent)
+      FIXME("parent not implemented.\n");
+
+    enc->magic = 0x44434e45;
+    enc->version = 0;
+    enc->module = module;
+    enc->buf = 0;
+    enc->size = 0;
+    enc->len = 0;
+    enc->err = ASN1_SUCCESS;
+    enc->bit = 0;
+    enc->pos = 0;
+    enc->cbExtraHeader = 0;
+    enc->eRule = module->eRule;
+    enc->dwFlags = module->dwFlags;
+
+    if (buf && bufsize)
+    {
+        enc->buf = buf;
+        enc->pos = buf;
+        enc->size = bufsize;
+        enc->dwFlags |= ASN1ENCODE_SETBUFFER;
+    }
+
+    *encoder = enc;
+
+    return ASN1_SUCCESS;
 }
