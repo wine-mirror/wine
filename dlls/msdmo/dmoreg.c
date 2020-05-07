@@ -519,6 +519,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     WCHAR szGuidKey[64];
     WCHAR szKey[MAX_PATH];
     WCHAR szValue[MAX_PATH];
+    DMO_PARTIAL_MEDIATYPE types[100];
     DWORD len;
     UINT count = 0;
     HRESULT hres = S_OK;
@@ -572,31 +573,25 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         {
             UINT i, j;
             DWORD cInTypes;
-            DMO_PARTIAL_MEDIATYPE* pInTypes;
 
-            hres = read_types(hkey, szDMOInputType, &cInTypes,
-                    sizeof(szValue)/sizeof(DMO_PARTIAL_MEDIATYPE),
-                    (DMO_PARTIAL_MEDIATYPE*)szValue);
-
+            hres = read_types(hkey, szDMOInputType, &cInTypes, ARRAY_SIZE(types), types);
             if (FAILED(hres))
             {
                 RegCloseKey(hkey);
                 continue;
             }
 
-            pInTypes = (DMO_PARTIAL_MEDIATYPE *)szValue;
-
             TRACE("read %d intypes for %s:\n", cInTypes, debugstr_w(szKey));
             for (i = 0; i < cInTypes; i++) {
-                TRACE("intype %d: type %s, subtype %s\n", i, debugstr_guid(&pInTypes[i].type),
-                    debugstr_guid(&pInTypes[i].subtype));
+                TRACE("intype %d: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
+                    debugstr_guid(&types[i].subtype));
             }
 
             for (i = 0; i < This->cInTypes; i++)
             {
                 for (j = 0; j < cInTypes; j++) 
                 {
-                    if (IsMediaTypeEqual(&pInTypes[j], &This->pInTypes[i]))
+                    if (IsMediaTypeEqual(&types[j], &This->pInTypes[i]))
                         break;
                 }
 
@@ -615,31 +610,25 @@ static HRESULT WINAPI IEnumDMO_fnNext(
         {
             UINT i, j;
             DWORD cOutTypes;
-            DMO_PARTIAL_MEDIATYPE* pOutTypes;
 
-            hres = read_types(hkey, szDMOOutputType, &cOutTypes,
-                    sizeof(szValue)/sizeof(DMO_PARTIAL_MEDIATYPE),
-                    (DMO_PARTIAL_MEDIATYPE*)szValue);
-
+            hres = read_types(hkey, szDMOOutputType, &cOutTypes, ARRAY_SIZE(types), types);
             if (FAILED(hres))
             {
                 RegCloseKey(hkey);
                 continue;
             }
 
-            pOutTypes = (DMO_PARTIAL_MEDIATYPE *)szValue;
-
             TRACE("read %d outtypes for %s:\n", cOutTypes, debugstr_w(szKey));
             for (i = 0; i < cOutTypes; i++) {
-                TRACE("outtype %d: type %s, subtype %s\n", i, debugstr_guid(&pOutTypes[i].type),
-                    debugstr_guid(&pOutTypes[i].subtype));
+                TRACE("outtype %d: type %s, subtype %s\n", i, debugstr_guid(&types[i].type),
+                    debugstr_guid(&types[i].subtype));
             }
 
             for (i = 0; i < This->cOutTypes; i++)
             {
                 for (j = 0; j < cOutTypes; j++) 
                 {
-                    if (IsMediaTypeEqual(&pOutTypes[j], &This->pOutTypes[i]))
+                    if (IsMediaTypeEqual(&types[j], &This->pOutTypes[i]))
                         break;
                 }
 
