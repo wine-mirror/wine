@@ -529,15 +529,30 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
 
     while ((hr = stream_next_chunk(stream, &chunk)) == S_OK) {
         switch (chunk.id) {
+            case DMUS_FOURCC_CATEGORY_CHUNK:
+                if ((supported & DMUS_OBJ_CATEGORY) && stream_chunk_get_wstr(stream, &chunk,
+                            desc->wszCategory, sizeof(desc->wszCategory)) == S_OK)
+                    desc->dwValidData |= DMUS_OBJ_CATEGORY;
+                break;
+            case DMUS_FOURCC_DATE_CHUNK:
+                if ((supported & DMUS_OBJ_DATE) && stream_chunk_get_data(stream, &chunk,
+                            &desc->ftDate, sizeof(desc->ftDate)) == S_OK)
+                    desc->dwValidData |= DMUS_OBJ_DATE;
+                break;
+            case DMUS_FOURCC_FILE_CHUNK:
+                if ((supported & DMUS_OBJ_FILENAME) && stream_chunk_get_wstr(stream, &chunk,
+                            desc->wszFileName, sizeof(desc->wszFileName)) == S_OK)
+                    desc->dwValidData |= DMUS_OBJ_FILENAME;
+                break;
             case DMUS_FOURCC_GUID_CHUNK:
                 if ((supported & DMUS_OBJ_OBJECT) && stream_chunk_get_data(stream, &chunk,
                             &desc->guidObject, sizeof(desc->guidObject)) == S_OK)
                     desc->dwValidData |= DMUS_OBJ_OBJECT;
                 break;
-            case DMUS_FOURCC_CATEGORY_CHUNK:
-                if ((supported & DMUS_OBJ_CATEGORY) && stream_chunk_get_wstr(stream, &chunk,
-                            desc->wszCategory, sizeof(desc->wszCategory)) == S_OK)
-                    desc->dwValidData |= DMUS_OBJ_CATEGORY;
+            case DMUS_FOURCC_NAME_CHUNK:
+                if ((supported & DMUS_OBJ_NAME) && stream_chunk_get_wstr(stream, &chunk,
+                            desc->wszName, sizeof(desc->wszName)) == S_OK)
+                    desc->dwValidData |= DMUS_OBJ_NAME;
                 break;
             case DMUS_FOURCC_VERSION_CHUNK:
                 if ((supported & DMUS_OBJ_VERSION) && stream_chunk_get_data(stream, &chunk,
