@@ -866,7 +866,11 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
         {
             key >>= 32;
             if ((key & WAIT_ITEM_KEY_MASK) == WAIT_ITEM_KEY_MASK)
+            {
+                IRtwqAsyncResult_SetStatus(item->result, RTWQ_E_OPERATION_CANCELLED);
+                invoke_async_callback(item->result);
                 CloseThreadpoolWait(item->u.wait_object);
+            }
             else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
                 CloseThreadpoolTimer(item->u.timer_object);
             else
