@@ -8306,6 +8306,7 @@ static void test_fullscreen(void)
         0, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW
     };
     WNDCLASSA cls;
+    int timeout;
     HWND hwnd;
     int i, j;
     POINT pt;
@@ -8428,6 +8429,35 @@ static void test_fullscreen(void)
             DestroyWindow(hwnd);
         }
     }
+
+    /* Test restoring a full screen window with WS_THICKFRAME style to normal */
+    /* Add WS_THICKFRAME style later so that the window can cover the entire monitor */
+    hwnd = CreateWindowA("fullscreen_class", NULL, WS_POPUP | WS_VISIBLE, 0, 0, mi.rcMonitor.right,
+                         mi.rcMonitor.bottom, NULL, NULL, GetModuleHandleA(NULL), NULL);
+    ok(!!hwnd, "CreateWindow failed, error %#x.\n", GetLastError());
+    flush_events(TRUE);
+
+    /* Add WS_THICKFRAME and exit full screen */
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | WS_THICKFRAME);
+    SetWindowPos(hwnd, 0, 0, 0, 100, 100, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+    flush_events(TRUE);
+
+    /* TestBots need about 1000ms to exit full screen */
+    timeout = 1000;
+    while (timeout > 0)
+    {
+        timeout -= 200;
+        flush_events(TRUE);
+        GetWindowRect(hwnd, &rc);
+        if (rc.right - rc.left == 100 && rc.bottom - rc.top == 100)
+            break;
+    }
+    /* FVWM used by TestBots are not EWMH compliant. So this bug doesn't appear. */
+    todo_wine_if(rc.right - rc.left != 100)
+    ok(rc.right - rc.left == 100, "Expect width %d, got %d.\n", 100, rc.right - rc.left);
+    todo_wine_if(rc.bottom - rc.top != 100)
+    ok(rc.bottom - rc.top == 100, "Expect height %d, got %d.\n", 100, rc.bottom - rc.top);
+    DestroyWindow(hwnd);
 
     UnregisterClassA("fullscreen_class", GetModuleHandleA(NULL));
 }
