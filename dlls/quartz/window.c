@@ -656,6 +656,550 @@ HRESULT WINAPI BaseControlWindowImpl_IsCursorHidden(IVideoWindow *iface, LONG *C
     return S_OK;
 }
 
+static inline struct video_window *impl_from_IBasicVideo(IBasicVideo *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_window, IBasicVideo_iface);
+}
+
+static HRESULT WINAPI basic_video_QueryInterface(IBasicVideo *iface, REFIID iid, void **out)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+    return IUnknown_QueryInterface(window->pFilter->outer_unk, iid, out);
+}
+
+static ULONG WINAPI basic_video_AddRef(IBasicVideo *iface)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+    return IUnknown_AddRef(window->pFilter->outer_unk);
+}
+
+static ULONG WINAPI basic_video_Release(IBasicVideo *iface)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+    return IUnknown_Release(window->pFilter->outer_unk);
+}
+
+static HRESULT WINAPI basic_video_GetTypeInfoCount(IBasicVideo *iface, UINT *count)
+{
+    TRACE("iface %p, count %p.\n", iface, count);
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetTypeInfo(IBasicVideo *iface, UINT index,
+        LCID lcid, ITypeInfo **typeinfo)
+{
+    TRACE("iface %p, index %u, lcid %#x, typeinfo %p.\n", iface, index, lcid, typeinfo);
+    return strmbase_get_typeinfo(IBasicVideo_tid, typeinfo);
+}
+
+static HRESULT WINAPI basic_video_GetIDsOfNames(IBasicVideo *iface, REFIID iid,
+        LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("iface %p, iid %s, names %p, count %u, lcid %#x, ids %p.\n",
+            iface, debugstr_guid(iid), names, count, lcid, ids);
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicVideo_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, ids);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI basic_video_Invoke(IBasicVideo *iface, DISPID id, REFIID iid, LCID lcid,
+        WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("iface %p, id %d, iid %s, lcid %#x, flags %#x, params %p, result %p, excepinfo %p, error_arg %p.\n",
+            iface, id, debugstr_guid(iid), lcid, flags, params, result, excepinfo, error_arg);
+
+    if (SUCCEEDED(hr = strmbase_get_typeinfo(IBasicVideo_tid, &typeinfo)))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, id, flags, params, result, excepinfo, error_arg);
+        ITypeInfo_Release(typeinfo);
+    }
+    return hr;
+}
+
+static const VIDEOINFOHEADER *get_video_format(struct video_window *window)
+{
+    /* Members of VIDEOINFOHEADER up to bmiHeader are identical to those of
+     * VIDEOINFOHEADER2. */
+    return (const VIDEOINFOHEADER *)window->pPin->mt.pbFormat;
+}
+
+static const BITMAPINFOHEADER *get_bitmap_header(struct video_window *window)
+{
+    const AM_MEDIA_TYPE *mt = &window->pPin->mt;
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        return &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+}
+
+static HRESULT WINAPI basic_video_get_AvgTimePerFrame(IBasicVideo *iface, REFTIME *reftime)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    if (!reftime)
+        return E_POINTER;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
+    TRACE("window %p, reftime %p.\n", window, reftime);
+
+    *reftime = get_video_format(window)->AvgTimePerFrame;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_BitRate(IBasicVideo *iface, LONG *rate)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, rate %p.\n", window, rate);
+
+    if (!rate)
+        return E_POINTER;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
+    *rate = get_video_format(window)->dwBitRate;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_BitErrorRate(IBasicVideo *iface, LONG *rate)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, rate %p.\n", window, rate);
+
+    if (!rate)
+        return E_POINTER;
+    if (!window->pPin->peer)
+        return VFW_E_NOT_CONNECTED;
+
+    *rate = get_video_format(window)->dwBitErrorRate;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_VideoWidth(IBasicVideo *iface, LONG *width)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, width %p.\n", window, width);
+
+    if (!width)
+        return E_POINTER;
+
+    *width = get_bitmap_header(window)->biWidth;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_VideoHeight(IBasicVideo *iface, LONG *height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, height %p.\n", window, height);
+
+    if (!height)
+        return E_POINTER;
+
+    *height = abs(get_bitmap_header(window)->biHeight);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceLeft(IBasicVideo *iface, LONG left)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %d.\n", window, left);
+
+    if (left < 0 || window->src.right + left - window->src.left > get_bitmap_header(window)->biWidth)
+        return E_INVALIDARG;
+
+    OffsetRect(&window->src, left - window->src.left, 0);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceLeft(IBasicVideo *iface, LONG *left)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %p.\n", window, left);
+
+    if (!left)
+        return E_POINTER;
+
+    *left = window->src.left;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceWidth(IBasicVideo *iface, LONG width)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, width %d.\n", window, width);
+
+    if (width <= 0 || window->src.left + width > get_bitmap_header(window)->biWidth)
+        return E_INVALIDARG;
+
+    window->src.right = window->src.left + width;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceWidth(IBasicVideo *iface, LONG *width)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, width %p.\n", window, width);
+
+    if (!width)
+        return E_POINTER;
+
+    *width = window->src.right - window->src.left;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceTop(IBasicVideo *iface, LONG top)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, top %d.\n", window, top);
+
+    if (top < 0 || window->src.bottom + top - window->src.top > get_bitmap_header(window)->biHeight)
+        return E_INVALIDARG;
+
+    OffsetRect(&window->src, 0, top - window->src.top);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceTop(IBasicVideo *iface, LONG *top)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, top %p.\n", window, top);
+
+    if (!top)
+        return E_POINTER;
+
+    *top = window->src.top;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_SourceHeight(IBasicVideo *iface, LONG height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, height %d.\n", window, height);
+
+    if (height <= 0 || window->src.top + height > get_bitmap_header(window)->biHeight)
+        return E_INVALIDARG;
+
+    window->src.bottom = window->src.top + height;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_SourceHeight(IBasicVideo *iface, LONG *height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, height %p\n", window, height);
+
+    if (!height)
+        return E_POINTER;
+
+    *height = window->src.bottom - window->src.top;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationLeft(IBasicVideo *iface, LONG left)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %d.\n", window, left);
+
+    OffsetRect(&window->dst, left - window->dst.left, 0);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationLeft(IBasicVideo *iface, LONG *left)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %p.\n", window, left);
+
+    if (!left)
+        return E_POINTER;
+
+    *left = window->dst.left;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationWidth(IBasicVideo *iface, LONG width)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, width %d.\n", window, width);
+
+    if (width <= 0)
+        return E_INVALIDARG;
+
+    window->dst.right = window->dst.left + width;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationWidth(IBasicVideo *iface, LONG *width)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, width %p.\n", window, width);
+
+    if (!width)
+        return E_POINTER;
+
+    *width = window->dst.right - window->dst.left;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationTop(IBasicVideo *iface, LONG top)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, top %d.\n", window, top);
+
+    OffsetRect(&window->dst, 0, top - window->dst.top);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationTop(IBasicVideo *iface, LONG *top)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, top %p.\n", window, top);
+
+    if (!top)
+        return E_POINTER;
+
+    *top = window->dst.top;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_put_DestinationHeight(IBasicVideo *iface, LONG height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, height %d.\n", window, height);
+
+    if (height <= 0)
+        return E_INVALIDARG;
+
+    window->dst.bottom = window->dst.top + height;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_get_DestinationHeight(IBasicVideo *iface, LONG *height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, height %p.\n", window, height);
+
+    if (!height)
+        return E_POINTER;
+
+    *height = window->dst.bottom - window->dst.top;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetSourcePosition(IBasicVideo *iface,
+        LONG left, LONG top, LONG width, LONG height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(window);
+
+    TRACE("window %p, left %d, top %d, width %d, height %d.\n", window, left, top, width, height);
+
+    if (left < 0 || left + width > bitmap_header->biWidth || width <= 0)
+        return E_INVALIDARG;
+    if (top < 0 || top + height > bitmap_header->biHeight || height <= 0)
+        return E_INVALIDARG;
+
+    SetRect(&window->src, left, top, left + width, top + height);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetSourcePosition(IBasicVideo *iface,
+        LONG *left, LONG *top, LONG *width, LONG *height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %p, top %p, width %p, height %p.\n", window, left, top, width, height);
+
+    if (!left || !top || !width || !height)
+        return E_POINTER;
+
+    *left = window->src.left;
+    *top = window->src.top;
+    *width = window->src.right - window->src.left;
+    *height = window->src.bottom - window->src.top;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetDefaultSourcePosition(IBasicVideo *iface)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p.\n", window);
+
+    return window->ops->pfnSetDefaultSourceRect(window);
+}
+
+static HRESULT WINAPI basic_video_SetDestinationPosition(IBasicVideo *iface,
+        LONG left, LONG top, LONG width, LONG height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %d, top %d, width %d, height %d.\n", window, left, top, width, height);
+
+    if (width <= 0 || height <= 0)
+        return E_INVALIDARG;
+
+    SetRect(&window->dst, left, top, left + width, top + height);
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetDestinationPosition(IBasicVideo *iface,
+        LONG *left, LONG *top, LONG *width, LONG *height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, left %p, top %p, width %p, height %p.\n", window, left, top, width, height);
+
+    if (!left || !top || !width || !height)
+        return E_POINTER;
+
+    *left = window->dst.left;
+    *top = window->dst.top;
+    *width = window->dst.right - window->dst.left;
+    *height = window->dst.bottom - window->dst.top;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_SetDefaultDestinationPosition(IBasicVideo *iface)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p.\n", window);
+
+    return window->ops->pfnSetDefaultTargetRect(window);
+}
+
+static HRESULT WINAPI basic_video_GetVideoSize(IBasicVideo *iface, LONG *width, LONG *height)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(window);
+
+    TRACE("window %p, width %p, height %p.\n", window, width, height);
+
+    if (!width || !height)
+        return E_POINTER;
+
+    *width = bitmap_header->biWidth;
+    *height = bitmap_header->biHeight;
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_GetVideoPaletteEntries(IBasicVideo *iface,
+        LONG start, LONG count, LONG *ret_count, LONG *palette)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    FIXME("window %p, start %d, count %d, ret_count %p, palette %p, stub!\n",
+            window, start, count, ret_count, palette);
+
+    if (!ret_count || !palette)
+        return E_POINTER;
+
+    *ret_count = 0;
+    return VFW_E_NO_PALETTE_AVAILABLE;
+}
+
+static HRESULT WINAPI basic_video_GetCurrentImage(IBasicVideo *iface, LONG *size, LONG *image)
+{
+    struct video_window *window = impl_from_IBasicVideo(iface);
+
+    TRACE("window %p, size %p, image %p.\n", window, size, image);
+
+    if (!size || !image)
+        return E_POINTER;
+
+    return window->ops->get_current_image(window, size, image);
+}
+
+static HRESULT WINAPI basic_video_IsUsingDefaultSource(IBasicVideo *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI basic_video_IsUsingDefaultDestination(IBasicVideo *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+
+    return S_OK;
+}
+
+static const IBasicVideoVtbl basic_video_vtbl =
+{
+    basic_video_QueryInterface,
+    basic_video_AddRef,
+    basic_video_Release,
+    basic_video_GetTypeInfoCount,
+    basic_video_GetTypeInfo,
+    basic_video_GetIDsOfNames,
+    basic_video_Invoke,
+    basic_video_get_AvgTimePerFrame,
+    basic_video_get_BitRate,
+    basic_video_get_BitErrorRate,
+    basic_video_get_VideoWidth,
+    basic_video_get_VideoHeight,
+    basic_video_put_SourceLeft,
+    basic_video_get_SourceLeft,
+    basic_video_put_SourceWidth,
+    basic_video_get_SourceWidth,
+    basic_video_put_SourceTop,
+    basic_video_get_SourceTop,
+    basic_video_put_SourceHeight,
+    basic_video_get_SourceHeight,
+    basic_video_put_DestinationLeft,
+    basic_video_get_DestinationLeft,
+    basic_video_put_DestinationWidth,
+    basic_video_get_DestinationWidth,
+    basic_video_put_DestinationTop,
+    basic_video_get_DestinationTop,
+    basic_video_put_DestinationHeight,
+    basic_video_get_DestinationHeight,
+    basic_video_SetSourcePosition,
+    basic_video_GetSourcePosition,
+    basic_video_SetDefaultSourcePosition,
+    basic_video_SetDestinationPosition,
+    basic_video_GetDestinationPosition,
+    basic_video_SetDefaultDestinationPosition,
+    basic_video_GetVideoSize,
+    basic_video_GetVideoPaletteEntries,
+    basic_video_GetCurrentImage,
+    basic_video_IsUsingDefaultSource,
+    basic_video_IsUsingDefaultDestination
+};
+
 void video_window_unregister_class(void)
 {
     if (!UnregisterClassW(class_name, NULL) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
@@ -668,6 +1212,7 @@ void video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl
     memset(window, 0, sizeof(*window));
     window->ops = ops;
     window->IVideoWindow_iface.lpVtbl = vtbl;
+    window->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;
     window->AutoShow = OATRUE;
     window->pFilter = owner;
     window->pPin = pin;

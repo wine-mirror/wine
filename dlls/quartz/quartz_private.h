@@ -91,6 +91,9 @@ BOOL get_media_type(const WCHAR *filename, GUID *majortype, GUID *subtype, GUID 
 struct video_window
 {
     IVideoWindow IVideoWindow_iface;
+    IBasicVideo IBasicVideo_iface;
+
+    RECT src, dst;
 
     HWND hwnd;
     BOOL AutoShow;
@@ -107,6 +110,10 @@ struct video_window_ops
     RECT (*get_default_rect)(struct video_window *window);
     /* Optional, WinProc Related */
     BOOL (*resize)(struct video_window *window, LONG height, LONG width);
+
+    HRESULT (*get_current_image)(struct video_window *window, LONG *size, LONG *image);
+    HRESULT (WINAPI *pfnSetDefaultSourceRect)(struct video_window *window);
+    HRESULT (WINAPI *pfnSetDefaultTargetRect)(struct video_window *window);
 };
 
 void video_window_cleanup(struct video_window *window) DECLSPEC_HIDDEN;
@@ -161,31 +168,5 @@ HRESULT WINAPI BaseControlWindowImpl_GetMaxIdealImageSize(IVideoWindow *iface, L
 HRESULT WINAPI BaseControlWindowImpl_GetRestorePosition(IVideoWindow *iface, LONG *pLeft, LONG *pTop, LONG *pWidth, LONG *pHeight) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseControlWindowImpl_HideCursor(IVideoWindow *iface, LONG HideCursor) DECLSPEC_HIDDEN;
 HRESULT WINAPI BaseControlWindowImpl_IsCursorHidden(IVideoWindow *iface, LONG *CursorHidden) DECLSPEC_HIDDEN;
-
-typedef struct tagBaseControlVideo
-{
-    IBasicVideo IBasicVideo_iface;
-
-    RECT src, dst;
-
-    struct strmbase_filter *pFilter;
-    struct strmbase_pin *pPin;
-
-    const struct BaseControlVideoFuncTable *pFuncsTable;
-} BaseControlVideo;
-
-typedef HRESULT (WINAPI *BaseControlVideo_GetStaticImage)(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage);
-typedef HRESULT (WINAPI *BaseControlVideo_SetDefaultSourceRect)(BaseControlVideo* This);
-typedef HRESULT (WINAPI *BaseControlVideo_SetDefaultTargetRect)(BaseControlVideo* This);
-
-typedef struct BaseControlVideoFuncTable
-{
-    BaseControlVideo_GetStaticImage pfnGetStaticImage;
-    BaseControlVideo_SetDefaultSourceRect pfnSetDefaultSourceRect;
-    BaseControlVideo_SetDefaultTargetRect pfnSetDefaultTargetRect;
-} BaseControlVideoFuncTable;
-
-void basic_video_init(BaseControlVideo *video, struct strmbase_filter *filter,
-        struct strmbase_pin *pin, const BaseControlVideoFuncTable *func_table) DECLSPEC_HIDDEN;
 
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

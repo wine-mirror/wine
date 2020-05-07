@@ -18,7 +18,6 @@ C_SRCS = \
 	passthrough.c \
 	regsvr.c \
 	systemclock.c \
-	video.c \
 	videorenderer.c \
 	vmr9.c \
 	window.c
