@@ -772,28 +772,6 @@ static HRESULT WINAPI VMR9_GetTargetRect(BaseControlVideo* This, RECT *pTargetRe
     return S_OK;
 }
 
-static VIDEOINFOHEADER* WINAPI VMR9_GetVideoFormat(BaseControlVideo* This)
-{
-    struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
-    AM_MEDIA_TYPE *pmt;
-
-    TRACE("(%p/%p)\n", pVMR9, This);
-
-    pmt = &pVMR9->renderer.sink.pin.mt;
-    if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
-        return (VIDEOINFOHEADER*)pmt->pbFormat;
-    } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {
-        static VIDEOINFOHEADER vih;
-        VIDEOINFOHEADER2 *vih2 = (VIDEOINFOHEADER2*)pmt->pbFormat;
-        memcpy(&vih,vih2,sizeof(VIDEOINFOHEADER));
-        memcpy(&vih.bmiHeader, &vih2->bmiHeader, sizeof(BITMAPINFOHEADER));
-        return &vih;
-    } else {
-        ERR("Unknown format type %s\n", qzdebugstr_guid(&pmt->formattype));
-        return NULL;
-    }
-}
-
 static HRESULT WINAPI VMR9_IsDefaultSourceRect(BaseControlVideo* This)
 {
     struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
@@ -850,7 +828,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VMR9_GetSourceRect,
     VMR9_GetStaticImage,
     VMR9_GetTargetRect,
-    VMR9_GetVideoFormat,
     VMR9_IsDefaultSourceRect,
     VMR9_IsDefaultTargetRect,
     VMR9_SetDefaultSourceRect,

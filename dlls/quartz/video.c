@@ -120,9 +120,24 @@ static HRESULT WINAPI basic_video_Invoke(IBasicVideo *iface, DISPID id, REFIID i
     return hr;
 }
 
+static const VIDEOINFOHEADER *get_video_format(BaseControlVideo *video)
+{
+    /* Members of VIDEOINFOHEADER up to bmiHeader are identical to those of
+     * VIDEOINFOHEADER2. */
+    return (const VIDEOINFOHEADER *)video->pPin->mt.pbFormat;
+}
+
+static const BITMAPINFOHEADER *get_bitmap_header(BaseControlVideo *video)
+{
+    const AM_MEDIA_TYPE *mt = &video->pPin->mt;
+    if (IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return &((VIDEOINFOHEADER *)mt->pbFormat)->bmiHeader;
+    else
+        return &((VIDEOINFOHEADER2 *)mt->pbFormat)->bmiHeader;
+}
+
 static HRESULT WINAPI basic_video_get_AvgTimePerFrame(IBasicVideo *iface, REFTIME *pAvgTimePerFrame)
 {
-    VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     if (!pAvgTimePerFrame)
@@ -132,14 +147,12 @@ static HRESULT WINAPI basic_video_get_AvgTimePerFrame(IBasicVideo *iface, REFTIM
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pAvgTimePerFrame);
 
-    vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pAvgTimePerFrame = vih->AvgTimePerFrame;
+    *pAvgTimePerFrame = get_video_format(This)->AvgTimePerFrame;
     return S_OK;
 }
 
 static HRESULT WINAPI basic_video_get_BitRate(IBasicVideo *iface, LONG *pBitRate)
 {
-    VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pBitRate);
@@ -149,14 +162,12 @@ static HRESULT WINAPI basic_video_get_BitRate(IBasicVideo *iface, LONG *pBitRate
     if (!This->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
-    vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pBitRate = vih->dwBitRate;
+    *pBitRate = get_video_format(This)->dwBitRate;
     return S_OK;
 }
 
 static HRESULT WINAPI basic_video_get_BitErrorRate(IBasicVideo *iface, LONG *pBitErrorRate)
 {
-    VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pBitErrorRate);
@@ -166,37 +177,32 @@ static HRESULT WINAPI basic_video_get_BitErrorRate(IBasicVideo *iface, LONG *pBi
     if (!This->pPin->peer)
         return VFW_E_NOT_CONNECTED;
 
-    vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pBitErrorRate = vih->dwBitErrorRate;
+    *pBitErrorRate = get_video_format(This)->dwBitErrorRate;
     return S_OK;
 }
 
 static HRESULT WINAPI basic_video_get_VideoWidth(IBasicVideo *iface, LONG *pVideoWidth)
 {
-    VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pVideoWidth);
     if (!pVideoWidth)
         return E_POINTER;
 
-    vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pVideoWidth = vih->bmiHeader.biWidth;
+    *pVideoWidth = get_bitmap_header(This)->biWidth;
 
     return S_OK;
 }
 
 static HRESULT WINAPI basic_video_get_VideoHeight(IBasicVideo *iface, LONG *pVideoHeight)
 {
-    VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pVideoHeight);
     if (!pVideoHeight)
         return E_POINTER;
 
-    vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pVideoHeight = abs(vih->bmiHeader.biHeight);
+    *pVideoHeight = abs(get_bitmap_header(This)->biHeight);
 
     return S_OK;
 }
@@ -550,16 +556,15 @@ static HRESULT WINAPI basic_video_SetDefaultDestinationPosition(IBasicVideo *ifa
 
 static HRESULT WINAPI basic_video_GetVideoSize(IBasicVideo *iface, LONG *pWidth, LONG *pHeight)
 {
-    VIDEOINFOHEADER *vih;
     BaseControlVideo *This = impl_from_IBasicVideo(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(This);
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pWidth, pHeight);
     if (!pWidth || !pHeight)
         return E_POINTER;
 
-    vih = This->pFuncsTable->pfnGetVideoFormat(This);
-    *pHeight = vih->bmiHeader.biHeight;
-    *pWidth = vih->bmiHeader.biWidth;
+    *pHeight = bitmap_header->biHeight;
+    *pWidth = bitmap_header->biWidth;
 
     return S_OK;
 }

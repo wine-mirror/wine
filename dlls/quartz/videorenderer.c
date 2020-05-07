@@ -352,28 +352,6 @@ static HRESULT WINAPI VideoRenderer_GetTargetRect(BaseControlVideo* iface, RECT 
     return S_OK;
 }
 
-static VIDEOINFOHEADER* WINAPI VideoRenderer_GetVideoFormat(BaseControlVideo* iface)
-{
-    struct video_renderer *This = impl_from_BaseControlVideo(iface);
-    AM_MEDIA_TYPE *pmt;
-
-    TRACE("(%p/%p)\n", This, iface);
-
-    pmt = &This->renderer.sink.pin.mt;
-    if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
-        return (VIDEOINFOHEADER*)pmt->pbFormat;
-    } else if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo2)) {
-        static VIDEOINFOHEADER vih;
-        VIDEOINFOHEADER2 *vih2 = (VIDEOINFOHEADER2*)pmt->pbFormat;
-        memcpy(&vih,vih2,sizeof(VIDEOINFOHEADER));
-        memcpy(&vih.bmiHeader, &vih2->bmiHeader, sizeof(BITMAPINFOHEADER));
-        return &vih;
-    } else {
-        ERR("Unknown format type %s\n", qzdebugstr_guid(&pmt->formattype));
-        return NULL;
-    }
-}
-
 static HRESULT WINAPI VideoRenderer_IsDefaultSourceRect(BaseControlVideo* iface)
 {
     struct video_renderer *This = impl_from_BaseControlVideo(iface);
@@ -430,7 +408,6 @@ static const BaseControlVideoFuncTable renderer_BaseControlVideoFuncTable = {
     VideoRenderer_GetSourceRect,
     VideoRenderer_GetStaticImage,
     VideoRenderer_GetTargetRect,
-    VideoRenderer_GetVideoFormat,
     VideoRenderer_IsDefaultSourceRect,
     VideoRenderer_IsDefaultTargetRect,
     VideoRenderer_SetDefaultSourceRect,

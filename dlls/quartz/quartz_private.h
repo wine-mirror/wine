@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "dshow.h"
+#include "dvdmedia.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/strmbase.h"
@@ -174,7 +175,6 @@ typedef struct tagBaseControlVideo
 typedef HRESULT (WINAPI *BaseControlVideo_GetSourceRect)(BaseControlVideo* This, RECT *pSourceRect);
 typedef HRESULT (WINAPI *BaseControlVideo_GetStaticImage)(BaseControlVideo* This, LONG *pBufferSize, LONG *pDIBImage);
 typedef HRESULT (WINAPI *BaseControlVideo_GetTargetRect)(BaseControlVideo* This, RECT *pTargetRect);
-typedef VIDEOINFOHEADER* (WINAPI *BaseControlVideo_GetVideoFormat)(BaseControlVideo* This);
 typedef HRESULT (WINAPI *BaseControlVideo_IsDefaultSourceRect)(BaseControlVideo* This);
 typedef HRESULT (WINAPI *BaseControlVideo_IsDefaultTargetRect)(BaseControlVideo* This);
 typedef HRESULT (WINAPI *BaseControlVideo_SetDefaultSourceRect)(BaseControlVideo* This);
@@ -187,7 +187,6 @@ typedef struct BaseControlVideoFuncTable
     BaseControlVideo_GetSourceRect pfnGetSourceRect;
     BaseControlVideo_GetStaticImage pfnGetStaticImage;
     BaseControlVideo_GetTargetRect pfnGetTargetRect;
-    BaseControlVideo_GetVideoFormat pfnGetVideoFormat;
     BaseControlVideo_IsDefaultSourceRect pfnIsDefaultSourceRect;
     BaseControlVideo_IsDefaultTargetRect pfnIsDefaultTargetRect;
     BaseControlVideo_SetDefaultSourceRect pfnSetDefaultSourceRect;
