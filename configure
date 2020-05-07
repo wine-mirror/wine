@@ -13565,7 +13565,7 @@ if ${GNUTLS_LIBS:+false} :; then :
 fi
 fi
 
-
+GNUTLS_LIBS=${GNUTLS_LIBS:-"-lgnutls"}
 $as_echo "$as_me:${as_lineno-$LINENO}: gnutls cflags: $GNUTLS_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: gnutls libs: $GNUTLS_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
