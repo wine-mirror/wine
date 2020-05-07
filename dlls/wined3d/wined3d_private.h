@@ -4720,7 +4720,7 @@ struct wined3d_swapchain_state
 void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, const RECT *window_rect) DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
-        HWND window, unsigned int w, unsigned int h) DECLSPEC_HIDDEN;
+        HWND window, int x, int y, int width, int height) DECLSPEC_HIDDEN;
 
 struct wined3d_swapchain_ops
 {
