@@ -140,24 +140,19 @@ static void test_message_from_string_wide(void)
     ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
-    /* s doesn't seem to work in format strings */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!s!", 0, 0, out, ARRAY_SIZE(out), L"test");
-    ok(!lstrcmpW(L"!s!", out), "failed out=%s\n", wine_dbgstr_w(out));
-    ok(r==3, "failed: r=%d\n", r);
-
-    /* nor ls */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!ls!", 0, 0, out, ARRAY_SIZE(out), L"test");
-    ok(!lstrcmpW(L"!ls!", out), "failed out=%s\n", wine_dbgstr_w(out));
+    /* ls is unicode */
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!ls!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
 
-    /* nor S */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!S!", 0, 0, out, ARRAY_SIZE(out), L"test");
-    ok(!lstrcmpW(L"!S!", out), "failed out=%s\n", wine_dbgstr_w(out));
-    ok(r==3, "failed: r=%d\n", r);
+    /* S is ascii */
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!S!", 0, 0, out, ARRAY_SIZE(out), "test");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(r==4, "failed: r=%d\n", r);
 
-    /* nor ws */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!ws!", 0, 0, out, ARRAY_SIZE(out), L"test");
-    ok(!lstrcmpW(L"!ws!", out), "failed out=%s\n", wine_dbgstr_w(out));
+    /* ws is unicode */
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!ws!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
 
     /* as characters */
@@ -423,10 +418,10 @@ static void test_message_from_string(void)
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
-    /* s doesn't seem to work in format strings */
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%!s!", 0, 0, out, ARRAY_SIZE(out), "test");
-    ok(!strcmp("!s!", out),"failed out=[%s]\n",out);
-    ok(r==3,"failed: r=%d\n",r);
+    /* s is ascii */
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!s!", 0, 0, out, ARRAY_SIZE(out), "test");
+    ok(!strcmp("test", out),"failed out=[%s]\n",out);
+    ok(r==4,"failed: r=%d\n",r);
 
     /* ls is unicode */
     r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!ls!", 0, 0, out, ARRAY_SIZE(out), L"test");
@@ -1051,9 +1046,6 @@ static void test_message_insufficient_buffer(void)
 
 static void test_message_insufficient_buffer_wide(void)
 {
-    static const WCHAR broken_buf[] = L"\0xxxxx";
-    static const WCHAR broken2_buf[] = L"tes\0x";
-
     DWORD ret;
     WCHAR out[8];
 
@@ -1067,8 +1059,6 @@ static void test_message_insufficient_buffer_wide(void)
     ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the buffer to be untouched\n");
 
-    /* Windows Server 2003 and newer report failure but copy a
-     * truncated string to the buffer for non-zero buffer sizes. */
     SetLastError(0xdeadbeef);
     lstrcpyW( out, L"xxxxxx" );
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test", 0, 0, out, 1, NULL);
@@ -1076,9 +1066,10 @@ static void test_message_insufficient_buffer_wide(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    ok(!lstrcmpW( out, L"xxxxxx" ) ||
-       broken(!memcmp(broken_buf, out, sizeof(broken_buf))), /* W2K3+ */
-       "Expected the buffer to be untouched\n");
+    todo_wine
+    ok(!memcmp(out, L"\0xxxxx", 6 * sizeof(WCHAR)) ||
+        broken(!lstrcmpW( out, L"xxxxxx" )), /* winxp */
+       "Expected the buffer to be truncated\n");
 
     SetLastError(0xdeadbeef);
     lstrcpyW( out, L"xxxxxx" );
@@ -1087,9 +1078,10 @@ static void test_message_insufficient_buffer_wide(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    ok(!lstrcmpW( out, L"xxxxxx" ) ||
-       broken(!memcmp(broken2_buf, out, sizeof(broken2_buf))), /* W2K3+ */
-       "Expected the buffer to be untouched\n");
+    todo_wine
+    ok(!memcmp(out, L"tes\0xx", 6 * sizeof(WCHAR)) ||
+        broken(!lstrcmpW( out, L"xxxxxx" )), /* winxp */
+        "Expected the buffer to be truncated\n");
 }
 
 static void test_message_null_buffer(void)
