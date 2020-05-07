@@ -54,366 +54,288 @@ static DWORD WINAPIV doitW(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id
 
 static void test_message_from_string_wide(void)
 {
-    static const WCHAR test[]        = {'t','e','s','t',0};
-    static const WCHAR empty[]       = {0};
-    static const WCHAR te[]          = {'t','e',0};
-    static const WCHAR st[]          = {'s','t',0};
-    static const WCHAR t[]           = {'t',0};
-    static const WCHAR e[]           = {'e',0};
-    static const WCHAR s[]           = {'s',0};
-    static const WCHAR fmt_null[]    = {'%',0};
-    static const WCHAR fmt_tnull[]   = {'t','e','s','t','%',0};
-    static const WCHAR fmt_1[]       = {'%','1',0};
-    static const WCHAR fmt_12[]      = {'%','1','%','2',0};
-    static const WCHAR fmt_123[]     = {'%','1','%','3','%','2','%','1',0};
-    static const WCHAR fmt_123c[]    = {'%','1','!','c','!','%','2','!','c','!','%','3','!','c','!','%','1','!','c','!',0};
-    static const WCHAR fmt_123lc[]   = {'%','1','!','l','c','!','%','2','!','l','c','!','%','3','!','l','c','!','%','1','!','l','c','!',0};
-    static const WCHAR fmt_123wc[]   = {'%','1','!','w','c','!','%','2','!','w','c','!','%','3','!','w','c','!','%','1','!','w','c','!',0};
-    static const WCHAR fmt_123C[]    = {'%','1','!','C','!','%','2','!','C','!','%','3','!','C','!','%','1','!','C','!',0};
-    static const WCHAR fmt_123d[]    = {'%','1','!','d','!','%','2','!','d','!','%','3','!','d','!',0};
-    static const WCHAR fmt_1s[]      = {'%','1','!','s','!',0};
-    static const WCHAR fmt_s[]       = {'%','!','s','!',0};
-    static const WCHAR fmt_ls[]      = {'%','!','l','s','!',0};
-    static const WCHAR fmt_ws[]      = {'%','!','w','s','!',0};
-    static const WCHAR fmt_S[]       = {'%','!','S','!',0};
-    static const WCHAR fmt_14d[]     = {'%','1','!','4','d','!',0};
-    static const WCHAR fmt_14x[]     = {'%','1','!','4','x','!',0};
-    static const WCHAR fmt_14X[]     = {'%','1','!','4','X','!',0};
-    static const WCHAR fmt_1_4X[]    = {'%','1','!','-','4','X','!',0};
-    static const WCHAR fmt_1_4d[]    = {'%','1','!','-','4','d','!',0};
-    static const WCHAR fmt_2pct[]    = {' ','%','%','%','%',' ',0};
-    static const WCHAR fmt_2dot1d[]  = {' ', '%','.','%','.',' ',' ','%','1','!','d','!',0};
-    static const WCHAR fmt_t0t[]     = {'t','e','s','t','%','0','t','e','s','t',0};
-    static const WCHAR fmt_yah[]     = {'y','a','h','%','!','%','0',' ',' ',' ',0};
-    static const WCHAR fmt_space[]   = {'%',' ','%',' ',' ',' ',0};
-    static const WCHAR fmt_nrt[]     = {'%','n','%','r','%','t',0};
-    static const WCHAR fmt_hi_lf[]   = {'h','i','\n',0};
-    static const WCHAR fmt_hi_crlf[] = {'h','i','\r','\n',0};
-    static const WCHAR fmt_cr[]      = {'\r',0};
-    static const WCHAR fmt_crcrlf[]  = {'\r','\r','\n',0};
-    static const WCHAR fmt_13s[]     = {'%','1','!','3','s','!',0};
-    static const WCHAR fmt_1os[]     = {'%','1','!','*','s','!',0};
-    static const WCHAR fmt_142u[]    = {'%','1','!','4','.','2','u','!',0};
-    static const WCHAR fmt_1oou[]    = {'%','1','!','*','.','*','u','!',0};
-    static const WCHAR fmt_1oou1oou[] = {'%','1','!','*','.','*','u','!',',','%','1','!','*','.','*','u','!',0};
-    static const WCHAR fmt_1oou3oou[] = {'%','1','!','*','.','*','u','!',',','%','3','!','*','.','*','u','!',0};
-    static const WCHAR fmt_1oou4oou[] = {'%','1','!','*','.','*','u','!',',','%','4','!','*','.','*','u','!',0};
-
-    static const WCHAR s_123d[]      = {'1','2','3',0};
-    static const WCHAR s_14d[]       = {' ',' ',' ','1',0};
-    static const WCHAR s_14x[]       = {' ',' ',' ','b',0};
-    static const WCHAR s_14X[]       = {' ',' ',' ','B',0};
-    static const WCHAR s_1_4X[]      = {'B',' ',' ',' ',0};
-    static const WCHAR s_14d2[]      = {' ',' ','1','1',0};
-    static const WCHAR s_1_4d[]      = {'1',' ',' ',' ',0};
-    static const WCHAR s_1AB[]       = {' ','1','A','B',0};
-    static const WCHAR s_2pct[]      = {' ','%','%',' ',0};
-    static const WCHAR s_2dot147[]   = {' ','.','.',' ',' ','4','2','7',0};
-    static const WCHAR s_yah[]       = {'y','a','h','!',0};
-    static const WCHAR s_space[]     = {' ',' ',' ',' ',0};
-    static const WCHAR s_nrt[]       = {'\r','\n','\r','\t',0};
-    static const WCHAR s_hi_crlf[]   = {'h','i','\r','\n',0};
-    static const WCHAR s_crlf[]      = {'\r','\n',0};
-    static const WCHAR s_crlfcrlf[]  = {'\r','\n','\r','\n',0};
-    static const WCHAR s_hi_sp[]     = {'h','i',' ',0};
-    static const WCHAR s_sp[]        = {' ',0};
-    static const WCHAR s_2sp[]       = {' ',' ',0};
-    static const WCHAR s_spt[]       = {' ',' ','t',0};
-    static const WCHAR s_sp3t[]      = {' ',' ',' ','t',0};
-    static const WCHAR s_sp03[]      = {' ',' ','0','3',0};
-    static const WCHAR s_sp001[]     = {' ',' ','0','0','1',0};
-    static const WCHAR s_sp001002[]  = {' ',' ','0','0','1',',',' ','0','0','0','2',0};
-    static const WCHAR s_sp001sp002[] = {' ',' ','0','0','1',',',' ',' ','0','0','0','2',0};
-    static const WCHAR s_sp002sp001[] = {' ',' ','0','0','0','2',',',' ',' ','0','0','1',0};
-    static const WCHAR s_sp002sp003[] = {' ',' ','0','0','0','2',',',' ','0','0','0','0','3',0};
-    static const WCHAR s_sp001004[]   = {' ',' ','0','0','1',',','0','0','0','0','0','4',0};
-    static const WCHAR s_null[]       = {'(','n','u','l','l',')',0};
-
-    static const WCHAR init_buf[] = {'x', 'x', 'x', 'x', 'x', 'x'};
-    static const WCHAR broken_buf[] = {'t','e','s','t','x','x'};
-
     WCHAR out[0x100] = {0};
     DWORD r, error;
 
     /* the basics */
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, ARRAY_SIZE(out), NULL);
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
 
     /* null string, crashes on Windows */
     if (0)
     {
         SetLastError(0xdeadbeef);
-        memcpy(out, init_buf, sizeof(init_buf));
+        lstrcpyW( out, L"xxxxxx" );
         FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0, 0, out, ARRAY_SIZE(out), NULL);
     }
 
     /* empty string */
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, empty, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"", 0, 0, out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
-    ok(!lstrcmpW(empty, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==0, "succeeded: r=%d\n", r);
     ok((error==0xdeadbeef) || (error == ERROR_NO_WORK_DONE), "last error %u\n", error);
 
     /* format placeholder with no specifier */
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt_null, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"%", 0, 0, out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the buffer to be unchanged\n");
     ok(r==0, "succeeded: r=%d\n", r);
     ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
 
     /* test string with format placeholder with no specifier */
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt_tnull, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test%", 0, 0, out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
-    ok(!memcmp(out, init_buf, sizeof(init_buf)) ||
-       broken(!memcmp(out, broken_buf, sizeof(broken_buf))), /* W2K3+ */
+    ok(!lstrcmpW( out, L"xxxxxx" ) ||
+       broken(!lstrcmpW(out, L"testxx")), /* W2K3+ */
        "Expected the buffer to be unchanged\n");
     ok(r==0, "succeeded: r=%d\n", r);
     ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
 
     /* insertion with no variadic arguments */
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt_1, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"%1", 0, 0, out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the buffer to be unchanged\n");
     ok(r==0, "succeeded: r=%d\n", r);
     ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1, 0,
+    lstrcpyW( out, L"xxxxxx" );
+    r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, L"%1", 0,
                        0, out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the buffer to be unchanged\n");
     ok(r==0, "succeeded: r=%d\n", r);
     ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
 
     /* using the format feature */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1s, 0, 0, out, ARRAY_SIZE(out), test);
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!s!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* no format */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1, 0, 0, out, ARRAY_SIZE(out), test);
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* two pieces */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_12, 0, 0, out, ARRAY_SIZE(out), te, st);
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1%2", 0, 0, out, ARRAY_SIZE(out), L"te", L"st");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* three pieces */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_123, 0, 0, out, ARRAY_SIZE(out), t, s, e);
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1%3%2%1", 0, 0, out, ARRAY_SIZE(out), L"t", L"s", L"e");
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* s doesn't seem to work in format strings */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_s, 0, 0, out, ARRAY_SIZE(out), test);
-    ok(!lstrcmpW(&fmt_s[1], out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!s!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"!s!", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==3, "failed: r=%d\n", r);
 
     /* nor ls */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_ls, 0, 0, out, ARRAY_SIZE(out), test);
-    ok(!lstrcmpW(&fmt_ls[1], out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!ls!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"!ls!", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
 
     /* nor S */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_S, 0, 0, out, ARRAY_SIZE(out), test);
-    ok(!lstrcmpW(&fmt_S[1], out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!S!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"!S!", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==3, "failed: r=%d\n", r);
 
     /* nor ws */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_ws, 0, 0, out, ARRAY_SIZE(out), test);
-    ok(!lstrcmpW(&fmt_ws[1], out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%!ws!", 0, 0, out, ARRAY_SIZE(out), L"test");
+    ok(!lstrcmpW(L"!ws!", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4, "failed: r=%d\n", r);
 
     /* as characters */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_123c, 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!c!%2!c!%3!c!%1!c!", 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* lc is unicode */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_123lc, 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!lc!%2!lc!%3!lc!%1!lc!", 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* wc is unicode */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_123wc, 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!wc!%2!wc!%3!wc!%1!wc!", 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* C is unicode */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_123C, 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!C!%2!C!%3!C!%1!C!", 0, 0, out, ARRAY_SIZE(out), 't', 'e', 's');
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* some numbers */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_123d, 0, 0, out, ARRAY_SIZE(out), 1, 2, 3);
-    ok(!lstrcmpW(s_123d, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!d!%2!d!%3!d!", 0, 0, out, ARRAY_SIZE(out), 1, 2, 3);
+    ok(!lstrcmpW(L"123", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==3,"failed: r=%d\n", r);
 
     /* a single digit with some spacing */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_14d, 0, 0, out, ARRAY_SIZE(out), 1);
-    ok(!lstrcmpW(s_14d, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!4d!", 0, 0, out, ARRAY_SIZE(out), 1);
+    ok(!lstrcmpW(L"   1", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* a single digit, left justified */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1_4d, 0, 0, out, ARRAY_SIZE(out), 1);
-    ok(!lstrcmpW(s_1_4d, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!-4d!", 0, 0, out, ARRAY_SIZE(out), 1);
+    ok(!lstrcmpW(L"1   ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* two digit decimal number */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_14d, 0, 0, out, ARRAY_SIZE(out), 11);
-    ok(!lstrcmpW(s_14d2, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!4d!", 0, 0, out, ARRAY_SIZE(out), 11);
+    ok(!lstrcmpW(L"  11", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* a hex number */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_14x, 0, 0, out, ARRAY_SIZE(out), 11);
-    ok(!lstrcmpW(s_14x, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!4x!", 0, 0, out, ARRAY_SIZE(out), 11);
+    ok(!lstrcmpW(L"   b", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* a hex number, upper case */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_14X, 0, 0, out, ARRAY_SIZE(out), 11);
-    ok(!lstrcmpW(s_14X, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!4X!", 0, 0, out, ARRAY_SIZE(out), 11);
+    ok(!lstrcmpW(L"   B", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* a hex number, upper case, left justified */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1_4X, 0, 0, out, ARRAY_SIZE(out), 11);
-    ok(!lstrcmpW(s_1_4X, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!-4X!", 0, 0, out, ARRAY_SIZE(out), 11);
+    ok(!lstrcmpW(L"B   ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* a long hex number, upper case */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_14X, 0, 0, out, ARRAY_SIZE(out), 0x1ab);
-    ok(!lstrcmpW(s_1AB, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!4X!", 0, 0, out, ARRAY_SIZE(out), 0x1ab);
+    ok(!lstrcmpW(L" 1AB", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* two percent... */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_2pct, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_2pct, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L" %%%% ", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L" %% ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* periods are special cases */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_2dot1d, 0, 0, out, ARRAY_SIZE(out), 0x1ab);
-    ok(!lstrcmpW(s_2dot147, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L" %.%.  %1!d!", 0, 0, out, ARRAY_SIZE(out), 0x1ab);
+    ok(!lstrcmpW(L" ..  427", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==8,"failed: r=%d\n", r);
 
     /* %0 ends the line */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_t0t, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(test, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"test%0test", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"test", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* %! prints an exclamation */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_yah, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_yah, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"yah%!%0   ", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"yah!", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* %space */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_space, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_space, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"% %   ", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"    ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* %n yields \r\n, %r yields \r, %t yields \t */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_nrt, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_nrt, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%n%r%t", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"\r\n\r\t", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* line feed */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_hi_lf, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_hi_crlf, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"hi\n", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"hi\r\n", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* carriage return line feed */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_hi_crlf, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_hi_crlf, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"hi\r\n", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"hi\r\n", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* carriage return */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_cr, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_crlf, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"\r", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"\r\n", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==2,"failed: r=%d\n", r);
 
     /* double carriage return line feed */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_crcrlf, 0, 0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_crlfcrlf, out), "failed out=%s\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"\r\r\n", 0, 0, out, ARRAY_SIZE(out));
+    ok(!lstrcmpW(L"\r\n\r\n", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n", r);
 
     /* null string as argument */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1, 0, 0, out, ARRAY_SIZE(out), NULL);
-    ok(!lstrcmpW(s_null, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1", 0, 0, out, ARRAY_SIZE(out), NULL);
+    ok(!lstrcmpW(L"(null)", out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==6,"failed: r=%d\n",r);
 
     /* precision and width */
 
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_13s, 0, 0, out, ARRAY_SIZE(out), t );
-    ok(!lstrcmpW(s_spt, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!3s!", 0, 0, out, ARRAY_SIZE(out), L"t" );
+    ok(!lstrcmpW(L"  t", out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==3, "failed: r=%d\n",r);
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1os, 0, 0, out, ARRAY_SIZE(out), 4, t );
-    ok(!lstrcmpW( s_sp3t, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!*s!", 0, 0, out, ARRAY_SIZE(out), 4, L"t" );
+    ok(!lstrcmpW( L"   t", out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n",r);
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_142u, 0, 0, out, ARRAY_SIZE(out), 3 );
-    ok(!lstrcmpW( s_sp03, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!4.2u!", 0, 0, out, ARRAY_SIZE(out), 3 );
+    ok(!lstrcmpW( L"  03", out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==4,"failed: r=%d\n",r);
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou, 0, 0, out, ARRAY_SIZE(out), 5, 3, 1 );
-    ok(!lstrcmpW( s_sp001, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!*.*u!", 0, 0, out, ARRAY_SIZE(out), 5, 3, 1 );
+    ok(!lstrcmpW( L"  001", out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==5,"failed: r=%d\n",r);
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou1oou, 0, 0, out, ARRAY_SIZE(out),
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!*.*u!,%1!*.*u!", 0, 0, out, ARRAY_SIZE(out),
               5, 3, 1, 4, 2 );
-    ok(!lstrcmpW( s_sp001002, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW( L"  001, 0002", out),"failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==11,"failed: r=%d\n",r);
-    r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1oou3oou, 0, 0, out, ARRAY_SIZE(out),
+    r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!*.*u!,%3!*.*u!", 0, 0, out, ARRAY_SIZE(out),
               5, 3, 1, 6, 4, 2 );
-    ok(!lstrcmpW( s_sp001sp002, out) ||
-       broken(!lstrcmpW(s_sp001004, out)), /* NT4/Win2k */
+    ok(!lstrcmpW( L"  001,  0002", out) ||
+       broken(!lstrcmpW(L"  001,000004", out)), /* NT4/Win2k */
        "failed out=[%s]\n", wine_dbgstr_w(out));
     ok(r==12,"failed: r=%d\n",r);
     /* args are not counted the same way with an argument array */
     {
         ULONG_PTR args[] = { 6, 4, 2, 5, 3, 1 };
-        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou1oou,
+        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, L"%1!*.*u!,%1!*.*u!",
                            0, 0, out, ARRAY_SIZE(out), (__ms_va_list *)args );
-        ok(!lstrcmpW(s_sp002sp003, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+        ok(!lstrcmpW(L"  0002, 00003", out),"failed out=[%s]\n", wine_dbgstr_w(out));
         ok(r==13,"failed: r=%d\n",r);
-        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, fmt_1oou4oou,
+        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, L"%1!*.*u!,%4!*.*u!",
                            0, 0, out, ARRAY_SIZE(out), (__ms_va_list *)args );
-        ok(!lstrcmpW(s_sp002sp001, out),"failed out=[%s]\n", wine_dbgstr_w(out));
+        ok(!lstrcmpW(L"  0002,  001", out),"failed out=[%s]\n", wine_dbgstr_w(out));
         ok(r==12,"failed: r=%d\n",r);
     }
 
     /* change of pace... test the low byte of dwflags */
 
     /* line feed */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_lf, 0,
+    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, L"hi\n", 0,
               0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_hi_sp, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"hi ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==3,"failed: r=%d\n", r);
 
     /* carriage return line feed */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_crlf, 0,
+    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, L"hi\r\n", 0,
               0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_hi_sp, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"hi ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==3,"failed: r=%d\n", r);
 
     /* carriage return */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_cr, 0,
+    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, L"\r", 0,
               0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_sp, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L" ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==1,"failed: r=%d\n", r);
 
     /* double carriage return line feed */
-    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_crcrlf, 0,
+    r = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_MAX_WIDTH_MASK, L"\r\r\n", 0,
               0, out, ARRAY_SIZE(out));
-    ok(!lstrcmpW(s_2sp, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"  ", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==2,"failed: r=%d\n", r);
 }
 
@@ -422,7 +344,6 @@ static void test_message_from_string(void)
     CHAR out[0x100] = {0};
     DWORD r;
     static const char init_buf[] = {'x', 'x', 'x', 'x', 'x', 'x'};
-    static const WCHAR szwTest[] = { 't','e','s','t',0};
 
     /* the basics */
     r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "test", 0, 0, out, ARRAY_SIZE(out),NULL);
@@ -508,17 +429,17 @@ static void test_message_from_string(void)
     ok(r==3,"failed: r=%d\n",r);
 
     /* ls is unicode */
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!ls!", 0, 0, out, ARRAY_SIZE(out), szwTest);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!ls!", 0, 0, out, ARRAY_SIZE(out), L"test");
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
     /* S is unicode */
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!S!", 0, 0, out, ARRAY_SIZE(out), szwTest);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!S!", 0, 0, out, ARRAY_SIZE(out), L"test");
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
     /* ws is unicode */
-    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!ws!", 0, 0, out, ARRAY_SIZE(out), szwTest);
+    r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!ws!", 0, 0, out, ARRAY_SIZE(out), L"test");
     ok(!strcmp("test", out),"failed out=[%s]\n",out);
     ok(r==4,"failed: r=%d\n",r);
 
@@ -810,116 +731,95 @@ static void test_message_ignore_inserts(void)
 
 static void test_message_ignore_inserts_wide(void)
 {
-    static const WCHAR test[] = {'t','e','s','t',0};
-    static const WCHAR empty[] = {0};
-    static const WCHAR fmt_t0[] = {'t','e','s','t','%','0',0};
-    static const WCHAR fmt_t0t[] = {'t','e','s','t','%','0','t','e','s','t',0};
-    static const WCHAR fmt_0t[] = {'%','0','t','e','s','t',0};
-    static const WCHAR fmt_t12oos99[] = {'t','e','s','t','%','1','%','2','!','*','.','*','s','!','%','9','9',0};
-    static const WCHAR fmt_pctspacedot[] = {'%','%','%',' ','%','.','%','!',0};
-    static const WCHAR fmt_nrt[] = {'%','n','%','r','%','t',0};
-    static const WCHAR fmt_hi_lf[]   = {'h','i','\n',0};
-    static const WCHAR fmt_hi_crlf[] = {'h','i','\r','\n',0};
-    static const WCHAR fmt_cr[]      = {'\r',0};
-    static const WCHAR fmt_crcrlf[]  = {'\r','\r','\n',0};
-
-    static const WCHAR s_nrt[] = {'\r','\n','\r','\t',0};
-    static const WCHAR s_hi_crlf[] = {'h','i','\r','\n',0};
-    static const WCHAR s_crlf[] = {'\r','\n',0};
-    static const WCHAR s_crlfcrlf[] = {'\r','\n','\r','\n',0};
-    static const WCHAR s_hi_sp[] = {'h','i',' ',0};
-    static const WCHAR s_sp[] = {' ',0};
-    static const WCHAR s_2sp[] = {' ',' ',0};
-
     DWORD ret;
     WCHAR out[256];
 
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, test, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"test", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(test, out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"test", out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
 
     /* The %0 escape sequence is handled. */
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t0, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"test%0", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(test, out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"test", out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
 
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t0t, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"test%0test", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(test, out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"test", out), "Expected output string \"test\", got %s\n", wine_dbgstr_w(out));
 
     /* While FormatMessageA returns 0 in this case, no last error code is set. */
     SetLastError(0xdeadbeef);
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_0t, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"%0test", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %d\n", ret);
-    ok(!lstrcmpW(empty, out), "Expected the output buffer to be the empty string, got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"", out), "Expected the output buffer to be the empty string, got %s\n", wine_dbgstr_w(out));
     ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
       "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     /* Insert sequences are ignored. */
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_t12oos99, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"test%1%2!*.*s!%99", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 17, "Expected FormatMessageW to return 17, got %d\n", ret);
-    ok(!lstrcmpW(fmt_t12oos99, out), "Expected output string \"test%%1%%2!*.*s!%%99\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"test%1%2!*.*s!%99", out), "Expected output string \"test%%1%%2!*.*s!%%99\", got %s\n", wine_dbgstr_w(out));
 
     /* Only the "%n", "%r", and "%t" escape sequences are processed. */
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_pctspacedot, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"%%% %.%!", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 8, "Expected FormatMessageW to return 8, got %d\n", ret);
-    ok(!lstrcmpW(fmt_pctspacedot, out), "Expected output string \"%%%%%% %%.%%!\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"%%% %.%!", out), "Expected output string \"%%%%%% %%.%%!\", got %s\n", wine_dbgstr_w(out));
 
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_nrt, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"%n%r%t", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(s_nrt, out), "Expected output string \"\\r\\n\\r\\t\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"\r\n\r\t", out), "Expected output string \"\\r\\n\\r\\t\", got %s\n", wine_dbgstr_w(out));
 
     /* CRLF characters are processed normally. */
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_hi_lf, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"hi\n", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(s_hi_crlf, out), "Expected output string \"hi\\r\\n\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"hi\r\n", out), "Expected output string \"hi\\r\\n\", got %s\n", wine_dbgstr_w(out));
 
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_hi_crlf, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"hi\r\n", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(s_hi_crlf, out), "Expected output string \"hi\\r\\n\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"hi\r\n", out), "Expected output string \"hi\\r\\n\", got %s\n", wine_dbgstr_w(out));
 
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_cr, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"\r", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 2, "Expected FormatMessageW to return 2, got %d\n", ret);
-    ok(!lstrcmpW(s_crlf, out), "Expected output string \"\\r\\n\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"\r\n", out), "Expected output string \"\\r\\n\", got %s\n", wine_dbgstr_w(out));
 
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, fmt_crcrlf, 0, 0, out,
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"\r\r\n", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %d\n", ret);
-    ok(!lstrcmpW(s_crlfcrlf, out), "Expected output string \"\\r\\n\\r\\n\", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"\r\n\r\n", out), "Expected output string \"\\r\\n\\r\\n\", got %s\n", wine_dbgstr_w(out));
 
     /* The width parameter is handled the same also. */
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
-                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_lf, 0, 0, out,
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, L"hi\n", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 3, "Expected FormatMessageW to return 3, got %d\n", ret);
-    ok(!lstrcmpW(s_hi_sp, out), "Expected output string \"hi \", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"hi ", out), "Expected output string \"hi \", got %s\n", wine_dbgstr_w(out));
 
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
-                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_hi_crlf, 0, 0, out,
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, L"hi\r\n", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 3, "Expected FormatMessageW to return 3, got %d\n", ret);
-    ok(!lstrcmpW(s_hi_sp, out), "Expected output string \"hi \", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"hi ", out), "Expected output string \"hi \", got %s\n", wine_dbgstr_w(out));
 
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
-                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_cr, 0, 0, out, ARRAY_SIZE(out), NULL);
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, L"\r", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 1, "Expected FormatMessageW to return 1, got %d\n", ret);
-    ok(!lstrcmpW(s_sp, out), "Expected output string \" \", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L" ", out), "Expected output string \" \", got %s\n", wine_dbgstr_w(out));
 
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS |
-                         FORMAT_MESSAGE_MAX_WIDTH_MASK, fmt_crcrlf, 0, 0, out,
+                         FORMAT_MESSAGE_MAX_WIDTH_MASK, L"\r\r\n", 0, 0, out,
                          ARRAY_SIZE(out), NULL);
     ok(ret == 2, "Expected FormatMessageW to return 2, got %d\n", ret);
-    ok(!lstrcmpW(s_2sp, out), "Expected output string \"  \", got %s\n", wine_dbgstr_w(out));
+    ok(!lstrcmpW(L"  ", out), "Expected output string \"  \", got %s\n", wine_dbgstr_w(out));
 }
 
 static void test_message_wrap(void)
@@ -1151,46 +1051,43 @@ static void test_message_insufficient_buffer(void)
 
 static void test_message_insufficient_buffer_wide(void)
 {
-    static const WCHAR test[] = {'t','e','s','t',0};
-    static const WCHAR init_buf[] = {'x', 'x', 'x', 'x', 'x'};
-    static const WCHAR expected_buf[] = {'x', 'x', 'x', 'x', 'x'};
-    static const WCHAR broken_buf[] = {0, 'x', 'x', 'x', 'x'};
-    static const WCHAR broken2_buf[] = {'t','e','s',0,'x'};
+    static const WCHAR broken_buf[] = L"\0xxxxx";
+    static const WCHAR broken2_buf[] = L"tes\0x";
 
     DWORD ret;
-    WCHAR out[5];
+    WCHAR out[8];
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, 0, NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test", 0, 0, out, 0, NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    ok(!memcmp(expected_buf, out, sizeof(expected_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the buffer to be untouched\n");
 
     /* Windows Server 2003 and newer report failure but copy a
      * truncated string to the buffer for non-zero buffer sizes. */
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, 1, NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test", 0, 0, out, 1, NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    ok(!memcmp(expected_buf, out, sizeof(expected_buf)) ||
+    ok(!lstrcmpW( out, L"xxxxxx" ) ||
        broken(!memcmp(broken_buf, out, sizeof(broken_buf))), /* W2K3+ */
        "Expected the buffer to be untouched\n");
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, test, 0, 0, out, ARRAY_SIZE(out) - 1, NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test", 0, 0, out, 4, NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    ok(!memcmp(expected_buf, out, sizeof(expected_buf)) ||
+    ok(!lstrcmpW( out, L"xxxxxx" ) ||
        broken(!memcmp(broken2_buf, out, sizeof(broken2_buf))), /* W2K3+ */
        "Expected the buffer to be untouched\n");
 }
@@ -1367,9 +1264,6 @@ static void test_message_allocate_buffer(void)
 
 static void test_message_allocate_buffer_wide(void)
 {
-    static const WCHAR empty[] = {0};
-    static const WCHAR test[] = {'t','e','s','t',0};
-
     DWORD ret;
     WCHAR *buf;
 
@@ -1390,7 +1284,7 @@ static void test_message_allocate_buffer_wide(void)
     SetLastError(0xdeadbeef);
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         empty, 0, 0, (WCHAR *)&buf, 0, NULL);
+                         L"", 0, 0, (WCHAR *)&buf, 0, NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
     ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
     ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
@@ -1398,65 +1292,65 @@ static void test_message_allocate_buffer_wide(void)
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         test, 0, 0, (WCHAR *)&buf, 0, NULL);
+                         L"test", 0, 0, (WCHAR *)&buf, 0, NULL);
     ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
     ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
        "Expected output buffer pointer to be valid\n");
     if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
     {
-        ok(!lstrcmpW(test, buf),
+        ok(!lstrcmpW(L"test", buf),
            "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
         LocalFree(buf);
     }
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         test, 0, 0, (WCHAR *)&buf, ARRAY_SIZE(test) - 1, NULL);
+                         L"test", 0, 0, (WCHAR *)&buf, 4, NULL);
     ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
     ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
        "Expected output buffer pointer to be valid\n");
     if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
     {
-        ok(!lstrcmpW(test, buf),
+        ok(!lstrcmpW(L"test", buf),
            "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
         LocalFree(buf);
     }
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         test, 0, 0, (WCHAR *)&buf, ARRAY_SIZE(test), NULL);
+                         L"test", 0, 0, (WCHAR *)&buf, 5, NULL);
     ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
     ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
        "Expected output buffer pointer to be valid\n");
     if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
     {
-        ok(!lstrcmpW(test, buf),
+        ok(!lstrcmpW(L"test", buf),
            "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
         LocalFree(buf);
     }
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         test, 0, 0, (WCHAR *)&buf, ARRAY_SIZE(test) + 1, NULL);
+                         L"test", 0, 0, (WCHAR *)&buf, 6, NULL);
     ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
     ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
        "Expected output buffer pointer to be valid\n");
     if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
     {
-        ok(!lstrcmpW(test, buf),
+        ok(!lstrcmpW(L"test", buf),
            "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
         LocalFree(buf);
     }
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                         test, 0, 0, (WCHAR *)&buf, 1024, NULL);
+                         L"test", 0, 0, (WCHAR *)&buf, 1024, NULL);
     ok(ret == 4, "Expected FormatMessageA to return 4, got %u\n", ret);
     ok(buf != NULL && buf != (WCHAR *)0xdeadbeef,
        "Expected output buffer pointer to be valid\n");
     if (buf != NULL && buf != (WCHAR *)0xdeadbeef)
     {
-        ok(!lstrcmpW(test, buf),
+        ok(!lstrcmpW(L"test", buf),
            "Expected buffer to contain \"test\", got %s\n", wine_dbgstr_w(buf));
         LocalFree(buf);
     }
@@ -1634,18 +1528,15 @@ static void test_message_invalid_flags(void)
 
 static void test_message_invalid_flags_wide(void)
 {
-    static const WCHAR init_buf[] = {'x', 'x', 'x', 'x', 'x'};
-    static const WCHAR test[] = {'t','e','s','t',0};
-
     DWORD ret;
-    WCHAR out[5];
+    WCHAR out[8];
     WCHAR *ptr;
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(0, test, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(0, L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the output buffer to be untouched\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
@@ -1653,7 +1544,7 @@ static void test_message_invalid_flags_wide(void)
 
     SetLastError(0xdeadbeef);
     ptr = (WCHAR *)0xdeadbeef;
-    ret = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER, test, 0, 0, (WCHAR *)&ptr, 0, NULL);
+    ret = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER, L"test", 0, 0, (WCHAR *)&ptr, 0, NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
     ok(ptr == NULL, "Expected output pointer to be initialized to NULL, got %p\n", ptr);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
@@ -1661,30 +1552,30 @@ static void test_message_invalid_flags_wide(void)
        GetLastError());
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(FORMAT_MESSAGE_IGNORE_INSERTS, test, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(FORMAT_MESSAGE_IGNORE_INSERTS, L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the output buffer to be untouched\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(FORMAT_MESSAGE_ARGUMENT_ARRAY, test, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(FORMAT_MESSAGE_ARGUMENT_ARRAY, L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the output buffer to be untouched\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
        GetLastError());
 
     SetLastError(0xdeadbeef);
-    memcpy(out, init_buf, sizeof(init_buf));
-    ret = FormatMessageW(FORMAT_MESSAGE_MAX_WIDTH_MASK, test, 0, 0, out, ARRAY_SIZE(out), NULL);
+    lstrcpyW( out, L"xxxxxx" );
+    ret = FormatMessageW(FORMAT_MESSAGE_MAX_WIDTH_MASK, L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
-    ok(!memcmp(out, init_buf, sizeof(init_buf)),
+    ok(!lstrcmpW( out, L"xxxxxx" ),
        "Expected the output buffer to be untouched\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
@@ -1694,32 +1585,30 @@ static void test_message_invalid_flags_wide(void)
      * flags is apparently permissible, and FORMAT_MESSAGE_FROM_STRING takes
      * precedence in this case. */
 
-    memcpy(out, init_buf, sizeof(init_buf));
+    lstrcpyW( out, L"xxxxxx" );
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_SYSTEM,
-                         test, 0, 0, out, ARRAY_SIZE(out), NULL);
+                         L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %u\n", ret);
-    ok(!lstrcmpW(test, out),
+    ok(!lstrcmpW(L"test", out),
        "Expected the output buffer to be untouched\n");
 
-    memcpy(out, init_buf, sizeof(init_buf));
+    lstrcpyW( out, L"xxxxxx" );
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_HMODULE,
-                         test, 0, 0, out, ARRAY_SIZE(out), NULL);
+                         L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %u\n", ret);
-    ok(!lstrcmpW(test, out),
+    ok(!lstrcmpW(L"test", out),
        "Expected the output buffer to be untouched\n");
 
-    memcpy(out, init_buf, sizeof(init_buf));
+    lstrcpyW( out, L"xxxxxx" );
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_FROM_HMODULE |
-                         FORMAT_MESSAGE_FROM_SYSTEM, test, 0, 0, out, ARRAY_SIZE(out), NULL);
+                         FORMAT_MESSAGE_FROM_SYSTEM, L"test", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(ret == 4, "Expected FormatMessageW to return 4, got %u\n", ret);
-    ok(!lstrcmpW(test, out),
+    ok(!lstrcmpW(L"test", out),
        "Expected the output buffer to be untouched\n");
 }
 
 static void test_message_from_64bit_number(void)
 {
-    static const WCHAR I64d[] = {'%', '1', '!', 'I', '6', '4', 'd', '!', 0};
-    static const WCHAR I64u[] = {'%', '1', '!', 'I', '6', '4', 'u', '!', 0};
     WCHAR outW[0x100], expW[0x100];
     char outA[0x100];
     DWORD r;
@@ -1753,7 +1642,7 @@ static void test_message_from_64bit_number(void)
 
     for (i = 0; i < ARRAY_SIZE(unsigned_tests); i++)
     {
-        r = doitW(FORMAT_MESSAGE_FROM_STRING, I64u, 0, 0, outW, ARRAY_SIZE(outW),
+        r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!I64u!", 0, 0, outW, ARRAY_SIZE(outW),
                   unsigned_tests[i].number);
         MultiByteToWideChar(CP_ACP, 0, unsigned_tests[i].expected, -1, expW, ARRAY_SIZE(expW));
 todo_wine {
@@ -1772,7 +1661,7 @@ todo_wine {
 
     for (i = 0; i < ARRAY_SIZE(signed_tests); i++)
     {
-        r = doitW(FORMAT_MESSAGE_FROM_STRING, I64d, 0, 0, outW, ARRAY_SIZE(outW),
+        r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!I64d!", 0, 0, outW, ARRAY_SIZE(outW),
                   signed_tests[i].number);
         MultiByteToWideChar(CP_ACP, 0, signed_tests[i].expected, -1, expW, ARRAY_SIZE(expW));
 todo_wine {
