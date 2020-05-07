@@ -895,7 +895,10 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 
     window = desc->device_window ? desc->device_window : device->create_parms.focus_window;
     if (FAILED(hr = wined3d_swapchain_state_init(&swapchain->state, desc, window, device->wined3d)))
-        return hr;
+    {
+        ERR("Failed to initialise swapchain state, hr %#x.\n", hr);
+        goto err;
+    }
 
     swapchain->swapchain_ops = swapchain_ops;
     swapchain->device = device;
