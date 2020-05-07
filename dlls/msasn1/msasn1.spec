@@ -222,7 +222,7 @@
 @ stdcall ASN1_CloseModule(ptr)
 @ stub ASN1_CreateDecoder
 @ stub ASN1_CreateDecoderEx
-@ stub ASN1_CreateEncoder
+@ stdcall ASN1_CreateEncoder(ptr ptr ptr long ptr)
 @ stdcall ASN1_CreateModule(long long long long ptr ptr ptr ptr long)
 @ stub ASN1_Decode
 @ stub ASN1_Encode

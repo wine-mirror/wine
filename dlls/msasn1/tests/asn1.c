@@ -47,22 +47,22 @@ static void test_CreateModule(void)
 
     mod = ASN1_CreateModule(0, 0, 0, 0, encfn, decfn, freefn, size, 0);
     ok(!!mod, "Failed to create module.\n");
-    ok(mod->nModuleName==0, "Got Module name = %d\n.",mod->nModuleName);
-    ok(mod->eRule==0, "Got eRule = %08x\n.",mod->eRule);
-    ok(mod->dwFlags==0, "Got Flags = %08x\n.",mod->dwFlags);
-    ok(mod->cPDUs==0, "Got PDUs = %08x\n.",mod->cPDUs);
+    ok(mod->nModuleName==0, "Got Module name = %d.\n",mod->nModuleName);
+    ok(mod->eRule==0, "Got eRule = %08x.\n",mod->eRule);
+    ok(mod->dwFlags==0, "Got Flags = %08x.\n",mod->dwFlags);
+    ok(mod->cPDUs==0, "Got PDUs = %08x.\n",mod->cPDUs);
     ok(mod->apfnFreeMemory==freefn, "Free function = %p.\n",mod->apfnFreeMemory);
     ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
-    ok(!mod->PER.apfnEncoder, "Encoder function should not be s et.\n");
+    ok(!mod->PER.apfnEncoder, "Encoder function should not be set.\n");
     ok(!mod->PER.apfnDecoder, "Decoder function should not be set.\n");
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
     ok(!!mod, "Failed to create module.\n");
-    ok(mod->nModuleName==name, "Got Module name = %d\n.",mod->nModuleName);
-    ok(mod->eRule==ASN1_BER_RULE_DER, "Got eRule = %08x\n.",mod->eRule);
-    ok(mod->cPDUs==1, "Got PDUs = %08x\n.",mod->cPDUs);
-    ok(mod->dwFlags==ASN1FLAGS_NOASSERT, "Got Flags = %08x\n.",mod->dwFlags);
+    ok(mod->nModuleName==name, "Got Module name = %d.\n",mod->nModuleName);
+    ok(mod->eRule==ASN1_BER_RULE_DER, "Got eRule = %08x.\n",mod->eRule);
+    ok(mod->cPDUs==1, "Got PDUs = %08x.\n",mod->cPDUs);
+    ok(mod->dwFlags==ASN1FLAGS_NOASSERT, "Got Flags = %08x.\n",mod->dwFlags);
     ok(mod->apfnFreeMemory==freefn, "Free function = %p.\n",mod->apfnFreeMemory);
     ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
     ok(mod->BER.apfnEncoder==(ASN1BerEncFun_t *)encfn, "Encoder function = %p.\n",mod->BER.apfnEncoder);
@@ -71,10 +71,10 @@ static void test_CreateModule(void)
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
     ok(!!mod, "Failed to create module.\n");
-    ok(mod->nModuleName==name, "Got Module name = %d\n.",mod->nModuleName);
-    ok(mod->eRule==ASN1_PER_RULE_ALIGNED, "Got eRule = %08x\n.",mod->eRule);
-    ok(mod->cPDUs==1, "Got PDUs = %08x\n.",mod->cPDUs);
-    ok(mod->dwFlags==ASN1FLAGS_NOASSERT, "Got Flags = %08x\n.",mod->dwFlags);
+    ok(mod->nModuleName==name, "Got Module name = %d.\n",mod->nModuleName);
+    ok(mod->eRule==ASN1_PER_RULE_ALIGNED, "Got eRule = %08x.\n",mod->eRule);
+    ok(mod->cPDUs==1, "Got PDUs = %08x.\n",mod->cPDUs);
+    ok(mod->dwFlags==ASN1FLAGS_NOASSERT, "Got Flags = %08x.\n",mod->dwFlags);
     ok(mod->apfnFreeMemory==freefn, "Free function = %p.\n",mod->apfnFreeMemory);
     ok(mod->acbStructSize==size, "Struct size = %p.\n",mod->acbStructSize);
     ok(mod->PER.apfnEncoder==(ASN1PerEncFun_t *)encfn /* WINXP & WIN2008 */ ||
@@ -84,7 +84,142 @@ static void test_CreateModule(void)
     ASN1_CloseModule(mod);
 }
 
+static void test_CreateEncoder(void)
+{
+    const ASN1GenericFun_t encfn[] = { NULL };
+    const ASN1GenericFun_t decfn[] = { NULL };
+    const ASN1FreeFun_t freefn[] = { NULL };
+    const ASN1uint32_t size[] = { 0 };
+    ASN1magic_t name = 0x61736e31;
+    ASN1encoding_t encoder = NULL;
+    ASN1octet_t buf[] = {0x54,0x65,0x73,0x74,0};
+    ASN1module_t mod;
+    ASN1error_e ret;
+
+    ret = ASN1_CreateEncoder(NULL, NULL, NULL, 0, NULL);
+    ok(ret == ASN1_ERR_BADARGS,"Got error code %d.\n",ret);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateEncoder(mod, NULL, NULL, 0, NULL);
+    ok(ret == ASN1_ERR_BADARGS,"Got error code %d.\n",ret);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, NULL, 0, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!encoder,"Encoder creation failed.\n");
+    ok(encoder->magic==0x44434e45,"Got invalid magic = %08x.\n",encoder->magic);
+    ok(!encoder->version,"Got incorrect version = %08x.\n",encoder->version);
+    ok(encoder->module==mod,"Got incorrect module = %p.\n",encoder->module);
+    ok(!encoder->buf,"Got incorrect buf = %p.\n",encoder->buf);
+    ok(!encoder->size,"Got incorrect size = %u.\n",encoder->size);
+    ok(!encoder->len,"Got incorrect length = %u.\n",encoder->len);
+    ok(encoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",encoder->err);
+    ok(!encoder->bit,"Got incorrect bit = %u.\n",encoder->bit);
+    ok(!encoder->pos,"Got incorrect pos = %p.\n",encoder->pos);
+    ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
+    ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",encoder->eRule);
+    ok(encoder->dwFlags == ASN1ENCODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!encoder,"Encoder creation failed.\n");
+    ok(encoder->magic==0x44434e45,"Got invalid magic = %08x.\n",encoder->magic);
+    ok(!encoder->version,"Got incorrect version = %08x.\n",encoder->version);
+    ok(encoder->module==mod,"Got incorrect module = %p.\n",encoder->module);
+    ok(!encoder->buf,"Got incorrect buf = %p.\n",encoder->buf);
+    ok(!encoder->size,"Got incorrect size = %u.\n",encoder->size);
+    ok(!encoder->len,"Got incorrect length = %u.\n",encoder->len);
+    ok(encoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",encoder->err);
+    ok(!encoder->bit,"Got incorrect bit = %u.\n",encoder->bit);
+    ok(!encoder->pos,"Got incorrect pos = %p.\n",encoder->pos);
+    ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
+    ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",encoder->eRule);
+    ok(encoder->dwFlags == ASN1ENCODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 2, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!encoder,"Encoder creation failed.\n");
+    ok(encoder->magic==0x44434e45,"Got invalid magic = %08x.\n",encoder->magic);
+    ok(!encoder->version,"Got incorrect version = %08x.\n",encoder->version);
+    ok(encoder->module==mod,"Got incorrect module = %p.\n",encoder->module);
+    ok(encoder->buf==buf,"Got incorrect buf = %p.\n",encoder->buf);
+    ok(encoder->size==2,"Got incorrect size = %u.\n",encoder->size);
+    ok(!encoder->len,"Got incorrect length = %u.\n",encoder->len);
+    ok(encoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",encoder->err);
+    ok(!encoder->bit,"Got incorrect bit = %u.\n",encoder->bit);
+    ok(encoder->pos==buf,"Got incorrect pos = %p.\n",encoder->pos);
+    ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
+    ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",encoder->eRule);
+    ok(encoder->dwFlags == (ASN1ENCODE_NOASSERT|ASN1ENCODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!encoder,"Encoder creation failed.\n");
+    ok(encoder->magic==0x44434e45,"Got invalid magic = %08x.\n",encoder->magic);
+    ok(!encoder->version,"Got incorrect version = %08x.\n",encoder->version);
+    ok(encoder->module==mod,"Got incorrect module = %p.\n",encoder->module);
+    ok(encoder->buf==buf,"Got incorrect buf = %p.\n",encoder->buf);
+    ok(encoder->size==4,"Got incorrect size = %u.\n",encoder->size);
+    ok(!encoder->len,"Got incorrect length = %u.\n",encoder->len);
+    ok(encoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",encoder->err);
+    ok(!encoder->bit,"Got incorrect bit = %u.\n",encoder->bit);
+    ok(encoder->pos==buf,"Got incorrect pos = %p.\n",encoder->pos);
+    ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
+    ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect rule = %08x.\n",encoder->eRule);
+    ok(encoder->dwFlags == (ASN1ENCODE_NOASSERT|ASN1ENCODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseModule(mod);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
+    ok(encoder->dwFlags == 0,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
+    ok(encoder->dwFlags == ASN1ENCODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseModule(mod);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!encoder,"Encoder creation failed.\n");
+    ok(encoder->magic==0x44434e45,"Got invalid magic = %08x.\n",encoder->magic);
+    ok(!encoder->version,"Got incorrect version = %08x.\n",encoder->version);
+    ok(encoder->module==mod,"Got incorrect module = %p.\n",encoder->module);
+    ok(!encoder->buf,"Got incorrect buf = %p.\n",encoder->buf);
+    ok(!encoder->size,"Got incorrect size = %u.\n",encoder->size);
+    ok(!encoder->len,"Got incorrect length = %u.\n",encoder->len);
+    ok(encoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",encoder->err);
+    ok(!encoder->bit,"Got incorrect bit = %u.\n",encoder->bit);
+    ok(!encoder->pos,"Got incorrect pos = %p.\n",encoder->pos);
+    ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
+    ok(encoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect eRule = %08x.\n",encoder->eRule);
+    ok(encoder->dwFlags == ASN1ENCODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
+    ok(!!encoder,"Encoder creation failed.\n");
+    ok(encoder->magic==0x44434e45,"Got invalid magic = %08x.\n",encoder->magic);
+    ok(!encoder->version,"Got incorrect version = %08x.\n",encoder->version);
+    ok(encoder->module==mod,"Got incorrect module = %p.\n",encoder->module);
+    ok(encoder->buf==buf,"Got incorrect buf = %p.\n",encoder->buf);
+    ok(encoder->size==4,"Got incorrect size = %u.\n",encoder->size);
+    ok(!encoder->len,"Got incorrect length = %u.\n",encoder->len);
+    ok(encoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",encoder->err);
+    ok(!encoder->bit,"Got incorrect bit = %u.\n",encoder->bit);
+    ok(encoder->pos==buf,"Got incorrect pos = %p.\n",encoder->pos);
+    ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
+    ok(encoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect rule = %08x.\n",encoder->eRule);
+    ok(encoder->dwFlags == (ASN1FLAGS_NOASSERT|ASN1ENCODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseModule(mod);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
+    ok(encoder->dwFlags == 0,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+
+    ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
+    ok(encoder->dwFlags == ASN1ENCODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseModule(mod);
+}
+
 START_TEST(asn1)
 {
     test_CreateModule();
+    test_CreateEncoder();
 }
