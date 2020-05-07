@@ -56,7 +56,7 @@ static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
 struct quartz_vmr
 {
     struct strmbase_renderer renderer;
-    struct video_window baseControlWindow;
+    struct video_window window;
     BaseControlVideo baseControlVideo;
 
     IAMCertifiedOutputProtection IAMCertifiedOutputProtection_iface;
@@ -119,7 +119,7 @@ static inline BOOL is_vmr9(const struct quartz_vmr *filter)
 
 static inline struct quartz_vmr *impl_from_video_window(struct video_window *iface)
 {
-    return CONTAINING_RECORD(iface, struct quartz_vmr, baseControlWindow);
+    return CONTAINING_RECORD(iface, struct quartz_vmr, window);
 }
 
 static inline struct quartz_vmr *impl_from_BaseControlVideo(BaseControlVideo *cvid)
@@ -415,7 +415,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     };
 
     TRACE("Initializing in mode %u, our window %p, clipping window %p.\n",
-            filter->mode, filter->baseControlWindow.hwnd, filter->hWndClippingWindow);
+            filter->mode, filter->window.hwnd, filter->hWndClippingWindow);
 
     if (filter->mode == VMR9Mode_Windowless && !filter->hWndClippingWindow)
         return S_OK;
@@ -481,7 +481,7 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
     TRACE("(%p)\n", This);
 
     IVMRImagePresenter9_StartPresenting(This->presenter, This->cookie);
-    ShowWindow(This->baseControlWindow.hwnd, SW_SHOW);
+    ShowWindow(This->window.hwnd, SW_SHOW);
     SetEvent(This->run_event);
 }
 
@@ -509,7 +509,7 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
-    HWND window = filter->baseControlWindow.hwnd;
+    HWND window = filter->window.hwnd;
     HRESULT hr;
     RECT rect;
 
@@ -567,7 +567,7 @@ static void vmr_destroy(struct strmbase_renderer *iface)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
-    video_window_cleanup(&filter->baseControlWindow);
+    video_window_cleanup(&filter->window);
 
     /* Devil May Cry 3 releases the IVMRSurfaceAllocatorNotify9 interface from
      * TerminateDevice(). Artificially increase the reference count so that we
@@ -601,7 +601,7 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     if (IsEqualGUID(iid, &IID_IVideoWindow))
-        *out = &filter->baseControlWindow.IVideoWindow_iface;
+        *out = &filter->window.IVideoWindow_iface;
     else if (IsEqualGUID(iid, &IID_IBasicVideo))
         *out = &filter->baseControlVideo.IBasicVideo_iface;
     else if (IsEqualGUID(iid, &IID_IAMCertifiedOutputProtection))
@@ -824,7 +824,7 @@ static HRESULT WINAPI VMR9_SetDefaultTargetRect(BaseControlVideo* This)
     RECT rect;
     struct quartz_vmr* pVMR9 = impl_from_BaseControlVideo(This);
 
-    if (!GetClientRect(pVMR9->baseControlWindow.hwnd, &rect))
+    if (!GetClientRect(pVMR9->window.hwnd, &rect))
         return E_FAIL;
 
     SetRect(&pVMR9->target_rect, 0, 0, rect.right, rect.bottom);
@@ -1598,7 +1598,7 @@ static HRESULT WINAPI VMR7WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     {
         This->target_rect = *dest;
         FIXME("Output rectangle: %s.\n", wine_dbgstr_rect(dest));
-        SetWindowPos(This->baseControlWindow.hwnd, NULL,
+        SetWindowPos(This->window.hwnd, NULL,
                 dest->left, dest->top, dest->right - dest->left, dest->bottom-dest->top,
                 SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREDRAW);
     }
@@ -1799,7 +1799,7 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     {
         This->target_rect = *dest;
         FIXME("Output rectangle: %s.\n", wine_dbgstr_rect(dest));
-        SetWindowPos(This->baseControlWindow.hwnd, NULL,
+        SetWindowPos(This->window.hwnd, NULL,
                 dest->left, dest->top, dest->right - dest->left, dest->bottom - dest->top,
                 SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREDRAW);
     }
@@ -1874,7 +1874,7 @@ static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 
     FIXME("(%p/%p)->(...) semi-stub\n", iface, This);
 
     EnterCriticalSection(&This->renderer.filter.csFilter);
-    if (hwnd != This->hWndClippingWindow && hwnd != This->baseControlWindow.hwnd)
+    if (hwnd != This->hWndClippingWindow && hwnd != This->window.hwnd)
     {
         ERR("Not handling changing windows yet!!!\n");
         LeaveCriticalSection(&This->renderer.filter.csFilter);
@@ -1889,7 +1889,7 @@ static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 
     }
 
     /* Windowless extension */
-    hr = IDirect3DDevice9_Present(This->allocator_d3d9_dev, NULL, NULL, This->baseControlWindow.hwnd, NULL);
+    hr = IDirect3DDevice9_Present(This->allocator_d3d9_dev, NULL, NULL, This->window.hwnd, NULL);
     LeaveCriticalSection(&This->renderer.filter.csFilter);
 
     return hr;
@@ -2348,7 +2348,7 @@ static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
 
     TRACE("filter %p, window %p.\n", filter, window);
 
-    *window = filter->baseControlWindow.hwnd;
+    *window = filter->window.hwnd;
     return S_OK;
 }
 
@@ -2423,12 +2423,12 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     object->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
+    video_window_init(&object->window, &IVideoWindow_VTable,
             &object->renderer.filter, &object->renderer.sink.pin, &window_ops);
 
-    if (FAILED(hr = video_window_create_window(&object->baseControlWindow)))
+    if (FAILED(hr = video_window_create_window(&object->window)))
     {
-        video_window_cleanup(&object->baseControlWindow);
+        video_window_cleanup(&object->window);
         strmbase_renderer_cleanup(&object->renderer);
         FreeLibrary(object->hD3d9);
         free(object);
@@ -2621,7 +2621,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     BOOL render = FALSE;
 
     TRACE("(%p/%p/%p)->(...) stub\n", iface, This, This->pVMR9);
-    GetWindowRect(This->pVMR9->baseControlWindow.hwnd, &output);
+    GetWindowRect(This->pVMR9->window.hwnd, &output);
     TRACE("Output rectangle: %s\n", wine_dbgstr_rect(&output));
 
     /* This might happen if we don't have active focus (eg on a different virtual desktop) */
@@ -2646,7 +2646,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     hr = IDirect3DDevice9_EndScene(This->d3d9_dev);
     if (render && SUCCEEDED(hr))
     {
-        hr = IDirect3DDevice9_Present(This->d3d9_dev, NULL, NULL, This->pVMR9->baseControlWindow.hwnd, NULL);
+        hr = IDirect3DDevice9_Present(This->d3d9_dev, NULL, NULL, This->pVMR9->window.hwnd, NULL);
         if (FAILED(hr))
             FIXME("Presenting image: %08x\n", hr);
     }
@@ -2770,12 +2770,12 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     TRACE("(%p)->()\n", This);
 
     /* Obtain a monitor and d3d9 device */
-    d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->baseControlWindow.hwnd, &This->hMon);
+    d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->window.hwnd, &This->hMon);
 
     /* Now try to create the d3d9 device */
     ZeroMemory(&d3dpp, sizeof(d3dpp));
     d3dpp.Windowed = TRUE;
-    d3dpp.hDeviceWindow = This->pVMR9->baseControlWindow.hwnd;
+    d3dpp.hDeviceWindow = This->pVMR9->window.hwnd;
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferHeight = This->pVMR9->target_rect.bottom - This->pVMR9->target_rect.top;
     d3dpp.BackBufferWidth = This->pVMR9->target_rect.right - This->pVMR9->target_rect.left;
@@ -2874,19 +2874,19 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(struct default_presenter 
     /* Now try to create the d3d9 device */
     ZeroMemory(&d3dpp, sizeof(d3dpp));
     d3dpp.Windowed = TRUE;
-    d3dpp.hDeviceWindow = This->pVMR9->baseControlWindow.hwnd;
+    d3dpp.hDeviceWindow = This->pVMR9->window.hwnd;
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
     if (This->d3d9_dev)
         IDirect3DDevice9_Release(This->d3d9_dev);
     This->d3d9_dev = NULL;
     hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter_from_hwnd(This->d3d9_ptr,
-            This->pVMR9->baseControlWindow.hwnd, &This->hMon), D3DDEVTYPE_HAL, NULL,
+            This->pVMR9->window.hwnd, &This->hMon), D3DDEVTYPE_HAL, NULL,
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
     if (FAILED(hr))
     {
         hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter_from_hwnd(This->d3d9_ptr,
-                This->pVMR9->baseControlWindow.hwnd, &This->hMon), D3DDEVTYPE_HAL, NULL,
+                This->pVMR9->window.hwnd, &This->hMon), D3DDEVTYPE_HAL, NULL,
                 D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
         if (FAILED(hr))
         {

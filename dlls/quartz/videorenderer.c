@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 struct video_renderer
 {
     struct strmbase_renderer renderer;
-    struct video_window baseControlWindow;
+    struct video_window window;
     BaseControlVideo baseControlVideo;
 
     IOverlay IOverlay_iface;
@@ -58,7 +58,7 @@ struct video_renderer
 
 static inline struct video_renderer *impl_from_video_window(struct video_window *iface)
 {
-    return CONTAINING_RECORD(iface, struct video_renderer, baseControlWindow);
+    return CONTAINING_RECORD(iface, struct video_renderer, window);
 }
 
 static inline struct video_renderer *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
@@ -68,7 +68,7 @@ static inline struct video_renderer *impl_from_strmbase_renderer(struct strmbase
 
 static inline struct video_renderer *impl_from_IVideoWindow(IVideoWindow *iface)
 {
-    return CONTAINING_RECORD(iface, struct video_renderer, baseControlWindow.IVideoWindow_iface);
+    return CONTAINING_RECORD(iface, struct video_renderer, window.IVideoWindow_iface);
 }
 
 static inline struct video_renderer *impl_from_BaseControlVideo(BaseControlVideo *iface)
@@ -86,8 +86,8 @@ static const BITMAPINFOHEADER *get_bitmap_header(const AM_MEDIA_TYPE *mt)
 
 static void VideoRenderer_AutoShowWindow(struct video_renderer *This)
 {
-    if (This->baseControlWindow.AutoShow)
-        ShowWindow(This->baseControlWindow.hwnd, SW_SHOW);
+    if (This->window.AutoShow)
+        ShowWindow(This->window.hwnd, SW_SHOW);
 }
 
 static HRESULT WINAPI VideoRenderer_ShouldDrawSampleNow(struct strmbase_renderer *filter,
@@ -115,7 +115,7 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
         return hr;
     }
 
-    dc = GetDC(filter->baseControlWindow.hwnd);
+    dc = GetDC(filter->window.hwnd);
     StretchDIBits(dc, filter->DestRect.left, filter->DestRect.top,
             filter->DestRect.right - filter->DestRect.left,
             filter->DestRect.bottom - filter->DestRect.top,
@@ -123,7 +123,7 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
             filter->SourceRect.right - filter->SourceRect.left,
             filter->SourceRect.bottom - filter->SourceRect.top,
             pbSrcStream, (BITMAPINFO *)get_bitmap_header(&filter->renderer.sink.pin.mt), DIB_RGB_COLORS, SRCCOPY);
-    ReleaseDC(filter->baseControlWindow.hwnd, dc);
+    ReleaseDC(filter->window.hwnd, dc);
 
     if (filter->renderer.filter.state == State_Paused)
     {
@@ -163,7 +163,7 @@ static void video_renderer_destroy(struct strmbase_renderer *iface)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
 
-    video_window_cleanup(&filter->baseControlWindow);
+    video_window_cleanup(&filter->window);
     CloseHandle(filter->run_event);
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);
@@ -178,7 +178,7 @@ static HRESULT video_renderer_query_interface(struct strmbase_renderer *iface, R
     if (IsEqualGUID(iid, &IID_IBasicVideo))
         *out = &filter->baseControlVideo.IBasicVideo_iface;
     else if (IsEqualGUID(iid, &IID_IVideoWindow))
-        *out = &filter->baseControlWindow.IVideoWindow_iface;
+        *out = &filter->window.IVideoWindow_iface;
     else
         return E_NOINTERFACE;
 
@@ -212,9 +212,9 @@ static void video_renderer_stop_stream(struct strmbase_renderer *iface)
 
     TRACE("(%p)->()\n", This);
 
-    if (This->baseControlWindow.AutoShow)
+    if (This->window.AutoShow)
         /* Black it out */
-        RedrawWindow(This->baseControlWindow.hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE);
+        RedrawWindow(This->window.hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE);
 
     ResetEvent(This->run_event);
 }
@@ -230,7 +230,7 @@ static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
     const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(mt);
-    HWND window = filter->baseControlWindow.hwnd;
+    HWND window = filter->window.hwnd;
     RECT rect;
 
     filter->VideoWidth = bitmap_header->biWidth;
@@ -404,7 +404,7 @@ static HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(BaseControlVideo* iface
     struct video_renderer *This = impl_from_BaseControlVideo(iface);
     RECT rect;
 
-    if (!GetClientRect(This->baseControlWindow.hwnd, &rect))
+    if (!GetClientRect(This->window.hwnd, &rect))
         return E_FAIL;
 
     SetRect(&This->DestRect, 0, 0, rect.right, rect.bottom);
@@ -457,26 +457,27 @@ static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,
 static HRESULT WINAPI VideoWindow_put_FullScreenMode(IVideoWindow *iface, LONG fullscreen)
 {
     struct video_renderer *filter = impl_from_IVideoWindow(iface);
+    HWND window = filter->window.hwnd;
 
     FIXME("filter %p, fullscreen %d.\n", filter, fullscreen);
 
     if (fullscreen)
     {
-        filter->saved_style = GetWindowLongW(filter->baseControlWindow.hwnd, GWL_STYLE);
-        ShowWindow(filter->baseControlWindow.hwnd, SW_HIDE);
-        SetParent(filter->baseControlWindow.hwnd, NULL);
-        SetWindowLongW(filter->baseControlWindow.hwnd, GWL_STYLE, WS_POPUP);
-        SetWindowPos(filter->baseControlWindow.hwnd, HWND_TOP, 0, 0,
+        filter->saved_style = GetWindowLongW(window, GWL_STYLE);
+        ShowWindow(window, SW_HIDE);
+        SetParent(window, NULL);
+        SetWindowLongW(window, GWL_STYLE, WS_POPUP);
+        SetWindowPos(window, HWND_TOP, 0, 0,
                 GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW);
-        GetWindowRect(filter->baseControlWindow.hwnd, &filter->DestRect);
+        GetWindowRect(window, &filter->DestRect);
     }
     else
     {
-        ShowWindow(filter->baseControlWindow.hwnd, SW_HIDE);
-        SetParent(filter->baseControlWindow.hwnd, filter->baseControlWindow.hwndOwner);
-        SetWindowLongW(filter->baseControlWindow.hwnd, GWL_STYLE, filter->saved_style);
-        GetClientRect(filter->baseControlWindow.hwnd, &filter->DestRect);
-        SetWindowPos(filter->baseControlWindow.hwnd, 0, filter->DestRect.left, filter->DestRect.top,
+        ShowWindow(window, SW_HIDE);
+        SetParent(window, filter->window.hwndOwner);
+        SetWindowLongW(window, GWL_STYLE, filter->saved_style);
+        GetClientRect(window, &filter->DestRect);
+        SetWindowPos(window, 0, filter->DestRect.left, filter->DestRect.top,
                 filter->DestRect.right, filter->DestRect.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
     }
     filter->FullScreenMode = fullscreen;
@@ -593,7 +594,7 @@ static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
 
     TRACE("filter %p, window %p.\n", filter, window);
 
-    *window = filter->baseControlWindow.hwnd;
+    *window = filter->window.hwnd;
     return S_OK;
 }
 
@@ -649,14 +650,14 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
     strmbase_renderer_init(&object->renderer, outer, &CLSID_VideoRenderer, L"In", &renderer_ops);
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
-    video_window_init(&object->baseControlWindow, &IVideoWindow_VTable,
+    video_window_init(&object->window, &IVideoWindow_VTable,
             &object->renderer.filter, &object->renderer.sink.pin, &window_ops);
     basic_video_init(&object->baseControlVideo, &object->renderer.filter,
             &object->renderer.sink.pin, &renderer_BaseControlVideoFuncTable);
 
-    if (FAILED(hr = video_window_create_window(&object->baseControlWindow)))
+    if (FAILED(hr = video_window_create_window(&object->window)))
     {
-        video_window_cleanup(&object->baseControlWindow);
+        video_window_cleanup(&object->window);
         strmbase_renderer_cleanup(&object->renderer);
         free(object);
         return hr;
