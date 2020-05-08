@@ -112,8 +112,6 @@ struct video_window_ops
     BOOL (*resize)(struct video_window *window, LONG height, LONG width);
 
     HRESULT (*get_current_image)(struct video_window *window, LONG *size, LONG *image);
-    HRESULT (WINAPI *pfnSetDefaultSourceRect)(struct video_window *window);
-    HRESULT (WINAPI *pfnSetDefaultTargetRect)(struct video_window *window);
 };
 
 void video_window_cleanup(struct video_window *window) DECLSPEC_HIDDEN;

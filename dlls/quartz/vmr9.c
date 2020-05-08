@@ -734,35 +734,11 @@ out:
     return hr;
 }
 
-static HRESULT WINAPI VMR9_SetDefaultSourceRect(struct video_window *iface)
-{
-    struct quartz_vmr *filter = impl_from_video_window(iface);
-
-    SetRect(&filter->window.src, 0, 0, filter->VideoWidth, filter->VideoHeight);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI VMR9_SetDefaultTargetRect(struct video_window *iface)
-{
-    RECT rect;
-    struct quartz_vmr *filter = impl_from_video_window(iface);
-
-    if (!GetClientRect(filter->window.hwnd, &rect))
-        return E_FAIL;
-
-    SetRect(&filter->window.dst, 0, 0, rect.right, rect.bottom);
-
-    return S_OK;
-}
-
 static const struct video_window_ops window_ops =
 {
     .get_default_rect = vmr_get_default_rect,
     .resize = vmr_resize,
     .get_current_image = vmr_get_current_image,
-    .pfnSetDefaultSourceRect = VMR9_SetDefaultSourceRect,
-    .pfnSetDefaultTargetRect = VMR9_SetDefaultTargetRect,
 };
 
 static const IVideoWindowVtbl IVideoWindow_VTable =

@@ -314,35 +314,11 @@ static HRESULT video_renderer_get_current_image(struct video_window *iface, LONG
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_SetDefaultSourceRect(struct video_window *iface)
-{
-    struct video_renderer *This = impl_from_video_window(iface);
-
-    SetRect(&This->window.src, 0, 0, This->VideoWidth, This->VideoHeight);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI VideoRenderer_SetDefaultTargetRect(struct video_window *iface)
-{
-    struct video_renderer *This = impl_from_video_window(iface);
-    RECT rect;
-
-    if (!GetClientRect(This->window.hwnd, &rect))
-        return E_FAIL;
-
-    SetRect(&This->window.dst, 0, 0, rect.right, rect.bottom);
-
-    return S_OK;
-}
-
 static const struct video_window_ops window_ops =
 {
     .get_default_rect = video_renderer_get_default_rect,
     .resize = video_renderer_resize,
     .get_current_image = video_renderer_get_current_image,
-    .pfnSetDefaultSourceRect = VideoRenderer_SetDefaultSourceRect,
-    .pfnSetDefaultTargetRect = VideoRenderer_SetDefaultTargetRect,
 };
 
 static HRESULT WINAPI VideoWindow_get_FullScreenMode(IVideoWindow *iface,

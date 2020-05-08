@@ -1055,10 +1055,12 @@ static HRESULT WINAPI basic_video_GetSourcePosition(IBasicVideo *iface,
 static HRESULT WINAPI basic_video_SetDefaultSourcePosition(IBasicVideo *iface)
 {
     struct video_window *window = impl_from_IBasicVideo(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(window);
 
     TRACE("window %p.\n", window);
 
-    return window->ops->pfnSetDefaultSourceRect(window);
+    SetRect(&window->src, 0, 0, bitmap_header->biWidth, bitmap_header->biHeight);
+    return S_OK;
 }
 
 static HRESULT WINAPI basic_video_SetDestinationPosition(IBasicVideo *iface,
@@ -1098,7 +1100,8 @@ static HRESULT WINAPI basic_video_SetDefaultDestinationPosition(IBasicVideo *ifa
 
     TRACE("window %p.\n", window);
 
-    return window->ops->pfnSetDefaultTargetRect(window);
+    GetClientRect(window->hwnd, &window->dst);
+    return S_OK;
 }
 
 static HRESULT WINAPI basic_video_GetVideoSize(IBasicVideo *iface, LONG *width, LONG *height)
