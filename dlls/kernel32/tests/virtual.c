@@ -2292,7 +2292,7 @@ static void test_write_watch(void)
     count = 64;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    todo_wine ok( !count, "wrong count %Iu\n", count );
+    todo_wine_if(count == 2) ok( !count, "wrong count %Iu\n", count );
 
     base = VirtualAlloc( base, size, MEM_COMMIT, PAGE_READWRITE );
     ok(!!base, "VirtualAlloc failed.\n");
@@ -2300,7 +2300,7 @@ static void test_write_watch(void)
     count = 64;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    todo_wine ok( !count, "wrong count %Iu\n", count );
+    todo_wine_if(count == 2) ok( !count, "wrong count %Iu\n", count );
 
     /* Looks like VirtualProtect latches write watch state somewhere, so if pages are decommitted after,
      * (which normally clears write watch state), a page from range which previously had protection change
@@ -2344,9 +2344,15 @@ static void test_write_watch(void)
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
     todo_wine ok( count == 4, "wrong count %Iu\n", count );
     ok( results[0] == base + 2*pagesize, "wrong result %p\n", results[0] );
-    ok( results[1] == base + 3*pagesize, "wrong result %p\n", results[1] );
-    ok( results[2] == base + 4*pagesize, "wrong result %p\n", results[2] );
-    todo_wine ok( results[3] == base + 6*pagesize, "wrong result %p\n", results[3] );
+    i = 1;
+    if (count >= 4)
+    {
+        ok( results[i] == base + 3*pagesize, "wrong result %p\n", results[i] );
+        ++i;
+    }
+    ok( results[i] == base + 4*pagesize, "wrong result %p\n", results[i] );
+    ++i;
+    todo_wine_if(count == 5) ok( results[i] == base + 6*pagesize, "wrong result %p\n", results[i] );
 
     VirtualFree( base, 0, MEM_RELEASE );
 

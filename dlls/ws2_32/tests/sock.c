@@ -8113,6 +8113,7 @@ static void test_write_watch(void)
     ok( count == 9 || !count /* Win 11 */, "wrong count %Iu\n", count );
     ok( !base[0], "data set\n" );
 
+    base[0x1000] = 1;
     send(src, "test message", sizeof("test message"), 0);
 
     ret = GetOverlappedResult( (HANDLE)dest, &ov, &bytesReturned, TRUE );
@@ -8122,9 +8123,18 @@ static void test_write_watch(void)
     ok( !memcmp( base + 0x4000, "message", 8 ), "wrong data %s\n", base + 0x4000 );
 
     count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, " GetWriteWatch failed %lu\n", GetLastError() );
+    todo_wine_if( count == 3 ) ok( count == 1, "wrong count %Iu\n", count );
+    todo_wine_if( count == 3 ) ok( results[0] == base + 0x1000, "got page %Iu.\n", ((char *)results[0] - base) / 0x1000 );
+
+    base[0x2000] = 1;
+    count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %Iu\n", count );
+    todo_wine_if( count == 4 ) ok( count == 2, "wrong count %Iu\n", count );
+    todo_wine_if( count == 4 ) ok( results[0] == base + 0x1000, "got page %Iu.\n", ((char *)results[0] - base) / 0x1000 );
+    todo_wine_if( count == 4 ) ok( results[1] == base + 0x2000, "got page %Iu.\n", ((char *)results[1] - base) / 0x1000 );
 
     memset( base, 0, size );
     count = 64;
@@ -8155,7 +8165,7 @@ static void test_write_watch(void)
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %Iu\n", count );
+    todo_wine_if( count == 2 ) ok( count == 0, "wrong count %Iu\n", count );
 
     memset( base, 0, size );
     count = 64;
@@ -8184,7 +8194,7 @@ static void test_write_watch(void)
         count = 64;
         ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
         ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-        ok( count == 0, "wrong count %Iu\n", count );
+        todo_wine_if( count == 1 ) ok( count == 0, "wrong count %Iu\n", count );
     }
     WSACloseEvent( event );
     closesocket( dest );

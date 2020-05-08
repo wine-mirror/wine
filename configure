@@ -9838,6 +9838,12 @@ then :
   printf "%s\n" "#define HAVE_LINUX_FILTER_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "linux/fs.h" "ac_cv_header_linux_fs_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_fs_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_FS_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "linux/hdreg.h" "ac_cv_header_linux_hdreg_h" "$ac_includes_default"
 if test "x$ac_cv_header_linux_hdreg_h" = xyes
 then :
@@ -9890,6 +9896,12 @@ ac_fn_c_check_header_compile "$LINENO" "linux/ucdrom.h" "ac_cv_header_linux_ucdr
 if test "x$ac_cv_header_linux_ucdrom_h" = xyes
 then :
   printf "%s\n" "#define HAVE_LINUX_UCDROM_H 1" >>confdefs.h
+
+fi
+ac_fn_c_check_header_compile "$LINENO" "linux/userfaultfd.h" "ac_cv_header_linux_userfaultfd_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_userfaultfd_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_USERFAULTFD_H 1" >>confdefs.h
 
 fi
 ac_fn_c_check_header_compile "$LINENO" "linux/wireless.h" "ac_cv_header_linux_wireless_h" "$ac_includes_default"
