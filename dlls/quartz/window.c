@@ -1155,9 +1155,16 @@ static HRESULT WINAPI basic_video_GetCurrentImage(IBasicVideo *iface, LONG *size
 
 static HRESULT WINAPI basic_video_IsUsingDefaultSource(IBasicVideo *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
+    struct video_window *window = impl_from_IBasicVideo(iface);
+    const BITMAPINFOHEADER *bitmap_header = get_bitmap_header(window);
 
-    return S_OK;
+    TRACE("window %p.\n", window);
+
+    if (!window->src.left && !window->src.top
+            && window->src.right == bitmap_header->biWidth
+            && window->src.bottom == bitmap_header->biHeight)
+        return S_OK;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI basic_video_IsUsingDefaultDestination(IBasicVideo *iface)
