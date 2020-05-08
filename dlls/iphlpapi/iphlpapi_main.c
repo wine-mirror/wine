@@ -2817,6 +2817,18 @@ DWORD WINAPI NotifyIpInterfaceChange(ADDRESS_FAMILY family, PIPINTERFACE_CHANGE_
     return NO_ERROR;
 }
 
+/******************************************************************
+ *    NotifyRouteChange2 (IPHLPAPI.@)
+ */
+DWORD WINAPI NotifyRouteChange2(ADDRESS_FAMILY family, PIPFORWARD_CHANGE_CALLBACK callback, VOID* context,
+                                BOOLEAN init_notify, HANDLE* handle)
+{
+    FIXME("(family %d, callback %p, context %p, init_notify %d, handle %p): stub\n",
+        family, callback, context, init_notify, handle);
+    if (handle) *handle = NULL;
+    return NO_ERROR;
+}
+
 
 /******************************************************************
  *    NotifyRouteChange (IPHLPAPI.@)

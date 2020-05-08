@@ -236,7 +236,7 @@
 @ stdcall NotifyAddrChange( ptr ptr )
 @ stdcall NotifyIpInterfaceChange( long ptr ptr long ptr )
 @ stdcall NotifyRouteChange( ptr ptr )
-#@ stub NotifyRouteChange2
+@ stdcall NotifyRouteChange2( long ptr ptr long ptr )
 @ stub NotifyRouteChangeEx
 #@ stub NotifyStableUnicastIpAddressTable
 #@ stub NotifyTeredoPortChange
