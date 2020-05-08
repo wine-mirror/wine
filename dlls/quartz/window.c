@@ -68,7 +68,8 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
         }
         break;
     case WM_SIZE:
-        GetClientRect(window->hwnd, &window->dst);
+        if (window->default_dst)
+            GetClientRect(window->hwnd, &window->dst);
         break;
     }
 
@@ -926,6 +927,7 @@ static HRESULT WINAPI basic_video_put_DestinationLeft(IBasicVideo *iface, LONG l
 
     TRACE("window %p, left %d.\n", window, left);
 
+    window->default_dst = FALSE;
     OffsetRect(&window->dst, left - window->dst.left, 0);
     return S_OK;
 }
@@ -952,6 +954,7 @@ static HRESULT WINAPI basic_video_put_DestinationWidth(IBasicVideo *iface, LONG 
     if (width <= 0)
         return E_INVALIDARG;
 
+    window->default_dst = FALSE;
     window->dst.right = window->dst.left + width;
     return S_OK;
 }
@@ -975,6 +978,7 @@ static HRESULT WINAPI basic_video_put_DestinationTop(IBasicVideo *iface, LONG to
 
     TRACE("window %p, top %d.\n", window, top);
 
+    window->default_dst = FALSE;
     OffsetRect(&window->dst, 0, top - window->dst.top);
     return S_OK;
 }
@@ -1001,6 +1005,7 @@ static HRESULT WINAPI basic_video_put_DestinationHeight(IBasicVideo *iface, LONG
     if (height <= 0)
         return E_INVALIDARG;
 
+    window->default_dst = FALSE;
     window->dst.bottom = window->dst.top + height;
     return S_OK;
 }
@@ -1073,6 +1078,7 @@ static HRESULT WINAPI basic_video_SetDestinationPosition(IBasicVideo *iface,
     if (width <= 0 || height <= 0)
         return E_INVALIDARG;
 
+    window->default_dst = FALSE;
     SetRect(&window->dst, left, top, left + width, top + height);
     return S_OK;
 }
@@ -1100,6 +1106,7 @@ static HRESULT WINAPI basic_video_SetDefaultDestinationPosition(IBasicVideo *ifa
 
     TRACE("window %p.\n", window);
 
+    window->default_dst = TRUE;
     GetClientRect(window->hwnd, &window->dst);
     return S_OK;
 }
@@ -1155,9 +1162,11 @@ static HRESULT WINAPI basic_video_IsUsingDefaultSource(IBasicVideo *iface)
 
 static HRESULT WINAPI basic_video_IsUsingDefaultDestination(IBasicVideo *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
+    struct video_window *window = impl_from_IBasicVideo(iface);
 
-    return S_OK;
+    TRACE("window %p.\n", window);
+
+    return window->default_dst ? S_OK : S_FALSE;
 }
 
 static const IBasicVideoVtbl basic_video_vtbl =
@@ -1216,6 +1225,7 @@ void video_window_init(struct video_window *window, const IVideoWindowVtbl *vtbl
     window->ops = ops;
     window->IVideoWindow_iface.lpVtbl = vtbl;
     window->IBasicVideo_iface.lpVtbl = &basic_video_vtbl;
+    window->default_dst = TRUE;
     window->AutoShow = OATRUE;
     window->pFilter = owner;
     window->pPin = pin;

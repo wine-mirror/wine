@@ -94,9 +94,10 @@ struct video_window
     IBasicVideo IBasicVideo_iface;
 
     RECT src, dst;
+    BOOL default_dst;
 
-    HWND hwnd;
     BOOL AutoShow;
+    HWND hwnd;
     HWND hwndDrain;
     HWND hwndOwner;
     struct strmbase_filter *pFilter;
