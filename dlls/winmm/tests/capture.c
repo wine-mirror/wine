@@ -130,7 +130,7 @@ static void check_position(int device, HWAVEIN win, DWORD bytes,
 static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, DWORD flags,
         WAVEINCAPSA *pcaps)
 {
-    HWAVEIN win;
+    HWAVEIN win, win2;
     HANDLE hevent = CreateEventW(NULL, FALSE, FALSE, NULL);
     WAVEHDR frag;
     MMRESULT rc;
@@ -139,6 +139,7 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
     WORD nChannels = pwfx->nChannels;
     WORD wBitsPerSample = pwfx->wBitsPerSample;
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
+    WAVEINCAPSW capsW;
 
     win=NULL;
     flags |= CALLBACK_EVENT;
@@ -180,6 +181,20 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
        "got the wrong format: %dx%2dx%d instead of %dx%2dx%d\n",
        pwfx->nSamplesPerSec, pwfx->wBitsPerSample,
        pwfx->nChannels, nSamplesPerSec, wBitsPerSample, nChannels);
+
+    /* waveInGetDevCaps allows an open handle instead of a device id */
+    rc=waveInGetDevCapsW(HandleToUlong(win),&capsW,sizeof(capsW));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetDevCapsW(%s): MMSYSERR_NOERROR "
+       "expected, got %s\n",dev_name(device),wave_in_error(rc));
+
+    /* waveInOpen does not allow an open handle instead of a device id */
+    rc=waveInOpen(&win2,HandleToUlong(win),pwfx,0,0,CALLBACK_NULL);
+    ok(rc==MMSYSERR_BADDEVICEID,
+       "waveInOpen(%s): MMSYSERR_BADDEVICEID "
+       "expected, got %s\n",dev_name(device),wave_in_error(rc));
+    if(rc==MMSYSERR_NOERROR)
+        waveInClose(win2);
 
     /* Check that the position is 0 at start */
     check_position(device, win, 0, pwfx);

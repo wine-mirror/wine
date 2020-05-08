@@ -599,9 +599,10 @@ static void wave_out_test_deviceOut(int device, double duration, int headers, in
         WAVEFORMATEX *pwfx, DWORD format, DWORD flags, WAVEOUTCAPSA *pcaps, BOOL interactive,
         BOOL sine, BOOL pause)
 {
-    HWAVEOUT wout;
+    HWAVEOUT wout, wout2;
     HANDLE hevent = CreateEventW(NULL, FALSE, FALSE, NULL);
     WAVEHDR *frags = 0;
+    WAVEOUTCAPSW capsW;
     MMRESULT rc;
     DWORD volume;
     WORD nChannels = pwfx->nChannels;
@@ -704,6 +705,20 @@ static void wave_out_test_deviceOut(int device, double duration, int headers, in
     if (rc == MMSYSERR_NOTSUPPORTED) has_volume = FALSE;
     ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
        "waveOutGetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+
+    /* waveOutGetDevCaps allows an open handle instead of a device id */
+    rc=waveOutGetDevCapsW(HandleToUlong(wout),&capsW,sizeof(capsW));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR "
+       "expected, got %s\n",dev_name(device),wave_out_error(rc));
+
+    /* waveOutOpen does not allow an open handle instead of a device id */
+    rc=waveOutOpen(&wout2,HandleToUlong(wout),pwfx,0,0,CALLBACK_NULL);
+    ok(rc==MMSYSERR_BADDEVICEID,
+       "waveOutOpen(%s): MMSYSERR_BADDEVICEID "
+       "expected, got %s\n",dev_name(device),wave_out_error(rc));
+    if(rc==MMSYSERR_NOERROR)
+        waveOutClose(wout2);
 
     /* make sure fragment length is a multiple of block size */
     frag_length = ((length / headers) / pwfx->nBlockAlign) * pwfx->nBlockAlign;
