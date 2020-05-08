@@ -902,7 +902,7 @@ static HRESULT WINAPI BackgroundCopyJob_GetOwnerElevationState(IBackgroundCopyJo
 static HRESULT WINAPI BackgroundCopyJob_SetMaximumDownloadTime(IBackgroundCopyJob4 *iface, ULONG timeout)
 {
     FIXME("%p, %u.\n", iface, timeout);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_GetMaximumDownloadTime(IBackgroundCopyJob4 *iface, ULONG *timeout)
