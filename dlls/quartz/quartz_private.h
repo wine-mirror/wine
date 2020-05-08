@@ -106,11 +106,7 @@ struct video_window
 
 struct video_window_ops
 {
-    /* Required */
     RECT (*get_default_rect)(struct video_window *window);
-    /* Optional, WinProc Related */
-    BOOL (*resize)(struct video_window *window, LONG height, LONG width);
-
     HRESULT (*get_current_image)(struct video_window *window, LONG *size, LONG *image);
 };
 

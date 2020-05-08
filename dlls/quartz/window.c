@@ -68,8 +68,8 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
         }
         break;
     case WM_SIZE:
-        if (window->ops->resize)
-            return window->ops->resize(window, LOWORD(lparam), HIWORD(lparam));
+        GetClientRect(window->hwnd, &window->dst);
+        break;
     }
 
     return DefWindowProcW(hwnd, message, wparam, lparam);

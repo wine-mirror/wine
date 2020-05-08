@@ -663,16 +663,6 @@ static RECT vmr_get_default_rect(struct video_window *This)
     return defRect;
 }
 
-static BOOL vmr_resize(struct video_window *This, LONG Width, LONG Height)
-{
-    struct quartz_vmr *pVMR9 = impl_from_video_window(This);
-
-    TRACE("WM_SIZE %d %d\n", Width, Height);
-    GetClientRect(This->hwnd, &pVMR9->window.dst);
-
-    return TRUE;
-}
-
 static HRESULT vmr_get_current_image(struct video_window *iface, LONG *size, LONG *image)
 {
     struct quartz_vmr *filter = impl_from_video_window(iface);
@@ -737,7 +727,6 @@ out:
 static const struct video_window_ops window_ops =
 {
     .get_default_rect = vmr_get_default_rect,
-    .resize = vmr_resize,
     .get_current_image = vmr_get_current_image,
 };
 

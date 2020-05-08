@@ -245,16 +245,6 @@ static RECT video_renderer_get_default_rect(struct video_window *iface)
     return defRect;
 }
 
-static BOOL video_renderer_resize(struct video_window *iface, LONG Width, LONG Height)
-{
-    struct video_renderer *filter = impl_from_video_window(iface);
-
-    TRACE("WM_SIZE %d %d\n", Width, Height);
-    GetClientRect(iface->hwnd, &filter->window.dst);
-
-    return TRUE;
-}
-
 static const struct strmbase_renderer_ops renderer_ops =
 {
     .pfnCheckMediaType = VideoRenderer_CheckMediaType,
@@ -317,7 +307,6 @@ static HRESULT video_renderer_get_current_image(struct video_window *iface, LONG
 static const struct video_window_ops window_ops =
 {
     .get_default_rect = video_renderer_get_default_rect,
-    .resize = video_renderer_resize,
     .get_current_image = video_renderer_get_current_image,
 };
 
