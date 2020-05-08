@@ -261,6 +261,7 @@ static void test_CreateDecoder(void)
     ok(!decoder->pos,"Got incorrect pos = %p.\n",decoder->pos);
     ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",decoder->eRule);
     ok(decoder->dwFlags == ASN1DECODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
 
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
     ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
@@ -276,6 +277,7 @@ static void test_CreateDecoder(void)
     ok(decoder->pos==buf,"Got incorrect pos = %s.\n",decoder->pos);
     ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",decoder->eRule);
     ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER), "Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
 
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 2, NULL);
     ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
@@ -291,6 +293,7 @@ static void test_CreateDecoder(void)
     ok(decoder->pos==buf,"Got incorrect pos = %p.\n",decoder->pos);
     ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",decoder->eRule);
     ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
 
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
     ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
@@ -306,14 +309,17 @@ static void test_CreateDecoder(void)
     ok(decoder->pos==buf,"Got incorrect pos = %p.\n",decoder->pos);
     ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect rule = %08x.\n",decoder->eRule);
     ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
     ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
 
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
     ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
@@ -331,6 +337,7 @@ static void test_CreateDecoder(void)
     ok(decoder->pos==buf,"Got incorrect pos = %s.\n",decoder->pos);
     ok(decoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect eRule = %08x.\n",decoder->eRule);
     ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
 
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
     ok(!!decoder,"Decoder creation failed.\n");
@@ -345,14 +352,17 @@ static void test_CreateDecoder(void)
     ok(decoder->pos==buf,"Got incorrect pos = %p.\n",decoder->pos);
     ok(decoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect rule = %08x.\n",decoder->eRule);
     ok(decoder->dwFlags == (ASN1FLAGS_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
     ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
 
     ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
     ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseDecoder(decoder);
     ASN1_CloseModule(mod);
 }
 

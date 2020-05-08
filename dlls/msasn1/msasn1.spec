@@ -216,7 +216,7 @@
 @ stub ASN1PEREncUnsignedShort
 @ stub ASN1PEREncZero
 @ stub ASN1PERFreeSeqOf
-@ stub ASN1_CloseDecoder
+@ stdcall ASN1_CloseDecoder(ptr)
 @ stub ASN1_CloseEncoder2
 @ stdcall ASN1_CloseEncoder(ptr)
 @ stdcall ASN1_CloseModule(ptr)
