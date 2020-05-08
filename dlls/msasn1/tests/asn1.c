@@ -118,6 +118,7 @@ static void test_CreateEncoder(void)
     ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
     ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",encoder->eRule);
     ok(encoder->dwFlags == ASN1ENCODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
 
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
     ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
@@ -134,6 +135,7 @@ static void test_CreateEncoder(void)
     ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
     ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",encoder->eRule);
     ok(encoder->dwFlags == ASN1ENCODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
 
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 2, NULL);
     ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
@@ -150,6 +152,7 @@ static void test_CreateEncoder(void)
     ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
     ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",encoder->eRule);
     ok(encoder->dwFlags == (ASN1ENCODE_NOASSERT|ASN1ENCODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
 
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
     ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
@@ -166,14 +169,17 @@ static void test_CreateEncoder(void)
     ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
     ok(encoder->eRule == ASN1_BER_RULE_DER,"Got incorrect rule = %08x.\n",encoder->eRule);
     ok(encoder->dwFlags == (ASN1ENCODE_NOASSERT|ASN1ENCODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
     ok(encoder->dwFlags == 0,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
 
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
     ok(encoder->dwFlags == ASN1ENCODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
@@ -192,6 +198,7 @@ static void test_CreateEncoder(void)
     ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
     ok(encoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect eRule = %08x.\n",encoder->eRule);
     ok(encoder->dwFlags == ASN1ENCODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
 
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
     ok(!!encoder,"Encoder creation failed.\n");
@@ -207,14 +214,17 @@ static void test_CreateEncoder(void)
     ok(!encoder->cbExtraHeader,"Got incorrect cbExtraHeader = %u.\n",encoder->cbExtraHeader);
     ok(encoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect rule = %08x.\n",encoder->eRule);
     ok(encoder->dwFlags == (ASN1FLAGS_NOASSERT|ASN1ENCODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
     ASN1_CloseModule(mod);
 
     mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 0, NULL);
     ok(encoder->dwFlags == 0,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
 
     ret = ASN1_CreateEncoder(mod, &encoder, buf, 4, NULL);
     ok(encoder->dwFlags == ASN1ENCODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",encoder->dwFlags);
+    ASN1_CloseEncoder(encoder);
     ASN1_CloseModule(mod);
 }
 

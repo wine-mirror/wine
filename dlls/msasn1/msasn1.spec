@@ -218,7 +218,7 @@
 @ stub ASN1PERFreeSeqOf
 @ stub ASN1_CloseDecoder
 @ stub ASN1_CloseEncoder2
-@ stub ASN1_CloseEncoder
+@ stdcall ASN1_CloseEncoder(ptr)
 @ stdcall ASN1_CloseModule(ptr)
 @ stub ASN1_CreateDecoder
 @ stub ASN1_CreateDecoderEx

@@ -137,3 +137,8 @@ ASN1error_e WINAPI ASN1_CreateEncoder(ASN1module_t module, ASN1encoding_t *encod
 
     return ASN1_SUCCESS;
 }
+
+void WINAPI ASN1_CloseEncoder(ASN1encoding_t encoder)
+{
+    FIXME("(%p): Stub!\n", encoder);
+}
