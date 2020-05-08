@@ -228,8 +228,137 @@ static void test_CreateEncoder(void)
     ASN1_CloseModule(mod);
 }
 
+static void test_CreateDecoder(void)
+{
+    const ASN1GenericFun_t encfn[] = { NULL };
+    const ASN1GenericFun_t decfn[] = { NULL };
+    const ASN1FreeFun_t freefn[] = { NULL };
+    const ASN1uint32_t size[] = { 0 };
+    ASN1magic_t name = 0x61736e31;
+    ASN1decoding_t decoder = NULL;
+    ASN1octet_t buf[] = {0x54,0x65,0x73,0x74,0};
+    ASN1module_t mod;
+    ASN1error_e ret;
+
+    ret = ASN1_CreateDecoder(NULL, NULL, NULL, 0, NULL);
+    ok(ret == ASN1_ERR_BADARGS,"Got error code %d.\n",ret);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateDecoder(mod, NULL, NULL, 0, NULL);
+    ok(ret == ASN1_ERR_BADARGS,"Got error code %d.\n",ret);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, NULL, 0, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!decoder,"Decoder creation failed.\n");
+    ok(decoder->magic==0x44434544,"Got invalid magic = %08x.\n",decoder->magic);
+    ok(!decoder->version,"Got incorrect version = %08x.\n",decoder->version);
+    ok(decoder->module==mod,"Got incorrect module = %p.\n",decoder->module);
+    ok(!decoder->buf,"Got incorrect buf = %p.\n",decoder->buf);
+    ok(!decoder->size,"Got incorrect size = %u.\n",decoder->size);
+    ok(!decoder->len,"Got incorrect length = %u.\n",decoder->len);
+    ok(decoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",decoder->err);
+    ok(!decoder->bit,"Got incorrect bit = %u.\n",decoder->bit);
+    ok(!decoder->pos,"Got incorrect pos = %p.\n",decoder->pos);
+    ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",decoder->eRule);
+    ok(decoder->dwFlags == ASN1DECODE_NOASSERT,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!decoder,"Decoder creation failed.\n");
+    ok(decoder->magic==0x44434544,"Got invalid magic = %08x.\n",decoder->magic);
+    ok(!decoder->version,"Got incorrect version = %08x.\n",decoder->version);
+    ok(decoder->module==mod,"Got incorrect module = %p.\n",decoder->module);
+    ok(decoder->buf==buf,"Got incorrect buf = %s.\n",decoder->buf);
+    ok(!decoder->size,"Got incorrect size = %u.\n",decoder->size);
+    ok(!decoder->len,"Got incorrect length = %u.\n",decoder->len);
+    ok(decoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",decoder->err);
+    ok(!decoder->bit,"Got incorrect bit = %u.\n",decoder->bit);
+    ok(decoder->pos==buf,"Got incorrect pos = %s.\n",decoder->pos);
+    ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",decoder->eRule);
+    ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER), "Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 2, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!decoder,"Decoder creation failed.\n");
+    ok(decoder->magic==0x44434544,"Got invalid magic = %08x.\n",decoder->magic);
+    ok(!decoder->version,"Got incorrect version = %08x.\n",decoder->version);
+    ok(decoder->module==mod,"Got incorrect module = %p.\n",decoder->module);
+    ok(decoder->buf==buf,"Got incorrect buf = %p.\n",decoder->buf);
+    ok(decoder->size==2,"Got incorrect size = %u.\n",decoder->size);
+    ok(!decoder->len,"Got incorrect length = %u.\n",decoder->len);
+    ok(decoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",decoder->err);
+    ok(!decoder->bit,"Got incorrect bit = %u.\n",decoder->bit);
+    ok(decoder->pos==buf,"Got incorrect pos = %p.\n",decoder->pos);
+    ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect eRule = %08x.\n",decoder->eRule);
+    ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!decoder,"Decoder creation failed.\n");
+    ok(decoder->magic==0x44434544,"Got invalid magic = %08x.\n",decoder->magic);
+    ok(!decoder->version,"Got incorrect version = %08x.\n",decoder->version);
+    ok(decoder->module==mod,"Got incorrect module = %p.\n",decoder->module);
+    ok(decoder->buf==buf,"Got incorrect buf = %p.\n",decoder->buf);
+    ok(decoder->size==4,"Got incorrect size = %u.\n",decoder->size);
+    ok(!decoder->len,"Got incorrect length = %u.\n",decoder->len);
+    ok(decoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",decoder->err);
+    ok(!decoder->bit,"Got incorrect bit = %u.\n",decoder->bit);
+    ok(decoder->pos==buf,"Got incorrect pos = %p.\n",decoder->pos);
+    ok(decoder->eRule == ASN1_BER_RULE_DER,"Got incorrect rule = %08x.\n",decoder->eRule);
+    ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseModule(mod);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_BER_RULE_DER, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
+    ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
+    ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseModule(mod);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NOASSERT, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
+    ok(ASN1_SUCCEEDED(ret),"Got error code %d.\n",ret);
+    ok(!!decoder,"Decoder creation failed.\n");
+    ok(decoder->magic==0x44434544,"Got invalid magic = %08x.\n",decoder->magic);
+    ok(!decoder->version,"Got incorrect version = %08x.\n",decoder->version);
+    ok(decoder->module==mod,"Got incorrect module = %p.\n",decoder->module);
+    ok(decoder->buf==buf,"Got incorrect buf = %s.\n",decoder->buf);
+    ok(!decoder->size,"Got incorrect size = %u.\n",decoder->size);
+    ok(!decoder->len,"Got incorrect length = %u.\n",decoder->len);
+    ok(decoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",decoder->err);
+    ok(!decoder->bit,"Got incorrect bit = %u.\n",decoder->bit);
+    ok(decoder->pos==buf,"Got incorrect pos = %s.\n",decoder->pos);
+    ok(decoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect eRule = %08x.\n",decoder->eRule);
+    ok(decoder->dwFlags == (ASN1DECODE_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
+    ok(!!decoder,"Decoder creation failed.\n");
+    ok(decoder->magic==0x44434544,"Got invalid magic = %08x.\n",decoder->magic);
+    ok(!decoder->version,"Got incorrect version = %08x.\n",decoder->version);
+    ok(decoder->module==mod,"Got incorrect module = %p.\n",decoder->module);
+    ok(decoder->buf==buf,"Got incorrect buf = %p.\n",decoder->buf);
+    ok(decoder->size==4,"Got incorrect size = %u.\n",decoder->size);
+    ok(!decoder->len,"Got incorrect length = %u.\n",decoder->len);
+    ok(decoder->err==ASN1_SUCCESS,"Got incorrect err = %d.\n",decoder->err);
+    ok(!decoder->bit,"Got incorrect bit = %u.\n",decoder->bit);
+    ok(decoder->pos==buf,"Got incorrect pos = %p.\n",decoder->pos);
+    ok(decoder->eRule == ASN1_PER_RULE_ALIGNED,"Got incorrect rule = %08x.\n",decoder->eRule);
+    ok(decoder->dwFlags == (ASN1FLAGS_NOASSERT|ASN1DECODE_SETBUFFER),"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseModule(mod);
+
+    mod = ASN1_CreateModule(ASN1_THIS_VERSION, ASN1_PER_RULE_ALIGNED, ASN1FLAGS_NONE, 1, encfn, decfn, freefn, size, name);
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 0, NULL);
+    ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+
+    ret = ASN1_CreateDecoder(mod, &decoder, buf, 4, NULL);
+    ok(decoder->dwFlags == ASN1DECODE_SETBUFFER,"Got incorrect dwFlags = %08x.\n",decoder->dwFlags);
+    ASN1_CloseModule(mod);
+}
+
 START_TEST(asn1)
 {
     test_CreateModule();
     test_CreateEncoder();
+    test_CreateDecoder();
 }
