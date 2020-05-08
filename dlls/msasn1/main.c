@@ -142,3 +142,46 @@ void WINAPI ASN1_CloseEncoder(ASN1encoding_t encoder)
 {
     FIXME("(%p): Stub!\n", encoder);
 }
+
+ASN1error_e WINAPI ASN1_CreateDecoder(ASN1module_t module, ASN1decoding_t *decoder, ASN1octet_t *buf,
+                                      ASN1uint32_t bufsize, ASN1decoding_t parent)
+{
+    ASN1decoding_t dec;
+
+    TRACE("(%p %p %p %u %p)\n", module, decoder, buf, bufsize, parent);
+
+    if (!module || !decoder)
+        return ASN1_ERR_BADARGS;
+
+    dec = heap_alloc(sizeof(dec));
+    if (!dec)
+    {
+        return ASN1_ERR_MEMORY;
+    }
+
+    if (parent)
+      FIXME("parent not implemented.\n");
+
+    dec->magic = 0x44434544;
+    dec->version = 0;
+    dec->module = module;
+    dec->buf = 0;
+    dec->size = bufsize;
+    dec->len = 0;
+    dec->err = ASN1_SUCCESS;
+    dec->bit = 0;
+    dec->pos = 0;
+    dec->eRule = module->eRule;
+    dec->dwFlags = module->dwFlags;
+
+    if (buf)
+    {
+        dec->buf = buf;
+        dec->pos = buf;
+        dec->dwFlags |= ASN1DECODE_SETBUFFER;
+    }
+
+    *decoder = dec;
+
+    return ASN1_SUCCESS;
+}
