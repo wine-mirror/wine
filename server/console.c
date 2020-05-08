@@ -1680,7 +1680,7 @@ DECL_HANDLER(append_console_input_history)
     struct console_input *console;
 
     if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) return;
-    console_input_append_hist( console, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+    console_input_append_hist( console, get_req_data(), get_req_data_size() );
     release_object( console );
 }
 
