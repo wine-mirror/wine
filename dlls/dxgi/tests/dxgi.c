@@ -44,6 +44,10 @@ static NTSTATUS (WINAPI *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECK
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *desc);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc);
 
+static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
+        D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
+
 static PFN_D3D12_CREATE_DEVICE pD3D12CreateDevice;
 static PFN_D3D12_GET_DEBUG_INTERFACE pD3D12GetDebugInterface;
 
@@ -598,6 +602,39 @@ success:
     return dxgi_device;
 }
 
+static IDXGIDevice *create_d3d11_device(void)
+{
+    static const D3D_FEATURE_LEVEL feature_level[] =
+    {
+        D3D_FEATURE_LEVEL_11_0,
+    };
+    unsigned int feature_level_count = ARRAY_SIZE(feature_level);
+    IDXGIDevice *device = NULL;
+    ID3D11Device *d3d_device;
+    HRESULT hr;
+
+    if (!pD3D11CreateDevice)
+        return NULL;
+
+    hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, feature_level, feature_level_count,
+            D3D11_SDK_VERSION, &d3d_device, NULL, NULL);
+    if (FAILED(hr))
+        hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_WARP, NULL, 0, feature_level, feature_level_count,
+                D3D11_SDK_VERSION, &d3d_device, NULL, NULL);
+    if (FAILED(hr))
+        hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_REFERENCE, NULL, 0, feature_level, feature_level_count,
+                D3D11_SDK_VERSION, &d3d_device, NULL, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = ID3D11Device_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&device);
+        ok(SUCCEEDED(hr), "Created device does not implement IDXGIDevice.\n");
+        ID3D11Device_Release(d3d_device);
+    }
+
+    return device;
+}
+
 static ID3D12Device *create_d3d12_device(void)
 {
     IDXGIAdapter *adapter;
@@ -1049,6 +1086,7 @@ static void test_check_interface_support(void)
 
 static void test_create_surface(void)
 {
+    ID3D11Texture2D *texture2d;
     DXGI_SURFACE_DESC desc;
     IDXGISurface *surface;
     IDXGIDevice *device;
@@ -1077,6 +1115,40 @@ static void test_create_surface(void)
     check_interface(surface, &IID_IDXGISurface1, TRUE, TRUE);
 
     IDXGISurface_Release(surface);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    /* DXGI_USAGE_UNORDERED_ACCESS */
+    if (!(device = create_d3d11_device()))
+    {
+        skip("Failed to create D3D11 device.\n");
+        return;
+    }
+
+    surface = NULL;
+    hr = IDXGIDevice_CreateSurface(device, &desc, 1, DXGI_USAGE_UNORDERED_ACCESS, NULL, &surface);
+    ok(SUCCEEDED(hr), "Failed to create a dxgi surface, hr %#x\n", hr);
+
+    if (surface)
+    {
+        ID3D11UnorderedAccessView *uav;
+        ID3D11Device *d3d_device;
+
+        hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture2d);
+        ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+
+        ID3D11Texture2D_GetDevice(texture2d, &d3d_device);
+
+        hr = ID3D11Device_CreateUnorderedAccessView(d3d_device, (ID3D11Resource *)texture2d, NULL, &uav);
+        ok(SUCCEEDED(hr), "Failed to create unordered access view, hr %#x.\n", hr);
+        ID3D11UnorderedAccessView_Release(uav);
+
+        ID3D11Device_Release(d3d_device);
+        ID3D11Texture2D_Release(texture2d);
+
+        IDXGISurface_Release(surface);
+    }
+
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
@@ -5754,7 +5826,7 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 
 START_TEST(dxgi)
 {
-    HMODULE dxgi_module, d3d12_module, gdi32_module;
+    HMODULE dxgi_module, d3d11_module, d3d12_module, gdi32_module;
     BOOL enable_debug_layer = FALSE;
     unsigned int argc, i;
     ID3D12Debug *debug;
@@ -5768,6 +5840,9 @@ START_TEST(dxgi)
     pD3DKMTCheckVidPnExclusiveOwnership = (void *)GetProcAddress(gdi32_module, "D3DKMTCheckVidPnExclusiveOwnership");
     pD3DKMTCloseAdapter = (void *)GetProcAddress(gdi32_module, "D3DKMTCloseAdapter");
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32_module, "D3DKMTOpenAdapterFromGdiDisplayName");
+
+    d3d11_module = LoadLibraryA("d3d11.dll");
+    pD3D11CreateDevice = (void *)GetProcAddress(d3d11_module, "D3D11CreateDevice");
 
     registry_mode.dmSize = sizeof(registry_mode);
     ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");

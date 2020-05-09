@@ -503,8 +503,10 @@ unsigned int wined3d_bind_flags_from_dxgi_usage(DXGI_USAGE dxgi_usage)
         wined3d_bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
     if (dxgi_usage & DXGI_USAGE_RENDER_TARGET_OUTPUT)
         wined3d_bind_flags |= WINED3D_BIND_RENDER_TARGET;
+    if (dxgi_usage & DXGI_USAGE_UNORDERED_ACCESS)
+        wined3d_bind_flags |= WINED3D_BIND_UNORDERED_ACCESS;
 
-    dxgi_usage &= ~(DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT);
+    dxgi_usage &= ~(DXGI_USAGE_SHADER_INPUT | DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS);
     if (dxgi_usage)
         FIXME("Unhandled DXGI usage %#x.\n", dxgi_usage);
     return wined3d_bind_flags;
