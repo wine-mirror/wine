@@ -111,11 +111,13 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
     return TRUE;
 }
 
-static HRESULT dxgi_get_output_from_window(IDXGIAdapter *adapter, HWND window, IDXGIOutput **dxgi_output)
+static HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window,
+        IDXGIOutput **dxgi_output)
 {
+    unsigned int adapter_idx, output_idx;
     DXGI_OUTPUT_DESC desc;
+    IDXGIAdapter *adapter;
     IDXGIOutput *output;
-    unsigned int index;
     HMONITOR monitor;
     HRESULT hr;
 
@@ -125,25 +127,32 @@ static HRESULT dxgi_get_output_from_window(IDXGIAdapter *adapter, HWND window, I
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    index = 0;
-    while ((hr = IDXGIAdapter_EnumOutputs(adapter, index, &output)) == S_OK)
+    for (adapter_idx = 0; SUCCEEDED(hr = IDXGIFactory_EnumAdapters(factory, adapter_idx, &adapter));
+            ++adapter_idx)
     {
-        if (FAILED(hr = IDXGIOutput_GetDesc(output, &desc)))
+        for (output_idx = 0; SUCCEEDED(hr = IDXGIAdapter_EnumOutputs(adapter, output_idx,
+                &output)); ++output_idx)
         {
-            WARN("Failed to get output desc %u, hr %#x.\n", index, hr);
-            ++index;
-            continue;
-        }
+            if (FAILED(hr = IDXGIOutput_GetDesc(output, &desc)))
+            {
+                WARN("Adapter %u output %u: Failed to get output desc, hr %#x.\n", adapter_idx,
+                        output_idx, hr);
+                IDXGIOutput_Release(output);
+                continue;
+            }
 
-        if (desc.Monitor == monitor)
-        {
-            *dxgi_output = output;
-            return S_OK;
-        }
+            if (desc.Monitor == monitor)
+            {
+                *dxgi_output = output;
+                IDXGIAdapter_Release(adapter);
+                return S_OK;
+            }
 
-        IDXGIOutput_Release(output);
-        ++index;
+            IDXGIOutput_Release(output);
+        }
+        IDXGIAdapter_Release(adapter);
     }
+
     if (hr != DXGI_ERROR_NOT_FOUND)
         WARN("Failed to enumerate outputs, hr %#x.\n", hr);
 
@@ -582,9 +591,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapChain1 *iface, IDXGIOutput **output)
 {
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
-    IDXGIAdapter *adapter;
-    IDXGIDevice *device;
-    HRESULT hr;
+    HWND window;
 
     TRACE("iface %p, output %p.\n", iface, output);
 
@@ -594,24 +601,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapCh
         return S_OK;
     }
 
-    if (SUCCEEDED(hr = d3d11_swapchain_GetDevice(iface, &IID_IDXGIDevice, (void **)&device)))
+    if (!swapchain->factory)
     {
-        hr = IDXGIDevice_GetAdapter(device, &adapter);
-        IDXGIDevice_Release(device);
+        ERR("Implicit swapchain does not store a reference to factory.\n");
+        return E_NOINTERFACE;
     }
 
-    if (SUCCEEDED(hr))
-    {
-        HWND hwnd = d3d11_swapchain_get_hwnd(swapchain);
-        hr = dxgi_get_output_from_window(adapter, hwnd, output);
-        IDXGIAdapter_Release(adapter);
-    }
-    else
-    {
-        WARN("Failed to get adapter, hr %#x.\n", hr);
-    }
-
-    return hr;
+    window = d3d11_swapchain_get_hwnd(swapchain);
+    return dxgi_get_output_from_window(swapchain->factory, window, output);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFrameStatistics(IDXGISwapChain1 *iface,
@@ -2423,6 +2420,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetContainingOutput(IDXGISwapCh
 {
     struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain3(iface);
     IUnknown *device_parent;
+    IDXGIFactory *factory;
     IDXGIAdapter *adapter;
     HRESULT hr;
 
@@ -2436,16 +2434,22 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetContainingOutput(IDXGISwapCh
 
     device_parent = vkd3d_get_device_parent(swapchain->device);
 
-    if (SUCCEEDED(hr = IUnknown_QueryInterface(device_parent, &IID_IDXGIAdapter, (void **)&adapter)))
-    {
-        hr = dxgi_get_output_from_window(adapter, swapchain->window, output);
-        IDXGIAdapter_Release(adapter);
-    }
-    else
+    if (FAILED(hr = IUnknown_QueryInterface(device_parent, &IID_IDXGIAdapter, (void **)&adapter)))
     {
         WARN("Failed to get adapter, hr %#x.\n", hr);
+        return hr;
     }
 
+    if (FAILED(hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory)))
+    {
+        WARN("Failed to get factory, hr %#x.\n", hr);
+        IDXGIAdapter_Release(adapter);
+        return hr;
+    }
+
+    hr = dxgi_get_output_from_window(factory, swapchain->window, output);
+    IDXGIFactory_Release(factory);
+    IDXGIAdapter_Release(adapter);
     return hr;
 }
 
