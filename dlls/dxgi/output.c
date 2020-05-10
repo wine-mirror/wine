@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static inline DXGI_MODE_SCANLINE_ORDER dxgi_mode_scanline_order_from_wined3d(enum wined3d_scanline_ordering ordering)
+{
+    return (DXGI_MODE_SCANLINE_ORDER)ordering;
+}
+
 static void dxgi_mode_from_wined3d(DXGI_MODE_DESC *mode, const struct wined3d_display_mode *wined3d_mode)
 {
     mode->Width = wined3d_mode->width;
@@ -30,7 +35,7 @@ static void dxgi_mode_from_wined3d(DXGI_MODE_DESC *mode, const struct wined3d_di
     mode->RefreshRate.Numerator = wined3d_mode->refresh_rate;
     mode->RefreshRate.Denominator = 1;
     mode->Format = dxgi_format_from_wined3dformat(wined3d_mode->format_id);
-    mode->ScanlineOrdering = wined3d_mode->scanline_ordering;
+    mode->ScanlineOrdering = dxgi_mode_scanline_order_from_wined3d(wined3d_mode->scanline_ordering);
     mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
 }
 
@@ -41,7 +46,7 @@ static void dxgi_mode1_from_wined3d(DXGI_MODE_DESC1 *mode, const struct wined3d_
     mode->RefreshRate.Numerator = wined3d_mode->refresh_rate;
     mode->RefreshRate.Denominator = 1;
     mode->Format = dxgi_format_from_wined3dformat(wined3d_mode->format_id);
-    mode->ScanlineOrdering = wined3d_mode->scanline_ordering;
+    mode->ScanlineOrdering = dxgi_mode_scanline_order_from_wined3d(wined3d_mode->scanline_ordering);
     mode->Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
     mode->Stereo = FALSE; /* FIXME */
 }
