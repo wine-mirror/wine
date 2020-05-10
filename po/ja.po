@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-11-29 22:03+0900\n"
+"PO-Revision-Date: 2020-05-10 19:59+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -8287,26 +8287,20 @@ msgid "Off"
 msgstr "Off"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "ビデオ"
+msgstr "プロバイダ"
 
 #: version.rc:45
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "形式を選択してください:"
+msgstr "接続したいデータを選択してください:"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "プロパティ"
+msgstr "データ リンク プロパティ"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB プロバイダ"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9498,16 +9492,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "カーボベルデ夏時間"
 
 #: tzres.rc:120
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "ハワイ標準時"
+msgstr "ハイチ標準時"
 
 #: tzres.rc:121
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "ハワイ夏時間"
+msgstr "ハイチ夏時間"
 
 #: tzres.rc:78
 msgid "Central European Standard Time"
@@ -9718,16 +9708,12 @@ msgid "Argentina Daylight Time"
 msgstr "アルゼンチン夏時間"
 
 #: tzres.rc:142
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "モーリシャス標準時"
+msgstr "マルキーズ標準時"
 
 #: tzres.rc:143
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "モーリシャス夏時間"
+msgstr "マルキーズ夏時間"
 
 #: tzres.rc:156
 msgid "Myanmar Standard Time"
@@ -10102,16 +10088,12 @@ msgid "Venezuela Daylight Time"
 msgstr "ベネズエラ夏時間"
 
 #: tzres.rc:60
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "山地標準時"
+msgstr "ブーゲンビル標準時"
 
 #: tzres.rc:61
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "山地夏時間"
+msgstr "ブーゲンビル夏時間"
 
 #: tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10138,16 +10120,12 @@ msgid "New Zealand Daylight Time"
 msgstr "ニュージーランド夏時間"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "アルゼンチン標準時"
+msgstr "アリューシャン標準時"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "アルゼンチン夏時間"
+msgstr "アリューシャン夏時間"
 
 #: tzres.rc:74
 msgid "Central Brazilian Standard Time"
@@ -10230,16 +10208,12 @@ msgid "Korea Daylight Time"
 msgstr "韓国 (夏時間)"
 
 #: tzres.rc:86
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "イースター島標準時"
+msgstr "チャタム諸島標準時"
 
 #: tzres.rc:87
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "イースター島夏時間"
+msgstr "チャタム諸島夏時間"
 
 #: tzres.rc:92
 msgid "E. Africa Standard Time"
