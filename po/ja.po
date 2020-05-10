@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-11-29 22:03+0900\n"
+"PO-Revision-Date: 2020-05-10 19:59+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -3702,17 +3702,15 @@ msgstr "'@'を期待していました"
 
 #: jscript.rc:75
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript コンパイル エラー"
 
 #: jscript.rc:76
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript 実行時エラー"
 
 #: jscript.rc:77
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "不明なエラー"
+msgstr "未知の実行時エラー"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -3760,7 +3758,7 @@ msgstr "正規表現に構文誤りがあります"
 
 #: jscript.rc:63
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "例外が送出されましたが捕捉されませんでした"
 
 #: jscript.rc:65
 msgid "URI to be encoded contains invalid characters"
@@ -6839,10 +6837,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "シンクは確定されていません。\n"
 
 #: mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "シンクはすでに停止していました。\n"
+msgstr "クロックは停止されていました\n"
 
 #: mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7221,10 +7217,8 @@ msgid "Clock state was already set.\n"
 msgstr "クロックの状態は設定済みでした。\n"
 
 #: mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "クロックは利用可能ではありません。\n"
+msgstr "クロックが単純ではありません\n"
 
 #: mpr.rc:35 wininet.rc:37
 msgid "Enter Network Password"
@@ -8319,206 +8313,160 @@ msgid "Off"
 msgstr "Off"
 
 #: version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "ビデオ"
+msgstr "プロバイダ"
 
 #: version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "形式を選択してください:"
+msgstr "接続したいデータを選択してください:"
 
 #: version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
 msgstr "接続"
 
 #: version.rc:69
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "形式を選択してください:"
+msgstr "ODBC データに接続するため以下を指定してください:"
 
 #: version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. データ ソース:"
 
 #: version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "名前を入力しましょう"
+msgstr "利用するデータ ソース名(&D)"
 
 #: version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "リセットされた接続"
+msgstr "利用する接続文字列(&C)"
 
 #: version.rc:75
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "接続"
+msgstr "接続文字列:"
 
 #: version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "追加(&D)..."
+msgstr "構築(&U)..."
 
 #: version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. サーバにログオンするための情報"
 
 #: version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "ユーザ名(&U):"
+msgstr "ユーザ名(&N):"
 
 #: version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "空白(&B)"
+msgstr "空のパスワード(&B)"
 
 #: version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "パスワードが違います。\n"
+msgstr "パスワードを保存する(&S)"
 
 #: version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. 最初に利用するカタログ(&I):"
 
 #: version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "リセットされた接続"
+msgstr "接続をテスト(&T)"
 
 #: version.rc:92 winemine.rc:65
 msgid "Advanced"
 msgstr "中級"
 
 #: version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "ネットワーク共有"
+msgstr "ネットワーク設定"
 
 #: version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "不正な偽装レベルです。\n"
+msgstr "偽装レベル(&I):"
 
 #: version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "保護レベル(&R):"
 
 #: version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "接続済み"
+msgstr "接続:"
 
 #: version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
 msgstr "秒"
 
 #: version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "成功"
+msgstr "アクセス(&C):"
 
 #: version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "すべて(&A)"
+msgstr "すべて"
 
 #: version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"このデータ型には初期プロパティがあります。値を編集するには、プロパティを選ん"
+"でから、下にある[値の編集]を選択してください。"
 
 #: version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "編集(&E)..."
+msgstr "値の編集(&E)..."
 
 #: version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "プロパティ"
+msgstr "データ リンク エラー"
 
 #: version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "ファイルを選択してください。"
+msgstr "プロバイダを選択してください。"
 
 #: version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"プロバイダが有効ではありません。当該プロバイダが正しくインストールされている"
+"か確かめてください。"
 
 #: version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "プロパティ"
+msgstr "データ リンク プロパティ"
 
 #: version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB プロバイダ"
 
 #: version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "待機中"
+msgstr "読み取り"
 
 #: version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "付属文書:"
+msgstr "読み書き"
 
 #: version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "共有(拒否なし)"
 
 #: version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "共有(読取拒否)"
 
 #: version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "共有(書込拒否)"
 
 #: version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "共有の排他制御"
 
 #: version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O 書き込み"
+msgstr "書き込み"
 
 #: oledlg.rc:55
 msgid "Insert Object"
@@ -9710,16 +9658,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "カーボベルデ夏時間"
 
 #: tzres.rc:120
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "ハワイ標準時"
+msgstr "ハイチ標準時"
 
 #: tzres.rc:121
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "ハワイ夏時間"
+msgstr "ハイチ夏時間"
 
 #: tzres.rc:78
 msgid "Central European Standard Time"
@@ -9930,16 +9874,12 @@ msgid "Argentina Daylight Time"
 msgstr "アルゼンチン夏時間"
 
 #: tzres.rc:142
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "モーリシャス標準時"
+msgstr "マルキーズ標準時"
 
 #: tzres.rc:143
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "モーリシャス夏時間"
+msgstr "マルキーズ夏時間"
 
 #: tzres.rc:156
 msgid "Myanmar Standard Time"
@@ -10314,16 +10254,12 @@ msgid "Venezuela Daylight Time"
 msgstr "ベネズエラ夏時間"
 
 #: tzres.rc:60
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "山地標準時"
+msgstr "ブーゲンビル標準時"
 
 #: tzres.rc:61
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "山地夏時間"
+msgstr "ブーゲンビル夏時間"
 
 #: tzres.rc:122
 msgid "Hawaiian Standard Time"
@@ -10350,16 +10286,12 @@ msgid "New Zealand Daylight Time"
 msgstr "ニュージーランド夏時間"
 
 #: tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "アルゼンチン標準時"
+msgstr "アリューシャン標準時"
 
 #: tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "アルゼンチン夏時間"
+msgstr "アリューシャン夏時間"
 
 #: tzres.rc:74
 msgid "Central Brazilian Standard Time"
@@ -10442,16 +10374,12 @@ msgid "Korea Daylight Time"
 msgstr "韓国 (夏時間)"
 
 #: tzres.rc:86
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "イースター島標準時"
+msgstr "チャタム諸島標準時"
 
 #: tzres.rc:87
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "イースター島夏時間"
+msgstr "チャタム諸島夏時間"
 
 #: tzres.rc:92
 msgid "E. Africa Standard Time"
