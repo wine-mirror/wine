@@ -1845,18 +1845,18 @@ BOOL WINAPI SetupDiGetDeviceInstanceIdW(HDEVINFO devinfo, SP_DEVINFO_DATA *devic
 }
 
 /***********************************************************************
- *              SetupDiGetActualSectionToInstallA (SETUPAPI.@)
+ *              SetupDiGetActualSectionToInstallExA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section,
-        char *section_ext, DWORD size, DWORD *needed, char **extptr)
+BOOL WINAPI SetupDiGetActualSectionToInstallExA(HINF hinf, const char *section, SP_ALTPLATFORM_INFO *altplatform,
+        char *section_ext, DWORD size, DWORD *needed, char **extptr, void *reserved)
 {
     WCHAR sectionW[LINE_LEN], section_extW[LINE_LEN], *extptrW;
     BOOL ret;
 
     MultiByteToWideChar(CP_ACP, 0, section, -1, sectionW, ARRAY_SIZE(sectionW));
 
-    ret = SetupDiGetActualSectionToInstallW(hinf, sectionW, section_extW,
-            ARRAY_SIZE(section_extW), NULL, &extptrW);
+    ret = SetupDiGetActualSectionToInstallExW(hinf, sectionW, altplatform, section_extW,
+            ARRAY_SIZE(section_extW), NULL, &extptrW, reserved);
     if (ret)
     {
         if (needed)
@@ -1879,70 +1879,91 @@ BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section,
 }
 
 /***********************************************************************
- *		SetupDiGetActualSectionToInstallW (SETUPAPI.@)
+ *              SetupDiGetActualSectionToInstallA (SETUPAPI.@)
  */
-BOOL WINAPI SetupDiGetActualSectionToInstallW(
-        HINF InfHandle,
-        PCWSTR InfSectionName,
-        PWSTR InfSectionWithExt,
-        DWORD InfSectionWithExtSize,
-        PDWORD RequiredSize,
-        PWSTR *Extension)
+BOOL WINAPI SetupDiGetActualSectionToInstallA(HINF hinf, const char *section, char *section_ext,
+        DWORD size, DWORD *needed, char **extptr)
 {
-    WCHAR szBuffer[MAX_PATH];
-    DWORD dwLength;
-    DWORD dwFullLength;
-    LONG lLineCount = -1;
+    return SetupDiGetActualSectionToInstallExA(hinf, section, NULL, section_ext, size,
+        needed, extptr, NULL);
+}
 
-    lstrcpyW(szBuffer, InfSectionName);
-    dwLength = lstrlenW(szBuffer);
+/***********************************************************************
+ *              SetupDiGetActualSectionToInstallExW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetActualSectionToInstallExW(HINF hinf, const WCHAR *section, SP_ALTPLATFORM_INFO *altplatform,
+        WCHAR *section_ext, DWORD size, DWORD *needed, WCHAR **extptr, void *reserved)
+{
+    WCHAR buffer[MAX_PATH];
+    DWORD len;
+    DWORD full_len;
+    LONG line_count = -1;
+
+    TRACE("hinf %p, section %s, altplatform %p, ext %p, size %d, needed %p, extptr %p, reserved %p.\n",
+            hinf, debugstr_w(section), altplatform, section_ext, size, needed, extptr, reserved);
+
+    if (altplatform)
+        FIXME("SP_ALTPLATFORM_INFO unsupported\n");
+
+    lstrcpyW(buffer, section);
+    len = lstrlenW(buffer);
 
     if (OsVersionInfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
     {
-	/* Test section name with '.NTx86' extension */
-	lstrcpyW(&szBuffer[dwLength], NtPlatformExtension);
-	lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
+        /* Test section name with '.NTx86' extension */
+        lstrcpyW(&buffer[len], NtPlatformExtension);
+        line_count = SetupGetLineCountW(hinf, buffer);
 
-	if (lLineCount == -1)
-	{
-	    /* Test section name with '.NT' extension */
-	    lstrcpyW(&szBuffer[dwLength], NtExtension);
-	    lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
-	}
+        if (line_count == -1)
+        {
+            /* Test section name with '.NT' extension */
+            lstrcpyW(&buffer[len], NtExtension);
+            line_count = SetupGetLineCountW(hinf, buffer);
+        }
     }
     else
     {
-	/* Test section name with '.Win' extension */
-	lstrcpyW(&szBuffer[dwLength], WinExtension);
-	lLineCount = SetupGetLineCountW(InfHandle, szBuffer);
+        /* Test section name with '.Win' extension */
+        lstrcpyW(&buffer[len], WinExtension);
+        line_count = SetupGetLineCountW(hinf, buffer);
     }
 
-    if (lLineCount == -1)
-        szBuffer[dwLength] = 0;
+    if (line_count == -1)
+        buffer[len] = 0;
 
-    dwFullLength = lstrlenW(szBuffer);
+    full_len = lstrlenW(buffer);
 
-    if (InfSectionWithExt != NULL && InfSectionWithExtSize != 0)
+    if (section_ext != NULL && size != 0)
     {
-	if (InfSectionWithExtSize < (dwFullLength + 1))
-	{
-	    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	    return FALSE;
-	}
+        if (size < (full_len + 1))
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
 
-	lstrcpyW(InfSectionWithExt, szBuffer);
-	if (Extension != NULL)
-	{
-	    *Extension = (dwLength == dwFullLength) ? NULL : &InfSectionWithExt[dwLength];
-	}
+        lstrcpyW(section_ext, buffer);
+        if (extptr != NULL)
+        {
+            *extptr = (len == full_len) ? NULL : &section_ext[len];
+        }
     }
 
-    if (RequiredSize != NULL)
+    if (needed != NULL)
     {
-	*RequiredSize = dwFullLength + 1;
+        *needed = full_len + 1;
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *              SetupDiGetActualSectionToInstallW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetActualSectionToInstallW(HINF hinf, const WCHAR *section, WCHAR *section_ext,
+        DWORD size, DWORD *needed, WCHAR **extptr)
+{
+    return SetupDiGetActualSectionToInstallExW(hinf, section, NULL, section_ext, size,
+            needed, extptr, NULL);
 }
 
 /***********************************************************************
