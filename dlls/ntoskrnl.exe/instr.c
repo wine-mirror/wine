@@ -593,15 +593,6 @@ static void fake_syscall_function(void)
 }
 
 
-static void update_shared_data(void)
-{
-    struct _KUSER_SHARED_DATA *shared_data  = (struct _KUSER_SHARED_DATA *)wine_user_shared_data;
-
-    shared_data->u.TickCountQuad = GetTickCount64();
-    shared_data->u.TickCount.High2Time = shared_data->u.TickCount.High1Time;
-}
-
-
 /***********************************************************************
  *           emulate_instruction
  *
@@ -802,7 +793,6 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
             {
                 ULONGLONG temp = 0;
-                update_shared_data();
                 memcpy( &temp, wine_user_shared_data + offset, data_size );
                 store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex );
                 context->Rip += prefixlen + len + 2;
@@ -823,7 +813,6 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
         if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
         {
-            update_shared_data();
             switch (*instr)
             {
             case 0x8a: store_reg_byte( context, instr[1], wine_user_shared_data + offset, rex ); break;
@@ -845,7 +834,6 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
         if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
         {
-            update_shared_data();
             memcpy( &context->Rax, wine_user_shared_data + offset, data_size );
             context->Rip += prefixlen + len + 1;
             return ExceptionContinueExecution;

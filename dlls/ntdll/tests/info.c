@@ -2264,7 +2264,6 @@ static void test_queryvirtualmemory(void)
     todo_wine
     ok(mbi.AllocationProtect == PAGE_READONLY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_READONLY);
     ok(mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
-    todo_wine
     ok(mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x\n", mbi.Protect);
     ok(mbi.Type == MEM_PRIVATE, "mbi.Type is 0x%x, expected 0x%x\n", mbi.Type, MEM_PRIVATE);
     todo_wine

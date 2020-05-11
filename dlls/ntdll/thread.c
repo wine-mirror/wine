@@ -56,6 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 #endif
 
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
+static size_t user_shared_data_size;
 static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
 
 void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
@@ -212,6 +213,64 @@ static void set_process_name( int argc, char *argv[] )
 #endif  /* HAVE_PRCTL */
 }
 
+HANDLE user_shared_data_init_done(void)
+{
+    static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+                                      '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING wine_usd_str;
+    LARGE_INTEGER section_size;
+    NTSTATUS status;
+    HANDLE section;
+    SIZE_T size;
+    void *addr;
+    ULONG old_prot;
+    int res, fd, needs_close;
+
+    section_size.HighPart = 0;
+    section_size.LowPart = user_shared_data_size;
+
+    RtlInitUnicodeString( &wine_usd_str, wine_usdW );
+    InitializeObjectAttributes( &attr, &wine_usd_str, OBJ_OPENIF, NULL, NULL );
+    if ((status = NtCreateSection( &section, SECTION_ALL_ACCESS, &attr,
+                                   &section_size, PAGE_READWRITE, SEC_COMMIT, NULL )) &&
+        status != STATUS_OBJECT_NAME_EXISTS)
+    {
+        MESSAGE( "wine: failed to create or open the USD section: %08x\n", status );
+        exit(1);
+    }
+
+    if (status != STATUS_OBJECT_NAME_EXISTS)
+    {
+        addr = NULL;
+        size = user_shared_data_size;
+
+        if ((status = NtMapViewOfSection( section, NtCurrentProcess(), &addr, 0, 0, 0,
+                                          &size, 0, 0, PAGE_READWRITE )))
+        {
+            MESSAGE( "wine: failed to initialize the USD section: %08x\n", status );
+            exit(1);
+        }
+
+        memcpy( addr, user_shared_data, user_shared_data_size );
+        NtUnmapViewOfSection( NtCurrentProcess(), addr );
+    }
+
+    addr = user_shared_data;
+    size = user_shared_data_size;
+    NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot );
+
+    if ((res = server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
+        (user_shared_data != mmap( user_shared_data, user_shared_data_size,
+                                   PROT_READ, MAP_SHARED | MAP_FIXED, fd, 0 )))
+    {
+        MESSAGE( "wine: failed to remap the process USD: %d\n", res );
+        exit(1);
+    }
+    if (needs_close) close( fd );
+
+    return section;
+}
 
 /***********************************************************************
  *           thread_init
@@ -244,6 +303,7 @@ TEB *thread_init(void)
         exit(1);
     }
     user_shared_data = addr;
+    user_shared_data_size = size;
     memcpy( user_shared_data->NtSystemRoot, default_windirW, sizeof(default_windirW) );
 
     /* allocate and initialize the PEB and initial TEB */

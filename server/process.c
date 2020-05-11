@@ -1361,6 +1361,7 @@ DECL_HANDLER(init_process_done)
 {
     struct process_dll *dll;
     struct process *process = current->process;
+    struct mapping *mapping;
 
     if (is_process_init_done(process))
     {
@@ -1372,6 +1373,13 @@ DECL_HANDLER(init_process_done)
         set_error( STATUS_DLL_NOT_FOUND );
         return;
     }
+    if (!(mapping = get_mapping_obj( current->process, req->usd_handle, SECTION_MAP_WRITE )))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    init_kusd_mapping( mapping );
+    release_object( mapping );
 
     /* main exe is the first in the dll list */
     list_remove( &dll->entry );

@@ -854,6 +854,7 @@ struct rawinput_device
     mod_handle_t module;       /* main module base address */
     client_ptr_t ldt_copy;     /* address of LDT copy (in thread address space) */
     client_ptr_t entry;        /* process entry point */
+    obj_handle_t usd_handle;   /* USD mapping handle */
 @REPLY
     int          suspend;      /* is process suspended? */
 @END

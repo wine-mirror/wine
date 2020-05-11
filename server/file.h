@@ -173,6 +173,8 @@ extern struct file *get_mapping_file( struct process *process, client_ptr_t base
 extern void free_mapped_views( struct process *process );
 extern int get_page_size(void);
 
+extern void init_kusd_mapping( struct mapping *mapping );
+
 /* device functions */
 
 extern struct object *create_named_pipe_device( struct object *root, const struct unicode_str *name );

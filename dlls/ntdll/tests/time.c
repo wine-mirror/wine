@@ -185,9 +185,10 @@ static void test_user_shared_data_time(void)
         t3 = GetTickCount();
     } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 
+    /* FIXME: not always in order, but should be close */
+    todo_wine_if(t1 > t2 && t1 - t2 < 50)
     ok(t1 <= t2, "USD TickCount / GetTickCount are out of order: %s %s\n",
        wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
-    todo_wine
     ok(t2 <= t3, "USD TickCount / GetTickCount are out of order: %s %s\n",
        wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
 
@@ -202,7 +203,8 @@ static void test_user_shared_data_time(void)
         t3 = system_time.QuadPart;
     } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 
-    todo_wine
+    /* FIXME: not always in order, but should be close */
+    todo_wine_if(t1 > t2 && t1 - t2 < 50 * TICKSPERMSEC)
     ok(t1 <= t2, "USD SystemTime / NtQuerySystemTime are out of order %s %s\n",
        wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
     ok(t2 <= t3, "USD SystemTime / NtQuerySystemTime are out of order %s %s\n",
@@ -220,7 +222,8 @@ static void test_user_shared_data_time(void)
             pRtlQueryUnbiasedInterruptTime(&t3);
         } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 
-        todo_wine
+        /* FIXME: not always in order, but should be close */
+        todo_wine_if(t1 > t2 && t1 - t2 < 50 * TICKSPERMSEC)
         ok(t1 <= t2, "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
            wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
         ok(t2 <= t3 || broken(t2 == t3 + 82410089070) /* w864 has some weird offset on testbot */,

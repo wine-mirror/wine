@@ -1317,6 +1317,7 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     dump_uint64( ", module=", &req->module );
     dump_uint64( ", ldt_copy=", &req->ldt_copy );
     dump_uint64( ", entry=", &req->entry );
+    fprintf( stderr, ", usd_handle=%04x", req->usd_handle );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_reply *req )

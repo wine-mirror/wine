@@ -872,6 +872,8 @@ struct init_process_done_request
     mod_handle_t module;
     client_ptr_t ldt_copy;
     client_ptr_t entry;
+    obj_handle_t usd_handle;
+    char __pad_44[4];
 };
 struct init_process_done_reply
 {
@@ -6682,7 +6684,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 602
+#define SERVER_PROTOCOL_VERSION 603
 
 /* ### protocol_version end ### */
 
