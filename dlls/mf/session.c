@@ -536,6 +536,19 @@ static HRESULT session_submit_command(struct media_session *session, struct sess
     return hr;
 }
 
+static HRESULT session_submit_simple_command(struct media_session *session, enum session_command command)
+{
+    struct session_op *op;
+    HRESULT hr;
+
+    if (FAILED(hr = create_session_op(command, &op)))
+        return hr;
+
+    hr = session_submit_command(session, op);
+    IUnknown_Release(&op->IUnknown_iface);
+    return hr;
+}
+
 static void session_clear_topologies(struct media_session *session)
 {
     struct queued_topology *ptr, *next;
@@ -1499,18 +1512,10 @@ static HRESULT WINAPI mfsession_SetTopology(IMFMediaSession *iface, DWORD flags,
 static HRESULT WINAPI mfsession_ClearTopologies(IMFMediaSession *iface)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
-    struct session_op *op;
-    HRESULT hr;
 
     TRACE("%p.\n", iface);
 
-    if (FAILED(hr = create_session_op(SESSION_CMD_CLEAR_TOPOLOGIES, &op)))
-        return hr;
-
-    hr = session_submit_command(session, op);
-    IUnknown_Release(&op->IUnknown_iface);
-
-    return hr;
+    return session_submit_simple_command(session, SESSION_CMD_CLEAR_TOPOLOGIES);
 }
 
 static HRESULT WINAPI mfsession_Start(IMFMediaSession *iface, const GUID *format, const PROPVARIANT *start_position)
@@ -1541,52 +1546,28 @@ static HRESULT WINAPI mfsession_Start(IMFMediaSession *iface, const GUID *format
 static HRESULT WINAPI mfsession_Pause(IMFMediaSession *iface)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
-    struct session_op *op;
-    HRESULT hr;
 
     TRACE("%p.\n", iface);
 
-    if (FAILED(hr = create_session_op(SESSION_CMD_PAUSE, &op)))
-        return hr;
-
-    hr = session_submit_command(session, op);
-    IUnknown_Release(&op->IUnknown_iface);
-
-    return hr;
+    return session_submit_simple_command(session, SESSION_CMD_PAUSE);
 }
 
 static HRESULT WINAPI mfsession_Stop(IMFMediaSession *iface)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
-    struct session_op *op;
-    HRESULT hr;
 
     TRACE("%p.\n", iface);
 
-    if (FAILED(hr = create_session_op(SESSION_CMD_STOP, &op)))
-        return hr;
-
-    hr = session_submit_command(session, op);
-    IUnknown_Release(&op->IUnknown_iface);
-
-    return hr;
+    return session_submit_simple_command(session, SESSION_CMD_STOP);
 }
 
 static HRESULT WINAPI mfsession_Close(IMFMediaSession *iface)
 {
     struct media_session *session = impl_from_IMFMediaSession(iface);
-    struct session_op *op;
-    HRESULT hr;
 
     TRACE("%p.\n", iface);
 
-    if (FAILED(hr = create_session_op(SESSION_CMD_CLOSE, &op)))
-        return hr;
-
-    hr = session_submit_command(session, op);
-    IUnknown_Release(&op->IUnknown_iface);
-
-    return hr;
+    return session_submit_simple_command(session, SESSION_CMD_CLOSE);
 }
 
 static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
