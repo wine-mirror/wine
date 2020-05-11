@@ -10168,6 +10168,87 @@ static void test_cursor_clipping(void)
     DestroyWindow(window);
 }
 
+static void test_window_position(void)
+{
+    unsigned int adapter_idx, adapter_count;
+    struct device_desc device_desc;
+    IDirect3DDevice8 *device;
+    MONITORINFO monitor_info;
+    HMONITOR monitor;
+    RECT window_rect;
+    IDirect3D8 *d3d;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    adapter_count = IDirect3D8_GetAdapterCount(d3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        monitor = IDirect3D8_GetAdapterMonitor(d3d, adapter_idx);
+        ok(!!monitor, "Adapter %u: GetAdapterMonitor failed.\n", adapter_idx);
+        monitor_info.cbSize = sizeof(monitor_info);
+        ret = GetMonitorInfoW(monitor, &monitor_info);
+        ok(ret, "Adapter %u: GetMonitorInfoW failed, error %#x.\n", adapter_idx, GetLastError());
+
+        window = create_window();
+        device_desc.adapter_ordinal = adapter_idx;
+        device_desc.device_window = window;
+        device_desc.width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+        device_desc.height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+        device_desc.flags = CREATE_DEVICE_FULLSCREEN;
+        if (!(device = create_device(d3d, window, &device_desc)))
+        {
+            skip("Adapter %u: Failed to create a D3D device, skipping tests.\n", adapter_idx);
+            DestroyWindow(window);
+            continue;
+        }
+        flush_events();
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Adapter %u: GetWindowRect failed, error %#x.\n", adapter_idx, GetLastError());
+        ok(EqualRect(&window_rect, &monitor_info.rcMonitor),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+
+        /* Device resets should restore the window rectangle to fit the whole monitor */
+        ret = SetWindowPos(window, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+        ok(ret, "Adapter %u: SetWindowPos failed, error %#x.\n", adapter_idx, GetLastError());
+        hr = reset_device(device, &device_desc);
+        ok(hr == D3D_OK, "Adapter %u: Failed to reset device, hr %#x.\n", adapter_idx, hr);
+        flush_events();
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Adapter %u: GetWindowRect failed, error %#x.\n", adapter_idx, GetLastError());
+        ok(EqualRect(&window_rect, &monitor_info.rcMonitor),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+
+        /* Window activation should restore the window rectangle to fit the whole monitor */
+        ret = SetWindowPos(window, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+        ok(ret, "Adapter %u: SetWindowPos failed, error %#x.\n", adapter_idx, GetLastError());
+        ret = SetForegroundWindow(GetDesktopWindow());
+        ok(ret, "Adapter %u: SetForegroundWindow failed, error %#x.\n", adapter_idx, GetLastError());
+        flush_events();
+        ret = ShowWindow(window, SW_RESTORE);
+        ok(ret, "Adapter %u: Failed to restore window, error %#x.\n", adapter_idx, GetLastError());
+        flush_events();
+        ret = SetForegroundWindow(window);
+        ok(ret, "Adapter %u: SetForegroundWindow failed, error %#x.\n", adapter_idx, GetLastError());
+        flush_events();
+        ret = GetWindowRect(window, &window_rect);
+        ok(ret, "Adapter %u: GetWindowRect failed, error %#x.\n", adapter_idx, GetLastError());
+        ok(EqualRect(&window_rect, &monitor_info.rcMonitor),
+                "Adapter %u: Expect window rect %s, got %s.\n", adapter_idx,
+                wine_dbgstr_rect(&monitor_info.rcMonitor), wine_dbgstr_rect(&window_rect));
+
+        IDirect3DDevice8_Release(device);
+        DestroyWindow(window);
+    }
+
+    IDirect3D8_Release(d3d);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = GetModuleHandleA("d3d8.dll");
@@ -10287,6 +10368,7 @@ START_TEST(device)
     test_multi_adapter();
     test_creation_parameters();
     test_cursor_clipping();
+    test_window_position();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
