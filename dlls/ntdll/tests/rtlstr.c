@@ -693,6 +693,7 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x19d: lower_ch = 0x272; break;
 		case 0x19f: lower_ch = 0x275; break;
 		case 0x1a9: lower_ch = 0x283; break;
+		case 0x1a6: lower_ch = 0x280; break;
 		case 0x1ae: lower_ch = 0x288; break;
 		case 0x1b1: lower_ch = 0x28a; break;
 		case 0x1b2: lower_ch = 0x28b; break;
@@ -701,6 +702,16 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x1c7: lower_ch = 0x1c9; break;
 		case 0x1ca: lower_ch = 0x1cc; break;
 		case 0x1f1: lower_ch = 0x1f3; break;
+		case 0x1f6: lower_ch = 0x195; break;
+		case 0x1f7: lower_ch = 0x1bf; break;
+		case 0x220: lower_ch = 0x19e; break;
+		case 0x23a: lower_ch = 0x2c65; break;
+		case 0x23d: lower_ch = 0x19a; break;
+		case 0x23e: lower_ch = 0x2c66; break;
+		case 0x243: lower_ch = 0x180; break;
+		case 0x244: lower_ch = 0x289; break;
+		case 0x245: lower_ch = 0x28c; break;
+		case 0x37f: lower_ch = 0x3f3; break;
 		case 0x386: lower_ch = 0x3ac; break;
 		case 0x388: lower_ch = 0x3ad; break;
 		case 0x389: lower_ch = 0x3ae; break;
@@ -708,6 +719,11 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x38c: lower_ch = 0x3cc; break;
 		case 0x38e: lower_ch = 0x3cd; break;
 		case 0x38f: lower_ch = 0x3ce; break;
+		case 0x3cf: lower_ch = 0x3d7; break;
+		case 0x3f9: lower_ch = 0x3f2; break;
+		case 0x3fd: lower_ch = 0x37b; break;
+		case 0x3fe: lower_ch = 0x37c; break;
+		case 0x3ff: lower_ch = 0x37d; break;
 		default: lower_ch = ch; break;
 	    } /* switch */
 	}
@@ -730,7 +746,8 @@ static void test_RtlDowncaseUnicodeString(void)
 
     pRtlDowncaseUnicodeString(&result_str, &source_str, 0);
     for (i = 0; i <= 1024; i++) {
-	ok(result_str.Buffer[i] == lower_str.Buffer[i] || result_str.Buffer[i] == source_str.Buffer[i] + 1,
+	ok(result_str.Buffer[i] == lower_str.Buffer[i] || result_str.Buffer[i] == source_str.Buffer[i] + 1 ||
+           broken( result_str.Buffer[i] == source_str.Buffer[i] ),
 	   "RtlDowncaseUnicodeString works wrong: '%c'[=0x%x] is converted to '%c'[=0x%x], expected: '%c'[=0x%x]\n",
 	   source_str.Buffer[i], source_str.Buffer[i],
 	   result_str.Buffer[i], result_str.Buffer[i],
@@ -2621,10 +2638,7 @@ START_TEST(rtlstr)
     test_RtlCompareUnicodeString();
     test_RtlUpcaseUnicodeChar();
     test_RtlUpcaseUnicodeString();
-    if(0)
-    {
-	test_RtlDowncaseUnicodeString();
-    }
+    test_RtlDowncaseUnicodeString();
     test_RtlHashUnicodeString();
     test_RtlUnicodeToUTF8N();
     test_RtlUTF8ToUnicodeN();
