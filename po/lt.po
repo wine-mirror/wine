@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-03-31 23:40+0300\n"
+"PO-Revision-Date: 2020-05-12 00:24+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3617,7 +3617,7 @@ msgstr "Žaidimų valdikliai"
 
 #: joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Tikrinti ir konfigūruoti žaidimų valdiklius."
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
