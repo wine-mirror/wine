@@ -43,6 +43,7 @@ enum session_command
     SESSION_CMD_START,
     SESSION_CMD_PAUSE,
     SESSION_CMD_STOP,
+    SESSION_CMD_END, /* Internal use only. */
 };
 
 struct session_op
@@ -526,6 +527,14 @@ static HRESULT session_is_shut_down(struct media_session *session)
     return session->state == SESSION_STATE_SHUT_DOWN ? MF_E_SHUTDOWN : S_OK;
 }
 
+static void session_push_back_command(struct media_session *session, enum session_command command)
+{
+    struct session_op *op;
+
+    if (SUCCEEDED(create_session_op(command, &op)))
+        list_add_head(&session->commands, &op->entry);
+}
+
 static HRESULT session_submit_command(struct media_session *session, struct session_op *op)
 {
     HRESULT hr;
@@ -933,7 +942,7 @@ static void session_set_stopped(struct media_session *session, HRESULT status)
 
 static void session_stop(struct media_session *session)
 {
-    HRESULT hr;
+    HRESULT hr = MF_E_INVALIDREQUEST;
 
     switch (session->state)
     {
@@ -949,10 +958,12 @@ static void session_stop(struct media_session *session)
 
             break;
         case SESSION_STATE_STOPPED:
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, S_OK, NULL);
-            break;
+            hr = S_OK;
+            /* fallthrough */
         default:
-            ;
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, hr, NULL);
+            session_command_complete(session);
+            break;
     }
 }
 
@@ -1002,11 +1013,9 @@ static void session_close(struct media_session *session)
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
                 session->state = SESSION_STATE_STOPPING_SINKS;
             break;
-        case SESSION_STATE_CLOSED:
+        default:
             hr = MF_E_INVALIDREQUEST;
             break;
-        default:
-            ;
     }
 
     if (FAILED(hr))
@@ -2749,8 +2758,9 @@ static void session_raise_end_of_presentation(struct media_session *session)
     {
         if (session_nodes_is_mask_set(session, MF_TOPOLOGY_MAX, SOURCE_FLAG_END_OF_PRESENTATION))
         {
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, NULL);
             session->presentation.flags |= SESSION_FLAG_END_OF_PRESENTATION;
+            session_push_back_command(session, SESSION_CMD_END);
+            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, NULL);
         }
     }
 }
