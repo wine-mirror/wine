@@ -14466,6 +14466,43 @@ static void test_window_position(void)
     EnumDisplayMonitors(NULL, NULL, test_window_position_cb, 0);
 }
 
+static BOOL CALLBACK test_get_display_mode_cb(HMONITOR monitor, HDC hdc, RECT *monitor_rect,
+        LPARAM lparam)
+{
+    DDSURFACEDESC surface_desc;
+    IDirectDraw2 *ddraw;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    window = create_window();
+    ok(!!window, "Failed to create a window.\n");
+
+    /* Test that DirectDraw doesn't use the device window to determine which monitor to use */
+    ret = SetWindowPos(window, 0, monitor_rect->left, monitor_rect->top, 0, 0,
+            SWP_NOZORDER | SWP_NOSIZE);
+    ok(ret, "SetWindowPos failed, error %#x.\n", GetLastError());
+
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw2_GetDisplayMode(ddraw, &surface_desc);
+    ok(hr == DD_OK, "GetDisplayMode failed, hr %#x.\n", hr);
+    ok(surface_desc.dwWidth == GetSystemMetrics(SM_CXSCREEN), "Expect width %d, got %d.\n",
+            GetSystemMetrics(SM_CXSCREEN), surface_desc.dwWidth);
+    ok(surface_desc.dwHeight == GetSystemMetrics(SM_CYSCREEN), "Expect height %d, got %d.\n",
+            GetSystemMetrics(SM_CYSCREEN), surface_desc.dwHeight);
+
+    DestroyWindow(window);
+    IDirectDraw2_Release(ddraw);
+    return TRUE;
+}
+
+static void test_get_display_mode(void)
+{
+    EnumDisplayMonitors(NULL, NULL, test_get_display_mode_cb, 0);
+}
+
 START_TEST(ddraw2)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -14587,4 +14624,5 @@ START_TEST(ddraw2)
     test_d32_support();
     test_cursor_clipping();
     test_window_position();
+    test_get_display_mode();
 }
