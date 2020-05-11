@@ -812,6 +812,14 @@ static void session_start(struct media_session *session, const GUID *time_format
     LeaveCriticalSection(&session->cs);
 }
 
+static void session_set_paused(struct media_session *session, HRESULT status)
+{
+    session->state = SESSION_STATE_PAUSED;
+    if (SUCCEEDED(status))
+        session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, status, NULL);
+}
+
 static void session_set_closed(struct media_session *session, HRESULT status)
 {
     session->state = SESSION_STATE_CLOSED;
@@ -840,10 +848,7 @@ static void session_pause(struct media_session *session)
     }
 
     if (FAILED(hr))
-    {
-        session->state = SESSION_STATE_PAUSED;
-        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, hr, NULL);
-    }
+        session_set_paused(session, hr);
 
     LeaveCriticalSection(&session->cs);
 }
@@ -2185,12 +2190,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             if (!session_is_source_nodes_state(session, OBJ_STATE_PAUSED))
                 break;
 
-            session->state = SESSION_STATE_PAUSED;
-
-            session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
-
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, S_OK, NULL);
-
+            session_set_paused(session, S_OK);
             break;
         case SESSION_STATE_STOPPING_SOURCES:
             if (!session_is_source_nodes_state(session, OBJ_STATE_STOPPED))
@@ -2291,10 +2291,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
             }
 
             if (FAILED(hr))
-            {
-                session->state = SESSION_STATE_PAUSED;
-                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, hr, NULL);
-            }
+                session_set_paused(session, hr);
 
             break;
         case SESSION_STATE_STOPPING_SINKS:
