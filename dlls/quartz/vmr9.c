@@ -409,14 +409,10 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     if (filter->mode == VMR9Mode_Windowless && !filter->hWndClippingWindow)
         return S_OK;
 
-    info.dwWidth = filter->window.src.right;
-    info.dwHeight = filter->window.src.bottom;
     info.Pool = D3DPOOL_DEFAULT;
     info.MinBuffers = 1;
-    info.szAspectRatio.cx = info.dwWidth;
-    info.szAspectRatio.cy = info.dwHeight;
-    info.szNativeSize.cx = filter->bmiheader.biWidth;
-    info.szNativeSize.cy = filter->bmiheader.biHeight;
+    info.dwWidth = info.szAspectRatio.cx = info.szNativeSize.cx = filter->bmiheader.biWidth;
+    info.dwHeight = info.szAspectRatio.cy = info.szNativeSize.cy = filter->bmiheader.biHeight;
 
     filter->cur_surface = 0;
 
