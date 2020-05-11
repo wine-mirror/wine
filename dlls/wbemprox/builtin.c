@@ -3761,7 +3761,7 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
 
 static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
 {
-    static const WCHAR *fmtW = L"PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\0&DEADBEEF&0&DEAD";
+    static const WCHAR fmtW[] = L"PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\0&DEADBEEF&0&DEAD";
     UINT len = sizeof(fmtW) + 2;
     WCHAR *ret;
 
