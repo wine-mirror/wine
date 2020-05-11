@@ -702,8 +702,8 @@
 @ stdcall SHEnumValueW(long long wstr ptr ptr ptr ptr) shcore.SHEnumValueW
 @ stdcall SHGetInverseCMAP ( ptr long )
 @ stdcall SHGetThreadRef(ptr) shcore.SHGetThreadRef
-@ stdcall SHGetValueA ( long str str ptr ptr ptr )
-@ stdcall SHGetValueW ( long wstr wstr ptr ptr ptr )
+@ stdcall -import SHGetValueA(long str str ptr ptr ptr)
+@ stdcall -import SHGetValueW(long wstr wstr ptr ptr ptr)
 @ stdcall SHIsLowMemoryMachine(long)
 @ stdcall SHOpenRegStream2A(long str str long) shcore.SHOpenRegStream2A
 @ stdcall SHOpenRegStream2W(long wstr wstr long) shcore.SHOpenRegStream2W
