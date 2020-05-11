@@ -688,7 +688,7 @@ msgstr "&Только слово целиком"
 msgid "Match &Case"
 msgstr "C &учетом регистра"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Направление"
 
@@ -3566,27 +3566,27 @@ msgstr "Повышенный"
 msgid "High"
 msgstr "Высокий"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "Джойстики"
 
-#: joy.rc:39 winecfg.rc:212
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Отключить"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "&Включить"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "Подключено"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "Выключено"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3594,23 +3594,23 @@ msgstr ""
 "Список подключенных джойстиков не обновляется автоматически при подключении/"
 "отключении устройств, требуется перезапуск этой программы."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "Проверить джойстик"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "Кнопки"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "Проверить отдачу"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "Доступные эффекты"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3621,6 +3621,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "Игровые контроллеры"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"

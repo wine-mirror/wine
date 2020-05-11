@@ -691,7 +691,7 @@ msgstr "&Bara hela ord"
 msgid "Match &Case"
 msgstr "&Skillnad på stora/små bokstäver"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Riktning"
 
@@ -3583,27 +3583,27 @@ msgstr "Ökad"
 msgid "High"
 msgstr "Hög"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "Joysticks"
 
-#: joy.rc:39 winecfg.rc:212
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Inaktivera"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "&Aktivera"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "Ansluten"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "Inaktiverad"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3611,23 +3611,23 @@ msgstr ""
 "Efter att ha inaktiverat eller aktiverat en enhet kommer de anslutna "
 "styrspakarna inte att uppdateras här innan du startar om detta miniprogram."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "Testa joysticken"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "Knappar"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "Testa kraftåterkoppling"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "Tillgängliga effekter"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3638,6 +3638,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "Spelkontroller"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"

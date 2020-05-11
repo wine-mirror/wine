@@ -684,7 +684,7 @@ msgstr "단어 단위로(&W)"
 msgid "Match &Case"
 msgstr "대/소문자 구분(&C)"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "방향"
 
@@ -3540,27 +3540,27 @@ msgstr "증가"
 msgid "High"
 msgstr "높음"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "조이스틱"
 
-#: joy.rc:39 winecfg.rc:212
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "사용하지 않음(&D)"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "가능(&E)"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "연결됨"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "불가능"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3568,23 +3568,23 @@ msgstr ""
 "장치를 비활성화하거나 활성화한 후, 이 애플릿을 다시 시작할 때까지 연결된 조이"
 "스틱을 업데이트하지 않습니다."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "조이스틱 테스트"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "버튼"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "강제 피드백 테스트"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "가능한 효과들"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3595,6 +3595,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "게임 컨트롤러"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"

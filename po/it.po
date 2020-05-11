@@ -710,7 +710,7 @@ msgstr "Solo parole &intere"
 msgid "Match &Case"
 msgstr "&Maiuscole/Minuscole"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Direzione"
 
@@ -3628,57 +3628,57 @@ msgstr "Aumentato"
 msgid "High"
 msgstr "Alta"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr ""
 
-#: joy.rc:39 winecfg.rc:212
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Disabilita"
 
-#: joy.rc:40
+#: joy.rc:41
 #, fuzzy
 #| msgid "&enable"
 msgid "&Enable"
 msgstr "&abilita"
 
-#: joy.rc:41
+#: joy.rc:42
 #, fuzzy
 #| msgid "Disconnected"
 msgid "Connected"
 msgstr "Disconnesso"
 
-#: joy.rc:43
+#: joy.rc:44
 #, fuzzy
 #| msgid "&Disable"
 msgid "Disabled"
 msgstr "&Disabilita"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr ""
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr ""
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr ""
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr ""
 
-#: joy.rc:67
+#: joy.rc:68
 #, fuzzy
 #| msgid "Available formats"
 msgid "Available Effects"
 msgstr "Formati disponibili"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3689,6 +3689,10 @@ msgstr ""
 #| msgid "Create Control"
 msgid "Game Controllers"
 msgstr "Crea controllo"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"

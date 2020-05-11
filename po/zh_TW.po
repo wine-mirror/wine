@@ -680,7 +680,7 @@ msgstr "全字拼寫須符合(&W)"
 msgid "Match &Case"
 msgstr "大小寫視為相異(&C)"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "方向"
 
@@ -3545,49 +3545,49 @@ msgstr "已增加"
 msgid "High"
 msgstr "高"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "搖桿"
 
-#: joy.rc:39 winecfg.rc:212
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "停用(&D)"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "啟用(&E)"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "已連線"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "已停用"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
 msgstr "停用或啟用裝置之後，已連線的搖桿將無法更新，直到您重新啟動這個小程式。"
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "測試搖桿"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "按鈕"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "測試應力回饋"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "可用效果"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3598,6 +3598,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "遊戲控制器"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"

@@ -685,7 +685,7 @@ msgstr "Yalnızca &Tam Sözcükleri Bul"
 msgid "Match &Case"
 msgstr "BÜYÜK/küçük Harf &Duyarlı"
 
-#: comdlg32.rc:325 joy.rc:71
+#: comdlg32.rc:325 joy.rc:72
 msgid "Direction"
 msgstr "Yön"
 
@@ -3557,27 +3557,27 @@ msgstr "Arttırılmış"
 msgid "High"
 msgstr "Yüksek"
 
-#: joy.rc:36
+#: joy.rc:37
 msgid "Joysticks"
 msgstr "Oyun Kolları"
 
-#: joy.rc:39 winecfg.rc:212
+#: joy.rc:40 winecfg.rc:212
 msgid "&Disable"
 msgstr "&Devre Dışı Bırak"
 
-#: joy.rc:40
+#: joy.rc:41
 msgid "&Enable"
 msgstr "&Etkinleştir"
 
-#: joy.rc:41
+#: joy.rc:42
 msgid "Connected"
 msgstr "Bağlı"
 
-#: joy.rc:43
+#: joy.rc:44
 msgid "Disabled"
 msgstr "Devre dışı"
 
-#: joy.rc:45
+#: joy.rc:46
 msgid ""
 "After disabling or enabling a device, the connected joysticks won't be "
 "updated here until you restart this applet."
@@ -3585,23 +3585,23 @@ msgstr ""
 "Bir aygıtı etkinleştirdiğinizde veya kapattığınızda, siz bu ayarlara yeniden "
 "girene kadar bağlı oyun kolları burada güncellenmeyecektir."
 
-#: joy.rc:50
+#: joy.rc:51
 msgid "Test Joystick"
 msgstr "Oyun Kolunu Test Et"
 
-#: joy.rc:54
+#: joy.rc:55
 msgid "Buttons"
 msgstr "Düğmeler"
 
-#: joy.rc:63
+#: joy.rc:64
 msgid "Test Force Feedback"
 msgstr "Zorunlu Geri Beslemeyi Kontrol Et"
 
-#: joy.rc:67
+#: joy.rc:68
 msgid "Available Effects"
 msgstr "Kullanılabilir Efektler"
 
-#: joy.rc:69
+#: joy.rc:70
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3612,6 +3612,10 @@ msgstr ""
 #: joy.rc:31
 msgid "Game Controllers"
 msgstr "Oyun Denetleyicileri"
+
+#: joy.rc:32
+msgid "Test and configure game controllers."
+msgstr ""
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"

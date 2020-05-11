@@ -28,6 +28,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 BEGIN
     IDS_CPL_NAME        "Game Controllers"
+    IDS_CPL_INFO        "Test and configure game controllers."
 END
 
 IDD_LIST DIALOG 0, 0, 320, 220
