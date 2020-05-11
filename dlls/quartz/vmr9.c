@@ -182,7 +182,6 @@ struct default_presenter
     HMONITOR hMon;
     DWORD num_surfaces;
 
-    BOOL reset;
     VMR9AllocationInfo info;
 
     struct quartz_vmr* pVMR9;
@@ -2529,7 +2528,6 @@ static HRESULT VMR9_SurfaceAllocator_SetAllocationSettings(struct default_presen
         FIXME("Square texture support required..\n");
     }
 
-    This->reset = TRUE;
     allocinfo->dwHeight = height;
     allocinfo->dwWidth = width;
 
@@ -2639,60 +2637,6 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocator
     return S_OK;
 }
 
-/* Recreate all surfaces (If allocated as D3DPOOL_DEFAULT) and survive! */
-static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(struct default_presenter *This)
-{
-    unsigned int i;
-    D3DPRESENT_PARAMETERS d3dpp;
-    HRESULT hr;
-
-    if (!This->d3d9_surfaces || !This->reset)
-        return S_OK;
-
-    This->reset = FALSE;
-    TRACE("RESETTING\n");
-
-    for (i = 0; i < This->num_surfaces; ++i)
-    {
-        IDirect3DSurface9 *surface = This->d3d9_surfaces[i];
-        TRACE("Releasing surface %p\n", surface);
-        if (surface)
-            IDirect3DSurface9_Release(surface);
-    }
-    ZeroMemory(This->d3d9_surfaces, sizeof(IDirect3DSurface9 *) * This->num_surfaces);
-
-    /* Now try to create the d3d9 device */
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.hDeviceWindow = This->pVMR9->window.hwnd;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-
-    if (This->d3d9_dev)
-        IDirect3DDevice9_Release(This->d3d9_dev);
-    This->d3d9_dev = NULL;
-    hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter_from_hwnd(This->d3d9_ptr,
-            This->pVMR9->window.hwnd, &This->hMon), D3DDEVTYPE_HAL, NULL,
-            D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
-    if (FAILED(hr))
-    {
-        hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter_from_hwnd(This->d3d9_ptr,
-                This->pVMR9->window.hwnd, &This->hMon), D3DDEVTYPE_HAL, NULL,
-                D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
-        if (FAILED(hr))
-        {
-            ERR("--> Creating device: %08x\n", hr);
-            return S_OK;
-        }
-    }
-    IVMRSurfaceAllocatorNotify9_ChangeD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
-
-    IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(This->SurfaceAllocatorNotify, &This->info, &This->num_surfaces, This->d3d9_surfaces);
-
-    This->reset = FALSE;
-
-    return S_OK;
-}
-
 static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id, DWORD surfaceindex, DWORD flags, IDirect3DSurface9 **surface)
 {
     struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
@@ -2703,8 +2647,6 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *
         TRACE("Device has left me!\n");
         return E_FAIL;
     }
-
-    VMR9_SurfaceAllocator_UpdateDeviceReset(This);
 
     if (surfaceindex >= This->num_surfaces)
     {
