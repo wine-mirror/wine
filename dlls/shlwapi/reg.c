@@ -48,59 +48,6 @@ INT     WINAPI SHStringFromGUIDW(REFGUID,LPWSTR,INT);
 HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
 
 /*************************************************************************
- * SHRegSetPathA   [SHLWAPI.@]
- *
- * Write a path to the registry.
- *
- * PARAMS
- *   hKey       [I] Handle to registry key
- *   lpszSubKey [I] Name of sub key containing path to set
- *   lpszValue  [I] Name of value containing path to set
- *   lpszPath   [O] Path to write
- *   dwFlags    [I] Reserved, must be 0.
- *
- * RETURNS
- *   Success: ERROR_SUCCESS.
- *   Failure: An error code from SHSetValueA().
- */
-DWORD WINAPI SHRegSetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
-                           LPCSTR lpszPath, DWORD dwFlags)
-{
-  char szBuff[MAX_PATH];
-
-  FIXME("(hkey=%p,%s,%s,%p,%d) - semi-stub\n",hKey, debugstr_a(lpszSubKey),
-        debugstr_a(lpszValue), lpszPath, dwFlags);
-
-  lstrcpyA(szBuff, lpszPath);
-
-  /* FIXME: PathUnExpandEnvStringsA(szBuff); */
-
-  return SHSetValueA(hKey,lpszSubKey, lpszValue, REG_SZ, szBuff,
-                     lstrlenA(szBuff));
-}
-
-/*************************************************************************
- * SHRegSetPathW   [SHLWAPI.@]
- *
- * See SHRegSetPathA.
- */
-DWORD WINAPI SHRegSetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
-                           LPCWSTR lpszPath, DWORD dwFlags)
-{
-  WCHAR szBuff[MAX_PATH];
-
-  FIXME("(hkey=%p,%s,%s,%p,%d) - semi-stub\n",hKey, debugstr_w(lpszSubKey),
-        debugstr_w(lpszValue), lpszPath, dwFlags);
-
-  lstrcpyW(szBuff, lpszPath);
-
-  /* FIXME: PathUnExpandEnvStringsW(szBuff); */
-
-  return SHSetValueW(hKey,lpszSubKey, lpszValue, REG_SZ, szBuff,
-                     lstrlenW(szBuff));
-}
-
-/*************************************************************************
  * SHGetValueA   [SHLWAPI.@]
  *
  * Get a value from the registry.
