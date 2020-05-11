@@ -273,6 +273,24 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
         handler->register_event_handlers();
 }
 
+void X11DRV_DisplayDevices_Update(BOOL send_display_change)
+{
+    RECT old_virtual_rect, new_virtual_rect;
+    UINT mask = 0;
+
+    old_virtual_rect = get_virtual_screen_rect();
+    X11DRV_DisplayDevices_Init(TRUE);
+    new_virtual_rect = get_virtual_screen_rect();
+
+    /* Calculate XReconfigureWMWindow() mask */
+    if (old_virtual_rect.left != new_virtual_rect.left)
+        mask |= CWX;
+    if (old_virtual_rect.top != new_virtual_rect.top)
+        mask |= CWY;
+
+    X11DRV_resize_desktop(mask, send_display_change);
+}
+
 /* Initialize a GPU instance and return its GUID string in guid_string and driver value in driver parameter */
 static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT gpu_index, WCHAR *guid_string,
                            WCHAR *driver)

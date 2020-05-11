@@ -209,7 +209,7 @@ static LONG xrandr10_set_current_mode( int mode )
     if (stat == RRSetConfigSuccess)
     {
         xrandr_current_mode = mode;
-        X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
+        X11DRV_DisplayDevices_Update( TRUE );
         return DISP_CHANGE_SUCCESSFUL;
     }
 
@@ -457,7 +457,7 @@ static LONG xrandr12_set_current_mode( int mode )
     }
 
     xrandr_current_mode = mode;
-    X11DRV_resize_desktop( dd_modes[mode].width, dd_modes[mode].height );
+    X11DRV_DisplayDevices_Update( TRUE );
     return DISP_CHANGE_SUCCESSFUL;
 }
 
@@ -1094,7 +1094,12 @@ static void xrandr14_free_monitors( struct x11drv_monitor *monitors )
 static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
 {
     if (hwnd == GetDesktopWindow() && GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
-        X11DRV_DisplayDevices_Init( TRUE );
+    {
+        /* Don't send a WM_DISPLAYCHANGE message here because this event may be a result from
+         * ChangeDisplaySettings(). Otherwise, ChangeDisplaySettings() would send multiple
+         * WM_DISPLAYCHANGE messages instead of just one */
+        X11DRV_DisplayDevices_Update( FALSE );
+    }
     return FALSE;
 }
 

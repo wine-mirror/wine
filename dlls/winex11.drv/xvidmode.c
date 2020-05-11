@@ -145,7 +145,7 @@ static LONG X11DRV_XF86VM_SetCurrentMode(int mode)
   XWarpPointer(gdi_display, None, DefaultRootWindow(gdi_display), 0, 0, 0, 0, 0, 0);
 #endif
   XSync(gdi_display, False);
-  X11DRV_resize_desktop( real_xf86vm_modes[mode]->hdisplay, real_xf86vm_modes[mode]->vdisplay );
+  X11DRV_DisplayDevices_Update( TRUE );
   return DISP_CHANGE_SUCCESSFUL;
 }
 

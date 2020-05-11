@@ -657,7 +657,7 @@ struct x11drv_mode_info
 };
 
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height ) DECLSPEC_HIDDEN;
-extern void X11DRV_resize_desktop(unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
+extern void X11DRV_resize_desktop(UINT, BOOL) DECLSPEC_HIDDEN;
 extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_fullscreen(void) DECLSPEC_HIDDEN;
 extern BOOL create_desktop_win_data( Window win ) DECLSPEC_HIDDEN;
@@ -755,6 +755,7 @@ struct x11drv_display_device_handler
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_RegisterEventHandlers(void) DECLSPEC_HIDDEN;
+extern void X11DRV_DisplayDevices_Update(BOOL) DECLSPEC_HIDDEN;
 /* Display device handler used in virtual desktop mode */
 extern struct x11drv_display_device_handler desktop_handler DECLSPEC_HIDDEN;
 
