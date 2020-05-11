@@ -179,7 +179,6 @@ struct default_presenter
     IDirect3DDevice9 *d3d9_dev;
     IDirect3D9 *d3d9_ptr;
     IDirect3DSurface9 **d3d9_surfaces;
-    IDirect3DVertexBuffer9 *d3d9_vertex;
     HMONITOR hMon;
     DWORD num_surfaces;
 
@@ -2379,11 +2378,6 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
         free(This->d3d9_surfaces);
         This->d3d9_surfaces = NULL;
         This->num_surfaces = 0;
-        if (This->d3d9_vertex)
-        {
-            IDirect3DVertexBuffer9_Release(This->d3d9_vertex);
-            This->d3d9_vertex = NULL;
-        }
         free(This);
         return 0;
     }
@@ -2406,57 +2400,10 @@ static HRESULT WINAPI VMR9_ImagePresenter_StopPresenting(IVMRImagePresenter9 *if
     return S_OK;
 }
 
-#define USED_FVF (D3DFVF_XYZRHW | D3DFVF_TEX1)
-struct VERTEX { float x, y, z, rhw, u, v; };
-
-static HRESULT VMR9_ImagePresenter_PresentTexture(struct default_presenter *This, IDirect3DSurface9 *surface)
-{
-    IDirect3DTexture9 *texture = NULL;
-    HRESULT hr;
-
-    hr = IDirect3DDevice9_SetFVF(This->d3d9_dev, USED_FVF);
-    if (FAILED(hr))
-    {
-        FIXME("SetFVF: %08x\n", hr);
-        return hr;
-    }
-
-    hr = IDirect3DDevice9_SetStreamSource(This->d3d9_dev, 0, This->d3d9_vertex, 0, sizeof(struct VERTEX));
-    if (FAILED(hr))
-    {
-        FIXME("SetStreamSource: %08x\n", hr);
-        return hr;
-    }
-
-    hr = IDirect3DSurface9_GetContainer(surface, &IID_IDirect3DTexture9, (void **) &texture);
-    if (FAILED(hr))
-    {
-        FIXME("IDirect3DSurface9_GetContainer failed\n");
-        return hr;
-    }
-    hr = IDirect3DDevice9_SetTexture(This->d3d9_dev, 0, (IDirect3DBaseTexture9 *)texture);
-    IDirect3DTexture9_Release(texture);
-    if (FAILED(hr))
-    {
-        FIXME("SetTexture: %08x\n", hr);
-        return hr;
-    }
-
-    hr = IDirect3DDevice9_DrawPrimitive(This->d3d9_dev, D3DPT_TRIANGLESTRIP, 0, 2);
-    if (FAILED(hr))
-    {
-        FIXME("DrawPrimitive: %08x\n", hr);
-        return hr;
-    }
-
-    return S_OK;
-}
-
 static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(struct default_presenter *This, IDirect3DSurface9 *surface)
 {
     HRESULT hr;
     IDirect3DSurface9 *target = NULL;
-    RECT target_rect;
 
     hr = IDirect3DDevice9_GetBackBuffer(This->d3d9_dev, 0, 0, D3DBACKBUFFER_TYPE_MONO, &target);
     if (FAILED(hr))
@@ -2465,12 +2412,8 @@ static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(struct default_presen
         return hr;
     }
 
-    /* Move rect to origin and flip it */
-    SetRect(&target_rect, 0, This->pVMR9->window.dst.bottom - This->pVMR9->window.dst.top,
-            This->pVMR9->window.dst.right - This->pVMR9->window.dst.left, 0);
-
     hr = IDirect3DDevice9_StretchRect(This->d3d9_dev, surface,
-            &This->pVMR9->window.src, target, &target_rect, D3DTEXF_LINEAR);
+            &This->pVMR9->window.src, target, NULL, D3DTEXF_LINEAR);
     if (FAILED(hr))
         ERR("IDirect3DDevice9_StretchRect -- %08x\n", hr);
     IDirect3DSurface9_Release(target);
@@ -2500,10 +2443,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     hr = IDirect3DDevice9_BeginScene(This->d3d9_dev);
     if (SUCCEEDED(hr))
     {
-        if (This->d3d9_vertex)
-            hr = VMR9_ImagePresenter_PresentTexture(This, info->lpSurf);
-        else
-            hr = VMR9_ImagePresenter_PresentOffscreenSurface(This, info->lpSurf);
+        hr = VMR9_ImagePresenter_PresentOffscreenSurface(This, info->lpSurf);
         render = SUCCEEDED(hr);
     }
     else
@@ -2587,13 +2527,6 @@ static HRESULT VMR9_SurfaceAllocator_SetAllocationSettings(struct default_presen
         else
             height = width;
         FIXME("Square texture support required..\n");
-    }
-
-    hr = IDirect3DDevice9_CreateVertexBuffer(This->d3d9_dev, 4 * sizeof(struct VERTEX), D3DUSAGE_WRITEONLY, USED_FVF, allocinfo->Pool, &This->d3d9_vertex, NULL);
-    if (FAILED(hr))
-    {
-        ERR("Couldn't create vertex buffer: %08x\n", hr);
-        return hr;
     }
 
     This->reset = TRUE;
@@ -2709,10 +2642,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocator
 /* Recreate all surfaces (If allocated as D3DPOOL_DEFAULT) and survive! */
 static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(struct default_presenter *This)
 {
-    struct VERTEX t_vert[4];
-    UINT width, height;
     unsigned int i;
-    void *bits = NULL;
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
 
@@ -2721,11 +2651,6 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(struct default_presenter 
 
     This->reset = FALSE;
     TRACE("RESETTING\n");
-    if (This->d3d9_vertex)
-    {
-        IDirect3DVertexBuffer9_Release(This->d3d9_vertex);
-        This->d3d9_vertex = NULL;
-    }
 
     for (i = 0; i < This->num_surfaces; ++i)
     {
@@ -2764,52 +2689,6 @@ static HRESULT VMR9_SurfaceAllocator_UpdateDeviceReset(struct default_presenter 
     IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(This->SurfaceAllocatorNotify, &This->info, &This->num_surfaces, This->d3d9_surfaces);
 
     This->reset = FALSE;
-
-    if (!(This->info.dwFlags & VMR9AllocFlag_TextureSurface))
-        return S_OK;
-
-    hr = IDirect3DDevice9_CreateVertexBuffer(This->d3d9_dev, 4 * sizeof(struct VERTEX), D3DUSAGE_WRITEONLY, USED_FVF,
-                                             This->info.Pool, &This->d3d9_vertex, NULL);
-
-    width = This->info.dwWidth;
-    height = This->info.dwHeight;
-
-    for (i = 0; i < ARRAY_SIZE(t_vert); ++i)
-    {
-        if (i % 2)
-        {
-            t_vert[i].x = (float)This->pVMR9->window.dst.right - (float)This->pVMR9->window.dst.left - 0.5f;
-            t_vert[i].u = (float)This->pVMR9->window.src.right / (float)width;
-        }
-        else
-        {
-            t_vert[i].x = -0.5f;
-            t_vert[i].u = (float)This->pVMR9->window.src.left / (float)width;
-        }
-
-        if (i % 4 < 2)
-        {
-            t_vert[i].y = -0.5f;
-            t_vert[i].v = (float)This->pVMR9->window.src.bottom / (float)height;
-        }
-        else
-        {
-            t_vert[i].y = (float)This->pVMR9->window.dst.bottom - (float)This->pVMR9->window.dst.top - 0.5f;
-            t_vert[i].v = (float)This->pVMR9->window.src.top / (float)height;
-        }
-        t_vert[i].z = 0.0f;
-        t_vert[i].rhw = 1.0f;
-    }
-
-    FIXME("Vertex rectangle:\n");
-    FIXME("X, Y: %f, %f\n", t_vert[0].x, t_vert[0].y);
-    FIXME("X, Y: %f, %f\n", t_vert[3].x, t_vert[3].y);
-    FIXME("TOP, LEFT: %f, %f\n", t_vert[0].u, t_vert[0].v);
-    FIXME("DOWN, BOTTOM: %f, %f\n", t_vert[3].u, t_vert[3].v);
-
-    IDirect3DVertexBuffer9_Lock(This->d3d9_vertex, 0, sizeof(t_vert), &bits, 0);
-    memcpy(bits, t_vert, sizeof(t_vert));
-    IDirect3DVertexBuffer9_Unlock(This->d3d9_vertex);
 
     return S_OK;
 }
