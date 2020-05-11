@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdint.h>
 #define COBJMACROS
 #include "ocidl.h"
 #include "olectl.h"
@@ -68,6 +69,22 @@ static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TY
 {
     return !memcmp(a, b, offsetof(AM_MEDIA_TYPE, pbFormat))
         && !memcmp(a->pbFormat, b->pbFormat, a->cbFormat);
+}
+
+static BOOL compare_double(double f, double g, unsigned int ulps)
+{
+    int64_t x = *(int64_t *)&f;
+    int64_t y = *(int64_t *)&g;
+
+    if (x < 0)
+        x = INT64_MIN - x;
+    if (y < 0)
+        y = INT64_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
 }
 
 static IFilterGraph2 *create_graph(void)
@@ -3693,7 +3710,7 @@ static void test_basic_video(void)
     reftime = 0.0;
     hr = IBasicVideo_get_AvgTimePerFrame(video, &reftime);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(reftime == 0.02, "Got frame rate %.16e.\n", reftime);
+    todo_wine ok(compare_double(reftime, 0.02, 1 << 28), "Got frame rate %.16e.\n", reftime);
 
     l = 0xdeadbeef;
     hr = IBasicVideo_get_BitRate(video, &l);
