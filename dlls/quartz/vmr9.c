@@ -2411,8 +2411,7 @@ static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(struct default_presen
         return hr;
     }
 
-    hr = IDirect3DDevice9_StretchRect(This->d3d9_dev, surface,
-            &This->pVMR9->window.src, target, NULL, D3DTEXF_LINEAR);
+    hr = IDirect3DDevice9_StretchRect(This->d3d9_dev, surface, NULL, target, NULL, D3DTEXF_POINT);
     if (FAILED(hr))
         ERR("IDirect3DDevice9_StretchRect -- %08x\n", hr);
     IDirect3DSurface9_Release(target);
@@ -2450,7 +2449,8 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     hr = IDirect3DDevice9_EndScene(This->d3d9_dev);
     if (render && SUCCEEDED(hr))
     {
-        hr = IDirect3DDevice9_Present(This->d3d9_dev, NULL, NULL, This->pVMR9->window.hwnd, NULL);
+        hr = IDirect3DDevice9_Present(This->d3d9_dev, &This->pVMR9->window.src,
+                &This->pVMR9->window.dst, This->pVMR9->window.hwnd, NULL);
         if (FAILED(hr))
             FIXME("Presenting image: %08x\n", hr);
     }
@@ -2572,9 +2572,9 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     ZeroMemory(&d3dpp, sizeof(d3dpp));
     d3dpp.Windowed = TRUE;
     d3dpp.hDeviceWindow = This->pVMR9->window.hwnd;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    d3dpp.BackBufferHeight = This->pVMR9->window.dst.bottom - This->pVMR9->window.dst.top;
-    d3dpp.BackBufferWidth = This->pVMR9->window.dst.right - This->pVMR9->window.dst.left;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_COPY;
+    d3dpp.BackBufferWidth = info->dwWidth;
+    d3dpp.BackBufferHeight = info->dwHeight;
 
     hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter, D3DDEVTYPE_HAL, NULL, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
     if (FAILED(hr))
