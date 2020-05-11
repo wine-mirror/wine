@@ -47,51 +47,6 @@ static const WCHAR szExtensionW[] = { 'E', 'x', 't','e','n','s','i','o','n','\0'
 INT     WINAPI SHStringFromGUIDW(REFGUID,LPWSTR,INT);
 HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
 
-
-/*************************************************************************
- * SHRegGetPathA   [SHLWAPI.@]
- *
- * Get a path from the registry.
- *
- * PARAMS
- *   hKey       [I] Handle to registry key
- *   lpszSubKey [I] Name of sub key containing path to get
- *   lpszValue  [I] Name of value containing path to get
- *   lpszPath   [O] Buffer for returned path
- *   dwFlags    [I] Reserved
- *
- * RETURNS
- *   Success: ERROR_SUCCESS. lpszPath contains the path.
- *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA().
- */
-DWORD WINAPI SHRegGetPathA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue,
-                           LPSTR lpszPath, DWORD dwFlags)
-{
-  DWORD dwSize = MAX_PATH;
-
-  TRACE("(hkey=%p,%s,%s,%p,%d)\n", hKey, debugstr_a(lpszSubKey),
-        debugstr_a(lpszValue), lpszPath, dwFlags);
-
-  return SHGetValueA(hKey, lpszSubKey, lpszValue, 0, lpszPath, &dwSize);
-}
-
-/*************************************************************************
- * SHRegGetPathW   [SHLWAPI.@]
- *
- * See SHRegGetPathA.
- */
-DWORD WINAPI SHRegGetPathW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
-                           LPWSTR lpszPath, DWORD dwFlags)
-{
-  DWORD dwSize = MAX_PATH;
-
-  TRACE("(hkey=%p,%s,%s,%p,%d)\n", hKey, debugstr_w(lpszSubKey),
-        debugstr_w(lpszValue), lpszPath, dwFlags);
-
-  return SHGetValueW(hKey, lpszSubKey, lpszValue, 0, lpszPath, &dwSize);
-}
-
-
 /*************************************************************************
  * SHRegSetPathA   [SHLWAPI.@]
  *

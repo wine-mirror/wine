@@ -727,8 +727,8 @@
 @ stdcall SHRegEnumUSValueW(long long ptr ptr ptr ptr ptr long)
 @ stdcall SHRegGetBoolUSValueA(str str long long)
 @ stdcall SHRegGetBoolUSValueW(wstr wstr long long)
-@ stdcall SHRegGetPathA(long str str ptr long)
-@ stdcall SHRegGetPathW(long wstr wstr ptr long)
+@ stdcall -import SHRegGetPathA(long str str ptr long)
+@ stdcall -import SHRegGetPathW(long wstr wstr ptr long)
 @ stdcall SHRegGetUSValueA ( str str ptr ptr ptr long ptr long )
 @ stdcall SHRegGetUSValueW ( wstr wstr ptr ptr ptr long ptr long )
 @ stdcall SHRegGetValueA ( long str str long ptr ptr ptr ) advapi32.RegGetValueA
