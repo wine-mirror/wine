@@ -720,7 +720,7 @@
 @ stdcall SHRegDeleteEmptyUSKeyW(long wstr long)
 @ stdcall SHRegDeleteUSValueA(long str long)
 @ stdcall SHRegDeleteUSValueW(long wstr long)
-@ stdcall SHRegDuplicateHKey (long)
+@ stdcall -import SHRegDuplicateHKey(long)
 @ stdcall SHRegEnumUSKeyA(long long str ptr long)
 @ stdcall SHRegEnumUSKeyW(long long wstr ptr long)
 @ stdcall SHRegEnumUSValueA(long long ptr ptr ptr ptr ptr long)

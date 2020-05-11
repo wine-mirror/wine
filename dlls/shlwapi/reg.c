@@ -932,26 +932,6 @@ BOOL WINAPI UnregisterExtensionForMIMETypeW(LPCWSTR lpszType)
   return TRUE;
 }
 
-/*************************************************************************
- * SHRegDuplicateHKey   [SHLWAPI.@]
- *
- * Create a duplicate of a registry handle.
- *
- * PARAMS
- *  hKey [I] key to duplicate.
- *
- * RETURNS
- *  A new handle pointing to the same key as hKey.
- */
-HKEY WINAPI SHRegDuplicateHKey(HKEY hKey)
-{
-    HKEY newKey = 0;
-
-    RegOpenKeyExA(hKey, 0, 0, MAXIMUM_ALLOWED, &newKey);
-    TRACE("new key is %p\n", newKey);
-    return newKey;
-}
-
 /*
  * The following functions are ORDINAL ONLY:
  */
