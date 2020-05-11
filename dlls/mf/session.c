@@ -812,6 +812,14 @@ static void session_start(struct media_session *session, const GUID *time_format
     LeaveCriticalSection(&session->cs);
 }
 
+static void session_set_closed(struct media_session *session, HRESULT status)
+{
+    session->state = SESSION_STATE_CLOSED;
+    if (SUCCEEDED(status))
+        session_set_caps(session, session->caps & ~(MFSESSIONCAP_START | MFSESSIONCAP_SEEK));
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, status, NULL);
+}
+
 static void session_pause(struct media_session *session)
 {
     HRESULT hr;
@@ -911,11 +919,7 @@ static HRESULT session_finalize_sinks(struct media_session *session)
     }
 
     if (sinks_finalized)
-    {
-        session->state = SESSION_STATE_CLOSED;
-        session_set_caps(session, session->caps & ~(MFSESSIONCAP_START | MFSESSIONCAP_SEEK));
-        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, hr, NULL);
-    }
+        session_set_closed(session, hr);
 
     return hr;
 }
@@ -945,10 +949,7 @@ static void session_close(struct media_session *session)
     }
 
     if (FAILED(hr))
-    {
-        session->state = SESSION_STATE_CLOSED;
-        IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, hr, NULL);
-    }
+        session_set_closed(session, hr);
 
     LeaveCriticalSection(&session->cs);
 }
@@ -3018,11 +3019,7 @@ static HRESULT WINAPI session_sink_finalizer_callback_Invoke(IMFAsyncCallback *i
         {
             sink->finalized = TRUE;
             if (sinks_finalized)
-            {
-                session->state = SESSION_STATE_CLOSED;
-                session_set_caps(session, session->caps & ~(MFSESSIONCAP_START | MFSESSIONCAP_SEEK));
-                IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, hr, NULL);
-            }
+                session_set_closed(session, hr);
         }
         IMFFinalizableMediaSink_Release(fin_sink);
     }
