@@ -273,6 +273,31 @@ void X11DRV_DisplayDevices_RegisterEventHandlers(void)
         handler->register_event_handlers();
 }
 
+static BOOL CALLBACK update_windows_on_display_change(HWND hwnd, LPARAM lparam)
+{
+    struct x11drv_win_data *data;
+    UINT mask = (UINT)lparam;
+
+    if (!(data = get_win_data(hwnd)))
+        return TRUE;
+
+    /* update the full screen state */
+    update_net_wm_states(data);
+
+    if (mask && data->whole_window)
+    {
+        POINT pos = virtual_screen_to_root(data->whole_rect.left, data->whole_rect.top);
+        XWindowChanges changes;
+        changes.x = pos.x;
+        changes.y = pos.y;
+        XReconfigureWMWindow(data->display, data->whole_window, data->vis.screen, mask, &changes);
+    }
+    release_win_data(data);
+    if (hwnd == GetForegroundWindow())
+        clip_fullscreen_window(hwnd, TRUE);
+    return TRUE;
+}
+
 void X11DRV_DisplayDevices_Update(BOOL send_display_change)
 {
     RECT old_virtual_rect, new_virtual_rect;
@@ -288,7 +313,8 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
     if (old_virtual_rect.top != new_virtual_rect.top)
         mask |= CWY;
 
-    X11DRV_resize_desktop(mask, send_display_change);
+    X11DRV_resize_desktop(send_display_change);
+    EnumWindows(update_windows_on_display_change, (LPARAM)mask);
 }
 
 /* Initialize a GPU instance and return its GUID string in guid_string and driver value in driver parameter */
