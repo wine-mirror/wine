@@ -226,6 +226,7 @@ SOURCES = \
 	docobjectservice.idl \
 	downloadmgr.idl \
 	dpaddr.h \
+	dpfilter.h \
 	dplay.h \
 	dplay8.h \
 	dplobby.h \
