@@ -13549,14 +13549,21 @@ static void test_vertex_buffer_read_write(void)
 
 static void test_get_display_mode(void)
 {
+    static const DWORD creation_flags[] = {0, CREATE_DEVICE_FULLSCREEN};
+    unsigned int adapter_idx, adapter_count, mode_idx, test_idx;
     IDirect3DSwapChain9 *swapchain;
+    RECT previous_monitor_rect;
+    unsigned int width, height;
     IDirect3DDevice9 *device;
+    MONITORINFO monitor_info;
     struct device_desc desc;
     D3DDISPLAYMODE mode;
+    HMONITOR monitor;
     IDirect3D9 *d3d;
     ULONG refcount;
     HWND window;
     HRESULT hr;
+    BOOL ret;
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -13620,8 +13627,114 @@ static void test_get_display_mode(void)
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
-    IDirect3D9_Release(d3d);
     DestroyWindow(window);
+
+    /* D3D9 uses adapter indices to determine which adapter to use to get the display mode */
+    adapter_count = IDirect3D9_GetAdapterCount(d3d);
+    for (adapter_idx = 0; adapter_idx < adapter_count; ++adapter_idx)
+    {
+        if (!adapter_idx)
+        {
+            desc.width = 640;
+            desc.height = 480;
+        }
+        else
+        {
+            /* Find a mode different than that of the previous adapter, so that tests can be sure
+             * that they are comparing to the current adapter display mode */
+            monitor = IDirect3D9_GetAdapterMonitor(d3d, adapter_idx - 1);
+            ok(!!monitor, "Adapter %u: GetAdapterMonitor failed.\n", adapter_idx - 1);
+            monitor_info.cbSize = sizeof(monitor_info);
+            ret = GetMonitorInfoW(monitor, &monitor_info);
+            ok(ret, "Adapter %u: GetMonitorInfoW failed, error %#x.\n", adapter_idx - 1,
+                    GetLastError());
+            previous_monitor_rect = monitor_info.rcMonitor;
+
+            desc.width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+            desc.height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+            for (mode_idx = 0; SUCCEEDED(IDirect3D9_EnumAdapterModes(d3d, adapter_idx,
+                    D3DFMT_X8R8G8B8, mode_idx, &mode)); ++mode_idx)
+            {
+                if (mode.Width < 640 || mode.Height < 480)
+                    continue;
+                if (mode.Width != desc.width && mode.Height != desc.height)
+                    break;
+            }
+            ok(mode.Width != desc.width && mode.Height != desc.height,
+                    "Adapter %u: Failed to find a different mode than %ux%u.\n", adapter_idx,
+                    desc.width, desc.height);
+            desc.width = mode.Width;
+            desc.height = mode.Height;
+        }
+
+        for (test_idx = 0; test_idx < ARRAY_SIZE(creation_flags); ++test_idx)
+        {
+            window = create_window();
+            desc.adapter_ordinal = adapter_idx;
+            desc.device_window = window;
+            desc.flags = creation_flags[test_idx];
+            if (!(device = create_device(d3d, window, &desc)))
+            {
+                skip("Adapter %u test %u: Failed to create a D3D device.\n", adapter_idx, test_idx);
+                DestroyWindow(window);
+                continue;
+            }
+
+            monitor = IDirect3D9_GetAdapterMonitor(d3d, adapter_idx);
+            ok(!!monitor, "Adapter %u test %u: GetAdapterMonitor failed.\n", adapter_idx, test_idx);
+            monitor_info.cbSize = sizeof(monitor_info);
+            ret = GetMonitorInfoW(monitor, &monitor_info);
+            ok(ret, "Adapter %u test %u: GetMonitorInfoW failed, error %#x.\n", adapter_idx,
+                    test_idx, GetLastError());
+            width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+            height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+
+            if (adapter_idx)
+            {
+                /* Move the device window to the previous monitor to test that the device window
+                 * position doesn't affect which adapter to use to get the display mode */
+                ret = SetWindowPos(window, 0, previous_monitor_rect.left, previous_monitor_rect.top,
+                        0, 0, SWP_NOZORDER | SWP_NOSIZE);
+                ok(ret, "Adapter %u test %u: SetWindowPos failed, error %#x.\n", adapter_idx,
+                        test_idx, GetLastError());
+            }
+
+            hr = IDirect3D9_GetAdapterDisplayMode(d3d, adapter_idx, &mode);
+            ok(hr == D3D_OK, "Adapter %u test %u: GetAdapterDisplayMode failed, hr %#x.\n",
+                    adapter_idx, test_idx, hr);
+            ok(mode.Width == width, "Adapter %u test %u: Expect width %u, got %u.\n", adapter_idx,
+                    test_idx, width, mode.Width);
+            ok(mode.Height == height, "Adapter %u test %u: Expect height %u, got %u.\n",
+                    adapter_idx, test_idx, height, mode.Height);
+
+            hr = IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+            ok(hr == D3D_OK, "Adapter %u test %u: GetDisplayMode failed, hr %#x.\n", adapter_idx,
+                    test_idx, hr);
+            ok(mode.Width == width, "Adapter %u test %u: Expect width %u, got %u.\n", adapter_idx,
+                    test_idx, width, mode.Width);
+            ok(mode.Height == height, "Adapter %u test %u: Expect height %u, got %u.\n",
+                    adapter_idx, test_idx, height, mode.Height);
+
+            hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+            ok(hr == D3D_OK, "Adapter %u test %u: GetSwapChain failed, hr %#x.\n", adapter_idx,
+                    test_idx, hr);
+            hr = IDirect3DSwapChain9_GetDisplayMode(swapchain, &mode);
+            ok(hr == D3D_OK, "Adapter %u test %u: GetDisplayMode failed, hr %#x.\n", adapter_idx,
+                    test_idx, hr);
+            ok(mode.Width == width, "Adapter %u test %u: Expect width %u, got %u.\n", adapter_idx,
+                    test_idx, width, mode.Width);
+            ok(mode.Height == height, "Adapter %u test %u: Expect height %u, got %u.\n",
+                    adapter_idx, test_idx, height, mode.Height);
+            IDirect3DSwapChain9_Release(swapchain);
+
+            refcount = IDirect3DDevice9_Release(device);
+            ok(!refcount, "Adapter %u test %u: Device has %u references left.\n", adapter_idx,
+                    test_idx, refcount);
+            DestroyWindow(window);
+        }
+    }
+
+    IDirect3D9_Release(d3d);
 }
 
 static void test_multi_adapter(void)
