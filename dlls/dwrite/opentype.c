@@ -4478,6 +4478,7 @@ static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             case GSUB_LOOKUP_LIGATURE_SUBST:
             case GSUB_LOOKUP_CONTEXTUAL_SUBST:
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
+                ret = FALSE;
                 WARN("Unimplemented lookup %d.\n", lookup_type);
                 break;
             default:
