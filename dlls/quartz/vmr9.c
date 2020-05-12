@@ -1755,7 +1755,7 @@ static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 
     }
 
     /* Windowless extension */
-    hr = IDirect3DDevice9_Present(This->allocator_d3d9_dev, NULL, NULL, This->window.hwnd, NULL);
+    hr = IDirect3DDevice9_Present(This->allocator_d3d9_dev, NULL, NULL, NULL, NULL);
     LeaveCriticalSection(&This->renderer.filter.csFilter);
 
     return hr;
@@ -2451,7 +2451,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     if (render && SUCCEEDED(hr))
     {
         hr = IDirect3DDevice9_Present(This->d3d9_dev, &This->pVMR9->window.src,
-                &This->pVMR9->window.dst, This->pVMR9->window.hwnd, NULL);
+                &This->pVMR9->window.dst, NULL, NULL);
         if (FAILED(hr))
             FIXME("Presenting image: %08x\n", hr);
     }
@@ -2562,17 +2562,23 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
 {
     D3DPRESENT_PARAMETERS d3dpp;
     DWORD d3d9_adapter;
+    HWND window;
     HRESULT hr;
 
     TRACE("(%p)->()\n", This);
 
+    if (This->pVMR9->mode == VMR9Mode_Windowed)
+        window = This->pVMR9->window.hwnd;
+    else
+        window = This->pVMR9->clipping_window;
+
     /* Obtain a monitor and d3d9 device */
-    d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, This->pVMR9->window.hwnd, &This->hMon);
+    d3d9_adapter = d3d9_adapter_from_hwnd(This->d3d9_ptr, window, &This->hMon);
 
     /* Now try to create the d3d9 device */
     ZeroMemory(&d3dpp, sizeof(d3dpp));
     d3dpp.Windowed = TRUE;
-    d3dpp.hDeviceWindow = This->pVMR9->window.hwnd;
+    d3dpp.hDeviceWindow = window;
     d3dpp.SwapEffect = D3DSWAPEFFECT_COPY;
     d3dpp.BackBufferWidth = info->dwWidth;
     d3dpp.BackBufferHeight = info->dwHeight;
