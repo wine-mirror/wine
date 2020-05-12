@@ -442,6 +442,7 @@ static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
 {
     LONG depth = 24;
 
+    memset(caps, 0, sizeof(*caps));
     caps->video_info.dwBitRate = width * height * depth * max_fps;
     caps->video_info.bmiHeader.biSize = sizeof(caps->video_info.bmiHeader);
     caps->video_info.bmiHeader.biWidth = width;
