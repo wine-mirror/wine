@@ -276,27 +276,34 @@ static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
     if (thumnail) IWICBitmapSource_Release(thumnail);
 }
 
-static void test_dds_decoder_frame_count(void)
+static void test_dds_decoder_image_parameters(void)
 {
     static struct test_data {
         void *data;
         UINT size;
-        UINT expected;
+        UINT expected_frame_count;
+        WICDdsParameters expected_parameters;
     } test_data[] = {
-        { test_dds_image,   sizeof(test_dds_image),   1 },
-        { test_dds_mipmaps, sizeof(test_dds_mipmaps), 3 },
-        { test_dds_volume,  sizeof(test_dds_volume),  7 },
-        { test_dds_array,   sizeof(test_dds_array),   9 },
+        { test_dds_image,   sizeof(test_dds_image),   1,
+          { 4, 4, 1, 1, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
+        { test_dds_mipmaps, sizeof(test_dds_mipmaps), 3,
+          { 4, 4, 1, 3, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
+        { test_dds_volume,  sizeof(test_dds_volume),  7,
+          { 4, 4, 4, 3, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
+        { test_dds_array,   sizeof(test_dds_array),   9,
+          { 4, 4, 1, 3, 3, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown } },
     };
 
     int i;
     HRESULT hr;
+    WICDdsParameters parameters;
 
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
         UINT frame_count;
         IWICStream *stream = NULL;
         IWICBitmapDecoder *decoder = NULL;
+        IWICDdsDecoder *dds_decoder = NULL;
 
         stream = create_stream(test_data[i].data, test_data[i].size);
         if (!stream) goto next;
@@ -304,10 +311,21 @@ static void test_dds_decoder_frame_count(void)
         decoder = create_decoder();
         if (!decoder) goto next;
 
+        hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICDdsDecoder, (void **)&dds_decoder);
+        ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
+        if (hr != S_OK) goto next;
+
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
         ok (hr == WINCODEC_ERR_WRONGSTATE, "%d: Expected hr=WINCODEC_ERR_WRONGSTATE, got %x\n", i, hr);
         hr = IWICBitmapDecoder_GetFrameCount(decoder, NULL);
         ok (hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
+
+        todo_wine {
+        hr = IWICDdsDecoder_GetParameters(dds_decoder, &parameters);
+        ok(hr == WINCODEC_ERR_WRONGSTATE, "%d: Expected hr=WINCODEC_ERR_WRONGSTATE, got %x\n", i, hr);
+        hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
+        ok(hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
+        };
 
         hr = init_decoder(decoder, stream, S_OK, -1);
         if (hr != S_OK) goto next;
@@ -315,15 +333,42 @@ static void test_dds_decoder_frame_count(void)
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
         ok (hr == S_OK, "%d: GetFrameCount failed, hr=%x\n", i, hr);
         if (hr == S_OK) {
-            ok (frame_count == test_data[i].expected, "%d: expected frame count %d, got %d\n",
-                i, test_data[i].expected, frame_count);
+            ok (frame_count == test_data[i].expected_frame_count, "%d: expected frame count %d, got %d\n",
+                i, test_data[i].expected_frame_count, frame_count);
         }
         hr = IWICBitmapDecoder_GetFrameCount(decoder, NULL);
         ok (hr == E_INVALIDARG, "%d: Expected hr=S_OK, got %x\n", i, hr);
 
+
+        todo_wine {
+        hr = IWICDdsDecoder_GetParameters(dds_decoder, &parameters);
+        ok (hr == S_OK, "%d: GetParameters failed, hr=%x\n", i, hr);
+        if (hr == S_OK) {
+            ok (parameters.Width == test_data[i].expected_parameters.Width,
+                "%d, Expected Width=%d, got %d\n", i, test_data[i].expected_parameters.Width, parameters.Width);
+            ok (parameters.Height == test_data[i].expected_parameters.Height,
+                "%d, Expected Height=%d, got %d\n", i, test_data[i].expected_parameters.Height, parameters.Height);
+            ok (parameters.Depth == test_data[i].expected_parameters.Depth,
+                "%d, Expected Depth=%d, got %d\n", i, test_data[i].expected_parameters.Depth, parameters.Depth);
+            ok (parameters.MipLevels == test_data[i].expected_parameters.MipLevels,
+                "%d, Expected MipLevels=%d, got %d\n", i, test_data[i].expected_parameters.MipLevels, parameters.MipLevels);
+            ok (parameters.ArraySize == test_data[i].expected_parameters.ArraySize,
+                "%d, Expected ArraySize=%d, got %d\n", i, test_data[i].expected_parameters.ArraySize, parameters.ArraySize);
+            ok (parameters.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,
+                "%d, Expected DxgiFormat=0x%x, got 0x%x\n", i, test_data[i].expected_parameters.DxgiFormat, parameters.DxgiFormat);
+            ok (parameters.Dimension == test_data[i].expected_parameters.Dimension,
+                "%d, Expected Dimension=0x%x, got 0x%x\n", i, test_data[i].expected_parameters.Dimension, parameters.Dimension);
+            ok (parameters.AlphaMode == test_data[i].expected_parameters.AlphaMode,
+                "%d, Expected AlphaMode=0x%x, got 0x%x\n", i, test_data[i].expected_parameters.AlphaMode, parameters.AlphaMode);
+        }
+        hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
+        ok (hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
+        };
+
     next:
         if (decoder) IWICBitmapDecoder_Release(decoder);
         if (stream) IWICStream_Release(stream);
+        if (dds_decoder) IWICDdsDecoder_Release(dds_decoder);
 
     }
 }
@@ -345,7 +390,7 @@ static void test_dds_decoder(void)
 
     test_dds_decoder_initialize();
     test_dds_decoder_global_properties(decoder);
-    test_dds_decoder_frame_count();
+    test_dds_decoder_image_parameters();
 
 end:
     if (decoder) IWICBitmapDecoder_Release(decoder);
