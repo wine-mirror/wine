@@ -48,162 +48,6 @@ INT     WINAPI SHStringFromGUIDW(REFGUID,LPWSTR,INT);
 HRESULT WINAPI SHRegGetCLSIDKeyW(REFGUID,LPCWSTR,BOOL,BOOL,PHKEY);
 
 /*************************************************************************
- * SHQueryValueExA   [SHLWAPI.@]
- *
- * Get a value from the registry, expanding environment variable strings.
- *
- * PARAMS
- *   hKey       [I] Handle to registry key
- *   lpszValue  [I] Name of value to query
- *   lpReserved [O] Reserved for future use; must be NULL
- *   pwType     [O] Optional pointer updated with the values type
- *   pvData     [O] Optional pointer updated with the values data
- *   pcbData    [O] Optional pointer updated with the values size
- *
- * RETURNS
- *   Success: ERROR_SUCCESS. Any non NULL output parameters are updated with
- *            information about the value.
- *   Failure: ERROR_OUTOFMEMORY if memory allocation fails, or the type of the
- *            data is REG_EXPAND_SZ and pcbData is NULL. Otherwise an error
- *            code from RegQueryValueExA() or ExpandEnvironmentStringsA().
- *
- * NOTES
- *   Either pwType, pvData or pcbData may be NULL if the caller doesn't want
- *   the type, data or size information for the value.
- *
- *   If the type of the data is REG_EXPAND_SZ, it is expanded to REG_SZ. The
- *   value returned will be truncated if it is of type REG_SZ and bigger than
- *   the buffer given to store it.
- *
- *   REG_EXPAND_SZ:
- *     case-1: the unexpanded string is smaller than the expanded one
- *       subcase-1: the buffer is too small to hold the unexpanded string:
- *          function fails and returns the size of the unexpanded string.
- *
- *       subcase-2: buffer is too small to hold the expanded string:
- *          the function return success (!!) and the result is truncated
- *	    *** This is clearly an error in the native implementation. ***
- *
- *     case-2: the unexpanded string is bigger than the expanded one
- *       The buffer must have enough space to hold the unexpanded
- *       string even if the result is smaller.
- *
- */
-DWORD WINAPI SHQueryValueExA( HKEY hKey, LPCSTR lpszValue,
-                              LPDWORD lpReserved, LPDWORD pwType,
-                              LPVOID pvData, LPDWORD pcbData)
-{
-  DWORD dwRet, dwType, dwUnExpDataLen = 0, dwExpDataLen;
-
-  TRACE("(hkey=%p,%s,%p,%p,%p,%p=%d)\n", hKey, debugstr_a(lpszValue),
-        lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
-
-  if (pcbData) dwUnExpDataLen = *pcbData;
-
-  dwRet = RegQueryValueExA(hKey, lpszValue, lpReserved, &dwType, pvData, &dwUnExpDataLen);
-
-  if (pcbData && (dwType == REG_EXPAND_SZ))
-  {
-    DWORD nBytesToAlloc;
-
-    /* Expand type REG_EXPAND_SZ into REG_SZ */
-    LPSTR szData;
-
-    /* If the caller didn't supply a buffer or the buffer is too small we have
-     * to allocate our own
-     */
-    if ((!pvData) || (dwRet == ERROR_MORE_DATA) )
-    {
-      char cNull = '\0';
-      nBytesToAlloc = dwUnExpDataLen;
-
-      szData = LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc);
-      RegQueryValueExA (hKey, lpszValue, lpReserved, NULL, (LPBYTE)szData, &nBytesToAlloc);
-      dwExpDataLen = ExpandEnvironmentStringsA(szData, &cNull, 1);
-      dwUnExpDataLen = max(nBytesToAlloc, dwExpDataLen);
-      LocalFree(szData);
-    }
-    else
-    {
-      nBytesToAlloc = (lstrlenA(pvData)+1) * sizeof (CHAR);
-      szData = LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc);
-      lstrcpyA(szData, pvData);
-      dwExpDataLen = ExpandEnvironmentStringsA(szData, pvData, *pcbData / sizeof(CHAR));
-      if (dwExpDataLen > *pcbData) dwRet = ERROR_MORE_DATA;
-      dwUnExpDataLen = max(nBytesToAlloc, dwExpDataLen);
-      LocalFree(szData);
-    }
-  }
-
-  /* Update the type and data size if the caller wanted them */
-  if ( dwType == REG_EXPAND_SZ ) dwType = REG_SZ;
-  if ( pwType ) *pwType = dwType;
-  if ( pcbData ) *pcbData = dwUnExpDataLen;
-  return dwRet;
-}
-
-
-/*************************************************************************
- * SHQueryValueExW   [SHLWAPI.@]
- *
- * See SHQueryValueExA.
- */
-DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
-                             LPDWORD lpReserved, LPDWORD pwType,
-                             LPVOID pvData, LPDWORD pcbData)
-{
-  DWORD dwRet, dwType, dwUnExpDataLen = 0, dwExpDataLen;
-
-  TRACE("(hkey=%p,%s,%p,%p,%p,%p=%d)\n", hKey, debugstr_w(lpszValue),
-        lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
-
-  if (pcbData) dwUnExpDataLen = *pcbData;
-
-  dwRet = RegQueryValueExW(hKey, lpszValue, lpReserved, &dwType, pvData, &dwUnExpDataLen);
-  if (dwRet!=ERROR_SUCCESS && dwRet!=ERROR_MORE_DATA)
-      return dwRet;
-
-  if (pcbData && (dwType == REG_EXPAND_SZ))
-  {
-    DWORD nBytesToAlloc;
-
-    /* Expand type REG_EXPAND_SZ into REG_SZ */
-    LPWSTR szData;
-
-    /* If the caller didn't supply a buffer or the buffer is too small we have
-     * to allocate our own
-     */
-    if ((!pvData) || (dwRet == ERROR_MORE_DATA) )
-    {
-      WCHAR cNull = '\0';
-      nBytesToAlloc = dwUnExpDataLen;
-
-      szData = LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc);
-      RegQueryValueExW (hKey, lpszValue, lpReserved, NULL, (LPBYTE)szData, &nBytesToAlloc);
-      dwExpDataLen = ExpandEnvironmentStringsW(szData, &cNull, 1);
-      dwUnExpDataLen = max(nBytesToAlloc, dwExpDataLen);
-      LocalFree(szData);
-    }
-    else
-    {
-      nBytesToAlloc = (lstrlenW(pvData) + 1) * sizeof(WCHAR);
-      szData = LocalAlloc(LMEM_ZEROINIT, nBytesToAlloc);
-      lstrcpyW(szData, pvData);
-      dwExpDataLen = ExpandEnvironmentStringsW(szData, pvData, *pcbData/sizeof(WCHAR) );
-      if (dwExpDataLen > *pcbData) dwRet = ERROR_MORE_DATA;
-      dwUnExpDataLen = max(nBytesToAlloc, dwExpDataLen);
-      LocalFree(szData);
-    }
-  }
-
-  /* Update the type and data size if the caller wanted them */
-  if ( dwType == REG_EXPAND_SZ ) dwType = REG_SZ;
-  if ( pwType ) *pwType = dwType;
-  if ( pcbData ) *pcbData = dwUnExpDataLen;
-  return dwRet;
-}
-
-/*************************************************************************
  * SHDeleteOrphanKeyA   [SHLWAPI.@]
  *
  * Delete a registry key with no sub keys or values.
@@ -272,20 +116,6 @@ DWORD WINAPI SHDeleteOrphanKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 /*************************************************************************
  * @   [SHLWAPI.205]
  *
- * Get a value from the registry.
- *
- * PARAMS
- *   hKey    [I] Handle to registry key
- *   pSubKey [I] Name of sub key containing value to get
- *   pValue  [I] Name of value to get
- *   pwType  [O] Destination for the values type
- *   pvData  [O] Destination for the values data
- *   pbData  [O] Destination for the values size
- *
- * RETURNS
- *   Success: ERROR_SUCCESS. Output parameters contain the details read.
- *   Failure: An error code from RegOpenKeyExA() or SHQueryValueExA(),
- *            or ERROR_INVALID_FUNCTION in the machine is in safe mode.
  */
 DWORD WINAPI SHGetValueGoodBootA(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pbData)
@@ -298,7 +128,6 @@ DWORD WINAPI SHGetValueGoodBootA(HKEY hkey, LPCSTR pSubKey, LPCSTR pValue,
 /*************************************************************************
  * @   [SHLWAPI.206]
  *
- * Unicode version of SHGetValueGoodBootW.
  */
 DWORD WINAPI SHGetValueGoodBootW(HKEY hkey, LPCWSTR pSubKey, LPCWSTR pValue,
                          LPDWORD pwType, LPVOID pvData, LPDWORD pbData)

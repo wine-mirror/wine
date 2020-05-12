@@ -711,8 +711,8 @@
 @ stdcall SHOpenRegStreamW(long wstr wstr long) shcore.SHOpenRegStreamW
 @ stdcall -import SHQueryInfoKeyA(long ptr ptr ptr ptr)
 @ stdcall -import SHQueryInfoKeyW(long ptr ptr ptr ptr)
-@ stdcall SHQueryValueExA(long str ptr ptr ptr ptr)
-@ stdcall SHQueryValueExW(long wstr ptr ptr ptr ptr)
+@ stdcall -import SHQueryValueExA(long str ptr ptr ptr ptr)
+@ stdcall -import SHQueryValueExW(long wstr ptr ptr ptr ptr)
 @ stdcall SHRegCloseUSKey(ptr)
 @ stdcall SHRegCreateUSKeyA(str long long ptr long)
 @ stdcall SHRegCreateUSKeyW(wstr long long ptr long)
