@@ -1756,6 +1756,7 @@ struct wined3d_adapter_identifier
 
 struct wined3d_swapchain_desc
 {
+    struct wined3d_output *output;
     unsigned int backbuffer_width;
     unsigned int backbuffer_height;
     enum wined3d_format_id backbuffer_format;

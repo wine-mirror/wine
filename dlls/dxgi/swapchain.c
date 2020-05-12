@@ -111,8 +111,7 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc)
     return TRUE;
 }
 
-static HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window,
-        IDXGIOutput **dxgi_output)
+HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window, IDXGIOutput **dxgi_output)
 {
     unsigned int adapter_idx, output_idx;
     DXGI_OUTPUT_DESC desc;
@@ -415,6 +414,7 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
     struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_swapchain_state *state;
+    struct dxgi_output *dxgi_output;
     HRESULT hr;
 
     TRACE("iface %p, fullscreen %#x, target %p.\n", iface, fullscreen, target);
@@ -434,10 +434,12 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
         WARN("Failed to get target output for swapchain, hr %#x.\n", hr);
         return hr;
     }
+    dxgi_output = unsafe_impl_from_IDXGIOutput(target);
 
     wined3d_mutex_lock();
     state = wined3d_swapchain_get_state(swapchain->wined3d_swapchain);
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
+    swapchain_desc.output = dxgi_output->wined3d_output;
     swapchain_desc.windowed = !fullscreen;
     hr = dxgi_swapchain_set_fullscreen_state(state, &swapchain_desc, target);
     wined3d_mutex_unlock();
@@ -2261,7 +2263,8 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
         return hr;
     }
 
-    if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, window, swapchain_desc, fullscreen_desc)))
+    if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, target, window, swapchain_desc,
+            fullscreen_desc)))
         goto fail;
     wined3d_mutex_lock();
     wined3d_desc.windowed = !fullscreen;
@@ -2928,6 +2931,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     IUnknown *device_parent;
     VkInstance vk_instance;
     IDXGIAdapter *adapter;
+    IDXGIOutput *output;
     VkBool32 supported;
     VkDevice vk_device;
     VkFence vk_fence;
@@ -2970,8 +2974,29 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     if (FAILED(hr = IUnknown_QueryInterface(device_parent, &IID_IDXGIAdapter, (void **)&adapter)))
         return hr;
     dxgi_adapter = unsafe_impl_from_IDXGIAdapter(adapter);
+
+    if (FAILED(hr = dxgi_get_output_from_window((IDXGIFactory *)factory, window, &output)))
+    {
+        WARN("Failed to get output from window %p, hr %#x.\n", window, hr);
+
+        /* FIXME: As wined3d only supports one output currently, even if a window is on a
+         * non-primary output, the swapchain will use the primary output. Keep this behaviour
+         * until all outputs are correctly enumerated. Otherwise it will create a regression
+         * for applications that specify a device window on a non-primary output */
+        if (FAILED(hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output)))
+        {
+            IDXGIAdapter_Release(adapter);
+            return hr;
+        }
+
+        FIXME("Using the primary output for the device window that is on a non-primary output.\n");
+    }
     IDXGIAdapter_Release(adapter);
-    if (FAILED(hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, window, swapchain_desc, fullscreen_desc)))
+
+    hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, output, window, swapchain_desc,
+            fullscreen_desc);
+    IDXGIOutput_Release(output);
+    if (FAILED(hr))
         return hr;
     if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window,
             dxgi_adapter->factory->wined3d, &swapchain->state)))

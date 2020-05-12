@@ -262,8 +262,8 @@ static enum wined3d_multisample_type wined3d_multisample_type_from_d3d(D3DMULTIS
     return (enum wined3d_multisample_type)type;
 }
 
-static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
-        const D3DPRESENT_PARAMETERS *present_parameters)
+static BOOL wined3d_swapchain_desc_from_d3d8(struct wined3d_swapchain_desc *swapchain_desc,
+        struct wined3d_output *output, const D3DPRESENT_PARAMETERS *present_parameters)
 {
     if (!present_parameters->SwapEffect || present_parameters->SwapEffect > D3DSWAPEFFECT_COPY_VSYNC)
     {
@@ -293,6 +293,7 @@ static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
             return FALSE;
     }
 
+    swapchain_desc->output = output;
     swapchain_desc->backbuffer_width = present_parameters->BackBufferWidth;
     swapchain_desc->backbuffer_height = present_parameters->BackBufferHeight;
     swapchain_desc->backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
@@ -846,6 +847,7 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     struct wined3d_swapchain_desc desc;
     struct d3d8_swapchain *object;
     unsigned int swap_interval;
+    unsigned int output_idx;
     unsigned int i, count;
     HRESULT hr;
 
@@ -876,7 +878,9 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     }
     wined3d_mutex_unlock();
 
-    if (!wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters))
+    output_idx = device->adapter_ordinal;
+    if (!wined3d_swapchain_desc_from_d3d8(&desc, device->d3d_parent->wined3d_outputs[output_idx],
+            present_parameters))
         return D3DERR_INVALIDCALL;
     swap_interval = wined3dswapinterval_from_d3d(present_parameters->FullScreen_PresentationInterval);
     if (SUCCEEDED(hr = d3d8_swapchain_create(device, &desc, swap_interval, &object)))
@@ -941,6 +945,7 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_swapchain_desc swapchain_desc;
     struct d3d8_swapchain *implicit_swapchain;
+    unsigned int output_idx;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p.\n", iface, present_parameters);
@@ -950,7 +955,9 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         WARN("App not active, returning D3DERR_DEVICELOST.\n");
         return D3DERR_DEVICELOST;
     }
-    if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters))
+    output_idx = device->adapter_ordinal;
+    if (!wined3d_swapchain_desc_from_d3d8(&swapchain_desc,
+            device->d3d_parent->wined3d_outputs[output_idx], present_parameters))
         return D3DERR_INVALIDCALL;
     swapchain_desc.flags |= WINED3D_SWAPCHAIN_IMPLICIT;
 
@@ -3718,6 +3725,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_swapchain *wined3d_swapchain;
     struct wined3d_adapter *wined3d_adapter;
+    struct wined3d_output *wined3d_output;
     struct d3d8_swapchain *d3d_swapchain;
     struct wined3d_caps caps;
     unsigned int output_idx;
@@ -3750,7 +3758,8 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
 
     wined3d_mutex_lock();
-    wined3d_adapter = wined3d_output_get_adapter(parent->wined3d_outputs[output_idx]);
+    wined3d_output = parent->wined3d_outputs[output_idx];
+    wined3d_adapter = wined3d_output_get_adapter(wined3d_output);
     if (FAILED(hr = wined3d_device_create(wined3d, wined3d_adapter, wined3d_device_type_from_d3d(device_type),
             focus_window, flags, 4, feature_levels, ARRAY_SIZE(feature_levels),
             &device->device_parent, &device->wined3d_device)))
@@ -3792,7 +3801,7 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     if (flags & D3DCREATE_MULTITHREADED)
         wined3d_device_set_multithreaded(device->wined3d_device);
 
-    if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, parameters))
+    if (!wined3d_swapchain_desc_from_d3d8(&swapchain_desc, wined3d_output, parameters))
     {
         wined3d_device_release_focus_window(device->wined3d_device);
         wined3d_device_decref(device->wined3d_device);

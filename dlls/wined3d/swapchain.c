@@ -873,7 +873,6 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 {
     struct wined3d_resource_desc texture_desc;
     struct wined3d_output_desc output_desc;
-    struct wined3d_output *output;
     BOOL displaymode_set = FALSE;
     DWORD texture_flags = 0;
     HRESULT hr = E_FAIL;
@@ -934,13 +933,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     }
     else
     {
-        if (!(output = wined3d_swapchain_get_output(swapchain)))
-        {
-            ERR("Failed to get output from swapchain %p.\n", swapchain);
-            goto err;
-        }
-
-        if (FAILED(hr = wined3d_output_get_desc(output, &output_desc)))
+        if (FAILED(hr = wined3d_output_get_desc(desc->output, &output_desc)))
         {
             ERR("Failed to get output description, hr %#x.\n", hr);
             goto err;
@@ -996,8 +989,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     if (!desc->windowed && desc->flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
     {
         /* Change the display settings */
-        output = wined3d_swapchain_get_output(swapchain);
-        if (!output || FAILED(hr = wined3d_output_set_display_mode(output,
+        if (FAILED(hr = wined3d_output_set_display_mode(desc->output,
                 &swapchain->state.d3d_mode)))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);
@@ -1081,7 +1073,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 err:
     if (displaymode_set)
     {
-        if (!output || FAILED(wined3d_output_set_display_mode(output,
+        if (FAILED(wined3d_output_set_display_mode(desc->output,
                 &swapchain->state.original_mode)))
             ERR("Failed to restore display mode.\n");
     }

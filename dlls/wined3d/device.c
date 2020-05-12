@@ -4910,6 +4910,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
 
     TRACE("New params:\n");
+    TRACE("output %p\n", swapchain_desc->output);
     TRACE("backbuffer_width %u\n", swapchain_desc->backbuffer_width);
     TRACE("backbuffer_height %u\n", swapchain_desc->backbuffer_height);
     TRACE("backbuffer_format %s\n", debug_d3dformat(swapchain_desc->backbuffer_format));
