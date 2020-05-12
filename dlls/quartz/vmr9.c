@@ -458,13 +458,12 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
 
 static void vmr_start_stream(struct strmbase_renderer *iface)
 {
-    struct quartz_vmr *This = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
-    TRACE("(%p)\n", This);
-
-    IVMRImagePresenter9_StartPresenting(This->presenter, This->cookie);
-    ShowWindow(This->window.hwnd, SW_SHOW);
-    SetEvent(This->run_event);
+    IVMRImagePresenter9_StartPresenting(filter->presenter, filter->cookie);
+    if (filter->window.hwnd)
+        ShowWindow(filter->window.hwnd, SW_SHOW);
+    SetEvent(filter->run_event);
 }
 
 static void vmr_stop_stream(struct strmbase_renderer *iface)
@@ -1354,6 +1353,9 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
         return E_INVALIDARG;
     }
 
+    if (mode != VMR9Mode_Windowed)
+        video_window_cleanup(&This->window);
+
     This->mode = mode;
     LeaveCriticalSection(&This->renderer.filter.csFilter);
     return hr;
@@ -1459,13 +1461,7 @@ static HRESULT WINAPI VMR7WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     if (source)
         This->window.src = *source;
     if (dest)
-    {
         This->window.dst = *dest;
-        FIXME("Output rectangle: %s.\n", wine_dbgstr_rect(dest));
-        SetWindowPos(This->window.hwnd, NULL,
-                dest->left, dest->top, dest->right - dest->left, dest->bottom-dest->top,
-                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREDRAW);
-    }
 
     LeaveCriticalSection(&This->renderer.filter.csFilter);
 
@@ -1662,13 +1658,7 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     if (source)
         This->window.src = *source;
     if (dest)
-    {
         This->window.dst = *dest;
-        FIXME("Output rectangle: %s.\n", wine_dbgstr_rect(dest));
-        SetWindowPos(This->window.hwnd, NULL,
-                dest->left, dest->top, dest->right - dest->left, dest->bottom - dest->top,
-                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOOWNERZORDER | SWP_NOREDRAW);
-    }
 
     LeaveCriticalSection(&This->renderer.filter.csFilter);
 
@@ -1740,7 +1730,7 @@ static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 
     FIXME("(%p/%p)->(...) semi-stub\n", iface, This);
 
     EnterCriticalSection(&This->renderer.filter.csFilter);
-    if (hwnd != This->clipping_window && hwnd != This->window.hwnd)
+    if (hwnd != This->clipping_window)
     {
         ERR("Not handling changing windows yet!!!\n");
         LeaveCriticalSection(&This->renderer.filter.csFilter);
@@ -2214,6 +2204,9 @@ static HRESULT WINAPI overlay_GetWindowHandle(IOverlay *iface, HWND *window)
 
     TRACE("filter %p, window %p.\n", filter, window);
 
+    if (!filter->window.hwnd)
+        return VFW_E_WRONG_STATE;
+
     *window = filter->window.hwnd;
     return S_OK;
 }
@@ -2424,12 +2417,9 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
 {
     struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
     HRESULT hr;
-    RECT output;
     BOOL render = FALSE;
 
     TRACE("(%p/%p/%p)->(...) stub\n", iface, This, This->pVMR9);
-    GetWindowRect(This->pVMR9->window.hwnd, &output);
-    TRACE("Output rectangle: %s\n", wine_dbgstr_rect(&output));
 
     /* This might happen if we don't have active focus (eg on a different virtual desktop) */
     if (!This->d3d9_dev)

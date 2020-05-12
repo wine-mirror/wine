@@ -1734,8 +1734,8 @@ static void test_overlay(void)
 
     hwnd = (HWND)0xdeadbeef;
     hr = IOverlay_GetWindowHandle(overlay, &hwnd);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
-    todo_wine ok(hwnd == (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hwnd == (HWND)0xdeadbeef, "Got window %p.\n", hwnd);
 
     IOverlay_Release(overlay);
     IPin_Release(pin);
@@ -1750,8 +1750,8 @@ static void test_overlay(void)
 
     hwnd = (HWND)0xdeadbeef;
     hr = IOverlay_GetWindowHandle(overlay, &hwnd);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
-    todo_wine ok(hwnd == (HWND)0xdeadbeef, "Got invalid window %p.\n", hwnd);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    ok(hwnd == (HWND)0xdeadbeef, "Got window %p.\n", hwnd);
 
     IOverlay_Release(overlay);
     IPin_Release(pin);
@@ -3854,7 +3854,7 @@ static void test_windowless_size(void)
     SetRect(&expect, 4, 6, 16, 12);
     ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
     SetRect(&expect, 40, 60, 120, 160);
-    todo_wine ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
 
     GetWindowRect(window, &src);
     SetRect(&expect, 0, 0, 640, 480);
