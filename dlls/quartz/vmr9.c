@@ -2615,12 +2615,6 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
 {
     struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
 
-    if (This->pVMR9->mode != VMR9Mode_Windowed && !This->pVMR9->hWndClippingWindow)
-    {
-        ERR("No window set\n");
-        return VFW_E_WRONG_STATE;
-    }
-
     This->info = *allocinfo;
 
     if (!CreateRenderingWindow(This, allocinfo, numbuffers))
