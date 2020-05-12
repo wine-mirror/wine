@@ -115,7 +115,7 @@ struct d3d8_device
     LONG                    ref;
     struct wined3d_device  *wined3d_device;
     unsigned int            adapter_ordinal;
-    IDirect3D8             *d3d_parent;
+    struct d3d8            *d3d_parent;
     struct                  d3d8_handle_table handle_table;
 
     /* FVF management */

@@ -609,7 +609,7 @@ static ULONG WINAPI d3d8_device_Release(IDirect3DDevice8 *iface)
 
     if (!ref)
     {
-        IDirect3D8 *parent = device->d3d_parent;
+        IDirect3D8 *parent = &device->d3d_parent->IDirect3D8_iface;
         unsigned i;
 
         TRACE("Releasing wined3d device %p.\n", device->wined3d_device);
@@ -705,7 +705,8 @@ static HRESULT WINAPI d3d8_device_GetDirect3D(IDirect3DDevice8 *iface, IDirect3D
     if (!d3d8)
         return D3DERR_INVALIDCALL;
 
-    return IDirect3D8_QueryInterface(device->d3d_parent, &IID_IDirect3D8, (void **)d3d8);
+    return IDirect3D8_QueryInterface(&device->d3d_parent->IDirect3D8_iface, &IID_IDirect3D8,
+            (void **)d3d8);
 }
 
 static HRESULT WINAPI d3d8_device_GetDeviceCaps(IDirect3DDevice8 *iface, D3DCAPS8 *caps)
@@ -791,8 +792,8 @@ static HRESULT WINAPI d3d8_device_SetCursorProperties(IDirect3DDevice8 *iface,
         return hr;
     }
 
-    if (FAILED(hr = IDirect3D8_GetAdapterDisplayMode(device->d3d_parent, device->adapter_ordinal,
-            &mode)))
+    if (FAILED(hr = IDirect3D8_GetAdapterDisplayMode(&device->d3d_parent->IDirect3D8_iface,
+            device->adapter_ordinal, &mode)))
     {
         WARN("Failed to get device display mode, hr %#x.\n", hr);
         return hr;
@@ -3835,8 +3836,8 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
 
     device->implicit_swapchain = wined3d_swapchain;
 
-    device->d3d_parent = &parent->IDirect3D8_iface;
-    IDirect3D8_AddRef(device->d3d_parent);
+    device->d3d_parent = parent;
+    IDirect3D8_AddRef(&parent->IDirect3D8_iface);
 
     return D3D_OK;
 
