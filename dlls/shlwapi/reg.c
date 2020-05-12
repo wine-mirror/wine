@@ -121,37 +121,6 @@ DWORD WINAPI SHSetValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue,
 }
 
 /*************************************************************************
- * SHQueryInfoKeyA   [SHLWAPI.@]
- *
- * Get information about a registry key. See RegQueryInfoKeyA().
- *
- * RETURNS
- *  The result of calling RegQueryInfoKeyA().
- */
-LONG WINAPI SHQueryInfoKeyA(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
-                            LPDWORD pwValues, LPDWORD pwValueMax)
-{
-  TRACE("(hkey=%p,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
-        pwValues, pwValueMax);
-  return RegQueryInfoKeyA(hKey, NULL, NULL, NULL, pwSubKeys, pwSubKeyMax,
-                          NULL, pwValues, pwValueMax, NULL, NULL, NULL);
-}
-
-/*************************************************************************
- * SHQueryInfoKeyW   [SHLWAPI.@]
- *
- * See SHQueryInfoKeyA.
- */
-LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
-                            LPDWORD pwValues, LPDWORD pwValueMax)
-{
-  TRACE("(hkey=%p,%p,%p,%p,%p)\n", hKey, pwSubKeys, pwSubKeyMax,
-        pwValues, pwValueMax);
-  return RegQueryInfoKeyW(hKey, NULL, NULL, NULL, pwSubKeys, pwSubKeyMax,
-                          NULL, pwValues, pwValueMax, NULL, NULL, NULL);
-}
-
-/*************************************************************************
  * SHQueryValueExA   [SHLWAPI.@]
  *
  * Get a value from the registry, expanding environment variable strings.
