@@ -748,8 +748,8 @@
 @ stdcall SHRegisterValidateTemplate(wstr long)
 @ stdcall SHReleaseThreadRef() shcore.SHReleaseThreadRef
 @ stdcall SHSetThreadRef(ptr) shcore.SHSetThreadRef
-@ stdcall SHSetValueA (long  str  str long ptr long)
-@ stdcall SHSetValueW (long wstr wstr long ptr long)
+@ stdcall -import SHSetValueA(long str str long ptr long)
+@ stdcall -import SHSetValueW(long wstr wstr long ptr long)
 @ stdcall SHSkipJunction(ptr ptr)
 @ stdcall SHStrDupA (str ptr)
 @ stdcall SHStrDupW (wstr ptr)

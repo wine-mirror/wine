@@ -49,7 +49,7 @@
 @ stdcall SHRegSetPathW(long wstr wstr wstr long) shlwapi.SHRegSetPathW
 @ stdcall SHReleaseThreadRef() shlwapi.SHReleaseThreadRef
 @ stdcall SHSetThreadRef(ptr) shlwapi.SHSetThreadRef
-@ stdcall SHSetValueA(long  str  str long ptr long) shlwapi.SHSetValueA
+@ stdcall SHSetValueA(long str str long ptr long) shlwapi.SHSetValueA
 @ stdcall SHSetValueW(long wstr wstr long ptr long) shlwapi.SHSetValueW
 @ stdcall SHStrDupW(wstr ptr) shlwapi.SHStrDupW
 @ stdcall SHUnicodeToAnsi(wstr ptr ptr) shlwapi.SHUnicodeToAnsi
