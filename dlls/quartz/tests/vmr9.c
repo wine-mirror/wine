@@ -3808,9 +3808,9 @@ static void test_windowless_size(void)
 
     width = height = 0xdeadbeef;
     hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, &height, NULL, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(width == 32, "Got width %d.\n", width);
-    todo_wine ok(height == 16, "Got height %d.\n", height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(width == 32, "Got width %d.\n", width);
+    ok(height == 16, "Got height %d.\n", height);
 
     aspect_width = aspect_height = 0xdeadbeef;
     hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, &height, &aspect_width, &aspect_height);
