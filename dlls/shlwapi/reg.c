@@ -343,57 +343,6 @@ DWORD WINAPI SHDeleteOrphanKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 }
 
 /*************************************************************************
- * SHDeleteValueA   [SHLWAPI.@]
- *
- * Delete a value from the registry.
- *
- * PARAMS
- *   hKey       [I] Handle to registry key
- *   lpszSubKey [I] Name of sub key containing value to delete
- *   lpszValue  [I] Name of value to delete
- *
- * RETURNS
- *   Success: ERROR_SUCCESS. The value is deleted.
- *   Failure: An error code from RegOpenKeyExA() or RegDeleteValueA().
- */
-DWORD WINAPI SHDeleteValueA(HKEY hKey, LPCSTR lpszSubKey, LPCSTR lpszValue)
-{
-  DWORD dwRet;
-  HKEY hSubKey;
-
-  TRACE("(hkey=%p,%s,%s)\n", hKey, debugstr_a(lpszSubKey), debugstr_a(lpszValue));
-
-  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_SET_VALUE, &hSubKey);
-  if (!dwRet)
-  {
-    dwRet = RegDeleteValueA(hSubKey, lpszValue);
-    RegCloseKey(hSubKey);
-  }
-  return dwRet;
-}
-
-/*************************************************************************
- * SHDeleteValueW   [SHLWAPI.@]
- *
- * See SHDeleteValueA.
- */
-DWORD WINAPI SHDeleteValueW(HKEY hKey, LPCWSTR lpszSubKey, LPCWSTR lpszValue)
-{
-  DWORD dwRet;
-  HKEY hSubKey;
-
-  TRACE("(hkey=%p,%s,%s)\n", hKey, debugstr_w(lpszSubKey), debugstr_w(lpszValue));
-
-  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_SET_VALUE, &hSubKey);
-  if (!dwRet)
-  {
-    dwRet = RegDeleteValueW(hSubKey, lpszValue);
-    RegCloseKey(hSubKey);
-  }
-  return dwRet;
-}
-
-/*************************************************************************
  * @   [SHLWAPI.205]
  *
  * Get a value from the registry.

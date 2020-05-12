@@ -694,8 +694,8 @@
 @ stdcall SHDeleteKeyW(long wstr) shcore.SHDeleteKeyW
 @ stdcall SHDeleteOrphanKeyA(long str)
 @ stdcall SHDeleteOrphanKeyW(long wstr)
-@ stdcall SHDeleteValueA(long  str  str)
-@ stdcall SHDeleteValueW(long wstr wstr)
+@ stdcall -import SHDeleteValueA(long str str)
+@ stdcall -import SHDeleteValueW(long wstr wstr)
 @ stdcall SHEnumKeyExA(long long str ptr) shcore.SHEnumKeyExA
 @ stdcall SHEnumKeyExW(long long wstr ptr) shcore.SHEnumKeyExW
 @ stdcall SHEnumValueA(long long str ptr ptr ptr ptr) shcore.SHEnumValueA

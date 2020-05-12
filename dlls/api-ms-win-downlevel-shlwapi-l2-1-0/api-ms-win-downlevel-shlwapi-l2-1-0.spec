@@ -23,7 +23,7 @@
 @ stdcall SHDeleteEmptyKeyW(long wstr) shlwapi.SHDeleteEmptyKeyW
 @ stdcall SHDeleteKeyA(long str) shlwapi.SHDeleteKeyA
 @ stdcall SHDeleteKeyW(long wstr) shlwapi.SHDeleteKeyW
-@ stdcall SHDeleteValueA(long  str  str) shlwapi.SHDeleteValueA
+@ stdcall SHDeleteValueA(long str str) shlwapi.SHDeleteValueA
 @ stdcall SHDeleteValueW(long wstr wstr) shlwapi.SHDeleteValueW
 @ stdcall SHEnumKeyExA(long long str ptr) shlwapi.SHEnumKeyExA
 @ stdcall SHEnumKeyExW(long long wstr ptr) shlwapi.SHEnumKeyExW
