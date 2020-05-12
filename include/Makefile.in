@@ -36,6 +36,7 @@ SOURCES = \
 	avrt.h \
 	axcore.idl \
 	axextend.idl \
+	axextendenums.h \
 	basetsd.h \
 	basetyps.h \
 	bcrypt.h \
@@ -275,6 +276,7 @@ SOURCES = \
 	excpt.h \
 	exdisp.idl \
 	exdispid.h \
+	exposeenums2managed.h \
 	fci.h \
 	fdi.h \
 	fileapi.h \
@@ -679,6 +681,7 @@ SOURCES = \
 	uiautomationcore.idl \
 	uiautomationcoreapi.h \
 	uiribbon.idl \
+	unexposeenums2managed.h \
 	unknwn.idl \
 	urlhist.idl \
 	urlmon.idl \
