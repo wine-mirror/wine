@@ -1003,7 +1003,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
     if (!(pin = create_pin(This, nameW)))
     {
         ERR("Failed to allocate memory.\n");
-        return;
+        goto out;
     }
 
     if (!strcmp(typename, "video/x-raw"))
@@ -1017,7 +1017,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
         {
             ERR("Failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
                     8 * (int)sizeof(void *));
-            return;
+            goto out;
         }
 
         /* GStreamer outputs RGB video top-down, but DirectShow expects bottom-up. */
@@ -1025,7 +1025,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
         {
             ERR("Failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
                     8 * (int)sizeof(void *));
-            return;
+            goto out;
         }
 
         gst_bin_add(GST_BIN(This->container), vconv); /* bin takes ownership */
@@ -1051,7 +1051,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
         {
             ERR("Failed to create audioconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
                     8 * (int)sizeof(void *));
-            return;
+            goto out;
         }
 
         gst_bin_add(GST_BIN(This->container), convert);
@@ -1069,7 +1069,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
                     gst_pad_link_get_name(ret));
             gst_object_unref(pin->post_sink);
             pin->post_sink = NULL;
-            return;
+            goto out;
         }
 
         if ((ret = gst_pad_link(pin->post_src, pin->my_sink)) < 0)
@@ -1080,18 +1080,20 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
             pin->post_src = NULL;
             gst_object_unref(pin->post_sink);
             pin->post_sink = NULL;
-            return;
+            goto out;
         }
     }
     else if ((ret = gst_pad_link(pad, pin->my_sink)) < 0)
     {
         ERR("Failed to link decodebin source pad to our sink pad, error %s.\n",
                 gst_pad_link_get_name(ret));
-        return;
+        goto out;
     }
 
     gst_pad_set_active(pin->my_sink, 1);
     gst_object_ref(pin->their_src = pad);
+out:
+    gst_caps_unref(caps);
 }
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
