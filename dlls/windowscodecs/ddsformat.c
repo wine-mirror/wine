@@ -48,6 +48,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 #define DDPF_LUMINANCE       0x00020000
 #define DDPF_BUMPDUDV        0x00080000
 
+#define DDSCAPS2_CUBEMAP 0x00000200
+#define DDSCAPS2_VOLUME  0x00200000
+
+#define DDS_DIMENSION_TEXTURE1D 2
+#define DDS_DIMENSION_TEXTURE2D 3
+#define DDS_DIMENSION_TEXTURE3D 4
+
+#define DDS_RESOURCE_MISC_TEXTURECUBE 0x00000004
+
 typedef struct {
     DWORD size;
     DWORD flags;
@@ -105,6 +114,65 @@ static inline BOOL has_extended_header(DDS_HEADER *header)
 {
     return (header->ddspf.flags & DDPF_FOURCC) &&
            (header->ddspf.fourCC == MAKEFOURCC('D', 'X', '1', '0'));
+}
+
+static WICDdsDimension get_dimension(DDS_HEADER *header, DDS_HEADER_DXT10 *header_dxt10)
+{
+    if (header_dxt10) {
+        if (header_dxt10->miscFlag & DDS_RESOURCE_MISC_TEXTURECUBE) return WICDdsTextureCube;
+        switch (header_dxt10->resourceDimension)
+        {
+        case DDS_DIMENSION_TEXTURE1D: return WICDdsTexture1D;
+        case DDS_DIMENSION_TEXTURE2D: return WICDdsTexture2D;
+        case DDS_DIMENSION_TEXTURE3D: return WICDdsTexture3D;
+        default: return WICDdsTexture2D;
+        }
+    } else {
+        if (header->caps2 & DDSCAPS2_CUBEMAP) {
+            return WICDdsTextureCube;
+        } else if (header->caps2 & DDSCAPS2_VOLUME) {
+            return WICDdsTexture3D;
+        } else {
+            return WICDdsTexture2D;
+        }
+    }
+}
+
+static DXGI_FORMAT get_format_from_fourcc(DWORD fourcc)
+{
+    switch (fourcc)
+    {
+    case MAKEFOURCC('D', 'X', 'T', '1'):
+        return DXGI_FORMAT_BC1_UNORM;
+    case MAKEFOURCC('D', 'X', 'T', '2'):
+    case MAKEFOURCC('D', 'X', 'T', '3'):
+        return DXGI_FORMAT_BC2_UNORM;
+    case MAKEFOURCC('D', 'X', 'T', '4'):
+    case MAKEFOURCC('D', 'X', 'T', '5'):
+        return DXGI_FORMAT_BC3_UNORM;
+    case MAKEFOURCC('D', 'X', '1', '0'):
+        /* format is indicated in extended header */
+        return DXGI_FORMAT_UNKNOWN;
+    default:
+        /* there are DDS files where fourCC is set directly to DXGI_FORMAT enumeration value */
+        return fourcc;
+    }
+}
+
+static WICDdsAlphaMode get_alpha_mode_from_fourcc(DWORD fourcc)
+{
+    switch (fourcc)
+    {
+    case MAKEFOURCC('D', 'X', 'T', '1'):
+    case MAKEFOURCC('D', 'X', 'T', '2'):
+    case MAKEFOURCC('D', 'X', 'T', '4'):
+        return WICDdsAlphaModePremultiplied;
+    case MAKEFOURCC('D', 'X', 'T', '3'):
+    case MAKEFOURCC('D', 'X', 'T', '5'):
+        return WICDdsAlphaModeStraight;
+    default:
+        return WICDdsAlphaModeUnknown;
+    }
 }
 
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
@@ -587,9 +655,47 @@ static ULONG WINAPI DdsDecoder_Dds_Release(IWICDdsDecoder *iface)
 static HRESULT WINAPI DdsDecoder_Dds_GetParameters(IWICDdsDecoder *iface,
                                                    WICDdsParameters *parameters)
 {
-    TRACE("(%p,%p): Stub.\n", iface, parameters);
+    DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    if (!parameters) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->initialized) {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    parameters->Width = This->header.width;
+    parameters->Height = This->header.height;
+    parameters->Depth = 1;
+    parameters->MipLevels = 1;
+    parameters->ArraySize = 1;
+    if (This->header.depth) parameters->Depth = This->header.depth;
+    if (This->header.mipMapCount) parameters->MipLevels = This->header.mipMapCount;
+
+    if (has_extended_header(&This->header)) {
+        if (This->header_dxt10.arraySize) parameters->ArraySize = This->header_dxt10.arraySize;
+        parameters->DxgiFormat = This->header_dxt10.dxgiFormat;
+        parameters->Dimension = get_dimension(NULL, &This->header_dxt10);
+        parameters->AlphaMode = This->header_dxt10.miscFlags2 & 0x00000008;
+    } else {
+        parameters->DxgiFormat = get_format_from_fourcc(This->header.ddspf.fourCC);
+        parameters->Dimension = get_dimension(&This->header, NULL);
+        parameters->AlphaMode = get_alpha_mode_from_fourcc(This->header.ddspf.fourCC);
+    }
+
+    TRACE("(%p) -> (%dx%d depth=%d mipLevels=%d arraySize=%d dxgiFormat=0x%x dimension=0x%x alphaMode=0x%x)\n",
+          iface, parameters->Width, parameters->Height, parameters->Depth, parameters->MipLevels,
+          parameters->ArraySize, parameters->DxgiFormat, parameters->Dimension, parameters->AlphaMode);
+
+    hr = S_OK;
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,

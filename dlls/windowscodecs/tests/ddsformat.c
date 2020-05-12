@@ -320,12 +320,10 @@ static void test_dds_decoder_image_parameters(void)
         hr = IWICBitmapDecoder_GetFrameCount(decoder, NULL);
         ok (hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
 
-        todo_wine {
         hr = IWICDdsDecoder_GetParameters(dds_decoder, &parameters);
         ok(hr == WINCODEC_ERR_WRONGSTATE, "%d: Expected hr=WINCODEC_ERR_WRONGSTATE, got %x\n", i, hr);
         hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
         ok(hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
-        };
 
         hr = init_decoder(decoder, stream, S_OK, -1);
         if (hr != S_OK) goto next;
@@ -339,8 +337,6 @@ static void test_dds_decoder_image_parameters(void)
         hr = IWICBitmapDecoder_GetFrameCount(decoder, NULL);
         ok (hr == E_INVALIDARG, "%d: Expected hr=S_OK, got %x\n", i, hr);
 
-
-        todo_wine {
         hr = IWICDdsDecoder_GetParameters(dds_decoder, &parameters);
         ok (hr == S_OK, "%d: GetParameters failed, hr=%x\n", i, hr);
         if (hr == S_OK) {
@@ -363,7 +359,6 @@ static void test_dds_decoder_image_parameters(void)
         }
         hr = IWICDdsDecoder_GetParameters(dds_decoder, NULL);
         ok (hr == E_INVALIDARG, "%d: Expected hr=E_INVALIDARG, got %x\n", i, hr);
-        };
 
     next:
         if (decoder) IWICBitmapDecoder_Release(decoder);
