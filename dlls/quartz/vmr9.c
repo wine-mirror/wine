@@ -2551,7 +2551,9 @@ static UINT d3d9_adapter_from_hwnd(IDirect3D9 *d3d9, HWND hwnd, HMONITOR *mon_ou
 static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9AllocationInfo *info, DWORD *numbuffers)
 {
     D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DDevice9 *device;
     DWORD d3d9_adapter;
+    D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
 
@@ -2573,12 +2575,23 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     d3dpp.BackBufferWidth = info->dwWidth;
     d3dpp.BackBufferHeight = info->dwHeight;
 
-    hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter, D3DDEVTYPE_HAL, NULL, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &This->d3d9_dev);
+    hr = IDirect3D9_CreateDevice(This->d3d9_ptr, d3d9_adapter, D3DDEVTYPE_HAL,
+            NULL, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
     if (FAILED(hr))
     {
         ERR("Could not create device: %08x\n", hr);
         return FALSE;
     }
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    if (!(caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES))
+    {
+        WARN("Device does not support blitting from textures.\n");
+        IDirect3DDevice9_Release(device);
+        return FALSE;
+    }
+
+    This->d3d9_dev = device;
     IVMRSurfaceAllocatorNotify9_SetD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
 
     if (!(This->d3d9_surfaces = calloc(*numbuffers, sizeof(IDirect3DSurface9 *))))
