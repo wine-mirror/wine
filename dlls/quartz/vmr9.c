@@ -100,8 +100,7 @@ struct quartz_vmr
     DWORD cur_surface;
     DWORD_PTR cookie;
 
-    /* for Windowless Mode */
-    HWND hWndClippingWindow;
+    HWND clipping_window;
 
     LONG VideoWidth;
     LONG VideoHeight;
@@ -402,9 +401,9 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     };
 
     TRACE("Initializing in mode %u, our window %p, clipping window %p.\n",
-            filter->mode, filter->window.hwnd, filter->hWndClippingWindow);
+            filter->mode, filter->window.hwnd, filter->clipping_window);
 
-    if (filter->mode == VMR9Mode_Windowless && !filter->hWndClippingWindow)
+    if (filter->mode == VMR9Mode_Windowless && !filter->clipping_window)
         return S_OK;
 
     info.Pool = D3DPOOL_DEFAULT;
@@ -1727,7 +1726,7 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowles
         return VFW_E_WRONG_STATE;
     }
 
-    filter->hWndClippingWindow = window;
+    filter->clipping_window = window;
 
     LeaveCriticalSection(&filter->renderer.filter.csFilter);
     return S_OK;
@@ -1741,7 +1740,7 @@ static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 
     FIXME("(%p/%p)->(...) semi-stub\n", iface, This);
 
     EnterCriticalSection(&This->renderer.filter.csFilter);
-    if (hwnd != This->hWndClippingWindow && hwnd != This->window.hwnd)
+    if (hwnd != This->clipping_window && hwnd != This->window.hwnd)
     {
         ERR("Not handling changing windows yet!!!\n");
         LeaveCriticalSection(&This->renderer.filter.csFilter);
