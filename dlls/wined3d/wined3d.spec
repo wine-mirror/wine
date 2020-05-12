@@ -281,7 +281,7 @@
 @ cdecl wined3d_swapchain_set_palette(ptr ptr)
 @ cdecl wined3d_swapchain_set_window(ptr ptr)
 
-@ cdecl wined3d_swapchain_state_create(ptr ptr ptr ptr)
+@ cdecl wined3d_swapchain_state_create(ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_destroy(ptr)
 @ cdecl wined3d_swapchain_state_resize_target(ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr ptr)

@@ -2924,7 +2924,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     struct wined3d_swapchain_desc wined3d_desc;
     VkWin32SurfaceCreateInfoKHR surface_desc;
     VkPhysicalDevice vk_physical_device;
-    struct dxgi_adapter *dxgi_adapter;
     VkFenceCreateInfo fence_desc;
     uint32_t queue_family_index;
     VkSurfaceKHR vk_surface;
@@ -2973,7 +2972,6 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     device_parent = vkd3d_get_device_parent(device);
     if (FAILED(hr = IUnknown_QueryInterface(device_parent, &IID_IDXGIAdapter, (void **)&adapter)))
         return hr;
-    dxgi_adapter = unsafe_impl_from_IDXGIAdapter(adapter);
 
     if (FAILED(hr = dxgi_get_output_from_window((IDXGIFactory *)factory, window, &output)))
     {
@@ -2998,8 +2996,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     IDXGIOutput_Release(output);
     if (FAILED(hr))
         return hr;
-    if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window,
-            dxgi_adapter->factory->wined3d, &swapchain->state)))
+    if (FAILED(hr = wined3d_swapchain_state_create(&wined3d_desc, window, &swapchain->state)))
         return hr;
 
     if (swapchain_desc->BufferUsage && swapchain_desc->BufferUsage != DXGI_USAGE_RENDER_TARGET_OUTPUT)
