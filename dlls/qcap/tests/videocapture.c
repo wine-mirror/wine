@@ -23,6 +23,21 @@
 #include "wine/test.h"
 #include "wine/strmbase.h"
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static void test_media_types(IPin *pin)
 {
     IEnumMediaTypes *enum_media_types;
@@ -176,11 +191,48 @@ static void test_capture(IBaseFilter *filter)
         {
             test_media_types(pin);
             test_stream_config(pin);
+
+            todo_wine check_interface(pin, &IID_IAMBufferNegotiation, TRUE);
+            check_interface(pin, &IID_IAMStreamConfig, TRUE);
+            todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
+            check_interface(pin, &IID_IKsPropertySet, TRUE);
+            todo_wine check_interface(pin, &IID_IMediaSeeking, TRUE);
+            check_interface(pin, &IID_IPin, TRUE);
+            todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
+            todo_wine check_interface(pin, &IID_ISpecifyPropertyPages, TRUE);
+
+            check_interface(pin, &IID_IAMCrossbar, FALSE);
+            check_interface(pin, &IID_IAMDroppedFrames, FALSE);
+            check_interface(pin, &IID_IAMFilterMiscFlags, FALSE);
+            check_interface(pin, &IID_IAMPushSource, FALSE);
+            check_interface(pin, &IID_IAMTVTuner, FALSE);
+            check_interface(pin, &IID_IAMVideoCompression, FALSE);
+            check_interface(pin, &IID_IAMVideoProcAmp, FALSE);
+            check_interface(pin, &IID_IPersistPropertyBag, FALSE);
         }
         IPin_Release(pin);
     }
 
     IEnumPins_Release(enum_pins);
+
+    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    todo_wine check_interface(filter, &IID_IAMVideoControl, TRUE);
+    check_interface(filter, &IID_IAMVideoProcAmp, TRUE);
+    check_interface(filter, &IID_IBaseFilter, TRUE);
+    todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
+    todo_wine check_interface(filter, &IID_IMediaSeeking, TRUE);
+    check_interface(filter, &IID_IPersistPropertyBag, TRUE);
+    todo_wine check_interface(filter, &IID_ISpecifyPropertyPages, TRUE);
+
+    check_interface(filter, &IID_IAMCrossbar, FALSE);
+    check_interface(filter, &IID_IAMPushSource, FALSE);
+    check_interface(filter, &IID_IAMStreamConfig, FALSE);
+    check_interface(filter, &IID_IAMTVTuner, FALSE);
+    check_interface(filter, &IID_IAMVideoCompression, FALSE);
+    check_interface(filter, &IID_IAMVfwCaptureDialogs, FALSE);
+    check_interface(filter, &IID_IPin, FALSE);
+    check_interface(filter, &IID_IReferenceClock, FALSE);
+    check_interface(filter, &IID_IOverlayNotify, FALSE);
 }
 
 START_TEST(videocapture)
