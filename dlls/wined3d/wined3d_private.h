@@ -1540,6 +1540,12 @@ static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
     return bo ? ((struct wined3d_bo_gl *)bo)->id : 0;
 }
 
+struct wined3d_bo_user_vk
+{
+    struct list entry;
+    bool valid;
+};
+
 struct wined3d_bo_vk
 {
     VkBuffer vk_buffer;
@@ -1554,6 +1560,7 @@ struct wined3d_bo_vk
     VkBufferUsageFlags usage;
     VkMemoryPropertyFlags memory_type;
 
+    struct list users;
     uint64_t command_buffer_id;
 };
 
@@ -2299,6 +2306,20 @@ struct wined3d_render_pass_vk
     VkRenderPass vk_render_pass;
 };
 
+struct wined3d_pipeline_layout_key_vk
+{
+    VkDescriptorSetLayoutBinding *bindings;
+    SIZE_T binding_count;
+};
+
+struct wined3d_pipeline_layout_vk
+{
+    struct wine_rb_entry entry;
+    struct wined3d_pipeline_layout_key_vk key;
+    VkPipelineLayout vk_pipeline_layout;
+    VkDescriptorSetLayout vk_set_layout;
+};
+
 enum wined3d_shader_descriptor_type
 {
     WINED3D_SHADER_DESCRIPTOR_TYPE_CBV,
@@ -2324,6 +2345,12 @@ struct wined3d_shader_resource_bindings
     SIZE_T size, count;
 };
 
+struct wined3d_shader_descriptor_writes_vk
+{
+    VkWriteDescriptorSet *writes;
+    SIZE_T size, count;
+};
+
 struct wined3d_context_vk
 {
     struct wined3d_context c;
@@ -2336,6 +2363,8 @@ struct wined3d_context_vk
     struct
     {
         VkPipeline vk_pipeline;
+        VkPipelineLayout vk_pipeline_layout;
+        VkDescriptorSetLayout vk_set_layout;
         struct wined3d_shader_resource_bindings bindings;
     } compute;
 
@@ -2350,12 +2379,13 @@ struct wined3d_context_vk
         SIZE_T buffer_count;
     } submitted;
 
+    struct wined3d_shader_descriptor_writes_vk descriptor_writes;
+
     VkDescriptorPool vk_descriptor_pool;
-    VkPipelineLayout vk_pipeline_layout;
-    VkDescriptorSetLayout vk_set_layout;
 
     struct wined3d_retired_objects_vk retired;
     struct wine_rb_tree render_passes;
+    struct wine_rb_tree pipeline_layouts;
     struct wine_rb_tree bo_slab_available;
 };
 
@@ -2390,6 +2420,8 @@ void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
 void wined3d_context_vk_destroy_sampler(struct wined3d_context_vk *context_vk,
         VkSampler vk_sampler, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(struct wined3d_context_vk *context_vk,
+        VkDescriptorSetLayoutBinding *bindings, SIZE_T binding_count) DECLSPEC_HIDDEN;
 VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *context_vk,
         const struct wined3d_fb_state *fb, unsigned int rt_count,
         bool depth_stencil, uint32_t clear_flags) DECLSPEC_HIDDEN;
@@ -4547,6 +4579,8 @@ struct wined3d_buffer_vk
     struct wined3d_buffer b;
 
     struct wined3d_bo_vk bo;
+    struct wined3d_bo_user_vk bo_user;
+    VkDescriptorBufferInfo buffer_info;
 };
 
 static inline struct wined3d_buffer_vk *wined3d_buffer_vk(struct wined3d_buffer *buffer)
@@ -4554,6 +4588,7 @@ static inline struct wined3d_buffer_vk *wined3d_buffer_vk(struct wined3d_buffer 
     return CONTAINING_RECORD(buffer, struct wined3d_buffer_vk, b);
 }
 
+const VkDescriptorBufferInfo *wined3d_buffer_vk_get_buffer_info(struct wined3d_buffer_vk *buffer_vk) DECLSPEC_HIDDEN;
 HRESULT wined3d_buffer_vk_init(struct wined3d_buffer_vk *buffer_vk, struct wined3d_device *device,
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;

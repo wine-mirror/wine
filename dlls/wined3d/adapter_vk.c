@@ -810,6 +810,7 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
 {
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     const struct wined3d_vk_info *vk_info;
+    struct wined3d_bo_user_vk *bo_user_vk;
     struct wined3d_device_vk *device_vk;
     VkCommandBuffer vk_command_buffer;
     VkBufferMemoryBarrier vk_barrier;
@@ -830,8 +831,15 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
     {
         if (wined3d_context_vk_create_bo(context_vk, bo->size, bo->usage, bo->memory_type, &tmp))
         {
+            list_move_head(&tmp.users, &bo->users);
             wined3d_context_vk_destroy_bo(context_vk, bo);
             *bo = tmp;
+            list_init(&bo->users);
+            list_move_head(&bo->users, &tmp.users);
+            LIST_FOR_EACH_ENTRY(bo_user_vk, &bo->users, struct wined3d_bo_user_vk, entry)
+            {
+                bo_user_vk->valid = false;
+            }
 
             goto map;
         }

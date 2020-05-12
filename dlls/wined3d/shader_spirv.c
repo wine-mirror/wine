@@ -44,6 +44,8 @@ struct shader_spirv_compute_program_vk
 {
     VkShaderModule vk_module;
     VkPipeline vk_pipeline;
+    VkPipelineLayout vk_pipeline_layout;
+    VkDescriptorSetLayout vk_set_layout;
 };
 
 static void shader_spirv_handle_instruction(const struct wined3d_shader_instruction *ins)
@@ -65,8 +67,7 @@ static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct shader_spirv_compute_program_vk *program;
-    VkDescriptorSetLayoutCreateInfo set_layout_desc;
-    VkPipelineLayoutCreateInfo pipeline_layout_desc;
+    struct wined3d_pipeline_layout_vk *layout;
     VkComputePipelineCreateInfo pipeline_info;
     VkResult vr;
 
@@ -82,40 +83,15 @@ static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program
         return NULL;
     }
 
-    if (!context_vk->vk_pipeline_layout)
+    if (!(layout = wined3d_context_vk_get_pipeline_layout(context_vk,
+            bindings->vk_bindings, bindings->vk_binding_count)))
     {
-        set_layout_desc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        set_layout_desc.pNext = NULL;
-        set_layout_desc.flags = 0;
-        set_layout_desc.bindingCount = 0;
-        set_layout_desc.pBindings = NULL;
-        if ((vr = VK_CALL(vkCreateDescriptorSetLayout(device_vk->vk_device,
-                &set_layout_desc, NULL, &context_vk->vk_set_layout))) < 0)
-        {
-            WARN("Failed to create Vulkan descriptor set layout, vr %s.\n", wined3d_debug_vkresult(vr));
-            VK_CALL(vkDestroyShaderModule(device_vk->vk_device, program->vk_module, NULL));
-            heap_free(program);
-            return NULL;
-        }
-
-        pipeline_layout_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipeline_layout_desc.pNext = NULL;
-        pipeline_layout_desc.flags = 0;
-        pipeline_layout_desc.setLayoutCount = 1;
-        pipeline_layout_desc.pSetLayouts = &context_vk->vk_set_layout;
-        pipeline_layout_desc.pushConstantRangeCount = 0;
-        pipeline_layout_desc.pPushConstantRanges = NULL;
-
-        if ((vr = VK_CALL(vkCreatePipelineLayout(device_vk->vk_device,
-                &pipeline_layout_desc, NULL, &context_vk->vk_pipeline_layout))) < 0)
-        {
-            WARN("Failed to create Vulkan pipeline layout, vr %s.\n", wined3d_debug_vkresult(vr));
-            VK_CALL(vkDestroyDescriptorSetLayout(device_vk->vk_device, context_vk->vk_set_layout, NULL));
-            VK_CALL(vkDestroyShaderModule(device_vk->vk_device, program->vk_module, NULL));
-            heap_free(program);
-            return NULL;
-        }
+        VK_CALL(vkDestroyShaderModule(device_vk->vk_device, program->vk_module, NULL));
+        heap_free(program);
+        return NULL;
     }
+    program->vk_set_layout = layout->vk_set_layout;
+    program->vk_pipeline_layout = layout->vk_pipeline_layout;
 
     pipeline_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     pipeline_info.pNext = NULL;
@@ -127,7 +103,7 @@ static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program
     pipeline_info.stage.pName = "main";
     pipeline_info.stage.pSpecializationInfo = NULL;
     pipeline_info.stage.module = program->vk_module;
-    pipeline_info.layout = context_vk->vk_pipeline_layout;
+    pipeline_info.layout = program->vk_pipeline_layout;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.basePipelineIndex = -1;
     if ((vr = VK_CALL(vkCreateComputePipelines(device_vk->vk_device,
@@ -342,9 +318,17 @@ static void shader_spirv_select_compute(void *shader_priv,
         program = NULL;
 
     if (program)
+    {
         context_vk->compute.vk_pipeline = program->vk_pipeline;
+        context_vk->compute.vk_set_layout = program->vk_set_layout;
+        context_vk->compute.vk_pipeline_layout = program->vk_pipeline_layout;
+    }
     else
+    {
         context_vk->compute.vk_pipeline = VK_NULL_HANDLE;
+        context_vk->compute.vk_set_layout = VK_NULL_HANDLE;
+        context_vk->compute.vk_pipeline_layout = VK_NULL_HANDLE;
+    }
 }
 
 static void shader_spirv_disable(void *shader_priv, struct wined3d_context *context)
