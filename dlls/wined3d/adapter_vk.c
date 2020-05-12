@@ -1509,7 +1509,45 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
 static void adapter_vk_dispatch_compute(struct wined3d_device *device,
         const struct wined3d_state *state, const struct wined3d_dispatch_parameters *parameters)
 {
-    FIXME("device %p, state %p, parameters %p.\n", device, state, parameters);
+    struct wined3d_buffer_vk *indirect_vk = NULL;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_context_vk *context_vk;
+    VkCommandBuffer vk_command_buffer;
+
+    TRACE("device %p, state %p, parameters %p.\n", device, state, parameters);
+
+    context_vk = wined3d_context_vk(context_acquire(device, NULL, 0));
+    vk_info = context_vk->vk_info;
+
+    if (parameters->indirect)
+        indirect_vk = wined3d_buffer_vk(parameters->u.indirect.buffer);
+
+    if (!(vk_command_buffer = wined3d_context_vk_apply_compute_state(context_vk, state, indirect_vk)))
+    {
+        ERR("Failed to apply compute state.\n");
+        context_release(&context_vk->c);
+        return;
+    }
+
+    if (parameters->indirect)
+    {
+        struct wined3d_bo_vk *bo = &indirect_vk->bo;
+
+        wined3d_context_vk_reference_bo(context_vk, bo);
+        VK_CALL(vkCmdDispatchIndirect(vk_command_buffer, bo->vk_buffer,
+                bo->buffer_offset + parameters->u.indirect.offset));
+    }
+    else
+    {
+        const struct wined3d_direct_dispatch_parameters *direct = &parameters->u.direct;
+
+        VK_CALL(vkCmdDispatch(vk_command_buffer, direct->group_count_x, direct->group_count_y, direct->group_count_z));
+    }
+
+    VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, NULL, 0, NULL, 0, NULL));
+
+    context_release(&context_vk->c);
 }
 
 void adapter_vk_clear_uav(struct wined3d_context *context,

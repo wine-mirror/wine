@@ -1123,6 +1123,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
                     }
                     reg_maps->resource_info[reg_idx].type = semantic->resource_type;
                     reg_maps->resource_info[reg_idx].data_type = semantic->resource_data_type;
+                    wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
                     break;
 
                 case WINED3DSPR_UAV:
@@ -1146,9 +1147,14 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
         {
             struct wined3d_shader_register *reg = &ins.declaration.src.reg;
             if (reg->idx[0].offset >= WINED3D_MAX_CBS)
+            {
                 ERR("Invalid CB index %u.\n", reg->idx[0].offset);
+            }
             else
+            {
                 reg_maps->cb_sizes[reg->idx[0].offset] = reg->idx[1].offset;
+                wined3d_bitmap_set(&reg_maps->cb_map, reg->idx[0].offset);
+            }
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_GLOBAL_FLAGS)
         {
@@ -1266,6 +1272,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
             reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_BUFFER;
             reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
             reg_maps->resource_info[reg_idx].flags = WINED3D_VIEW_BUFFER_RAW;
+            wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_RESOURCE_STRUCTURED)
         {
@@ -1279,6 +1286,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
             reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_UINT;
             reg_maps->resource_info[reg_idx].flags = 0;
             reg_maps->resource_info[reg_idx].stride = ins.declaration.structured_resource.byte_stride / 4;
+            wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_SAMPLER)
         {
@@ -1605,6 +1613,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
                     reg_maps->resource_info[reg_idx].type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
                     reg_maps->resource_info[reg_idx].data_type = WINED3D_DATA_FLOAT;
                     shader_record_sample(reg_maps, reg_idx, reg_idx, reg_idx);
+                    wined3d_bitmap_set(reg_maps->resource_map, reg_idx);
 
                     /* texbem is only valid with < 1.4 pixel shaders */
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
