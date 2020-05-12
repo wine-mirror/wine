@@ -3901,13 +3901,6 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 
     wined3d_context_gl_apply_compute_state(context_gl, device, state);
 
-    if (!state->shader[WINED3D_SHADER_TYPE_COMPUTE])
-    {
-        context_release(&context_gl->c);
-        WARN("No compute shader bound, skipping dispatch.\n");
-        return;
-    }
-
     if (parameters->indirect)
     {
         const struct wined3d_indirect_dispatch_parameters *indirect = &parameters->u.indirect;

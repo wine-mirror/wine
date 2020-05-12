@@ -785,7 +785,10 @@ static void wined3d_cs_exec_dispatch(struct wined3d_cs *cs, const void *data)
     const struct wined3d_cs_dispatch *op = data;
     struct wined3d_state *state = &cs->state;
 
-    cs->device->adapter->adapter_ops->adapter_dispatch_compute(cs->device, state, &op->parameters);
+    if (!state->shader[WINED3D_SHADER_TYPE_COMPUTE])
+        WARN("No compute shader bound, skipping dispatch.\n");
+    else
+        cs->device->adapter->adapter_ops->adapter_dispatch_compute(cs->device, state, &op->parameters);
 
     if (op->parameters.indirect)
         wined3d_resource_release(&op->parameters.u.indirect.buffer->resource);
