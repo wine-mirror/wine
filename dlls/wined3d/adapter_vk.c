@@ -1886,7 +1886,7 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     adapter->vertex_pipe = &none_vertex_pipe;
     adapter->fragment_pipe = &none_fragment_pipe;
     adapter->misc_state_template = misc_state_template_vk;
-    adapter->shader_backend = &none_shader_backend;
+    adapter->shader_backend = wined3d_spirv_shader_backend_init_vk();
 
     wined3d_adapter_vk_init_d3d_info(adapter, wined3d_creation_flags);
 
