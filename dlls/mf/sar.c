@@ -1396,9 +1396,30 @@ static HRESULT WINAPI audio_renderer_stream_PlaceMarker(IMFStreamSink *iface, MF
 
 static HRESULT WINAPI audio_renderer_stream_Flush(IMFStreamSink *iface)
 {
-    FIXME("%p.\n", iface);
+    struct audio_renderer *renderer = impl_from_IMFStreamSink(iface);
+    struct queued_object *obj, *obj2;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->flags & SAR_SHUT_DOWN)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &renderer->queue, struct queued_object, entry)
+        {
+            if (obj->type == OBJECT_TYPE_MARKER)
+            {
+                IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkMarker,
+                        &GUID_NULL, S_OK, &obj->u.marker.context);
+            }
+            release_pending_object(obj);
+        }
+    }
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMFStreamSinkVtbl audio_renderer_stream_vtbl =
