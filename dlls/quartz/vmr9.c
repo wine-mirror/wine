@@ -339,25 +339,19 @@ static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const
     return S_OK;
 }
 
-static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *info)
+static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *info, DWORD count)
 {
-    DWORD buffer_count = 1, i;
     HRESULT hr;
+    DWORD i;
 
     if (FAILED(hr = IVMRSurfaceAllocatorEx9_InitializeDevice(filter->allocator,
-            filter->cookie, info, &buffer_count)))
+            filter->cookie, info, &count)))
     {
         WARN("Failed to initialize device (flags %#x), hr %#x.\n", info->dwFlags, hr);
         return hr;
     }
 
-    if (!(filter->surfaces = calloc(buffer_count, sizeof(IDirect3DSurface9 *))))
-    {
-        IVMRSurfaceAllocatorEx9_TerminateDevice(filter->allocator, filter->cookie);
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < buffer_count; ++i)
+    for (i = 0; i < count; ++i)
     {
         if (FAILED(hr = IVMRSurfaceAllocatorEx9_GetSurface(filter->allocator,
                 filter->cookie, i, 0, &filter->surfaces[i])))
@@ -370,7 +364,6 @@ static HRESULT initialize_device(struct quartz_vmr *filter, VMR9AllocationInfo *
         }
     }
 
-    filter->num_surfaces = buffer_count;
     return hr;
 }
 
@@ -378,6 +371,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
 {
     VMR9AllocationInfo info = {};
     HRESULT hr = E_FAIL;
+    DWORD count = 1;
     unsigned int i;
 
     static const struct
@@ -410,10 +404,13 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
         return S_OK;
 
     info.Pool = D3DPOOL_DEFAULT;
-    info.MinBuffers = 1;
+    info.MinBuffers = count;
     info.dwWidth = info.szAspectRatio.cx = info.szNativeSize.cx = filter->bmiheader.biWidth;
     info.dwHeight = info.szAspectRatio.cy = info.szNativeSize.cy = filter->bmiheader.biHeight;
 
+    if (!(filter->surfaces = calloc(count, sizeof(IDirect3DSurface9 *))))
+        return E_OUTOFMEMORY;
+    filter->num_surfaces = count;
     filter->cur_surface = 0;
 
     if (!is_vmr9(filter))
@@ -431,7 +428,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
         }
 
         info.dwFlags = VMR9AllocFlag_TextureSurface;
-        return initialize_device(filter, &info);
+        return initialize_device(filter, &info, count);
     }
 
     for (i = 0; i < ARRAY_SIZE(formats); ++i)
@@ -443,14 +440,14 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
             if (formats[i].flags & VMR9AllocFlag_TextureSurface)
             {
                 info.dwFlags = VMR9AllocFlag_TextureSurface;
-                if (SUCCEEDED(hr = initialize_device(filter, &info)))
+                if (SUCCEEDED(hr = initialize_device(filter, &info, count)))
                     return hr;
             }
 
             if (formats[i].flags & VMR9AllocFlag_OffscreenSurface)
             {
                 info.dwFlags = VMR9AllocFlag_OffscreenSurface;
-                if (SUCCEEDED(hr = initialize_device(filter, &info)))
+                if (SUCCEEDED(hr = initialize_device(filter, &info, count)))
                     return hr;
             }
         }
