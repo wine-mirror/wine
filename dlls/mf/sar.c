@@ -95,6 +95,10 @@ struct audio_renderer
     IAudioRenderClient *audio_render_client;
     IAudioStreamVolume *stream_volume;
     ISimpleAudioVolume *audio_volume;
+    struct
+    {
+        unsigned int flags;
+    } stream_config;
     HANDLE buffer_ready_event;
     MFWORKITEM_KEY buffer_ready_key;
     unsigned int frame_size;
@@ -1170,6 +1174,10 @@ static HRESULT sar_create_mmdevice(IMFAttributes *attributes, struct audio_rende
     else
         hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, role, &renderer->device);
 
+    /* Configuration attributes to be used later for audio client initialization. */
+    if (attributes)
+        IMFAttributes_GetUINT32(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS, &renderer->stream_config.flags);
+
     if (FAILED(hr))
         hr = MF_E_NO_AUDIO_PLAYBACK_DEVICE;
 
@@ -1503,6 +1511,7 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_GetMediaTypeByIndex(IMF
 static HRESULT audio_renderer_create_audio_client(struct audio_renderer *renderer)
 {
     IMFAsyncResult *result;
+    unsigned int flags;
     WAVEFORMATEX *wfx;
     HRESULT hr;
 
@@ -1516,8 +1525,6 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
         return hr;
     }
 
-    /* FIXME: use SAR configuration for flags and session id. */
-
     /* FIXME: for now always use default format. */
     if (FAILED(hr = IAudioClient_GetMixFormat(renderer->audio_client, &wfx)))
     {
@@ -1527,8 +1534,12 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
 
     renderer->frame_size = wfx->wBitsPerSample * wfx->nChannels / 8;
 
-    hr = IAudioClient_Initialize(renderer->audio_client, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-            1000000, 0, wfx, NULL);
+    flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+    if (renderer->stream_config.flags & MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_CROSSPROCESS)
+        flags |= AUDCLNT_STREAMFLAGS_CROSSPROCESS;
+    if (renderer->stream_config.flags & MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_NOPERSIST)
+        flags |= AUDCLNT_STREAMFLAGS_NOPERSIST;
+    hr = IAudioClient_Initialize(renderer->audio_client, AUDCLNT_SHAREMODE_SHARED, flags, 1000000, 0, wfx, NULL);
     CoTaskMemFree(wfx);
     if (FAILED(hr))
     {
