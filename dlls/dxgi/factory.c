@@ -36,6 +36,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *i
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IWineDXGIFactory)
+            || IsEqualGUID(iid, &IID_IDXGIFactory7)
             || IsEqualGUID(iid, &IID_IDXGIFactory6)
             || IsEqualGUID(iid, &IID_IDXGIFactory5)
             || IsEqualGUID(iid, &IID_IDXGIFactory4)
@@ -483,6 +484,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByGpuPreference(IWineDX
     return hr;
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_factory_RegisterAdaptersChangedEvent(IWineDXGIFactory *iface,
+        HANDLE event, DWORD *cookie)
+{
+    FIXME("iface %p, event %p, cookie %p stub!\n", iface, event, cookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_factory_UnregisterAdaptersChangedEvent(IWineDXGIFactory *iface,
+        DWORD cookie)
+{
+    FIXME("iface %p, cookie %#x stub!\n", iface, cookie);
+
+    return E_NOTIMPL;
+}
+
 static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
 {
     dxgi_factory_QueryInterface,
@@ -521,6 +538,9 @@ static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
     dxgi_factory_CheckFeatureSupport,
     /* IDXGIFactory6 methods */
     dxgi_factory_EnumAdapterByGpuPreference,
+    /* IDXGIFactory7 methods */
+    dxgi_factory_RegisterAdaptersChangedEvent,
+    dxgi_factory_UnregisterAdaptersChangedEvent,
 };
 
 struct dxgi_factory *unsafe_impl_from_IDXGIFactory(IDXGIFactory *iface)
