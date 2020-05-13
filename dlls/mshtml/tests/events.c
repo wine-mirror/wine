@@ -3319,6 +3319,9 @@ static IHTMLDocument2 *create_document(void)
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHTMLDocument2, (void**)&doc);
+#if !defined(__i386__) && !defined(__x86_64__)
+    todo_wine
+#endif
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
     return SUCCEEDED(hres) ? doc : NULL;
 }
@@ -3489,6 +3492,9 @@ START_TEST(events)
 
         DestroyWindow(container_hwnd);
     }else {
+#if !defined(__i386__) && !defined(__x86_64__)
+        todo_wine
+#endif
         win_skip("Too old IE\n");
     }
 
