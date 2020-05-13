@@ -334,7 +334,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IBasicVideo, TRUE);
     todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
     check_interface(filter, &IID_IVideoWindow, TRUE);
-    todo_wine check_interface(filter, &IID_IVMRMixerControl9, TRUE);
+    check_interface(filter, &IID_IVMRMixerControl9, TRUE);
     /* IVMRMonitorConfig9 may not be available if the d3d9 device has
      * insufficient support. */
     check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
@@ -3153,9 +3153,8 @@ static void test_mixing_mode(void)
         ok(stream_count == 1, "Got %u streams.\n", stream_count);
 
         hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        if (hr == S_OK)
-            IVMRMixerControl9_Release(mixer_control);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        IVMRMixerControl9_Release(mixer_control);
 
         hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
         ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);

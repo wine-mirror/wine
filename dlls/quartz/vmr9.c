@@ -63,6 +63,7 @@ struct quartz_vmr
     IVMRFilterConfig IVMRFilterConfig_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
     IVMRMixerBitmap9 IVMRMixerBitmap9_iface;
+    IVMRMixerControl9 IVMRMixerControl9_iface;
     IVMRMonitorConfig IVMRMonitorConfig_iface;
     IVMRMonitorConfig9 IVMRMonitorConfig9_iface;
     IVMRSurfaceAllocatorNotify IVMRSurfaceAllocatorNotify_iface;
@@ -597,6 +598,8 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IVMRFilterConfig9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMixerBitmap9) && is_vmr9(filter))
         *out = &filter->IVMRMixerBitmap9_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRMixerControl9) && is_vmr9(filter) && filter->stream_count)
+        *out = &filter->IVMRMixerControl9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig))
         *out = &filter->IVMRMonitorConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig9))
@@ -2121,6 +2124,173 @@ static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
     VMR9SurfaceAllocatorNotify_NotifyEvent
 };
 
+static inline struct quartz_vmr *impl_from_IVMRMixerControl9(IVMRMixerControl9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRMixerControl9_iface);
+}
+
+static HRESULT WINAPI mixer_control9_QueryInterface(IVMRMixerControl9 *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI mixer_control9_AddRef(IVMRMixerControl9 *iface)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI mixer_control9_Release(IVMRMixerControl9 *iface)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI mixer_control9_SetAlpha(IVMRMixerControl9 *iface, DWORD stream, float alpha)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, stream %u, alpha %.8e, stub!\n", filter, stream, alpha);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetAlpha(IVMRMixerControl9 *iface, DWORD stream, float *alpha)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, stream %u, alpha %p, stub!\n", filter, stream, alpha);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_SetZOrder(IVMRMixerControl9 *iface, DWORD stream, DWORD z)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, stream %u, z %u, stub!\n", filter, stream, z);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetZOrder(IVMRMixerControl9 *iface, DWORD stream, DWORD *z)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, stream %u, z %p, stub!\n", filter, stream, z);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_SetOutputRect(IVMRMixerControl9 *iface,
+        DWORD stream, const VMR9NormalizedRect *rect)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, stream %u, rect %s, stub!\n", filter, stream, debugstr_normalized_rect(rect));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetOutputRect(IVMRMixerControl9 *iface,
+        DWORD stream, VMR9NormalizedRect *rect)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, stream %u, rect %p, stub!\n", filter, stream, rect);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_SetBackgroundClr(IVMRMixerControl9 *iface, COLORREF color)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, color #%06x, stub!\n", filter, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetBackgroundClr(IVMRMixerControl9 *iface, COLORREF *color)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, color %p, stub!\n", filter, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_SetMixingPrefs(IVMRMixerControl9 *iface, DWORD flags)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, flags %#x, stub!\n", filter, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetMixingPrefs(IVMRMixerControl9 *iface, DWORD *flags)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, flags %p, stub!\n", filter, flags);
+
+    *flags = MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY | MixerPref9_BiLinearFiltering | MixerPref9_RenderTargetRGB;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI mixer_control9_SetProcAmpControl(IVMRMixerControl9 *iface,
+        DWORD stream, VMR9ProcAmpControl *settings)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, settings %p, stub!\n", filter, settings);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetProcAmpControl(IVMRMixerControl9 *iface,
+        DWORD stream, VMR9ProcAmpControl *settings)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, settings %p, stub!\n", filter, settings);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mixer_control9_GetProcAmpControlRange(IVMRMixerControl9 *iface,
+        DWORD stream, VMR9ProcAmpControlRange *settings)
+{
+    struct quartz_vmr *filter = impl_from_IVMRMixerControl9(iface);
+
+    FIXME("filter %p, settings %p, stub!\n", filter, settings);
+
+    return E_NOTIMPL;
+}
+
+static const IVMRMixerControl9Vtbl mixer_control9_vtbl =
+{
+    mixer_control9_QueryInterface,
+    mixer_control9_AddRef,
+    mixer_control9_Release,
+    mixer_control9_SetAlpha,
+    mixer_control9_GetAlpha,
+    mixer_control9_SetZOrder,
+    mixer_control9_GetZOrder,
+    mixer_control9_SetOutputRect,
+    mixer_control9_GetOutputRect,
+    mixer_control9_SetBackgroundClr,
+    mixer_control9_GetBackgroundClr,
+    mixer_control9_SetMixingPrefs,
+    mixer_control9_GetMixingPrefs,
+    mixer_control9_SetProcAmpControl,
+    mixer_control9_GetProcAmpControl,
+    mixer_control9_GetProcAmpControlRange,
+};
+
 static inline struct quartz_vmr *impl_from_IVMRMixerBitmap9(IVMRMixerBitmap9 *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRMixerBitmap9_iface);
@@ -2307,6 +2477,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     object->IVMRFilterConfig_iface.lpVtbl = &VMR7_FilterConfig_Vtbl;
     object->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
     object->IVMRMixerBitmap9_iface.lpVtbl = &mixer_bitmap9_vtbl;
+    object->IVMRMixerControl9_iface.lpVtbl = &mixer_control9_vtbl;
     object->IVMRMonitorConfig_iface.lpVtbl = &VMR7_MonitorConfig_Vtbl;
     object->IVMRMonitorConfig9_iface.lpVtbl = &VMR9_MonitorConfig_Vtbl;
     object->IVMRSurfaceAllocatorNotify_iface.lpVtbl = &VMR7_SurfaceAllocatorNotify_Vtbl;
