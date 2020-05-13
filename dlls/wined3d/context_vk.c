@@ -1335,6 +1335,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     struct wined3d_resource *resource;
     VkDescriptorSet vk_descriptor_set;
     struct wined3d_view_vk *view_vk;
+    struct wined3d_sampler *sampler;
     struct wined3d_buffer *buffer;
     VkBufferView *buffer_view;
     VkDescriptorType type;
@@ -1397,6 +1398,14 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
 
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
                         binding->binding_idx, type, NULL, image_info, buffer_view))
+                    return false;
+                break;
+
+            case WINED3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
+                if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
+                    sampler = context_vk->c.device->null_sampler;
+                if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
+                        VK_DESCRIPTOR_TYPE_SAMPLER, NULL, &wined3d_sampler_vk(sampler)->vk_image_info, NULL))
                     return false;
                 break;
 
@@ -1506,6 +1515,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
     struct wined3d_shader_resource_view_vk *srv_vk;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_buffer_vk *buffer_vk;
+    struct wined3d_sampler *sampler;
     struct wined3d_buffer *buffer;
     size_t i;
 
@@ -1549,6 +1559,12 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
+                break;
+
+            case WINED3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
+                if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
+                    sampler = context_vk->c.device->null_sampler;
+                wined3d_context_vk_reference_sampler(context_vk, wined3d_sampler_vk(sampler));
                 break;
 
             default:

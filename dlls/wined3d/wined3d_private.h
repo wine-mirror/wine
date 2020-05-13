@@ -5662,6 +5662,12 @@ static inline void wined3d_context_vk_reference_texture(const struct wined3d_con
     texture_vk->command_buffer_id = context_vk->current_command_buffer.id;
 }
 
+static inline void wined3d_context_vk_reference_sampler(const struct wined3d_context_vk *context_vk,
+        struct wined3d_sampler_vk *sampler_vk)
+{
+    sampler_vk->command_buffer_id = context_vk->current_command_buffer.id;
+}
+
 static inline void wined3d_context_vk_reference_rendertarget_view(const struct wined3d_context_vk *context_vk,
         struct wined3d_rendertarget_view_vk *rtv_vk)
 {
