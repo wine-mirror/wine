@@ -1419,8 +1419,14 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 }
                 else
                 {
-                    FIXME("Image UAVs not implemented.\n");
-                    return false;
+                    struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture_from_resource(resource));
+
+                    if (view_vk->u.vk_image_info.imageView)
+                        image_info = &view_vk->u.vk_image_info;
+                    else
+                        image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
+                    buffer_view = NULL;
+                    type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
                 }
 
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
@@ -1601,6 +1607,11 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                     }
                     wined3d_buffer_load(buffer_from_resource(uav->resource), &context_vk->c, state);
                     wined3d_unordered_access_view_invalidate_location(uav, ~WINED3D_LOCATION_BUFFER);
+                }
+                else
+                {
+                    wined3d_texture_load(texture_from_resource(uav->resource), &context_vk->c, FALSE);
+                    wined3d_unordered_access_view_invalidate_location(uav, ~WINED3D_LOCATION_TEXTURE_RGB);
                 }
                 wined3d_context_vk_reference_unordered_access_view(context_vk, uav_vk);
                 break;
