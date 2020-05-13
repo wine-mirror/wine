@@ -119,3 +119,20 @@ interface IDXGIFactory6 : IDXGIFactory5
         [out] void **adapter
     );
 }
+
+[
+    object,
+    uuid(a4966eed-76db-44da-84c1-ee9a7afb20a8),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIFactory7 : IDXGIFactory6
+{
+    HRESULT RegisterAdaptersChangedEvent(
+        [in] HANDLE event,
+        [out] DWORD *cookie
+    );
+    HRESULT UnregisterAdaptersChangedEvent(
+        [in] DWORD cookie
+    );
+}
