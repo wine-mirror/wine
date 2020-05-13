@@ -41,6 +41,7 @@ enum stream_state
 enum audio_renderer_flags
 {
     SAR_SHUT_DOWN = 0x1,
+    SAR_PREROLLED = 0x2,
 };
 
 struct audio_renderer
@@ -179,6 +180,7 @@ static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
     if (renderer->audio_volume)
         ISimpleAudioVolume_Release(renderer->audio_volume);
     renderer->audio_volume = NULL;
+    renderer->flags &= ~SAR_PREROLLED;
 }
 
 static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
@@ -409,10 +411,14 @@ static const IMFMediaSinkVtbl audio_renderer_sink_vtbl =
 
 static void audio_renderer_preroll(struct audio_renderer *renderer)
 {
-    int i;
+    unsigned int i;
+
+    if (renderer->flags & SAR_PREROLLED)
+        return;
 
     for (i = 0; i < 2; ++i)
         IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+    renderer->flags |= SAR_PREROLLED;
 }
 
 static HRESULT WINAPI audio_renderer_preroll_QueryInterface(IMFMediaSinkPreroll *iface, REFIID riid, void **obj)
@@ -586,6 +592,7 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStop(IMFClockStateSink *i
             else
                 WARN("Failed to stop audio client, hr %#x.\n", hr);
             renderer->state = STREAM_STATE_STOPPED;
+            renderer->flags &= ~SAR_PREROLLED;
         }
     }
     else
