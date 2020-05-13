@@ -79,8 +79,8 @@
 @ stub CM_Get_Device_ID_List_Size_ExW
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long) setupapi.CM_Get_Device_ID_Size
 @ stub CM_Get_Device_ID_Size_Ex
-@ stub CM_Get_Device_Interface_AliasA
-@ stub CM_Get_Device_Interface_AliasW
+@ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long) setupapi.CM_Get_Device_Interface_AliasA
+@ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long) setupapi.CM_Get_Device_Interface_AliasW
 @ stub CM_Get_Device_Interface_Alias_ExA
 @ stub CM_Get_Device_Interface_Alias_ExW
 @ stub CM_Get_Device_Interface_ListA

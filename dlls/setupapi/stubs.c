@@ -392,6 +392,26 @@ CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW(PULONG len, LPGUID class,
 }
 
 /***********************************************************************
+ *      CM_Get_Device_Interface_AliasA (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_AliasA(const char *interface, GUID *class,
+                                                char *name, ULONG *len, ULONG flags)
+{
+    FIXME("%s %p %p %p 0x%08x: stub\n", debugstr_a(interface), class, name, len, flags);
+    return CR_FAILURE;
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_AliasW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_AliasW(const WCHAR *interface, GUID *class,
+                                                WCHAR *name, ULONG *len, ULONG flags)
+{
+    FIXME("%s %p %p %p 0x%08x: stub\n", debugstr_w(interface), class, name, len, flags);
+    return CR_FAILURE;
+}
+
+/***********************************************************************
  *      CM_Get_DevNode_Registry_Property_ExA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExA(DEVINST dev, ULONG prop, PULONG regdatatype,
