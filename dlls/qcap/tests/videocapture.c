@@ -216,7 +216,7 @@ static void test_capture(IBaseFilter *filter)
     IEnumPins_Release(enum_pins);
 
     check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
-    todo_wine check_interface(filter, &IID_IAMVideoControl, TRUE);
+    check_interface(filter, &IID_IAMVideoControl, TRUE);
     check_interface(filter, &IID_IAMVideoProcAmp, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
     todo_wine check_interface(filter, &IID_IKsPropertySet, TRUE);
