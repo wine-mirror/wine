@@ -5671,6 +5671,18 @@ static inline void wined3d_context_vk_reference_rendertarget_view(const struct w
     rtv_vk->command_buffer_id = context_vk->current_command_buffer.id;
 }
 
+static inline void wined3d_context_vk_reference_shader_resource_view(const struct wined3d_context_vk *context_vk,
+        struct wined3d_shader_resource_view_vk *srv_vk)
+{
+    struct wined3d_resource *resource = srv_vk->v.resource;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+        wined3d_context_vk_reference_bo(context_vk, &wined3d_buffer_vk(buffer_from_resource(resource))->bo);
+    else
+        wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
+    srv_vk->view_vk.command_buffer_id = context_vk->current_command_buffer.id;
+}
+
 static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_view *dsv,
         const struct wined3d_format *srv_format)
 {
