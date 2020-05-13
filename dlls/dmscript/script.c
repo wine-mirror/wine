@@ -199,12 +199,6 @@ static const IDirectMusicScriptVtbl dmscript_vtbl = {
     IDirectMusicScriptImpl_EnumVariable
 };
 
-/* IDirectMusicScriptImpl IDirectMusicObject part: */
-static inline IDirectMusicScriptImpl *impl_from_IDirectMusicObject(IDirectMusicObject *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, dmobj.IDirectMusicObject_iface);
-}
-
 static HRESULT WINAPI script_IDirectMusicObject_ParseDescriptor(IDirectMusicObject *iface,
         IStream *stream, DMUS_OBJECTDESC *desc)
 {
