@@ -2191,19 +2191,21 @@ static NTSTATUS get_firmware_info(SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG
 
             *required_len = sizeof(struct smbios_prologue);
 
+#define L(l) (l + (l ? 1 : 0))
             *required_len += sizeof(struct smbios_bios);
-            *required_len += max(bios_vendor_len + bios_version_len + bios_date_len + 4, 2);
+            *required_len += max(L(bios_vendor_len) + L(bios_version_len) + L(bios_date_len) + 1, 2);
 
             *required_len += sizeof(struct smbios_system);
-            *required_len += max(system_vendor_len + system_product_len + system_version_len +
-                                 system_serial_len + system_sku_len + system_family_len + 7, 2);
+            *required_len += max(L(system_vendor_len) + L(system_product_len) + L(system_version_len) +
+                                 L(system_serial_len) + L(system_sku_len) + L(system_family_len) + 1, 2);
 
             *required_len += sizeof(struct smbios_board);
-            *required_len += max(board_vendor_len + board_product_len + board_version_len + board_serial_len + 5, 2);
+            *required_len += max(L(board_vendor_len) + L(board_product_len) + L(board_version_len) + L(board_serial_len) + 1, 2);
 
             *required_len += sizeof(struct smbios_chassis);
-            *required_len += max(chassis_vendor_len + chassis_version_len + chassis_serial_len +
-                                 chassis_asset_tag_len + 5, 2);
+            *required_len += max(L(chassis_vendor_len) + L(chassis_version_len) + L(chassis_serial_len) +
+                                 L(chassis_asset_tag_len) + 1, 2);
+#undef L
 
             sfti->TableBufferLength = *required_len;
 
