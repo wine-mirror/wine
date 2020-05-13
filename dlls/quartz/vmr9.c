@@ -1301,12 +1301,24 @@ static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9FilterConfig_GetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD *max)
+static HRESULT WINAPI VMR9FilterConfig_GetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD *count)
 {
-    struct quartz_vmr *This = impl_from_IVMRFilterConfig9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig9(iface);
 
-    FIXME("(%p/%p)->(%p) stub\n", iface, This, max);
-    return E_NOTIMPL;
+    TRACE("filter %p, count %p.\n", filter, count);
+
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+
+    if (!filter->stream_count)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        return VFW_E_VMR_NOT_IN_MIXER_MODE;
+    }
+
+    *count = filter->stream_count;
+
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9FilterConfig_SetRenderingPrefs(IVMRFilterConfig9 *iface, DWORD renderflags)

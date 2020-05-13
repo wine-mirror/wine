@@ -170,16 +170,14 @@ static void test_filter_config(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
-    todo_wine ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_SetNumberOfStreams(config, 3);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
-    todo_wine {
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count == 3, "Got count %u.\n", count);
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 3, "Got count %u.\n", count);
 
     hr = IVMRFilterConfig9_GetRenderingMode(config, &mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -195,10 +193,8 @@ static void test_filter_config(void)
     ok(mode == VMR9Mode_Windowless, "Got mode %#x.\n", mode);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
-    todo_wine {
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count == 3, "Got count %u.\n", count);
-    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(count == 3, "Got count %u.\n", count);
 
     ref = IVMRFilterConfig9_Release(config);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -3147,14 +3143,14 @@ static void test_mixing_mode(void)
         ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
 
         hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
-        todo_wine ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
+        ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
 
         hr = IVMRFilterConfig9_SetNumberOfStreams(config, 1);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        todo_wine ok(stream_count == 1, "Got %u streams.\n", stream_count);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_count == 1, "Got %u streams.\n", stream_count);
 
         hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3165,8 +3161,8 @@ static void test_mixing_mode(void)
         ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
         hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
-        todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-        todo_wine ok(stream_count == 1, "Got %u streams.\n", stream_count);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(stream_count == 1, "Got %u streams.\n", stream_count);
 
         IVMRFilterConfig9_Release(config);
         ref = IBaseFilter_Release(filter);
@@ -3195,7 +3191,7 @@ static void test_mixing_mode(void)
     todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(stream_count == 4, "Got %u streams.\n", stream_count);
 
     IVMRWindowlessControl9_Release(windowless_control);
