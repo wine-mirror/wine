@@ -567,6 +567,8 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStart(IMFClockStateSink *
         hr = MF_E_NOT_INITIALIZED;
 
     IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, MEStreamSinkStarted, &GUID_NULL, hr, NULL);
+    if (SUCCEEDED(hr))
+        audio_renderer_preroll(renderer);
     LeaveCriticalSection(&renderer->cs);
 
     return hr;
