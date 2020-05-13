@@ -70,6 +70,8 @@ static void     (__cdecl *pqsort)(void *,size_t,size_t, int(__cdecl *compar)(con
 static void*    (__cdecl *pbsearch)(void *,void*,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
 static int      (WINAPIV *p_snprintf)(char *, size_t, const char *, ...);
 static int      (WINAPIV *p_snprintf_s)(char *, size_t, size_t, const char *, ...);
+static int      (WINAPIV *p_snwprintf)(WCHAR *, size_t, const WCHAR *, ...);
+static int      (WINAPIV *p_snwprintf_s)(WCHAR *, size_t, size_t, const WCHAR *, ...);
 
 static int      (__cdecl *ptolower)(int);
 static int      (__cdecl *ptoupper)(int);
@@ -124,6 +126,8 @@ static void InitFunctionPtrs(void)
     X(bsearch);
     X(_snprintf);
     X(_snprintf_s);
+    X(_snwprintf);
+    X(_snwprintf_s);
     X(tolower);
     X(toupper);
     X(_strnicmp);
@@ -1457,8 +1461,7 @@ static void test__snprintf(void)
     int res;
 
     res = p_snprintf(NULL, 0, teststring);
-    ok(res == lstrlenA(teststring) || broken(res == -1) /* <= w2k */,
-       "_snprintf returned %d, expected %d.\n", res, lstrlenA(teststring));
+    ok(res == lstrlenA(teststring), "_snprintf returned %d, expected %d.\n", res, lstrlenA(teststring));
 
     if (res != -1)
     {
@@ -1488,6 +1491,20 @@ static void test__snprintf(void)
     memset(buffer, 0x7c, sizeof(buffer));
     res = p_snprintf(buffer, 3, "test");
     ok(res == -1, "res = %d\n", res);
+    ok(!memcmp(buffer, "tes", 3), "buf = %s\n", buffer);
+    ok(buffer[3] == 0x7c, "buffer[3] = %x\n", buffer[3]);
+
+    memset(buffer, 0x7c, sizeof(buffer));
+    res = p_snprintf(buffer, 4, "%s", "test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!memcmp(buffer, "test", 4), "buf = %s\n", buffer);
+    ok(buffer[4] == 0x7c, "buffer[4] = %x\n", buffer[4]);
+
+    memset(buffer, 0x7c, sizeof(buffer));
+    res = p_snprintf(buffer, 3, "%s", "test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!memcmp(buffer, "tes", 3), "buf = %s\n", buffer);
+    ok(buffer[3] == 0x7c, "buffer[3] = %x\n", buffer[3]);
 
     res = p_snprintf(buffer, sizeof(buffer), "%I64x %d", (ULONGLONG)0x1234567890, 1);
     ok(res == strlen(buffer), "wrong size %d\n", res);
@@ -1497,9 +1514,36 @@ static void test__snprintf(void)
     ok(res == strlen(buffer), "wrong size %d\n", res);
     ok(!strcmp(buffer, "123456 1"), "got %s\n", debugstr_a(buffer));
 
+    res = p_snprintf(buffer, sizeof(buffer), "%#x %#x", 0, 1);
+    ok(res == lstrlenA(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "0 0x1"), "got %s\n", debugstr_a(buffer));
+
+    res = p_snprintf(buffer, sizeof(buffer), "%hx %hd", 0x123456, 987654);
+    ok(res == strlen(buffer), "wrong size %d\n", res);
+    ok(!strcmp(buffer, "3456 4614"), "got %s\n", debugstr_a(buffer));
+
     if (sizeof(void *) == 8)
     {
         res = p_snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%zx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1") || broken(!strcmp(buffer, "zx 878082192")),
+           "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%tx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1") || broken(!strcmp(buffer, "tx 878082192")),
+           "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%jx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1") || broken(!strcmp(buffer, "jx 878082192")),
+           "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%llx %d", (ULONG_PTR)0x1234567890, 1);
         ok(res == strlen(buffer), "wrong size %d\n", res);
         ok(!strcmp(buffer, "1234567890 1"), "got %s\n", debugstr_a(buffer));
     }
@@ -1508,6 +1552,26 @@ static void test__snprintf(void)
         res = p_snprintf(buffer, sizeof(buffer), "%Ix %d", (ULONG_PTR)0x123456, 1);
         ok(res == strlen(buffer), "wrong size %d\n", res);
         ok(!strcmp(buffer, "123456 1"), "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%zx %d", (ULONG_PTR)0x123456, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "123456 1") || broken(!strcmp(buffer, "zx 1193046")),
+           "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%tx %d", (ULONG_PTR)0x123456, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "123456 1") || broken(!strcmp(buffer, "tx 1193046")),
+           "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%jx %d", 0x1234567890ull, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1") || broken(!strcmp(buffer, "jx 878082192")),
+           "got %s\n", debugstr_a(buffer));
+
+        res = p_snprintf(buffer, sizeof(buffer), "%llx %d", 0x1234567890ull, 1);
+        ok(res == strlen(buffer), "wrong size %d\n", res);
+        ok(!strcmp(buffer, "1234567890 1") || broken(!strcmp(buffer, "34567890 18")), /* winxp */
+           "got %s\n", debugstr_a(buffer));
     }
 }
 
@@ -1551,6 +1615,167 @@ static void test__snprintf_s(void)
     res = p_snprintf_s(buf, 6, 5, "test%c", 0);
     ok(res == 5, "res = %d\n", res);
     ok(!memcmp(buf, "test\0", 6), "buf = %s\n", buf);
+
+}
+
+static void test__snwprintf(void)
+{
+    const WCHAR *origstring = L"XXXXXXXXXXXX";
+    const WCHAR *teststring = L"hello world";
+    WCHAR buffer[32];
+    int res;
+
+    res = p_snwprintf(NULL, 0, teststring);
+    ok(res == lstrlenW(teststring), "_snprintf returned %d, expected %d.\n", res, lstrlenW(teststring));
+
+    res = p_snwprintf(buffer, lstrlenW(teststring) - 1, teststring);
+    ok(res < 0, "_snprintf returned %d, expected < 0.\n", res);
+
+    wcscpy(buffer,  origstring);
+    res = p_snwprintf(buffer, lstrlenW(teststring), teststring);
+    ok(res == lstrlenW(teststring), "_snprintf returned %d, expected %d.\n", res, lstrlenW(teststring));
+    ok(!wcscmp(buffer, L"hello worldX"), "_snprintf returned buffer %s, expected 'hello worldX'.\n",
+       debugstr_w(buffer));
+
+    wcscpy(buffer, origstring);
+    res = p_snwprintf(buffer, lstrlenW(teststring) + 1, teststring);
+    ok(res == lstrlenW(teststring), "_snprintf returned %d, expected %d.\n", res, lstrlenW(teststring));
+    ok(!wcscmp(buffer, teststring), "_snprintf returned buffer %s, expected %s.\n",
+       debugstr_w(buffer), debugstr_w(teststring));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    res = p_snwprintf(buffer, 4, L"test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!memcmp(buffer, L"test", 4 * sizeof(WCHAR)), "buf = %s\n", debugstr_w(buffer));
+    ok(buffer[4] == 0xcccc, "buffer[4] = %x\n", buffer[4]);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    res = p_snwprintf(buffer, 3, L"test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!memcmp(buffer, L"tes", 3 * sizeof(WCHAR)), "buf = %s\n", debugstr_w(buffer));
+    ok(buffer[3] == 0xcccc, "buffer[3] = %x\n", buffer[3]);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    res = p_snwprintf(buffer, 4, L"%s", L"test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!memcmp(buffer, L"test", 4 * sizeof(WCHAR)), "buf = %s\n", debugstr_w(buffer));
+    ok(buffer[4] == 0xcccc, "buffer[4] = %x\n", buffer[4]);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    res = p_snwprintf(buffer, 3, L"%s", L"test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!memcmp(buffer, L"tes", 3), "buf = %s\n", debugstr_w(buffer));
+    ok(buffer[3] == 0xcccc, "buffer[3] = %x\n", buffer[3]);
+
+    res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%I64x %d", (ULONGLONG)0x1234567890, 1);
+    ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+    ok(!wcscmp(buffer, L"1234567890 1"), "got %s\n", debugstr_w(buffer));
+
+    res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%I32x %d", 0x123456, 1);
+    ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+    ok(!wcscmp(buffer, L"123456 1"), "got %s\n", debugstr_w(buffer));
+
+    res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%#x %#x", 0, 1);
+    ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+    ok(!wcscmp(buffer, L"0 0x1"), "got %s\n", debugstr_w(buffer));
+
+    res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%hx %hd", 0x123456, 987654);
+    ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+    ok(!wcscmp(buffer, L"3456 4614"), "got %s\n", debugstr_w(buffer));
+
+    if (sizeof(void *) == 8)
+    {
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%Ix %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1"), "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%zx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1") || broken(!wcscmp(buffer, L"zx 878082192")),
+           "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%tx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1") || broken(!wcscmp(buffer, L"tx 878082192")),
+           "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%jx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1") || broken(!wcscmp(buffer, L"jx 878082192")),
+           "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%llx %d", (ULONG_PTR)0x1234567890, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1"), "got %s\n", debugstr_w(buffer));
+    }
+    else
+    {
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%Ix %d", (ULONG_PTR)0x123456, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"123456 1"), "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%zx %d", (ULONG_PTR)0x123456, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"123456 1") || broken(!wcscmp(buffer, L"zx 1193046")),
+           "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%tx %d", (ULONG_PTR)0x123456, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"123456 1") || broken(!wcscmp(buffer, L"tx 1193046")),
+           "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%jx %d", 0x1234567890ull, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1") || broken(!wcscmp(buffer, L"jx 878082192")),
+           "got %s\n", debugstr_w(buffer));
+
+        res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%llx %d", 0x1234567890ull, 1);
+        ok(res == lstrlenW(buffer), "wrong size %d\n", res);
+        ok(!wcscmp(buffer, L"1234567890 1") || broken(!wcscmp(buffer, L"34567890 18")), /* winxp */
+           "got %s\n", debugstr_w(buffer));
+    }
+}
+
+static void test__snwprintf_s(void)
+{
+    WCHAR buf[32];
+    int res;
+
+    if (!p_snwprintf_s)
+    {
+        win_skip("_snwprintf_s not available\n");
+        return;
+    }
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p_snwprintf_s(buf, sizeof(buf), sizeof(buf), L"test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!wcscmp(buf, L"test"), "buf = %s\n", debugstr_w(buf));
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p_snwprintf_s(buf, 4, 4, L"test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!buf[0], "buf = %s\n", debugstr_w(buf));
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p_snwprintf_s(buf, 5, 4, L"test");
+    ok(res == 4, "res = %d\n", res);
+    ok(!wcscmp(buf, L"test"), "buf = %s\n", debugstr_w(buf));
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p_snwprintf_s(buf, 5, 3, L"test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!wcscmp(buf, L"tes"), "buf = %s\n", debugstr_w(buf));
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p_snwprintf_s(buf, 4, 10, L"test");
+    ok(res == -1, "res = %d\n", res);
+    ok(!buf[0], "buf = %s\n", debugstr_w(buf));
+
+    memset(buf, 0xcc, sizeof(buf));
+    res = p_snwprintf_s(buf, 6, 5, L"test%c", 0);
+    ok(res == 5, "res = %d\n", res);
+    ok(!memcmp(buf, L"test\0", 6 * sizeof(WCHAR)), "buf = %s\n", debugstr_w(buf));
 
 }
 
@@ -1751,6 +1976,8 @@ START_TEST(string)
     test_bsearch();
     test__snprintf();
     test__snprintf_s();
+    test__snwprintf();
+    test__snwprintf_s();
     test_tolower();
     test_toupper();
     test__strnicmp();
