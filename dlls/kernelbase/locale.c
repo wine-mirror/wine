@@ -3639,6 +3639,197 @@ INT WINAPI DECLSPEC_HOTPATCH FoldStringW( DWORD flags, LPCWSTR src, INT srclen, 
 }
 
 
+static const WCHAR *get_message( DWORD flags, const void *src, UINT id, UINT lang,
+                                 BOOL ansi, WCHAR **buffer )
+{
+    DWORD len;
+
+    if (!(flags & FORMAT_MESSAGE_FROM_STRING))
+    {
+        const MESSAGE_RESOURCE_ENTRY *entry;
+        NTSTATUS status = STATUS_INVALID_PARAMETER;
+
+        if (flags & FORMAT_MESSAGE_FROM_HMODULE)
+        {
+            HMODULE module = (HMODULE)src;
+            if (!module) module = GetModuleHandleW( 0 );
+            status = RtlFindMessage( module, RT_MESSAGETABLE, lang, id, &entry );
+        }
+        if (status && (flags & FORMAT_MESSAGE_FROM_SYSTEM))
+        {
+            /* Fold win32 hresult to its embedded error code. */
+            if (HRESULT_SEVERITY(id) == SEVERITY_ERROR && HRESULT_FACILITY(id) == FACILITY_WIN32)
+                id = HRESULT_CODE( id );
+            status = RtlFindMessage( kernel32_handle, RT_MESSAGETABLE, lang, id, &entry );
+        }
+        if (!set_ntstatus( status )) return NULL;
+
+        src = entry->Text;
+        ansi = !(entry->Flags & MESSAGE_RESOURCE_UNICODE);
+    }
+
+    if (!ansi) return src;
+    len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+    if (!(*buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
+    MultiByteToWideChar( CP_ACP, 0, src, -1, *buffer, len );
+    return *buffer;
+}
+
+
+/***********************************************************************
+ *	FormatMessageA   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageA( DWORD flags, const void *source, DWORD msgid, DWORD langid,
+                                               char *buffer, DWORD size, __ms_va_list *args )
+{
+    DWORD ret = 0;
+    ULONG len, retsize = 0;
+    ULONG width = (flags & FORMAT_MESSAGE_MAX_WIDTH_MASK);
+    const WCHAR *src;
+    WCHAR *result, *message = NULL;
+    NTSTATUS status;
+
+    TRACE( "(0x%x,%p,%d,0x%x,%p,%d,%p)\n", flags, source, msgid, langid, buffer, size, args );
+
+    if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+    {
+        if (!buffer)
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return 0;
+        }
+        *(char **)buffer = NULL;
+    }
+    if (size >= 32768)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (width == 0xff) width = ~0u;
+
+    if (!(src = get_message( flags, source, msgid, langid, TRUE, &message ))) return 0;
+
+    if (!(result = HeapAlloc( GetProcessHeap(), 0, 65536 )))
+        status = STATUS_NO_MEMORY;
+    else
+        status = RtlFormatMessage( src, width, !!(flags & FORMAT_MESSAGE_IGNORE_INSERTS),
+                                   TRUE, !!(flags & FORMAT_MESSAGE_ARGUMENT_ARRAY), args,
+                                   result, 65536, &retsize );
+
+    HeapFree( GetProcessHeap(), 0, message );
+
+    if (status == STATUS_BUFFER_OVERFLOW)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        goto done;
+    }
+    if (!set_ntstatus( status )) goto done;
+
+    len = WideCharToMultiByte( CP_ACP, 0, result, retsize / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (len <= 1)
+    {
+        SetLastError( ERROR_NO_WORK_DONE );
+        goto done;
+    }
+
+    if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+    {
+        char *buf = LocalAlloc( LMEM_ZEROINIT, max( size, len ));
+        if (!buf)
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            goto done;
+        }
+        *(char **)buffer = buf;
+        WideCharToMultiByte( CP_ACP, 0, result, retsize / sizeof(WCHAR), buf, max( size, len ), NULL, NULL );
+    }
+    else if (len > size)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        goto done;
+    }
+    else WideCharToMultiByte( CP_ACP, 0, result, retsize / sizeof(WCHAR), buffer, size, NULL, NULL );
+
+    ret = len - 1;
+
+done:
+    HeapFree( GetProcessHeap(), 0, result );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	FormatMessageW   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, DWORD msgid, DWORD langid,
+                                               WCHAR *buffer, DWORD size, __ms_va_list *args )
+{
+    ULONG retsize = 0;
+    ULONG width = (flags & FORMAT_MESSAGE_MAX_WIDTH_MASK);
+    const WCHAR *src;
+    WCHAR *message = NULL;
+    NTSTATUS status;
+
+    TRACE( "(0x%x,%p,%d,0x%x,%p,%d,%p)\n", flags, source, msgid, langid, buffer, size, args );
+
+    if (!buffer)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (width == 0xff) width = ~0u;
+
+    if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER) *(LPWSTR *)buffer = NULL;
+
+    if (!(src = get_message( flags, source, msgid, langid, FALSE, &message ))) return 0;
+
+    if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
+    {
+        WCHAR *result;
+        ULONG alloc = max( size * sizeof(WCHAR), 65536 );
+
+        for (;;)
+        {
+            if (!(result = HeapAlloc( GetProcessHeap(), 0, alloc )))
+            {
+                status = STATUS_NO_MEMORY;
+                break;
+            }
+            status = RtlFormatMessage( src, width, !!(flags & FORMAT_MESSAGE_IGNORE_INSERTS),
+                                       FALSE, !!(flags & FORMAT_MESSAGE_ARGUMENT_ARRAY), args,
+                                       result, alloc, &retsize );
+            if (!status)
+            {
+                if (retsize <= sizeof(WCHAR)) HeapFree( GetProcessHeap(), 0, result );
+                else *(WCHAR **)buffer = HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
+                                                      result, max( retsize, size * sizeof(WCHAR) ));
+                break;
+            }
+            HeapFree( GetProcessHeap(), 0, result );
+            if (status != STATUS_BUFFER_OVERFLOW) break;
+            alloc *= 2;
+        }
+    }
+    else status = RtlFormatMessage( src, width, !!(flags & FORMAT_MESSAGE_IGNORE_INSERTS),
+                                    FALSE, !!(flags & FORMAT_MESSAGE_ARGUMENT_ARRAY), args,
+                                    buffer, size * sizeof(WCHAR), &retsize );
+
+    HeapFree( GetProcessHeap(), 0, message );
+
+    if (status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (size) buffer[size - 1] = 0;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    if (!set_ntstatus( status )) return 0;
+    if (retsize <= sizeof(WCHAR)) SetLastError( ERROR_NO_WORK_DONE );
+    return retsize / sizeof(WCHAR) - 1;
+}
+
+
 /******************************************************************************
  *	GetACP   (kernelbase.@)
  */

@@ -387,8 +387,8 @@
 @ stdcall FoldStringW(long wstr long ptr long)
 # @ stub ForceSyncFgPolicyInternal
 # @ stub FormatApplicationUserModelId
-@ stdcall FormatMessageA(long ptr long long ptr long ptr) kernel32.FormatMessageA
-@ stdcall FormatMessageW(long ptr long long ptr long ptr) kernel32.FormatMessageW
+@ stdcall FormatMessageA(long ptr long long ptr long ptr)
+@ stdcall FormatMessageW(long ptr long long ptr long ptr)
 @ stdcall FreeConsole()
 @ stdcall FreeEnvironmentStringsA(ptr) FreeEnvironmentStringsW
 @ stdcall FreeEnvironmentStringsW(ptr)

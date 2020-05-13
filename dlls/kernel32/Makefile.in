@@ -16,7 +16,6 @@ C_SRCS = \
 	editline.c \
 	environ.c \
 	file.c \
-	format_msg.c \
 	heap.c \
 	kernel_main.c \
 	lcformat.c \

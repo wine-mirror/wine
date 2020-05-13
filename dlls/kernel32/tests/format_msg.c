@@ -77,7 +77,7 @@ static void test_message_from_string_wide(void)
     error = GetLastError();
     ok(!lstrcmpW(L"", out), "failed out=%s\n", wine_dbgstr_w(out));
     ok(r==0, "succeeded: r=%d\n", r);
-    ok((error==0xdeadbeef) || (error == ERROR_NO_WORK_DONE), "last error %u\n", error);
+    ok(error == ERROR_NO_WORK_DONE || broken(error == 0xdeadbeef), "last error %u\n", error);
 
     /* format placeholder with no specifier */
     SetLastError(0xdeadbeef);
@@ -94,8 +94,7 @@ static void test_message_from_string_wide(void)
     lstrcpyW( out, L"xxxxxx" );
     r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, L"test%", 0, 0, out, ARRAY_SIZE(out), NULL);
     error = GetLastError();
-    ok(!lstrcmpW( out, L"xxxxxx" ) ||
-       broken(!lstrcmpW(out, L"testxx")), /* W2K3+ */
+    ok(!lstrcmpW(out, L"testxx") || broken(!lstrcmpW( out, L"xxxxxx" )), /* winxp */
        "Expected the buffer to be unchanged\n");
     ok(r==0, "succeeded: r=%d\n", r);
     ok(error==ERROR_INVALID_PARAMETER, "last error %u\n", error);
@@ -359,7 +358,7 @@ static void test_message_from_string(void)
     r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, "", 0, 0, out, ARRAY_SIZE(out), NULL);
     ok(!memcmp(out, init_buf, sizeof(init_buf)), "Expected the buffer to be untouched\n");
     ok(r==0, "succeeded: r=%d\n", r);
-    ok((GetLastError()==0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
+    ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
        "last error %u\n", GetLastError());
 
     /* format placeholder with no specifier */
@@ -661,8 +660,8 @@ static void test_message_ignore_inserts(void)
                          ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %d\n", ret);
     ok(!memcmp(out, init_buf, sizeof(init_buf)), "Expected the output buffer to be untouched\n");
-    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
-        "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
+        "Expected GetLastError() to return ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     /* Insert sequences are ignored. */
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, "test%1%2!*.*s!%99", 0, 0, out,
@@ -751,8 +750,8 @@ static void test_message_ignore_inserts_wide(void)
                          ARRAY_SIZE(out), NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %d\n", ret);
     ok(!lstrcmpW(L"", out), "Expected the output buffer to be the empty string, got %s\n", wine_dbgstr_w(out));
-    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
-      "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
+      "Expected GetLastError() to return ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     /* Insert sequences are ignored. */
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_IGNORE_INSERTS, L"test%1%2!*.*s!%99", 0, 0, out,
@@ -1066,7 +1065,6 @@ static void test_message_insufficient_buffer_wide(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    todo_wine
     ok(!memcmp(out, L"\0xxxxx", 6 * sizeof(WCHAR)) ||
         broken(!lstrcmpW( out, L"xxxxxx" )), /* winxp */
        "Expected the buffer to be truncated\n");
@@ -1078,7 +1076,6 @@ static void test_message_insufficient_buffer_wide(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %u\n",
        GetLastError());
-    todo_wine
     ok(!memcmp(out, L"tes\0xx", 6 * sizeof(WCHAR)) ||
         broken(!lstrcmpW( out, L"xxxxxx" )), /* winxp */
         "Expected the buffer to be truncated\n");
@@ -1185,8 +1182,8 @@ static void test_message_allocate_buffer(void)
                          "", 0, 0, (char *)&buf, 0, NULL);
     ok(ret == 0, "Expected FormatMessageA to return 0, got %u\n", ret);
     ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
-    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
-       "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
+       "Expected GetLastError() to return ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     buf = (char *)0xdeadbeef;
     ret = FormatMessageA(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
@@ -1279,8 +1276,8 @@ static void test_message_allocate_buffer_wide(void)
                          L"", 0, 0, (WCHAR *)&buf, 0, NULL);
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
     ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
-    ok((GetLastError() == 0xdeadbeef) || (GetLastError() == ERROR_NO_WORK_DONE),
-       "Expected GetLastError() to return 0xdeadbeef or ERROR_NO_WORK_DONE, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
+       "Expected GetLastError() to return ERROR_NO_WORK_DONE, got %u\n", GetLastError());
 
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
@@ -1637,18 +1634,14 @@ static void test_message_from_64bit_number(void)
         r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!I64u!", 0, 0, outW, ARRAY_SIZE(outW),
                   unsigned_tests[i].number);
         MultiByteToWideChar(CP_ACP, 0, unsigned_tests[i].expected, -1, expW, ARRAY_SIZE(expW));
-todo_wine {
         ok(!lstrcmpW(outW, expW),"[%d] failed, expected %s, got %s\n", i,
                      unsigned_tests[i].expected, wine_dbgstr_w(outW));
         ok(r == unsigned_tests[i].len,"[%d] failed: r=%d\n", i, r);
-}
         r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!I64u!",
                   0, 0, outA, sizeof(outA), unsigned_tests[i].number);
-todo_wine {
         ok(!strcmp(outA, unsigned_tests[i].expected),"[%d] failed, expected %s, got %s\n", i,
                    unsigned_tests[i].expected, outA);
         ok(r == unsigned_tests[i].len,"[%d] failed: r=%d\n", i, r);
-}
     }
 
     for (i = 0; i < ARRAY_SIZE(signed_tests); i++)
@@ -1656,18 +1649,14 @@ todo_wine {
         r = doitW(FORMAT_MESSAGE_FROM_STRING, L"%1!I64d!", 0, 0, outW, ARRAY_SIZE(outW),
                   signed_tests[i].number);
         MultiByteToWideChar(CP_ACP, 0, signed_tests[i].expected, -1, expW, ARRAY_SIZE(expW));
-todo_wine {
         ok(!lstrcmpW(outW, expW),"[%d] failed, expected %s, got %s\n", i,
                      signed_tests[i].expected, wine_dbgstr_w(outW));
         ok(r == signed_tests[i].len,"[%d] failed: r=%d\n", i, r);
-}
         r = doit(FORMAT_MESSAGE_FROM_STRING, "%1!I64d!",
                   0, 0, outA, sizeof(outA), signed_tests[i].number);
-todo_wine {
         ok(!strcmp(outA, signed_tests[i].expected),"[%d] failed, expected %s, got %s\n", i,
                    signed_tests[i].expected, outA);
         ok(r == signed_tests[i].len,"[%d] failed: r=%d\n", i, r);
-}
     }
 }
 
