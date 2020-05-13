@@ -1438,6 +1438,7 @@ static void adapter_vk_destroy_unordered_access_view(struct wined3d_unordered_ac
         vk_buffer_view = &view_vk->u.vk_buffer_view;
     else
         vk_image_view = &view_vk->u.vk_image_info.imageView;
+    list_remove(&view_vk->bo_user.entry);
     wined3d_unordered_access_view_cleanup(&uav_vk->v);
     wined3d_view_vk_destroy(device, vk_buffer_view, vk_image_view, &uav_vk->counter_bo,
             &uav_vk->vk_counter_view, &view_vk->command_buffer_id, uav_vk);

@@ -1329,6 +1329,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_shader_resource_binding *binding;
     struct wined3d_shader_resource_bindings *bindings;
+    struct wined3d_unordered_access_view *uav;
     const VkDescriptorBufferInfo *buffer_info;
     struct wined3d_shader_resource_view *srv;
     const VkDescriptorImageInfo *image_info;
@@ -1394,6 +1395,32 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                         image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
                     buffer_view = NULL;
                     type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+                }
+
+                if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                        binding->binding_idx, type, NULL, image_info, buffer_view))
+                    return false;
+                break;
+
+            case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV:
+                if (!(uav = state->unordered_access_view[WINED3D_PIPELINE_COMPUTE][binding->resource_idx]))
+                {
+                    FIXME("NULL unordered access views not implemented.\n");
+                    return false;
+                }
+                resource = uav->resource;
+
+                view_vk = &wined3d_unordered_access_view_vk(uav)->view_vk;
+                if (resource->type == WINED3D_RTYPE_BUFFER)
+                {
+                    image_info = NULL;
+                    buffer_view = &view_vk->u.vk_buffer_view;
+                    type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+                }
+                else
+                {
+                    FIXME("Image UAVs not implemented.\n");
+                    return false;
                 }
 
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
@@ -1512,7 +1539,9 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
     const struct wined3d_shader_resource_bindings *bindings = &context_vk->compute.bindings;
     struct wined3d_shader_descriptor_writes_vk *writes = &context_vk->descriptor_writes;
     const struct wined3d_shader_resource_binding *binding;
+    struct wined3d_unordered_access_view_vk *uav_vk;
     struct wined3d_shader_resource_view_vk *srv_vk;
+    struct wined3d_unordered_access_view *uav;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_buffer_vk *buffer_vk;
     struct wined3d_sampler *sampler;
@@ -1558,6 +1587,24 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 wined3d_context_vk_reference_shader_resource_view(context_vk, srv_vk);
                 break;
 
+            case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV:
+                if (!(uav = state->unordered_access_view[WINED3D_PIPELINE_COMPUTE][binding->resource_idx]))
+                    break;
+
+                uav_vk = wined3d_unordered_access_view_vk(uav);
+                if (uav->resource->type == WINED3D_RTYPE_BUFFER)
+                {
+                    if (!uav_vk->view_vk.bo_user.valid)
+                    {
+                        wined3d_unordered_access_view_vk_update(uav_vk, context_vk);
+                        context_invalidate_compute_state(&context_vk->c, STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING);
+                    }
+                    wined3d_buffer_load(buffer_from_resource(uav->resource), &context_vk->c, state);
+                    wined3d_unordered_access_view_invalidate_location(uav, ~WINED3D_LOCATION_BUFFER);
+                }
+                wined3d_context_vk_reference_unordered_access_view(context_vk, uav_vk);
+                break;
+
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
                 break;
 
@@ -1568,7 +1615,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 break;
 
             default:
-                FIXME("Unhandled descriptor type %#x.\n", binding->shader_descriptor_type);
+                ERR("Invalid descriptor type %#x.\n", binding->shader_descriptor_type);
                 break;
         }
     }
