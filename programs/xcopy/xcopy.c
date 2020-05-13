@@ -122,11 +122,10 @@ static int WINAPIV XCOPY_wprintf(const WCHAR *format, ...) {
     }
 
     __ms_va_start(parms, format);
-    SetLastError(NO_ERROR);
     len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, format, 0, 0, output_bufW,
                    MAX_WRITECONSOLE_SIZE/sizeof(*output_bufW), &parms);
     __ms_va_end(parms);
-    if (len == 0 && GetLastError() != NO_ERROR) {
+    if (len == 0 && GetLastError() != ERROR_NO_WORK_DONE) {
       WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
       return 0;
     }
