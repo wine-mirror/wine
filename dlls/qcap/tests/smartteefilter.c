@@ -185,12 +185,12 @@ static void test_aggregation(void)
     ULONG ref;
 
     filter = (IBaseFilter *)0xdeadbeef;
-    hr = CoCreateInstance(&CLSID_AviDest, &test_outer, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_SmartTee, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
     ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
-    hr = CoCreateInstance(&CLSID_AviDest, &test_outer, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_SmartTee, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
