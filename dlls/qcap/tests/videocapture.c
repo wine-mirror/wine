@@ -215,7 +215,7 @@ static void test_capture(IBaseFilter *filter)
 
     IEnumPins_Release(enum_pins);
 
-    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     todo_wine check_interface(filter, &IID_IAMVideoControl, TRUE);
     check_interface(filter, &IID_IAMVideoProcAmp, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
@@ -233,6 +233,22 @@ static void test_capture(IBaseFilter *filter)
     check_interface(filter, &IID_IPin, FALSE);
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IOverlayNotify, FALSE);
+}
+
+static void test_misc_flags(IBaseFilter *filter)
+{
+    IAMFilterMiscFlags *misc_flags;
+    ULONG flags;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IAMFilterMiscFlags, (void **)&misc_flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    flags = IAMFilterMiscFlags_GetMiscFlags(misc_flags);
+    ok(flags == AM_FILTER_MISC_FLAGS_IS_SOURCE
+            || broken(!flags) /* win7 */, "Got wrong flags: %#x.\n", flags);
+
+    IAMFilterMiscFlags_Release(misc_flags);
 }
 
 START_TEST(videocapture)
@@ -272,6 +288,7 @@ START_TEST(videocapture)
         if (hr == S_OK)
         {
             test_capture(filter);
+            test_misc_flags(filter);
             ref = IBaseFilter_Release(filter);
             ok(!ref, "Got outstanding refcount %d.\n", ref);
         }

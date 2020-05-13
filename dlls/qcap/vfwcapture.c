@@ -49,6 +49,7 @@ typedef struct VfwCapture
     struct strmbase_filter filter;
     IAMStreamConfig IAMStreamConfig_iface;
     IAMVideoProcAmp IAMVideoProcAmp_iface;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IPersistPropertyBag IPersistPropertyBag_iface;
     BOOL init;
     Capture *driver_info;
@@ -70,6 +71,11 @@ static inline VfwCapture *impl_from_IAMStreamConfig(IAMStreamConfig *iface)
 static inline VfwCapture *impl_from_IAMVideoProcAmp(IAMVideoProcAmp *iface)
 {
     return CONTAINING_RECORD(iface, VfwCapture, IAMVideoProcAmp_iface);
+}
+
+static inline VfwCapture *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, VfwCapture, IAMFilterMiscFlags_iface);
 }
 
 static inline VfwCapture *impl_from_IPersistPropertyBag(IPersistPropertyBag *iface)
@@ -117,6 +123,8 @@ static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID
         *out = &filter->IPersistPropertyBag_iface;
     else if (IsEqualGUID(iid, &IID_IAMVideoProcAmp))
         *out = &filter->IAMVideoProcAmp_iface;
+    else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
+        *out = &filter->IAMFilterMiscFlags_iface;
     else
         return E_NOINTERFACE;
 
@@ -574,6 +582,37 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
 
+static HRESULT WINAPI misc_flags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv)
+{
+    VfwCapture *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, riid, ppv);
+}
+
+static ULONG WINAPI misc_flags_AddRef(IAMFilterMiscFlags *iface)
+{
+    VfwCapture *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI misc_flags_Release(IAMFilterMiscFlags *iface)
+{
+    VfwCapture *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI misc_flags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return AM_FILTER_MISC_FLAGS_IS_SOURCE;
+}
+
+static const IAMFilterMiscFlagsVtbl IAMFilterMiscFlags_VTable =
+{
+    misc_flags_QueryInterface,
+    misc_flags_AddRef,
+    misc_flags_Release,
+    misc_flags_GetMiscFlags
+};
+
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
@@ -586,6 +625,7 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 
     object->IAMStreamConfig_iface.lpVtbl = &IAMStreamConfig_VTable;
     object->IAMVideoProcAmp_iface.lpVtbl = &IAMVideoProcAmp_VTable;
+    object->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_VTable;
     object->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     object->init = FALSE;
 
