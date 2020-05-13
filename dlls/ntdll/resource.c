@@ -419,31 +419,3 @@ NTSTATUS WINAPI RtlFindMessage( HMODULE hmod, ULONG type, ULONG lang,
     }
     return STATUS_MESSAGE_NOT_FOUND;
 }
-
-/**********************************************************************
- *	RtlFormatMessage  (NTDLL.@)
- *
- * Formats a message (similar to sprintf).
- *
- * PARAMS
- *   Message          [I] Message to format.
- *   MaxWidth         [I] Maximum width in characters of each output line.
- *   IgnoreInserts    [I] Whether to copy the message without processing inserts.
- *   Ansi             [I] Whether Arguments may have ANSI strings.
- *   ArgumentsIsArray [I] Whether Arguments is actually an array rather than a va_list *.
- *   Buffer           [O] Buffer to store processed message in.
- *   BufferSize       [I] Size of Buffer (in bytes?).
- *
- * RETURNS
- *      NTSTATUS code.
- */
-NTSTATUS WINAPI RtlFormatMessage( LPWSTR Message, UCHAR MaxWidth,
-                                  BOOLEAN IgnoreInserts, BOOLEAN Ansi,
-                                  BOOLEAN ArgumentIsArray, __ms_va_list * Arguments,
-                                  LPWSTR Buffer, ULONG BufferSize )
-{
-    FIXME("(%s, %u, %s, %s, %s, %p, %p, %d)\n", debugstr_w(Message),
-        MaxWidth, IgnoreInserts ? "TRUE" : "FALSE", Ansi ? "TRUE" : "FALSE",
-        ArgumentIsArray ? "TRUE" : "FALSE", Arguments, Buffer, BufferSize);
-    return STATUS_SUCCESS;
-}
