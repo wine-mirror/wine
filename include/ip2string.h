@@ -30,6 +30,13 @@ NTSTATUS WINAPI RtlIpv4StringToAddressExA(const char *str, BOOLEAN strict, IN_AD
 NTSTATUS WINAPI RtlIpv4StringToAddressExW(const WCHAR *str, BOOLEAN strict, IN_ADDR *address, USHORT *port);
 #define RtlIpv4StringToAddressEx WINELIB_NAME_AW(RtlIpv4StringToAddressEx)
 
+NTSTATUS WINAPI RtlIpv6StringToAddressA(const char *str, const char **terminator, IN6_ADDR *address);
+NTSTATUS WINAPI RtlIpv6StringToAddressW(const WCHAR *str, const WCHAR **terminator, IN6_ADDR *address);
+#define RtlIpv6StringToAddress WINELIB_NAME_AW(RtlIpv6StringToAddress)
+NTSTATUS WINAPI RtlIpv6StringToAddressExA(const char *str, IN6_ADDR *address, ULONG *scope, USHORT *port);
+NTSTATUS WINAPI RtlIpv6StringToAddressExW(const WCHAR *str, IN6_ADDR *address, ULONG *scope, USHORT *port);
+#define RtlIpv6StringToAddressEx WINELIB_NAME_AW(RtlIpv6StringToAddressEx)
+
 #ifdef __cplusplus
 }
 #endif

@@ -784,10 +784,10 @@
 # @ stub RtlIpv6AddressToStringExA
 # @ stub RtlIpv6AddressToStringExW
 # @ stub RtlIpv6AddressToStringW
-# @ stub RtlIpv6StringToAddressA
-# @ stub RtlIpv6StringToAddressExA
+@ stdcall RtlIpv6StringToAddressA(str ptr ptr)
+@ stdcall RtlIpv6StringToAddressExA(str ptr ptr ptr)
 @ stdcall RtlIpv6StringToAddressExW(wstr ptr ptr ptr)
-# @ stub RtlIpv6StringToAddressW
+@ stdcall RtlIpv6StringToAddressW(wstr ptr ptr)
 @ stdcall RtlIsActivationContextActive(ptr)
 @ stdcall RtlIsCriticalSectionLocked(ptr)
 @ stdcall RtlIsCriticalSectionLockedByThread(ptr)
