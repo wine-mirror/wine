@@ -98,6 +98,7 @@ struct audio_renderer
     struct
     {
         unsigned int flags;
+        GUID session_id;
     } stream_config;
     HANDLE buffer_ready_event;
     MFWORKITEM_KEY buffer_ready_key;
@@ -1176,7 +1177,10 @@ static HRESULT sar_create_mmdevice(IMFAttributes *attributes, struct audio_rende
 
     /* Configuration attributes to be used later for audio client initialization. */
     if (attributes)
+    {
         IMFAttributes_GetUINT32(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS, &renderer->stream_config.flags);
+        IMFAttributes_GetGUID(attributes, &MF_AUDIO_RENDERER_ATTRIBUTE_SESSION_ID, &renderer->stream_config.session_id);
+    }
 
     if (FAILED(hr))
         hr = MF_E_NO_AUDIO_PLAYBACK_DEVICE;
@@ -1539,7 +1543,8 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
         flags |= AUDCLNT_STREAMFLAGS_CROSSPROCESS;
     if (renderer->stream_config.flags & MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_NOPERSIST)
         flags |= AUDCLNT_STREAMFLAGS_NOPERSIST;
-    hr = IAudioClient_Initialize(renderer->audio_client, AUDCLNT_SHAREMODE_SHARED, flags, 1000000, 0, wfx, NULL);
+    hr = IAudioClient_Initialize(renderer->audio_client, AUDCLNT_SHAREMODE_SHARED, flags, 1000000, 0, wfx,
+            &renderer->stream_config.session_id);
     CoTaskMemFree(wfx);
     if (FAILED(hr))
     {
