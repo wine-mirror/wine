@@ -2622,17 +2622,21 @@ static void test_allocate_surface_helper(void)
     HRESULT hr;
     ULONG ref;
 
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
+    if (!(device = create_device(window)))
+    {
+        IBaseFilter_Release(filter);
+        DestroyWindow(window);
+        return;
+    }
+
     IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
 
     count = 2;
     hr = IVMRSurfaceAllocatorNotify9_AllocateSurfaceHelper(notify, &info, &count, surfaces);
     todo_wine ok(hr == E_FAIL, "Got hr %#x.\n", hr);
-
-    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
-    if (!(device = create_device(window)))
-        goto out;
 
     hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
     if (hr == E_NOINTERFACE)
