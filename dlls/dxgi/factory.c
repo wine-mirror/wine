@@ -36,6 +36,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *i
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IWineDXGIFactory)
+            || IsEqualGUID(iid, &IID_IDXGIFactory6)
             || IsEqualGUID(iid, &IID_IDXGIFactory5)
             || IsEqualGUID(iid, &IID_IDXGIFactory4)
             || IsEqualGUID(iid, &IID_IDXGIFactory3)
@@ -462,6 +463,26 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CheckFeatureSupport(IWineDXGIFacto
     }
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapterByGpuPreference(IWineDXGIFactory *iface,
+        UINT adapter_idx, DXGI_GPU_PREFERENCE gpu_preference, REFIID iid, void **adapter)
+{
+    IDXGIAdapter1 *adapter_object;
+    HRESULT hr;
+
+    TRACE("iface %p, adapter_idx %u, gpu_preference %#x, iid %s, adapter %p.\n",
+            iface, adapter_idx, gpu_preference, debugstr_guid(iid), adapter);
+
+    if (gpu_preference != DXGI_GPU_PREFERENCE_UNSPECIFIED)
+        FIXME("Ignoring GPU preference %#x.\n", gpu_preference);
+
+    if (FAILED(hr = dxgi_factory_EnumAdapters1(iface, adapter_idx, &adapter_object)))
+        return hr;
+
+    hr = IDXGIAdapter1_QueryInterface(adapter_object, iid, adapter);
+    IDXGIAdapter1_Release(adapter_object);
+    return hr;
+}
+
 static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
 {
     dxgi_factory_QueryInterface,
@@ -498,6 +519,8 @@ static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
     dxgi_factory_EnumWarpAdapter,
     /* IDXIGFactory5 methods */
     dxgi_factory_CheckFeatureSupport,
+    /* IDXGIFactory6 methods */
+    dxgi_factory_EnumAdapterByGpuPreference,
 };
 
 struct dxgi_factory *unsafe_impl_from_IDXGIFactory(IDXGIFactory *iface)
