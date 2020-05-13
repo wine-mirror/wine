@@ -3415,6 +3415,8 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
                                 NET_ADDRESS_INFO *info, USHORT *port, BYTE *prefix_len)
 {
     IN_ADDR temp_addr4;
+    IN6_ADDR temp_addr6;
+    ULONG temp_scope;
     USHORT temp_port = 0;
     NTSTATUS status;
 
@@ -3455,10 +3457,44 @@ DWORD WINAPI ParseNetworkString(const WCHAR *str, DWORD type,
             return ERROR_SUCCESS;
         }
     }
+    if (type & NET_STRING_IPV6_ADDRESS)
+    {
+        status = RtlIpv6StringToAddressExW(str, &temp_addr6, &temp_scope, &temp_port);
+        if (SUCCEEDED(status) && !temp_port)
+        {
+            if (info)
+            {
+                info->Format = NET_ADDRESS_IPV6;
+                info->u.Ipv6Address.sin6_addr = temp_addr6;
+                info->u.Ipv6Address.sin6_scope_id = temp_scope;
+                info->u.Ipv6Address.sin6_port = 0;
+            }
+            if (port) *port = 0;
+            if (prefix_len) *prefix_len = 255;
+            return ERROR_SUCCESS;
+        }
+    }
+    if (type & NET_STRING_IPV6_SERVICE)
+    {
+        status = RtlIpv6StringToAddressExW(str, &temp_addr6, &temp_scope, &temp_port);
+        if (SUCCEEDED(status) && temp_port)
+        {
+            if (info)
+            {
+                info->Format = NET_ADDRESS_IPV6;
+                info->u.Ipv6Address.sin6_addr = temp_addr6;
+                info->u.Ipv6Address.sin6_scope_id = temp_scope;
+                info->u.Ipv6Address.sin6_port = temp_port;
+            }
+            if (port) *port = ntohs(temp_port);
+            if (prefix_len) *prefix_len = 255;
+            return ERROR_SUCCESS;
+        }
+    }
 
     if (info) info->Format = NET_ADDRESS_FORMAT_UNSPECIFIED;
 
-    if (type & ~(NET_STRING_IPV4_ADDRESS|NET_STRING_IPV4_SERVICE))
+    if (type & ~(NET_STRING_IPV4_ADDRESS|NET_STRING_IPV4_SERVICE|NET_STRING_IPV6_ADDRESS|NET_STRING_IPV6_SERVICE))
     {
         FIXME("Unimplemented type 0x%x\n", type);
         return ERROR_NOT_SUPPORTED;
