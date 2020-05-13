@@ -82,6 +82,8 @@ struct quartz_vmr
     IVMRImagePresenter9 *presenter;
     BOOL allocator_is_ex;
 
+    DWORD stream_count;
+
     /*
      * The Video Mixing Renderer supports 3 modes, renderless, windowless and windowed
      * What I do is implement windowless as a special case of renderless, and then
@@ -1274,10 +1276,29 @@ static HRESULT WINAPI VMR9FilterConfig_SetImageCompositor(IVMRFilterConfig9 *ifa
 
 static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD count)
 {
+    struct quartz_vmr *filter = impl_from_IVMRFilterConfig9(iface);
+
     FIXME("iface %p, count %u, stub!\n", iface, count);
-    if (count == 1)
-        return S_OK;
-    return E_NOTIMPL;
+
+    if (!count)
+    {
+        WARN("Application requested zero streams; returning E_INVALIDARG.\n");
+        return E_INVALIDARG;
+    }
+
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+
+    if (filter->stream_count)
+    {
+        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        WARN("Stream count is already set; returning VFW_E_WRONG_STATE.\n");
+        return VFW_E_WRONG_STATE;
+    }
+
+    filter->stream_count = count;
+
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9FilterConfig_GetNumberOfStreams(IVMRFilterConfig9 *iface, DWORD *max)

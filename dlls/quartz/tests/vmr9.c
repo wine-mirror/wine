@@ -59,7 +59,7 @@ static HRESULT set_mixing_mode(IBaseFilter *filter, DWORD count)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_SetNumberOfStreams(config, count);
-    todo_wine_if (count != 1) ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IVMRFilterConfig9_Release(config);
     return hr;
@@ -173,7 +173,7 @@ static void test_filter_config(void)
     todo_wine ok(hr == VFW_E_VMR_NOT_IN_MIXER_MODE, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_SetNumberOfStreams(config, 3);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IVMRFilterConfig9_GetNumberOfStreams(config, &count);
     todo_wine {
@@ -332,24 +332,22 @@ static void test_interfaces(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     filter = create_vmr9(VMR9Mode_Windowed);
-    if (SUCCEEDED(set_mixing_mode(filter, 1)))
-    {
-        test_common_interfaces(filter);
+    set_mixing_mode(filter, 1);
+    test_common_interfaces(filter);
 
-        check_interface(filter, &IID_IBasicVideo, TRUE);
-        todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
-        check_interface(filter, &IID_IVideoWindow, TRUE);
-        todo_wine check_interface(filter, &IID_IVMRMixerControl9, TRUE);
-        /* IVMRMonitorConfig9 may not be available if the d3d9 device has
-         * insufficient support. */
-        check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
+    check_interface(filter, &IID_IBasicVideo, TRUE);
+    todo_wine check_interface(filter, &IID_IBasicVideo2, TRUE);
+    check_interface(filter, &IID_IVideoWindow, TRUE);
+    todo_wine check_interface(filter, &IID_IVMRMixerControl9, TRUE);
+    /* IVMRMonitorConfig9 may not be available if the d3d9 device has
+     * insufficient support. */
+    check_interface_broken(filter, &IID_IVMRMonitorConfig9, TRUE);
 
-        check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
-        check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
+    check_interface(filter, &IID_IVMRSurfaceAllocatorNotify9, FALSE);
+    check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
-        ref = IBaseFilter_Release(filter);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
-    }
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static const GUID test_iid = {0x33333333};
@@ -532,43 +530,42 @@ static void test_enum_pins(void)
 
     IEnumPins_Release(enum2);
 
-    if (SUCCEEDED(set_mixing_mode(filter, 2)))
-    {
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    set_mixing_mode(filter, 2);
 
-        hr = IEnumPins_Reset(enum1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        IPin_Release(pins[0]);
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        IPin_Release(pins[0]);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IPin_Release(pins[0]);
 
-        hr = IEnumPins_Next(enum1, 1, pins, NULL);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK) IPin_Release(pins[0]);
 
-        hr = IEnumPins_Reset(enum1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 1, pins, NULL);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Next(enum1, 2, pins, &count);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(count == 2, "Got count %u.\n", count);
-        IPin_Release(pins[0]);
-        IPin_Release(pins[1]);
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-        hr = IEnumPins_Reset(enum1);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum1, 2, pins, &count);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+    if (count > 1) IPin_Release(pins[1]);
 
-        hr = IEnumPins_Next(enum1, 3, pins, &count);
-        ok(hr == S_FALSE, "Got hr %#x.\n", hr);
-        ok(count == 2, "Got count %u.\n", count);
-        IPin_Release(pins[0]);
-        IPin_Release(pins[1]);
-    }
+    hr = IEnumPins_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumPins_Next(enum1, 3, pins, &count);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    todo_wine ok(count == 2, "Got count %u.\n", count);
+    IPin_Release(pins[0]);
+    if (count > 1) IPin_Release(pins[1]);
 
     IEnumPins_Release(enum1);
     ref = IBaseFilter_Release(filter);
@@ -602,29 +599,31 @@ static void test_find_pin(void)
     hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
-    if (SUCCEEDED(set_mixing_mode(filter, 2)))
+    set_mixing_mode(filter, 2);
+
+    IEnumPins_Reset(enum_pins);
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(pin == pin2, "Pins did not match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
     {
-        IEnumPins_Reset(enum_pins);
-
-        hr = IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(pin == pin2, "Pins did not match.\n");
         IPin_Release(pin);
         IPin_Release(pin2);
-
-        hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(pin == pin2, "Pins did not match.\n");
-        IPin_Release(pin);
-        IPin_Release(pin2);
-
-        hr = IBaseFilter_FindPin(filter, L"VMR Input2", &pin);
-        ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
     }
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input2", &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     IEnumPins_Release(enum_pins);
     ref = IBaseFilter_Release(filter);
@@ -662,9 +661,12 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    if (SUCCEEDED(set_mixing_mode(filter, 2)))
+    set_mixing_mode(filter, 2);
+
+    hr = IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
     {
-        IBaseFilter_FindPin(filter, L"VMR Input1", &pin);
         hr = IPin_QueryPinInfo(pin, &info);
         ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
         ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
@@ -3160,7 +3162,7 @@ static void test_mixing_mode(void)
             IVMRMixerControl9_Release(mixer_control);
 
         hr = IVMRFilterConfig9_SetNumberOfStreams(config, 2);
-        todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+        ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
         hr = IVMRFilterConfig9_GetNumberOfStreams(config, &stream_count);
         todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
