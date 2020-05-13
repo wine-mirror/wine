@@ -38,6 +38,11 @@ enum stream_state
     STREAM_STATE_PAUSED,
 };
 
+enum audio_renderer_flags
+{
+    SAR_SHUT_DOWN = 0x1,
+};
+
 struct audio_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
@@ -62,7 +67,7 @@ struct audio_renderer
     ISimpleAudioVolume *audio_volume;
     HANDLE buffer_ready_event;
     enum stream_state state;
-    BOOL is_shut_down;
+    unsigned int flags;
     CRITICAL_SECTION cs;
 };
 
@@ -212,7 +217,7 @@ static HRESULT WINAPI audio_renderer_sink_GetCharacteristics(IMFMediaSink *iface
 
     TRACE("%p, %p.\n", iface, flags);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_SHUTDOWN;
 
     *flags = MEDIASINK_FIXED_STREAMS | MEDIASINK_CAN_PREROLL;
@@ -227,7 +232,7 @@ static HRESULT WINAPI audio_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWO
 
     TRACE("%p, %#x, %p, %p.\n", iface, stream_sink_id, media_type, stream_sink);
 
-    return renderer->is_shut_down ? MF_E_SHUTDOWN : MF_E_STREAMSINKS_FIXED;
+    return renderer->flags & SAR_SHUT_DOWN ? MF_E_SHUTDOWN : MF_E_STREAMSINKS_FIXED;
 }
 
 static HRESULT WINAPI audio_renderer_sink_RemoveStreamSink(IMFMediaSink *iface, DWORD stream_sink_id)
@@ -236,7 +241,7 @@ static HRESULT WINAPI audio_renderer_sink_RemoveStreamSink(IMFMediaSink *iface, 
 
     TRACE("%p, %#x.\n", iface, stream_sink_id);
 
-    return renderer->is_shut_down ? MF_E_SHUTDOWN : MF_E_STREAMSINKS_FIXED;
+    return renderer->flags & SAR_SHUT_DOWN ? MF_E_SHUTDOWN : MF_E_STREAMSINKS_FIXED;
 }
 
 static HRESULT WINAPI audio_renderer_sink_GetStreamSinkCount(IMFMediaSink *iface, DWORD *count)
@@ -248,7 +253,7 @@ static HRESULT WINAPI audio_renderer_sink_GetStreamSinkCount(IMFMediaSink *iface
     if (!count)
         return E_POINTER;
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_SHUTDOWN;
 
     *count = 1;
@@ -264,12 +269,9 @@ static HRESULT WINAPI audio_renderer_sink_GetStreamSinkByIndex(IMFMediaSink *ifa
 
     TRACE("%p, %u, %p.\n", iface, index, stream);
 
-    if (renderer->is_shut_down)
-        return MF_E_SHUTDOWN;
-
     EnterCriticalSection(&renderer->cs);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else if (index > 0)
         hr = MF_E_INVALIDINDEX;
@@ -294,7 +296,7 @@ static HRESULT WINAPI audio_renderer_sink_GetStreamSinkById(IMFMediaSink *iface,
 
     EnterCriticalSection(&renderer->cs);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else if (stream_sink_id > 0)
         hr = MF_E_INVALIDSTREAMNUMBER;
@@ -333,7 +335,7 @@ static HRESULT WINAPI audio_renderer_sink_SetPresentationClock(IMFMediaSink *ifa
 
     EnterCriticalSection(&renderer->cs);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else
         audio_renderer_set_presentation_clock(renderer, clock);
@@ -355,7 +357,7 @@ static HRESULT WINAPI audio_renderer_sink_GetPresentationClock(IMFMediaSink *ifa
 
     EnterCriticalSection(&renderer->cs);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else if (renderer->clock)
     {
@@ -376,11 +378,11 @@ static HRESULT WINAPI audio_renderer_sink_Shutdown(IMFMediaSink *iface)
 
     TRACE("%p.\n", iface);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_SHUTDOWN;
 
     EnterCriticalSection(&renderer->cs);
-    renderer->is_shut_down = TRUE;
+    renderer->flags |= SAR_SHUT_DOWN;
     IMFMediaEventQueue_Shutdown(renderer->event_queue);
     IMFMediaEventQueue_Shutdown(renderer->stream_event_queue);
     audio_renderer_set_presentation_clock(renderer, NULL);
@@ -437,7 +439,7 @@ static HRESULT WINAPI audio_renderer_preroll_NotifyPreroll(IMFMediaSinkPreroll *
 
     TRACE("%p, %s.\n", iface, debugstr_time(start_time));
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_SHUTDOWN;
 
     audio_renderer_preroll(renderer);
@@ -1145,7 +1147,7 @@ static HRESULT WINAPI audio_renderer_stream_GetEvent(IMFStreamSink *iface, DWORD
 
     TRACE("%p, %#x, %p.\n", iface, flags, event);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     return IMFMediaEventQueue_GetEvent(renderer->stream_event_queue, flags, event);
@@ -1158,7 +1160,7 @@ static HRESULT WINAPI audio_renderer_stream_BeginGetEvent(IMFStreamSink *iface, 
 
     TRACE("%p, %p, %p.\n", iface, callback, state);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     return IMFMediaEventQueue_BeginGetEvent(renderer->stream_event_queue, callback, state);
@@ -1171,7 +1173,7 @@ static HRESULT WINAPI audio_renderer_stream_EndGetEvent(IMFStreamSink *iface, IM
 
     TRACE("%p, %p, %p.\n", iface, result, event);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     return IMFMediaEventQueue_EndGetEvent(renderer->stream_event_queue, result, event);
@@ -1184,7 +1186,7 @@ static HRESULT WINAPI audio_renderer_stream_QueueEvent(IMFStreamSink *iface, Med
 
     TRACE("%p, %u, %s, %#x, %p.\n", iface, event_type, debugstr_guid(ext_type), hr, value);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     return IMFMediaEventQueue_QueueEventParamVar(renderer->stream_event_queue, event_type, ext_type, hr, value);
@@ -1196,7 +1198,7 @@ static HRESULT WINAPI audio_renderer_stream_GetMediaSink(IMFStreamSink *iface, I
 
     TRACE("%p, %p.\n", iface, sink);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     *sink = &renderer->IMFMediaSink_iface;
@@ -1211,7 +1213,7 @@ static HRESULT WINAPI audio_renderer_stream_GetIdentifier(IMFStreamSink *iface, 
 
     TRACE("%p, %p.\n", iface, identifier);
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     *identifier = 0;
@@ -1228,7 +1230,7 @@ static HRESULT WINAPI audio_renderer_stream_GetMediaTypeHandler(IMFStreamSink *i
     if (!handler)
         return E_POINTER;
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     *handler = &renderer->IMFMediaTypeHandler_iface;
@@ -1462,7 +1464,7 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_GetMajorType(IMFMediaTy
     if (!type)
         return E_POINTER;
 
-    if (renderer->is_shut_down)
+    if (renderer->flags & SAR_SHUT_DOWN)
         return MF_E_STREAMSINK_REMOVED;
 
     memcpy(type, &MFMediaType_Audio, sizeof(*type));
