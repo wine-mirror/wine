@@ -1009,7 +1009,7 @@ static void test_message_insufficient_buffer(void)
 {
     static const char init_buf[] = {'x', 'x', 'x', 'x', 'x'};
     static const char expected_buf[] = {'x', 'x', 'x', 'x', 'x'};
-    DWORD ret;
+    DWORD ret, size, i;
     CHAR out[5];
 
     SetLastError(0xdeadbeef);
@@ -1041,11 +1041,63 @@ static void test_message_insufficient_buffer(void)
        GetLastError());
     ok(!memcmp(expected_buf, out, sizeof(expected_buf)),
        "Expected the buffer to be untouched\n");
+
+    for (size = 32700; size < 32800; size++)
+    {
+        char *tmp = HeapAlloc( GetProcessHeap(), 0, size );
+        char *buf = HeapAlloc( GetProcessHeap(), 0, size );
+
+        for (i = 0; i < size; i++) tmp[i] = 'A' + i % 26;
+        tmp[size - 1] = 0;
+        SetLastError( 0xdeadbeef );
+        ret = FormatMessageA( FORMAT_MESSAGE_FROM_STRING, tmp, 0, 0, buf, size, NULL );
+        if (size < 32768)
+        {
+            ok( ret == size - 1, "%u: got %u\n", size, ret );
+            ok( !strcmp( tmp, buf ), "wrong buffer\n" );
+        }
+        else
+        {
+            ok( ret == 0, "%u: got %u\n", size, ret );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        }
+
+        SetLastError( 0xdeadbeef );
+        ret = doit( FORMAT_MESSAGE_FROM_STRING, "%1", 0, 0, buf, size, tmp );
+        if (size < 32768)
+        {
+            ok( ret == size - 1, "%u: got %u\n", size, ret );
+            ok( !strcmp( tmp, buf ), "wrong buffer\n" );
+        }
+        else
+        {
+            ok( ret == 0, "%u: got %u\n", size, ret );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_MORE_DATA), /* winxp */
+                "wrong error %u\n", GetLastError() );
+        }
+        HeapFree( GetProcessHeap(), 0, buf );
+
+        SetLastError( 0xdeadbeef );
+        ret = FormatMessageA( FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                              tmp, 0, 0, (char *)&buf, size, NULL );
+        if (size < 32768)
+        {
+            ok( ret == size - 1, "%u: got %u\n", size, ret );
+            ok( !strcmp( tmp, buf ), "wrong buffer\n" );
+            HeapFree( GetProcessHeap(), 0, buf );
+        }
+        else
+        {
+            ok( ret == 0, "%u: got %u\n", size, ret );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        }
+        HeapFree( GetProcessHeap(), 0, tmp );
+    }
 }
 
 static void test_message_insufficient_buffer_wide(void)
 {
-    DWORD ret;
+    DWORD ret, size, i;
     WCHAR out[8];
 
     SetLastError(0xdeadbeef);
@@ -1079,6 +1131,28 @@ static void test_message_insufficient_buffer_wide(void)
     ok(!memcmp(out, L"tes\0xx", 6 * sizeof(WCHAR)) ||
         broken(!lstrcmpW( out, L"xxxxxx" )), /* winxp */
         "Expected the buffer to be truncated\n");
+
+    for (size = 1000; size < 1000000; size += size / 10)
+    {
+        WCHAR *tmp = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
+        WCHAR *buf = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
+        for (i = 0; i < size; i++) tmp[i] = 'A' + i % 26;
+        tmp[size - 1] = 0;
+        ret = FormatMessageW( FORMAT_MESSAGE_FROM_STRING, tmp, 0, 0, buf, size, NULL );
+        ok(ret == size - 1 || broken(!ret), /* winxp */ "got %u\n", ret);
+        if (!ret) break;
+        ok( !lstrcmpW( tmp, buf ), "wrong buffer\n" );
+        ret = doitW( FORMAT_MESSAGE_FROM_STRING, L"%1", 0, 0, buf, size, tmp );
+        ok(ret == size - 1, "got %u\n", ret);
+        ok( !lstrcmpW( tmp, buf ), "wrong buffer\n" );
+        HeapFree( GetProcessHeap(), 0, buf );
+        ret = FormatMessageW( FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                              tmp, 0, 0, (WCHAR *)&buf, size, NULL );
+        ok(ret == size - 1, "got %u\n", ret);
+        ok( !lstrcmpW( tmp, buf ), "wrong buffer\n" );
+        HeapFree( GetProcessHeap(), 0, tmp );
+        HeapFree( GetProcessHeap(), 0, buf );
+    }
 }
 
 static void test_message_null_buffer(void)
@@ -1274,6 +1348,15 @@ static void test_message_allocate_buffer_wide(void)
     buf = (WCHAR *)0xdeadbeef;
     ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
                          L"", 0, 0, (WCHAR *)&buf, 0, NULL);
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
+    ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
+    ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
+       "Expected GetLastError() to return ERROR_NO_WORK_DONE, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    buf = (WCHAR *)0xdeadbeef;
+    ret = doitW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER, L"%1",
+                0, 0, (WCHAR *)&buf, 0, L"" );
     ok(ret == 0, "Expected FormatMessageW to return 0, got %u\n", ret);
     ok(buf == NULL, "Expected output buffer pointer to be NULL\n");
     ok(GetLastError() == ERROR_NO_WORK_DONE || broken(GetLastError() == 0xdeadbeef),
