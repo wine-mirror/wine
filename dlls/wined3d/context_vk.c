@@ -1336,6 +1336,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     VkDescriptorSet vk_descriptor_set;
     struct wined3d_view_vk *view_vk;
     struct wined3d_buffer *buffer;
+    VkBufferView *buffer_view;
     VkDescriptorType type;
     VkResult vr;
     size_t i;
@@ -1378,8 +1379,9 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 view_vk = &wined3d_shader_resource_view_vk(srv)->view_vk;
                 if (resource->type == WINED3D_RTYPE_BUFFER)
                 {
-                    FIXME("Buffer SRV descriptors not implemented.\n");
-                    return false;
+                    image_info = NULL;
+                    buffer_view = &view_vk->u.vk_buffer_view;
+                    type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
                 }
                 else
                 {
@@ -1389,11 +1391,12 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                         image_info = &view_vk->u.vk_image_info;
                     else
                         image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
+                    buffer_view = NULL;
                     type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
                 }
 
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
-                        binding->binding_idx, type, NULL, image_info, NULL))
+                        binding->binding_idx, type, NULL, image_info, buffer_view))
                     return false;
                 break;
 
@@ -1500,6 +1503,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
     const struct wined3d_shader_resource_bindings *bindings = &context_vk->compute.bindings;
     struct wined3d_shader_descriptor_writes_vk *writes = &context_vk->descriptor_writes;
     const struct wined3d_shader_resource_binding *binding;
+    struct wined3d_shader_resource_view_vk *srv_vk;
     struct wined3d_shader_resource_view *srv;
     struct wined3d_buffer_vk *buffer_vk;
     struct wined3d_buffer *buffer;
@@ -1527,9 +1531,21 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 if (!(srv = state->shader_resource_view[binding->shader_type][binding->resource_idx]))
                     break;
 
-                if (srv->resource->type != WINED3D_RTYPE_BUFFER)
+                srv_vk = wined3d_shader_resource_view_vk(srv);
+                if (srv->resource->type == WINED3D_RTYPE_BUFFER)
+                {
+                    if (!srv_vk->view_vk.bo_user.valid)
+                    {
+                        wined3d_shader_resource_view_vk_update(srv_vk, context_vk);
+                        context_invalidate_compute_state(&context_vk->c, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
+                    }
+                    wined3d_buffer_load(buffer_from_resource(srv->resource), &context_vk->c, state);
+                }
+                else
+                {
                     wined3d_texture_load(texture_from_resource(srv->resource), &context_vk->c, FALSE);
-                wined3d_context_vk_reference_shader_resource_view(context_vk, wined3d_shader_resource_view_vk(srv));
+                }
+                wined3d_context_vk_reference_shader_resource_view(context_vk, srv_vk);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:

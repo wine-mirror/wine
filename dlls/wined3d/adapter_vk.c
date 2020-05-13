@@ -1383,6 +1383,7 @@ static void adapter_vk_destroy_shader_resource_view(struct wined3d_shader_resour
         vk_buffer_view = &view_vk->u.vk_buffer_view;
     else
         vk_image_view = &view_vk->u.vk_image_info.imageView;
+    list_remove(&view_vk->bo_user.entry);
     wined3d_shader_resource_view_cleanup(&srv_vk->v);
     wined3d_view_vk_destroy(device, vk_buffer_view, vk_image_view,
             NULL, NULL, &view_vk->command_buffer_id, srv_vk);

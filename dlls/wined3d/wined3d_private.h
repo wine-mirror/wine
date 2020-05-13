@@ -4698,6 +4698,7 @@ HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view
 
 struct wined3d_view_vk
 {
+    struct wined3d_bo_user_vk bo_user;
     union
     {
         VkBufferView vk_buffer_view;
@@ -4721,6 +4722,8 @@ static inline struct wined3d_shader_resource_view_vk *wined3d_shader_resource_vi
 HRESULT wined3d_shader_resource_view_vk_init(struct wined3d_shader_resource_view_vk *view_vk,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void wined3d_shader_resource_view_vk_update(struct wined3d_shader_resource_view_vk *view_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
 struct wined3d_unordered_access_view
 {
