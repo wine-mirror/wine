@@ -49,7 +49,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "unixlib.h"
+#include "unix_private.h"
 #include "wine/library.h"
 
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
@@ -514,6 +514,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     __wine_main_argc = argc;
     __wine_main_argv = argv;
     __wine_main_environ = envp;
+    virtual_init();
 
     module = load_ntdll();
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
