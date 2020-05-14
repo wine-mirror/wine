@@ -3607,15 +3607,25 @@ static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device 
     return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
 }
 
+struct wined3d_null_image_vk
+{
+    VkImage vk_image;
+    struct wined3d_allocator_block *memory;
+    VkDeviceMemory vk_memory;
+};
+
 struct wined3d_null_resources_vk
 {
     struct wined3d_bo_vk bo;
+    struct wined3d_null_image_vk image_1d;
 };
 
 struct wined3d_null_views_vk
 {
     VkBufferView vk_view_buffer_uint;
     VkBufferView vk_view_buffer_float;
+
+    VkDescriptorImageInfo vk_info_1d;
 };
 
 #define WINED3D_ALLOCATOR_CHUNK_SIZE        (64 * 1024 * 1024)

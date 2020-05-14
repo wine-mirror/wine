@@ -1336,6 +1336,10 @@ static bool wined3d_shader_resource_bindings_add_null_srv_binding(struct wined3d
             return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding_idx,
                     VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, NULL, NULL, &v->vk_view_buffer_uint);
 
+        case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
+            return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                    binding_idx, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NULL, &v->vk_info_1d, NULL);
+
         default:
             FIXME("Unhandled resource type %#x.\n", type);
             return false;
