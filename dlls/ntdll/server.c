@@ -1733,6 +1733,12 @@ static void send_server_task_port(void)
 
     if (task_get_bootstrap_port(mach_task_self(), &bootstrap_port) != KERN_SUCCESS) return;
 
+    if (!server_dir)
+    {
+        struct stat st;
+        stat( config_dir, &st );
+        server_dir = init_server_dir( st.st_dev, st.st_ino );
+    }
     kret = bootstrap_look_up(bootstrap_port, server_dir, &wineserver_port);
     if (kret != KERN_SUCCESS)
         fatal_error( "cannot find the server port: 0x%08x\n", kret );
