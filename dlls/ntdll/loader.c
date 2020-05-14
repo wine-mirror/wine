@@ -4437,3 +4437,13 @@ void __wine_process_init(void)
 
     server_init_process_done();
 }
+
+/***********************************************************************
+ *           __wine_set_unix_funcs
+ */
+void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs )
+{
+    assert( version == NTDLL_UNIXLIB_VERSION );
+    unix_funcs = funcs;
+    __wine_process_init();
+}

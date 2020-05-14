@@ -1573,6 +1573,7 @@
 @ cdecl wine_server_release_fd(long long)
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
+@ cdecl __wine_set_unix_funcs(long ptr)
 @ extern -arch=i386 __wine_ldt_copy
 
 # Debugging

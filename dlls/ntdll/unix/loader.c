@@ -27,14 +27,20 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
 #ifdef __APPLE__
+# include <CoreFoundation/CoreFoundation.h>
+# define LoadResource MacLoadResource
+# define GetCurrentThread MacGetCurrentThread
+# include <CoreServices/CoreServices.h>
+# undef LoadResource
+# undef GetCurrentThread
+# include <pthread.h>
 # include <mach-o/getsect.h>
 #endif
-
-#include <stdio.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -47,6 +53,7 @@
 #include "wine/library.h"
 
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
+extern void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs );
 
 static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
 {
@@ -329,6 +336,42 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt, HMODULE ntdll_modul
 }
 
 /***********************************************************************
+ *           load_ntdll
+ */
+static HMODULE load_ntdll(void)
+{
+    const IMAGE_NT_HEADERS *nt;
+    HMODULE module;
+    Dl_info info;
+    char *name;
+    void *handle;
+
+    if (!dladdr( load_ntdll, &info ))
+    {
+        fprintf( stderr, "cannot get path to ntdll.so\n" );
+        exit(1);
+    }
+    name = malloc( strlen(info.dli_fname) + 5 );
+    strcpy( name, info.dli_fname );
+    strcpy( name + strlen(info.dli_fname) - 3, ".dll.so" );
+    if (!(handle = dlopen( name, RTLD_NOW )))
+    {
+        fprintf( stderr, "failed to load %s: %s\n", name, dlerror() );
+        exit(1);
+    }
+    if (!(nt = dlsym( handle, "__wine_spec_nt_header" )))
+    {
+        fprintf( stderr, "NT header not found in %s (too old?)\n", name );
+        exit(1);
+    }
+    free( name );
+    module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+    map_so_dll( nt, module );
+    return module;
+}
+
+
+/***********************************************************************
  *           unix_funcs
  */
 static struct unix_funcs unix_funcs =
@@ -336,8 +379,154 @@ static struct unix_funcs unix_funcs =
     map_so_dll,
 };
 
+
+#ifdef __APPLE__
+struct apple_stack_info
+{
+    void *stack;
+    size_t desired_size;
+};
+
+static void *apple_wine_thread( void *arg )
+{
+    __wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    return NULL;
+}
+
+/***********************************************************************
+ *           apple_alloc_thread_stack
+ *
+ * Callback for wine_mmap_enum_reserved_areas to allocate space for
+ * the secondary thread's stack.
+ */
+#ifndef _WIN64
+static int apple_alloc_thread_stack( void *base, size_t size, void *arg )
+{
+    struct apple_stack_info *info = arg;
+
+    /* For mysterious reasons, putting the thread stack at the very top
+     * of the address space causes subsequent execs to fail, even on the
+     * child side of a fork.  Avoid the top 16MB. */
+    char * const limit = (char*)0xff000000;
+    if ((char *)base >= limit) return 0;
+    if (size > limit - (char*)base)
+        size = limit - (char*)base;
+    if (size < info->desired_size) return 0;
+    info->stack = wine_anon_mmap( (char *)base + size - info->desired_size,
+                                  info->desired_size, PROT_READ|PROT_WRITE, MAP_FIXED );
+    return (info->stack != (void *)-1);
+}
+#endif
+
+/***********************************************************************
+ *           apple_create_wine_thread
+ *
+ * Spin off a secondary thread to complete Wine initialization, leaving
+ * the original thread for the Mac frameworks.
+ *
+ * Invoked as a CFRunLoopSource perform callback.
+ */
+static void apple_create_wine_thread( void *arg )
+{
+    int success = 0;
+    pthread_t thread;
+    pthread_attr_t attr;
+
+    if (!pthread_attr_init( &attr ))
+    {
+#ifndef _WIN64
+        struct apple_stack_info info;
+
+        /* Try to put the new thread's stack in the reserved area.  If this
+         * fails, just let it go wherever.  It'll be a waste of space, but we
+         * can go on. */
+        if (!pthread_attr_getstacksize( &attr, &info.desired_size ) &&
+            wine_mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
+        {
+            wine_mmap_remove_reserved_area( info.stack, info.desired_size, 0 );
+            pthread_attr_setstackaddr( &attr, (char*)info.stack + info.desired_size );
+        }
+#endif
+
+        if (!pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_JOINABLE ) &&
+            !pthread_create( &thread, &attr, apple_wine_thread, NULL ))
+            success = 1;
+
+        pthread_attr_destroy( &attr );
+    }
+    if (!success) exit(1);
+}
+
+
+/***********************************************************************
+ *           apple_main_thread
+ *
+ * Park the process's original thread in a Core Foundation run loop for
+ * use by the Mac frameworks, especially receiving and handling
+ * distributed notifications.  Spin off a new thread for the rest of the
+ * Wine initialization.
+ */
+static void apple_main_thread(void)
+{
+    CFRunLoopSourceContext source_context = { 0 };
+    CFRunLoopSourceRef source;
+
+    if (!pthread_main_np()) return;
+
+    /* Multi-processing Services can get confused about the main thread if the
+     * first time it's used is on a secondary thread.  Use it here to make sure
+     * that doesn't happen. */
+    MPTaskIsPreemptive(MPCurrentTaskID());
+
+    /* Give ourselves the best chance of having the distributed notification
+     * center scheduled on this thread's run loop.  In theory, it's scheduled
+     * in the first thread to ask for it. */
+    CFNotificationCenterGetDistributedCenter();
+
+    /* We use this run loop source for two purposes.  First, a run loop exits
+     * if it has no more sources scheduled.  So, we need at least one source
+     * to keep the run loop running.  Second, although it's not critical, it's
+     * preferable for the Wine initialization to not proceed until we know
+     * the run loop is running.  So, we signal our source immediately after
+     * adding it and have its callback spin off the Wine thread. */
+    source_context.perform = apple_create_wine_thread;
+    source = CFRunLoopSourceCreate( NULL, 0, &source_context );
+    CFRunLoopAddSource( CFRunLoopGetCurrent(), source, kCFRunLoopCommonModes );
+    CFRunLoopSourceSignal( source );
+    CFRelease( source );
+    CFRunLoopRun(); /* Should never return, except on error. */
+}
+#endif  /* __APPLE__ */
+
+/***********************************************************************
+ *           __wine_main
+ *
+ * Main entry point called by the wine loader.
+ */
+void __wine_main( int argc, char *argv[], char *envp[] )
+{
+    extern int __wine_main_argc;
+    extern char **__wine_main_argv;
+    extern char **__wine_main_environ;
+    HMODULE module;
+
+    wine_init_argv0_path( argv[0] );
+    __wine_main_argc = argc;
+    __wine_main_argv = argv;
+    __wine_main_environ = envp;
+
+    module = load_ntdll();
+    fixup_ntdll_imports( &__wine_spec_nt_header, module );
+#ifdef __APPLE__
+    apple_main_thread();
+#endif
+    __wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+}
+
 /***********************************************************************
  *           __wine_init_unix_lib
+ *
+ * Lib entry point called by ntdll.dll.so if not yet initialized.
  */
 NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void *ptr_out )
 {
