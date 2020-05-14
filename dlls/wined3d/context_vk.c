@@ -1340,6 +1340,22 @@ static bool wined3d_shader_resource_bindings_add_null_srv_binding(struct wined3d
             return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
                     binding_idx, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NULL, &v->vk_info_1d, NULL);
 
+        case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
+            return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                    binding_idx, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NULL, &v->vk_info_2d, NULL);
+
+        case WINED3D_SHADER_RESOURCE_TEXTURE_2DMS:
+            return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                    binding_idx, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NULL, &v->vk_info_2dms, NULL);
+
+        case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
+            return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                    binding_idx, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NULL, &v->vk_info_2d_array, NULL);
+
+        case WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY:
+            return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                    binding_idx, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, NULL, &v->vk_info_2dms_array, NULL);
+
         default:
             FIXME("Unhandled resource type %#x.\n", type);
             return false;
