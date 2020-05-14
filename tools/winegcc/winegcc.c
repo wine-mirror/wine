@@ -140,6 +140,7 @@ static const char* app_loader_template =
 ;
 
 static const char *output_file_name;
+static const char *output_debug_file;
 static int keep_generated = 0;
 static strarray* tmp_files;
 #ifdef HAVE_SIGSET_T
@@ -227,6 +228,7 @@ struct options
     const char* subsystem;
     const char* entry_point;
     const char* prelink;
+    const char* debug_file;
     strarray* prefix;
     strarray* lib_dirs;
     strarray* linker_args;
@@ -267,6 +269,7 @@ static enum target_platform build_platform = PLATFORM_UNSPECIFIED;
 static void cleanup_output_files(void)
 {
     if (output_file_name) unlink( output_file_name );
+    if (output_debug_file) unlink( output_debug_file );
 }
 
 static void clean_temp_files(void)
@@ -321,6 +324,7 @@ enum tool
     TOOL_CXX,
     TOOL_CPP,
     TOOL_LD,
+    TOOL_OBJCOPY,
 };
 
 static const struct
@@ -330,10 +334,11 @@ static const struct
     const char *deflt;
 } tool_names[] =
 {
-    { "gcc", "clang --driver-mode=gcc", CC },
-    { "g++", "clang --driver-mode=g++", CXX },
-    { "cpp", "clang --driver-mode=cpp", CPP },
-    { "ld",  "ld.lld",                  LD },
+    { "gcc",     "clang --driver-mode=gcc", CC },
+    { "g++",     "clang --driver-mode=g++", CXX },
+    { "cpp",     "clang --driver-mode=cpp", CPP },
+    { "ld",      "ld.lld",                  LD },
+    { "objcopy", "llvm-objcopy" },
 };
 
 static strarray* build_tool_name( struct options *opts, enum tool tool )
@@ -358,7 +363,7 @@ static strarray* build_tool_name( struct options *opts, enum tool tool )
         str = strmake("%s-%s", base, opts->version);
     }
     else
-        str = xstrdup(deflt);
+        str = xstrdup((deflt && *deflt) ? deflt : base);
 
     if ((path = find_binary( opts->prefix, str ))) return strarray_fromstring( path, " " );
 
@@ -511,6 +516,9 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         /* make sure we don't need a libgcc_s dll on Windows */
         strarray_add( flags, "-static-libgcc" );
 
+        if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
+            strarray_add(link_args, strmake("-Wl,-pdb,%s", opts->debug_file));
+
         strarray_addall( link_args, flags );
         return link_args;
 
@@ -528,6 +536,14 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
             strarray_add( flags, strmake("-Wl,-subsystem:%s", opts->subsystem ));
         else
             strarray_add( flags, strmake("-Wl,-subsystem:%s", opts->gui_app ? "windows" : "console" ));
+
+        if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
+        {
+            strarray_add(link_args, "-Wl,-debug");
+            strarray_add(link_args, strmake("-Wl,-pdb:%s", opts->debug_file));
+        }
+        else if (!opts->strip)
+            strarray_add(link_args, "-Wl,-debug:dwarf");
 
         strarray_addall( link_args, flags );
         return link_args;
@@ -1388,10 +1404,36 @@ static void build(struct options* opts)
     if (libgcc) strarray_add(link_args, libgcc);
 
     output_file_name = output_path;
+    output_debug_file = opts->debug_file;
     atexit( cleanup_output_files );
 
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
+
+    if (opts->debug_file && !strendswith(opts->debug_file, ".pdb"))
+    {
+        strarray *tool, *objcopy = build_tool_name(opts, TOOL_OBJCOPY);
+
+        tool = strarray_dup(objcopy);
+        strarray_add(tool, "--only-keep-debug");
+        strarray_add(tool, output_path);
+        strarray_add(tool, opts->debug_file);
+        spawn(opts->prefix, tool, 1);
+        strarray_free(tool);
+
+        tool = strarray_dup(objcopy);
+        strarray_add(tool, "--strip-debug");
+        strarray_add(tool, output_path);
+        spawn(opts->prefix, tool, 1);
+        strarray_free(tool);
+
+        tool = objcopy;
+        strarray_add(tool, "--add-gnu-debuglink");
+        strarray_add(tool, opts->debug_file);
+        strarray_add(tool, output_path);
+        spawn(opts->prefix, tool, 0);
+        strarray_free(tool);
+    }
 
     /* set the base address with prelink if linker support is not present */
     if (opts->prelink && !opts->target)
@@ -1843,6 +1885,11 @@ int main(int argc, char **argv)
                                 strarray_add( opts.delayimports, Wl->base[++j] );
                                 continue;
                             }
+                            if (!strcmp(Wl->base[j], "--debug-file") && j < Wl->size - 1)
+                            {
+                                opts.debug_file = strdup( Wl->base[++j] );
+                                continue;
+                            }
                             if (!strcmp(Wl->base[j], "-static")) linking = -1;
                             strarray_add(opts.linker_args, strmake("-Wl,%s",Wl->base[j]));
                         }
@@ -1926,5 +1973,6 @@ int main(int argc, char **argv)
     else compile(&opts, lang);
 
     output_file_name = NULL;
+    output_debug_file = NULL;
     return 0;
 }
