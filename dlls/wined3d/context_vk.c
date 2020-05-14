@@ -1329,6 +1329,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_shader_resource_binding *binding;
     struct wined3d_shader_resource_bindings *bindings;
+    struct wined3d_unordered_access_view_vk *uav_vk;
     struct wined3d_unordered_access_view *uav;
     const VkDescriptorBufferInfo *buffer_info;
     struct wined3d_shader_resource_view *srv;
@@ -1434,6 +1435,20 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                     return false;
                 break;
 
+            case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
+                if (!(uav = state->unordered_access_view[WINED3D_PIPELINE_COMPUTE][binding->resource_idx]))
+                {
+                    FIXME("NULL unordered access view counters not implemented.\n");
+                    return false;
+                }
+
+                uav_vk = wined3d_unordered_access_view_vk(uav);
+                if (!uav_vk->vk_counter_view || !wined3d_shader_descriptor_writes_vk_add_write(writes,
+                        vk_descriptor_set, binding->binding_idx, VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+                        NULL, NULL, &uav_vk->vk_counter_view))
+                    return false;
+                break;
+
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
                 if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
                     sampler = context_vk->c.device->null_sampler;
@@ -1443,7 +1458,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 break;
 
             default:
-                FIXME("Unhandled descriptor type %#x.\n", binding->shader_descriptor_type);
+                ERR("Invalid descriptor type %#x.\n", binding->shader_descriptor_type);
                 return false;
         }
     }
