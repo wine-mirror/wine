@@ -1340,12 +1340,14 @@ static void call_constructors( WINE_MODREF *wm )
     if (dlinfo( wm->so_handle, RTLD_DI_LINKMAP, &map ) == -1) return;
     for (dyn = map->l_ld; dyn->d_tag; dyn++)
     {
+#define GET_PTR(base,ptr)  ((ptr) > (base) ? (ptr) : (base) + (ptr))
         switch (dyn->d_tag)
         {
-        case 0x60009990: init_array = (void *)((char *)map->l_addr + dyn->d_un.d_val); break;
+        case 0x60009990: init_array = (void *)GET_PTR( map->l_addr, dyn->d_un.d_ptr ); break;
         case 0x60009991: init_arraysz = dyn->d_un.d_val; break;
-        case 0x60009992: init_func = (void *)((char *)map->l_addr + dyn->d_un.d_val); break;
+        case 0x60009992: init_func = (void *)GET_PTR( map->l_addr, dyn->d_un.d_ptr ); break;
         }
+#undef GET_PTR
     }
 
     TRACE( "%s: got init_func %p init_array %p %lu\n", debugstr_us( &wm->ldr.BaseDllName ),
