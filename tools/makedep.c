@@ -152,6 +152,7 @@ static const char *exe_ext;
 static const char *dll_ext;
 static const char *man_ext;
 static const char *crosstarget;
+static const char *crossdebug;
 static const char *fontforge;
 static const char *convert;
 static const char *flex;
@@ -214,6 +215,7 @@ struct makefile
     struct strarray unixobj_files;
     struct strarray res_files;
     struct strarray c2man_files;
+    struct strarray debug_files;
     struct strarray dlldata_files;
     struct strarray implib_objs;
     struct strarray all_targets;
@@ -2342,6 +2344,20 @@ static struct strarray get_source_defines( struct makefile *make, struct incl_fi
 
 
 /*******************************************************************
+ *         get_debug_file
+ */
+static const char *get_debug_file( struct makefile *make, const char *name )
+{
+    const char *debug_file = NULL;
+    if (!make->is_cross || !crossdebug) return NULL;
+    if (!strcmp( crossdebug, "pdb" )) debug_file = strmake( "%s.pdb", get_base_name( name ));
+    else if(!strncmp( crossdebug, "split", 5 )) debug_file = strmake( "%s.debug", name );
+    if (debug_file) strarray_add( &make->debug_files, debug_file );
+    return debug_file;
+}
+
+
+/*******************************************************************
  *         output_winegcc_command
  */
 static void output_winegcc_command( struct makefile *make )
@@ -2998,7 +3014,8 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     struct strarray imports = get_expanded_file_local_var( make, obj, "IMPORTS" );
     struct strarray dll_flags = get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" );
     struct strarray all_libs, dep_libs = empty_strarray;
-    char *dll_name, *obj_name;
+    char *dll_name, *obj_name, *output_file;
+    const char *debug_file;
 
     if (!imports.count) imports = make->imports;
     if (!dll_flags.count) dll_flags = make->extradllflags;
@@ -3006,14 +3023,15 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 ); /* dependencies only */
     dll_name = strmake( "%s.dll%s", obj, make->is_cross ? "" : dll_ext );
     obj_name = strmake( "%s%s", obj_dir_path( make, obj ), make->is_cross ? ".cross.o" : ".o" );
+    output_file = obj_dir_path( make, dll_name );
 
     strarray_add( &make->clean_files, dll_name );
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
     output( "%s.res: %s\n", obj_dir_path( make, obj ), obj_dir_path( make, dll_name ));
-    output( "\techo \"%s.dll TESTDLL \\\"%s\\\"\" | %s -u -o $@\n", obj,
-            obj_dir_path( make, dll_name ), tools_path( make, "wrc" ));
+    output( "\techo \"%s.dll TESTDLL \\\"%s\\\"\" | %s -u -o $@\n", obj, output_file,
+            tools_path( make, "wrc" ));
 
-    output( "%s:", obj_dir_path( make, dll_name ));
+    output( "%s:", output_file);
     output_filename( source->filename );
     output_filename( obj_name );
     output_filenames( dep_libs );
@@ -3026,6 +3044,8 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     output_filename( "-shared" );
     output_filename( source->filename );
     output_filename( obj_name );
+    if ((debug_file = get_debug_file( make, output_file )))
+        output_filename( strmake( "-Wl,--debug-file,%s", debug_file ));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
@@ -3222,6 +3242,7 @@ static void output_module( struct makefile *make )
     struct strarray all_libs = empty_strarray;
     struct strarray dep_libs = empty_strarray;
     char *module_path = obj_dir_path( make, make->module );
+    const char *debug_file = NULL;
     char *spec_file = NULL;
     unsigned int i;
 
@@ -3241,6 +3262,7 @@ static void output_module( struct makefile *make )
         strarray_add( &make->all_targets, strmake( "%s", make->module ));
         add_install_rule( make, make->module, strmake( "%s", make->module ),
                           strmake( "c$(dlldir)/%s", make->module ));
+        debug_file = get_debug_file( make, module_path );
         output( "%s:", module_path );
     }
     else
@@ -3265,6 +3287,7 @@ static void output_module( struct makefile *make )
             strarray_add( &make->all_targets, make->module );
             add_install_rule( make, make->module, make->module,
                               strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
+            debug_file = get_debug_file( make, module_path );
             output( "%s:", module_path );
         }
     }
@@ -3286,6 +3309,7 @@ static void output_module( struct makefile *make )
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->is_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
+    if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", debug_file ));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
@@ -3448,15 +3472,20 @@ static void output_test_module( struct makefile *make )
     struct makefile *parent = get_parent_makefile( make );
     const char *ext = make->is_cross ? "" : dll_ext;
     const char *parent_ext = parent && parent->is_cross ? "" : dll_ext;
+    const char *debug_file;
+    char *output_file;
 
     add_import_libs( make, &dep_libs, get_default_imports( make ), 0 ); /* dependencies only */
     strarray_add( &make->all_targets, strmake( "%s%s", testmodule, ext ));
     strarray_add( &make->clean_files, strmake( "%s%s", stripped, ext ));
-    output( "%s%s:\n", obj_dir_path( make, testmodule ), ext );
+    output_file = strmake( "%s%s", obj_dir_path( make, testmodule ), ext );
+    output( "%s:\n", output_file );
     output_winegcc_command( make );
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->is_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
+    if ((debug_file = get_debug_file( make, output_file )))
+        output_filename( strmake( "-Wl,--debug-file,%s", debug_file ));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
@@ -3899,6 +3928,7 @@ static void output_sources( struct makefile *make )
     strarray_addall( &make->clean_files, make->crossobj_files );
     strarray_addall( &make->clean_files, make->unixobj_files );
     strarray_addall( &make->clean_files, make->res_files );
+    strarray_addall( &make->clean_files, make->debug_files );
     strarray_addall( &make->clean_files, make->all_targets );
     strarray_addall( &make->clean_files, make->extra_targets );
 
@@ -4415,6 +4445,7 @@ int main( int argc, char *argv[] )
     man_ext      = get_expanded_make_variable( top_makefile, "api_manext" );
     dll_ext      = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
     crosstarget  = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
+    crossdebug   = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
     fontforge    = get_expanded_make_variable( top_makefile, "FONTFORGE" );
     convert      = get_expanded_make_variable( top_makefile, "CONVERT" );
     flex         = get_expanded_make_variable( top_makefile, "FLEX" );
