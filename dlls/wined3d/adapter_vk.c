@@ -678,6 +678,8 @@ static HRESULT adapter_vk_init_3d(struct wined3d_device *device)
     wined3d_vk_blitter_create(&device_vk->d.blitter);
 
     wined3d_device_create_default_samplers(device, &context_vk->c);
+    wined3d_device_vk_create_null_resources(device_vk, context_vk);
+    wined3d_device_vk_create_null_views(device_vk, context_vk);
 
     return WINED3D_OK;
 }
@@ -701,6 +703,8 @@ static void adapter_vk_uninit_3d_cs(void *object)
 
     device->blitter->ops->blitter_destroy(device->blitter, NULL);
     device->shader_backend->shader_free_private(device, &context_vk->c);
+    wined3d_device_vk_destroy_null_views(device_vk, context_vk);
+    wined3d_device_vk_destroy_null_resources(device_vk, context_vk);
     wined3d_device_destroy_default_samplers(device, &context_vk->c);
 }
 

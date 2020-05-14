@@ -655,6 +655,91 @@ void wined3d_device_destroy_default_samplers(struct wined3d_device *device, stru
     device->null_sampler = NULL;
 }
 
+bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_null_resources_vk *r = &device_vk->null_resources_vk;
+    const struct wined3d_vk_info *vk_info;
+    VkMemoryPropertyFlags memory_type;
+    VkCommandBuffer vk_command_buffer;
+    VkBufferUsageFlags usage;
+
+    if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+    {
+        ERR("Failed to get command buffer.\n");
+        return false;
+    }
+
+    vk_info = context_vk->vk_info;
+
+    usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+    memory_type = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    if (!wined3d_context_vk_create_bo(context_vk, 16, usage, memory_type, &r->bo))
+        return false;
+    VK_CALL(vkCmdFillBuffer(vk_command_buffer, r->bo.vk_buffer, r->bo.buffer_offset, r->bo.size, 0x00000000u));
+
+    return true;
+}
+
+void wined3d_device_vk_destroy_null_resources(struct wined3d_device_vk *device_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_null_resources_vk *r = &device_vk->null_resources_vk;
+
+    /* We don't track command buffer references to NULL resources. We easily
+     * could, but it doesn't seem worth it. */
+    wined3d_context_vk_reference_bo(context_vk, &r->bo);
+    wined3d_context_vk_destroy_bo(context_vk, &r->bo);
+}
+
+bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_null_resources_vk *r = &device_vk->null_resources_vk;
+    struct wined3d_null_views_vk *v = &device_vk->null_views_vk;
+    VkBufferViewCreateInfo buffer_create_info;
+    const struct wined3d_vk_info *vk_info;
+    VkResult vr;
+
+    vk_info = context_vk->vk_info;
+
+    buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+    buffer_create_info.pNext = NULL;
+    buffer_create_info.flags = 0;
+    buffer_create_info.buffer = r->bo.vk_buffer;
+    buffer_create_info.format = VK_FORMAT_R32_UINT;
+    buffer_create_info.offset = r->bo.buffer_offset;
+    buffer_create_info.range = r->bo.size;
+
+    if ((vr = VK_CALL(vkCreateBufferView(device_vk->vk_device,
+            &buffer_create_info, NULL, &v->vk_view_buffer_uint))) < 0)
+    {
+        ERR("Failed to create buffer view, vr %s.\n", wined3d_debug_vkresult(vr));
+        return false;
+    }
+    TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(v->vk_view_buffer_uint));
+
+    buffer_create_info.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    if ((vr = VK_CALL(vkCreateBufferView(device_vk->vk_device,
+            &buffer_create_info, NULL, &v->vk_view_buffer_float))) < 0)
+    {
+        ERR("Failed to create buffer view, vr %s.\n", wined3d_debug_vkresult(vr));
+        VK_CALL(vkDestroyBufferView(device_vk->vk_device, v->vk_view_buffer_uint, NULL));
+        return false;
+    }
+    TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(v->vk_view_buffer_float));
+
+    return true;
+}
+
+void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk, struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_null_views_vk *v = &device_vk->null_views_vk;
+    uint64_t id = context_vk->current_command_buffer.id;
+
+    wined3d_context_vk_destroy_buffer_view(context_vk, v->vk_view_buffer_float, id);
+    wined3d_context_vk_destroy_buffer_view(context_vk, v->vk_view_buffer_uint, id);
+}
+
 HRESULT CDECL wined3d_device_acquire_focus_window(struct wined3d_device *device, HWND window)
 {
     unsigned int screensaver_active;

@@ -1321,6 +1321,27 @@ static bool wined3d_shader_descriptor_writes_vk_add_write(struct wined3d_shader_
     return true;
 }
 
+static bool wined3d_shader_resource_bindings_add_null_srv_binding(struct wined3d_shader_descriptor_writes_vk *writes,
+        VkDescriptorSet vk_descriptor_set, size_t binding_idx, enum wined3d_shader_resource_type type,
+        enum wined3d_data_type data_type, struct wined3d_context_vk *context_vk)
+{
+    const struct wined3d_null_views_vk *v = &wined3d_device_vk(context_vk->c.device)->null_views_vk;
+
+    switch (type)
+    {
+        case WINED3D_SHADER_RESOURCE_BUFFER:
+            if (data_type == WINED3D_DATA_FLOAT)
+                return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding_idx,
+                        VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, NULL, NULL, &v->vk_view_buffer_float);
+            return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding_idx,
+                    VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, NULL, NULL, &v->vk_view_buffer_uint);
+
+        default:
+            FIXME("Unhandled resource type %#x.\n", type);
+            return false;
+    }
+}
+
 static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state)
 {
@@ -1374,8 +1395,10 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SRV:
                 if (!(srv = state->shader_resource_view[binding->shader_type][binding->resource_idx]))
                 {
-                    FIXME("NULL shader resource views not implemented.\n");
-                    return false;
+                    if (!wined3d_shader_resource_bindings_add_null_srv_binding(writes, vk_descriptor_set,
+                            binding->binding_idx, binding->resource_type, binding->resource_data_type, context_vk))
+                        return false;
+                    break;
                 }
                 resource = srv->resource;
 
