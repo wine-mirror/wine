@@ -106,9 +106,12 @@ static void test_GetSetEnvironmentVariableA(void)
        GetLastError());
 
     /* Try to retrieve the environment variable we just set */
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableA(name, NULL, 0);
     ok(ret_size == strlen(value) + 1,
        "should return length with terminating 0 ret_size=%d\n", ret_size);
+    ok(GetLastError() == 0xdeadbeef,
+       "should not fail with zero size but GetLastError=%d\n", GetLastError());
 
     lstrcpyA(buf, "foo");
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value));
@@ -208,10 +211,13 @@ static void test_GetSetEnvironmentVariableW(void)
        GetLastError());
 
     /* Try to retrieve the environment variable we just set */
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableW(name, NULL, 0);
     ok(ret_size == lstrlenW(value) + 1,
        "should return length with terminating 0 ret_size=%d\n",
        ret_size);
+    ok(GetLastError() == 0xdeadbeef,
+       "should not fail with zero size but GetLastError=%d\n", GetLastError());
 
     lstrcpyW(buf, fooW);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value));
