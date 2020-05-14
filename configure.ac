@@ -1100,13 +1100,23 @@ then
                   WINE_TRY_CROSSCFLAGS([-Wnonnull]) ;;
         esac
 
-        dnl Default to dwarf-2 debug info
-        for ac_flag in $CROSSCFLAGS; do
-          case $ac_flag in
-            -g) WINE_TRY_CROSSCFLAGS([-gdwarf-2])
-                WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
-          esac
-        done
+        dnl Determine debug info format
+        AC_SUBST(CROSSDEBUG)
+        if test -z "$CROSSDEBUG"
+        then
+          for ac_flag in $CROSSCFLAGS; do
+            case $ac_flag in
+             -gdwarf*)    CROSSDEBUG=dwarf ;;
+             -gcodeview)  CROSSDEBUG=pdb ;;
+             -g)          CROSSDEBUG=${CROSSDEBUG:-dwarf} ;;
+            esac
+          done
+        fi
+        case $CROSSDEBUG in
+          *dwarf)  WINE_TRY_CROSSCFLAGS([-gdwarf-2])
+                   WINE_TRY_CROSSCFLAGS([-gstrict-dwarf]) ;;
+          pdb)     WINE_TRY_CROSSCFLAGS([-gcodeview]) ;;
+        esac
 
         if test "x$enable_werror" = "xyes"
         then

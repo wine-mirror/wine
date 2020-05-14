@@ -69,6 +69,7 @@ CONVERT         = @CONVERT@
 ICOTOOL         = @ICOTOOL@
 MSGFMT          = @MSGFMT@
 CROSSTARGET     = @CROSSTARGET@
+CROSSDEBUG      = @CROSSDEBUG@
 SUBDIRS         = @SUBDIRS@
 RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
