@@ -3632,6 +3632,7 @@ struct wined3d_null_views_vk
     VkDescriptorImageInfo vk_info_2d;
     VkDescriptorImageInfo vk_info_2dms;
     VkDescriptorImageInfo vk_info_3d;
+    VkDescriptorImageInfo vk_info_cube;
     VkDescriptorImageInfo vk_info_2d_array;
     VkDescriptorImageInfo vk_info_2dms_array;
 };

@@ -666,7 +666,7 @@ static void wined3d_null_image_vk_cleanup(struct wined3d_null_image_vk *image,
 }
 
 static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, struct wined3d_context_vk *context_vk,
-        VkCommandBuffer vk_command_buffer, VkImageType type, unsigned int sample_count)
+        VkCommandBuffer vk_command_buffer, VkImageType type, unsigned int layer_count, unsigned int sample_count)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
@@ -674,23 +674,27 @@ static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, stru
     VkImageSubresourceRange range;
     VkImageCreateInfo image_desc;
     unsigned int memory_type_idx;
+    uint32_t flags = 0;
     VkResult vr;
 
     static const VkClearColorValue colour = {{0}};
 
-    TRACE("image %p, context_vk %p, vk_command_buffer %p, type %#x, sample_count %u.\n",
-            image, context_vk, vk_command_buffer, type, sample_count);
+    TRACE("image %p, context_vk %p, vk_command_buffer %p, type %#x, layer_count %u, sample_count %u.\n",
+            image, context_vk, vk_command_buffer, type, layer_count, sample_count);
+
+    if (type == VK_IMAGE_TYPE_2D && layer_count >= 6)
+        flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
     image_desc.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_desc.pNext = NULL;
-    image_desc.flags = 0;
+    image_desc.flags = flags;
     image_desc.imageType = type;
     image_desc.format = VK_FORMAT_R8G8B8A8_UNORM;
     image_desc.extent.width = 1;
     image_desc.extent.height = 1;
     image_desc.extent.depth = 1;
     image_desc.mipLevels = 1;
-    image_desc.arrayLayers = 1;
+    image_desc.arrayLayers = layer_count;
     image_desc.samples = sample_count;
     image_desc.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_desc.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -748,7 +752,7 @@ static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, stru
     range.baseMipLevel = 0;
     range.levelCount = 1;
     range.baseArrayLayer = 0;
-    range.layerCount = 1;
+    range.layerCount = layer_count;
     VK_CALL(vkCmdClearColorImage(vk_command_buffer, image->vk_image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &colour, 1, &range));
 
@@ -793,25 +797,25 @@ bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk
         return false;
     VK_CALL(vkCmdFillBuffer(vk_command_buffer, r->bo.vk_buffer, r->bo.buffer_offset, r->bo.size, 0x00000000u));
 
-    if (!wined3d_null_image_vk_init(&r->image_1d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_1D, 1))
+    if (!wined3d_null_image_vk_init(&r->image_1d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_1D, 1, 1))
     {
         ERR("Failed to create 1D image.\n");
         goto fail;
     }
 
-    if (!wined3d_null_image_vk_init(&r->image_2d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_2D, 1))
+    if (!wined3d_null_image_vk_init(&r->image_2d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_2D, 6, 1))
     {
         ERR("Failed to create 2D image.\n");
         goto fail;
     }
 
-    if (!wined3d_null_image_vk_init(&r->image_2dms, context_vk, vk_command_buffer, VK_IMAGE_TYPE_2D, sample_count))
+    if (!wined3d_null_image_vk_init(&r->image_2dms, context_vk, vk_command_buffer, VK_IMAGE_TYPE_2D, 1, sample_count))
     {
         ERR("Failed to create 2D MSAA image.\n");
         goto fail;
     }
 
-    if (!wined3d_null_image_vk_init(&r->image_3d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_3D, 1))
+    if (!wined3d_null_image_vk_init(&r->image_3d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_3D, 1, 1))
     {
         ERR("Failed to create 3D image.\n");
         goto fail;
@@ -942,6 +946,18 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     TRACE("Created 3D image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_3d.imageView));
 
     view_desc.image = r->image_2d.vk_image;
+    view_desc.subresourceRange.layerCount = 6;
+    view_desc.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_cube.imageView))) < 0)
+    {
+        ERR("Failed to create cube image view, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+    v->vk_info_cube.sampler = VK_NULL_HANDLE;
+    v->vk_info_cube.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    TRACE("Created cube image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_cube.imageView));
+
+    view_desc.subresourceRange.layerCount = 1;
     view_desc.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_2d_array.imageView))) < 0)
     {
@@ -968,6 +984,8 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
 fail:
     if (v->vk_info_2d_array.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_2d_array.imageView, NULL));
+    if (v->vk_info_cube.imageView)
+        VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_cube.imageView, NULL));
     if (v->vk_info_3d.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_3d.imageView, NULL));
     if (v->vk_info_2dms.imageView)
@@ -989,6 +1007,7 @@ void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk, s
 
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2dms_array.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2d_array.imageView, id);
+    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_cube.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_3d.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2dms.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2d.imageView, id);
