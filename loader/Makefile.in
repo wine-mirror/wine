@@ -18,6 +18,8 @@ INSTALL_LIB = $(WINELOADER_PROGRAMS)
 
 preloader_EXTRADEFS = -fno-builtin
 
+main_EXTRADEFS = -DDLLDIR=\"${dlldir}\" -DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\"
+
 wine_OBJS = main.o
 wine_DEPS = $(WINELOADER_DEPENDS)
 wine_LDFLAGS = $(WINELOADER_LDFLAGS) $(LDEXECFLAGS) -lwine $(PTHREAD_LIBS)

@@ -40,6 +40,8 @@
 #include "wine/library.h"
 #include "main.h"
 
+extern char **environ;
+
 /* the preloader will set this variable */
 const struct wine_preload_info *wine_main_preload_info = NULL;
 
@@ -158,6 +160,116 @@ static int pre_exec(void)
 #endif
 
 
+/* canonicalize path and return its directory name */
+static char *realpath_dirname( const char *name )
+{
+    char *p, *fullpath = realpath( name, NULL );
+
+    if (fullpath)
+    {
+        p = strrchr( fullpath, '/' );
+        if (p == fullpath) p++;
+        if (p) *p = 0;
+    }
+    return fullpath;
+}
+
+/* if string ends with tail, remove it */
+static char *remove_tail( const char *str, const char *tail )
+{
+    size_t len = strlen( str );
+    size_t tail_len = strlen( tail );
+    char *ret;
+
+    if (len < tail_len) return NULL;
+    if (strcmp( str + len - tail_len, tail )) return NULL;
+    ret = malloc( len - tail_len + 1 );
+    memcpy( ret, str, len - tail_len );
+    ret[len - tail_len] = 0;
+    return ret;
+}
+
+/* build a path from the specified dir and name */
+static char *build_path( const char *dir, const char *name )
+{
+    size_t len = strlen( dir );
+    char *ret = malloc( len + strlen( name ) + 2 );
+
+    memcpy( ret, dir, len );
+    if (len && ret[len - 1] != '/') ret[len++] = '/';
+    strcpy( ret + len, name );
+    return ret;
+}
+
+static const char *get_self_exe( char *argv0 )
+{
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    return "/proc/self/exe";
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    return "/proc/curproc/file";
+#else
+    if (!strchr( argv0, '/' )) /* search in PATH */
+    {
+        char *p, *path = getenv( "PATH" );
+
+        if (!path || !(path = strdup(path))) return NULL;
+        for (p = strtok( path, ":" ); p; p = strtok( NULL, ":" ))
+        {
+            char *name = build_path( p, argv0 );
+            int found = !access( name, X_OK );
+            free( name );
+            if (found) break;
+        }
+        if (p) p = strdup( p );
+        free( path );
+        return p;
+    }
+    return argv0;
+#endif
+}
+
+static void *try_dlopen( const char *dir, const char *name )
+{
+    char *path = build_path( dir, name );
+    void *handle = dlopen( path, RTLD_NOW );
+    free( path );
+    return handle;
+}
+
+static void *load_ntdll( char *argv0 )
+{
+    const char *self = get_self_exe( argv0 );
+    char *path, *p;
+    void *handle = NULL;
+
+    if (self && ((path = realpath_dirname( self ))))
+    {
+        if ((p = remove_tail( path, "/loader" )))
+        {
+            handle = try_dlopen( p, "dlls/ntdll/ntdll.so" );
+            free( p );
+        }
+        else handle = try_dlopen( path, BIN_TO_DLLDIR "/ntdll.so" );
+        free( path );
+    }
+
+    if (!handle && (path = getenv( "WINEDLLPATH" )))
+    {
+        path = strdup( path );
+        for (p = strtok( path, ":" ); p; p = strtok( NULL, ":" ))
+        {
+            handle = try_dlopen( p, "ntdll.so" );
+            if (handle) break;
+        }
+        free( path );
+    }
+
+    if (!handle && !self) handle = try_dlopen( DLLDIR, "ntdll.so" );
+
+    return handle;
+}
+
+
 /**********************************************************************
  *           main
  */
@@ -165,6 +277,7 @@ int main( int argc, char *argv[] )
 {
     char error[1024];
     int i;
+    void *handle;
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
     {
@@ -179,6 +292,14 @@ int main( int argc, char *argv[] )
             fprintf( stderr, "wine: could not exec the wine loader\n" );
             exit(1);
         }
+    }
+
+    if ((handle = load_ntdll( argv[0] )))
+    {
+        void (*init_func)(int, char **, char **) = dlsym( handle, "__wine_main" );
+        if (init_func) init_func( argc, argv, environ );
+        fprintf( stderr, "wine: __wine_main function not found in ntdll.so\n" );
+        exit(1);
     }
 
     if (wine_main_preload_info)
