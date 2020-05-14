@@ -118,7 +118,7 @@ static inline unsigned char _InterlockedCompareExchange128(__int64 *dest, __int6
                           : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
                             "c" (xchg_high), "b" (xchg_low) );
 #else
-    ret = __sync_bool_compare_and_swap( (__int128 *)dest, (__int128 *)compare,
+    ret = __sync_bool_compare_and_swap( (__int128 *)dest, *(__int128 *)compare,
                                         ((__int128)xchg_high << 64) | xchg_low );
 #endif
     return ret;
