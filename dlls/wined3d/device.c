@@ -811,10 +811,18 @@ bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk
         goto fail;
     }
 
+    if (!wined3d_null_image_vk_init(&r->image_3d, context_vk, vk_command_buffer, VK_IMAGE_TYPE_3D, 1))
+    {
+        ERR("Failed to create 3D image.\n");
+        goto fail;
+    }
+
     return true;
 
 fail:
     id = context_vk->current_command_buffer.id;
+    if (r->image_2dms.vk_image)
+        wined3d_null_image_vk_cleanup(&r->image_2dms, context_vk, id);
     if (r->image_2d.vk_image)
         wined3d_null_image_vk_cleanup(&r->image_2d, context_vk, id);
     if (r->image_1d.vk_image)
@@ -832,6 +840,7 @@ void wined3d_device_vk_destroy_null_resources(struct wined3d_device_vk *device_v
 
     /* We don't track command buffer references to NULL resources. We easily
      * could, but it doesn't seem worth it. */
+    wined3d_null_image_vk_cleanup(&r->image_3d, context_vk, id);
     wined3d_null_image_vk_cleanup(&r->image_2dms, context_vk, id);
     wined3d_null_image_vk_cleanup(&r->image_2d, context_vk, id);
     wined3d_null_image_vk_cleanup(&r->image_1d, context_vk, id);
@@ -921,6 +930,17 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     v->vk_info_2dms.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     TRACE("Created 2D MSAA image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_2dms.imageView));
 
+    view_desc.image = r->image_3d.vk_image;
+    view_desc.viewType = VK_IMAGE_VIEW_TYPE_3D;
+    if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_3d.imageView))) < 0)
+    {
+        ERR("Failed to create 3D image view, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+    v->vk_info_3d.sampler = VK_NULL_HANDLE;
+    v->vk_info_3d.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    TRACE("Created 3D image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_3d.imageView));
+
     view_desc.image = r->image_2d.vk_image;
     view_desc.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_2d_array.imageView))) < 0)
@@ -948,6 +968,8 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
 fail:
     if (v->vk_info_2d_array.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_2d_array.imageView, NULL));
+    if (v->vk_info_3d.imageView)
+        VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_3d.imageView, NULL));
     if (v->vk_info_2dms.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_2dms.imageView, NULL));
     if (v->vk_info_2d.imageView)
@@ -967,6 +989,7 @@ void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk, s
 
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2dms_array.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2d_array.imageView, id);
+    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_3d.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2dms.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2d.imageView, id);
     wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_1d.imageView, id);

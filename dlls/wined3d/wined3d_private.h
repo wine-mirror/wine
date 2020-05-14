@@ -3620,6 +3620,7 @@ struct wined3d_null_resources_vk
     struct wined3d_null_image_vk image_1d;
     struct wined3d_null_image_vk image_2d;
     struct wined3d_null_image_vk image_2dms;
+    struct wined3d_null_image_vk image_3d;
 };
 
 struct wined3d_null_views_vk
@@ -3630,6 +3631,7 @@ struct wined3d_null_views_vk
     VkDescriptorImageInfo vk_info_1d;
     VkDescriptorImageInfo vk_info_2d;
     VkDescriptorImageInfo vk_info_2dms;
+    VkDescriptorImageInfo vk_info_3d;
     VkDescriptorImageInfo vk_info_2d_array;
     VkDescriptorImageInfo vk_info_2dms_array;
 };
