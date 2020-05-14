@@ -1345,24 +1345,32 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetEnvironmentStringsW( WCHAR *env )
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
 {
-    UNICODE_STRING us_name;
+    UNICODE_STRING us_name, us_value;
     PWSTR valueW;
-    DWORD ret;
+    NTSTATUS status;
+    DWORD len, ret;
 
     /* limit the size to sane values */
     size = min( size, 32767 );
     if (!(valueW = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return 0;
 
     RtlCreateUnicodeStringFromAsciiz( &us_name, name );
-    SetLastError( 0 );
-    ret = GetEnvironmentVariableW( us_name.Buffer, valueW, size);
-    if (ret && ret < size) WideCharToMultiByte( CP_ACP, 0, valueW, ret + 1, value, size, NULL, NULL );
+    us_value.Length = 0;
+    us_value.MaximumLength = (size ? size - 1 : 0) * sizeof(WCHAR);
+    us_value.Buffer = valueW;
 
-    /* this is needed to tell, with 0 as a return value, the difference between:
-     * - an error (GetLastError() != 0)
-     * - returning an empty string (in this case, we need to update the buffer)
-     */
-    if (ret == 0 && size && GetLastError() == 0) value[0] = 0;
+    status = RtlQueryEnvironmentVariable_U( NULL, &us_name, &us_value );
+    len = us_value.Length / sizeof(WCHAR);
+    if (status == STATUS_BUFFER_TOO_SMALL) ret = len + 1;
+    else if (!set_ntstatus( status )) ret = 0;
+    else if (!size) ret = len + 1;
+    else
+    {
+        if (len) WideCharToMultiByte( CP_ACP, 0, valueW, len + 1, value, size, NULL, NULL );
+        value[len] = 0;
+        ret = len;
+    }
+
     RtlFreeUnicodeString( &us_name );
     HeapFree( GetProcessHeap(), 0, valueW );
     return ret;

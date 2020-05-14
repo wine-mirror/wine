@@ -157,10 +157,10 @@ static void test_GetSetEnvironmentVariableA(void)
        "should not fail with empty value but GetLastError=%d\n", GetLastError());
 
     lstrcpyA(buf, "foo");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableA(name, buf, lstrlenA(value) + 1);
     ok(ret_size == 0 &&
-       ((GetLastError() == 0 && lstrcmpA(buf, "") == 0) ||
+       ((GetLastError() == 0xdeadbeef && lstrcmpA(buf, "") == 0) ||
         (GetLastError() == ERROR_ENVVAR_NOT_FOUND)),
        "%s should be set to \"\" (NT) or removed (Win9x) but ret_size=%d GetLastError=%d and buf=%s\n",
        name, ret_size, GetLastError(), buf);
@@ -262,10 +262,10 @@ static void test_GetSetEnvironmentVariableW(void)
     ok(ret == TRUE, "should not fail with empty value but GetLastError=%d\n", GetLastError());
 
     lstrcpyW(buf, fooW);
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     ret_size = GetEnvironmentVariableW(name, buf, lstrlenW(value) + 1);
     ok(ret_size == 0 &&
-       ((GetLastError() == 0 && lstrcmpW(buf, empty_strW) == 0) ||
+       ((GetLastError() == 0xdeadbeef && lstrcmpW(buf, empty_strW) == 0) ||
         (GetLastError() == ERROR_ENVVAR_NOT_FOUND)),
        "should be set to \"\" (NT) or removed (Win9x) but ret_size=%d GetLastError=%d\n",
        ret_size, GetLastError());
