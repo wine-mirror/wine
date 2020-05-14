@@ -1397,7 +1397,8 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetEnvironmentVariableW( LPCWSTR name, LPWSTR val
     len = us_value.Length / sizeof(WCHAR);
     if (status == STATUS_BUFFER_TOO_SMALL) return len + 1;
     if (!set_ntstatus( status )) return 0;
-    if (size) val[len] = 0;
+    if (!size) return len + 1;
+    val[len] = 0;
     return len;
 }
 
