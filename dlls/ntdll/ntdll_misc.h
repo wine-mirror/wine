@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "unixlib.h"
 #include "wine/server.h"
 #include "wine/asm.h"
 
@@ -149,6 +150,7 @@ extern void SNOOP_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
 extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
 extern const WCHAR syswow64_dir[] DECLSPEC_HIDDEN;
 
+extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 extern void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) DECLSPEC_HIDDEN;
 
 /* Device IO */

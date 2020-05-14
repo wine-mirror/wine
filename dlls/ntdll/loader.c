@@ -31,10 +31,6 @@
 # include <sys/mman.h>
 #endif
 
-#if defined(__APPLE__)
-# include <mach-o/getsect.h>
-#endif
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
@@ -70,6 +66,8 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 typedef void  (CALLBACK *LDRENUMPROC)(LDR_DATA_TABLE_ENTRY *, void *, BOOLEAN *);
+
+const struct unix_funcs *unix_funcs = NULL;
 
 /* system directory with trailing backslash */
 const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
@@ -1824,186 +1822,6 @@ static BOOL is_16bit_builtin( HMODULE module )
 }
 
 
-/* adjust an array of pointers to make them into RVAs */
-static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
-{
-    BYTE **src = array;
-    DWORD *dst = array;
-
-    for ( ; count; count--, src++, dst++) *dst = *src ? *src - base : 0;
-}
-
-/* fixup an array of RVAs by adding the specified delta */
-static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
-{
-    for ( ; count; count--, ptr++) if (*ptr) *ptr += delta;
-}
-
-
-/* fixup an array of name/ordinal RVAs by adding the specified delta */
-static inline void fixup_rva_names( UINT_PTR *ptr, int delta )
-{
-    for ( ; *ptr; ptr++) if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
-}
-
-
-/* fixup RVAs in the resource directory */
-static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
-{
-    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    unsigned int i;
-
-    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
-    {
-        void *ptr = root + entry->u2.s2.OffsetToDirectory;
-        if (entry->u2.s2.DataIsDirectory) fixup_so_resources( ptr, root, delta );
-        else fixup_rva_dwords( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
-    }
-}
-
-/*************************************************************************
- *		map_so_dll
- *
- * Map a builtin dll in memory and fixup RVAs.
- */
-static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
-{
-    static const char builtin_signature[32] = "Wine builtin DLL";
-    IMAGE_DATA_DIRECTORY *dir;
-    IMAGE_DOS_HEADER *dos;
-    IMAGE_NT_HEADERS *nt;
-    IMAGE_SECTION_HEADER *sec;
-    BYTE *addr = (BYTE *)module;
-    DWORD code_start, code_end, data_start, data_end, align_mask;
-    int delta, nb_sections = 2;  /* code + data */
-    unsigned int i;
-    DWORD size = (sizeof(IMAGE_DOS_HEADER)
-                  + sizeof(builtin_signature)
-                  + sizeof(IMAGE_NT_HEADERS)
-                  + nb_sections * sizeof(IMAGE_SECTION_HEADER));
-
-    if (wine_anon_mmap( addr, size, PROT_READ | PROT_WRITE, MAP_FIXED ) != addr) return STATUS_NO_MEMORY;
-
-    dos = (IMAGE_DOS_HEADER *)addr;
-    nt  = (IMAGE_NT_HEADERS *)((BYTE *)(dos + 1) + sizeof(builtin_signature));
-    sec = (IMAGE_SECTION_HEADER *)(nt + 1);
-
-    /* build the DOS and NT headers */
-
-    dos->e_magic    = IMAGE_DOS_SIGNATURE;
-    dos->e_cblp     = 0x90;
-    dos->e_cp       = 3;
-    dos->e_cparhdr  = (sizeof(*dos) + 0xf) / 0x10;
-    dos->e_minalloc = 0;
-    dos->e_maxalloc = 0xffff;
-    dos->e_ss       = 0x0000;
-    dos->e_sp       = 0x00b8;
-    dos->e_lfanew   = sizeof(*dos) + sizeof(builtin_signature);
-
-    *nt = *nt_descr;
-
-    delta      = (const BYTE *)nt_descr - addr;
-    align_mask = nt->OptionalHeader.SectionAlignment - 1;
-    code_start = (size + align_mask) & ~align_mask;
-    data_start = delta & ~align_mask;
-#ifdef __APPLE__
-    {
-        Dl_info dli;
-        unsigned long data_size;
-        /* need the mach_header, not the PE header, to give to getsegmentdata(3) */
-        dladdr(addr, &dli);
-        code_end   = getsegmentdata(dli.dli_fbase, "__DATA", &data_size) - addr;
-        data_end   = (code_end + data_size + align_mask) & ~align_mask;
-    }
-#else
-    code_end   = data_start;
-    data_end   = (nt->OptionalHeader.SizeOfImage + delta + align_mask) & ~align_mask;
-#endif
-
-    fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
-
-    nt->FileHeader.NumberOfSections                = nb_sections;
-    nt->OptionalHeader.BaseOfCode                  = code_start;
-#ifndef _WIN64
-    nt->OptionalHeader.BaseOfData                  = data_start;
-#endif
-    nt->OptionalHeader.SizeOfCode                  = code_end - code_start;
-    nt->OptionalHeader.SizeOfInitializedData       = data_end - data_start;
-    nt->OptionalHeader.SizeOfUninitializedData     = 0;
-    nt->OptionalHeader.SizeOfImage                 = data_end;
-    nt->OptionalHeader.ImageBase                   = (ULONG_PTR)addr;
-
-    /* build the code section */
-
-    memcpy( sec->Name, ".text", sizeof(".text") );
-    sec->SizeOfRawData = code_end - code_start;
-    sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = code_start;
-    sec->PointerToRawData = code_start;
-    sec->Characteristics  = (IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
-    sec++;
-
-    /* build the data section */
-
-    memcpy( sec->Name, ".data", sizeof(".data") );
-    sec->SizeOfRawData = data_end - data_start;
-    sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = data_start;
-    sec->PointerToRawData = data_start;
-    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                             IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
-    sec++;
-
-    for (i = 0; i < nt->OptionalHeader.NumberOfRvaAndSizes; i++)
-        fixup_rva_dwords( &nt->OptionalHeader.DataDirectory[i].VirtualAddress, delta, 1 );
-
-    /* build the import directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
-    if (dir->Size)
-    {
-        IMAGE_IMPORT_DESCRIPTOR *imports = (IMAGE_IMPORT_DESCRIPTOR *)(addr + dir->VirtualAddress);
-
-        while (imports->Name)
-        {
-            fixup_rva_dwords( &imports->u.OriginalFirstThunk, delta, 1 );
-            fixup_rva_dwords( &imports->Name, delta, 1 );
-            fixup_rva_dwords( &imports->FirstThunk, delta, 1 );
-            if (imports->u.OriginalFirstThunk)
-                fixup_rva_names( (UINT_PTR *)(addr + imports->u.OriginalFirstThunk), delta );
-            if (imports->FirstThunk)
-                fixup_rva_names( (UINT_PTR *)(addr + imports->FirstThunk), delta );
-            imports++;
-        }
-    }
-
-    /* build the resource directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-    if (dir->Size)
-    {
-        void *ptr = addr + dir->VirtualAddress;
-        fixup_so_resources( ptr, ptr, delta );
-    }
-
-    /* build the export directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
-    if (dir->Size)
-    {
-        IMAGE_EXPORT_DIRECTORY *exports = (IMAGE_EXPORT_DIRECTORY *)(addr + dir->VirtualAddress);
-
-        fixup_rva_dwords( &exports->Name, delta, 1 );
-        fixup_rva_dwords( &exports->AddressOfFunctions, delta, 1 );
-        fixup_rva_dwords( &exports->AddressOfNames, delta, 1 );
-        fixup_rva_dwords( &exports->AddressOfNameOrdinals, delta, 1 );
-        fixup_rva_dwords( (DWORD *)(addr + exports->AddressOfNames), delta, exports->NumberOfNames );
-        fixup_rva_ptrs( addr + exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
-    }
-    return STATUS_SUCCESS;
-}
-
-
 /*************************************************************************
  *		build_so_dll_module
  *
@@ -2849,7 +2667,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         }
         else
         {
-            if ((info.status = map_so_dll( nt, module ))) goto failed;
+            if ((info.status = unix_funcs->map_so_dll( nt, module ))) goto failed;
             if ((info.status = build_so_dll_module( load_path, &win_name, module, flags, &info.wm )))
                 goto failed;
             TRACE_(loaddll)( "Loaded %s at %p: builtin\n",
@@ -4465,6 +4283,33 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 
+static NTSTATUS load_ntdll_so( HMODULE module, const IMAGE_NT_HEADERS *nt )
+{
+    NTSTATUS (__cdecl *init_func)( HMODULE module, const void *ptr_in, void *ptr_out );
+    Dl_info info;
+    char *name;
+    void *handle;
+
+    if (!dladdr( load_ntdll_so, &info ))
+    {
+        fprintf( stderr, "cannot get path to ntdll.dll.so\n" );
+        exit(1);
+    }
+    name = strdup( info.dli_fname );
+    strcpy( name + strlen(name) - strlen(".dll.so"), ".so" );
+    if (!(handle = dlopen( name, RTLD_NOW )))
+    {
+        fprintf( stderr, "failed to load %s: %s\n", name, dlerror() );
+        exit(1);
+    }
+    if (!(init_func = dlsym( handle, "__wine_init_unix_lib" )))
+    {
+        fprintf( stderr, "init func not found in %s\n", name );
+        exit(1);
+    }
+    return init_func( module, nt, &unix_funcs );
+}
+
 /***********************************************************************
  *           __wine_process_init
  */
@@ -4486,8 +4331,13 @@ void __wine_process_init(void)
     INITIAL_TEB stack;
     BOOL suspend;
     SIZE_T info_size;
-    TEB *teb = thread_init();
-    PEB *peb = teb->Peb;
+    TEB *teb;
+    PEB *peb;
+
+    if (!unix_funcs) load_ntdll_so( ntdll_module, &__wine_spec_nt_header );
+
+    teb = thread_init();
+    peb = teb->Peb;
 
     /* setup the server connection */
     server_init_process();
@@ -4512,7 +4362,6 @@ void __wine_process_init(void)
 
     /* setup the load callback and create ntdll modref */
     RtlInitUnicodeString( &nt_name, ntdllW );
-    map_so_dll( &__wine_spec_nt_header, ntdll_module );
     status = build_so_dll_module( params->DllPath.Buffer, &nt_name, ntdll_module, 0, &wm );
     assert( !status );
 

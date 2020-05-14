@@ -51,6 +51,7 @@ C_SRCS = \
 	thread.c \
 	threadpool.c \
 	time.c \
+	unix/loader.c \
 	version.c \
 	virtual.c \
 	wcstring.c
