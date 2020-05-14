@@ -49,6 +49,7 @@ BOOL WINAPI GetUserNameA( LPSTR name, LPDWORD size )
 
     if (!len) return FALSE;
     if ((ret = (len < *size))) len++;
+    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
     *size = len;
     return ret;
 }
@@ -64,6 +65,7 @@ BOOL WINAPI GetUserNameW( LPWSTR name, LPDWORD size )
 
     if (!len) return FALSE;
     if ((ret = (len < *size))) len++;
+    else SetLastError( ERROR_INSUFFICIENT_BUFFER );
     *size = len;
     return ret;
 }
