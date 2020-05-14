@@ -1107,12 +1107,12 @@ static void build(struct options* opts)
     if (strendswith(output_file, ".fake")) fake_module = 1;
 
     /* normalize the filename a bit: strip .so, ensure it has proper ext */
-    if (strendswith(output_file, ".so")) 
-	output_file[strlen(output_file) - 3] = 0;
     if ((output_name = strrchr(output_file, '/'))) output_name++;
     else output_name = output_file;
     if (!strchr(output_name, '.'))
         output_file = strmake("%s.%s", output_file, opts->shared ? "dll" : "exe");
+    else if (strendswith(output_file, ".so"))
+	output_file[strlen(output_file) - 3] = 0;
     output_path = is_pe ? output_file : strmake( "%s.so", output_file );
 
     /* get the filename from the path */
