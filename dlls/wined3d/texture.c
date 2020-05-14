@@ -1748,11 +1748,13 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     const struct wined3d_d3d_info *d3d_info;
     const struct wined3d_gl_info *gl_info;
     const struct wined3d_format *format;
-    const struct wined3d *d3d;
     struct wined3d_device *device;
     unsigned int resource_size;
+    const struct wined3d *d3d;
+    unsigned int slice_pitch;
     DWORD valid_location = 0;
-    BOOL create_dib = FALSE;
+    bool update_memory_only;
+    bool create_dib = false;
 
     TRACE("texture %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u, "
             "mem %p, pitch %u.\n",
@@ -1765,10 +1767,27 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     format = wined3d_get_format(device->adapter, format_id, texture->resource.bind_flags);
     resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
 
+    update_memory_only = width == texture->resource.width && height == texture->resource.height
+            && format_id == texture->resource.format->id && multisample_type == texture->resource.multisample_type
+            && multisample_quality == texture->resource.multisample_quality;
+
+    if (pitch)
+        slice_pitch = height * pitch;
+    else
+        wined3d_format_calculate_pitch(format, 1, width, height, &pitch, &slice_pitch);
+
+    if (update_memory_only)
+    {
+        unsigned int current_row_pitch, current_slice_pitch;
+
+        wined3d_texture_get_pitch(texture, 0, &current_row_pitch, &current_slice_pitch);
+        update_memory_only = pitch == current_row_pitch && slice_pitch == current_slice_pitch;
+    }
+
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
 
-    if (texture->level_count * texture->layer_count > 1)
+    if (texture->level_count * texture->layer_count > 1 && !update_memory_only)
     {
         WARN("Texture has multiple sub-resources, not supported.\n");
         return WINED3DERR_INVALIDCALL;
@@ -1803,65 +1822,65 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         wined3d_cs_emit_unload_resource(device->cs, &texture->resource);
     wined3d_resource_wait_idle(&texture->resource);
 
-    sub_resource = &texture->sub_resources[0];
     if (texture->dc_info && texture->dc_info[0].dc)
     {
         struct wined3d_texture_idx texture_idx = {texture, 0};
 
         wined3d_cs_destroy_object(device->cs, wined3d_texture_destroy_dc, &texture_idx);
         wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
-        create_dib = TRUE;
+        create_dib = true;
     }
 
     wined3d_resource_free_sysmem(&texture->resource);
 
-    if ((texture->row_pitch = pitch))
-        texture->slice_pitch = height * pitch;
-    else
-        /* User memory surfaces don't have the regular surface alignment. */
-        wined3d_format_calculate_pitch(format, 1, width, height,
-                &texture->row_pitch, &texture->slice_pitch);
-
-    texture->resource.format = format;
-    texture->resource.multisample_type = multisample_type;
-    texture->resource.multisample_quality = multisample_quality;
-    texture->resource.width = width;
-    texture->resource.height = height;
-    if (!(texture->resource.access & WINED3D_RESOURCE_ACCESS_CPU) && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
-        adapter_adjust_memory(device->adapter,  (INT64)texture->slice_pitch - texture->resource.size);
-    texture->resource.size = texture->slice_pitch;
-    sub_resource->size = texture->slice_pitch;
-    sub_resource->locations = WINED3D_LOCATION_DISCARDED;
-
-    if (texture->texture_ops == &texture_gl_ops)
+    if (!update_memory_only)
     {
-        if (multisample_type && gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+        sub_resource = &texture->sub_resources[0];
+
+        texture->row_pitch = pitch;
+        texture->slice_pitch = slice_pitch;
+
+        texture->resource.format = format;
+        texture->resource.multisample_type = multisample_type;
+        texture->resource.multisample_quality = multisample_quality;
+        texture->resource.width = width;
+        texture->resource.height = height;
+        if (!(texture->resource.access & WINED3D_RESOURCE_ACCESS_CPU) && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
+            adapter_adjust_memory(device->adapter,  (INT64)texture->slice_pitch - texture->resource.size);
+        texture->resource.size = texture->slice_pitch;
+        sub_resource->size = texture->slice_pitch;
+        sub_resource->locations = WINED3D_LOCATION_DISCARDED;
+
+        if (texture->texture_ops == &texture_gl_ops)
         {
-            wined3d_texture_gl(texture)->target = GL_TEXTURE_2D_MULTISAMPLE;
-            texture->flags &= ~WINED3D_TEXTURE_DOWNLOADABLE;
+            if (multisample_type && gl_info->supported[ARB_TEXTURE_MULTISAMPLE])
+            {
+                wined3d_texture_gl(texture)->target = GL_TEXTURE_2D_MULTISAMPLE;
+                texture->flags &= ~WINED3D_TEXTURE_DOWNLOADABLE;
+            }
+            else
+            {
+                wined3d_texture_gl(texture)->target = GL_TEXTURE_2D;
+                texture->flags |= WINED3D_TEXTURE_DOWNLOADABLE;
+            }
+        }
+
+        if (((width & (width - 1)) || (height & (height - 1))) && !d3d_info->texture_npot
+                && !d3d_info->texture_npot_conditional)
+        {
+            texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
+            texture->pow2_width = texture->pow2_height = 1;
+            while (texture->pow2_width < width)
+                texture->pow2_width <<= 1;
+            while (texture->pow2_height < height)
+                texture->pow2_height <<= 1;
         }
         else
         {
-            wined3d_texture_gl(texture)->target = GL_TEXTURE_2D;
-            texture->flags |= WINED3D_TEXTURE_DOWNLOADABLE;
+            texture->flags &= ~WINED3D_TEXTURE_COND_NP2_EMULATED;
+            texture->pow2_width = width;
+            texture->pow2_height = height;
         }
-    }
-
-    if (((width & (width - 1)) || (height & (height - 1))) && !d3d_info->texture_npot
-            && !d3d_info->texture_npot_conditional)
-    {
-        texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
-        texture->pow2_width = texture->pow2_height = 1;
-        while (texture->pow2_width < width)
-            texture->pow2_width <<= 1;
-        while (texture->pow2_height < height)
-            texture->pow2_height <<= 1;
-    }
-    else
-    {
-        texture->flags &= ~WINED3D_TEXTURE_COND_NP2_EMULATED;
-        texture->pow2_width = width;
-        texture->pow2_height = height;
     }
 
     if ((texture->user_memory = mem))
