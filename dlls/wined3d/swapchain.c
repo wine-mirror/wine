@@ -1239,9 +1239,11 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 {
     struct wined3d_device *device = swapchain->device;
     HWND window = swapchain->state.device_window;
+    struct wined3d_output_desc output_desc;
     unsigned int screensaver_active;
     struct wined3d_output *output;
     BOOL focus_messages, filter;
+    HRESULT hr;
 
     /* This code is not protected by the wined3d mutex, so it may run while
      * wined3d_device_reset is active. Testing on Windows shows that changing
@@ -1250,6 +1252,13 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 
     if (!(focus_messages = device->wined3d->flags & WINED3D_FOCUS_MESSAGES))
         filter = wined3d_filter_messages(window, TRUE);
+
+    output = wined3d_swapchain_get_output(swapchain);
+    if (!output)
+    {
+        ERR("Failed to get output from swapchain %p.\n", swapchain);
+        return;
+    }
 
     if (activate)
     {
@@ -1266,16 +1275,19 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
              *
              * Guild Wars 1 wants a WINDOWPOSCHANGED message on the device window to
              * resume drawing after a focus loss. */
-            SetWindowPos(window, NULL, 0, 0, swapchain->state.desc.backbuffer_width,
-                    swapchain->state.desc.backbuffer_height, SWP_NOACTIVATE | SWP_NOZORDER);
+            if (SUCCEEDED(hr = wined3d_output_get_desc(output, &output_desc)))
+                SetWindowPos(window, NULL, output_desc.desktop_rect.left,
+                        output_desc.desktop_rect.top, swapchain->state.desc.backbuffer_width,
+                        swapchain->state.desc.backbuffer_height, SWP_NOACTIVATE | SWP_NOZORDER);
+            else
+                ERR("Failed to get output description, hr %#x.\n", hr);
         }
 
         if (device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
         {
-            output = wined3d_swapchain_get_output(swapchain);
-            if (!output || FAILED(wined3d_output_set_display_mode(output,
+            if (FAILED(hr = wined3d_output_set_display_mode(output,
                     &swapchain->state.d3d_mode)))
-                ERR("Failed to set display mode.\n");
+                ERR("Failed to set display mode, hr %#x.\n", hr);
         }
 
         if (swapchain == device->swapchains[0])
@@ -1289,9 +1301,8 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
             device->restore_screensaver = FALSE;
         }
 
-        output = wined3d_swapchain_get_output(swapchain);
-        if (!output || FAILED(wined3d_output_set_display_mode(output, NULL)))
-            ERR("Failed to set display mode.\n");
+        if (FAILED(hr = wined3d_output_set_display_mode(output, NULL)))
+            ERR("Failed to set display mode, hr %#x.\n", hr);
 
         swapchain->reapply_mode = TRUE;
 
