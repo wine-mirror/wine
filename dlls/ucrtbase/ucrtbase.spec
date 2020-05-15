@@ -934,7 +934,7 @@
 @ stub _o__fgetwchar
 @ stub _o__filelength
 @ stub _o__filelengthi64
-@ stub _o__fileno
+@ cdecl _o__fileno(ptr) MSVCRT__fileno
 @ stub _o__findclose
 @ stub _o__findfirst32
 @ stub _o__findfirst32i64
@@ -1337,7 +1337,7 @@
 @ stub _o__set_thread_local_invalid_parameter_handler
 @ stub _o__seterrormode
 @ stub _o__setmbcp
-@ stub _o__setmode
+@ cdecl _o__setmode(long long) MSVCRT__setmode
 @ stub _o__setsystime
 @ stub _o__sleep
 @ stub _o__sopen
@@ -1496,7 +1496,7 @@
 @ stub _o__wfindnext32i64
 @ stub _o__wfindnext64
 @ stub _o__wfindnext64i32
-@ stub _o__wfopen
+@ cdecl _o__wfopen(wstr wstr) MSVCRT__wfopen
 @ stub _o__wfopen_s
 @ stub _o__wfreopen
 @ stub _o__wfreopen_s
