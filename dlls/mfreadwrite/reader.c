@@ -114,6 +114,7 @@ struct media_stream
     enum media_stream_state state;
     unsigned int flags;
     unsigned int requests;
+    unsigned int responses;
 };
 
 enum source_reader_async_op
@@ -360,6 +361,7 @@ static void source_reader_queue_response(struct source_reader *reader, struct me
         IMFSample_AddRef(response->sample);
 
     list_add_tail(&reader->responses, &response->entry);
+    stream->responses++;
 
     if (stream->requests)
     {
@@ -831,6 +833,22 @@ static ULONG WINAPI source_reader_async_commands_callback_Release(IMFAsyncCallba
     return IMFSourceReader_Release(&reader->IMFSourceReader_iface);
 }
 
+static struct stream_response * media_stream_detach_response(struct source_reader *reader, struct stream_response *response)
+{
+    struct media_stream *stream;
+
+    list_remove(&response->entry);
+
+    if (response->stream_index < reader->stream_count)
+    {
+        stream = &reader->streams[response->stream_index];
+        if (stream->responses)
+            --stream->responses;
+    }
+
+    return response;
+}
+
 static struct stream_response *media_stream_pop_response(struct source_reader *reader, struct media_stream *stream)
 {
     struct stream_response *response;
@@ -841,20 +859,13 @@ static struct stream_response *media_stream_pop_response(struct source_reader *r
         LIST_FOR_EACH_ENTRY(response, &reader->responses, struct stream_response, entry)
         {
             if (response->stream_index == stream->index)
-            {
-                list_remove(&response->entry);
-                return response;
-            }
+                return media_stream_detach_response(reader, response);
         }
     }
     else
     {
         if ((head = list_head(&reader->responses)))
-        {
-            response = LIST_ENTRY(head, struct stream_response, entry);
-            list_remove(&response->entry);
-            return response;
-        }
+            return media_stream_detach_response(reader, LIST_ENTRY(head, struct stream_response, entry));
     }
 
     return NULL;
@@ -979,18 +990,33 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
 static HRESULT source_reader_get_first_selected_stream(struct source_reader *reader, unsigned int flags,
         unsigned int *stream_index)
 {
-    unsigned int i;
-    BOOL selected;
+    unsigned int i, first_selected = ~0u;
+    BOOL selected, stream_drained;
 
     for (i = 0; i < reader->stream_count; ++i)
     {
-        source_reader_get_stream_selection(reader, i, &selected);
-        if (SUCCEEDED(source_reader_get_stream_selection(reader, i, &selected)) && selected &&
-                !(reader->streams[i].flags & flags))
+        stream_drained = reader->streams[i].state == STREAM_STATE_EOS && !reader->streams[i].responses;
+        selected = SUCCEEDED(source_reader_get_stream_selection(reader, i, &selected)) && selected;
+
+        if (selected && !(reader->streams[i].flags & flags))
         {
-            *stream_index = i;
-            break;
+            if (first_selected == ~0u)
+                first_selected = i;
+
+            if (!stream_drained)
+            {
+                *stream_index = i;
+                break;
+            }
         }
+    }
+
+    /* If all selected streams reached EOS, use first selected. This fallback only applies after reader went through all
+       selected streams once. */
+    if (i == reader->stream_count && first_selected != ~0u && !flags)
+    {
+        *stream_index = first_selected;
+        i = first_selected;
     }
 
     return i == reader->stream_count ? MF_E_MEDIA_SOURCE_NO_STREAMS_SELECTED : S_OK;
@@ -1046,7 +1072,7 @@ static void source_reader_release_responses(struct source_reader *reader, struct
         {
             continue;
         }
-        list_remove(&ptr->entry);
+        media_stream_detach_response(reader, ptr);
         source_reader_release_response(ptr);
     }
 }
