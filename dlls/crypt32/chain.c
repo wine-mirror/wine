@@ -3703,38 +3703,37 @@ static BOOL WINAPI verify_ms_root_policy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
 {
-    BOOL ret = verify_base_policy(szPolicyOID, pChainContext, pPolicyPara,
-     pPolicyStatus);
+    BOOL isMSRoot = FALSE;
 
-    if (ret && !pPolicyStatus->dwError)
+    CERT_PUBLIC_KEY_INFO msPubKey = { { 0 } };
+    DWORD i;
+    CRYPT_DATA_BLOB keyBlobs[] = {
+        { sizeof(msPubKey1), msPubKey1 },
+        { sizeof(msPubKey2), msPubKey2 },
+        { sizeof(msPubKey3), msPubKey3 },
+        { sizeof(msPubKey4), msPubKey4 },
+    };
+    PCERT_SIMPLE_CHAIN rootChain =
+        pChainContext->rgpChain[pChainContext->cChain - 1];
+    PCCERT_CONTEXT root =
+        rootChain->rgpElement[rootChain->cElement - 1]->pCertContext;
+
+    for (i = 0; !isMSRoot && i < ARRAY_SIZE(keyBlobs); i++)
     {
-        CERT_PUBLIC_KEY_INFO msPubKey = { { 0 } };
-        BOOL isMSRoot = FALSE;
-        DWORD i;
-        CRYPT_DATA_BLOB keyBlobs[] = {
-         { sizeof(msPubKey1), msPubKey1 },
-         { sizeof(msPubKey2), msPubKey2 },
-         { sizeof(msPubKey3), msPubKey3 },
-         { sizeof(msPubKey4), msPubKey4 },
-        };
-        PCERT_SIMPLE_CHAIN rootChain =
-         pChainContext->rgpChain[pChainContext->cChain -1 ];
-        PCCERT_CONTEXT root =
-         rootChain->rgpElement[rootChain->cElement - 1]->pCertContext;
-
-        for (i = 0; !isMSRoot && i < ARRAY_SIZE(keyBlobs); i++)
-        {
-            msPubKey.PublicKey.cbData = keyBlobs[i].cbData;
-            msPubKey.PublicKey.pbData = keyBlobs[i].pbData;
-            if (CertComparePublicKeyInfo(
-             X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-             &root->pCertInfo->SubjectPublicKeyInfo, &msPubKey))
-                isMSRoot = TRUE;
-        }
-        if (isMSRoot)
-            pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = 0;
+        msPubKey.PublicKey.cbData = keyBlobs[i].cbData;
+        msPubKey.PublicKey.pbData = keyBlobs[i].pbData;
+        if (CertComparePublicKeyInfo(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                &root->pCertInfo->SubjectPublicKeyInfo, &msPubKey)) isMSRoot = TRUE;
     }
-    return ret;
+
+    pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = 0;
+
+    if (isMSRoot)
+        pPolicyStatus->dwError = 0;
+    else
+        pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
+
+    return TRUE;
 }
 
 typedef BOOL (WINAPI *CertVerifyCertificateChainPolicyFunc)(LPCSTR szPolicyOID,
