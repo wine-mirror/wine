@@ -717,35 +717,32 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallba
 
     EnterCriticalSection(&grabber->cs);
 
-    if (!grabber->is_shut_down)
+    LIST_FOR_EACH_ENTRY_SAFE(item, item2, &grabber->items, struct scheduled_item, entry)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(item, item2, &grabber->items, struct scheduled_item, entry)
+        if (item->type == ITEM_TYPE_MARKER)
         {
-            if (item->type == ITEM_TYPE_MARKER)
+            sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
+            stream_release_pending_item(item);
+        }
+        else if (item->type == ITEM_TYPE_SAMPLE)
+        {
+            if (!sample_reported)
             {
-                sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
+                if (FAILED(hr = sample_grabber_report_sample(grabber, item->u.sample, &sample_delivered)))
+                    WARN("Failed to report a sample, hr %#x.\n", hr);
                 stream_release_pending_item(item);
+                sample_reported = TRUE;
             }
-            else if (item->type == ITEM_TYPE_SAMPLE)
+            else
             {
-                if (!sample_reported)
-                {
-                    if (FAILED(hr = sample_grabber_report_sample(grabber, item->u.sample, &sample_delivered)))
-                        WARN("Failed to report a sample, hr %#x.\n", hr);
-                    stream_release_pending_item(item);
-                    sample_reported = TRUE;
-                }
-                else
-                {
-                    if (FAILED(hr = stream_schedule_sample(grabber, item)))
-                        WARN("Failed to schedule a sample, hr %#x.\n", hr);
-                    break;
-                }
+                if (FAILED(hr = stream_schedule_sample(grabber, item)))
+                    WARN("Failed to schedule a sample, hr %#x.\n", hr);
+                break;
             }
         }
-        if (sample_delivered)
-            sample_grabber_stream_request_sample(grabber);
     }
+    if (sample_delivered)
+        sample_grabber_stream_request_sample(grabber);
 
     LeaveCriticalSection(&grabber->cs);
 
