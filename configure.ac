@@ -727,7 +727,8 @@ case $host_os in
     DLLEXT=""
     dnl Disable stdcall fixups to catch prototype mismatches
     case $host_cpu in
-      *i[[3456]]86*) LDDLLFLAGS="-Wl,--disable-stdcall-fixup" ;;
+      *i[[3456]]86*) WINE_TRY_CFLAGS([-Wl,--disable-stdcall-fixup],
+                                     [LDDLLFLAGS="-Wl,--disable-stdcall-fixup"]) ;;
     esac
     dnl Disable modules that can't be used on Windows
     enable_iphlpapi=${enable_iphlpapi:-no}
