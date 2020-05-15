@@ -3583,20 +3583,22 @@ static void test_image_properties(void)
         UINT prop_size2; /* if win7 behaves differently */
         UINT prop_id;
         UINT prop_id2; /* if win7 behaves differently */
+        INT palette_size;
     }
     td[] =
     {
-        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4, ~0, 1, 20, 0x5110, 0x132 },
-        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2, ~0, 128, 0, 0x5090, 0x5091 },
-        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16, 0, 4, 0, 0xfe, 0 },
-        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0, 0, 0, 0, 0, 0 },
-        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0, 0, 0, 0, 0, 0 }
+        { pngimage, sizeof(pngimage), ImageTypeBitmap, 4, ~0, 1, 20, 0x5110, 0x132, 12 },
+        { jpgimage, sizeof(jpgimage), ImageTypeBitmap, 2, ~0, 128, 0, 0x5090, 0x5091, 12 },
+        { tiffimage, sizeof(tiffimage), ImageTypeBitmap, 16, 0, 4, 0, 0xfe, 0, 12 },
+        { bmpimage, sizeof(bmpimage), ImageTypeBitmap, 0, 0, 0, 0, 0, 0, 16 },
+        { wmfimage, sizeof(wmfimage), ImageTypeMetafile, 0, 0, 0, 0, 0, 0, -GenericError }
     };
     GpStatus status;
     GpImage *image;
     UINT prop_count, prop_size, i;
     PROPID prop_id[16] = { 0 };
     ImageType image_type;
+    INT palette_size;
     union
     {
         PropertyItem data;
@@ -3616,6 +3618,21 @@ static void test_image_properties(void)
         ok(status == Ok, "%u: GdipGetImageType error %d\n", i, status);
         ok(td[i].image_type == image_type, "%u: expected image_type %d, got %d\n",
            i, td[i].image_type, image_type);
+
+        palette_size = -1;
+        status = GdipGetImagePaletteSize(image, &palette_size);
+        if (td[i].palette_size >= 0)
+        {
+            ok(status == Ok, "%u: GdipGetImagePaletteSize error %d\n", i, status);
+            ok(td[i].palette_size == palette_size, "%u: expected palette_size %d, got %d\n",
+               i, td[i].palette_size, palette_size);
+        }
+        else
+        {
+            ok(status == -td[i].palette_size, "%u: GdipGetImagePaletteSize returned %d\n", i, status);
+            ok(palette_size == 0, "%u: expected palette_size 0, got %d\n",
+               i, palette_size);
+        }
 
         status = GdipGetPropertyCount(image, &prop_count);
         ok(status == Ok, "%u: GdipGetPropertyCount error %d\n", i, status);
