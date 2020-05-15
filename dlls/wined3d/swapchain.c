@@ -1434,6 +1434,21 @@ static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain
         }
     }
 
+    if (output != state->desc.output)
+    {
+        if (FAILED(hr = wined3d_output_set_display_mode(state->desc.output, &state->original_mode)))
+        {
+            WARN("Failed to set display mode, hr %#x.\n", hr);
+            return hr;
+        }
+
+        if (FAILED(hr = wined3d_output_get_display_mode(output, &state->original_mode, NULL)))
+        {
+            WARN("Failed to get current display mode, hr %#x.\n", hr);
+            return hr;
+        }
+    }
+
     if (FAILED(hr = wined3d_output_set_display_mode(output, mode)))
     {
         WARN("Failed to set display mode, hr %#x.\n", hr);
