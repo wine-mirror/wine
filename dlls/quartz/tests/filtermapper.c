@@ -119,7 +119,7 @@ static void test_fm2_enummatchingfilters(void)
     IEnumMoniker *pEnum = NULL;
     BOOL found, registered = TRUE;
     REGFILTER *regfilter;
-    ULONG count;
+    ULONG count, ref;
 
     ZeroMemory(&rgf2, sizeof(rgf2));
 
@@ -227,6 +227,8 @@ static void test_fm2_enummatchingfilters(void)
         }
         IEnumRegFilters_Release(enum_reg);
         ok(found, "IFilterMapper didn't find filter\n");
+
+        IFilterMapper_Release(mapper);
     }
 
     if (pEnum) IEnumMoniker_Release(pEnum);
@@ -256,7 +258,8 @@ static void test_fm2_enummatchingfilters(void)
     out:
 
     if (pEnum) IEnumMoniker_Release(pEnum);
-    if (pMapper) IFilterMapper2_Release(pMapper);
+    ref = IFilterMapper2_Release(pMapper);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
 static void test_legacy_filter_registration(void)
