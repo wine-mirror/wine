@@ -802,11 +802,20 @@ static ULONG WINAPI sample_grabber_sink_AddRef(IMFMediaSink *iface)
     return refcount;
 }
 
+static void sample_grabber_release_pending_items(struct sample_grabber *grabber)
+{
+    struct scheduled_item *item, *next_item;
+
+    LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &grabber->items, struct scheduled_item, entry)
+    {
+        stream_release_pending_item(item);
+    }
+}
+
 static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
 {
     struct sample_grabber *grabber = impl_from_IMFMediaSink(iface);
     ULONG refcount = InterlockedDecrement(&grabber->refcount);
-    struct scheduled_item *item, *next_item;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
@@ -836,10 +845,7 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
         }
         if (grabber->sample_attributes)
             IMFAttributes_Release(grabber->sample_attributes);
-        LIST_FOR_EACH_ENTRY_SAFE(item, next_item, &grabber->items, struct scheduled_item, entry)
-        {
-            stream_release_pending_item(item);
-        }
+        sample_grabber_release_pending_items(grabber);
         DeleteCriticalSection(&grabber->cs);
         heap_free(grabber);
     }
@@ -1031,6 +1037,7 @@ static HRESULT WINAPI sample_grabber_sink_Shutdown(IMFMediaSink *iface)
 
     EnterCriticalSection(&grabber->cs);
     grabber->is_shut_down = TRUE;
+    sample_grabber_release_pending_items(grabber);
     if (SUCCEEDED(hr = IMFSampleGrabberSinkCallback_OnShutdown(sample_grabber_get_callback(grabber))))
     {
         sample_grabber_set_presentation_clock(grabber, NULL);
