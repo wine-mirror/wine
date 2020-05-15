@@ -23,9 +23,12 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "dshow.h"
-#include "winternl.h"
+#include "mediaobj.h"
 #include "initguid.h"
+#include "dmo.h"
 #include "wine/fil_data.h"
+
+static const GUID testclsid = {0x77777777};
 
 static IFilterMapper3 *create_mapper(void)
 {
@@ -662,6 +665,72 @@ static void test_aggregation(void)
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
 }
 
+static void test_dmo(void)
+{
+    DMO_PARTIAL_MEDIATYPE mt = {MEDIATYPE_Audio, MEDIASUBTYPE_PCM};
+    IEnumRegFilters *enumerator1;
+    IEnumMoniker *enumerator;
+    IFilterMapper3 *mapper;
+    IFilterMapper *mapper1;
+    REGFILTER *regfilter;
+    IMoniker *moniker;
+    WCHAR *name;
+    HRESULT hr;
+    BOOL found;
+    ULONG ref;
+
+    hr = DMORegister(L"dmo test", &testclsid, &DMOCATEGORY_AUDIO_DECODER, 0, 1, &mt, 1, &mt);
+    if (hr == E_FAIL)
+    {
+        skip("Not enough permissions to register DMOs.\n");
+        return;
+    }
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mapper = create_mapper();
+    IFilterMapper3_QueryInterface(mapper, &IID_IFilterMapper, (void **)&mapper1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterMapper3_EnumMatchingFilters(mapper, &enumerator, 0, FALSE, 0,
+            FALSE, 0, NULL, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    found = FALSE;
+    while (IEnumMoniker_Next(enumerator, 1, &moniker, NULL) == S_OK)
+    {
+        hr = IMoniker_GetDisplayName(moniker, NULL, NULL, &name);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        if (!wcscmp(name, L"@device:dmo:{77777777-0000-0000-0000-000000000000}{57F2DB8B-E6BB-4513-9D43-DCD2A6593125}"))
+            found = TRUE;
+
+        CoTaskMemFree(name);
+        IMoniker_Release(moniker);
+    }
+    IEnumMoniker_Release(enumerator);
+    ok(found, "DMO should be enumerated.\n");
+
+    /* DMOs lack a CLSID property and are therefore not enumerated by IFilterMapper. */
+
+    hr = IFilterMapper_EnumMatchingFilters(mapper1, &enumerator1, 0, FALSE,
+            GUID_NULL, GUID_NULL, FALSE, FALSE, GUID_NULL, GUID_NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    while (IEnumRegFilters_Next(enumerator1, 1, &regfilter, NULL) == S_OK)
+    {
+        ok(!IsEqualGUID(&regfilter->Clsid, &testclsid), "DMO should not be enumerated.\n");
+        ok(wcscmp(regfilter->Name, L"dmo test"), "DMO should not be enumerated.\n");
+    }
+    IEnumRegFilters_Release(enumerator1);
+
+    IFilterMapper_Release(mapper1);
+    ref = IFilterMapper3_Release(mapper);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = DMOUnregister(&testclsid, &DMOCATEGORY_AUDIO_DECODER);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
 START_TEST(filtermapper)
 {
     CoInitialize(NULL);
@@ -673,6 +742,7 @@ START_TEST(filtermapper)
     test_register_filter_with_null_clsMinorType();
     test_parse_filter_data();
     test_aggregation();
+    test_dmo();
 
     CoUninitialize();
 }
