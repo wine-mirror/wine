@@ -1087,7 +1087,7 @@ static HRESULT WINAPI FilterMapper_EnumMatchingFilters(
 
     if (SUCCEEDED(hr))
     {
-        hr = IEnumRegFiltersImpl_Construct(regfilters, nb_mon, ppEnum);
+        hr = IEnumRegFiltersImpl_Construct(regfilters, idx, ppEnum);
     }
 
     for (idx = 0; idx < nb_mon; idx++)
