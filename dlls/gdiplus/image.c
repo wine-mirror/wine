@@ -2285,6 +2285,12 @@ GpStatus WINGDIPAPI GdipGetImagePaletteSize(GpImage *image, INT *size)
     if(!image || !size)
         return InvalidParameter;
 
+    if (image->type == ImageTypeMetafile)
+    {
+        *size = 0;
+        return GenericError;
+    }
+
     if (!image->palette || image->palette->Count == 0)
         *size = sizeof(ColorPalette);
     else
