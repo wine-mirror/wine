@@ -351,8 +351,6 @@ static HRESULT WINAPI DSoundRender_DoRenderSample(struct strmbase_renderer *ifac
         tStart = tStop = -1;
     }
 
-    IMediaSample_IsDiscontinuity(pSample);
-
     if (IMediaSample_IsPreroll(pSample) == S_OK)
     {
         TRACE("Preroll!\n");
