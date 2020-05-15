@@ -237,11 +237,11 @@ static void d2d_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         enum d2d_brush_type type, const D2D1_BRUSH_PROPERTIES *desc, const struct ID2D1BrushVtbl *vtbl)
 {
     static const D2D1_MATRIX_3X2_F identity =
-    {
+    {{{
         1.0f, 0.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
-    };
+    }}};
 
     brush->ID2D1Brush_iface.lpVtbl = vtbl;
     brush->refcount = 1;

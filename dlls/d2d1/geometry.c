@@ -30,11 +30,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 #define D2D_FP_EPS (1.0f / (1 << FLT_MANT_DIG))
 
 static const D2D1_MATRIX_3X2_F identity =
-{
+{{{
     1.0f, 0.0f,
     0.0f, 1.0f,
     0.0f, 0.0f,
-};
+}}};
 
 enum d2d_cdt_edge_next
 {

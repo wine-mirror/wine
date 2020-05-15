@@ -165,11 +165,11 @@ void d2d_state_block_init(struct d2d_state_block *state_block, ID2D1Factory *fac
         const D2D1_DRAWING_STATE_DESCRIPTION1 *desc, IDWriteRenderingParams *text_rendering_params)
 {
     static const D2D1_MATRIX_3X2_F identity =
-    {
+    {{{
         1.0f, 0.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
-    };
+    }}};
 
     state_block->ID2D1DrawingStateBlock1_iface.lpVtbl = &d2d_state_block_vtbl;
     state_block->refcount = 1;

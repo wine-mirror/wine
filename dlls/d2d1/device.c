@@ -23,11 +23,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 #define INITIAL_CLIP_STACK_SIZE 4
 
 static const D2D1_MATRIX_3X2_F identity =
-{
+{{{
     1.0f, 0.0f,
     0.0f, 1.0f,
     0.0f, 0.0f,
-};
+}}};
 
 struct d2d_draw_text_layout_ctx
 {

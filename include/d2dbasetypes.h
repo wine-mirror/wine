@@ -29,16 +29,6 @@ typedef struct D3DCOLORVALUE
 
 typedef D3DCOLORVALUE D2D_COLOR_F;
 
-typedef struct D2D_MATRIX_3X2_F
-{
-    float _11;
-    float _12;
-    float _21;
-    float _22;
-    float _31;
-    float _32;
-} D2D_MATRIX_3X2_F;
-
 typedef struct D2D_RECT_F
 {
     float left;
