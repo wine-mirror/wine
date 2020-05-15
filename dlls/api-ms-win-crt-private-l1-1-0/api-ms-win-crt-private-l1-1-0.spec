@@ -892,288 +892,288 @@
 @ stub _o__y0
 @ stub _o__y1
 @ stub _o__yn
-@ stub _o_abort
-@ stub _o_acos
-@ stub _o_acosf
-@ stub _o_acosh
-@ stub _o_acoshf
-@ stub _o_acoshl
-@ stub _o_asctime
-@ stub _o_asctime_s
-@ stub _o_asin
-@ stub _o_asinf
-@ stub _o_asinh
-@ stub _o_asinhf
-@ stub _o_asinhl
-@ stub _o_atan
-@ stub _o_atan2
-@ stub _o_atan2f
-@ stub _o_atanf
-@ stub _o_atanh
-@ stub _o_atanhf
-@ stub _o_atanhl
+@ cdecl _o_abort() ucrtbase._o_abort
+@ cdecl _o_acos(double) ucrtbase._o_acos
+@ cdecl -arch=!i386 _o_acosf(float) ucrtbase._o_acosf
+@ cdecl _o_acosh(double) ucrtbase._o_acosh
+@ cdecl _o_acoshf(float) ucrtbase._o_acoshf
+@ cdecl _o_acoshl(double) ucrtbase._o_acoshl
+@ cdecl _o_asctime(ptr) ucrtbase._o_asctime
+@ cdecl _o_asctime_s(ptr long ptr) ucrtbase._o_asctime_s
+@ cdecl _o_asin(double) ucrtbase._o_asin
+@ cdecl -arch=!i386 _o_asinf(float) ucrtbase._o_asinf
+@ cdecl _o_asinh(double) ucrtbase._o_asinh
+@ cdecl _o_asinhf(float) ucrtbase._o_asinhf
+@ cdecl _o_asinhl(double) ucrtbase._o_asinhl
+@ cdecl _o_atan(double) ucrtbase._o_atan
+@ cdecl _o_atan2(double double) ucrtbase._o_atan2
+@ cdecl -arch=!i386 _o_atan2f(float float) ucrtbase._o_atan2f
+@ cdecl -arch=!i386 _o_atanf(float) ucrtbase._o_atanf
+@ cdecl _o_atanh(double) ucrtbase._o_atanh
+@ cdecl _o_atanhf(float) ucrtbase._o_atanhf
+@ cdecl _o_atanhl(double) ucrtbase._o_atanhl
 @ cdecl _o_atof(str) ucrtbase._o_atof
 @ cdecl _o_atoi(str) ucrtbase._o_atoi
-@ stub _o_atol
-@ stub _o_atoll
-@ stub _o_bsearch
-@ stub _o_bsearch_s
-@ stub _o_btowc
+@ cdecl _o_atol(str) ucrtbase._o_atol
+@ cdecl -ret64 _o_atoll(str) ucrtbase._o_atoll
+@ cdecl _o_bsearch(ptr ptr long long ptr) ucrtbase._o_bsearch
+@ cdecl _o_bsearch_s(ptr ptr long long ptr ptr) ucrtbase._o_bsearch_s
+@ cdecl _o_btowc(long) ucrtbase._o_btowc
 @ cdecl _o_calloc(long long) ucrtbase._o_calloc
-@ stub _o_cbrt
-@ stub _o_cbrtf
+@ cdecl _o_cbrt(double) ucrtbase._o_cbrt
+@ cdecl _o_cbrtf(float) ucrtbase._o_cbrtf
 @ cdecl _o_ceil(double) ucrtbase._o_ceil
-@ stub _o_ceilf
-@ stub _o_clearerr
-@ stub _o_clearerr_s
-@ stub _o_cos
-@ stub _o_cosf
-@ stub _o_cosh
-@ stub _o_coshf
-@ stub _o_erf
-@ stub _o_erfc
-@ stub _o_erfcf
-@ stub _o_erfcl
-@ stub _o_erff
-@ stub _o_erfl
+@ cdecl -arch=!i386 _o_ceilf(float) ucrtbase._o_ceilf
+@ cdecl _o_clearerr(ptr) ucrtbase._o_clearerr
+@ cdecl _o_clearerr_s(ptr) ucrtbase._o_clearerr_s
+@ cdecl _o_cos(double) ucrtbase._o_cos
+@ cdecl -arch=!i386 _o_cosf(float) ucrtbase._o_cosf
+@ cdecl _o_cosh(double) ucrtbase._o_cosh
+@ cdecl -arch=!i386 _o_coshf(float) ucrtbase._o_coshf
+@ cdecl _o_erf(double) ucrtbase._o_erf
+@ cdecl _o_erfc(double) ucrtbase._o_erfc
+@ cdecl _o_erfcf(float) ucrtbase._o_erfcf
+@ cdecl _o_erfcl(double) ucrtbase._o_erfcl
+@ cdecl _o_erff(float) ucrtbase._o_erff
+@ cdecl _o_erfl(double) ucrtbase._o_erfl
 @ cdecl _o_exit(long) ucrtbase._o_exit
-@ stub _o_exp
-@ stub _o_exp2
-@ stub _o_exp2f
-@ stub _o_exp2l
-@ stub _o_expf
-@ stub _o_fabs
-@ stub _o_fclose
-@ stub _o_feof
-@ stub _o_ferror
-@ stub _o_fflush
-@ stub _o_fgetc
-@ stub _o_fgetpos
-@ stub _o_fgets
-@ stub _o_fgetwc
-@ stub _o_fgetws
+@ cdecl _o_exp(double) ucrtbase._o_exp
+@ cdecl _o_exp2(double) ucrtbase._o_exp2
+@ cdecl _o_exp2f(float) ucrtbase._o_exp2f
+@ cdecl _o_exp2l(double) ucrtbase._o_exp2l
+@ cdecl -arch=!i386 _o_expf(float) ucrtbase._o_expf
+@ cdecl _o_fabs(double) ucrtbase._o_fabs
+@ cdecl _o_fclose(ptr) ucrtbase._o_fclose
+@ cdecl _o_feof(ptr) ucrtbase._o_feof
+@ cdecl _o_ferror(ptr) ucrtbase._o_ferror
+@ cdecl _o_fflush(ptr) ucrtbase._o_fflush
+@ cdecl _o_fgetc(ptr) ucrtbase._o_fgetc
+@ cdecl _o_fgetpos(ptr ptr) ucrtbase._o_fgetpos
+@ cdecl _o_fgets(ptr long ptr) ucrtbase._o_fgets
+@ cdecl _o_fgetwc(ptr) ucrtbase._o_fgetwc
+@ cdecl _o_fgetws(ptr long ptr) ucrtbase._o_fgetws
 @ cdecl _o_floor(double) ucrtbase._o_floor
-@ stub _o_floorf
-@ stub _o_fma
-@ stub _o_fmaf
-@ stub _o_fmal
+@ cdecl -arch=!i386 _o_floorf(float) ucrtbase._o_floorf
+@ cdecl _o_fma(double double double) ucrtbase._o_fma
+@ cdecl _o_fmaf(float float float) ucrtbase._o_fmaf
+@ cdecl _o_fmal(double double double) ucrtbase._o_fmal
 @ cdecl _o_fmod(double double) ucrtbase._o_fmod
 @ cdecl -arch=!i386 _o_fmodf(float float) ucrtbase._o_fmodf
-@ stub _o_fopen
-@ stub _o_fopen_s
-@ stub _o_fputc
-@ stub _o_fputs
-@ stub _o_fputwc
-@ stub _o_fputws
-@ stub _o_fread
-@ stub _o_fread_s
+@ cdecl _o_fopen(str str) ucrtbase._o_fopen
+@ cdecl _o_fopen_s(ptr str str) ucrtbase._o_fopen_s
+@ cdecl _o_fputc(long ptr) ucrtbase._o_fputc
+@ cdecl _o_fputs(str ptr) ucrtbase._o_fputs
+@ cdecl _o_fputwc(long ptr) ucrtbase._o_fputwc
+@ cdecl _o_fputws(wstr ptr) ucrtbase._o_fputws
+@ cdecl _o_fread(ptr long long ptr) ucrtbase._o_fread
+@ cdecl _o_fread_s(ptr long long long ptr) ucrtbase._o_fread_s
 @ cdecl _o_free(ptr) ucrtbase._o_free
-@ stub _o_freopen
-@ stub _o_freopen_s
-@ stub _o_frexp
-@ stub _o_fseek
-@ stub _o_fsetpos
-@ stub _o_ftell
-@ stub _o_fwrite
-@ stub _o_getc
-@ stub _o_getchar
+@ cdecl _o_freopen(str str ptr) ucrtbase._o_freopen
+@ cdecl _o_freopen_s(ptr str str ptr) ucrtbase._o_freopen_s
+@ cdecl _o_frexp(double ptr) ucrtbase._o_frexp
+@ cdecl _o_fseek(ptr long long) ucrtbase._o_fseek
+@ cdecl _o_fsetpos(ptr ptr) ucrtbase._o_fsetpos
+@ cdecl _o_ftell(ptr) ucrtbase._o_ftell
+@ cdecl _o_fwrite(ptr long long ptr) ucrtbase._o_fwrite
+@ cdecl _o_getc(ptr) ucrtbase._o_getc
+@ cdecl _o_getchar() ucrtbase._o_getchar
 @ cdecl _o_getenv(str) ucrtbase._o_getenv
-@ stub _o_getenv_s
-@ stub _o_gets
-@ stub _o_gets_s
-@ stub _o_getwc
-@ stub _o_getwchar
-@ stub _o_hypot
-@ stub _o_is_wctype
+@ cdecl _o_getenv_s(ptr ptr long str) ucrtbase._o_getenv_s
+@ cdecl _o_gets(str) ucrtbase._o_gets
+@ cdecl _o_gets_s(ptr long) ucrtbase._o_gets_s
+@ cdecl _o_getwc(ptr) ucrtbase._o_getwc
+@ cdecl _o_getwchar() ucrtbase._o_getwchar
+@ cdecl _o_hypot(double double) ucrtbase._o_hypot
+@ cdecl _o_is_wctype(long long) ucrtbase._o_is_wctype
 @ cdecl _o_isalnum(long) ucrtbase._o_isalnum
 @ cdecl _o_isalpha(long) ucrtbase._o_isalpha
-@ stub _o_isblank
-@ stub _o_iscntrl
+@ cdecl _o_isblank(long) ucrtbase._o_isblank
+@ cdecl _o_iscntrl(long) ucrtbase._o_iscntrl
 @ cdecl _o_isdigit(long) ucrtbase._o_isdigit
-@ stub _o_isgraph
-@ stub _o_isleadbyte
-@ stub _o_islower
+@ cdecl _o_isgraph(long) ucrtbase._o_isgraph
+@ cdecl _o_isleadbyte(long) ucrtbase._o_isleadbyte
+@ cdecl _o_islower(long) ucrtbase._o_islower
 @ cdecl _o_isprint(long) ucrtbase._o_isprint
-@ stub _o_ispunct
-@ stub _o_isspace
-@ stub _o_isupper
-@ stub _o_iswalnum
-@ stub _o_iswalpha
-@ stub _o_iswascii
-@ stub _o_iswblank
-@ stub _o_iswcntrl
-@ stub _o_iswctype
-@ stub _o_iswdigit
-@ stub _o_iswgraph
-@ stub _o_iswlower
-@ stub _o_iswprint
-@ stub _o_iswpunct
-@ stub _o_iswspace
-@ stub _o_iswupper
-@ stub _o_iswxdigit
+@ cdecl _o_ispunct(long) ucrtbase._o_ispunct
+@ cdecl _o_isspace(long) ucrtbase._o_isspace
+@ cdecl _o_isupper(long) ucrtbase._o_isupper
+@ cdecl _o_iswalnum(long) ucrtbase._o_iswalnum
+@ cdecl _o_iswalpha(long) ucrtbase._o_iswalpha
+@ cdecl _o_iswascii(long) ucrtbase._o_iswascii
+@ cdecl _o_iswblank(long) ucrtbase._o_iswblank
+@ cdecl _o_iswcntrl(long) ucrtbase._o_iswcntrl
+@ cdecl _o_iswctype(long long) ucrtbase._o_iswctype
+@ cdecl _o_iswdigit(long) ucrtbase._o_iswdigit
+@ cdecl _o_iswgraph(long) ucrtbase._o_iswgraph
+@ cdecl _o_iswlower(long) ucrtbase._o_iswlower
+@ cdecl _o_iswprint(long) ucrtbase._o_iswprint
+@ cdecl _o_iswpunct(long) ucrtbase._o_iswpunct
+@ cdecl _o_iswspace(long) ucrtbase._o_iswspace
+@ cdecl _o_iswupper(long) ucrtbase._o_iswupper
+@ cdecl _o_iswxdigit(long) ucrtbase._o_iswxdigit
 @ cdecl _o_isxdigit(long) ucrtbase._o_isxdigit
-@ stub _o_ldexp
-@ stub _o_lgamma
-@ stub _o_lgammaf
-@ stub _o_lgammal
-@ stub _o_llrint
-@ stub _o_llrintf
-@ stub _o_llrintl
-@ stub _o_llround
-@ stub _o_llroundf
-@ stub _o_llroundl
-@ stub _o_localeconv
+@ cdecl _o_ldexp(double long) ucrtbase._o_ldexp
+@ cdecl _o_lgamma(double) ucrtbase._o_lgamma
+@ cdecl _o_lgammaf(float) ucrtbase._o_lgammaf
+@ cdecl _o_lgammal(double) ucrtbase._o_lgammal
+@ cdecl -ret64 _o_llrint(double) ucrtbase._o_llrint
+@ cdecl -ret64 _o_llrintf(float) ucrtbase._o_llrintf
+@ cdecl -ret64 _o_llrintl(double) ucrtbase._o_llrintl
+@ cdecl -ret64 _o_llround(double) ucrtbase._o_llround
+@ cdecl -ret64 _o_llroundf(float) ucrtbase._o_llroundf
+@ cdecl -ret64 _o_llroundl(double) ucrtbase._o_llroundl
+@ cdecl _o_localeconv() ucrtbase._o_localeconv
 @ cdecl _o_log(double) ucrtbase._o_log
-@ stub _o_log10
-@ stub _o_log10f
-@ stub _o_log1p
-@ stub _o_log1pf
-@ stub _o_log1pl
-@ stub _o_log2
-@ stub _o_log2f
-@ stub _o_log2l
-@ stub _o_logb
-@ stub _o_logbf
-@ stub _o_logbl
-@ stub _o_logf
-@ stub _o_lrint
-@ stub _o_lrintf
-@ stub _o_lrintl
-@ stub _o_lround
-@ stub _o_lroundf
-@ stub _o_lroundl
+@ cdecl _o_log10(double) ucrtbase._o_log10
+@ cdecl -arch=!i386 _o_log10f(float) ucrtbase._o_log10f
+@ cdecl _o_log1p(double) ucrtbase._o_log1p
+@ cdecl _o_log1pf(float) ucrtbase._o_log1pf
+@ cdecl _o_log1pl(double) ucrtbase._o_log1pl
+@ cdecl _o_log2(double) ucrtbase._o_log2
+@ cdecl _o_log2f(float) ucrtbase._o_log2f
+@ cdecl _o_log2l(double) ucrtbase._o_log2l
+@ cdecl _o_logb(double) ucrtbase._o_logb
+@ cdecl _o_logbf(float) ucrtbase._o_logbf
+@ cdecl _o_logbl(double) ucrtbase._o_logbl
+@ cdecl -arch=!i386 _o_logf(float) ucrtbase._o_logf
+@ cdecl _o_lrint(double) ucrtbase._o_lrint
+@ cdecl _o_lrintf(float) ucrtbase._o_lrintf
+@ cdecl _o_lrintl(double) ucrtbase._o_lrintl
+@ cdecl _o_lround(double) ucrtbase._o_lround
+@ cdecl _o_lroundf(float) ucrtbase._o_lroundf
+@ cdecl _o_lroundl(double) ucrtbase._o_lroundl
 @ cdecl _o_malloc(long) ucrtbase._o_malloc
-@ stub _o_mblen
-@ stub _o_mbrlen
+@ cdecl _o_mblen(ptr long) ucrtbase._o_mblen
+@ cdecl _o_mbrlen(ptr long ptr) ucrtbase._o_mbrlen
 @ stub _o_mbrtoc16
 @ stub _o_mbrtoc32
-@ stub _o_mbrtowc
-@ stub _o_mbsrtowcs
-@ stub _o_mbsrtowcs_s
-@ stub _o_mbstowcs
-@ stub _o_mbstowcs_s
-@ stub _o_mbtowc
-@ stub _o_memcpy_s
+@ cdecl _o_mbrtowc(ptr str long ptr) ucrtbase._o_mbrtowc
+@ cdecl _o_mbsrtowcs(ptr ptr long ptr) ucrtbase._o_mbsrtowcs
+@ cdecl _o_mbsrtowcs_s(ptr ptr long ptr long ptr) ucrtbase._o_mbsrtowcs_s
+@ cdecl _o_mbstowcs(ptr str long) ucrtbase._o_mbstowcs
+@ cdecl _o_mbstowcs_s(ptr ptr long str long) ucrtbase._o_mbstowcs_s
+@ cdecl _o_mbtowc(ptr str long) ucrtbase._o_mbtowc
+@ cdecl _o_memcpy_s(ptr long ptr long) ucrtbase._o_memcpy_s
 @ cdecl _o_modf(double ptr) ucrtbase._o_modf
-@ stub _o_modff
-@ stub _o_nan
-@ stub _o_nanf
-@ stub _o_nanl
-@ stub _o_nearbyint
-@ stub _o_nearbyintf
-@ stub _o_nearbyintl
-@ stub _o_nextafter
-@ stub _o_nextafterf
-@ stub _o_nextafterl
-@ stub _o_nexttoward
-@ stub _o_nexttowardf
-@ stub _o_nexttowardl
+@ cdecl -arch=!i386 _o_modff(float ptr) ucrtbase._o_modff
+@ cdecl _o_nan(str) ucrtbase._o_nan
+@ cdecl _o_nanf(str) ucrtbase._o_nanf
+@ cdecl _o_nanl(str) ucrtbase._o_nanl
+@ cdecl _o_nearbyint(double) ucrtbase._o_nearbyint
+@ cdecl _o_nearbyintf(float) ucrtbase._o_nearbyintf
+@ cdecl _o_nearbyintl(double) ucrtbase._o_nearbyintl
+@ cdecl _o_nextafter(double double) ucrtbase._o_nextafter
+@ cdecl _o_nextafterf(float float) ucrtbase._o_nextafterf
+@ cdecl _o_nextafterl(double double) ucrtbase._o_nextafterl
+@ cdecl _o_nexttoward(double double) ucrtbase._o_nexttoward
+@ cdecl _o_nexttowardf(float double) ucrtbase._o_nexttowardf
+@ cdecl _o_nexttowardl(double double) ucrtbase._o_nexttowardl
 @ cdecl _o_pow(double double) ucrtbase._o_pow
-@ stub _o_powf
-@ stub _o_putc
-@ stub _o_putchar
-@ stub _o_puts
-@ stub _o_putwc
-@ stub _o_putwchar
+@ cdecl -arch=!i386 _o_powf(float float) ucrtbase._o_powf
+@ cdecl _o_putc(long ptr) ucrtbase._o_putc
+@ cdecl _o_putchar(long) ucrtbase._o_putchar
+@ cdecl _o_puts(str) ucrtbase._o_puts
+@ cdecl _o_putwc(long ptr) ucrtbase._o_putwc
+@ cdecl _o_putwchar(long) ucrtbase._o_putwchar
 @ cdecl _o_qsort(ptr long long ptr) ucrtbase._o_qsort
-@ stub _o_qsort_s
-@ stub _o_raise
-@ stub _o_rand
-@ stub _o_rand_s
+@ cdecl _o_qsort_s(ptr long long ptr ptr) ucrtbase._o_qsort_s
+@ cdecl _o_raise(long) ucrtbase._o_raise
+@ cdecl _o_rand() ucrtbase._o_rand
+@ cdecl _o_rand_s(ptr) ucrtbase._o_rand_s
 @ cdecl _o_realloc(ptr long) ucrtbase._o_realloc
-@ stub _o_remainder
-@ stub _o_remainderf
-@ stub _o_remainderl
-@ stub _o_remove
-@ stub _o_remquo
-@ stub _o_remquof
-@ stub _o_remquol
-@ stub _o_rename
-@ stub _o_rewind
-@ stub _o_rint
-@ stub _o_rintf
-@ stub _o_rintl
-@ stub _o_round
-@ stub _o_roundf
-@ stub _o_roundl
-@ stub _o_scalbln
-@ stub _o_scalblnf
-@ stub _o_scalblnl
-@ stub _o_scalbn
-@ stub _o_scalbnf
-@ stub _o_scalbnl
-@ stub _o_set_terminate
-@ stub _o_setbuf
+@ cdecl _o_remainder(double double) ucrtbase._o_remainder
+@ cdecl _o_remainderf(float float) ucrtbase._o_remainderf
+@ cdecl _o_remainderl(double double) ucrtbase._o_remainderl
+@ cdecl _o_remove(str) ucrtbase._o_remove
+@ cdecl _o_remquo(double double ptr) ucrtbase._o_remquo
+@ cdecl _o_remquof(float float ptr) ucrtbase._o_remquof
+@ cdecl _o_remquol(double double ptr) ucrtbase._o_remquol
+@ cdecl _o_rename(str str) ucrtbase._o_rename
+@ cdecl _o_rewind(ptr) ucrtbase._o_rewind
+@ cdecl _o_rint(double) ucrtbase._o_rint
+@ cdecl _o_rintf(float) ucrtbase._o_rintf
+@ cdecl _o_rintl(double) ucrtbase._o_rintl
+@ cdecl _o_round(double) ucrtbase._o_round
+@ cdecl _o_roundf(float) ucrtbase._o_roundf
+@ cdecl _o_roundl(double) ucrtbase._o_roundl
+@ cdecl _o_scalbln(double long) ucrtbase._o_scalbln
+@ cdecl _o_scalblnf(float long) ucrtbase._o_scalblnf
+@ cdecl _o_scalblnl(double long) ucrtbase._o_scalblnl
+@ cdecl _o_scalbn(double long) ucrtbase._o_scalbn
+@ cdecl _o_scalbnf(float long) ucrtbase._o_scalbnf
+@ cdecl _o_scalbnl(double long) ucrtbase._o_scalbnl
+@ cdecl _o_set_terminate(ptr) ucrtbase._o_set_terminate
+@ cdecl _o_setbuf(ptr ptr) ucrtbase._o_setbuf
 @ cdecl _o_setlocale(long str) ucrtbase._o_setlocale
-@ stub _o_setvbuf
-@ stub _o_sin
-@ stub _o_sinf
-@ stub _o_sinh
-@ stub _o_sinhf
+@ cdecl _o_setvbuf(ptr str long long) ucrtbase._o_setvbuf
+@ cdecl _o_sin(double) ucrtbase._o_sin
+@ cdecl -arch=!i386 _o_sinf(float) ucrtbase._o_sinf
+@ cdecl _o_sinh(double) ucrtbase._o_sinh
+@ cdecl -arch=!i386 _o_sinhf(float) ucrtbase._o_sinhf
 @ cdecl _o_sqrt(double) ucrtbase._o_sqrt
-@ stub _o_sqrtf
-@ stub _o_srand
+@ cdecl -arch=!i386 _o_sqrtf(float) ucrtbase._o_sqrtf
+@ cdecl _o_srand(long) ucrtbase._o_srand
 @ cdecl _o_strcat_s(str long str) ucrtbase._o_strcat_s
-@ stub _o_strcoll
-@ stub _o_strcpy_s
-@ stub _o_strerror
-@ stub _o_strerror_s
-@ stub _o_strftime
-@ stub _o_strncat_s
-@ stub _o_strncpy_s
-@ stub _o_strtod
-@ stub _o_strtof
-@ stub _o_strtok
-@ stub _o_strtok_s
-@ stub _o_strtol
+@ cdecl _o_strcoll(str str) ucrtbase._o_strcoll
+@ cdecl _o_strcpy_s(ptr long str) ucrtbase._o_strcpy_s
+@ cdecl _o_strerror(long) ucrtbase._o_strerror
+@ cdecl _o_strerror_s(ptr long long) ucrtbase._o_strerror_s
+@ cdecl _o_strftime(ptr long str ptr) ucrtbase._o_strftime
+@ cdecl _o_strncat_s(str long str long) ucrtbase._o_strncat_s
+@ cdecl _o_strncpy_s(ptr long str long) ucrtbase._o_strncpy_s
+@ cdecl _o_strtod(str ptr) ucrtbase._o_strtod
+@ cdecl _o_strtof(str ptr) ucrtbase._o_strtof
+@ cdecl _o_strtok(str str) ucrtbase._o_strtok
+@ cdecl _o_strtok_s(ptr str ptr) ucrtbase._o_strtok_s
+@ cdecl _o_strtol(str ptr long) ucrtbase._o_strtol
 @ stub _o_strtold
-@ stub _o_strtoll
+@ cdecl -ret64 _o_strtoll(str ptr long) ucrtbase._o_strtoll
 @ cdecl _o_strtoul(str ptr long) ucrtbase._o_strtoul
-@ stub _o_strtoull
-@ stub _o_system
-@ stub _o_tan
-@ stub _o_tanf
-@ stub _o_tanh
-@ stub _o_tanhf
-@ stub _o_terminate
-@ stub _o_tgamma
-@ stub _o_tgammaf
-@ stub _o_tgammal
-@ stub _o_tmpfile_s
-@ stub _o_tmpnam_s
+@ cdecl -ret64 _o_strtoull(str ptr long) ucrtbase._o_strtoull
+@ cdecl _o_system(str) ucrtbase._o_system
+@ cdecl _o_tan(double) ucrtbase._o_tan
+@ cdecl -arch=!i386 _o_tanf(float) ucrtbase._o_tanf
+@ cdecl _o_tanh(double) ucrtbase._o_tanh
+@ cdecl -arch=!i386 _o_tanhf(float) ucrtbase._o_tanhf
+@ cdecl _o_terminate() ucrtbase._o_terminate
+@ cdecl _o_tgamma(double) ucrtbase._o_tgamma
+@ cdecl _o_tgammaf(float) ucrtbase._o_tgammaf
+@ cdecl _o_tgammal(double) ucrtbase._o_tgammal
+@ cdecl _o_tmpfile_s(ptr) ucrtbase._o_tmpfile_s
+@ cdecl _o_tmpnam_s(ptr long) ucrtbase._o_tmpnam_s
 @ cdecl _o_tolower(long) ucrtbase._o_tolower
 @ cdecl _o_toupper(long) ucrtbase._o_toupper
-@ stub _o_towlower
-@ stub _o_towupper
-@ stub _o_ungetc
-@ stub _o_ungetwc
-@ stub _o_wcrtomb
-@ stub _o_wcrtomb_s
-@ stub _o_wcscat_s
-@ stub _o_wcscoll
-@ stub _o_wcscpy
-@ stub _o_wcscpy_s
-@ stub _o_wcsftime
-@ stub _o_wcsncat_s
-@ stub _o_wcsncpy_s
-@ stub _o_wcsrtombs
-@ stub _o_wcsrtombs_s
-@ stub _o_wcstod
-@ stub _o_wcstof
-@ stub _o_wcstok
-@ stub _o_wcstok_s
-@ stub _o_wcstol
+@ cdecl _o_towlower(long) ucrtbase._o_towlower
+@ cdecl _o_towupper(long) ucrtbase._o_towupper
+@ cdecl _o_ungetc(long ptr) ucrtbase._o_ungetc
+@ cdecl _o_ungetwc(long ptr) ucrtbase._o_ungetwc
+@ cdecl _o_wcrtomb(ptr long ptr) ucrtbase._o_wcrtomb
+@ cdecl _o_wcrtomb_s(ptr ptr long long ptr) ucrtbase._o_wcrtomb_s
+@ cdecl _o_wcscat_s(wstr long wstr) ucrtbase._o_wcscat_s
+@ cdecl _o_wcscoll(wstr wstr) ucrtbase._o_wcscoll
+@ cdecl _o_wcscpy(ptr wstr) ucrtbase._o_wcscpy
+@ cdecl _o_wcscpy_s(ptr long wstr) ucrtbase._o_wcscpy_s
+@ cdecl _o_wcsftime(ptr long wstr ptr) ucrtbase._o_wcsftime
+@ cdecl _o_wcsncat_s(wstr long wstr long) ucrtbase._o_wcsncat_s
+@ cdecl _o_wcsncpy_s(ptr long wstr long) ucrtbase._o_wcsncpy_s
+@ cdecl _o_wcsrtombs(ptr ptr long ptr) ucrtbase._o_wcsrtombs
+@ cdecl _o_wcsrtombs_s(ptr ptr long ptr long ptr) ucrtbase._o_wcsrtombs_s
+@ cdecl _o_wcstod(wstr ptr) ucrtbase._o_wcstod
+@ cdecl _o_wcstof(ptr ptr) ucrtbase._o_wcstof
+@ cdecl _o_wcstok(wstr wstr ptr) ucrtbase._o_wcstok
+@ cdecl _o_wcstok_s(ptr wstr ptr) ucrtbase._o_wcstok_s
+@ cdecl _o_wcstol(wstr ptr long) ucrtbase._o_wcstol
 @ stub _o_wcstold
-@ stub _o_wcstoll
-@ stub _o_wcstombs
-@ stub _o_wcstombs_s
-@ stub _o_wcstoul
-@ stub _o_wcstoull
-@ stub _o_wctob
-@ stub _o_wctomb
-@ stub _o_wctomb_s
-@ stub _o_wmemcpy_s
-@ stub _o_wmemmove_s
+@ cdecl -ret64 _o_wcstoll(wstr ptr long) ucrtbase._o_wcstoll
+@ cdecl _o_wcstombs(ptr ptr long) ucrtbase._o_wcstombs
+@ cdecl _o_wcstombs_s(ptr ptr long wstr long) ucrtbase._o_wcstombs_s
+@ cdecl _o_wcstoul(wstr ptr long) ucrtbase._o_wcstoul
+@ cdecl -ret64 _o_wcstoull(wstr ptr long) ucrtbase._o_wcstoull
+@ cdecl _o_wctob(long) ucrtbase._o_wctob
+@ cdecl _o_wctomb(ptr long) ucrtbase._o_wctomb
+@ cdecl _o_wctomb_s(ptr ptr long long) ucrtbase._o_wctomb_s
+@ cdecl _o_wmemcpy_s(ptr long ptr long) ucrtbase._o_wmemcpy_s
+@ cdecl _o_wmemmove_s(ptr long ptr long) ucrtbase._o_wmemmove_s
 @ cdecl _purecall() ucrtbase._purecall
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr) ucrtbase._seh_longjmp_unwind
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr) ucrtbase._seh_longjmp_unwind4
