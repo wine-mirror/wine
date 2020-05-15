@@ -708,61 +708,43 @@ static HRESULT WINAPI sample_grabber_stream_timer_callback_GetParameters(IMFAsyn
     return E_NOTIMPL;
 }
 
-static struct scheduled_item *stream_get_next_item(struct sample_grabber *grabber)
-{
-    struct scheduled_item *item = NULL;
-    struct list *e;
-
-    if ((e = list_head(&grabber->items)))
-        item = LIST_ENTRY(e, struct scheduled_item, entry);
-
-    return item;
-}
-
 static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct sample_grabber *grabber = impl_from_IMFAsyncCallback(iface);
-    struct scheduled_item *item;
-    BOOL sample_delivered;
+    BOOL sample_reported = FALSE, sample_delivered = FALSE;
+    struct scheduled_item *item, *item2;
     HRESULT hr;
 
     EnterCriticalSection(&grabber->cs);
 
-    /* Report and schedule next. */
-    if (!grabber->is_shut_down && (item = stream_get_next_item(grabber)))
+    if (!grabber->is_shut_down)
     {
-        while (item)
+        LIST_FOR_EACH_ENTRY_SAFE(item, item2, &grabber->items, struct scheduled_item, entry)
         {
-            switch (item->type)
+            if (item->type == ITEM_TYPE_MARKER)
             {
-                case ITEM_TYPE_SAMPLE:
+                sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
+                stream_release_pending_item(item);
+            }
+            else if (item->type == ITEM_TYPE_SAMPLE)
+            {
+                if (!sample_reported)
+                {
                     if (FAILED(hr = sample_grabber_report_sample(grabber, item->u.sample, &sample_delivered)))
                         WARN("Failed to report a sample, hr %#x.\n", hr);
                     stream_release_pending_item(item);
-
-                    /* Schedule next sample, skipping markers. */
-                    LIST_FOR_EACH_ENTRY(item, &grabber->items, struct scheduled_item, entry)
-                    {
-                        if (item->type == ITEM_TYPE_SAMPLE)
-                        {
-                            if (FAILED(hr = stream_schedule_sample(grabber, item)))
-                                WARN("Failed to schedule a sample, hr %#x.\n", hr);
-                            break;
-                        }
-                    }
-
-                    if (sample_delivered)
-                        sample_grabber_stream_request_sample(grabber);
-
-                    item = NULL;
+                    sample_reported = TRUE;
+                }
+                else
+                {
+                    if (FAILED(hr = stream_schedule_sample(grabber, item)))
+                        WARN("Failed to schedule a sample, hr %#x.\n", hr);
                     break;
-                case ITEM_TYPE_MARKER:
-                    sample_grabber_stream_report_marker(grabber, &item->u.marker.context, S_OK);
-                    stream_release_pending_item(item);
-                    item = stream_get_next_item(grabber);
-                    break;
+                }
             }
         }
+        if (sample_delivered)
+            sample_grabber_stream_request_sample(grabber);
     }
 
     LeaveCriticalSection(&grabber->cs);
