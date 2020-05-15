@@ -27,11 +27,50 @@
 #include "initguid.h"
 #include "wine/fil_data.h"
 
+static IFilterMapper3 *create_mapper(void)
+{
+    IFilterMapper3 *ret;
+    HRESULT hr;
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper3, (void **)&ret);
+    ok(hr == S_OK, "Failed to create filter mapper, hr %#x.\n", hr);
+    return ret;
+}
+
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
     IUnknown_AddRef(unknown);
     return IUnknown_Release(unknown);
+}
+
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    IFilterMapper3 *mapper = create_mapper();
+
+    check_interface(mapper, &IID_IAMFilterData, TRUE);
+    check_interface(mapper, &IID_IFilterMapper, TRUE);
+    check_interface(mapper, &IID_IFilterMapper2, TRUE);
+    check_interface(mapper, &IID_IFilterMapper3, TRUE);
+    check_interface(mapper, &IID_IUnknown, TRUE);
+
+    check_interface(mapper, &IID_IFilterGraph, FALSE);
+
+    IFilterMapper3_Release(mapper);
 }
 
 /* Helper function, checks if filter with given name was enumerated. */
@@ -624,6 +663,7 @@ START_TEST(filtermapper)
 {
     CoInitialize(NULL);
 
+    test_interfaces();
     test_fm2_enummatchingfilters();
     test_legacy_filter_registration();
     test_ifiltermapper_from_filtergraph();
