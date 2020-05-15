@@ -407,12 +407,11 @@ static HRESULT WINAPI sample_grabber_stream_ProcessSample(IMFStreamSink *iface, 
     if (!sample)
         return S_OK;
 
-    if (grabber->is_shut_down)
-        return MF_E_STREAMSINK_REMOVED;
-
     EnterCriticalSection(&grabber->cs);
 
-    if (grabber->state == SINK_STATE_RUNNING)
+    if (grabber->is_shut_down)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else if (grabber->state == SINK_STATE_RUNNING)
     {
         hr = IMFSample_GetSampleTime(sample, &sampletime);
 
@@ -479,12 +478,11 @@ static HRESULT WINAPI sample_grabber_stream_PlaceMarker(IMFStreamSink *iface, MF
 
     TRACE("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
 
-    if (grabber->is_shut_down)
-        return MF_E_STREAMSINK_REMOVED;
-
     EnterCriticalSection(&grabber->cs);
 
-    if (grabber->state == SINK_STATE_RUNNING)
+    if (grabber->is_shut_down)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else if (grabber->state == SINK_STATE_RUNNING)
         hr = stream_place_marker(grabber, marker_type, context_value);
 
     LeaveCriticalSection(&grabber->cs);
