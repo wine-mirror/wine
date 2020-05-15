@@ -1459,7 +1459,7 @@ static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain
 }
 
 HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_state *state,
-        struct wined3d_output *output, const struct wined3d_display_mode *mode)
+        const struct wined3d_display_mode *mode)
 {
     struct wined3d_display_mode actual_mode;
     struct wined3d_output_desc output_desc;
@@ -1468,7 +1468,7 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
     HWND window;
     HRESULT hr;
 
-    TRACE("state %p, output %p, mode %p.\n", state, output, mode);
+    TRACE("state %p, mode %p.\n", state, mode);
 
     wined3d_mutex_lock();
 
@@ -1492,7 +1492,8 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
         if (state->desc.flags & WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH)
         {
             actual_mode = *mode;
-            if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, output, &actual_mode)))
+            if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, state->desc.output,
+                    &actual_mode)))
             {
                 ERR("Failed to set display mode, hr %#x.\n", hr);
                 wined3d_mutex_unlock();
@@ -1500,7 +1501,7 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
             }
         }
 
-        if (FAILED(hr = wined3d_output_get_desc(output, &output_desc)))
+        if (FAILED(hr = wined3d_output_get_desc(state->desc.output, &output_desc)))
         {
             ERR("Failed to get output description, hr %#x.\n", hr);
             wined3d_mutex_unlock();

@@ -159,23 +159,16 @@ HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window, IDXGIOut
     return DXGI_ERROR_NOT_FOUND;
 }
 
-static HRESULT dxgi_swapchain_resize_target(IDXGISwapChain1 *swapchain,
-        struct wined3d_swapchain_state *state, const DXGI_MODE_DESC *target_mode_desc)
+static HRESULT dxgi_swapchain_resize_target(struct wined3d_swapchain_state *state,
+        const DXGI_MODE_DESC *target_mode_desc)
 {
     struct wined3d_display_mode mode;
-    struct dxgi_output *dxgi_output;
-    IDXGIOutput *output;
-    HRESULT hr;
 
     if (!target_mode_desc)
     {
         WARN("Invalid pointer.\n");
         return DXGI_ERROR_INVALID_CALL;
     }
-
-    if (FAILED(hr = IDXGISwapChain1_GetContainingOutput(swapchain, &output)))
-        return hr;
-    dxgi_output = unsafe_impl_from_IDXGIOutput(output);
 
     TRACE("Mode: %s.\n", debug_dxgi_mode(target_mode_desc));
 
@@ -184,9 +177,7 @@ static HRESULT dxgi_swapchain_resize_target(IDXGISwapChain1 *swapchain,
 
     wined3d_display_mode_from_dxgi(&mode, target_mode_desc);
 
-    hr = wined3d_swapchain_state_resize_target(state, dxgi_output->wined3d_output, &mode);
-    IDXGIOutput_Release(output);
-    return hr;
+    return wined3d_swapchain_state_resize_target(state, &mode);
 }
 
 static HWND d3d11_swapchain_get_hwnd(struct d3d11_swapchain *swapchain)
@@ -571,7 +562,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeTarget(IDXGISwapChain1 *i
 
     state = wined3d_swapchain_get_state(swapchain->wined3d_swapchain);
 
-    return dxgi_swapchain_resize_target(iface, state, target_mode_desc);
+    return dxgi_swapchain_resize_target(state, target_mode_desc);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapChain1 *iface, IDXGIOutput **output)
@@ -2399,7 +2390,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_ResizeTarget(IDXGISwapChain3 *i
 
     TRACE("iface %p, target_mode_desc %p.\n", iface, target_mode_desc);
 
-    return dxgi_swapchain_resize_target((IDXGISwapChain1 *)iface, swapchain->state, target_mode_desc);
+    return dxgi_swapchain_resize_target(swapchain->state, target_mode_desc);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetContainingOutput(IDXGISwapChain3 *iface,
