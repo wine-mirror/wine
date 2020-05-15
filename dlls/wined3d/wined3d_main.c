@@ -605,8 +605,7 @@ static LRESULT CALLBACK wined3d_hook_proc(int code, WPARAM wparam, LPARAM lparam
                 break;
             }
             swapchain_desc.output = output;
-            wined3d_swapchain_state_set_fullscreen(&swapchain->state, &swapchain_desc, output,
-                    NULL);
+            wined3d_swapchain_state_set_fullscreen(&swapchain->state, &swapchain_desc, NULL);
 
             wined3d_wndproc_mutex_unlock();
 

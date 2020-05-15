@@ -5223,7 +5223,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_swapchain *swapchain;
     struct wined3d_view_desc view_desc;
     BOOL backbuffer_resized, windowed;
-    struct wined3d_output *output;
     HRESULT hr = WINED3D_OK;
     unsigned int i;
 
@@ -5317,12 +5316,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             || swapchain_desc->backbuffer_height != current_desc->backbuffer_height;
     windowed = current_desc->windowed;
 
-    if (!(output = wined3d_swapchain_get_output(swapchain)))
-    {
-        ERR("Failed to get output from swapchain %p.\n", swapchain);
-        return E_FAIL;
-    }
-
     if (!swapchain_desc->windowed != !windowed || swapchain->reapply_mode
             || mode || (!swapchain_desc->windowed && backbuffer_resized))
     {
@@ -5341,7 +5334,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
 
         if (FAILED(hr = wined3d_swapchain_state_set_fullscreen(&swapchain->state,
-                swapchain_desc, output, mode)))
+                swapchain_desc, mode)))
             return hr;
 
         /* Switch from fullscreen to windowed. */
@@ -5358,7 +5351,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
          * the window back into the right position. Some applications
          * (Battlefield 2, Guild Wars) move it and then call Reset() to clean
          * up their mess. Guild Wars also loses the device during that. */
-        if (FAILED(hr = wined3d_output_get_desc(output, &output_desc)))
+        if (FAILED(hr = wined3d_output_get_desc(swapchain_desc->output, &output_desc)))
         {
             ERR("Failed to get output description, hr %#x.\n", hr);
             return hr;

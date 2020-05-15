@@ -160,16 +160,12 @@ HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window, IDXGIOut
 }
 
 static HRESULT dxgi_swapchain_set_fullscreen_state(struct wined3d_swapchain_state *state,
-        const struct wined3d_swapchain_desc *swapchain_desc, IDXGIOutput *output)
+        const struct wined3d_swapchain_desc *swapchain_desc)
 {
-    struct dxgi_output *dxgi_output;
     HRESULT hr;
 
-    dxgi_output = unsafe_impl_from_IDXGIOutput(output);
-
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_state_set_fullscreen(state, swapchain_desc,
-            dxgi_output->wined3d_output, NULL);
+    hr = wined3d_swapchain_state_set_fullscreen(state, swapchain_desc, NULL);
     wined3d_mutex_unlock();
 
     return hr;
@@ -441,7 +437,7 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &swapchain_desc);
     swapchain_desc.output = dxgi_output->wined3d_output;
     swapchain_desc.windowed = !fullscreen;
-    hr = dxgi_swapchain_set_fullscreen_state(state, &swapchain_desc, target);
+    hr = dxgi_swapchain_set_fullscreen_state(state, &swapchain_desc);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -897,7 +893,7 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
             goto cleanup;
         }
 
-        if (FAILED(hr = dxgi_swapchain_set_fullscreen_state(state, desc, swapchain->target)))
+        if (FAILED(hr = dxgi_swapchain_set_fullscreen_state(state, desc)))
         {
             WARN("Failed to set fullscreen state, hr %#x.\n", hr);
             IDXGIOutput_Release(swapchain->target);
@@ -2268,7 +2264,7 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
         goto fail;
     wined3d_mutex_lock();
     wined3d_desc.windowed = !fullscreen;
-    hr = dxgi_swapchain_set_fullscreen_state(swapchain->state, &wined3d_desc, target);
+    hr = dxgi_swapchain_set_fullscreen_state(swapchain->state, &wined3d_desc);
     wined3d_mutex_unlock();
     if (FAILED(hr))
         goto fail;
