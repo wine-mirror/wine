@@ -2829,6 +2829,9 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
         if (source->file->flags & FLAG_IDL_HEADER)
             add_install_rule( make, source->name, strmake( "%s.h", obj ),
                               strmake( "d$(includedir)/wine/%s.h", get_include_install_path( obj ) ));
+        if (source->file->flags & FLAG_IDL_TYPELIB)
+            add_install_rule( make, source->name, strmake( "%s.tlb", obj ),
+                              strmake( "d$(includedir)/wine/%s.tlb", get_include_install_path( obj ) ));
     }
     if (!targets.count) return;
 
