@@ -4813,20 +4813,21 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
         if (is_array( arg->declspec.type ) || is_ptr( arg->declspec.type )) align = pointer_size;
         else type_memsize_and_alignment( arg->declspec.type, &align );
 
-        if (align >= pointer_size)
-            fprintf( file, "%s;\n", arg->name );
-        else
-            fprintf( file, "DECLSPEC_ALIGN(%u) %s;\n", pointer_size, arg->name );
+        if (align < pointer_size)
+            fprintf( file, "DECLSPEC_ALIGN(%u) ", pointer_size );
+        fprintf( file, "%s;\n", arg->name );
     }
     if (add_retval && !is_void( retval->declspec.type ))
     {
         print_file(file, 2, "%s", "");
-        write_type_decl( file, &retval->declspec, retval->name );
-        if (is_array( retval->declspec.type ) || is_ptr( retval->declspec.type ) ||
-            type_memsize( retval->declspec.type ) == pointer_size)
-            fprintf( file, ";\n" );
-        else
-            fprintf( file, " DECLSPEC_ALIGN(%u);\n", pointer_size );
+        write_type_left( file, &retval->declspec, NAME_DEFAULT, TRUE, TRUE );
+        if (needs_space_after( retval->declspec.type )) fputc( ' ', file );
+        if (!is_array( retval->declspec.type ) && !is_ptr( retval->declspec.type ) &&
+            type_memsize( retval->declspec.type ) != pointer_size)
+        {
+            fprintf( file, "DECLSPEC_ALIGN(%u) ", pointer_size );
+        }
+        fprintf( file, "%s;\n", retval->name );
     }
     print_file(file, 1, "} %s;\n", var_decl );
     if (needs_packing) print_file( file, 0, "#include <poppack.h>\n" );
