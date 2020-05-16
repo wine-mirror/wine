@@ -4005,7 +4005,7 @@ BOOL WINAPI RSAENH_CPGetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
      * IE6 SP1 asks for it in the 'About' dialog.
      * Returning this BLOB seems to satisfy IE. The marked 0x00 seem 
      * to be 'don't care's. If you know anything more specific about
-     * this provider parameter, please report to wine-devel@winehq.org */
+     * this provider parameter, please contact the Wine developers */
     static const BYTE abWTF[96] = {
         0xb0, 0x25,     0x63,     0x86, 0x9c, 0xab,     0xb6,     0x37, 
         0xe8, 0x82, /**/0x00,/**/ 0x72, 0x06, 0xb2, /**/0x00,/**/ 0x3b, 
