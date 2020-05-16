@@ -402,7 +402,7 @@ static HRESULT create_decoder(const void *image_data, UINT image_size, IWICBitma
     return hr;
 }
 
-static HRESULT get_pixelformat_info(const GUID *format, UINT *bpp, UINT *channels, BOOL *trasparency)
+static HRESULT get_pixelformat_info(const GUID *format, UINT *bpp, UINT *channels, BOOL *transparency)
 {
     HRESULT hr;
     IWICComponentInfo *info;
@@ -415,7 +415,7 @@ static HRESULT get_pixelformat_info(const GUID *format, UINT *bpp, UINT *channel
         hr = IWICComponentInfo_QueryInterface(info, &IID_IWICPixelFormatInfo2, (void **)&formatinfo);
         if (hr == S_OK)
         {
-            hr = IWICPixelFormatInfo2_SupportsTransparency(formatinfo, trasparency);
+            hr = IWICPixelFormatInfo2_SupportsTransparency(formatinfo, transparency);
             ok(hr == S_OK, "SupportsTransparency error %#x\n", hr);
             IWICPixelFormatInfo2_Release(formatinfo);
         }
@@ -1093,7 +1093,7 @@ static void test_color_formats(void)
     IWICBitmapFrameDecode *frame;
     GUID format;
     UINT count, i, bpp, channels, ret;
-    BOOL trasparency;
+    BOOL transparency;
     struct IFD_entry *tag, *tag_photo = NULL, *tag_bps = NULL, *tag_samples = NULL, *tag_colormap = NULL;
     struct IFD_entry *tag_width = NULL, *tag_height = NULL, *tag_extra_samples = NULL;
     short *bps;
@@ -1236,12 +1236,12 @@ static void test_color_formats(void)
             i, td[i].photometric, td[i].samples, td[i].extra_samples, td[i].bps,
             wine_dbgstr_guid(td[i].data->format), wine_dbgstr_guid(&format));
 
-        trasparency = (td[i].photometric == 2 && td[i].samples == 4); /* for XP */
-        hr = get_pixelformat_info(&format, &bpp, &channels, &trasparency);
+        transparency = (td[i].photometric == 2 && td[i].samples == 4); /* for XP */
+        hr = get_pixelformat_info(&format, &bpp, &channels, &transparency);
         ok(hr == S_OK, "%u: get_pixelformat_bpp error %#x\n", i, hr);
         ok(bpp == td[i].data->bpp, "%u: expected %u, got %u\n", i, td[i].data->bpp, bpp);
         ok(channels == td[i].samples, "%u: expected %u, got %u\n", i, td[i].samples, channels);
-        ok(trasparency == (td[i].photometric == 2 && td[i].samples == 4), "%u: got %u\n", i, trasparency);
+        ok(transparency == (td[i].photometric == 2 && td[i].samples == 4), "%u: got %u\n", i, transparency);
 
         memset(pixels, 0, sizeof(pixels));
         hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, width_bytes(td[i].data->width, bpp), sizeof(pixels), pixels);

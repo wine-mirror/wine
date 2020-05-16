@@ -234,16 +234,16 @@ static void test_dds_decoder_initialize(void)
 static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
 {
     HRESULT hr;
-    IWICPalette *pallette = NULL;
+    IWICPalette *palette = NULL;
     IWICMetadataQueryReader *metadata_reader = NULL;
     IWICBitmapSource *preview = NULL, *thumnail = NULL;
     IWICColorContext *color_context = NULL;
     UINT count;
 
-    hr = IWICImagingFactory_CreatePalette(factory, &pallette);
+    hr = IWICImagingFactory_CreatePalette(factory, &palette);
     ok (hr == S_OK, "CreatePalette failed, hr=%x\n", hr);
     if (hr == S_OK) {
-        hr = IWICBitmapDecoder_CopyPalette(decoder, pallette);
+        hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
         ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Expected hr=WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
         hr = IWICBitmapDecoder_CopyPalette(decoder, NULL);
         ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Expected hr=WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
@@ -269,7 +269,7 @@ static void test_dds_decoder_global_properties(IWICBitmapDecoder *decoder)
     hr = IWICBitmapDecoder_GetThumbnail(decoder, NULL);
     ok (hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "Expected hr=WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
 
-    if (pallette) IWICPalette_Release(pallette);
+    if (palette) IWICPalette_Release(palette);
     if (metadata_reader) IWICMetadataQueryReader_Release(metadata_reader);
     if (preview) IWICBitmapSource_Release(preview);
     if (color_context) IWICColorContext_Release(color_context);
