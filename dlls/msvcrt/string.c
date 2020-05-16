@@ -864,7 +864,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         if(b.data[BNUM_IDX(b.b)]) break;
     }
 
-    /* move decimal point to limb boundry */
+    /* move decimal point to limb boundary */
     if(limb_digits==dp && b.b==b.e-1)
         return make_double(sign, 0, b.data[BNUM_IDX(b.e-1)], ROUND_ZERO, err);
     off = (dp - limb_digits) % LIMB_DIGITS;
@@ -893,7 +893,7 @@ double parse_double(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
     }
 
     /* Check if fractional part is non-zero */
-    /* Caution: it's only correct because bnum_to_mant returns more then 53 bits */
+    /* Caution: it's only correct because bnum_to_mant returns more than 53 bits */
     for(i=b.e-3; i>=b.b; i--) {
         if (!b.data[BNUM_IDX(b.b)]) continue;
         round = ROUND_DOWN;
