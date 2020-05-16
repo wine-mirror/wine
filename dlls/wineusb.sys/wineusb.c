@@ -641,7 +641,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
             transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
             ret = libusb_submit_transfer(transfer);
             if (ret < 0)
-                ERR("Failed to submit GET_DESRIPTOR transfer: %s\n", libusb_strerror(ret));
+                ERR("Failed to submit GET_DESCRIPTOR transfer: %s\n", libusb_strerror(ret));
 
             return STATUS_PENDING;
         }
