@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_UTSNAME_H
+#include <sys/utsname.h>
+#endif
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # define LoadResource MacLoadResource
@@ -98,6 +101,48 @@ static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int d
         if (entry->u2.s2.DataIsDirectory) fixup_so_resources( ptr, root, delta );
         else fixup_rva_dwords( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
     }
+}
+
+
+/*********************************************************************
+ *                  get_version
+ */
+const char * CDECL get_version(void)
+{
+    return PACKAGE_VERSION;
+}
+
+
+/*********************************************************************
+ *                  get_build_id
+ */
+const char * CDECL get_build_id(void)
+{
+    extern const char wine_build[];
+    return wine_build;
+}
+
+
+/*********************************************************************
+ *                  get_host_version
+ */
+void CDECL get_host_version( const char **sysname, const char **release )
+{
+#ifdef HAVE_SYS_UTSNAME_H
+    static struct utsname buf;
+    static BOOL init_done;
+
+    if (!init_done)
+    {
+        uname( &buf );
+        init_done = TRUE;
+    }
+    if (sysname) *sysname = buf.sysname;
+    if (release) *release = buf.release;
+#else
+    if (sysname) *sysname = "";
+    if (release) *release = "";
+#endif
 }
 
 
@@ -379,6 +424,9 @@ static HMODULE load_ntdll(void)
  */
 static struct unix_funcs unix_funcs =
 {
+    get_version,
+    get_build_id,
+    get_host_version,
     map_so_dll,
     mmap_add_reserved_area,
     mmap_remove_reserved_area,

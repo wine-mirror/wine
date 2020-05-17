@@ -59,9 +59,17 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
+EXTRA_OBJS = unix/version.o
+
 server_EXTRADEFS = \
 	-DBINDIR=\"${bindir}\" \
 	-DDLLDIR=\"${dlldir}\" \
 	-DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\" \
 	-DDLL_TO_BINDIR=\"`$(MAKEDEP) -R ${dlldir} ${bindir}`\" \
 	-DBIN_TO_DATADIR=\"`$(MAKEDEP) -R ${bindir} ${datadir}/wine`\"
+
+unix/version.c: dummy
+	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-$(PACKAGE_VERSION)") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || (rm -f $@ && exit 1)
+
+dummy:
+.PHONY: dummy

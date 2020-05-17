@@ -1969,7 +1969,10 @@ static void add_generated_sources( struct makefile *make )
     {
         /* default to .c for unknown extra object files */
         if (strendswith( objs.str[i], ".o" ))
-            add_generated_source( make, objs.str[i], replace_extension( objs.str[i], ".o", ".c" ));
+        {
+            file = add_generated_source( make, objs.str[i], replace_extension( objs.str[i], ".o", ".c" ));
+            if (make->module || make->staticlib) file->file->flags |= FLAG_C_UNIX;
+        }
         else if (strendswith( objs.str[i], ".res" ))
             add_generated_source( make, replace_extension( objs.str[i], ".res", ".rc" ), NULL );
         else

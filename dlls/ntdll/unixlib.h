@@ -28,6 +28,11 @@
 
 struct unix_funcs
 {
+    /* environment functions */
+    const char *  (CDECL *get_version)(void);
+    const char *  (CDECL *get_build_id)(void);
+    void          (CDECL *get_host_version)( const char **sysname, const char **release );
+
     /* virtual memory functions */
     NTSTATUS      (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );
     void          (CDECL *mmap_add_reserved_area)( void *addr, SIZE_T size );
