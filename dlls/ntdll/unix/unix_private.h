@@ -31,4 +31,6 @@ int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T s
 
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 
+extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
+
 #endif /* __NTDLL_UNIX_PRIVATE_H */

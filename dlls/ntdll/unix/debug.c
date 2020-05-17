@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -280,9 +284,9 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
 }
 
 /***********************************************************************
- *		debug_init
+ *		dbg_init
  */
-void debug_init(void)
+void CDECL dbg_init(void)
 {
     setbuf( stdout, NULL );
     setbuf( stderr, NULL );

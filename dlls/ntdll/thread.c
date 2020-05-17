@@ -153,6 +153,41 @@ static ULONG_PTR get_image_addr(void)
 
 
 /***********************************************************************
+ *		__wine_dbg_get_channel_flags  (NTDLL.@)
+ *
+ * Get the flags to use for a given channel, possibly setting them too in case of lazy init
+ */
+unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
+{
+    return unix_funcs->dbg_get_channel_flags( channel );
+}
+
+/***********************************************************************
+ *		__wine_dbg_strdup  (NTDLL.@)
+ */
+const char * __cdecl __wine_dbg_strdup( const char *str )
+{
+    return unix_funcs->dbg_strdup( str );
+}
+
+/***********************************************************************
+ *		__wine_dbg_header  (NTDLL.@)
+ */
+int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
+                               const char *function )
+{
+    return unix_funcs->dbg_header( cls, channel, function );
+}
+
+/***********************************************************************
+ *		__wine_dbg_output  (NTDLL.@)
+ */
+int __cdecl __wine_dbg_output( const char *str )
+{
+    return unix_funcs->dbg_output( str );
+}
+
+/***********************************************************************
  *           set_process_name
  *
  * Change the process name in the ps output.
@@ -345,7 +380,7 @@ TEB *thread_init(void)
     thread_data->wait_fd[0] = -1;
     thread_data->wait_fd[1] = -1;
 
-    debug_init();
+    unix_funcs->dbg_init();
     init_paths();
     set_process_name( __wine_main_argc, __wine_main_argv );
 

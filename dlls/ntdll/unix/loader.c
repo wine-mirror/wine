@@ -51,6 +51,9 @@
 #include "winternl.h"
 #include "unix_private.h"
 #include "wine/library.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
 extern void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs );
@@ -319,13 +322,13 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt, HMODULE ntdll_modul
             {
                 int ordinal = IMAGE_ORDINAL( import_list->u1.Ordinal ) - ntdll_exports->Base;
                 thunk_list->u1.Function = find_ordinal_export( ntdll_module, ntdll_exports, ordinal );
-                if (!thunk_list->u1.Function) fprintf( stderr, "ntdll: ordinal %u not found\n", ordinal );
+                if (!thunk_list->u1.Function) ERR( "ordinal %u not found\n", ordinal );
             }
             else  /* import by name */
             {
                 IMAGE_IMPORT_BY_NAME *pe_name = get_rva( nt, import_list->u1.AddressOfData );
                 thunk_list->u1.Function = find_named_export( ntdll_module, ntdll_exports, pe_name );
-                if (!thunk_list->u1.Function) fprintf( stderr, "ntdll: %s not found\n", pe_name->Name );
+                if (!thunk_list->u1.Function) ERR( "%s not found\n", pe_name->Name );
             }
             import_list++;
             thunk_list++;
@@ -348,7 +351,7 @@ static HMODULE load_ntdll(void)
 
     if (!dladdr( load_ntdll, &info ))
     {
-        fprintf( stderr, "cannot get path to ntdll.so\n" );
+        ERR( "cannot get path to ntdll.so\n" );
         exit(1);
     }
     name = malloc( strlen(info.dli_fname) + 5 );
@@ -356,12 +359,12 @@ static HMODULE load_ntdll(void)
     strcpy( name + strlen(info.dli_fname) - 3, ".dll.so" );
     if (!(handle = dlopen( name, RTLD_NOW )))
     {
-        fprintf( stderr, "failed to load %s: %s\n", name, dlerror() );
+        ERR( "failed to load %s: %s\n", name, dlerror() );
         exit(1);
     }
     if (!(nt = dlsym( handle, "__wine_spec_nt_header" )))
     {
-        fprintf( stderr, "NT header not found in %s (too old?)\n", name );
+        ERR( "NT header not found in %s (too old?)\n", name );
         exit(1);
     }
     free( name );
@@ -381,6 +384,11 @@ static struct unix_funcs unix_funcs =
     mmap_remove_reserved_area,
     mmap_is_in_reserved_area,
     mmap_enum_reserved_areas,
+    dbg_init,
+    __wine_dbg_get_channel_flags,
+    __wine_dbg_strdup,
+    __wine_dbg_output,
+    __wine_dbg_header,
 };
 
 

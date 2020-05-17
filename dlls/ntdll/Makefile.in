@@ -13,7 +13,6 @@ C_SRCS = \
 	critsection.c \
 	crypt.c \
 	debugbuffer.c \
-	debugtools.c \
 	directory.c \
 	env.c \
 	error.c \
@@ -51,6 +50,7 @@ C_SRCS = \
 	thread.c \
 	threadpool.c \
 	time.c \
+	unix/debug.c \
 	unix/loader.c \
 	unix/virtual.c \
 	version.c \
