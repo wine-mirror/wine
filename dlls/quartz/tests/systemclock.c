@@ -259,18 +259,15 @@ static void test_advise(void)
     hr = IReferenceClock_AdvisePeriodic(clock, -500 * 10000, 1000 * 10000, (HSEMAPHORE)semaphore, &cookie);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-    hr = IReferenceClock_AdvisePeriodic(clock, current, 500 * 10000, (HSEMAPHORE)semaphore, &cookie);
+    hr = IReferenceClock_AdvisePeriodic(clock, current, 100 * 10000, (HSEMAPHORE)semaphore, &cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!WaitForSingleObject(semaphore, 20), "Semaphore should be signaled.\n");
+    ok(!WaitForSingleObject(semaphore, 50), "Semaphore should be signaled.\n");
     for (i = 0; i < 5; ++i)
-    {
-        ok(WaitForSingleObject(semaphore, 460) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
-        ok(!WaitForSingleObject(semaphore, 60), "Semaphore should be signaled.\n");
-    }
+        ok(!WaitForSingleObject(semaphore, 500), "Semaphore should be signaled.\n");
 
     hr = IReferenceClock_Unadvise(clock, cookie);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(WaitForSingleObject(semaphore, 520) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
+    ok(WaitForSingleObject(semaphore, 200) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
 
     CloseHandle(event);
     CloseHandle(semaphore);
