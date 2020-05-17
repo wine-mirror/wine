@@ -2979,14 +2979,14 @@ static void test_renderless_formats(void)
         .pbFormat = (BYTE *)&vih,
     };
     ALLOCATOR_PROPERTIES req_props = {5, 32 * 16 * 4, 1, 0}, ret_props;
-    IBaseFilter *filter = create_vmr9(VMR9Mode_Renderless);
-    IFilterGraph2 *graph = create_graph();
     IVMRSurfaceAllocatorNotify9 *notify;
     RECT rect = {0, 0, 640, 480};
     struct testfilter source;
     IDirect3DDevice9 *device;
     IMemAllocator *allocator;
+    IFilterGraph2 *graph;
     IMemInputPin *input;
+    IBaseFilter *filter;
     unsigned int i;
     HWND window;
     HRESULT hr;
@@ -3020,13 +3020,17 @@ static void test_renderless_formats(void)
         {&MEDIASUBTYPE_YV12, MAKEFOURCC('Y','V','1','2'), VMR9AllocFlag_OffscreenSurface},
     };
 
-    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
-
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
     window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0,
             rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, NULL, NULL);
     if (!(device = create_device(window)))
-        goto out;
+    {
+        DestroyWindow(window);
+        return;
+    }
+
+    filter = create_vmr9(VMR9Mode_Renderless);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRSurfaceAllocatorNotify9, (void **)&notify);
 
     hr = IVMRSurfaceAllocatorNotify9_SetD3DDevice(notify, device, MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY));
     if (hr == E_NOINTERFACE)
@@ -3042,6 +3046,7 @@ static void test_renderless_formats(void)
     allocator_notify = notify;
 
     testfilter_init(&source);
+    graph = create_graph();
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
