@@ -685,7 +685,7 @@ static void add_reserved_area( void *addr, size_t size )
     }
     /* blow away existing mappings */
     wine_anon_mmap( addr, size, PROT_NONE, MAP_NORESERVE | MAP_FIXED );
-    wine_mmap_add_reserved_area( addr, size );
+    unix_funcs->mmap_add_reserved_area( addr, size );
 }
 
 
@@ -700,7 +700,7 @@ static void remove_reserved_area( void *addr, size_t size )
     struct file_view *view;
 
     TRACE( "removing %p-%p\n", addr, (char *)addr + size );
-    wine_mmap_remove_reserved_area( addr, size, 0 );
+    unix_funcs->mmap_remove_reserved_area( addr, size );
 
     /* unmap areas not covered by an existing view */
     WINE_RB_FOR_EACH_ENTRY( view, &views_tree, struct file_view, entry )
@@ -730,7 +730,7 @@ struct area_boundary
  * in the specified region. If no boundaries are found, result is NULL.
  * The csVirtual section must be held by caller.
  */
-static int get_area_boundary_callback( void *start, size_t size, void *arg )
+static int CDECL get_area_boundary_callback( void *start, SIZE_T size, void *arg )
 {
     struct area_boundary *area = arg;
     void *end = (char *)start + size;
@@ -771,7 +771,7 @@ static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *l
  */
 static inline void unmap_area( void *addr, size_t size )
 {
-    switch (wine_mmap_is_in_reserved_area( addr, size ))
+    switch (unix_funcs->mmap_is_in_reserved_area( addr, size ))
     {
     case -1: /* partially in a reserved area */
     {
@@ -779,7 +779,7 @@ static inline void unmap_area( void *addr, size_t size )
         size_t lower_size;
         area.base = addr;
         area.size = size;
-        wine_mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
+        unix_funcs->mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
         assert( area.boundary );
         lower_size = (char *)area.boundary - (char *)addr;
         unmap_area( addr, lower_size );
@@ -1129,9 +1129,9 @@ struct alloc_area
 /***********************************************************************
  *           alloc_reserved_area_callback
  *
- * Try to map some space inside a reserved area. Callback for wine_mmap_enum_reserved_areas.
+ * Try to map some space inside a reserved area. Callback for mmap_enum_reserved_areas.
  */
-static int alloc_reserved_area_callback( void *start, size_t size, void *arg )
+static int CDECL alloc_reserved_area_callback( void *start, SIZE_T size, void *arg )
 {
     struct alloc_area *alloc = arg;
     void *end = (char *)start + size;
@@ -1175,7 +1175,7 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
 {
     void *ptr;
 
-    switch (wine_mmap_is_in_reserved_area( base, size ))
+    switch (unix_funcs->mmap_is_in_reserved_area( base, size ))
     {
     case -1: /* partially in a reserved area */
     {
@@ -1184,7 +1184,7 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
         size_t lower_size;
         area.base = base;
         area.size = size;
-        wine_mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
+        unix_funcs->mmap_enum_reserved_areas( get_area_boundary_callback, &area, 0 );
         assert( area.boundary );
         lower_size = (char *)area.boundary - (char *)base;
         status = map_fixed_area( base, lower_size, vprot );
@@ -1251,7 +1251,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
         alloc.top_down = top_down;
         alloc.limit = (void*)(get_zero_bits_64_mask( zero_bits_64 ) & (UINT_PTR)user_space_limit);
 
-        if (wine_mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
+        if (unix_funcs->mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
         {
             ptr = alloc.result;
             TRACE( "got mem in reserved area %p-%p\n", ptr, (char *)ptr + size );
@@ -1433,7 +1433,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
     /* check without the first 64K */
 
-    if (wine_mmap_is_in_reserved_area( low_64k, dosmem_size - 0x10000 ) != 1)
+    if (unix_funcs->mmap_is_in_reserved_area( low_64k, dosmem_size - 0x10000 ) != 1)
     {
         addr = wine_anon_mmap( low_64k, dosmem_size - 0x10000, unix_prot, 0 );
         if (addr != low_64k)
@@ -1445,7 +1445,7 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
     /* now try to allocate the low 64K too */
 
-    if (wine_mmap_is_in_reserved_area( NULL, 0x10000 ) != 1)
+    if (unix_funcs->mmap_is_in_reserved_area( NULL, 0x10000 ) != 1)
     {
         addr = wine_anon_mmap( (void *)page_size, 0x10000 - page_size, unix_prot, 0 );
         if (addr == (void *)page_size)
@@ -1922,8 +1922,8 @@ struct alloc_virtual_heap
     size_t size;
 };
 
-/* callback for wine_mmap_enum_reserved_areas to allocate space for the virtual heap */
-static int alloc_virtual_heap( void *base, size_t size, void *arg )
+/* callback for mmap_enum_reserved_areas to allocate space for the virtual heap */
+static int CDECL alloc_virtual_heap( void *base, SIZE_T size, void *arg )
 {
     struct alloc_virtual_heap *alloc = arg;
 
@@ -1985,8 +1985,8 @@ void virtual_init(void)
 #else
     alloc_views.size = view_block_size + (1U << (32 - page_shift));
 #endif
-    if (wine_mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_views, 1 ))
-        wine_mmap_remove_reserved_area( alloc_views.base, alloc_views.size, 0 );
+    if (unix_funcs->mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_views, 1 ))
+        unix_funcs->mmap_remove_reserved_area( alloc_views.base, alloc_views.size );
     else
         alloc_views.base = wine_anon_mmap( NULL, alloc_views.size, PROT_READ | PROT_WRITE, 0 );
 
@@ -1998,7 +1998,7 @@ void virtual_init(void)
 
     /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
     size = (char *)address_space_start - (char *)0x10000;
-    if (size && wine_mmap_is_in_reserved_area( (void*)0x10000, size ) == 1)
+    if (size && unix_funcs->mmap_is_in_reserved_area( (void*)0x10000, size ) == 1)
         wine_anon_mmap( (void *)0x10000, size, PROT_READ | PROT_WRITE, MAP_FIXED );
 }
 
@@ -2701,8 +2701,8 @@ struct free_range
     char *limit;
 };
 
-/* free reserved areas above the limit; callback for wine_mmap_enum_reserved_areas */
-static int free_reserved_memory( void *base, size_t size, void *arg )
+/* free reserved areas above the limit; callback for mmap_enum_reserved_areas */
+static int CDECL free_reserved_memory( void *base, SIZE_T size, void *arg )
 {
     struct free_range *range = arg;
 
@@ -2737,7 +2737,7 @@ void virtual_release_address_space(void)
 
     if (range.limit > range.base)
     {
-        while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
+        while (unix_funcs->mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
 #ifdef __APPLE__
         /* On macOS, we still want to free some of low memory, for OpenGL resources */
         range.base  = (char *)0x40000000;
@@ -2751,7 +2751,7 @@ void virtual_release_address_space(void)
     if (range.base)
     {
         range.limit = (char *)0x7f000000;
-        while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
+        while (unix_funcs->mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
     }
 
     server_leave_uninterrupted_section( &csVirtual, &sigset );
@@ -3087,8 +3087,8 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH NtProtectVirtualMemory( HANDLE process, PVOID 
 }
 
 
-/* retrieve state for a free memory area; callback for wine_mmap_enum_reserved_areas */
-static int get_free_mem_state_callback( void *start, size_t size, void *arg )
+/* retrieve state for a free memory area; callback for mmap_enum_reserved_areas */
+static int CDECL get_free_mem_state_callback( void *start, SIZE_T size, void *arg )
 {
     MEMORY_BASIC_INFORMATION *info = arg;
     void *end = (char *)start + size;
@@ -3202,7 +3202,7 @@ static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
 
     if (!ptr)
     {
-        if (!wine_mmap_enum_reserved_areas( get_free_mem_state_callback, info, 0 ))
+        if (!unix_funcs->mmap_enum_reserved_areas( get_free_mem_state_callback, info, 0 ))
         {
             /* not in a reserved area at all, pretend it's allocated */
 #ifdef __i386__

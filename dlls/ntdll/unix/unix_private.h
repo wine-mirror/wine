@@ -23,6 +23,12 @@
 
 #include "unixlib.h"
 
+void CDECL mmap_add_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
+void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
+int  CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
+int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg), void *arg,
+                                     int top_down ) DECLSPEC_HIDDEN;
+
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */

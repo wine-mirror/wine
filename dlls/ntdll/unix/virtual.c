@@ -44,7 +44,7 @@
 #include "windef.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "unixlib.h"
+#include "unix_private.h"
 #include "wine/library.h"
 
 struct preload_info
@@ -108,7 +108,7 @@ static void reserve_area( void *addr, void *end )
 
             ret = mach_vm_map( mach_task_self(), &alloc_address, hole_size, 0, VM_FLAGS_FIXED,
                                MEMORY_OBJECT_NULL, 0, 0, PROT_NONE, VM_PROT_ALL, VM_INHERIT_COPY );
-            if (!ret) wine_mmap_add_reserved_area( (void*)hole_address, hole_size );
+            if (!ret) mmap_add_reserved_area( (void*)hole_address, hole_size );
             else if (ret == KERN_NO_SPACE)
             {
                 /* something filled (part of) the hole before we could.
@@ -129,7 +129,7 @@ static void reserve_area( void *addr, void *end )
     ptr = mmap( addr, size, PROT_NONE, flags, -1, 0 );
     if (ptr == addr)
     {
-        wine_mmap_add_reserved_area( addr, size );
+        mmap_add_reserved_area( addr, size );
         return;
     }
     if (ptr != (void *)-1) munmap( ptr, size );
@@ -200,6 +200,40 @@ static void mmap_init( const struct preload_info *preload_info )
 #endif
 }
 
+void CDECL mmap_add_reserved_area( void *addr, SIZE_T size )
+{
+    wine_mmap_add_reserved_area( addr, size );
+}
+
+void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size )
+{
+    wine_mmap_remove_reserved_area( addr, size, 0 );
+}
+
+int CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size )
+{
+    return wine_mmap_is_in_reserved_area( addr, size );
+}
+
+struct enum_data
+{
+    int (CDECL *enum_func)( void *base, SIZE_T size, void *arg );
+    void *arg;
+};
+
+static int enum_wrapper( void *base, size_t size, void *arg )
+{
+    struct enum_data *data = arg;
+    return data->enum_func( base, size, data->arg );
+}
+
+int CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
+                                    void *arg, int top_down )
+{
+    struct enum_data data = { enum_func, arg };
+    return wine_mmap_enum_reserved_areas( enum_wrapper, &data, top_down );
+}
+
 void virtual_init(void)
 {
     const struct preload_info **preload_info = dlsym( RTLD_DEFAULT, "wine_main_preload_info" );
@@ -207,7 +241,7 @@ void virtual_init(void)
 
     if (preload_info && *preload_info)
         for (i = 0; (*preload_info)[i].size; i++)
-            wine_mmap_add_reserved_area( (*preload_info)[i].addr, (*preload_info)[i].size );
+            mmap_add_reserved_area( (*preload_info)[i].addr, (*preload_info)[i].size );
 
     mmap_init( preload_info ? *preload_info : NULL );
 }

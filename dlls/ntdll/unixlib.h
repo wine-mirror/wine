@@ -22,11 +22,17 @@
 #define __NTDLL_UNIXLIB_H
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 1
+#define NTDLL_UNIXLIB_VERSION 2
 
 struct unix_funcs
 {
-    NTSTATUS (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );
+    /* virtual memory functions */
+    NTSTATUS      (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );
+    void          (CDECL *mmap_add_reserved_area)( void *addr, SIZE_T size );
+    void          (CDECL *mmap_remove_reserved_area)( void *addr, SIZE_T size );
+    int           (CDECL *mmap_is_in_reserved_area)( void *addr, SIZE_T size );
+    int           (CDECL *mmap_enum_reserved_areas)( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
+                                                     void *arg, int top_down );
 };
 
 #endif /* __NTDLL_UNIXLIB_H */

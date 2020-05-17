@@ -377,6 +377,10 @@ static HMODULE load_ntdll(void)
 static struct unix_funcs unix_funcs =
 {
     map_so_dll,
+    mmap_add_reserved_area,
+    mmap_remove_reserved_area,
+    mmap_is_in_reserved_area,
+    mmap_enum_reserved_areas,
 };
 
 
@@ -396,11 +400,11 @@ static void *apple_wine_thread( void *arg )
 /***********************************************************************
  *           apple_alloc_thread_stack
  *
- * Callback for wine_mmap_enum_reserved_areas to allocate space for
+ * Callback for mmap_enum_reserved_areas to allocate space for
  * the secondary thread's stack.
  */
 #ifndef _WIN64
-static int apple_alloc_thread_stack( void *base, size_t size, void *arg )
+static int CDECL apple_alloc_thread_stack( void *base, size_t size, void *arg )
 {
     struct apple_stack_info *info = arg;
 
@@ -441,9 +445,9 @@ static void apple_create_wine_thread( void *arg )
          * fails, just let it go wherever.  It'll be a waste of space, but we
          * can go on. */
         if (!pthread_attr_getstacksize( &attr, &info.desired_size ) &&
-            wine_mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
+            mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
         {
-            wine_mmap_remove_reserved_area( info.stack, info.desired_size, 0 );
+            mmap_remove_reserved_area( info.stack, info.desired_size, 0 );
             pthread_attr_setstackaddr( &attr, (char*)info.stack + info.desired_size );
         }
 #endif
