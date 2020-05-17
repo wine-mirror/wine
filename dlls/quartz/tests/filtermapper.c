@@ -668,11 +668,8 @@ static void test_aggregation(void)
 static void test_dmo(void)
 {
     DMO_PARTIAL_MEDIATYPE mt = {MEDIATYPE_Audio, MEDIASUBTYPE_PCM};
-    IEnumRegFilters *enumerator1;
     IEnumMoniker *enumerator;
     IFilterMapper3 *mapper;
-    IFilterMapper *mapper1;
-    REGFILTER *regfilter;
     IMoniker *moniker;
     WCHAR *name;
     HRESULT hr;
@@ -688,8 +685,6 @@ static void test_dmo(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     mapper = create_mapper();
-    IFilterMapper3_QueryInterface(mapper, &IID_IFilterMapper, (void **)&mapper1);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterMapper3_EnumMatchingFilters(mapper, &enumerator, 0, FALSE, 0,
             FALSE, 0, NULL, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
@@ -710,20 +705,8 @@ static void test_dmo(void)
     IEnumMoniker_Release(enumerator);
     ok(found, "DMO should be enumerated.\n");
 
-    /* DMOs lack a CLSID property and are therefore not enumerated by IFilterMapper. */
+    /* DMOs are enumerated by IFilterMapper in Windows 7 and higher. */
 
-    hr = IFilterMapper_EnumMatchingFilters(mapper1, &enumerator1, 0, FALSE,
-            GUID_NULL, GUID_NULL, FALSE, FALSE, GUID_NULL, GUID_NULL);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    while (IEnumRegFilters_Next(enumerator1, 1, &regfilter, NULL) == S_OK)
-    {
-        ok(!IsEqualGUID(&regfilter->Clsid, &testclsid), "DMO should not be enumerated.\n");
-        ok(wcscmp(regfilter->Name, L"dmo test"), "DMO should not be enumerated.\n");
-    }
-    IEnumRegFilters_Release(enumerator1);
-
-    IFilterMapper_Release(mapper1);
     ref = IFilterMapper3_Release(mapper);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 
