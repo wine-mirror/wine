@@ -279,6 +279,14 @@ int main( int argc, char *argv[] )
     int i;
     void *handle;
 
+    if ((handle = load_ntdll( argv[0] )))
+    {
+        void (*init_func)(int, char **, char **) = dlsym( handle, "__wine_main" );
+        if (init_func) init_func( argc, argv, environ );
+        fprintf( stderr, "wine: __wine_main function not found in ntdll.so\n" );
+        exit(1);
+    }
+
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
     {
         static char noexec[] = "WINELOADERNOEXEC=1";
@@ -292,14 +300,6 @@ int main( int argc, char *argv[] )
             fprintf( stderr, "wine: could not exec the wine loader\n" );
             exit(1);
         }
-    }
-
-    if ((handle = load_ntdll( argv[0] )))
-    {
-        void (*init_func)(int, char **, char **) = dlsym( handle, "__wine_main" );
-        if (init_func) init_func( argc, argv, environ );
-        fprintf( stderr, "wine: __wine_main function not found in ntdll.so\n" );
-        exit(1);
     }
 
     if (wine_main_preload_info)
