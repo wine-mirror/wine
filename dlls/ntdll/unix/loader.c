@@ -528,6 +528,13 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     __wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
 }
 
+
+static int add_area( void *base, size_t size, void *arg )
+{
+    mmap_add_reserved_area( base, size );
+    return 0;
+}
+
 /***********************************************************************
  *           __wine_init_unix_lib
  *
@@ -540,6 +547,7 @@ NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void 
     map_so_dll( nt, module );
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
     *(struct unix_funcs **)ptr_out = &unix_funcs;
+    wine_mmap_enum_reserved_areas( add_area, NULL, 0 );
     return STATUS_SUCCESS;
 }
 

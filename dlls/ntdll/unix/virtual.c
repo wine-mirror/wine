@@ -45,13 +45,22 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "unix_private.h"
-#include "wine/library.h"
+#include "wine/list.h"
 
 struct preload_info
 {
     void  *addr;
     size_t size;
 };
+
+struct reserved_area
+{
+    struct list entry;
+    void       *base;
+    size_t      size;
+};
+
+static struct list reserved_areas = LIST_INIT(reserved_areas);
 
 static const unsigned int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
 
@@ -202,36 +211,153 @@ static void mmap_init( const struct preload_info *preload_info )
 
 void CDECL mmap_add_reserved_area( void *addr, SIZE_T size )
 {
-    wine_mmap_add_reserved_area( addr, size );
+    struct reserved_area *area;
+    struct list *ptr;
+
+    if (!((char *)addr + size)) size--;  /* avoid wrap-around */
+
+    LIST_FOR_EACH( ptr, &reserved_areas )
+    {
+        area = LIST_ENTRY( ptr, struct reserved_area, entry );
+        if (area->base > addr)
+        {
+            /* try to merge with the next one */
+            if ((char *)addr + size == (char *)area->base)
+            {
+                area->base = addr;
+                area->size += size;
+                return;
+            }
+            break;
+        }
+        else if ((char *)area->base + area->size == (char *)addr)
+        {
+            /* merge with the previous one */
+            area->size += size;
+
+            /* try to merge with the next one too */
+            if ((ptr = list_next( &reserved_areas, ptr )))
+            {
+                struct reserved_area *next = LIST_ENTRY( ptr, struct reserved_area, entry );
+                if ((char *)addr + size == (char *)next->base)
+                {
+                    area->size += next->size;
+                    list_remove( &next->entry );
+                    free( next );
+                }
+            }
+            return;
+        }
+    }
+
+    if ((area = malloc( sizeof(*area) )))
+    {
+        area->base = addr;
+        area->size = size;
+        list_add_before( ptr, &area->entry );
+    }
 }
 
 void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size )
 {
-    wine_mmap_remove_reserved_area( addr, size, 0 );
+    struct reserved_area *area;
+    struct list *ptr;
+
+    if (!((char *)addr + size)) size--;  /* avoid wrap-around */
+
+    ptr = list_head( &reserved_areas );
+    /* find the first area covering address */
+    while (ptr)
+    {
+        area = LIST_ENTRY( ptr, struct reserved_area, entry );
+        if ((char *)area->base >= (char *)addr + size) break;  /* outside the range */
+        if ((char *)area->base + area->size > (char *)addr)  /* overlaps range */
+        {
+            if (area->base >= addr)
+            {
+                if ((char *)area->base + area->size > (char *)addr + size)
+                {
+                    /* range overlaps beginning of area only -> shrink area */
+                    area->size -= (char *)addr + size - (char *)area->base;
+                    area->base = (char *)addr + size;
+                    break;
+                }
+                else
+                {
+                    /* range contains the whole area -> remove area completely */
+                    ptr = list_next( &reserved_areas, ptr );
+                    list_remove( &area->entry );
+                    free( area );
+                    continue;
+                }
+            }
+            else
+            {
+                if ((char *)area->base + area->size > (char *)addr + size)
+                {
+                    /* range is in the middle of area -> split area in two */
+                    struct reserved_area *new_area = malloc( sizeof(*new_area) );
+                    if (new_area)
+                    {
+                        new_area->base = (char *)addr + size;
+                        new_area->size = (char *)area->base + area->size - (char *)new_area->base;
+                        list_add_after( ptr, &new_area->entry );
+                    }
+                    else size = (char *)area->base + area->size - (char *)addr;
+                    area->size = (char *)addr - (char *)area->base;
+                    break;
+                }
+                else
+                {
+                    /* range overlaps end of area only -> shrink area */
+                    area->size = (char *)addr - (char *)area->base;
+                }
+            }
+        }
+        ptr = list_next( &reserved_areas, ptr );
+    }
 }
 
 int CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size )
 {
-    return wine_mmap_is_in_reserved_area( addr, size );
-}
+    struct reserved_area *area;
+    struct list *ptr;
 
-struct enum_data
-{
-    int (CDECL *enum_func)( void *base, SIZE_T size, void *arg );
-    void *arg;
-};
-
-static int enum_wrapper( void *base, size_t size, void *arg )
-{
-    struct enum_data *data = arg;
-    return data->enum_func( base, size, data->arg );
+    LIST_FOR_EACH( ptr, &reserved_areas )
+    {
+        area = LIST_ENTRY( ptr, struct reserved_area, entry );
+        if (area->base > addr) break;
+        if ((char *)area->base + area->size <= (char *)addr) continue;
+        /* area must contain block completely */
+        if ((char *)area->base + area->size < (char *)addr + size) return -1;
+        return 1;
+    }
+    return 0;
 }
 
 int CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
                                     void *arg, int top_down )
 {
-    struct enum_data data = { enum_func, arg };
-    return wine_mmap_enum_reserved_areas( enum_wrapper, &data, top_down );
+    int ret = 0;
+    struct list *ptr;
+
+    if (top_down)
+    {
+        for (ptr = reserved_areas.prev; ptr != &reserved_areas; ptr = ptr->prev)
+        {
+            struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
+            if ((ret = enum_func( area->base, area->size, arg ))) break;
+        }
+    }
+    else
+    {
+        for (ptr = reserved_areas.next; ptr != &reserved_areas; ptr = ptr->next)
+        {
+            struct reserved_area *area = LIST_ENTRY( ptr, struct reserved_area, entry );
+            if ((ret = enum_func( area->base, area->size, arg ))) break;
+        }
+    }
+    return ret;
 }
 
 void virtual_init(void)
