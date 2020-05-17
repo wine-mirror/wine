@@ -1317,6 +1317,35 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
     }
 }
 
+#ifdef __FreeBSD__
+/* The PT_LOAD segments are sorted in increasing order, and the first
+ * starts at the beginning of the ELF file. By parsing the file, we can
+ * find that first PT_LOAD segment, from which we can find the base
+ * address it wanted, and knowing mapbase where the binary was actually
+ * loaded, use them to work out the relocbase offset. */
+static BOOL get_relocbase(caddr_t mapbase, caddr_t *relocbase)
+{
+    Elf_Half i;
+#ifdef _WIN64
+    const Elf64_Ehdr *elf_header = (Elf64_Ehdr*) mapbase;
+#else
+    const Elf32_Ehdr *elf_header = (Elf32_Ehdr*) mapbase;
+#endif
+    const Elf_Phdr *prog_header = (const Elf_Phdr *)(mapbase + elf_header->e_phoff);
+
+    for (i = 0; i < elf_header->e_phnum; i++)
+    {
+         if (prog_header->p_type == PT_LOAD)
+         {
+             caddr_t desired_base = (caddr_t)((prog_header->p_vaddr / prog_header->p_align) * prog_header->p_align);
+             *relocbase = (caddr_t) (mapbase - desired_base);
+             return TRUE;
+         }
+         prog_header++;
+    }
+    return FALSE;
+}
+#endif
 
 /*************************************************************************
  *              call_constructors
@@ -1339,14 +1368,17 @@ static void call_constructors( WINE_MODREF *wm )
     if (dlinfo( wm->so_handle, RTLD_DI_LINKMAP, &map ) == -1) return;
     for (dyn = map->l_ld; dyn->d_tag; dyn++)
     {
-#define GET_PTR(base,ptr)  ((ptr) > (base) ? (ptr) : (base) + (ptr))
+        caddr_t relocbase = (caddr_t)map->l_addr;
+
+#ifdef __FreeBSD__  /* FreeBSD doesn't relocate l_addr */
+        if (!get_relocbase(map->l_addr, &relocbase)) return;
+#endif
         switch (dyn->d_tag)
         {
-        case 0x60009990: init_array = (void *)GET_PTR( map->l_addr, dyn->d_un.d_ptr ); break;
+        case 0x60009990: init_array = (void *)(relocbase + dyn->d_un.d_val); break;
         case 0x60009991: init_arraysz = dyn->d_un.d_val; break;
-        case 0x60009992: init_func = (void *)GET_PTR( map->l_addr, dyn->d_un.d_ptr ); break;
+        case 0x60009992: init_func = (void *)(relocbase + dyn->d_un.d_val); break;
         }
-#undef GET_PTR
     }
 
     TRACE( "%s: got init_func %p init_array %p %lu\n", debugstr_us( &wm->ldr.BaseDllName ),
