@@ -3034,7 +3034,14 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             if (Length >= len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
-                else *((DWORD *)SystemInformation) = 64;
+                else
+                {
+#ifdef __arm__
+                    *((DWORD *)SystemInformation) = 32;
+#else
+                    *((DWORD *)SystemInformation) = 64;
+#endif
+                }
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }

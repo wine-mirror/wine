@@ -2518,7 +2518,11 @@ static void test_query_data_alignment(void)
     status = pNtQuerySystemInformation(SystemRecommendedSharedDataAlignment, &value, sizeof(value), &ReturnLength);
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok(sizeof(value) == ReturnLength, "Inconsistent length %u\n", ReturnLength);
+#ifdef __arm__
+    ok(value == 32, "Expected 32, got %u\n", value);
+#else
     ok(value == 64, "Expected 64, got %u\n", value);
+#endif
 }
 
 static void test_thread_lookup(void)
