@@ -4242,7 +4242,7 @@ static void load_extensions(void)
 }
 
 
-static BOOL init_opengl(void)
+static BOOL CALLBACK init_opengl(INIT_ONCE *init_once, void *context, void **param)
 {
     static BOOL init_done = FALSE;
     unsigned int i;
@@ -4654,13 +4654,15 @@ static struct opengl_funcs opengl_funcs =
  */
 struct opengl_funcs * CDECL macdrv_wine_get_wgl_driver(PHYSDEV dev, UINT version)
 {
+    static INIT_ONCE opengl_init = INIT_ONCE_STATIC_INIT;
+
     if (version != WINE_WGL_DRIVER_VERSION)
     {
         ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_WGL_DRIVER_VERSION);
         return NULL;
     }
 
-    if (!init_opengl()) return (void *)-1;
+    if (!InitOnceExecuteOnce(&opengl_init, init_opengl, NULL, NULL)) return (void *)-1;
 
     return &opengl_funcs;
 }
