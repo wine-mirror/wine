@@ -1324,11 +1324,12 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
 static void call_constructors( WINE_MODREF *wm )
 {
 #ifdef HAVE_DLINFO
-    extern char **__wine_main_environ;
     struct link_map *map;
     void (*init_func)(int, char **, char **) = NULL;
     void (**init_array)(int, char **, char **) = NULL;
     ULONG_PTR i, init_arraysz = 0;
+    int argc;
+    char **argv, **envp;
 #ifdef _WIN64
     const Elf64_Dyn *dyn;
 #else
@@ -1351,11 +1352,12 @@ static void call_constructors( WINE_MODREF *wm )
     TRACE( "%s: got init_func %p init_array %p %lu\n", debugstr_us( &wm->ldr.BaseDllName ),
            init_func, init_array, init_arraysz );
 
-    if (init_func) init_func( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+    unix_funcs->get_main_args( &argc, &argv, &envp );
+
+    if (init_func) init_func( argc, argv, envp );
 
     if (init_array)
-        for (i = 0; i < init_arraysz / sizeof(*init_array); i++)
-            init_array[i]( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+        for (i = 0; i < init_arraysz / sizeof(*init_array); i++) init_array[i]( argc, argv, envp );
 #endif
 }
 

@@ -65,6 +65,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
 extern void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs );
 
+extern int __wine_main_argc;
+extern char **__wine_main_argv;
+extern char **__wine_main_environ;
+
+static int main_argc;
+static char **main_argv;
+static char **main_envp;
+
 static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
 {
     return (BYTE *)nt + addr;
@@ -147,6 +155,19 @@ void CDECL get_host_version( const char **sysname, const char **release )
     if (sysname) *sysname = "";
     if (release) *release = "";
 #endif
+}
+
+
+/*************************************************************************
+ *		get_main_args
+ *
+ * Return the initial arguments.
+ */
+static void CDECL get_main_args( int *argc, char **argv[], char **envp[] )
+{
+    *argc = main_argc;
+    *argv = main_argv;
+    *envp = main_envp;
 }
 
 
@@ -428,6 +449,7 @@ static HMODULE load_ntdll(void)
  */
 static struct unix_funcs unix_funcs =
 {
+    get_main_args,
     get_version,
     get_build_id,
     get_host_version,
@@ -684,9 +706,6 @@ static void check_command_line( int argc, char *argv[] )
  */
 void __wine_main( int argc, char *argv[], char *envp[] )
 {
-    extern int __wine_main_argc;
-    extern char **__wine_main_argv;
-    extern char **__wine_main_environ;
     HMODULE module;
 
     wine_init_argv0_path( argv[0] );
@@ -705,9 +724,9 @@ void __wine_main( int argc, char *argv[], char *envp[] )
         }
     }
 
-    __wine_main_argc = argc;
-    __wine_main_argv = argv;
-    __wine_main_environ = envp;
+    __wine_main_argc = main_argc = argc;
+    __wine_main_argv = main_argv = argv;
+    __wine_main_environ = main_envp = envp;
     virtual_init();
 
     module = load_ntdll();
@@ -733,6 +752,15 @@ static int add_area( void *base, size_t size, void *arg )
 NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void *ptr_out )
 {
     const IMAGE_NT_HEADERS *nt = ptr_in;
+
+#ifdef __APPLE__
+    extern char **__wine_get_main_environment(void);
+    main_envp = __wine_get_main_environment();
+#else
+    main_envp = __wine_main_environ;
+#endif
+    main_argc = __wine_main_argc;
+    main_argv = __wine_main_argv;
 
     map_so_dll( nt, module );
     fixup_ntdll_imports( &__wine_spec_nt_header, module );

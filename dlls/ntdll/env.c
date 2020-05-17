@@ -61,13 +61,6 @@ static inline SIZE_T get_env_length( const WCHAR *env )
     return end + 1 - env;
 }
 
-#ifdef __APPLE__
-extern char **__wine_get_main_environment(void);
-#else
-extern char **__wine_main_environ;
-static char **__wine_get_main_environment(void) { return __wine_main_environ; }
-#endif
-
 
 /***********************************************************************
  *           is_special_env_var
@@ -779,8 +772,6 @@ static void set_library_wargv( char **argv, const UNICODE_STRING *image )
         total -= reslen;
     }
     wargv[argc] = NULL;
-
-    __wine_main_argc = argc;
     __wine_main_wargv = wargv;
 }
 
@@ -1465,6 +1456,10 @@ void init_user_process_params( SIZE_T data_size )
     startup_info_t *info = NULL;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     UNICODE_STRING curdir, dllpath, imagepath, cmdline, title, desktop, shellinfo, runtime;
+    int argc;
+    char **argv, **envp;
+
+    unix_funcs->get_main_args( &argc, &argv, &envp );
 
     if (!data_size)
     {
@@ -1472,13 +1467,13 @@ void init_user_process_params( SIZE_T data_size )
         WCHAR *env, curdir_buffer[MAX_PATH];
 
         NtCurrentTeb()->Peb->ProcessParameters = &initial_params;
-        initial_params.Environment = build_initial_environment( __wine_get_main_environment() );
+        initial_params.Environment = build_initial_environment( envp );
         curdir.Buffer = curdir_buffer;
         curdir.MaximumLength = sizeof(curdir_buffer);
         get_current_directory( &curdir );
         initial_params.CurrentDirectory.DosPath = curdir;
-        get_image_path( __wine_main_argv[0], &initial_params.ImagePathName );
-        set_library_wargv( __wine_main_argv, &initial_params.ImagePathName );
+        get_image_path( argv[0], &initial_params.ImagePathName );
+        set_library_wargv( argv, &initial_params.ImagePathName );
         build_command_line( __wine_main_wargv, &cmdline );
         LdrGetDllPath( initial_params.ImagePathName.Buffer, 0, &load_path, &dummy );
         RtlInitUnicodeString( &dllpath, load_path );
@@ -1566,7 +1561,7 @@ void init_user_process_params( SIZE_T data_size )
         else params->Environment[0] = 0;
     }
 
-    set_library_wargv( __wine_main_argv, NULL );
+    set_library_wargv( argv, NULL );
 
 done:
     RtlFreeHeap( GetProcessHeap(), 0, info );
