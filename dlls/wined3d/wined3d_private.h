@@ -2513,6 +2513,8 @@ extern const struct wined3d_fragment_pipe_ops nvts_fragment_pipeline DECLSPEC_HI
 extern const struct wined3d_fragment_pipe_ops nvrc_fragment_pipeline DECLSPEC_HIDDEN;
 extern const struct wined3d_fragment_pipe_ops glsl_fragment_pipe DECLSPEC_HIDDEN;
 
+const struct wined3d_fragment_pipe_ops *wined3d_spirv_fragment_pipe_init_vk(void) DECLSPEC_HIDDEN;
+
 extern const struct wined3d_vertex_pipe_ops none_vertex_pipe DECLSPEC_HIDDEN;
 extern const struct wined3d_vertex_pipe_ops ffp_vertex_pipe DECLSPEC_HIDDEN;
 extern const struct wined3d_vertex_pipe_ops glsl_vertex_pipe DECLSPEC_HIDDEN;

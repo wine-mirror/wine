@@ -581,3 +581,85 @@ const struct wined3d_vertex_pipe_ops *wined3d_spirv_vertex_pipe_init_vk(void)
 {
     return &spirv_vertex_pipe_vk;
 }
+
+static void spirv_fragment_pipe_vk_fp_enable(const struct wined3d_context *context, BOOL enable)
+{
+    /* Nothing to do. */
+}
+
+static void spirv_fragment_pipe_vk_fp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
+{
+    memset(caps, 0, sizeof(*caps));
+}
+
+static uint32_t spirv_fragment_pipe_vk_fp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return 0;
+}
+
+static void *spirv_fragment_pipe_vk_fp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
+{
+    if (shader_backend != &spirv_shader_backend_vk)
+    {
+        FIXME("SPIR-V fragment pipe without SPIR-V shader backend not implemented.\n");
+        return NULL;
+    }
+
+    return shader_priv;
+}
+
+static void spirv_fragment_pipe_vk_fp_free(struct wined3d_device *device, struct wined3d_context *context)
+{
+    /* Nothing to do. */
+}
+
+static BOOL spirv_fragment_pipe_vk_fp_alloc_context_data(struct wined3d_context *context)
+{
+    return TRUE;
+}
+
+static void spirv_fragment_pipe_vk_fp_free_context_data(struct wined3d_context *context)
+{
+    /* Nothing to do. */
+}
+
+static const struct wined3d_state_entry_template spirv_fragment_pipe_vk_fp_states[] =
+{
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),         {STATE_RENDER(WINED3D_RS_SHADEMODE),         state_nop}},
+    {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),   {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),   state_nop}},
+    {STATE_RENDER(WINED3D_RS_ALPHAREF),          {STATE_RENDER(WINED3D_RS_ALPHAREF),          state_nop}},
+    {STATE_RENDER(WINED3D_RS_ALPHAFUNC),         {STATE_RENDER(WINED3D_RS_ALPHAFUNC),         state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGENABLE),         {STATE_RENDER(WINED3D_RS_FOGENABLE),         state_nop}},
+    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),    state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGCOLOR),          {STATE_RENDER(WINED3D_RS_FOGCOLOR),          state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),      {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),      state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGSTART),          {STATE_RENDER(WINED3D_RS_FOGSTART),          state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGEND),            {STATE_RENDER(WINED3D_RS_FOGEND),            state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGDENSITY),        {STATE_RENDER(WINED3D_RS_FOGDENSITY),        state_nop}},
+    {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),    {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),    state_nop}},
+    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),     {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),     state_nop}},
+    {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),     {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),     state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE), {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE), state_nop}},
+    {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),   {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),   state_nop}},
+    {STATE_POINT_ENABLE,                         {STATE_POINT_ENABLE,                         state_nop}},
+    {STATE_COLOR_KEY,                            {STATE_COLOR_KEY,                            state_nop}},
+    {0}, /* Terminate */
+};
+
+static const struct wined3d_fragment_pipe_ops spirv_fragment_pipe_vk =
+{
+    .fp_enable = spirv_fragment_pipe_vk_fp_enable,
+    .get_caps = spirv_fragment_pipe_vk_fp_get_caps,
+    .get_emul_mask = spirv_fragment_pipe_vk_fp_get_emul_mask,
+    .alloc_private = spirv_fragment_pipe_vk_fp_alloc,
+    .free_private = spirv_fragment_pipe_vk_fp_free,
+    .allocate_context_data = spirv_fragment_pipe_vk_fp_alloc_context_data,
+    .free_context_data = spirv_fragment_pipe_vk_fp_free_context_data,
+    .color_fixup_supported = shader_spirv_color_fixup_supported,
+    .states = spirv_fragment_pipe_vk_fp_states,
+};
+
+const struct wined3d_fragment_pipe_ops *wined3d_spirv_fragment_pipe_init_vk(void)
+{
+    return &spirv_fragment_pipe_vk;
+}
