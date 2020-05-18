@@ -144,6 +144,18 @@ static void test_snprintf (void)
         "Failure to snprintf to NULL\n");
     ok (vsprintf_wrapper (0, NULL, 0, "abcd") == 4,
         "Failure to snprintf to NULL\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, "abcd") == 4,
+        "Failure to snprintf to zero length buffer\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, "abcd") == -1,
+        "Failure to snprintf to zero length buffer\n");
+    ok (vsprintf_wrapper (0, buffer, 0, "abcd") == -1,
+        "Failure to snprintf to zero length buffer\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, "") == 0,
+        "Failure to snprintf a zero length string to a zero length buffer\n");
+    ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, "") == 0,
+        "Failure to snprintf a zero length string to a zero length buffer\n");
+    ok (vsprintf_wrapper (0, buffer, 0, "") == -1,
+        "Failure to snprintf a zero length string to a zero length buffer\n");
 }
 
 static int WINAPIV vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
@@ -163,6 +175,7 @@ static void test_swprintf (void)
     const wchar_t str_justfit[]    = {'j','u','s','t','f','i','t',0};
     const wchar_t str_justfits[]   = {'j','u','s','t','f','i','t','s',0};
     const wchar_t str_muchlonger[] = {'m','u','c','h','l','o','n','g','e','r',0};
+    const wchar_t str_empty[]      = {0};
     const wchar_t *tests[] = {str_short, str_justfit, str_justfits, str_muchlonger};
 
     wchar_t buffer[8];
@@ -225,6 +238,18 @@ static void test_swprintf (void)
         "Failure to swprintf to NULL\n");
     ok (vswprintf_wrapper (0, NULL, 0, str_short) == 5,
         "Failure to swprintf to NULL\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, str_short) == 5,
+        "Failure to swprintf to a zero length buffer\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, str_short) == -1,
+        "Failure to swprintf to a zero length buffer\n");
+    ok (vswprintf_wrapper (0, buffer, 0, str_short) == -1,
+        "Failure to swprintf to a zero length buffer\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, 0, str_empty) == 0,
+        "Failure to swprintf a zero length string to a zero length buffer\n");
+    ok (vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, 0, str_empty) == 0,
+        "Failure to swprintf a zero length string to a zero length buffer\n");
+    ok (vswprintf_wrapper (0, buffer, 0, str_empty) == -1,
+        "Failure to swprintf a zero length string to a zero length buffer\n");
 }
 
 static int WINAPIV vfprintf_wrapper(FILE *file,
