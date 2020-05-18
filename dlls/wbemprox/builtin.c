@@ -243,7 +243,7 @@ static const struct column col_operatingsystem[] =
     { L"OSProductSuite",          CIM_UINT32 },
     { L"OSType",                  CIM_UINT16 },
     { L"Primary",                 CIM_BOOLEAN },
-    { L"SerialNumber",            CIM_STRING },
+    { L"SerialNumber",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ServicePackMajorVersion", CIM_UINT16 },
     { L"ServicePackMinorVersion", CIM_UINT16 },
     { L"SuiteMask",               CIM_UINT32 },
@@ -3360,6 +3360,27 @@ static WCHAR *get_osname( const WCHAR *caption )
     memcpy( ret + len, partitionW, sizeof(partitionW) );
     return ret;
 }
+static WCHAR *get_osserialnumber(void)
+{
+    HKEY hkey = 0;
+    DWORD size, type;
+    WCHAR *ret = NULL;
+
+    if (!RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hkey ) &&
+        !RegQueryValueExW( hkey, L"ProductId", NULL, &type, NULL, &size ) && type == REG_SZ &&
+        (ret = heap_alloc( size + sizeof(WCHAR) )))
+    {
+        size += sizeof(WCHAR);
+        if (RegQueryValueExW( hkey, L"ProductId", NULL, NULL, (BYTE *)ret, &size ))
+        {
+            heap_free( ret );
+            ret = NULL;
+        }
+    }
+    if (hkey) RegCloseKey( hkey );
+    if (!ret) return heap_strdupW( L"12345-OEM-1234567-12345" );
+    return ret;
+}
 static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
 {
     WCHAR *ret = heap_alloc( 33 * sizeof(WCHAR) );
@@ -3414,7 +3435,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
     rec->ostype                 = 18;      /* WINNT */
     rec->primary                = -1;
-    rec->serialnumber           = L"12345-OEM-1234567-12345";
+    rec->serialnumber           = get_osserialnumber();
     rec->servicepackmajor       = ver.wServicePackMajor;
     rec->servicepackminor       = ver.wServicePackMinor;
     rec->suitemask              = 272;     /* Single User + Terminal */
