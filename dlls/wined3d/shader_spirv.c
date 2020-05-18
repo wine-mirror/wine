@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Henri Verbeet for CodeWeavers
+ * Copyright 2019 Józef Kucia for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -503,4 +504,80 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk =
 const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(void)
 {
     return &spirv_shader_backend_vk;
+}
+
+static void spirv_vertex_pipe_vk_vp_enable(const struct wined3d_context *context, BOOL enable)
+{
+    /* Nothing to do. */
+}
+
+static void spirv_vertex_pipe_vk_vp_get_caps(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps)
+{
+    memset(caps, 0, sizeof(*caps));
+}
+
+static uint32_t spirv_vertex_pipe_vk_vp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return 0;
+}
+
+static void *spirv_vertex_pipe_vk_vp_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
+{
+    if (shader_backend != &spirv_shader_backend_vk)
+    {
+        FIXME("SPIR-V vertex pipe without SPIR-V shader backend not implemented.\n");
+        return NULL;
+    }
+
+    return shader_priv;
+}
+
+static void spirv_vertex_pipe_vk_vp_free(struct wined3d_device *device, struct wined3d_context *context)
+{
+    /* Nothing to do. */
+}
+
+static const struct wined3d_state_entry_template spirv_vertex_pipe_vk_vp_states[] =
+{
+    {STATE_RENDER(WINED3D_RS_RANGEFOGENABLE),           {STATE_RENDER(WINED3D_RS_RANGEFOGENABLE),           state_nop}},
+    {STATE_RENDER(WINED3D_RS_CLIPPING),                 {STATE_RENDER(WINED3D_RS_CLIPPING),                 state_nop}},
+    {STATE_RENDER(WINED3D_RS_LIGHTING),                 {STATE_RENDER(WINED3D_RS_LIGHTING),                 state_nop}},
+    {STATE_RENDER(WINED3D_RS_AMBIENT),                  {STATE_RENDER(WINED3D_RS_AMBIENT),                  state_nop}},
+    {STATE_RENDER(WINED3D_RS_COLORVERTEX),              {STATE_RENDER(WINED3D_RS_COLORVERTEX),              state_nop}},
+    {STATE_RENDER(WINED3D_RS_LOCALVIEWER),              {STATE_RENDER(WINED3D_RS_LOCALVIEWER),              state_nop}},
+    {STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),         {STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),         state_nop}},
+    {STATE_RENDER(WINED3D_RS_DIFFUSEMATERIALSOURCE),    {STATE_RENDER(WINED3D_RS_DIFFUSEMATERIALSOURCE),    state_nop}},
+    {STATE_RENDER(WINED3D_RS_SPECULARMATERIALSOURCE),   {STATE_RENDER(WINED3D_RS_SPECULARMATERIALSOURCE),   state_nop}},
+    {STATE_RENDER(WINED3D_RS_AMBIENTMATERIALSOURCE),    {STATE_RENDER(WINED3D_RS_AMBIENTMATERIALSOURCE),    state_nop}},
+    {STATE_RENDER(WINED3D_RS_EMISSIVEMATERIALSOURCE),   {STATE_RENDER(WINED3D_RS_EMISSIVEMATERIALSOURCE),   state_nop}},
+    {STATE_RENDER(WINED3D_RS_VERTEXBLEND),              {STATE_RENDER(WINED3D_RS_VERTEXBLEND),              state_nop}},
+    {STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),          {STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),          state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSIZE),                {STATE_RENDER(WINED3D_RS_POINTSIZE),                state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),            {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),            state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),         {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),         state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSCALE_A),             {STATE_RENDER(WINED3D_RS_POINTSCALE_A),             state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSCALE_B),             {STATE_RENDER(WINED3D_RS_POINTSCALE_B),             state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSCALE_C),             {STATE_RENDER(WINED3D_RS_POINTSCALE_C),             state_nop}},
+    {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),            {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),            state_nop}},
+    {STATE_RENDER(WINED3D_RS_INDEXEDVERTEXBLENDENABLE), {STATE_RENDER(WINED3D_RS_INDEXEDVERTEXBLENDENABLE), state_nop}},
+    {STATE_RENDER(WINED3D_RS_TWEENFACTOR),              {STATE_RENDER(WINED3D_RS_TWEENFACTOR),              state_nop}},
+    {STATE_MATERIAL,                                    {STATE_MATERIAL,                                    state_nop}},
+    {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),          {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),          state_nop}},
+    {STATE_LIGHT_TYPE,                                  {STATE_LIGHT_TYPE,                                  state_nop}},
+    {0}, /* Terminate */
+};
+
+static const struct wined3d_vertex_pipe_ops spirv_vertex_pipe_vk =
+{
+    .vp_enable = spirv_vertex_pipe_vk_vp_enable,
+    .vp_get_caps = spirv_vertex_pipe_vk_vp_get_caps,
+    .vp_get_emul_mask = spirv_vertex_pipe_vk_vp_get_emul_mask,
+    .vp_alloc = spirv_vertex_pipe_vk_vp_alloc,
+    .vp_free = spirv_vertex_pipe_vk_vp_free,
+    .vp_states = spirv_vertex_pipe_vk_vp_states,
+};
+
+const struct wined3d_vertex_pipe_ops *wined3d_spirv_vertex_pipe_init_vk(void)
+{
+    return &spirv_vertex_pipe_vk;
 }

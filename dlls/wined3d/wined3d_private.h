@@ -2517,6 +2517,8 @@ extern const struct wined3d_vertex_pipe_ops none_vertex_pipe DECLSPEC_HIDDEN;
 extern const struct wined3d_vertex_pipe_ops ffp_vertex_pipe DECLSPEC_HIDDEN;
 extern const struct wined3d_vertex_pipe_ops glsl_vertex_pipe DECLSPEC_HIDDEN;
 
+const struct wined3d_vertex_pipe_ops *wined3d_spirv_vertex_pipe_init_vk(void) DECLSPEC_HIDDEN;
+
 /* "Base" state table */
 HRESULT compile_state_table(struct wined3d_state_entry *state_table, APPLYSTATEFUNC **dev_multistate_funcs,
         const struct wined3d_d3d_info *d3d_info, const BOOL *supported_extensions,
