@@ -1379,10 +1379,12 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     const struct wined3d_shader_resource_binding *binding;
     struct wined3d_shader_resource_bindings *bindings;
     struct wined3d_unordered_access_view_vk *uav_vk;
+    struct wined3d_shader_resource_view_vk *srv_vk;
     struct wined3d_unordered_access_view *uav;
     const VkDescriptorBufferInfo *buffer_info;
     struct wined3d_shader_resource_view *srv;
     const VkDescriptorImageInfo *image_info;
+    struct wined3d_buffer_vk *buffer_vk;
     struct wined3d_resource *resource;
     VkDescriptorSet vk_descriptor_set;
     struct wined3d_view_vk *view_vk;
@@ -1414,10 +1416,12 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                     FIXME("NULL constant buffer views not implemented.\n");
                     return false;
                 }
-                buffer_info = wined3d_buffer_vk_get_buffer_info(wined3d_buffer_vk(buffer));
+                buffer_vk = wined3d_buffer_vk(buffer);
+                buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
                         binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer_info, NULL, NULL))
                     return false;
+                wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SRV:
@@ -1430,7 +1434,8 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 }
                 resource = srv->resource;
 
-                view_vk = &wined3d_shader_resource_view_vk(srv)->view_vk;
+                srv_vk = wined3d_shader_resource_view_vk(srv);
+                view_vk = &srv_vk->view_vk;
                 if (resource->type == WINED3D_RTYPE_BUFFER)
                 {
                     image_info = NULL;
@@ -1452,6 +1457,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
                         binding->binding_idx, type, NULL, image_info, buffer_view))
                     return false;
+                wined3d_context_vk_reference_shader_resource_view(context_vk, srv_vk);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV:
@@ -1462,7 +1468,8 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 }
                 resource = uav->resource;
 
-                view_vk = &wined3d_unordered_access_view_vk(uav)->view_vk;
+                uav_vk = wined3d_unordered_access_view_vk(uav);
+                view_vk = &uav_vk->view_vk;
                 if (resource->type == WINED3D_RTYPE_BUFFER)
                 {
                     image_info = NULL;
@@ -1484,6 +1491,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
                         binding->binding_idx, type, NULL, image_info, buffer_view))
                     return false;
+                wined3d_context_vk_reference_unordered_access_view(context_vk, uav_vk);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
@@ -1506,6 +1514,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
                         VK_DESCRIPTOR_TYPE_SAMPLER, NULL, &wined3d_sampler_vk(sampler)->vk_image_info, NULL))
                     return false;
+                wined3d_context_vk_reference_sampler(context_vk, wined3d_sampler_vk(sampler));
                 break;
 
             default:
@@ -1635,7 +1644,6 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 wined3d_buffer_load(buffer, &context_vk->c, state);
                 if (!buffer_vk->bo_user.valid)
                     context_invalidate_compute_state(&context_vk->c, STATE_COMPUTE_CONSTANT_BUFFER);
-                wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SRV:
@@ -1656,7 +1664,6 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 {
                     wined3d_texture_load(texture_from_resource(srv->resource), &context_vk->c, FALSE);
                 }
-                wined3d_context_vk_reference_shader_resource_view(context_vk, srv_vk);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV:
@@ -1679,7 +1686,6 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                     wined3d_texture_load(texture_from_resource(uav->resource), &context_vk->c, FALSE);
                     wined3d_unordered_access_view_invalidate_location(uav, ~WINED3D_LOCATION_TEXTURE_RGB);
                 }
-                wined3d_context_vk_reference_unordered_access_view(context_vk, uav_vk);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
@@ -1688,7 +1694,6 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
                 if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
                     sampler = context_vk->c.device->null_sampler;
-                wined3d_context_vk_reference_sampler(context_vk, wined3d_sampler_vk(sampler));
                 break;
 
             default:
