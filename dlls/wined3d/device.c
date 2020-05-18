@@ -5676,7 +5676,7 @@ static BOOL wined3d_select_feature_level(const struct wined3d_adapter *adapter,
 HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined3d,
         unsigned int adapter_idx, enum wined3d_device_type device_type, HWND focus_window, unsigned int flags,
         BYTE surface_alignment, const enum wined3d_feature_level *levels, unsigned int level_count,
-        struct wined3d_device_parent *device_parent)
+        const BOOL *supported_extensions, struct wined3d_device_parent *device_parent)
 {
     struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
     const struct wined3d_fragment_pipe_ops *fragment_pipeline;
@@ -5716,7 +5716,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->state_table, device->multistate_funcs,
-            &adapter->d3d_info, adapter->gl_info.supported, vertex_pipeline,
+            &adapter->d3d_info, supported_extensions, vertex_pipeline,
             fragment_pipeline, adapter->misc_state_template)))
     {
         ERR("Failed to compile state table, hr %#x.\n", hr);

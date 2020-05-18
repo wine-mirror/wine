@@ -181,6 +181,12 @@ struct vulkan_ops
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
 };
 
+enum wined3d_vk_extension
+{
+    WINED3D_VK_EXT_NONE,
+    WINED3D_VK_EXT_COUNT,
+};
+
 struct wined3d_vk_info
 {
     struct vulkan_ops vk_ops;
@@ -188,6 +194,7 @@ struct wined3d_vk_info
     VkInstance instance;
     unsigned int api_version;
 
+    BOOL supported[WINED3D_VK_EXT_COUNT];
 #ifdef USE_WIN32_VULKAN
     HMODULE vulkan_lib;
 #endif

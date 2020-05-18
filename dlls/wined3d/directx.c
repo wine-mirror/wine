@@ -2483,8 +2483,8 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
     if (!(device_no3d = heap_alloc_zero(sizeof(*device_no3d))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type,
-            focus_window, flags, surface_alignment, levels, level_count, device_parent)))
+    if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type, focus_window,
+            flags, surface_alignment, levels, level_count, adapter->gl_info.supported, device_parent)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
         heap_free(device_no3d);

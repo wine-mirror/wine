@@ -477,8 +477,8 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
         goto fail;
     }
 
-    if (FAILED(hr = wined3d_device_init(&device_vk->d, wined3d, adapter->ordinal, device_type,
-            focus_window, flags, surface_alignment, levels, level_count, device_parent)))
+    if (FAILED(hr = wined3d_device_init(&device_vk->d, wined3d, adapter->ordinal, device_type, focus_window,
+            flags, surface_alignment, levels, level_count, vk_info->supported, device_parent)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
         wined3d_allocator_cleanup(&device_vk->allocator);
@@ -1744,6 +1744,9 @@ static BOOL wined3d_init_vulkan(struct wined3d_vk_info *vk_info)
     instance_info.ppEnabledExtensionNames = enabled_instance_extensions;
     if (!enable_vulkan_instance_extensions(&instance_info.enabledExtensionCount, enabled_instance_extensions, vk_info))
         goto fail;
+
+    memset(vk_info->supported, 0, sizeof(vk_info->supported));
+    vk_info->supported[WINED3D_VK_EXT_NONE] = TRUE;
 
     if ((vr = VK_CALL(vkCreateInstance(&instance_info, NULL, &instance))) < 0)
     {

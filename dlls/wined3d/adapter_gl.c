@@ -4313,8 +4313,8 @@ static HRESULT adapter_gl_create_device(struct wined3d *wined3d, const struct wi
     if (!(device_gl = heap_alloc_zero(sizeof(*device_gl))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_device_init(&device_gl->d, wined3d, adapter->ordinal, device_type,
-            focus_window, flags, surface_alignment, levels, level_count, device_parent)))
+    if (FAILED(hr = wined3d_device_init(&device_gl->d, wined3d, adapter->ordinal, device_type, focus_window,
+            flags, surface_alignment, levels, level_count, adapter->gl_info.supported, device_parent)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
         heap_free(device_gl);
