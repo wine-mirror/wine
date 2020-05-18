@@ -1535,7 +1535,8 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     if (parameters->indirect)
         indirect_vk = wined3d_buffer_vk(parameters->u.indirect.buffer);
 
-    if (!(vk_command_buffer = wined3d_context_vk_apply_draw_state(context_vk, state, indirect_vk)))
+    if (!(vk_command_buffer = wined3d_context_vk_apply_draw_state(context_vk,
+            state, indirect_vk, parameters->indexed)))
     {
         ERR("Failed to apply draw state.\n");
         context_release(&context_vk->c);
@@ -1547,17 +1548,23 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
         struct wined3d_bo_vk *bo = &indirect_vk->bo;
         uint32_t stride, size;
 
-        if (!parameters->indexed)
-        {
-            wined3d_context_vk_reference_bo(context_vk, bo);
-            size = indirect_vk->b.resource.size - parameters->u.indirect.offset;
+        wined3d_context_vk_reference_bo(context_vk, bo);
+        size = indirect_vk->b.resource.size - parameters->u.indirect.offset;
 
+        if (parameters->indexed)
+        {
+            stride = sizeof(VkDrawIndexedIndirectCommand);
+            VK_CALL(vkCmdDrawIndexedIndirect(vk_command_buffer, bo->vk_buffer,
+                    bo->buffer_offset + parameters->u.indirect.offset, size / stride, stride));
+        }
+        else
+        {
             stride = sizeof(VkDrawIndirectCommand);
             VK_CALL(vkCmdDrawIndirect(vk_command_buffer, bo->vk_buffer,
                     bo->buffer_offset + parameters->u.indirect.offset, size / stride, stride));
         }
     }
-    else if (!parameters->indexed)
+    else
     {
         instance_count = parameters->u.direct.instance_count;
         if (context_vk->c.instance_count)
@@ -1565,8 +1572,13 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
         if (!instance_count)
             instance_count = 1;
 
-        VK_CALL(vkCmdDraw(vk_command_buffer, parameters->u.direct.index_count, instance_count,
-                parameters->u.direct.start_idx, parameters->u.direct.start_instance));
+        if (parameters->indexed)
+            VK_CALL(vkCmdDrawIndexed(vk_command_buffer, parameters->u.direct.index_count,
+                    instance_count, parameters->u.direct.start_idx, parameters->u.direct.base_vertex_idx,
+                    parameters->u.direct.start_instance));
+        else
+            VK_CALL(vkCmdDraw(vk_command_buffer, parameters->u.direct.index_count, instance_count,
+                    parameters->u.direct.start_idx, parameters->u.direct.start_instance));
     }
 
     context_release(&context_vk->c);

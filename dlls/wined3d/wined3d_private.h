@@ -2412,7 +2412,7 @@ VkDeviceMemory wined3d_context_vk_allocate_vram_chunk_memory(struct wined3d_cont
 VkCommandBuffer wined3d_context_vk_apply_compute_state(struct wined3d_context_vk *context_vk,
         const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *context_vk,
-        const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk) DECLSPEC_HIDDEN;
+        const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk, bool indexed) DECLSPEC_HIDDEN;
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;

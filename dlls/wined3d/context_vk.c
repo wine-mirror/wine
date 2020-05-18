@@ -1126,6 +1126,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_vk->c.update_compute_shader_resource_bindings = 1;
     context_vk->c.update_unordered_access_view_bindings = 1;
     context_vk->c.update_compute_unordered_access_view_bindings = 1;
+    context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
 
     VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
 
@@ -1887,7 +1888,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
 }
 
 VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *context_vk,
-        const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk)
+        const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk, bool indexed)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
@@ -1950,6 +1951,13 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     wined3d_context_vk_load_shader_resources(context_vk, state, WINED3D_PIPELINE_GRAPHICS);
 
+    if (indexed)
+    {
+        wined3d_buffer_load(state->index_buffer, &context_vk->c, state);
+        if (!wined3d_buffer_vk(state->index_buffer)->bo_user.valid)
+            context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
+    }
+
     if (indirect_vk)
         wined3d_buffer_load(&indirect_vk->b, &context_vk->c, state);
 
@@ -1973,6 +1981,20 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         return VK_NULL_HANDLE;
     }
     VK_CALL(vkCmdBindPipeline(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context_vk->graphics.vk_pipeline));
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer)
+    {
+        struct wined3d_bo_vk *bo = &wined3d_buffer_vk(state->index_buffer)->bo;
+        VkIndexType idx_type;
+
+        if (state->index_format == WINED3DFMT_R16_UINT)
+            idx_type = VK_INDEX_TYPE_UINT16;
+        else
+            idx_type = VK_INDEX_TYPE_UINT32;
+        wined3d_context_vk_reference_bo(context_vk, bo);
+        VK_CALL(vkCmdBindIndexBuffer(vk_command_buffer, bo->vk_buffer,
+                bo->buffer_offset + state->index_offset, idx_type));
+    }
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL))
             || wined3d_context_is_graphics_state_dirty(&context_vk->c,
