@@ -4337,11 +4337,13 @@ static void load_sources( struct makefile *make )
 
     if (make->use_msvcrt)
     {
+        unsigned int msvcrt_version = 0;
         for (i = 0; i < make->imports.count; i++)
         {
             if (strncmp( make->imports.str[i], "msvcr", 5 ) && strncmp( make->imports.str[i], "ucrt", 4 )) continue;
             if (crt_dll) fatal_error( "More than one crt DLL imported: %s %s\n", crt_dll, make->imports.str[i] );
             crt_dll = make->imports.str[i];
+            sscanf( crt_dll, "msvcr%u", &msvcrt_version );
         }
         if (!crt_dll && !strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
         {
@@ -4349,6 +4351,7 @@ static void load_sources( struct makefile *make )
             strarray_add( &make->imports, crt_dll );
         }
         if (crt_dll && !strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
+        else strarray_add( &make->define_args, strmake( "-D_MSVCR_VER=%u", msvcrt_version ));
     }
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
