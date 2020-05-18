@@ -118,9 +118,48 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
     return S_OK;
 }
 
+static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int count, unsigned int size)
+{
+    unsigned int new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
+
+static LONG cookie_counter;
+
+struct window
+{
+    LONG cookie, hwnd;
+    int class;
+};
+
 struct shellwindows
 {
     IShellWindows IShellWindows_iface;
+    CRITICAL_SECTION cs;
+
+    unsigned int count, max;
+    struct window *windows;
 };
 
 /* This is not limited to desktop itself, every file browser window that
@@ -1140,10 +1179,34 @@ static HRESULT WINAPI shellwindows__NewEnum(IShellWindows *iface, IUnknown **ppu
 }
 
 static HRESULT WINAPI shellwindows_Register(IShellWindows *iface,
-        IDispatch *disp, LONG hWnd, int class, LONG *cookie)
+        IDispatch *disp, LONG hwnd, int class, LONG *cookie)
 {
-    FIXME("%p 0x%x 0x%x %p\n", disp, hWnd, class, cookie);
-    return E_NOTIMPL;
+    struct shellwindows *sw = impl_from_IShellWindows(iface);
+    struct window *window;
+
+    TRACE("iface %p, disp %p, hwnd %#x, class %u, cookie %p.\n", iface, disp, hwnd, class, cookie);
+
+    if (!hwnd)
+        return E_POINTER;
+
+    if (disp)
+        FIXME("Ignoring IDispatch %p.\n", disp);
+
+    EnterCriticalSection(&sw->cs);
+
+    if (!array_reserve((void **)&sw->windows, &sw->max, sw->count + 1, sizeof(*sw->windows)))
+    {
+        LeaveCriticalSection(&sw->cs);
+        return E_OUTOFMEMORY;
+    }
+
+    window = &sw->windows[sw->count++];
+    window->hwnd = hwnd;
+    window->class = class;
+    *cookie = window->cookie = ++cookie_counter;
+
+    LeaveCriticalSection(&sw->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI shellwindows_RegisterPending(IShellWindows *iface,
@@ -1156,8 +1219,26 @@ static HRESULT WINAPI shellwindows_RegisterPending(IShellWindows *iface,
 
 static HRESULT WINAPI shellwindows_Revoke(IShellWindows *iface, LONG cookie)
 {
-    FIXME("0x%x\n", cookie);
-    return E_NOTIMPL;
+    struct shellwindows *sw = impl_from_IShellWindows(iface);
+    unsigned int i;
+
+    TRACE("iface %p, cookie %u.\n", iface, cookie);
+
+    EnterCriticalSection(&sw->cs);
+
+    for (i = 0; i < sw->count; ++i)
+    {
+        if (sw->windows[i].cookie == cookie)
+        {
+            --sw->count;
+            memmove(&sw->windows[i], &sw->windows[i + 1], (sw->count - i) * sizeof(*sw->windows));
+            LeaveCriticalSection(&sw->cs);
+            return S_OK;
+        }
+    }
+
+    LeaveCriticalSection(&sw->cs);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI shellwindows_OnNavigate(IShellWindows *iface, LONG cookie, VARIANT *loc)
@@ -2157,6 +2238,8 @@ static void shellwindows_init(void)
     CoInitialize(NULL);
 
     shellwindows.IShellWindows_iface.lpVtbl = &shellwindowsvtbl;
+    InitializeCriticalSection(&shellwindows.cs);
+    shellwindows.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": shellwindows.cs");
 
     hr = CoRegisterClassObject(&CLSID_ShellWindows,
         (IUnknown*)&shellwindows_classfactory.IClassFactory_iface,
