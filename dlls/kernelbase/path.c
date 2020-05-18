@@ -3521,7 +3521,7 @@ HRESULT WINAPI UrlCanonicalizeW(const WCHAR *src_url, WCHAR *canonicalized, DWOR
 
     TRACE("%s, %p, %p, %#x\n", wine_dbgstr_w(src_url), canonicalized, canonicalized_len, flags);
 
-    if (!src_url || !canonicalized || !canonicalized || !*canonicalized_len)
+    if (!src_url || !canonicalized || !canonicalized_len || !*canonicalized_len)
         return E_INVALIDARG;
 
     if (!*src_url)
