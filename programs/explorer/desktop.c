@@ -1284,26 +1284,49 @@ static HRESULT WINAPI shellwindows_OnActivated(IShellWindows *iface, LONG cookie
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI shellwindows_FindWindowSW(IShellWindows *iface, VARIANT *loc,
-    VARIANT *root, int class, LONG *hwnd, int options, IDispatch **disp)
+static HRESULT WINAPI shellwindows_FindWindowSW(IShellWindows *iface, VARIANT *location,
+        VARIANT *root, int class, LONG *hwnd, int options, IDispatch **disp)
 {
-    TRACE("%s %s 0x%x %p 0x%x %p\n", debugstr_variant(loc), debugstr_variant(root),
-        class, hwnd, options, disp);
+    struct shellwindows *sw = impl_from_IShellWindows(iface);
+    unsigned int i;
 
-    if (class != SWC_DESKTOP)
+    TRACE("iface %p, location %p, root %p, class %#x, hwnd %p, options %#x, disp %p.\n",
+            iface, location, root, class, hwnd, options, disp);
+
+    if (class == SWC_DESKTOP)
     {
-        WARN("only SWC_DESKTOP class supported.\n");
+        *hwnd = (LONG)(LONG_PTR)GetDesktopWindow();
+        if (options & SWFO_NEEDDISPATCH)
+        {
+            *disp = (IDispatch *)&desktopshellbrowserwindow.IWebBrowser2_iface;
+            IDispatch_AddRef(*disp);
+        }
+        return S_OK;
+    }
+
+    if (options)
+        FIXME("Ignoring options %#x.\n", options);
+
+    if (V_VT(location) != (VT_ARRAY | VT_UI1))
+    {
+        FIXME("Unexpected variant type %s.\n", debugstr_vt(V_VT(location)));
         return E_NOTIMPL;
     }
 
-    *hwnd = HandleToLong(GetDesktopWindow());
-    if (options & SWFO_NEEDDISPATCH)
+    EnterCriticalSection(&sw->cs);
+
+    for (i = 0; i < sw->count; ++i)
     {
-        *disp = (IDispatch*)&desktopshellbrowserwindow.IWebBrowser2_iface;
-        IDispatch_AddRef(*disp);
+        if (sw->windows[i].class == class && ILIsEqual(V_ARRAY(location)->pvData, sw->windows[i].pidl))
+        {
+            *hwnd = sw->windows[i].hwnd;
+            LeaveCriticalSection(&sw->cs);
+            return S_OK;
+        }
     }
 
-    return S_OK;
+    LeaveCriticalSection(&sw->cs);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI shellwindows_OnCreated(IShellWindows *iface, LONG cookie, IUnknown *punk)

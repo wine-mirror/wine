@@ -1064,7 +1064,7 @@ static void test_ShellWindows(void)
 
     VariantInit(&v2);
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(!ret, "Got window %#x.\n", ret);
     ok(!disp, "Got IDispatch %p.\n", &disp);
 
@@ -1075,15 +1075,15 @@ static void test_ShellWindows(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(ret == (LONG)(LONG_PTR)hwnd, "Expected %p, got %#x.\n", hwnd, ret);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ret == (LONG)(LONG_PTR)hwnd, "Expected %p, got %#x.\n", hwnd, ret);
     ok(!disp, "Got IDispatch %p.\n", &disp);
 
     hr = IShellWindows_Revoke(shellwindows, cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     ok(!ret, "Got window %#x.\n", ret);
     ok(!disp, "Got IDispatch %p.\n", &disp);
 
