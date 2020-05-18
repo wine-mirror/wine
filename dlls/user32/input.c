@@ -555,7 +555,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetKeyState(INT vkey)
     {
         req->tid = GetCurrentThreadId();
         req->key = vkey;
-        if (!wine_server_call( req )) retval = (signed char)reply->state;
+        if (!wine_server_call( req )) retval = (signed char)(reply->state & 0x81);
     }
     SERVER_END_REQ;
     TRACE("key (0x%x) -> %x\n", vkey, retval);
@@ -569,6 +569,7 @@ SHORT WINAPI DECLSPEC_HOTPATCH GetKeyState(INT vkey)
 BOOL WINAPI DECLSPEC_HOTPATCH GetKeyboardState( LPBYTE state )
 {
     BOOL ret;
+    UINT i;
 
     TRACE("(%p)\n", state);
 
@@ -579,6 +580,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetKeyboardState( LPBYTE state )
         req->key = -1;
         wine_server_set_reply( req, state, 256 );
         ret = !wine_server_call_err( req );
+        for (i = 0; i < 256; i++) state[i] &= 0x81;
     }
     SERVER_END_REQ;
     return ret;
