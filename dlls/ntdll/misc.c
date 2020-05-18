@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa)
 {
     if (!oa) return "<null>";
-    return wine_dbg_sprintf( "{name=%s, attr=0x%08x, hRoot=%p, sd=%p}\n",
+    return wine_dbg_sprintf( "{name=%s, attr=0x%08x, hRoot=%p, sd=%p}",
                              debugstr_us(oa->ObjectName), oa->Attributes,
                              oa->RootDirectory, oa->SecurityDescriptor );
 }
