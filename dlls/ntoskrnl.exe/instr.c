@@ -33,6 +33,8 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 
+#define KSHARED_USER_DATA_PAGE_SIZE 0x1000
+
 #ifdef __i386__
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -790,9 +792,11 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             unsigned int data_size = (instr[1] == 0xb7) ? 2 : 1;
             SIZE_T offset = data - user_shared_data;
 
-            if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+            if (offset <= KSHARED_USER_DATA_PAGE_SIZE - data_size)
             {
                 ULONGLONG temp = 0;
+
+                TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
                 memcpy( &temp, wine_user_shared_data + offset, data_size );
                 store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex );
                 context->Rip += prefixlen + len + 2;
@@ -811,8 +815,9 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         unsigned int data_size = (*instr == 0x8b) ? get_op_size( long_op, rex ) : 1;
         SIZE_T offset = data - user_shared_data;
 
-        if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+        if (offset <= KSHARED_USER_DATA_PAGE_SIZE - data_size)
         {
+            TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
             switch (*instr)
             {
             case 0x8a: store_reg_byte( context, instr[1], wine_user_shared_data + offset, rex ); break;
@@ -832,8 +837,9 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
         SIZE_T offset = data - user_shared_data;
         len = long_addr ? sizeof(DWORD64) : sizeof(DWORD);
 
-        if (offset <= sizeof(KSHARED_USER_DATA) - data_size)
+        if (offset <= KSHARED_USER_DATA_PAGE_SIZE - data_size)
         {
+            TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
             memcpy( &context->Rax, wine_user_shared_data + offset, data_size );
             context->Rip += prefixlen + len + 1;
             return ExceptionContinueExecution;
