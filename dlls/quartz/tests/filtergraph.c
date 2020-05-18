@@ -3178,6 +3178,26 @@ static void test_filter_state(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
 
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+
+    hr = IMediaControl_StopWhenReady(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Running);
+
+    hr = IMediaControl_StopWhenReady(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    hr = IMediaControl_StopWhenReady(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
     IReferenceClock_Release(clock);
     IMediaFilter_Release(filter);
     IMediaControl_Release(control);

@@ -2132,11 +2132,63 @@ static HRESULT WINAPI MediaControl_get_RegFilterCollection(IMediaControl *iface,
     return S_OK;
 }
 
+static void CALLBACK wait_pause_cb(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    IMediaControl *control = context;
+    OAFilterState state;
+    HRESULT hr;
+
+    if ((hr = IMediaControl_GetState(control, INFINITE, &state)) != S_OK)
+        ERR("Failed to get paused state, hr %#x.\n", hr);
+
+    if (FAILED(hr = IMediaControl_Stop(control)))
+        ERR("Failed to stop, hr %#x.\n", hr);
+
+    if ((hr = IMediaControl_GetState(control, INFINITE, &state)) != S_OK)
+        ERR("Failed to get paused state, hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
+static void CALLBACK wait_stop_cb(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    IMediaControl *control = context;
+    OAFilterState state;
+    HRESULT hr;
+
+    if ((hr = IMediaControl_GetState(control, INFINITE, &state)) != S_OK)
+        ERR("Failed to get state, hr %#x.\n", hr);
+
+    IMediaControl_Release(control);
+}
+
 static HRESULT WINAPI MediaControl_StopWhenReady(IMediaControl *iface)
 {
-    IFilterGraphImpl *This = impl_from_IMediaControl(iface);
+    IFilterGraphImpl *graph = impl_from_IMediaControl(iface);
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(): stub !!!\n", This, iface);
+    TRACE("graph %p.\n", graph);
+
+    /* Even if we are already stopped, we still pause. */
+    hr = IMediaControl_Pause(iface);
+    if (FAILED(hr))
+        return hr;
+    else if (hr == S_FALSE)
+    {
+        IMediaControl_AddRef(iface);
+        TrySubmitThreadpoolCallback(wait_pause_cb, iface, NULL);
+        return S_FALSE;
+    }
+
+    hr = IMediaControl_Stop(iface);
+    if (FAILED(hr))
+        return hr;
+    else if (hr == S_FALSE)
+    {
+        IMediaControl_AddRef(iface);
+        TrySubmitThreadpoolCallback(wait_stop_cb, iface, NULL);
+        return S_FALSE;
+    }
 
     return S_OK;
 }
