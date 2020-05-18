@@ -1843,7 +1843,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 dispatch.ContextRecord = context;
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
-                                  &new_context, NULL, &frame, NULL );
+                                  &new_context, &dispatch.HandlerData, &frame,
+                                  NULL );
                 rec->ExceptionFlags |= EH_COLLIDED_UNWIND;
                 goto unwind_done;
             }
@@ -1866,7 +1867,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                     dispatch.ContextRecord = context;
                     RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                       dispatch.ControlPc, dispatch.FunctionEntry,
-                                      &new_context, NULL, &frame, NULL );
+                                      &new_context, &dispatch.HandlerData,
+                                      &frame, NULL );
                     rec->ExceptionFlags |= EH_COLLIDED_UNWIND;
                     goto unwind_done;
                 }
