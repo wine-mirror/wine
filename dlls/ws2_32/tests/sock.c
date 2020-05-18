@@ -3429,6 +3429,8 @@ static void test_WSAStringToAddress(void)
         { "127.127.127.127:65535", 0x7f7f7f7f, 65535 },
         { "255.255.255.255:65535", 0xffffffff, 65535 },
         { "2001::1", 0xd1070000, 0, WSAEINVAL },
+        { "1.2.3.", 0, 0, WSAEINVAL },
+        { "", 0, 0, WSAEINVAL },
     };
     static struct
     {
@@ -3445,6 +3447,10 @@ static void test_WSAStringToAddress(void)
         { "2001::1", { 0x120, 0, 0, 0, 0, 0, 0, 0x100 } },
         { "::1]:65535", { 0, 0, 0, 0, 0, 0, 0, 0x100 }, 0, WSAEINVAL },
         { "001::1", { 0x100, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "::1:2:3:4:5:6:7", { 0, 0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600 }, 0, WSAEINVAL }, /* Windows bug */
+        { "1.2.3.4", { 0x201, 0x3, 0, 0, 0, 0, 0, 0 }, 0, WSAEINVAL },
+        { "1:2:3:", { 0x100, 0x200, 0x300, 0, 0, 0, 0 }, 0, WSAEINVAL },
+        { "", { 0, 0, 0, 0, 0, 0, 0, 0 }, 0, WSAEINVAL },
     };
 
     WCHAR inputW[64];
@@ -3485,11 +3491,9 @@ static void test_WSAStringToAddress(void)
             ok( WSAGetLastError() == ipv4_tests[j].error,
                 "WSAStringToAddress(%s) gave error %d, expected %d\n",
                 wine_dbgstr_a( ipv4_tests[j].input ), WSAGetLastError(), ipv4_tests[j].error );
-todo_wine_if(ipv4_tests[j].error)
             ok( sockaddr.sin_family == expected_family,
                 "WSAStringToAddress(%s) gave family %d, expected %d\n",
                 wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_family, expected_family );
-todo_wine_if(ipv4_tests[j].error)
             ok( sockaddr.sin_addr.s_addr == ipv4_tests[j].address,
                 "WSAStringToAddress(%s) gave address %08x, expected %08x\n",
                 wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_addr.s_addr, ipv4_tests[j].address );
@@ -3526,11 +3530,9 @@ todo_wine_if(ipv4_tests[j].error)
             ok( WSAGetLastError() == ipv6_tests[j].error,
                 "WSAStringToAddress(%s) gave error %d, expected %d\n",
                 wine_dbgstr_a( ipv6_tests[j].input ), WSAGetLastError(), ipv6_tests[j].error );
-todo_wine_if(ipv6_tests[j].error)
             ok( sockaddr6.sin6_family == expected_family,
                 "WSAStringToAddress(%s) gave family %d, expected %d\n",
                 wine_dbgstr_a( ipv4_tests[j].input ), sockaddr6.sin6_family, expected_family );
-todo_wine_if(ipv6_tests[j].error)
             ok( memcmp(&sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr)) == 0,
                 "WSAStringToAddress(%s) gave address %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
                 wine_dbgstr_a( ipv6_tests[j].input ),

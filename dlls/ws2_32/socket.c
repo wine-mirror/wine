@@ -154,6 +154,7 @@
 #include "winnt.h"
 #define USE_WC_PREFIX   /* For CMSG_DATA */
 #include "iphlpapi.h"
+#include "ip2string.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
@@ -8484,7 +8485,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
                                LPINT lpAddressLength)
 {
     INT res=0;
-    LPSTR workBuffer=NULL,ptrPort;
+    NTSTATUS status;
 
     TRACE( "(%s, %x, %p, %p, %p)\n", debugstr_a(AddressString), AddressFamily,
            lpProtocolInfo, lpAddress, lpAddressLength );
@@ -8500,21 +8501,11 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
     if (lpProtocolInfo)
         FIXME("ProtocolInfo not implemented.\n");
 
-    workBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                            strlen(AddressString) + 1);
-    if (!workBuffer)
-    {
-        SetLastError(WSA_NOT_ENOUGH_MEMORY);
-        return SOCKET_ERROR;
-    }
-
-    strcpy(workBuffer, AddressString);
-
     switch(AddressFamily)
     {
     case WS_AF_INET:
     {
-        struct in_addr inetaddr;
+        SOCKADDR_IN *addr4 = (SOCKADDR_IN *)lpAddress;
 
         /* If lpAddressLength is too small, tell caller the size we need */
         if (*lpAddressLength < sizeof(SOCKADDR_IN))
@@ -8526,35 +8517,18 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         *lpAddressLength = sizeof(SOCKADDR_IN);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN));
 
-        ((LPSOCKADDR_IN)lpAddress)->sin_family = WS_AF_INET;
-
-        ptrPort = strchr(workBuffer, ':');
-        if(ptrPort)
+        status = RtlIpv4StringToAddressExA(AddressString, FALSE, &addr4->sin_addr, &addr4->sin_port);
+        if (status != STATUS_SUCCESS)
         {
-            /* User may have entered an IPv6 and asked to parse as IPv4 */
-            if(strchr(ptrPort + 1, ':'))
-            {
-                res = WSAEINVAL;
-                break;
-            }
-            ((LPSOCKADDR_IN)lpAddress)->sin_port = htons(atoi(ptrPort+1));
-            *ptrPort = '\0';
-        }
-
-        if(inet_aton(workBuffer, &inetaddr) > 0)
-        {
-            ((LPSOCKADDR_IN)lpAddress)->sin_addr.WS_s_addr = inetaddr.s_addr;
-            res = 0;
-        }
-        else
             res = WSAEINVAL;
-
+            break;
+        }
+        addr4->sin_family = WS_AF_INET;
         break;
     }
     case WS_AF_INET6:
     {
-        struct in6_addr inetaddr;
-        char *ptrAddr = workBuffer;
+        SOCKADDR_IN6 *addr6 = (SOCKADDR_IN6 *)lpAddress;
 
         /* If lpAddressLength is too small, tell caller the size we need */
         if (*lpAddressLength < sizeof(SOCKADDR_IN6))
@@ -8563,42 +8537,16 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEFAULT;
             break;
         }
-#ifdef HAVE_INET_PTON
         *lpAddressLength = sizeof(SOCKADDR_IN6);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN6));
 
-        ((LPSOCKADDR_IN6)lpAddress)->sin6_family = WS_AF_INET6;
-
-        /* Valid IPv6 addresses can also be surrounded by [ ], and in this case
-         * a port number may follow after like in [fd12:3456:7890::1]:12345
-         * We need to cut the brackets and find the port if any. */
-
-        if(*workBuffer == '[')
+        status = RtlIpv6StringToAddressExA(AddressString, &addr6->sin6_addr, &addr6->sin6_scope_id, &addr6->sin6_port);
+        if (status != STATUS_SUCCESS)
         {
-            ptrPort = strchr(workBuffer, ']');
-            if (!ptrPort)
-            {
-                SetLastError(WSAEINVAL);
-                return SOCKET_ERROR;
-            }
-
-            if (ptrPort[1] == ':')
-                ((LPSOCKADDR_IN6)lpAddress)->sin6_port = htons(atoi(ptrPort + 2));
-
-            *ptrPort = '\0';
-            ptrAddr = workBuffer + 1;
-        }
-
-        if(inet_pton(AF_INET6, ptrAddr, &inetaddr) > 0)
-        {
-            memcpy(&((LPSOCKADDR_IN6)lpAddress)->sin6_addr, &inetaddr,
-                    sizeof(struct in6_addr));
-            res = 0;
-        }
-        else
-#endif /* HAVE_INET_PTON */
             res = WSAEINVAL;
-
+            break;
+        }
+        addr6->sin6_family = WS_AF_INET6;
         break;
     }
     default:
@@ -8606,8 +8554,6 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         TRACE("Unsupported address family specified: %d.\n", AddressFamily);
         res = WSAEINVAL;
     }
-
-    HeapFree(GetProcessHeap(), 0, workBuffer);
 
     if (!res) return 0;
     SetLastError(res);
