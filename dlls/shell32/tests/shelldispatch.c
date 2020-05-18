@@ -1018,6 +1018,7 @@ static void test_ShellWindows(void)
 {
     IShellWindows *shellwindows;
     LONG cookie, cookie2, ret;
+    ITEMIDLIST *pidl;
     IDispatch *disp;
     VARIANT v, v2;
     HRESULT hr;
@@ -1061,9 +1062,35 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(cookie2 != 0 && cookie2 != cookie, "got %d\n", cookie2);
 }
+
+    pidl = ILCreateFromPathA("C:\\");
+    V_VT(&v) = VT_ARRAY | VT_UI1;
+    V_ARRAY(&v) = SafeArrayCreateVector(VT_UI1, 0, ILGetSize(pidl));
+    memcpy(V_ARRAY(&v)->pvData, pidl, ILGetSize(pidl));
+
+    VariantInit(&v2);
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!ret, "Got window %#x.\n", ret);
+    ok(!disp, "Got IDispatch %p.\n", &disp);
+
+    hr = IShellWindows_OnNavigate(shellwindows, cookie, &v);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(ret == (LONG)(LONG_PTR)hwnd, "Expected %p, got %#x.\n", hwnd, ret);
+    ok(!disp, "Got IDispatch %p.\n", &disp);
+
     hr = IShellWindows_Revoke(shellwindows, cookie);
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(!ret, "Got window %#x.\n", ret);
+    ok(!disp, "Got IDispatch %p.\n", &disp);
+
     hr = IShellWindows_Revoke(shellwindows, cookie2);
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
