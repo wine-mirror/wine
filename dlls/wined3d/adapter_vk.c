@@ -859,6 +859,8 @@ static void *adapter_vk_map_bo_address(struct wined3d_context *context,
             return NULL;
         }
 
+        wined3d_context_vk_end_current_render_pass(context_vk);
+
         vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier.pNext = NULL;
         vk_barrier.srcAccessMask = vk_access_mask_from_buffer_usage(bo->usage);
@@ -955,6 +957,8 @@ static void adapter_vk_copy_bo_address(struct wined3d_context *context,
             ERR("Failed to get command buffer.\n");
             return;
         }
+
+        wined3d_context_vk_end_current_render_pass(context_vk);
 
         src_access_mask = vk_access_mask_from_buffer_usage(src_bo->usage);
         dst_access_mask = vk_access_mask_from_buffer_usage(dst_bo->usage);
@@ -1517,7 +1521,36 @@ static void adapter_vk_flush_context(struct wined3d_context *context)
 static void adapter_vk_draw_primitive(struct wined3d_device *device,
         const struct wined3d_state *state, const struct wined3d_draw_parameters *parameters)
 {
-    FIXME("device %p, state %p, parameters %p.\n", device, state, parameters);
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_context_vk *context_vk;
+    VkCommandBuffer vk_command_buffer;
+    uint32_t instance_count;
+
+    TRACE("device %p, state %p, parameters %p.\n", device, state, parameters);
+
+    context_vk = wined3d_context_vk(context_acquire(device, NULL, 0));
+    vk_info = context_vk->vk_info;
+
+    if (!(vk_command_buffer = wined3d_context_vk_apply_draw_state(context_vk, state)))
+    {
+        ERR("Failed to apply draw state.\n");
+        context_release(&context_vk->c);
+        return;
+    }
+
+    if (!parameters->indirect && !parameters->indexed)
+    {
+        instance_count = parameters->u.direct.instance_count;
+        if (context_vk->c.instance_count)
+            instance_count = context_vk->c.instance_count;
+        if (!instance_count)
+            instance_count = 1;
+
+        VK_CALL(vkCmdDraw(vk_command_buffer, parameters->u.direct.index_count, instance_count,
+                parameters->u.direct.start_idx, parameters->u.direct.start_instance));
+    }
+
+    context_release(&context_vk->c);
 }
 
 static void adapter_vk_dispatch_compute(struct wined3d_device *device,

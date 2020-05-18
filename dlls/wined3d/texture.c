@@ -6082,18 +6082,6 @@ static void vk_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_c
     heap_free(blitter);
 }
 
-static inline VkImageView wined3d_rendertarget_view_vk_get_image_view(struct wined3d_rendertarget_view_vk *rtv_vk,
-        struct wined3d_context_vk *context_vk)
-{
-    struct wined3d_texture_vk *texture_vk;
-
-    if (rtv_vk->vk_image_view)
-        return rtv_vk->vk_image_view;
-
-    texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
-    return wined3d_texture_vk_get_default_image_info(texture_vk, context_vk)->imageView;
-}
-
 static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk, unsigned int rt_count,
         const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects, const RECT *draw_rect,
         uint32_t flags, const struct wined3d_color *colour, float depth, unsigned int stencil)
@@ -6224,6 +6212,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
     begin_desc.framebuffer = vk_framebuffer;
     begin_desc.clearValueCount = attachment_count;
     begin_desc.pClearValues = clear_values;
+
+    wined3d_context_vk_end_current_render_pass(context_vk);
 
     for (i = 0; i < rect_count; ++i)
     {

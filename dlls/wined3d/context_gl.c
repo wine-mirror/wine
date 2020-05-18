@@ -4367,15 +4367,6 @@ static GLenum gl_tfb_primitive_type_from_d3d(enum wined3d_primitive_type primiti
     }
 }
 
-static unsigned int get_render_target_writemask(const struct wined3d_blend_state *state, unsigned int index)
-{
-    if (!state)
-        return 0xf;
-    if (!state->desc.independent)
-        index = 0;
-    return state->desc.rt[index].writemask;
-}
-
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void draw_primitive(struct wined3d_device *device, const struct wined3d_state *state,
         const struct wined3d_draw_parameters *parameters)
@@ -4433,7 +4424,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         if (!(rtv = fb->render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
             continue;
 
-        if (get_render_target_writemask(state->blend_state, i))
+        if (wined3d_blend_state_get_writemask(state->blend_state, i))
         {
             wined3d_rendertarget_view_load_location(rtv, context, rtv->resource->draw_binding);
             wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);

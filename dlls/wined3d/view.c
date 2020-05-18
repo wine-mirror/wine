@@ -1547,6 +1547,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
                 return;
             }
 
+            wined3d_context_vk_end_current_render_pass(context_vk);
             VK_CALL(vkCmdFillBuffer(wined3d_context_vk_get_command_buffer(context_vk),
                     uav_vk->counter_bo.vk_buffer, uav_vk->counter_bo.buffer_offset, sizeof(uint32_t), 0));
             wined3d_context_vk_reference_bo(context_vk, &uav_vk->counter_bo);
