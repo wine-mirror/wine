@@ -44,15 +44,6 @@
 #define INVALID_SET_FILE_POINTER (~0u)
 #endif
 
-#ifdef _MSC_VER
-# ifndef INFINITY
-#  define INFINITY ((float)HUGE_VAL)
-# endif
-# ifndef NAN
-#  define NAN (INFINITY * 0.0f)
-# endif
-#endif
-
 /* debug level */
 extern int winetest_debug;
 
