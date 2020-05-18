@@ -70,12 +70,22 @@ typedef struct
     LPITEMIDLIST pidl;
     IImageList *icon_list;
     DWORD advise_cookie;
+
+    IShellWindows *sw;
+    LONG sw_cookie;
 } explorer_info;
 
 enum
 {
     BACK_BUTTON,FORWARD_BUTTON,UP_BUTTON
 };
+
+static void variant_from_pidl(VARIANT *var, const ITEMIDLIST *pidl)
+{
+    V_VT(var) = VT_ARRAY | VT_UI1;
+    V_ARRAY(var) = SafeArrayCreateVector(VT_UI1, 0, ILGetSize(pidl));
+    memcpy(V_ARRAY(var)->pvData, pidl, ILGetSize(pidl));
+}
 
 typedef struct
 {
@@ -265,6 +275,15 @@ static HRESULT WINAPI IExplorerBrowserEventsImpl_fnOnNavigationComplete(IExplore
     STRRET strret;
     WCHAR *name;
 
+    if (This->info->sw)
+    {
+        VARIANT var;
+
+        variant_from_pidl(&var, pidl);
+        IShellWindows_OnNavigate(This->info->sw, This->info->sw_cookie, &var);
+        VariantClear(&var);
+    }
+
     ILFree(This->info->pidl);
     This->info->pidl = ILClone(pidl);
     update_path_box(This->info);
@@ -325,7 +344,35 @@ static IExplorerBrowserEvents *make_explorer_events(explorer_info *info)
     return &ret->IExplorerBrowserEvents_iface;
 }
 
-static void make_explorer_window(IShellFolder* startFolder)
+static IShellFolder *get_starting_shell_folder(WCHAR *path)
+{
+    IShellFolder* desktop,*folder;
+    LPITEMIDLIST root_pidl;
+    HRESULT hres;
+
+    SHGetDesktopFolder(&desktop);
+
+    if (!path)
+        return desktop;
+
+    hres = IShellFolder_ParseDisplayName(desktop, NULL, NULL, path, NULL, &root_pidl, NULL);
+    if(FAILED(hres))
+    {
+        return desktop;
+    }
+    hres = IShellFolder_BindToObject(desktop,root_pidl,NULL,
+                                     &IID_IShellFolder,
+                                     (void**)&folder);
+    ILFree(root_pidl);
+    if(FAILED(hres))
+    {
+        return desktop;
+    }
+    IShellFolder_Release(desktop);
+    return folder;
+}
+
+static void make_explorer_window(parameters_struct *params)
 {
     RECT rect;
     HWND rebar,nav_toolbar;
@@ -339,8 +386,49 @@ static void make_explorer_window(IShellFolder* startFolder)
     TBBUTTON nav_buttons[3];
     int hist_offset,view_offset;
     REBARBANDINFOW band_info;
+    VARIANT var, empty_var;
+    IShellFolder *folder;
+    IDispatch *dispatch;
+    WCHAR *path = NULL;
+    IShellWindows *sw;
+    ITEMIDLIST *pidl;
     UINT dpix, dpiy;
+    DWORD size;
+    LONG hwnd;
     HDC hdc;
+    MSG msg;
+
+    CoCreateInstance(&CLSID_ShellWindows, NULL, CLSCTX_LOCAL_SERVER,
+            &IID_IShellWindows, (void **)&sw);
+
+    if (params->root[0])
+    {
+        size = GetFullPathNameW(params->root, 0, NULL, NULL);
+        path = malloc(size);
+        GetFullPathNameW(params->root, size, path, NULL);
+    }
+
+    if (sw && path)
+    {
+        if (!(pidl = ILCreateFromPathW(path)))
+        {
+            ERR("Failed to create PIDL for %s.\n", debugstr_w(path));
+            IShellWindows_Release(sw);
+            return;
+        }
+
+        variant_from_pidl(&var, pidl);
+        V_VT(&empty_var) = VT_EMPTY;
+        if (IShellWindows_FindWindowSW(sw, &var, &empty_var, SWC_EXPLORER, &hwnd, 0, &dispatch) == S_OK)
+        {
+            TRACE("Found window %#x already browsing path %s.\n", hwnd, debugstr_w(path));
+            SetForegroundWindow((HWND)(LONG_PTR)hwnd);
+            IShellWindows_Release(sw);
+            return;
+        }
+        ILFree(pidl);
+        VariantClear(&var);
+    }
 
     memset(nav_buttons,0,sizeof(nav_buttons));
 
@@ -375,6 +463,12 @@ static void make_explorer_window(IShellFolder* startFolder)
         = CreateWindowW(EXPLORER_CLASS,explorer_title,WS_OVERLAPPEDWINDOW,
                         CW_USEDEFAULT,CW_USEDEFAULT,default_width,
                         default_height,NULL,NULL,explorer_hInstance,NULL);
+
+    if (sw)
+    {
+        IShellWindows_Register(sw, NULL, (LONG_PTR)info->main_window, SWC_EXPLORER, &info->sw_cookie);
+        info->sw = sw;
+    }
 
     fs.ViewMode = FVM_DETAILS;
     fs.fFlags = FWF_AUTOARRANGE;
@@ -439,11 +533,20 @@ static void make_explorer_window(IShellFolder* startFolder)
     SendMessageW(rebar,RB_INSERTBANDW,-1,(LPARAM)&band_info);
     events = make_explorer_events(info);
     IExplorerBrowser_Advise(info->browser,events,&info->advise_cookie);
-    IExplorerBrowser_BrowseToObject(info->browser,(IUnknown*)startFolder,
-                                    SBSP_ABSOLUTE);
+
+    folder = get_starting_shell_folder(path);
+    IExplorerBrowser_BrowseToObject(info->browser, (IUnknown *)folder, SBSP_ABSOLUTE);
+    IShellFolder_Release(folder);
+
     ShowWindow(info->main_window,SW_SHOWDEFAULT);
     UpdateWindow(info->main_window);
     IExplorerBrowserEvents_Release(events);
+
+    while (GetMessageW(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
 }
 
 static void update_window_size(explorer_info *info, int height, int width)
@@ -568,6 +671,9 @@ static LRESULT CALLBACK explorer_wnd_proc(HWND hwnd, UINT uMsg, WPARAM wParam, L
     switch(uMsg)
     {
     case WM_DESTROY:
+        IShellWindows_Revoke(info->sw, info->sw_cookie);
+        IShellWindows_Release(info->sw);
+
         IExplorerBrowser_Unadvise(browser,info->advise_cookie);
         IExplorerBrowser_Destroy(browser);
         IExplorerBrowser_Release(browser);
@@ -623,47 +729,6 @@ static void register_explorer_window_class(void)
     window_class.lpszClassName = EXPLORER_CLASS;
     window_class.hIconSm = NULL;
     RegisterClassExW(&window_class);
-}
-
-static IShellFolder* get_starting_shell_folder(parameters_struct* params)
-{
-    IShellFolder* desktop,*folder;
-    LPITEMIDLIST root_pidl;
-    WCHAR *fullpath = NULL;
-    HRESULT hres;
-    DWORD size;
-
-    SHGetDesktopFolder(&desktop);
-    if (!params->root[0])
-    {
-        return desktop;
-    }
-
-    size = GetFullPathNameW(params->root, 0, fullpath, NULL);
-    if (!size)
-        return desktop;
-    fullpath = heap_alloc(size * sizeof(WCHAR));
-    GetFullPathNameW(params->root, size, fullpath, NULL);
-
-    hres = IShellFolder_ParseDisplayName(desktop,NULL,NULL,
-                                         fullpath,NULL,
-                                         &root_pidl,NULL);
-    heap_free(fullpath);
-
-    if(FAILED(hres))
-    {
-        return desktop;
-    }
-    hres = IShellFolder_BindToObject(desktop,root_pidl,NULL,
-                                     &IID_IShellFolder,
-                                     (void**)&folder);
-    ILFree(root_pidl);
-    if(FAILED(hres))
-    {
-        return desktop;
-    }
-    IShellFolder_Release(desktop);
-    return folder;
 }
 
 static WCHAR *copy_path_string(WCHAR *target, WCHAR *source)
@@ -793,8 +858,6 @@ int WINAPI wWinMain(HINSTANCE hinstance,
 
     parameters_struct   parameters;
     HRESULT hres;
-    MSG msg;
-    IShellFolder *folder;
     INITCOMMONCONTROLSEX init_info;
 
     memset(&parameters,0,sizeof(parameters));
@@ -817,13 +880,6 @@ int WINAPI wWinMain(HINSTANCE hinstance,
         ExitProcess(EXIT_FAILURE);
     }
     register_explorer_window_class();
-    folder = get_starting_shell_folder(&parameters);
-    make_explorer_window(folder);
-    IShellFolder_Release(folder);
-    while(GetMessageW( &msg, NULL, 0, 0 ) != 0)
-    {
-	    TranslateMessage(&msg);
-	    DispatchMessageW(&msg);
-    }
+    make_explorer_window(&parameters);
     return 0;
 }
