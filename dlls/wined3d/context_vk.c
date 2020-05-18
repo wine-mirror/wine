@@ -1887,7 +1887,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
 }
 
 VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *context_vk,
-        const struct wined3d_state *state)
+        const struct wined3d_state *state, struct wined3d_buffer_vk *indirect_vk)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
@@ -1949,6 +1949,9 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     }
 
     wined3d_context_vk_load_shader_resources(context_vk, state, WINED3D_PIPELINE_GRAPHICS);
+
+    if (indirect_vk)
+        wined3d_buffer_load(&indirect_vk->b, &context_vk->c, state);
 
     if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
     {

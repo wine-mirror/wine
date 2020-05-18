@@ -1521,6 +1521,7 @@ static void adapter_vk_flush_context(struct wined3d_context *context)
 static void adapter_vk_draw_primitive(struct wined3d_device *device,
         const struct wined3d_state *state, const struct wined3d_draw_parameters *parameters)
 {
+    struct wined3d_buffer_vk *indirect_vk = NULL;
     const struct wined3d_vk_info *vk_info;
     struct wined3d_context_vk *context_vk;
     VkCommandBuffer vk_command_buffer;
@@ -1531,14 +1532,32 @@ static void adapter_vk_draw_primitive(struct wined3d_device *device,
     context_vk = wined3d_context_vk(context_acquire(device, NULL, 0));
     vk_info = context_vk->vk_info;
 
-    if (!(vk_command_buffer = wined3d_context_vk_apply_draw_state(context_vk, state)))
+    if (parameters->indirect)
+        indirect_vk = wined3d_buffer_vk(parameters->u.indirect.buffer);
+
+    if (!(vk_command_buffer = wined3d_context_vk_apply_draw_state(context_vk, state, indirect_vk)))
     {
         ERR("Failed to apply draw state.\n");
         context_release(&context_vk->c);
         return;
     }
 
-    if (!parameters->indirect && !parameters->indexed)
+    if (parameters->indirect)
+    {
+        struct wined3d_bo_vk *bo = &indirect_vk->bo;
+        uint32_t stride, size;
+
+        if (!parameters->indexed)
+        {
+            wined3d_context_vk_reference_bo(context_vk, bo);
+            size = indirect_vk->b.resource.size - parameters->u.indirect.offset;
+
+            stride = sizeof(VkDrawIndirectCommand);
+            VK_CALL(vkCmdDrawIndirect(vk_command_buffer, bo->vk_buffer,
+                    bo->buffer_offset + parameters->u.indirect.offset, size / stride, stride));
+        }
+    }
+    else if (!parameters->indexed)
     {
         instance_count = parameters->u.direct.instance_count;
         if (context_vk->c.instance_count)
