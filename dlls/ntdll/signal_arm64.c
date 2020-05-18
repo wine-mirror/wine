@@ -1558,7 +1558,12 @@ static void *unwind_packed_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION 
 
     if (!skip)
     {
-        if (func->u.s.CR == 3) restore_regs( 29, 2, 0, context, ptrs );
+        if (func->u.s.CR == 3)
+        {
+            DWORD64 *fp = (DWORD64 *) context->u.s.Fp; /* u.X[29] */
+            context->u.X[29] = fp[0];
+            context->u.X[30] = fp[1];
+        }
         context->Sp += local_size;
         if (fp_size) restore_fpregs( 8, fp_size / 8, int_size, context, ptrs );
         if (func->u.s.CR == 1) restore_regs( 30, 1, int_size - 8, context, ptrs );
