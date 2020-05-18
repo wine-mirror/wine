@@ -428,6 +428,23 @@ static void test_empty(void)
     expect(Ok, stat);
     ok(limit_dpi == 255, "limit_dpi was %d\n", limit_dpi);
 
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 0);
+    expect(Ok, stat);
+
+    limit_dpi = 0xdeadbeef;
+    stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, &limit_dpi);
+    expect(Ok, stat);
+    ok(limit_dpi == 96, "limit_dpi was %d\n", limit_dpi);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 1);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 9);
+    expect(InvalidParameter, stat);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 10);
+    expect(Ok, stat);
+
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(InvalidParameter, stat);
 
@@ -444,6 +461,9 @@ static void test_empty(void)
     stat = GdipGetMetafileDownLevelRasterizationLimit(metafile, &limit_dpi);
     expect(WrongState, stat);
     expect(0xdeadbeef, limit_dpi);
+
+    stat = GdipSetMetafileDownLevelRasterizationLimit(metafile, 200);
+    expect(WrongState, stat);
 
     check_metafile(metafile, empty_records, "empty metafile", dst_points, &frame, UnitPixel);
 

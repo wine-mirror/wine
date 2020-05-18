@@ -4028,8 +4028,14 @@ GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metaf
 {
     TRACE("(%p,%u)\n", metafile, limitDpi);
 
-    if (!metafile)
+    if (limitDpi == 0)
+        limitDpi = 96;
+
+    if (!metafile || limitDpi < 10)
         return InvalidParameter;
+
+    if (!metafile->record_dc)
+        return WrongState;
 
     metafile->limit_dpi = limitDpi;
 
