@@ -2759,12 +2759,18 @@ static DWORD WINAPI get_key_state_thread(void *arg)
     ok((result & 0x8000) || broken(!(result & 0x8000)), /* > Win 2003 */
        "expected that highest bit is set, got %x\n", result);
 
+    ok((SHORT)(result & 0x007e) == 0,
+        "expected that undefined bits are unset, got %x\n", result);
+
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForSingleObject(semaphores[1], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
 
     result = GetKeyState('X');
     ok(!(result & 0x8000), "expected that highest bit is unset, got %x\n", result);
+
+    ok((SHORT)(result & 0x007e) == 0,
+        "expected that undefined bits are unset, got %x\n", result);
 
     return 0;
 }
