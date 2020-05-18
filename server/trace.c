@@ -4578,6 +4578,17 @@ static void dump_set_job_completion_port_request( const struct set_job_completio
     dump_uint64( ", key=", &req->key );
 }
 
+static void dump_get_job_info_request( const struct get_job_info_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_job_info_reply( const struct get_job_info_reply *req )
+{
+    fprintf( stderr, " total_processes=%d", req->total_processes );
+    fprintf( stderr, ", active_processes=%d", req->active_processes );
+}
+
 static void dump_terminate_job_request( const struct terminate_job_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4887,6 +4898,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_process_in_job_request,
     (dump_func)dump_set_job_limits_request,
     (dump_func)dump_set_job_completion_port_request,
+    (dump_func)dump_get_job_info_request,
     (dump_func)dump_terminate_job_request,
     (dump_func)dump_suspend_process_request,
     (dump_func)dump_resume_process_request,
@@ -5185,6 +5197,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     NULL,
+    (dump_func)dump_get_job_info_reply,
     NULL,
     NULL,
     NULL,
@@ -5483,6 +5496,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "process_in_job",
     "set_job_limits",
     "set_job_completion_port",
+    "get_job_info",
     "terminate_job",
     "suspend_process",
     "resume_process",

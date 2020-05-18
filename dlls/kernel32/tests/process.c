@@ -2513,6 +2513,7 @@ static void test_QueryInformationJobObject(void)
     PJOBOBJECT_BASIC_PROCESS_ID_LIST pid_list = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)buf;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit_info;
     JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit_info = &ext_limit_info.BasicLimitInformation;
+    JOBOBJECT_BASIC_ACCOUNTING_INFORMATION basic_accounting_info;
     DWORD ret_len;
     PROCESS_INFORMATION pi[2];
     char buffer[50];
@@ -2619,6 +2620,14 @@ static void test_QueryInformationJobObject(void)
     ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
     ok(ret_len == sizeof(ext_limit_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
     expect_eq_d(0, basic_limit_info->LimitFlags);
+
+    /* test JobObjectBasicAccountingInformation */
+    ret = pQueryInformationJobObject(job, JobObjectBasicAccountingInformation, &basic_accounting_info,
+                                     sizeof(basic_accounting_info), &ret_len);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(ret_len == sizeof(basic_accounting_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+    expect_eq_d(3, basic_accounting_info.TotalProcesses);
+    expect_eq_d(2, basic_accounting_info.ActiveProcesses);
 
     TerminateProcess(pi[0].hProcess, 0);
     CloseHandle(pi[0].hProcess);

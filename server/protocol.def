@@ -3935,6 +3935,15 @@ struct handle_info
 @END
 
 
+/* Retrieve information about a job */
+@REQ(get_job_info)
+    obj_handle_t handle;          /* handle to the job */
+@REPLY
+    int total_processes;          /* total count of processes */
+    int active_processes;         /* count of running processes */
+@END
+
+
 /* Terminate all processes associated with the job  */
 @REQ(terminate_job)
     obj_handle_t handle;          /* handle to the job */

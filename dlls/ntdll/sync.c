@@ -392,7 +392,9 @@ NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
 NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, PVOID info,
                                              ULONG len, PULONG ret_len )
 {
-    FIXME( "stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
+    NTSTATUS ret;
+
+    TRACE( "semi-stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
 
     if (class >= MaxJobObjectInfoClass)
         return STATUS_INVALID_PARAMETER;
@@ -406,9 +408,21 @@ NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS c
                 return STATUS_INFO_LENGTH_MISMATCH;
 
             accounting = (JOBOBJECT_BASIC_ACCOUNTING_INFORMATION *)info;
-            memset(accounting, 0, sizeof(*accounting));
+
+            SERVER_START_REQ(get_job_info)
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                {
+                    memset(accounting, 0, sizeof(*accounting));
+                    accounting->TotalProcesses = reply->total_processes;
+                    accounting->ActiveProcesses = reply->active_processes;
+                }
+            }
+            SERVER_END_REQ;
+
             if (ret_len) *ret_len = sizeof(*accounting);
-            return STATUS_SUCCESS;
+            return ret;
         }
 
     case JobObjectBasicProcessIdList:
