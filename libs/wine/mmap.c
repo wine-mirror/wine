@@ -211,17 +211,20 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 
     if (!(flags & MAP_FIXED))
     {
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
-        /* Even FreeBSD 5.3 does not properly support NULL here. */
-        if( start == NULL ) start = (void *)0x110000;
-#endif
-
 #ifdef MAP_TRYFIXED
         /* If available, this will attempt a fixed mapping in-kernel */
         flags |= MAP_TRYFIXED;
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+        if ( start && mmap( start, size, prot, flags | MAP_FIXED | MAP_EXCL, get_fdzero(), 0 ) )
+            return start;
 #elif defined(__svr4__) || defined(__NetBSD__) || defined(__APPLE__)
         if ( try_mmap_fixed( start, size, prot, flags, get_fdzero(), 0 ) )
             return start;
+#endif
+
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+        /* Even FreeBSD 5.3 does not properly support NULL here. */
+        if( start == NULL ) start = (void *)0x110000;
 #endif
     }
     return mmap( start, size, prot, flags, get_fdzero(), 0 );
