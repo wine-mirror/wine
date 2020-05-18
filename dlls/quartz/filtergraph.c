@@ -5215,7 +5215,7 @@ static HRESULT WINAPI MediaFilter_GetState(IMediaFilter *iface, DWORD timeout, F
         else if (filter_hr != S_OK && filter_hr != VFW_S_STATE_INTERMEDIATE)
             hr = filter_hr;
         if (filter_state != graph->state)
-            WARN("Filter %p reported incorrect state %u.\n", filter->filter, filter_state);
+            ERR("Filter %p reported incorrect state %u.\n", filter->filter, filter_state);
     }
 
     LeaveCriticalSection(&graph->cs);
