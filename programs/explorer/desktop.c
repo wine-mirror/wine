@@ -151,6 +151,7 @@ struct window
 {
     LONG cookie, hwnd;
     int class;
+    ITEMIDLIST *pidl;
 };
 
 struct shellwindows
@@ -1241,10 +1242,40 @@ static HRESULT WINAPI shellwindows_Revoke(IShellWindows *iface, LONG cookie)
     return S_FALSE;
 }
 
-static HRESULT WINAPI shellwindows_OnNavigate(IShellWindows *iface, LONG cookie, VARIANT *loc)
+static HRESULT WINAPI shellwindows_OnNavigate(IShellWindows *iface, LONG cookie, VARIANT *location)
 {
-    FIXME("0x%x %s\n", cookie, debugstr_variant(loc));
-    return E_NOTIMPL;
+    struct shellwindows *sw = impl_from_IShellWindows(iface);
+    unsigned int i;
+
+    TRACE("iface %p, cookie %u, location %s.\n", iface, cookie, debugstr_variant(location));
+
+    if (V_VT(location) != (VT_ARRAY | VT_UI1))
+    {
+        FIXME("Unexpected variant type %s.\n", debugstr_vt(V_VT(location)));
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection(&sw->cs);
+
+    for (i = 0; i < sw->count; ++i)
+    {
+        if (sw->windows[i].cookie == cookie)
+        {
+            size_t len = V_ARRAY(location)->rgsabound[0].cElements;
+            if (!(sw->windows[i].pidl = realloc(sw->windows[i].pidl, len)))
+            {
+                LeaveCriticalSection(&sw->cs);
+                return E_OUTOFMEMORY;
+            }
+            memcpy(sw->windows[i].pidl, V_ARRAY(location)->pvData, len);
+
+            LeaveCriticalSection(&sw->cs);
+            return S_OK;
+        }
+    }
+
+    LeaveCriticalSection(&sw->cs);
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI shellwindows_OnActivated(IShellWindows *iface, LONG cookie, VARIANT_BOOL active)

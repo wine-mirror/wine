@@ -1068,8 +1068,11 @@ static void test_ShellWindows(void)
     ok(!ret, "Got window %#x.\n", ret);
     ok(!disp, "Got IDispatch %p.\n", &disp);
 
+    hr = IShellWindows_OnNavigate(shellwindows, 0, &v);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
     hr = IShellWindows_OnNavigate(shellwindows, cookie, &v);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IShellWindows_FindWindowSW(shellwindows, &v, &v2, SWC_EXPLORER, &ret, 0, &disp);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
