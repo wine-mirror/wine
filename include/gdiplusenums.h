@@ -784,7 +784,6 @@ typedef enum FontStyle FontStyle;
 typedef enum StringFormatFlags StringFormatFlags;
 typedef enum HotkeyPrefix HotkeyPrefix;
 typedef enum PenAlignment PenAlignment;
-typedef enum PaletteFlags PaletteFlags;
 typedef enum ImageCodecFlags ImageCodecFlags;
 typedef enum EncoderParameterValueType EncoderParameterValueType;
 typedef enum EncoderValue EncoderValue;
