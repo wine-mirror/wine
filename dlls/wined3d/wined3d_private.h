@@ -2394,6 +2394,8 @@ struct wined3d_context_vk
     VkRenderPass vk_render_pass;
     VkDescriptorPool vk_descriptor_pool;
 
+    VkSampleCountFlagBits sample_count;
+
     struct wined3d_retired_objects_vk retired;
     struct wine_rb_tree render_passes;
     struct wine_rb_tree pipeline_layouts;

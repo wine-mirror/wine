@@ -1893,6 +1893,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_rendertarget_view *dsv;
+    VkSampleCountFlagBits sample_count;
     VkCommandBuffer vk_command_buffer;
     unsigned int i;
 
@@ -1908,6 +1909,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_DOMAIN)))
         context_vk->c.shader_update_mask |= (1u << WINED3D_SHADER_TYPE_DOMAIN);
 
+    context_vk->sample_count = 0;
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
         struct wined3d_rendertarget_view *rtv;
@@ -1924,6 +1926,12 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         {
             wined3d_rendertarget_view_prepare_location(rtv, &context_vk->c, rtv->resource->draw_binding);
         }
+
+        sample_count = max(1, wined3d_resource_get_sample_count(rtv->resource));
+        if (!context_vk->sample_count)
+            context_vk->sample_count = sample_count;
+        else if (context_vk->sample_count != sample_count)
+            FIXME("Inconsistent sample counts (%u != %u).\n", context_vk->sample_count, sample_count);
     }
 
     if ((dsv = state->fb.depth_stencil))
@@ -1934,8 +1942,16 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
         if (state->render_states[WINED3D_RS_ZWRITEENABLE])
             wined3d_rendertarget_view_invalidate_location(dsv, ~dsv->resource->draw_binding);
+
+        sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));
+        if (!context_vk->sample_count)
+            context_vk->sample_count = sample_count;
+        else if (context_vk->sample_count != sample_count)
+            FIXME("Inconsistent sample counts (%u != %u).\n", context_vk->sample_count, sample_count);
     }
 
+    if (!context_vk->sample_count)
+        context_vk->sample_count = VK_SAMPLE_COUNT_1_BIT;
     if (context_vk->c.shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
     {
         device_vk->d.shader_backend->shader_select(device_vk->d.shader_priv, &context_vk->c, state);

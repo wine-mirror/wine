@@ -30,6 +30,8 @@ struct shader_spirv_resource_bindings
 {
     VkDescriptorSetLayoutBinding *vk_bindings;
     SIZE_T vk_bindings_size, vk_binding_count;
+
+    size_t binding_base[WINED3D_SHADER_TYPE_COUNT];
 };
 
 struct shader_spirv_priv
@@ -39,6 +41,38 @@ struct shader_spirv_priv
     bool ffp_proj_control;
 
     struct shader_spirv_resource_bindings bindings;
+};
+
+struct shader_spirv_compile_arguments
+{
+    union
+    {
+        struct
+        {
+            uint32_t alpha_swizzle;
+            unsigned int sample_count;
+        } fs;
+
+        struct
+        {
+            enum wined3d_tessellator_output_primitive output_primitive;
+            enum wined3d_tessellator_partitioning partitioning;
+        } tes;
+    } u;
+};
+
+struct shader_spirv_graphics_program_variant_vk
+{
+    struct shader_spirv_compile_arguments compile_args;
+    size_t binding_base;
+
+    VkShaderModule vk_module;
+};
+
+struct shader_spirv_graphics_program_vk
+{
+    struct shader_spirv_graphics_program_variant_vk *variants;
+    SIZE_T variants_size, variant_count;
 };
 
 struct shader_spirv_compute_program_vk
@@ -53,12 +87,93 @@ static void shader_spirv_handle_instruction(const struct wined3d_shader_instruct
 {
 }
 
+static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_arguments *args,
+        const struct wined3d_context *context, const struct wined3d_shader *shader,
+        const struct wined3d_state *state, unsigned int sample_count)
+{
+    const struct wined3d_shader *hull_shader;
+    struct wined3d_rendertarget_view *rtv;
+    unsigned int i;
+
+    memset(args, 0, sizeof(*args));
+
+    switch (shader->reg_maps.shader_version.type)
+    {
+        case WINED3D_SHADER_TYPE_DOMAIN:
+            hull_shader = state->shader[WINED3D_SHADER_TYPE_HULL];
+            args->u.tes.output_primitive = hull_shader->u.hs.tessellator_output_primitive;
+            if (args->u.tes.output_primitive == WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CW)
+                args->u.tes.output_primitive = WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW;
+            else if (args->u.tes.output_primitive == WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CCW)
+                args->u.tes.output_primitive = WINED3D_TESSELLATOR_OUTPUT_TRIANGLE_CW;
+            args->u.tes.partitioning = hull_shader->u.hs.tessellator_partitioning;
+            break;
+
+        case WINED3D_SHADER_TYPE_PIXEL:
+            for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
+            {
+                if (!(rtv = state->fb.render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
+                    continue;
+                if (rtv->format->id == WINED3DFMT_A8_UNORM && !is_identity_fixup(rtv->format->color_fixup))
+                    args->u.fs.alpha_swizzle |= 1u << i;
+            }
+            args->u.fs.sample_count = sample_count;
+            break;
+
+        default:
+            break;
+    }
+}
+
 static VkShaderModule shader_spirv_compile(struct wined3d_context_vk *context_vk,
-        struct wined3d_shader *shader, const struct shader_spirv_resource_bindings *bindings)
+        struct wined3d_shader *shader, const struct shader_spirv_compile_arguments *args,
+        const struct shader_spirv_resource_bindings *bindings)
 {
     FIXME("Not implemented.\n");
 
     return VK_NULL_HANDLE;
+}
+
+static struct shader_spirv_graphics_program_variant_vk *shader_spirv_find_graphics_program_variant_vk(
+        struct shader_spirv_priv *priv, struct wined3d_context_vk *context_vk, struct wined3d_shader *shader,
+        const struct wined3d_state *state, const struct shader_spirv_resource_bindings *bindings)
+{
+    size_t binding_base = bindings->binding_base[shader->reg_maps.shader_version.type];
+    struct shader_spirv_graphics_program_variant_vk *variant_vk;
+    struct shader_spirv_graphics_program_vk *program_vk;
+    struct shader_spirv_compile_arguments args;
+    size_t variant_count, i;
+
+    shader_spirv_compile_arguments_init(&args, &context_vk->c, shader, state, context_vk->sample_count);
+
+    if (!(program_vk = shader->backend_data))
+    {
+        if (!(program_vk = heap_alloc_zero(sizeof(*program_vk))))
+            return NULL;
+        shader->backend_data = program_vk;
+    }
+
+    variant_count = program_vk->variant_count;
+    for (i = 0; i < variant_count; ++i)
+    {
+        variant_vk = &program_vk->variants[i];
+        if (variant_vk->binding_base == binding_base
+                && !memcmp(&variant_vk->compile_args, &args, sizeof(args)))
+            return variant_vk;
+    }
+
+    if (!wined3d_array_reserve((void **)&program_vk->variants, &program_vk->variants_size,
+            variant_count + 1, sizeof(*program_vk->variants)))
+        return NULL;
+
+    variant_vk = &program_vk->variants[variant_count];
+    variant_vk->compile_args = args;
+    variant_vk->binding_base = binding_base;
+    if (!(variant_vk->vk_module = shader_spirv_compile(context_vk, shader, &args, bindings)))
+        return NULL;
+    ++program_vk->variant_count;
+
+    return variant_vk;
 }
 
 static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program_vk(struct shader_spirv_priv *priv,
@@ -78,7 +193,7 @@ static struct shader_spirv_compute_program_vk *shader_spirv_find_compute_program
     if (!(program = heap_alloc(sizeof(*program))))
         return NULL;
 
-    if (!(program->vk_module = shader_spirv_compile(context_vk, shader, bindings)))
+    if (!(program->vk_module = shader_spirv_compile(context_vk, shader, NULL, bindings)))
     {
         heap_free(program);
         return NULL;
@@ -191,6 +306,8 @@ static bool shader_spirv_resource_bindings_init(struct shader_spirv_resource_bin
 
     for (shader_type = 0; shader_type < WINED3D_SHADER_TYPE_COUNT; ++shader_type)
     {
+        bindings->binding_base[shader_type] = bindings->vk_binding_count;
+
         if (!(shader_mask & (1u << shader_type)) || !(shader = state->shader[shader_type]))
             continue;
 
@@ -295,10 +412,53 @@ static void shader_spirv_precompile(void *shader_priv, struct wined3d_shader *sh
 static void shader_spirv_select(void *shader_priv, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+    struct shader_spirv_graphics_program_variant_vk *variant_vk;
+    struct shader_spirv_resource_bindings *bindings;
+    size_t binding_base[WINED3D_SHADER_TYPE_COUNT];
+    struct wined3d_pipeline_layout_vk *layout_vk;
     struct shader_spirv_priv *priv = shader_priv;
+    enum wined3d_shader_type shader_type;
+    struct wined3d_shader *shader;
 
     priv->vertex_pipe->vp_enable(context, !use_vs(state));
     priv->fragment_pipe->fp_enable(context, !use_ps(state));
+
+    bindings = &priv->bindings;
+    memcpy(binding_base, bindings->binding_base, sizeof(bindings));
+    if (!shader_spirv_resource_bindings_init(bindings, &context_vk->graphics.bindings,
+            state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE)))
+    {
+        ERR("Failed to initialise shader resource bindings.\n");
+        goto fail;
+    }
+
+    layout_vk = wined3d_context_vk_get_pipeline_layout(context_vk, bindings->vk_bindings, bindings->vk_binding_count);
+    context_vk->graphics.vk_set_layout = layout_vk->vk_set_layout;
+    context_vk->graphics.vk_pipeline_layout = layout_vk->vk_pipeline_layout;
+
+    for (shader_type = 0; shader_type < ARRAY_SIZE(context_vk->graphics.vk_modules); ++shader_type)
+    {
+        if (!(context->shader_update_mask & (1u << shader_type)) && (!context_vk->graphics.vk_modules[shader_type]
+                || binding_base[shader_type] == bindings->binding_base[shader_type]))
+            continue;
+
+        if (!(shader = state->shader[shader_type]))
+        {
+            context_vk->graphics.vk_modules[shader_type] = VK_NULL_HANDLE;
+            continue;
+        }
+
+        if (!(variant_vk = shader_spirv_find_graphics_program_variant_vk(priv, context_vk, shader, state, bindings)))
+            goto fail;
+        context_vk->graphics.vk_modules[shader_type] = variant_vk->vk_module;
+    }
+
+    return;
+
+fail:
+    context_vk->graphics.vk_set_layout = VK_NULL_HANDLE;
+    context_vk->graphics.vk_pipeline_layout = VK_NULL_HANDLE;
 }
 
 static void shader_spirv_select_compute(void *shader_priv,
@@ -386,20 +546,72 @@ static void shader_spirv_invalidate_contexts_compute_program(struct wined3d_devi
     }
 }
 
-static void shader_spirv_destroy(struct wined3d_shader *shader)
+static void shader_spirv_invalidate_graphics_program_variant(struct wined3d_context_vk *context_vk,
+        const struct shader_spirv_graphics_program_variant_vk *variant)
+{
+    enum wined3d_shader_type shader_type;
+
+    for (shader_type = 0; shader_type < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++shader_type)
+    {
+        if (context_vk->graphics.vk_modules[shader_type] != variant->vk_module)
+            continue;
+
+        context_vk->graphics.vk_modules[shader_type] = VK_NULL_HANDLE;
+        context_vk->c.shader_update_mask |= (1u << shader_type);
+    }
+}
+
+static void shader_spirv_invalidate_contexts_graphics_program_variant(struct wined3d_device *device,
+        const struct shader_spirv_graphics_program_variant_vk *variant)
+{
+    unsigned int i;
+
+    for (i = 0; i < device->context_count; ++i)
+    {
+        shader_spirv_invalidate_graphics_program_variant(wined3d_context_vk(device->contexts[i]), variant);
+    }
+}
+
+static void shader_spirv_destroy_compute_vk(struct wined3d_shader *shader)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(shader->device);
+    struct shader_spirv_compute_program_vk *program = shader->backend_data;
     struct wined3d_vk_info *vk_info = &device_vk->vk_info;
-    struct shader_spirv_compute_program_vk *program;
-
-    if (!(program = shader->backend_data))
-        return;
 
     shader_spirv_invalidate_contexts_compute_program(&device_vk->d, program);
     VK_CALL(vkDestroyPipeline(device_vk->vk_device, program->vk_pipeline, NULL));
     VK_CALL(vkDestroyShaderModule(device_vk->vk_device, program->vk_module, NULL));
     shader->backend_data = NULL;
     heap_free(program);
+}
+
+static void shader_spirv_destroy(struct wined3d_shader *shader)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(shader->device);
+    struct shader_spirv_graphics_program_variant_vk *variant_vk;
+    struct wined3d_vk_info *vk_info = &device_vk->vk_info;
+    struct shader_spirv_graphics_program_vk *program_vk;
+    size_t i;
+
+    if (!shader->backend_data)
+        return;
+
+    if (shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_COMPUTE)
+    {
+        shader_spirv_destroy_compute_vk(shader);
+        return;
+    }
+
+    program_vk = shader->backend_data;
+    for (i = 0; i < program_vk->variant_count; ++i)
+    {
+        variant_vk = &program_vk->variants[i];
+        shader_spirv_invalidate_contexts_graphics_program_variant(&device_vk->d, variant_vk);
+        VK_CALL(vkDestroyShaderModule(device_vk->vk_device, variant_vk->vk_module, NULL));
+    }
+
+    shader->backend_data = NULL;
+    heap_free(program_vk);
 }
 
 static HRESULT shader_spirv_alloc(struct wined3d_device *device,
