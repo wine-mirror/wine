@@ -5014,11 +5014,11 @@ static void test_inet_pton(void)
         WSASetLastError(0xdeadbeef);
         ret = pInetPtonA(tests[i].family, tests[i].printable, buffer);
         ok (ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
+        err = WSAGetLastError();
         if (tests[i].ret == -1)
-        {
-            err = WSAGetLastError();
             ok (tests[i].err == err, "Test [%d]: Expected 0x%x, got 0x%x\n", i, tests[i].err, err);
-        }
+        else
+            ok (err == 0xdeadbeef, "Test [%d]: Expected 0xdeadbeef, got 0x%x\n", i, err);
         if (tests[i].ret != 1) continue;
         ok (memcmp(buffer, tests[i].raw_data,
             tests[i].family == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr)) == 0,
@@ -5041,11 +5041,14 @@ static void test_inet_pton(void)
         WSASetLastError(0xdeadbeef);
         ret = pInetPtonW(tests[i].family, tests[i].printable ? printableW : NULL, buffer);
         ok(ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
+        err = WSAGetLastError();
         if (tests[i].ret == -1)
-        {
-            err = WSAGetLastError();
             ok(tests[i].err == err, "Test [%d]: Expected 0x%x, got 0x%x\n", i, tests[i].err, err);
-        }
+        else if (tests[i].ret == 0)
+            ok(err == WSAEINVAL || broken(err == 0xdeadbeef) /* win2008 */,
+               "Test [%d]: Expected WSAEINVAL, got 0x%x\n", i, err);
+        else
+            ok(err == 0xdeadbeef, "Test [%d]: Expected 0xdeadbeef, got 0x%x\n", i, err);
         if (tests[i].ret != 1) continue;
         ok(memcmp(buffer, tests[i].raw_data,
            tests[i].family == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr)) == 0,

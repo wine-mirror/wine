@@ -8450,6 +8450,7 @@ INT WINAPI InetPtonW(INT family, PCWSTR addr, PVOID buffer)
     WideCharToMultiByte(CP_ACP, 0, addr, -1, addrA, len, NULL, NULL);
 
     ret = WS_inet_pton(family, addrA, buffer);
+    if (!ret) SetLastError(WSAEINVAL);
 
     HeapFree(GetProcessHeap(), 0, addrA);
     return ret;
