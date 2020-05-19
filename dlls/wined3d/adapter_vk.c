@@ -398,12 +398,80 @@ static const struct wined3d_allocator_ops wined3d_allocator_vk_ops =
     .allocator_destroy_chunk = wined3d_allocator_vk_destroy_chunk,
 };
 
+static const struct
+{
+    const char *name;
+    unsigned int core_since_version;
+}
+vulkan_device_extensions[] =
+{
+    {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1},
+    {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
+};
+
+static bool enable_vulkan_device_extensions(VkPhysicalDevice physical_device, uint32_t *extension_count,
+        const char *enabled_extensions[], const struct wined3d_vk_info *vk_info)
+{
+    VkExtensionProperties *extensions = NULL;
+    bool success = false, found;
+    unsigned int i, j, count;
+    VkResult vr;
+
+    *extension_count = 0;
+
+    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
+    {
+        ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto done;
+    }
+    if (!(extensions = heap_calloc(count, sizeof(*extensions))))
+    {
+        WARN("Out of memory.\n");
+        goto done;
+    }
+    if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, extensions))) < 0)
+    {
+        ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto done;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(vulkan_device_extensions); ++i)
+    {
+        if (vulkan_device_extensions[i].core_since_version <= vk_info->api_version)
+            continue;
+
+        for (j = 0, found = false; j < count; ++j)
+        {
+            if (!strcmp(extensions[j].extensionName, vulkan_device_extensions[i].name))
+            {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            WARN("Required extension '%s' is not available.\n", vulkan_device_extensions[i].name);
+            goto done;
+        }
+
+        TRACE("Enabling instance extension '%s'.\n", vulkan_device_extensions[i].name);
+        enabled_extensions[(*extension_count)++] = vulkan_device_extensions[i].name;
+    }
+    success = true;
+
+done:
+    heap_free(extensions);
+    return success;
+}
+
 static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, unsigned int flags, BYTE surface_alignment,
         const enum wined3d_feature_level *levels, unsigned int level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {
     const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk_const(adapter);
+    const char *enabled_device_extensions[ARRAY_SIZE(vulkan_device_extensions)];
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     static const float priorities[] = {1.0f};
     struct wined3d_device_vk *device_vk;
@@ -441,8 +509,13 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     device_info.pQueueCreateInfos = &queue_info;
     device_info.enabledLayerCount = 0;
     device_info.ppEnabledLayerNames = NULL;
-    device_info.enabledExtensionCount = 0;
-    device_info.ppEnabledExtensionNames = NULL;
+    device_info.ppEnabledExtensionNames = enabled_device_extensions;
+    if (!enable_vulkan_device_extensions(physical_device,
+            &device_info.enabledExtensionCount, enabled_device_extensions, vk_info))
+    {
+        hr = E_FAIL;
+        goto fail;
+    }
     device_info.pEnabledFeatures = &features;
 
     if ((vr = VK_CALL(vkCreateDevice(physical_device, &device_info, NULL, &vk_device))) < 0)

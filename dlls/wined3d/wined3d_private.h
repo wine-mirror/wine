@@ -2320,6 +2320,34 @@ struct wined3d_pipeline_layout_vk
     VkDescriptorSetLayout vk_set_layout;
 };
 
+struct wined3d_graphics_pipeline_key_vk
+{
+    VkPipelineShaderStageCreateInfo stages[WINED3D_SHADER_TYPE_GRAPHICS_COUNT];
+    VkVertexInputAttributeDescription attributes[MAX_ATTRIBS];
+    VkVertexInputBindingDescription bindings[MAX_ATTRIBS];
+    VkViewport viewport;
+    VkRect2D scissor;
+    VkPipelineColorBlendAttachmentState blend_attachments[WINED3D_MAX_RENDER_TARGETS];
+
+    VkPipelineVertexInputStateCreateInfo input_desc;
+    VkPipelineInputAssemblyStateCreateInfo ia_desc;
+    VkPipelineViewportStateCreateInfo vp_desc;
+    VkPipelineRasterizationStateCreateInfo rs_desc;
+    VkPipelineMultisampleStateCreateInfo ms_desc;
+    VkPipelineDepthStencilStateCreateInfo ds_desc;
+    VkPipelineColorBlendStateCreateInfo blend_desc;
+    VkPipelineDynamicStateCreateInfo dynamic_desc;
+
+    VkGraphicsPipelineCreateInfo pipeline_desc;
+};
+
+struct wined3d_graphics_pipeline_vk
+{
+    struct wine_rb_entry entry;
+    struct wined3d_graphics_pipeline_key_vk key;
+    VkPipeline vk_pipeline;
+};
+
 enum wined3d_shader_descriptor_type
 {
     WINED3D_SHADER_DESCRIPTOR_TYPE_CBV,
@@ -2363,6 +2391,7 @@ struct wined3d_context_vk
     struct
     {
         VkShaderModule vk_modules[WINED3D_SHADER_TYPE_GRAPHICS_COUNT];
+        struct wined3d_graphics_pipeline_key_vk pipeline_key_vk;
         VkPipeline vk_pipeline;
         VkPipelineLayout vk_pipeline_layout;
         VkDescriptorSetLayout vk_set_layout;
@@ -2395,10 +2424,12 @@ struct wined3d_context_vk
     VkDescriptorPool vk_descriptor_pool;
 
     VkSampleCountFlagBits sample_count;
+    unsigned int rt_count;
 
     struct wined3d_retired_objects_vk retired;
     struct wine_rb_tree render_passes;
     struct wine_rb_tree pipeline_layouts;
+    struct wine_rb_tree graphics_pipelines;
     struct wine_rb_tree bo_slab_available;
 };
 

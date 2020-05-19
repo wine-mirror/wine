@@ -772,6 +772,21 @@ static void wined3d_context_vk_destroy_bo_slab(struct wine_rb_entry *entry, void
     }
 }
 
+static void wined3d_context_vk_destroy_graphics_pipeline(struct wine_rb_entry *entry, void *ctx)
+{
+    struct wined3d_graphics_pipeline_vk *pipeline_vk = WINE_RB_ENTRY_VALUE(entry,
+            struct wined3d_graphics_pipeline_vk, entry);
+    struct wined3d_context_vk *context_vk = ctx;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_device_vk *device_vk;
+
+    vk_info = context_vk->vk_info;
+    device_vk = wined3d_device_vk(context_vk->c.device);
+
+    VK_CALL(vkDestroyPipeline(device_vk->vk_device, pipeline_vk->vk_pipeline, NULL));
+    heap_free(pipeline_vk);
+}
+
 static void wined3d_context_vk_destroy_pipeline_layout(struct wine_rb_entry *entry, void *ctx)
 {
     struct wined3d_pipeline_layout_vk *layout = WINE_RB_ENTRY_VALUE(entry,
@@ -1041,6 +1056,7 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     heap_free(context_vk->retired.objects);
 
     wined3d_shader_descriptor_writes_vk_cleanup(&context_vk->descriptor_writes);
+    wine_rb_destroy(&context_vk->graphics_pipelines, wined3d_context_vk_destroy_graphics_pipeline, context_vk);
     wine_rb_destroy(&context_vk->pipeline_layouts, wined3d_context_vk_destroy_pipeline_layout, context_vk);
     wine_rb_destroy(&context_vk->render_passes, wined3d_context_vk_destroy_render_pass, context_vk);
 
@@ -1239,6 +1255,68 @@ static int wined3d_pipeline_layout_vk_compare(const void *key, const struct wine
     return memcmp(a->bindings, b->bindings, a->binding_count * sizeof(*a->bindings));
 }
 
+static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct wined3d_graphics_pipeline_key_vk *a = key;
+    const struct wined3d_graphics_pipeline_key_vk *b = &WINE_RB_ENTRY_VALUE(entry,
+            const struct wined3d_graphics_pipeline_vk, entry)->key;
+    unsigned int i;
+    int ret;
+
+    if (a->pipeline_desc.stageCount != b->pipeline_desc.stageCount)
+        return a->pipeline_desc.stageCount - b->pipeline_desc.stageCount;
+    for (i = 0; i < a->pipeline_desc.stageCount; ++i)
+    {
+        if (a->stages[i].module != b->stages[i].module)
+            return a->stages[i].module - b->stages[i].module;
+    }
+
+    if (a->input_desc.vertexAttributeDescriptionCount != b->input_desc.vertexAttributeDescriptionCount)
+        return a->input_desc.vertexAttributeDescriptionCount - b->input_desc.vertexAttributeDescriptionCount;
+    if ((ret = memcmp(a->attributes, b->attributes,
+            a->input_desc.vertexAttributeDescriptionCount * sizeof(*a->attributes))))
+        return ret;
+    if (a->input_desc.vertexBindingDescriptionCount != b->input_desc.vertexBindingDescriptionCount)
+        return a->input_desc.vertexBindingDescriptionCount - b->input_desc.vertexBindingDescriptionCount;
+    if ((ret = memcmp(a->bindings, b->bindings,
+            a->input_desc.vertexBindingDescriptionCount * sizeof(*a->bindings))))
+        return ret;
+
+    if (a->ia_desc.topology != b->ia_desc.topology)
+        return a->ia_desc.topology - b->ia_desc.topology;
+    if (a->ia_desc.primitiveRestartEnable != b->ia_desc.primitiveRestartEnable)
+        return a->ia_desc.primitiveRestartEnable - b->ia_desc.primitiveRestartEnable;
+
+    if ((ret = memcmp(&a->viewport, &b->viewport, sizeof(a->viewport))))
+        return ret;
+
+    if ((ret = memcmp(&a->scissor, &b->scissor, sizeof(a->scissor))))
+        return ret;
+
+    if ((ret = memcmp(&a->rs_desc, &b->rs_desc, sizeof(a->rs_desc))))
+        return ret;
+
+    if ((ret = memcmp(&a->ms_desc, &b->ms_desc, sizeof(a->ms_desc))))
+        return ret;
+
+    if ((ret = memcmp(&a->ds_desc, &b->ds_desc, sizeof(a->ds_desc))))
+        return ret;
+
+    if (a->blend_desc.attachmentCount != b->blend_desc.attachmentCount)
+        return a->blend_desc.attachmentCount - b->blend_desc.attachmentCount;
+    if ((ret = memcmp(a->blend_attachments, b->blend_attachments,
+            a->blend_desc.attachmentCount * sizeof(*a->blend_attachments))))
+        return ret;
+
+    if (a->pipeline_desc.layout != b->pipeline_desc.layout)
+        return a->pipeline_desc.layout - b->pipeline_desc.layout;
+
+    if (a->pipeline_desc.renderPass != b->pipeline_desc.renderPass)
+        return a->pipeline_desc.renderPass - b->pipeline_desc.renderPass;
+
+    return 0;
+}
+
 static int wined3d_bo_slab_vk_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct wined3d_bo_slab_vk *slab = WINE_RB_ENTRY_VALUE(entry, const struct wined3d_bo_slab_vk, entry);
@@ -1249,6 +1327,197 @@ static int wined3d_bo_slab_vk_compare(const void *key, const struct wine_rb_entr
     if (k->usage != slab->bo.usage)
         return k->usage - slab->bo.usage;
     return k->size - slab->bo.size;
+}
+
+static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_graphics_pipeline_key_vk *key;
+    VkPipelineShaderStageCreateInfo *stage;
+    unsigned int i;
+
+    key = &context_vk->graphics.pipeline_key_vk;
+    memset(key, 0, sizeof(*key));
+
+    for (i = 0; i < ARRAY_SIZE(context_vk->graphics.vk_modules); ++i)
+    {
+        stage = &key->stages[i];
+        stage->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        stage->pName = "main";
+    }
+
+    key->input_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    key->input_desc.pVertexBindingDescriptions = key->bindings;
+    key->input_desc.pVertexAttributeDescriptions = key->attributes;
+
+    key->ia_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    key->ia_desc.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+
+    key->vp_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    key->vp_desc.viewportCount = 1;
+    key->vp_desc.pViewports = &key->viewport;
+    key->vp_desc.scissorCount = 1;
+    key->vp_desc.pScissors = &key->scissor;
+
+    key->rs_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    key->rs_desc.lineWidth = 1.0f;
+
+    key->ms_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+
+    key->ds_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    key->ds_desc.maxDepthBounds = 1.0f;
+
+    key->blend_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    key->blend_desc.logicOp = VK_LOGIC_OP_COPY;
+    key->blend_desc.pAttachments = key->blend_attachments;
+    key->blend_desc.blendConstants[0] = 1.0f;
+    key->blend_desc.blendConstants[1] = 1.0f;
+    key->blend_desc.blendConstants[2] = 1.0f;
+    key->blend_desc.blendConstants[3] = 1.0f;
+
+    key->dynamic_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+
+    key->pipeline_desc.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    key->pipeline_desc.pStages = key->stages;
+    key->pipeline_desc.pVertexInputState = &key->input_desc;
+    key->pipeline_desc.pInputAssemblyState = &key->ia_desc;
+    key->pipeline_desc.pViewportState = &key->vp_desc;
+    key->pipeline_desc.pRasterizationState = &key->rs_desc;
+    key->pipeline_desc.pMultisampleState = &key->ms_desc;
+    key->pipeline_desc.pDepthStencilState = &key->ds_desc;
+    key->pipeline_desc.pColorBlendState = &key->blend_desc;
+    key->pipeline_desc.pDynamicState = &key->dynamic_desc;
+    key->pipeline_desc.basePipelineIndex = -1;
+}
+
+static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_context_vk *context_vk,
+        const struct wined3d_state *state, VkPipelineLayout vk_pipeline_layout)
+{
+    const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
+    unsigned int i, attribute_count, binding_count, stage_count;
+    struct wined3d_graphics_pipeline_key_vk *key;
+    VkPipelineShaderStageCreateInfo *stage;
+    struct wined3d_stream_info stream_info;
+    VkShaderModule module;
+    bool update = false;
+    uint32_t mask;
+
+    key = &context_vk->graphics.pipeline_key_vk;
+
+    if (context_vk->c.shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
+    {
+        stage_count = 0;
+        for (i = 0; i < ARRAY_SIZE(context_vk->graphics.vk_modules); ++i)
+        {
+            if (!(module = context_vk->graphics.vk_modules[i]))
+                continue;
+
+            stage = &key->stages[stage_count++];
+            stage->stage = vk_shader_stage_from_wined3d(i);
+            stage->module = module;
+        }
+
+        key->pipeline_desc.stageCount = stage_count;
+
+        update = true;
+    }
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_VDECL)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STREAMSRC)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX)))
+    {
+        wined3d_stream_info_from_declaration(&stream_info, state, d3d_info);
+        for (i = 0, mask = 0, attribute_count = 0, binding_count = 0; i < ARRAY_SIZE(stream_info.elements); ++i)
+        {
+            struct wined3d_stream_info_element *e;
+            VkVertexInputAttributeDescription *a;
+            VkVertexInputBindingDescription *b;
+            uint32_t binding;
+
+            if (!(stream_info.use_map & (1u << i)))
+                continue;
+
+            a = &key->attributes[attribute_count++];
+            e = &stream_info.elements[i];
+            binding = e->stream_idx;
+
+            a->location = i;
+            a->binding = binding;
+            a->format = wined3d_format_vk(e->format)->vk_format;
+            a->offset = (UINT_PTR)e->data.addr - state->streams[binding].offset;
+
+            if (mask & (1u << binding))
+                continue;
+            mask |= 1u << binding;
+
+            b = &key->bindings[binding_count++];
+            b->binding = binding;
+            b->stride = e->stride;
+            b->inputRate = e->divisor ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+        }
+
+        key->input_desc.vertexBindingDescriptionCount = binding_count;
+        key->input_desc.vertexAttributeDescriptionCount = attribute_count;
+
+        update = true;
+    }
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_VIEWPORT))
+    {
+        key->viewport.x = state->viewports[0].x;
+        key->viewport.y = state->viewports[0].y;
+        key->viewport.width = state->viewports[0].width;
+        key->viewport.height = state->viewports[0].height;
+        key->viewport.minDepth = state->viewports[0].min_z;
+        key->viewport.maxDepth = state->viewports[0].max_z;
+
+        key->scissor.offset.x = key->viewport.x;
+        key->scissor.offset.y = key->viewport.y;
+        key->scissor.extent.width = key->viewport.width;
+        key->scissor.extent.height = key->viewport.height;
+        key->viewport.y += key->viewport.height;
+        key->viewport.height = -key->viewport.height;
+
+        update = true;
+    }
+
+    if (key->ms_desc.rasterizationSamples != context_vk->sample_count)
+    {
+        key->ms_desc.rasterizationSamples = context_vk->sample_count;
+
+        update = true;
+    }
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
+    {
+        key->blend_desc.attachmentCount = context_vk->rt_count;
+
+        memset(key->blend_attachments, 0, sizeof(key->blend_attachments));
+        for (i = 0; i < context_vk->rt_count; ++i)
+        {
+            key->blend_attachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+                    | VK_COLOR_COMPONENT_G_BIT
+                    | VK_COLOR_COMPONENT_B_BIT
+                    | VK_COLOR_COMPONENT_A_BIT;
+        }
+
+        update = true;
+    }
+
+    if (key->pipeline_desc.layout != vk_pipeline_layout)
+    {
+        key->pipeline_desc.layout = vk_pipeline_layout;
+
+        update = true;
+    }
+
+    if (key->pipeline_desc.renderPass != context_vk->vk_render_pass)
+    {
+        key->pipeline_desc.renderPass = context_vk->vk_render_pass;
+
+        update = true;
+    }
+
+    return update;
 }
 
 static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *context_vk,
@@ -1274,6 +1543,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     fb_layer_count = limits->maxFramebufferLayers;
     attachment_count = 0;
 
+    context_vk->rt_count = 0;
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
         if (!(view = state->fb.render_targets[i]) || view->format->id == WINED3DFMT_NULL)
@@ -1289,6 +1559,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
             fb_height = view->height;
         if (view->layer_count < fb_layer_count)
             fb_layer_count = view->layer_count;
+        context_vk->rt_count = i + 1;
         ++attachment_count;
     }
 
@@ -1766,9 +2037,33 @@ fail:
 
 static VkPipeline wined3d_context_vk_get_graphics_pipeline(struct wined3d_context_vk *context_vk)
 {
-    FIXME("Not implemented.\n");
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_graphics_pipeline_vk *pipeline_vk;
+    struct wined3d_graphics_pipeline_key_vk *key;
+    struct wine_rb_entry *entry;
+    VkResult vr;
 
-    return VK_NULL_HANDLE;
+    key = &context_vk->graphics.pipeline_key_vk;
+    if ((entry = wine_rb_get(&context_vk->graphics_pipelines, key)))
+        return WINE_RB_ENTRY_VALUE(entry, struct wined3d_graphics_pipeline_vk, entry)->vk_pipeline;
+
+    if (!(pipeline_vk = heap_alloc(sizeof(*pipeline_vk))))
+        return VK_NULL_HANDLE;
+    pipeline_vk->key = *key;
+
+    if ((vr = VK_CALL(vkCreateGraphicsPipelines(device_vk->vk_device,
+            VK_NULL_HANDLE, 1, &key->pipeline_desc, NULL, &pipeline_vk->vk_pipeline))) < 0)
+    {
+        WARN("Failed to create graphics pipeline, vr %s.\n", wined3d_debug_vkresult(vr));
+        heap_free(pipeline_vk);
+        return VK_NULL_HANDLE;
+    }
+
+    if (wine_rb_put(&context_vk->graphics_pipelines, &pipeline_vk->key, &pipeline_vk->entry) == -1)
+        ERR("Failed to insert pipeline.\n");
+
+    return pipeline_vk->vk_pipeline;
 }
 
 static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *context_vk,
@@ -1960,7 +2255,6 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             ERR("No pipeline layout set.\n");
             return VK_NULL_HANDLE;
         }
-        context_vk->c.shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
         context_vk->c.update_shader_resource_bindings = 1;
         context_vk->c.update_unordered_access_view_bindings = 1;
     }
@@ -1991,12 +2285,18 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         return VK_NULL_HANDLE;
     }
 
-    if (!(context_vk->graphics.vk_pipeline = wined3d_context_vk_get_graphics_pipeline(context_vk)))
+    if (wined3d_context_vk_update_graphics_pipeline_key(context_vk, state, context_vk->graphics.vk_pipeline_layout)
+            || !context_vk->graphics.vk_pipeline)
     {
-        ERR("Failed to get graphics pipeline.\n");
-        return VK_NULL_HANDLE;
+        if (!(context_vk->graphics.vk_pipeline = wined3d_context_vk_get_graphics_pipeline(context_vk)))
+        {
+            ERR("Failed to get graphics pipeline.\n");
+            return VK_NULL_HANDLE;
+        }
+
+        VK_CALL(vkCmdBindPipeline(vk_command_buffer,
+                VK_PIPELINE_BIND_POINT_GRAPHICS, context_vk->graphics.vk_pipeline));
     }
-    VK_CALL(vkCmdBindPipeline(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context_vk->graphics.vk_pipeline));
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer)
     {
@@ -2039,6 +2339,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     }
 
     memset(context_vk->c.dirty_graphics_states, 0, sizeof(context_vk->c.dirty_graphics_states));
+    context_vk->c.shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
 
     return vk_command_buffer;
 }
@@ -2063,7 +2364,6 @@ VkCommandBuffer wined3d_context_vk_apply_compute_state(struct wined3d_context_vk
             ERR("No compute pipeline set.\n");
             return VK_NULL_HANDLE;
         }
-        context_vk->c.shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
         context_vk->c.update_compute_shader_resource_bindings = 1;
         context_vk->c.update_compute_unordered_access_view_bindings = 1;
         context_vk->update_compute_pipeline = 1;
@@ -2107,6 +2407,7 @@ VkCommandBuffer wined3d_context_vk_apply_compute_state(struct wined3d_context_vk
     }
 
     memset(context_vk->c.dirty_compute_states, 0, sizeof(context_vk->c.dirty_compute_states));
+    context_vk->c.shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
 
     return vk_command_buffer;
 }
@@ -2139,8 +2440,11 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
     }
     context_vk->current_command_buffer.id = 1;
 
+    wined3d_context_vk_init_graphics_pipeline_key(context_vk);
+
     wine_rb_init(&context_vk->render_passes, wined3d_render_pass_vk_compare);
     wine_rb_init(&context_vk->pipeline_layouts, wined3d_pipeline_layout_vk_compare);
+    wine_rb_init(&context_vk->graphics_pipelines, wined3d_graphics_pipeline_vk_compare);
     wine_rb_init(&context_vk->bo_slab_available, wined3d_bo_slab_vk_compare);
 
     return WINED3D_OK;
