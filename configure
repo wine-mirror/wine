@@ -631,7 +631,6 @@ RT_LIBS
 POLL_LIBS
 TOOLSEXT
 MSVCRTFLAGS
-EXCESS_PRECISION_CFLAGS
 EXTRACFLAGS
 VKD3D_LIBS
 VKD3D_CFLAGS
@@ -705,6 +704,7 @@ X_PRE_LIBS
 X_CFLAGS
 XMKMF
 PTHREAD_LIBS
+EXCESS_PRECISION_CFLAGS
 CROSSDEBUG
 DELAYLOADFLAG
 CROSSLDFLAGS
@@ -9983,6 +9983,37 @@ $as_echo "$ac_cv_crosscflags__Werror_unknown_warning_option" >&6; }
 if test "x$ac_cv_crosscflags__Werror_unknown_warning_option" = xyes; then :
   CFLAGS="$CFLAGS -Werror=unknown-warning-option"
 fi
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Werror=ignored-optimization-argument" >&5
+$as_echo_n "checking whether the cross-compiler supports -Werror=ignored-optimization-argument... " >&6; }
+if ${ac_cv_crosscflags__Werror_ignored_optimization_argument+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Werror=ignored-optimization-argument"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_crosscflags__Werror_ignored_optimization_argument=yes
+else
+  ac_cv_crosscflags__Werror_ignored_optimization_argument=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Werror_ignored_optimization_argument" >&5
+$as_echo "$ac_cv_crosscflags__Werror_ignored_optimization_argument" >&6; }
+if test "x$ac_cv_crosscflags__Werror_ignored_optimization_argument" = xyes; then :
+  CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
+fi
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether the cross-compiler supports -Wdeclaration-after-statement... " >&6; }
 if ${ac_cv_crosscflags__Wdeclaration_after_statement+:} false; then :
@@ -10651,6 +10682,39 @@ if test "x$ac_cv_crosscflags__gcodeview" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -gcodeview"
 fi ;;
         esac
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fexcess-precision=standard" >&5
+$as_echo_n "checking whether the cross-compiler supports -fexcess-precision=standard... " >&6; }
+if ${ac_cv_crosscflags__fexcess_precision_standard+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -fexcess-precision=standard"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_crosscflags__fexcess_precision_standard=yes
+else
+  ac_cv_crosscflags__fexcess_precision_standard=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__fexcess_precision_standard" >&5
+$as_echo "$ac_cv_crosscflags__fexcess_precision_standard" >&6; }
+if test "x$ac_cv_crosscflags__fexcess_precision_standard" = xyes; then :
+  EXCESS_PRECISION_CFLAGS="-fexcess-precision=standard"
+
+fi
 
         if test "x$enable_werror" = "xyes"
         then
@@ -17178,32 +17242,6 @@ $as_echo "$ac_cv_cflags__fno_strict_aliasing" >&6; }
 if test "x$ac_cv_cflags__fno_strict_aliasing" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -fno-strict-aliasing"
 fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fexcess-precision=standard" >&5
-$as_echo_n "checking whether the compiler supports -fexcess-precision=standard... " >&6; }
-if ${ac_cv_cflags__fexcess_precision_standard+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -fexcess-precision=standard"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__fexcess_precision_standard=yes
-else
-  ac_cv_cflags__fexcess_precision_standard=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fexcess_precision_standard" >&5
-$as_echo "$ac_cv_cflags__fexcess_precision_standard" >&6; }
-if test "x$ac_cv_cflags__fexcess_precision_standard" = xyes; then :
-  EXCESS_PRECISION_CFLAGS="-fexcess-precision=standard"
-
-fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wdeclaration-after-statement" >&5
 $as_echo_n "checking whether the compiler supports -Wdeclaration-after-statement... " >&6; }
 if ${ac_cv_cflags__Wdeclaration_after_statement+:} false; then :
@@ -17479,6 +17517,36 @@ $as_echo "$ac_cv_cflags__Wwrite_strings" >&6; }
 if test "x$ac_cv_cflags__Wwrite_strings" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
 fi
+
+  if test -z "$CROSSTARGET"
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fexcess-precision=standard" >&5
+$as_echo_n "checking whether the compiler supports -fexcess-precision=standard... " >&6; }
+if ${ac_cv_cflags__fexcess_precision_standard+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fexcess-precision=standard"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__fexcess_precision_standard=yes
+else
+  ac_cv_cflags__fexcess_precision_standard=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fexcess_precision_standard" >&5
+$as_echo "$ac_cv_cflags__fexcess_precision_standard" >&6; }
+if test "x$ac_cv_cflags__fexcess_precision_standard" = xyes; then :
+  EXCESS_PRECISION_CFLAGS="-fexcess-precision=standard"
+
+fi
+  fi
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpointer-arith" >&5
 $as_echo_n "checking whether the compiler supports -Wpointer-arith... " >&6; }
@@ -20061,6 +20129,7 @@ OPENCL_LIBS = $OPENCL_LIBS
 QUICKTIME_LIBS = $QUICKTIME_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
+EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
 PTHREAD_LIBS = $PTHREAD_LIBS
 X_CFLAGS = $X_CFLAGS
 X_PRE_LIBS = $X_PRE_LIBS
@@ -20132,7 +20201,6 @@ NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
 VKD3D_CFLAGS = $VKD3D_CFLAGS
 VKD3D_LIBS = $VKD3D_LIBS
-EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
 POLL_LIBS = $POLL_LIBS
 RT_LIBS = $RT_LIBS
 LDAP_CFLAGS = $LDAP_CFLAGS
