@@ -2247,7 +2247,6 @@ AC_CHECK_FUNCS(\
 	inet_addr \
 	inet_network \
 	inet_ntop \
-	inet_pton \
 )
 
 dnl Check for clock_gettime which may be in -lrt

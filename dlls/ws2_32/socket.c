@@ -8394,10 +8394,10 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
 /***********************************************************************
 *              inet_pton                      (WS2_32.@)
 */
-INT WINAPI WS_inet_pton( INT family, PCSTR addr, PVOID buffer)
+INT WINAPI WS_inet_pton(INT family, const char *addr, void *buffer)
 {
-#ifdef HAVE_INET_PTON
-    int unixaf, ret;
+    NTSTATUS status;
+    const char *terminator;
 
     TRACE("family %d, addr %s, buffer (%p)\n", family, debugstr_a(addr), buffer);
 
@@ -8407,21 +8407,20 @@ INT WINAPI WS_inet_pton( INT family, PCSTR addr, PVOID buffer)
         return SOCKET_ERROR;
     }
 
-    unixaf = convert_af_w2u(family);
-    if (unixaf != AF_INET && unixaf != AF_INET6)
+    switch (family)
     {
+    case WS_AF_INET:
+        status = RtlIpv4StringToAddressA(addr, TRUE, &terminator, buffer);
+        break;
+    case WS_AF_INET6:
+        status = RtlIpv6StringToAddressA(addr, &terminator, buffer);
+        break;
+    default:
         SetLastError(WSAEAFNOSUPPORT);
         return SOCKET_ERROR;
     }
 
-    ret = inet_pton(unixaf, addr, buffer);
-    if (ret == -1) SetLastError(wsaErrno());
-    return ret;
-#else
-    FIXME( "not supported on this platform\n" );
-    SetLastError( WSAEAFNOSUPPORT );
-    return SOCKET_ERROR;
-#endif
+    return (status == STATUS_SUCCESS && *terminator == 0);
 }
 
 /***********************************************************************

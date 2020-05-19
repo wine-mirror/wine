@@ -18262,7 +18262,6 @@ for ac_func in \
 	inet_addr \
 	inet_network \
 	inet_ntop \
-	inet_pton \
 
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

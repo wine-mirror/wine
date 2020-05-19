@@ -4993,7 +4993,11 @@ static void test_inet_pton(void)
         "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
         {AF_INET6, 1, 0,
         "2001:cdba:0:0:0:0:3257:9652", "2001:cdba::3257:9652",
-        "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"}
+        "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
+        {AF_INET, 0, 0,
+        "0x12345678", NULL, NULL},
+        {AF_INET6, 0, 0, /* windows bug */
+        "::1:2:3:4:5:6:7", NULL, NULL},
     };
     int i, ret;
     DWORD err;
