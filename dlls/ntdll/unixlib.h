@@ -24,7 +24,7 @@
 #include "wine/debug.h"
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 5
+#define NTDLL_UNIXLIB_VERSION 6
 
 struct unix_funcs
 {
@@ -39,6 +39,7 @@ struct unix_funcs
     /* loader functions */
     NTSTATUS      (CDECL *exec_wineloader)( char **argv, int socketfd, int is_child_64bit,
                                             ULONGLONG res_start, ULONGLONG res_end );
+    void          (CDECL *start_server)( BOOL debug );
 
     /* virtual memory functions */
     NTSTATUS      (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );

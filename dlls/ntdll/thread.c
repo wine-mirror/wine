@@ -381,7 +381,7 @@ TEB *thread_init(void)
     thread_data->wait_fd[1] = -1;
 
     unix_funcs->dbg_init();
-    init_paths();
+    unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
     set_process_name( __wine_main_argc, __wine_main_argv );
 
     /* initialize time values in user_shared_data */

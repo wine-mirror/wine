@@ -127,8 +127,6 @@ const char *build_dir = NULL;
 const char *data_dir = NULL;
 const char *config_dir = NULL;
 static const char *server_dir;
-static const char *bin_dir;
-static const char *argv0;
 
 unsigned int server_cpus = 0;
 BOOL is_wow64 = FALSE;
@@ -189,47 +187,6 @@ static void fatal_perror( const char *err, ... )
     perror( " " );
     va_end( args );
     exit(1);
-}
-
-/* canonicalize path and return its directory name */
-static char *realpath_dirname( const char *name )
-{
-    char *p, *fullpath = realpath( name, NULL );
-
-    if (fullpath)
-    {
-        p = strrchr( fullpath, '/' );
-        if (p == fullpath) p++;
-        if (p) *p = 0;
-    }
-    return fullpath;
-}
-
-/* if string ends with tail, remove it */
-static char *remove_tail( const char *str, const char *tail )
-{
-    size_t len = strlen( str );
-    size_t tail_len = strlen( tail );
-    char *ret;
-
-    if (len < tail_len) return NULL;
-    if (strcmp( str + len - tail_len, tail )) return NULL;
-    ret = malloc( len - tail_len + 1 );
-    memcpy( ret, str, len - tail_len );
-    ret[len - tail_len] = 0;
-    return ret;
-}
-
-/* build a path from the specified dir and name */
-static char *build_path( const char *dir, const char *name )
-{
-    size_t len = strlen( dir );
-    char *ret = malloc( len + strlen( name ) + 2 );
-
-    memcpy( ret, dir, len );
-    if (len && ret[len - 1] != '/') ret[len++] = '/';
-    strcpy( ret + len, name );
-    return ret;
 }
 
 /***********************************************************************
@@ -1224,83 +1181,6 @@ int server_pipe( int fd[2] )
 
 
 /***********************************************************************
- *           exec_wineserver
- *
- * Exec a new wine server.
- */
-static void exec_wineserver( char **argv )
-{
-    char *path;
-
-    if (build_dir)
-    {
-        if (!is_win64)  /* look for 64-bit server */
-        {
-            char *loader = realpath_dirname( build_path( build_dir, "loader/wine64" ));
-            if (loader)
-            {
-                argv[0] = build_path( loader, "../server/wineserver" );
-                execv( argv[0], argv );
-            }
-        }
-        argv[0] = build_path( build_dir, "server/wineserver" );
-        execv( argv[0], argv );
-        return;
-    }
-
-    argv[0] = build_path( bin_dir, "wineserver" );
-    execv( argv[0], argv );
-
-    argv[0] = getenv( "WINESERVER" );
-    if (argv[0]) execv( argv[0], argv );
-
-    if ((path = getenv( "PATH" )))
-    {
-        for (path = strtok( strdup( path ), ":" ); path; path = strtok( NULL, ":" ))
-        {
-            argv[0] = build_path( path, "wineserver" );
-            execvp( argv[0], argv );
-        }
-    }
-
-    argv[0] = build_path( BINDIR, "wineserver" );
-    execv( argv[0], argv );
-}
-
-
-/***********************************************************************
- *           start_server
- *
- * Start a new wine server.
- */
-static void start_server(void)
-{
-    static BOOL started;  /* we only try once */
-    char *argv[3];
-    static char debug[] = "-d";
-
-    if (!started)
-    {
-        int status;
-        int pid = fork();
-        if (pid == -1) fatal_perror( "fork" );
-        if (!pid)
-        {
-            argv[1] = TRACE_ON(server) ? debug : NULL;
-            argv[2] = NULL;
-            exec_wineserver( argv );
-            fatal_error( "could not exec wineserver\n" );
-        }
-        waitpid( pid, &status, 0 );
-        status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
-        if (status == 2) return;  /* server lock held by someone else, will retry later */
-        if (status) exit(status);  /* server failed */
-        started = TRUE;
-    }
-}
-
-
-/***********************************************************************
  *           init_server_dir
  */
 static const char *init_server_dir( dev_t dev, ino_t ino )
@@ -1329,43 +1209,6 @@ static const char *init_server_dir( dev_t dev, ino_t ino )
     else
         sprintf( p, "%lx", (unsigned long)ino );
     return dir;
-}
-
-
-/***********************************************************************
- *           init_paths
- */
-void init_paths(void)
-{
-    const char *dll_dir = NULL;
-
-#ifdef HAVE_DLADDR
-    Dl_info info;
-
-    if (dladdr( init_paths, &info ) && info.dli_fname[0] == '/')
-        dll_dir = realpath_dirname( info.dli_fname );
-#endif
-
-    argv0 = strdup( __wine_main_argv[0] );
-
-#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
-    bin_dir = realpath_dirname( "/proc/self/exe" );
-#elif defined (__FreeBSD__) || defined(__DragonFly__)
-    bin_dir = realpath_dirname( "/proc/curproc/file" );
-#else
-    bin_dir = realpath_dirname( argv0 );
-#endif
-
-    if (dll_dir) build_dir = remove_tail( dll_dir, "/dlls/ntdll" );
-    else if (bin_dir) build_dir = remove_tail( bin_dir, "/loader" );
-
-    if (!build_dir)
-    {
-        if (!bin_dir) bin_dir = dll_dir ? build_path( dll_dir, DLL_TO_BINDIR ) : BINDIR;
-        else if (!dll_dir) dll_dir = build_path( bin_dir, BIN_TO_DLLDIR );
-    }
-
-    unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
 }
 
 
@@ -1467,7 +1310,7 @@ static int server_connect(void)
     if (chdir( server_dir ) == -1)
     {
         if (errno != ENOENT) fatal_perror( "chdir to %s", server_dir );
-        start_server();
+        unix_funcs->start_server( TRACE_ON(server) );
         if (chdir( server_dir ) == -1) fatal_perror( "chdir to %s", server_dir );
     }
 
@@ -1482,13 +1325,13 @@ static int server_connect(void)
         if (retry)
         {
             usleep( 100000 * retry * retry );
-            start_server();
+            unix_funcs->start_server( TRACE_ON(server) );
             if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
         }
         else if (lstat( SOCKETNAME, &st ) == -1) /* check for an already existing socket */
         {
             if (errno != ENOENT) fatal_perror( "lstat %s/%s", server_dir, SOCKETNAME );
-            start_server();
+            unix_funcs->start_server( TRACE_ON(server) );
             if (lstat( SOCKETNAME, &st ) == -1) continue;  /* still no socket, wait a bit more */
         }
 

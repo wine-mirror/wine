@@ -42,6 +42,9 @@
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # define LoadResource MacLoadResource
@@ -484,6 +487,83 @@ static NTSTATUS CDECL exec_wineloader( char **argv, int socketfd, int is_child_6
 }
 
 
+/***********************************************************************
+ *           exec_wineserver
+ *
+ * Exec a new wine server.
+ */
+static void exec_wineserver( char **argv )
+{
+    char *path;
+
+    if (build_dir)
+    {
+        if (!is_win64)  /* look for 64-bit server */
+        {
+            char *loader = realpath_dirname( build_path( build_dir, "loader/wine64" ));
+            if (loader)
+            {
+                argv[0] = build_path( loader, "../server/wineserver" );
+                execv( argv[0], argv );
+            }
+        }
+        argv[0] = build_path( build_dir, "server/wineserver" );
+        execv( argv[0], argv );
+        return;
+    }
+
+    argv[0] = build_path( bin_dir, "wineserver" );
+    execv( argv[0], argv );
+
+    argv[0] = getenv( "WINESERVER" );
+    if (argv[0]) execv( argv[0], argv );
+
+    if ((path = getenv( "PATH" )))
+    {
+        for (path = strtok( strdup( path ), ":" ); path; path = strtok( NULL, ":" ))
+        {
+            argv[0] = build_path( path, "wineserver" );
+            execvp( argv[0], argv );
+        }
+    }
+
+    argv[0] = build_path( BINDIR, "wineserver" );
+    execv( argv[0], argv );
+}
+
+
+/***********************************************************************
+ *           start_server
+ *
+ * Start a new wine server.
+ */
+static void CDECL start_server( BOOL debug )
+{
+    static BOOL started;  /* we only try once */
+    char *argv[3];
+    static char debug_flag[] = "-d";
+
+    if (!started)
+    {
+        int status;
+        int pid = fork();
+        if (pid == -1) fatal_error( "fork: %s", strerror(errno) );
+        if (!pid)
+        {
+            argv[1] = debug ? debug_flag : NULL;
+            argv[2] = NULL;
+            exec_wineserver( argv );
+            fatal_error( "could not exec wineserver\n" );
+        }
+        waitpid( pid, &status, 0 );
+        status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+        if (status == 2) return;  /* server lock held by someone else, will retry later */
+        if (status) exit(status);  /* server failed */
+        started = TRUE;
+    }
+}
+
+
 /*************************************************************************
  *		map_so_dll
  *
@@ -760,6 +840,7 @@ static struct unix_funcs unix_funcs =
     get_build_id,
     get_host_version,
     exec_wineloader,
+    start_server,
     map_so_dll,
     mmap_add_reserved_area,
     mmap_remove_reserved_area,
