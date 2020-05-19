@@ -111,8 +111,6 @@ extern WCHAR **__wine_main_wargv;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
-extern const char **dll_paths DECLSPEC_HIDDEN;
-extern size_t dll_path_maxlen DECLSPEC_HIDDEN;
 extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;

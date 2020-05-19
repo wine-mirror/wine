@@ -2573,6 +2573,10 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
     char *ptr, *file;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
+    const char **dll_paths;
+    SIZE_T dll_path_maxlen;
+
+    unix_funcs->get_dll_path( &dll_paths, &dll_path_maxlen );
 
     len = wcslen( name );
     if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;

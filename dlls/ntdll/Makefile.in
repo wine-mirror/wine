@@ -63,8 +63,10 @@ EXTRA_OBJS = unix/version.o
 
 server_EXTRADEFS = \
 	-DBINDIR=\"${bindir}\" \
-	-DDLLDIR=\"${dlldir}\" \
 	-DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\" \
+	-DDLL_TO_BINDIR=\"`$(MAKEDEP) -R ${dlldir} ${bindir}`\"
+
+unix_loader_EXTRADEFS = \
 	-DDLL_TO_BINDIR=\"`$(MAKEDEP) -R ${dlldir} ${bindir}`\" \
 	-DBIN_TO_DATADIR=\"`$(MAKEDEP) -R ${bindir} ${datadir}/wine`\"
 

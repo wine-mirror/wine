@@ -29,6 +29,9 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -65,6 +68,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
 extern void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs );
 
+#ifdef __GNUC__
+static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
+#endif
+
 extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern char **__wine_main_environ;
@@ -72,6 +79,14 @@ extern char **__wine_main_environ;
 static int main_argc;
 static char **main_argv;
 static char **main_envp;
+static char *argv0;
+static const char *bin_dir;
+static const char *dll_dir;
+static const char *data_dir;
+static const char *build_dir;
+static const char *config_dir;
+static const char **dll_paths;
+static SIZE_T dll_path_maxlen;
 
 static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
 {
@@ -114,6 +129,139 @@ static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int d
         else fixup_rva_dwords( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
     }
 }
+
+/* die on a fatal error; use only during initialization */
+static void fatal_error( const char *err, ... )
+{
+    va_list args;
+
+    va_start( args, err );
+    fprintf( stderr, "wine: " );
+    vfprintf( stderr, err, args );
+    va_end( args );
+    exit(1);
+}
+
+/* canonicalize path and return its directory name */
+static char *realpath_dirname( const char *name )
+{
+    char *p, *fullpath = realpath( name, NULL );
+
+    if (fullpath)
+    {
+        p = strrchr( fullpath, '/' );
+        if (p == fullpath) p++;
+        if (p) *p = 0;
+    }
+    return fullpath;
+}
+
+/* if string ends with tail, remove it */
+static char *remove_tail( const char *str, const char *tail )
+{
+    size_t len = strlen( str );
+    size_t tail_len = strlen( tail );
+    char *ret;
+
+    if (len < tail_len) return NULL;
+    if (strcmp( str + len - tail_len, tail )) return NULL;
+    ret = malloc( len - tail_len + 1 );
+    memcpy( ret, str, len - tail_len );
+    ret[len - tail_len] = 0;
+    return ret;
+}
+
+/* build a path from the specified dir and name */
+static char *build_path( const char *dir, const char *name )
+{
+    size_t len = strlen( dir );
+    char *ret = malloc( len + strlen( name ) + 2 );
+
+    memcpy( ret, dir, len );
+    if (len && ret[len - 1] != '/') ret[len++] = '/';
+    strcpy( ret + len, name );
+    return ret;
+}
+
+static void set_dll_path(void)
+{
+    char *p, *path = getenv( "WINEDLLPATH" );
+    int i, count = 0;
+
+    if (path) for (p = path, count = 1; *p; p++) if (*p == ':') count++;
+
+    dll_paths = malloc( (count + 2) * sizeof(*dll_paths) );
+    count = 0;
+
+    if (!build_dir) dll_paths[count++] = dll_dir;
+
+    if (path)
+    {
+        path = strdup(path);
+        for (p = strtok( path, ":" ); p; p = strtok( NULL, ":" )) dll_paths[count++] = strdup( p );
+        free( path );
+    }
+
+    for (i = 0; i < count; i++) dll_path_maxlen = max( dll_path_maxlen, strlen(dll_paths[i]) );
+    dll_paths[count] = NULL;
+}
+
+
+static void set_config_dir(void)
+{
+    char *p, *dir;
+    const char *prefix = getenv( "WINEPREFIX" );
+
+    if (prefix)
+    {
+        if (prefix[0] != '/')
+            fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
+        config_dir = dir = strdup( prefix );
+        for (p = dir + strlen(dir) - 1; p > dir && *p == '/'; p--) *p = 0;
+    }
+    else
+    {
+        const char *home = getenv( "HOME" );
+        if (!home)
+        {
+            struct passwd *pwd = getpwuid( getuid() );
+            if (pwd) home = pwd->pw_dir;
+        }
+        if (!home) fatal_error( "could not determine your home directory\n" );
+        if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
+        config_dir = build_path( home, ".wine" );
+    }
+}
+
+static void init_paths( int argc, char *argv[], char *envp[] )
+{
+    Dl_info info;
+
+    __wine_main_argc = main_argc = argc;
+    __wine_main_argv = main_argv = argv;
+    __wine_main_environ = main_envp = envp;
+    argv0 = strdup( argv[0] );
+
+    if (!dladdr( init_paths, &info ) || !(dll_dir = realpath_dirname( info.dli_fname )))
+        fatal_error( "cannot get path to ntdll.so\n" );
+
+    if (!(build_dir = remove_tail( dll_dir, "/dlls/ntdll" )))
+    {
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+        bin_dir = realpath_dirname( "/proc/self/exe" );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+        bin_dir = realpath_dirname( "/proc/curproc/file" );
+#else
+        bin_dir = realpath_dirname( argv0 );
+#endif
+        if (!bin_dir) bin_dir = build_path( dll_dir, DLL_TO_BINDIR );
+        data_dir = build_path( bin_dir, BIN_TO_DATADIR );
+    }
+
+    set_dll_path();
+    set_config_dir();
+}
+
 
 
 /*********************************************************************
@@ -168,6 +316,31 @@ static void CDECL get_main_args( int *argc, char **argv[], char **envp[] )
     *argc = main_argc;
     *argv = main_argv;
     *envp = main_envp;
+}
+
+
+/*************************************************************************
+ *		get_paths
+ *
+ * Return the various configuration paths.
+ */
+static void CDECL get_paths( const char **builddir, const char **datadir, const char **configdir )
+{
+    *builddir  = build_dir;
+    *datadir   = data_dir;
+    *configdir = config_dir;
+}
+
+
+/*************************************************************************
+ *		get_dll_path
+ *
+ * Return the various configuration paths.
+ */
+static void CDECL get_dll_path( const char ***paths, SIZE_T *maxlen )
+{
+    *paths = dll_paths;
+    *maxlen = dll_path_maxlen;
 }
 
 
@@ -419,24 +592,15 @@ static HMODULE load_ntdll(void)
     char *name;
     void *handle;
 
-    if (!dladdr( load_ntdll, &info ))
-    {
-        ERR( "cannot get path to ntdll.so\n" );
-        exit(1);
-    }
+    name = build_path( dll_dir, "ntdll.dll.so" );
+    if (!dladdr( load_ntdll, &info )) fatal_error( "cannot get path to ntdll.so\n" );
     name = malloc( strlen(info.dli_fname) + 5 );
     strcpy( name, info.dli_fname );
     strcpy( name + strlen(info.dli_fname) - 3, ".dll.so" );
-    if (!(handle = dlopen( name, RTLD_NOW )))
-    {
-        ERR( "failed to load %s: %s\n", name, dlerror() );
-        exit(1);
-    }
+    if (!(handle = dlopen( name, RTLD_NOW ))) fatal_error( "failed to load %s: %s\n", name, dlerror() );
     if (!(nt = dlsym( handle, "__wine_spec_nt_header" )))
-    {
-        ERR( "NT header not found in %s (too old?)\n", name );
-        exit(1);
-    }
+        fatal_error( "NT header not found in %s (too old?)\n", name );
+    dll_dir = realpath_dirname( name );
     free( name );
     module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
     map_so_dll( nt, module );
@@ -450,6 +614,8 @@ static HMODULE load_ntdll(void)
 static struct unix_funcs unix_funcs =
 {
     get_main_args,
+    get_paths,
+    get_dll_path,
     get_version,
     get_build_id,
     get_host_version,
@@ -709,6 +875,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     HMODULE module;
 
     wine_init_argv0_path( argv[0] );
+    init_paths( argc, argv, envp );
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
     {
@@ -719,14 +886,10 @@ void __wine_main( int argc, char *argv[], char *envp[] )
         if (pre_exec())
         {
             wine_exec_wine_binary( NULL, argv, getenv( "WINELOADER" ));
-            ERR( "could not exec the wine loader\n" );
-            exit(1);
+            fatal_error( "could not exec the wine loader\n" );
         }
     }
 
-    __wine_main_argc = main_argc = argc;
-    __wine_main_argv = main_argv = argv;
-    __wine_main_environ = main_envp = envp;
     virtual_init();
 
     module = load_ntdll();
@@ -755,12 +918,11 @@ NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void 
 
 #ifdef __APPLE__
     extern char **__wine_get_main_environment(void);
-    main_envp = __wine_get_main_environment();
+    char **envp = __wine_get_main_environment();
 #else
-    main_envp = __wine_main_environ;
+    char **envp = __wine_main_environ;
 #endif
-    main_argc = __wine_main_argc;
-    main_argv = __wine_main_argv;
+    init_paths( __wine_main_argc, __wine_main_argv, envp );
 
     map_so_dll( nt, module );
     fixup_ntdll_imports( &__wine_spec_nt_header, module );

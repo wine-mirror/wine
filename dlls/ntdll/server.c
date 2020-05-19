@@ -132,8 +132,6 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 const char *build_dir = NULL;
 const char *data_dir = NULL;
 const char *config_dir = NULL;
-const char **dll_paths = NULL;
-size_t dll_path_maxlen = 0;
 static const char *server_dir;
 static const char *bin_dir;
 static const char *argv0;
@@ -1454,67 +1452,6 @@ static const char *init_server_dir( dev_t dev, ino_t ino )
 
 
 /***********************************************************************
- *           init_config_dir
- */
-static const char *init_config_dir(void)
-{
-    char *p, *dir;
-    const char *prefix = getenv( "WINEPREFIX" );
-
-    if (prefix)
-    {
-        if (prefix[0] != '/')
-            fatal_error( "invalid directory %s in WINEPREFIX: not an absolute path\n", prefix );
-        dir = strdup( prefix );
-        for (p = dir + strlen(dir) - 1; p > dir && *p == '/'; p--) *p = 0;
-    }
-    else
-    {
-        const char *home = getenv( "HOME" );
-        if (!home)
-        {
-            struct passwd *pwd = getpwuid( getuid() );
-            if (pwd) home = pwd->pw_dir;
-        }
-        if (!home) fatal_error( "could not determine your home directory\n" );
-        if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
-        dir = build_path( home, ".wine" );
-    }
-    return dir;
-}
-
-
-/***********************************************************************
- *           build_dll_path
- */
-static void build_dll_path( const char *dll_dir )
-{
-    const char *default_dlldir = DLLDIR;
-    char *p, *path = getenv( "WINEDLLPATH" );
-    int i, count = 0;
-
-    if (path) for (p = path, count = 1; *p; p++) if (*p == ':') count++;
-
-    dll_paths = malloc( (count + 2) * sizeof(*dll_paths) );
-    count = 0;
-
-    if (!build_dir && dll_dir) dll_paths[count++] = dll_dir;
-
-    if (path)
-    {
-        path = strdup(path);
-        for (p = strtok( path, ":" ); p; p = strtok( NULL, ":" )) dll_paths[count++] = strdup( p );
-        free( path );
-    }
-
-    if (!build_dir && !dll_dir) dll_paths[count++] = default_dlldir;
-
-    for (i = 0; i < count; i++) dll_path_maxlen = max( dll_path_maxlen, strlen(dll_paths[i]) );
-    dll_paths[count] = NULL;
-}
-
-
-/***********************************************************************
  *           init_paths
  */
 void init_paths(void)
@@ -1545,11 +1482,9 @@ void init_paths(void)
     {
         if (!bin_dir) bin_dir = dll_dir ? build_path( dll_dir, DLL_TO_BINDIR ) : BINDIR;
         else if (!dll_dir) dll_dir = build_path( bin_dir, BIN_TO_DLLDIR );
-        data_dir = build_path( bin_dir, BIN_TO_DATADIR );
     }
 
-    build_dll_path( dll_dir );
-    config_dir = init_config_dir();
+    unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
 }
 
 

@@ -384,6 +384,8 @@ static void set_wow64_environment( WCHAR **env )
     const char *p;
     const char *home = getenv( "HOME" );
     const char *name = getenv( "USER" );
+    const char **dll_paths;
+    SIZE_T dll_path_maxlen;
     WCHAR *val;
     HANDLE hkey;
     DWORD i;
@@ -404,6 +406,7 @@ static void set_wow64_environment( WCHAR **env )
     set_wine_path_variable( env, winehomedirW, home );
     set_wine_path_variable( env, winebuilddirW, build_dir );
     set_wine_path_variable( env, wineconfigdirW, config_dir );
+    unix_funcs->get_dll_path( &dll_paths, &dll_path_maxlen );
     for (i = 0; dll_paths[i]; i++)
     {
         NTDLL_swprintf( buf, winedlldirW, i );

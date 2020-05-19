@@ -24,12 +24,14 @@
 #include "wine/debug.h"
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 4
+#define NTDLL_UNIXLIB_VERSION 5
 
 struct unix_funcs
 {
     /* environment functions */
     void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );
+    void          (CDECL *get_paths)( const char **builddir, const char **datadir, const char **configdir );
+    void          (CDECL *get_dll_path)( const char ***paths, SIZE_T *maxlen );
     const char *  (CDECL *get_version)(void);
     const char *  (CDECL *get_build_id)(void);
     void          (CDECL *get_host_version)( const char **sysname, const char **release );
