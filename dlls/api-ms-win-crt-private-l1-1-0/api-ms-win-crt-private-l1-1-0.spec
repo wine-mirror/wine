@@ -66,313 +66,313 @@
 @ cdecl -arch=i386 _local_unwind2(ptr long) ucrtbase._local_unwind2
 @ cdecl -arch=i386 _local_unwind4(ptr ptr long) ucrtbase._local_unwind4
 @ cdecl -arch=i386 _longjmpex(ptr long) ucrtbase._longjmpex
-@ stub _o__CIacos
-@ stub _o__CIasin
-@ stub _o__CIatan
-@ stub _o__CIatan2
-@ stub _o__CIcos
-@ stub _o__CIcosh
-@ stub _o__CIexp
-@ stub _o__CIfmod
-@ stub _o__CIlog
-@ stub _o__CIlog10
-@ stub _o__CIpow
-@ stub _o__CIsin
-@ stub _o__CIsinh
-@ stub _o__CIsqrt
-@ stub _o__CItan
-@ stub _o__CItanh
-@ stub _o__Getdays
-@ stub _o__Getmonths
-@ stub _o__Gettnames
-@ stub _o__Strftime
-@ stub _o__W_Getdays
-@ stub _o__W_Getmonths
-@ stub _o__W_Gettnames
-@ stub _o__Wcsftime
-@ stub _o____lc_codepage_func
-@ stub _o____lc_collate_cp_func
-@ stub _o____lc_locale_name_func
-@ stub _o____mb_cur_max_func
+@ cdecl -arch=i386 _o__CIacos() ucrtbase._o__CIacos
+@ cdecl -arch=i386 _o__CIasin() ucrtbase._o__CIasin
+@ cdecl -arch=i386 _o__CIatan() ucrtbase._o__CIatan
+@ cdecl -arch=i386 _o__CIatan2() ucrtbase._o__CIatan2
+@ cdecl -arch=i386 _o__CIcos() ucrtbase._o__CIcos
+@ cdecl -arch=i386 _o__CIcosh() ucrtbase._o__CIcosh
+@ cdecl -arch=i386 _o__CIexp() ucrtbase._o__CIexp
+@ cdecl -arch=i386 _o__CIfmod() ucrtbase._o__CIfmod
+@ cdecl -arch=i386 _o__CIlog() ucrtbase._o__CIlog
+@ cdecl -arch=i386 _o__CIlog10() ucrtbase._o__CIlog10
+@ cdecl -arch=i386 _o__CIpow() ucrtbase._o__CIpow
+@ cdecl -arch=i386 _o__CIsin() ucrtbase._o__CIsin
+@ cdecl -arch=i386 _o__CIsinh() ucrtbase._o__CIsinh
+@ cdecl -arch=i386 _o__CIsqrt() ucrtbase._o__CIsqrt
+@ cdecl -arch=i386 _o__CItan() ucrtbase._o__CItan
+@ cdecl -arch=i386 _o__CItanh() ucrtbase._o__CItanh
+@ cdecl _o__Getdays() ucrtbase._o__Getdays
+@ cdecl _o__Getmonths() ucrtbase._o__Getmonths
+@ cdecl _o__Gettnames() ucrtbase._o__Gettnames
+@ cdecl _o__Strftime(ptr long str ptr ptr) ucrtbase._o__Strftime
+@ cdecl _o__W_Getdays() ucrtbase._o__W_Getdays
+@ cdecl _o__W_Getmonths() ucrtbase._o__W_Getmonths
+@ cdecl _o__W_Gettnames() ucrtbase._o__W_Gettnames
+@ cdecl _o__Wcsftime(ptr long wstr ptr ptr) ucrtbase._o__Wcsftime
+@ cdecl _o____lc_codepage_func() ucrtbase._o____lc_codepage_func
+@ cdecl _o____lc_collate_cp_func() ucrtbase._o____lc_collate_cp_func
+@ cdecl _o____lc_locale_name_func() ucrtbase._o____lc_locale_name_func
+@ cdecl _o____mb_cur_max_func() ucrtbase._o____mb_cur_max_func
 @ cdecl _o___acrt_iob_func(long) ucrtbase._o___acrt_iob_func
-@ stub _o___conio_common_vcprintf
+@ cdecl _o___conio_common_vcprintf(int64 str ptr ptr) ucrtbase._o___conio_common_vcprintf
 @ stub _o___conio_common_vcprintf_p
 @ stub _o___conio_common_vcprintf_s
 @ stub _o___conio_common_vcscanf
-@ stub _o___conio_common_vcwprintf
+@ cdecl _o___conio_common_vcwprintf(int64 wstr ptr ptr) ucrtbase._o___conio_common_vcwprintf
 @ stub _o___conio_common_vcwprintf_p
 @ stub _o___conio_common_vcwprintf_s
 @ stub _o___conio_common_vcwscanf
-@ stub _o___daylight
-@ stub _o___dstbias
-@ stub _o___fpe_flt_rounds
-@ stub _o___libm_sse2_acos
-@ stub _o___libm_sse2_acosf
-@ stub _o___libm_sse2_asin
-@ stub _o___libm_sse2_asinf
-@ stub _o___libm_sse2_atan
-@ stub _o___libm_sse2_atan2
-@ stub _o___libm_sse2_atanf
-@ stub _o___libm_sse2_cos
-@ stub _o___libm_sse2_cosf
-@ stub _o___libm_sse2_exp
-@ stub _o___libm_sse2_expf
-@ stub _o___libm_sse2_log
-@ stub _o___libm_sse2_log10
-@ stub _o___libm_sse2_log10f
-@ stub _o___libm_sse2_logf
-@ stub _o___libm_sse2_pow
-@ stub _o___libm_sse2_powf
-@ stub _o___libm_sse2_sin
-@ stub _o___libm_sse2_sinf
-@ stub _o___libm_sse2_tan
-@ stub _o___libm_sse2_tanf
+@ cdecl _o___daylight() ucrtbase._o___daylight
+@ cdecl _o___dstbias() ucrtbase._o___dstbias
+@ cdecl _o___fpe_flt_rounds() ucrtbase._o___fpe_flt_rounds
+@ cdecl -arch=i386 -norelay _o___libm_sse2_acos() ucrtbase._o___libm_sse2_acos
+@ cdecl -arch=i386 -norelay _o___libm_sse2_acosf() ucrtbase._o___libm_sse2_acosf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_asin() ucrtbase._o___libm_sse2_asin
+@ cdecl -arch=i386 -norelay _o___libm_sse2_asinf() ucrtbase._o___libm_sse2_asinf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_atan() ucrtbase._o___libm_sse2_atan
+@ cdecl -arch=i386 -norelay _o___libm_sse2_atan2() ucrtbase._o___libm_sse2_atan2
+@ cdecl -arch=i386 -norelay _o___libm_sse2_atanf() ucrtbase._o___libm_sse2_atanf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_cos() ucrtbase._o___libm_sse2_cos
+@ cdecl -arch=i386 -norelay _o___libm_sse2_cosf() ucrtbase._o___libm_sse2_cosf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_exp() ucrtbase._o___libm_sse2_exp
+@ cdecl -arch=i386 -norelay _o___libm_sse2_expf() ucrtbase._o___libm_sse2_expf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_log() ucrtbase._o___libm_sse2_log
+@ cdecl -arch=i386 -norelay _o___libm_sse2_log10() ucrtbase._o___libm_sse2_log10
+@ cdecl -arch=i386 -norelay _o___libm_sse2_log10f() ucrtbase._o___libm_sse2_log10f
+@ cdecl -arch=i386 -norelay _o___libm_sse2_logf() ucrtbase._o___libm_sse2_logf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_pow() ucrtbase._o___libm_sse2_pow
+@ cdecl -arch=i386 -norelay _o___libm_sse2_powf() ucrtbase._o___libm_sse2_powf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_sin() ucrtbase._o___libm_sse2_sin
+@ cdecl -arch=i386 -norelay _o___libm_sse2_sinf() ucrtbase._o___libm_sse2_sinf
+@ cdecl -arch=i386 -norelay _o___libm_sse2_tan() ucrtbase._o___libm_sse2_tan
+@ cdecl -arch=i386 -norelay _o___libm_sse2_tanf() ucrtbase._o___libm_sse2_tanf
 @ cdecl _o___p___argc() ucrtbase._o___p___argc
-@ stub _o___p___argv
+@ cdecl _o___p___argv() ucrtbase._o___p___argv
 @ cdecl _o___p___wargv() ucrtbase._o___p___wargv
-@ stub _o___p__acmdln
+@ cdecl _o___p__acmdln() ucrtbase._o___p__acmdln
 @ cdecl _o___p__commode() ucrtbase._o___p__commode
-@ stub _o___p__environ
-@ stub _o___p__fmode
+@ cdecl _o___p__environ() ucrtbase._o___p__environ
+@ cdecl _o___p__fmode() ucrtbase._o___p__fmode
 @ stub _o___p__mbcasemap
-@ stub _o___p__mbctype
-@ stub _o___p__pgmptr
-@ stub _o___p__wcmdln
-@ stub _o___p__wenviron
-@ stub _o___p__wpgmptr
-@ stub _o___pctype_func
+@ cdecl _o___p__mbctype() ucrtbase._o___p__mbctype
+@ cdecl _o___p__pgmptr() ucrtbase._o___p__pgmptr
+@ cdecl _o___p__wcmdln() ucrtbase._o___p__wcmdln
+@ cdecl _o___p__wenviron() ucrtbase._o___p__wenviron
+@ cdecl _o___p__wpgmptr() ucrtbase._o___p__wpgmptr
+@ cdecl _o___pctype_func() ucrtbase._o___pctype_func
 @ stub _o___pwctype_func
-@ stub _o___std_exception_copy
+@ cdecl _o___std_exception_copy(ptr ptr) ucrtbase._o___std_exception_copy
 @ cdecl _o___std_exception_destroy(ptr) ucrtbase._o___std_exception_destroy
 @ cdecl _o___std_type_info_destroy_list(ptr) ucrtbase._o___std_type_info_destroy_list
-@ stub _o___std_type_info_name
+@ cdecl _o___std_type_info_name(ptr ptr) ucrtbase._o___std_type_info_name
 @ cdecl _o___stdio_common_vfprintf(int64 ptr str ptr ptr) ucrtbase._o___stdio_common_vfprintf
 @ stub _o___stdio_common_vfprintf_p
-@ stub _o___stdio_common_vfprintf_s
-@ stub _o___stdio_common_vfscanf
+@ cdecl _o___stdio_common_vfprintf_s(int64 ptr str ptr ptr) ucrtbase._o___stdio_common_vfprintf_s
+@ cdecl _o___stdio_common_vfscanf(int64 ptr str ptr ptr) ucrtbase._o___stdio_common_vfscanf
 @ cdecl _o___stdio_common_vfwprintf(int64 ptr wstr ptr ptr) ucrtbase._o___stdio_common_vfwprintf
 @ stub _o___stdio_common_vfwprintf_p
-@ stub _o___stdio_common_vfwprintf_s
-@ stub _o___stdio_common_vfwscanf
+@ cdecl _o___stdio_common_vfwprintf_s(int64 ptr wstr ptr ptr) ucrtbase._o___stdio_common_vfwprintf_s
+@ cdecl _o___stdio_common_vfwscanf(int64 ptr wstr ptr ptr) ucrtbase._o___stdio_common_vfwscanf
 @ cdecl _o___stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) ucrtbase._o___stdio_common_vsnprintf_s
-@ stub _o___stdio_common_vsnwprintf_s
+@ cdecl _o___stdio_common_vsnwprintf_s(int64 ptr long long wstr ptr ptr) ucrtbase._o___stdio_common_vsnwprintf_s
 @ cdecl _o___stdio_common_vsprintf(int64 ptr long str ptr ptr) ucrtbase._o___stdio_common_vsprintf
-@ stub _o___stdio_common_vsprintf_p
+@ cdecl _o___stdio_common_vsprintf_p(int64 ptr long str ptr ptr) ucrtbase._o___stdio_common_vsprintf_p
 @ cdecl _o___stdio_common_vsprintf_s(int64 ptr long str ptr ptr) ucrtbase._o___stdio_common_vsprintf_s
-@ stub _o___stdio_common_vsscanf
+@ cdecl _o___stdio_common_vsscanf(int64 ptr long str ptr ptr) ucrtbase._o___stdio_common_vsscanf
 @ cdecl _o___stdio_common_vswprintf(int64 ptr long wstr ptr ptr) ucrtbase._o___stdio_common_vswprintf
-@ stub _o___stdio_common_vswprintf_p
-@ stub _o___stdio_common_vswprintf_s
-@ stub _o___stdio_common_vswscanf
-@ stub _o___timezone
-@ stub _o___tzname
-@ stub _o___wcserror
-@ stub _o__access
-@ stub _o__access_s
-@ stub _o__aligned_free
-@ stub _o__aligned_malloc
-@ stub _o__aligned_msize
-@ stub _o__aligned_offset_malloc
-@ stub _o__aligned_offset_realloc
+@ cdecl _o___stdio_common_vswprintf_p(int64 ptr long wstr ptr ptr) ucrtbase._o___stdio_common_vswprintf_p
+@ cdecl _o___stdio_common_vswprintf_s(int64 ptr long wstr ptr ptr) ucrtbase._o___stdio_common_vswprintf_s
+@ cdecl _o___stdio_common_vswscanf(int64 ptr long wstr ptr ptr) ucrtbase._o___stdio_common_vswscanf
+@ cdecl _o___timezone() ucrtbase._o___timezone
+@ cdecl _o___tzname() ucrtbase._o___tzname
+@ cdecl _o___wcserror(wstr) ucrtbase._o___wcserror
+@ cdecl _o__access(str long) ucrtbase._o__access
+@ cdecl _o__access_s(str long) ucrtbase._o__access_s
+@ cdecl _o__aligned_free(ptr) ucrtbase._o__aligned_free
+@ cdecl _o__aligned_malloc(long long) ucrtbase._o__aligned_malloc
+@ cdecl _o__aligned_msize(ptr long long) ucrtbase._o__aligned_msize
+@ cdecl _o__aligned_offset_malloc(long long long) ucrtbase._o__aligned_offset_malloc
+@ cdecl _o__aligned_offset_realloc(ptr long long long) ucrtbase._o__aligned_offset_realloc
 @ stub _o__aligned_offset_recalloc
-@ stub _o__aligned_realloc
+@ cdecl _o__aligned_realloc(ptr long long) ucrtbase._o__aligned_realloc
 @ stub _o__aligned_recalloc
-@ stub _o__atodbl
-@ stub _o__atodbl_l
-@ stub _o__atof_l
-@ stub _o__atoflt
-@ stub _o__atoflt_l
-@ stub _o__atoi64
-@ stub _o__atoi64_l
-@ stub _o__atoi_l
-@ stub _o__atol_l
-@ stub _o__atoldbl
+@ cdecl _o__atodbl(ptr str) ucrtbase._o__atodbl
+@ cdecl _o__atodbl_l(ptr str ptr) ucrtbase._o__atodbl_l
+@ cdecl _o__atof_l(str ptr) ucrtbase._o__atof_l
+@ cdecl _o__atoflt(ptr str) ucrtbase._o__atoflt
+@ cdecl _o__atoflt_l(ptr str ptr) ucrtbase._o__atoflt_l
+@ cdecl -ret64 _o__atoi64(str) ucrtbase._o__atoi64
+@ cdecl -ret64 _o__atoi64_l(str ptr) ucrtbase._o__atoi64_l
+@ cdecl _o__atoi_l(str ptr) ucrtbase._o__atoi_l
+@ cdecl _o__atol_l(str ptr) ucrtbase._o__atol_l
+@ cdecl _o__atoldbl(ptr str) ucrtbase._o__atoldbl
 @ stub _o__atoldbl_l
-@ stub _o__atoll_l
-@ stub _o__beep
-@ stub _o__beginthread
-@ stub _o__beginthreadex
-@ stub _o__cabs
-@ stub _o__callnewh
-@ stub _o__calloc_base
-@ stub _o__cexit
-@ stub _o__cgets
+@ cdecl -ret64 _o__atoll_l(str ptr) ucrtbase._o__atoll_l
+@ cdecl _o__beep(long long) ucrtbase._o__beep
+@ cdecl _o__beginthread(ptr long ptr) ucrtbase._o__beginthread
+@ cdecl _o__beginthreadex(ptr long ptr ptr long ptr) ucrtbase._o__beginthreadex
+@ cdecl _o__cabs(long) ucrtbase._o__cabs
+@ cdecl _o__callnewh(long) ucrtbase._o__callnewh
+@ cdecl _o__calloc_base(long long) ucrtbase._o__calloc_base
+@ cdecl _o__cexit() ucrtbase._o__cexit
+@ cdecl _o__cgets(ptr) ucrtbase._o__cgets
 @ stub _o__cgets_s
 @ stub _o__cgetws
 @ stub _o__cgetws_s
-@ stub _o__chdir
-@ stub _o__chdrive
-@ stub _o__chmod
-@ stub _o__chsize
-@ stub _o__chsize_s
-@ stub _o__close
-@ stub _o__commit
+@ cdecl _o__chdir(str) ucrtbase._o__chdir
+@ cdecl _o__chdrive(long) ucrtbase._o__chdrive
+@ cdecl _o__chmod(str long) ucrtbase._o__chmod
+@ cdecl _o__chsize(long long) ucrtbase._o__chsize
+@ cdecl _o__chsize_s(long int64) ucrtbase._o__chsize_s
+@ cdecl _o__close(long) ucrtbase._o__close
+@ cdecl _o__commit(long) ucrtbase._o__commit
 @ cdecl _o__configthreadlocale(long) ucrtbase._o__configthreadlocale
-@ stub _o__configure_narrow_argv
+@ cdecl _o__configure_narrow_argv(long) ucrtbase._o__configure_narrow_argv
 @ cdecl _o__configure_wide_argv(long) ucrtbase._o__configure_wide_argv
 @ cdecl _o__controlfp_s(ptr long long) ucrtbase._o__controlfp_s
-@ stub _o__cputs
-@ stub _o__cputws
-@ stub _o__creat
-@ stub _o__create_locale
+@ cdecl _o__cputs(str) ucrtbase._o__cputs
+@ cdecl _o__cputws(wstr) ucrtbase._o__cputws
+@ cdecl _o__creat(str long) ucrtbase._o__creat
+@ cdecl _o__create_locale(long str) ucrtbase._o__create_locale
 @ cdecl _o__crt_atexit(ptr) ucrtbase._o__crt_atexit
-@ stub _o__ctime32_s
-@ stub _o__ctime64_s
-@ stub _o__cwait
+@ cdecl _o__ctime32_s(str long ptr) ucrtbase._o__ctime32_s
+@ cdecl _o__ctime64_s(str long ptr) ucrtbase._o__ctime64_s
+@ cdecl _o__cwait(ptr long long) ucrtbase._o__cwait
 @ stub _o__d_int
-@ stub _o__dclass
-@ stub _o__difftime32
-@ stub _o__difftime64
+@ cdecl _o__dclass(double) ucrtbase._o__dclass
+@ cdecl _o__difftime32(long long) ucrtbase._o__difftime32
+@ cdecl _o__difftime64(int64 int64) ucrtbase._o__difftime64
 @ stub _o__dlog
 @ stub _o__dnorm
-@ stub _o__dpcomp
+@ cdecl _o__dpcomp(double double) ucrtbase._o__dpcomp
 @ stub _o__dpoly
 @ stub _o__dscale
-@ stub _o__dsign
+@ cdecl _o__dsign(double) ucrtbase._o__dsign
 @ stub _o__dsin
-@ stub _o__dtest
+@ cdecl _o__dtest(ptr) ucrtbase._o__dtest
 @ stub _o__dunscale
-@ stub _o__dup
-@ stub _o__dup2
-@ stub _o__dupenv_s
-@ stub _o__ecvt
-@ stub _o__ecvt_s
-@ stub _o__endthread
-@ stub _o__endthreadex
-@ stub _o__eof
+@ cdecl _o__dup(long) ucrtbase._o__dup
+@ cdecl _o__dup2(long long) ucrtbase._o__dup2
+@ cdecl _o__dupenv_s(ptr ptr str) ucrtbase._o__dupenv_s
+@ cdecl _o__ecvt(double long ptr ptr) ucrtbase._o__ecvt
+@ cdecl _o__ecvt_s(str long double long ptr ptr) ucrtbase._o__ecvt_s
+@ cdecl _o__endthread() ucrtbase._o__endthread
+@ cdecl _o__endthreadex(long) ucrtbase._o__endthreadex
+@ cdecl _o__eof(long) ucrtbase._o__eof
 @ cdecl _o__errno() ucrtbase._o__errno
-@ stub _o__except1
+@ cdecl _o__except1(long long double double long ptr) ucrtbase._o__except1
 @ cdecl _o__execute_onexit_table(ptr) ucrtbase._o__execute_onexit_table
-@ stub _o__execv
-@ stub _o__execve
-@ stub _o__execvp
-@ stub _o__execvpe
-@ stub _o__exit
-@ stub _o__expand
-@ stub _o__fclose_nolock
-@ stub _o__fcloseall
-@ stub _o__fcvt
-@ stub _o__fcvt_s
+@ cdecl _o__execv(str ptr) ucrtbase._o__execv
+@ cdecl _o__execve(str ptr ptr) ucrtbase._o__execve
+@ cdecl _o__execvp(str ptr) ucrtbase._o__execvp
+@ cdecl _o__execvpe(str ptr ptr) ucrtbase._o__execvpe
+@ cdecl _o__exit(long) ucrtbase._o__exit
+@ cdecl _o__expand(ptr long) ucrtbase._o__expand
+@ cdecl _o__fclose_nolock(ptr) ucrtbase._o__fclose_nolock
+@ cdecl _o__fcloseall() ucrtbase._o__fcloseall
+@ cdecl _o__fcvt(double long ptr ptr) ucrtbase._o__fcvt
+@ cdecl _o__fcvt_s(ptr long double long ptr ptr) ucrtbase._o__fcvt_s
 @ stub _o__fd_int
-@ stub _o__fdclass
+@ cdecl _o__fdclass(float) ucrtbase._o__fdclass
 @ stub _o__fdexp
 @ stub _o__fdlog
-@ stub _o__fdopen
-@ stub _o__fdpcomp
+@ cdecl _o__fdopen(long str) ucrtbase._o__fdopen
+@ cdecl _o__fdpcomp(float float) ucrtbase._o__fdpcomp
 @ stub _o__fdpoly
 @ stub _o__fdscale
-@ stub _o__fdsign
+@ cdecl _o__fdsign(float) ucrtbase._o__fdsign
 @ stub _o__fdsin
-@ stub _o__fflush_nolock
-@ stub _o__fgetc_nolock
-@ stub _o__fgetchar
-@ stub _o__fgetwc_nolock
-@ stub _o__fgetwchar
-@ stub _o__filelength
-@ stub _o__filelengthi64
+@ cdecl _o__fflush_nolock(ptr) ucrtbase._o__fflush_nolock
+@ cdecl _o__fgetc_nolock(ptr) ucrtbase._o__fgetc_nolock
+@ cdecl _o__fgetchar() ucrtbase._o__fgetchar
+@ cdecl _o__fgetwc_nolock(ptr) ucrtbase._o__fgetwc_nolock
+@ cdecl _o__fgetwchar() ucrtbase._o__fgetwchar
+@ cdecl _o__filelength(long) ucrtbase._o__filelength
+@ cdecl -ret64 _o__filelengthi64(long) ucrtbase._o__filelengthi64
 @ cdecl _o__fileno(ptr) ucrtbase._o__fileno
-@ stub _o__findclose
-@ stub _o__findfirst32
+@ cdecl _o__findclose(long) ucrtbase._o__findclose
+@ cdecl _o__findfirst32(str ptr) ucrtbase._o__findfirst32
 @ stub _o__findfirst32i64
-@ stub _o__findfirst64
-@ stub _o__findfirst64i32
-@ stub _o__findnext32
+@ cdecl _o__findfirst64(str ptr) ucrtbase._o__findfirst64
+@ cdecl _o__findfirst64i32(str ptr) ucrtbase._o__findfirst64i32
+@ cdecl _o__findnext32(long ptr) ucrtbase._o__findnext32
 @ stub _o__findnext32i64
-@ stub _o__findnext64
-@ stub _o__findnext64i32
-@ stub _o__flushall
+@ cdecl _o__findnext64(long ptr) ucrtbase._o__findnext64
+@ cdecl _o__findnext64i32(long ptr) ucrtbase._o__findnext64i32
+@ cdecl _o__flushall() ucrtbase._o__flushall
 @ cdecl _o__fpclass(double) ucrtbase._o__fpclass
 @ stub _o__fpclassf
-@ stub _o__fputc_nolock
-@ stub _o__fputchar
-@ stub _o__fputwc_nolock
-@ stub _o__fputwchar
-@ stub _o__fread_nolock
-@ stub _o__fread_nolock_s
-@ stub _o__free_base
-@ stub _o__free_locale
-@ stub _o__fseek_nolock
-@ stub _o__fseeki64
-@ stub _o__fseeki64_nolock
-@ stub _o__fsopen
-@ stub _o__fstat32
-@ stub _o__fstat32i64
-@ stub _o__fstat64
-@ stub _o__fstat64i32
-@ stub _o__ftell_nolock
-@ stub _o__ftelli64
-@ stub _o__ftelli64_nolock
-@ stub _o__ftime32
-@ stub _o__ftime32_s
-@ stub _o__ftime64
-@ stub _o__ftime64_s
-@ stub _o__fullpath
-@ stub _o__futime32
-@ stub _o__futime64
-@ stub _o__fwrite_nolock
-@ stub _o__gcvt
-@ stub _o__gcvt_s
-@ stub _o__get_daylight
-@ stub _o__get_doserrno
-@ stub _o__get_dstbias
-@ stub _o__get_errno
-@ stub _o__get_fmode
-@ stub _o__get_heap_handle
-@ stub _o__get_initial_narrow_environment
+@ cdecl _o__fputc_nolock(long ptr) ucrtbase._o__fputc_nolock
+@ cdecl _o__fputchar(long) ucrtbase._o__fputchar
+@ cdecl _o__fputwc_nolock(long ptr) ucrtbase._o__fputwc_nolock
+@ cdecl _o__fputwchar(long) ucrtbase._o__fputwchar
+@ cdecl _o__fread_nolock(ptr long long ptr) ucrtbase._o__fread_nolock
+@ cdecl _o__fread_nolock_s(ptr long long long ptr) ucrtbase._o__fread_nolock_s
+@ cdecl _o__free_base(ptr) ucrtbase._o__free_base
+@ cdecl _o__free_locale(ptr) ucrtbase._o__free_locale
+@ cdecl _o__fseek_nolock(ptr long long) ucrtbase._o__fseek_nolock
+@ cdecl _o__fseeki64(ptr int64 long) ucrtbase._o__fseeki64
+@ cdecl _o__fseeki64_nolock(ptr int64 long) ucrtbase._o__fseeki64_nolock
+@ cdecl _o__fsopen(str str long) ucrtbase._o__fsopen
+@ cdecl _o__fstat32(long ptr) ucrtbase._o__fstat32
+@ cdecl _o__fstat32i64(long ptr) ucrtbase._o__fstat32i64
+@ cdecl _o__fstat64(long ptr) ucrtbase._o__fstat64
+@ cdecl _o__fstat64i32(long ptr) ucrtbase._o__fstat64i32
+@ cdecl _o__ftell_nolock(ptr) ucrtbase._o__ftell_nolock
+@ cdecl -ret64 _o__ftelli64(ptr) ucrtbase._o__ftelli64
+@ cdecl -ret64 _o__ftelli64_nolock(ptr) ucrtbase._o__ftelli64_nolock
+@ cdecl _o__ftime32(ptr) ucrtbase._o__ftime32
+@ cdecl _o__ftime32_s(ptr) ucrtbase._o__ftime32_s
+@ cdecl _o__ftime64(ptr) ucrtbase._o__ftime64
+@ cdecl _o__ftime64_s(ptr) ucrtbase._o__ftime64_s
+@ cdecl _o__fullpath(ptr str long) ucrtbase._o__fullpath
+@ cdecl _o__futime32(long ptr) ucrtbase._o__futime32
+@ cdecl _o__futime64(long ptr) ucrtbase._o__futime64
+@ cdecl _o__fwrite_nolock(ptr long long ptr) ucrtbase._o__fwrite_nolock
+@ cdecl _o__gcvt(double long str) ucrtbase._o__gcvt
+@ cdecl _o__gcvt_s(ptr long double long) ucrtbase._o__gcvt_s
+@ cdecl _o__get_daylight(ptr) ucrtbase._o__get_daylight
+@ cdecl _o__get_doserrno(ptr) ucrtbase._o__get_doserrno
+@ cdecl _o__get_dstbias(ptr) ucrtbase._o__get_dstbias
+@ cdecl _o__get_errno(ptr) ucrtbase._o__get_errno
+@ cdecl _o__get_fmode(ptr) ucrtbase._o__get_fmode
+@ cdecl _o__get_heap_handle() ucrtbase._o__get_heap_handle
+@ cdecl _o__get_initial_narrow_environment() ucrtbase._o__get_initial_narrow_environment
 @ cdecl _o__get_initial_wide_environment() ucrtbase._o__get_initial_wide_environment
-@ stub _o__get_invalid_parameter_handler
-@ stub _o__get_narrow_winmain_command_line
-@ stub _o__get_osfhandle
-@ stub _o__get_pgmptr
-@ stub _o__get_stream_buffer_pointers
-@ stub _o__get_terminate
-@ stub _o__get_thread_local_invalid_parameter_handler
-@ stub _o__get_timezone
-@ stub _o__get_tzname
-@ stub _o__get_wide_winmain_command_line
-@ stub _o__get_wpgmptr
-@ stub _o__getc_nolock
-@ stub _o__getch
-@ stub _o__getch_nolock
-@ stub _o__getche
-@ stub _o__getche_nolock
-@ stub _o__getcwd
-@ stub _o__getdcwd
-@ stub _o__getdiskfree
-@ stub _o__getdllprocaddr
-@ stub _o__getdrive
-@ stub _o__getdrives
-@ stub _o__getmbcp
+@ cdecl _o__get_invalid_parameter_handler() ucrtbase._o__get_invalid_parameter_handler
+@ cdecl _o__get_narrow_winmain_command_line() ucrtbase._o__get_narrow_winmain_command_line
+@ cdecl _o__get_osfhandle(long) ucrtbase._o__get_osfhandle
+@ cdecl _o__get_pgmptr(ptr) ucrtbase._o__get_pgmptr
+@ cdecl _o__get_stream_buffer_pointers(ptr ptr ptr ptr) ucrtbase._o__get_stream_buffer_pointers
+@ cdecl _o__get_terminate() ucrtbase._o__get_terminate
+@ cdecl _o__get_thread_local_invalid_parameter_handler() ucrtbase._o__get_thread_local_invalid_parameter_handler
+@ cdecl _o__get_timezone(ptr) ucrtbase._o__get_timezone
+@ cdecl _o__get_tzname(ptr str long long) ucrtbase._o__get_tzname
+@ cdecl _o__get_wide_winmain_command_line() ucrtbase._o__get_wide_winmain_command_line
+@ cdecl _o__get_wpgmptr(ptr) ucrtbase._o__get_wpgmptr
+@ cdecl _o__getc_nolock(ptr) ucrtbase._o__getc_nolock
+@ cdecl _o__getch() ucrtbase._o__getch
+@ cdecl _o__getch_nolock() ucrtbase._o__getch_nolock
+@ cdecl _o__getche() ucrtbase._o__getche
+@ cdecl _o__getche_nolock() ucrtbase._o__getche_nolock
+@ cdecl _o__getcwd(str long) ucrtbase._o__getcwd
+@ cdecl _o__getdcwd(long str long) ucrtbase._o__getdcwd
+@ cdecl _o__getdiskfree(long ptr) ucrtbase._o__getdiskfree
+@ cdecl _o__getdllprocaddr(long str long) ucrtbase._o__getdllprocaddr
+@ cdecl _o__getdrive() ucrtbase._o__getdrive
+@ cdecl _o__getdrives() ucrtbase._o__getdrives
+@ cdecl _o__getmbcp() ucrtbase._o__getmbcp
 @ stub _o__getsystime
-@ stub _o__getw
-@ stub _o__getwc_nolock
-@ stub _o__getwch
-@ stub _o__getwch_nolock
-@ stub _o__getwche
-@ stub _o__getwche_nolock
-@ stub _o__getws
+@ cdecl _o__getw(ptr) ucrtbase._o__getw
+@ cdecl _o__getwc_nolock(ptr) ucrtbase._o__getwc_nolock
+@ cdecl _o__getwch() ucrtbase._o__getwch
+@ cdecl _o__getwch_nolock() ucrtbase._o__getwch_nolock
+@ cdecl _o__getwche() ucrtbase._o__getwche
+@ cdecl _o__getwche_nolock() ucrtbase._o__getwche_nolock
+@ cdecl _o__getws(ptr) ucrtbase._o__getws
 @ stub _o__getws_s
-@ stub _o__gmtime32
-@ stub _o__gmtime32_s
-@ stub _o__gmtime64
-@ stub _o__gmtime64_s
-@ stub _o__heapchk
-@ stub _o__heapmin
-@ stub _o__hypot
-@ stub _o__hypotf
-@ stub _o__i64toa
-@ stub _o__i64toa_s
-@ stub _o__i64tow
-@ stub _o__i64tow_s
-@ stub _o__initialize_narrow_environment
+@ cdecl _o__gmtime32(ptr) ucrtbase._o__gmtime32
+@ cdecl _o__gmtime32_s(ptr ptr) ucrtbase._o__gmtime32_s
+@ cdecl _o__gmtime64(ptr) ucrtbase._o__gmtime64
+@ cdecl _o__gmtime64_s(ptr ptr) ucrtbase._o__gmtime64_s
+@ cdecl _o__heapchk() ucrtbase._o__heapchk
+@ cdecl _o__heapmin() ucrtbase._o__heapmin
+@ cdecl _o__hypot(double double) ucrtbase._o__hypot
+@ cdecl _o__hypotf(float float) ucrtbase._o__hypotf
+@ cdecl _o__i64toa(int64 ptr long) ucrtbase._o__i64toa
+@ cdecl _o__i64toa_s(int64 ptr long long) ucrtbase._o__i64toa_s
+@ cdecl _o__i64tow(int64 ptr long) ucrtbase._o__i64tow
+@ cdecl _o__i64tow_s(int64 ptr long long) ucrtbase._o__i64tow_s
+@ cdecl _o__initialize_narrow_environment() ucrtbase._o__initialize_narrow_environment
 @ cdecl _o__initialize_onexit_table(ptr) ucrtbase._o__initialize_onexit_table
 @ cdecl _o__initialize_wide_environment() ucrtbase._o__initialize_wide_environment
-@ stub _o__invalid_parameter_noinfo
-@ stub _o__invalid_parameter_noinfo_noreturn
-@ stub _o__isatty
-@ stub _o__isctype
-@ stub _o__isctype_l
-@ stub _o__isleadbyte_l
+@ cdecl _o__invalid_parameter_noinfo() ucrtbase._o__invalid_parameter_noinfo
+@ cdecl _o__invalid_parameter_noinfo_noreturn() ucrtbase._o__invalid_parameter_noinfo_noreturn
+@ cdecl _o__isatty(long) ucrtbase._o__isatty
+@ cdecl _o__isctype(long long) ucrtbase._o__isctype
+@ cdecl _o__isctype_l(long long ptr) ucrtbase._o__isctype_l
+@ cdecl _o__isleadbyte_l(long ptr) ucrtbase._o__isleadbyte_l
 @ stub _o__ismbbalnum
 @ stub _o__ismbbalnum_l
 @ stub _o__ismbbalpha
@@ -383,515 +383,515 @@
 @ stub _o__ismbbgraph_l
 @ stub _o__ismbbkalnum
 @ stub _o__ismbbkalnum_l
-@ stub _o__ismbbkana
+@ cdecl _o__ismbbkana(long) ucrtbase._o__ismbbkana
 @ stub _o__ismbbkana_l
 @ stub _o__ismbbkprint
 @ stub _o__ismbbkprint_l
 @ stub _o__ismbbkpunct
 @ stub _o__ismbbkpunct_l
-@ stub _o__ismbblead
-@ stub _o__ismbblead_l
+@ cdecl _o__ismbblead(long) ucrtbase._o__ismbblead
+@ cdecl _o__ismbblead_l(long ptr) ucrtbase._o__ismbblead_l
 @ stub _o__ismbbprint
 @ stub _o__ismbbprint_l
 @ stub _o__ismbbpunct
 @ stub _o__ismbbpunct_l
-@ stub _o__ismbbtrail
-@ stub _o__ismbbtrail_l
-@ stub _o__ismbcalnum
+@ cdecl _o__ismbbtrail(long) ucrtbase._o__ismbbtrail
+@ cdecl _o__ismbbtrail_l(long ptr) ucrtbase._o__ismbbtrail_l
+@ cdecl _o__ismbcalnum(long) ucrtbase._o__ismbcalnum
 @ stub _o__ismbcalnum_l
-@ stub _o__ismbcalpha
+@ cdecl _o__ismbcalpha(long) ucrtbase._o__ismbcalpha
 @ stub _o__ismbcalpha_l
 @ stub _o__ismbcblank
 @ stub _o__ismbcblank_l
-@ stub _o__ismbcdigit
+@ cdecl _o__ismbcdigit(long) ucrtbase._o__ismbcdigit
 @ stub _o__ismbcdigit_l
-@ stub _o__ismbcgraph
+@ cdecl _o__ismbcgraph(long) ucrtbase._o__ismbcgraph
 @ stub _o__ismbcgraph_l
-@ stub _o__ismbchira
+@ cdecl _o__ismbchira(long) ucrtbase._o__ismbchira
 @ stub _o__ismbchira_l
-@ stub _o__ismbckata
+@ cdecl _o__ismbckata(long) ucrtbase._o__ismbckata
 @ stub _o__ismbckata_l
-@ stub _o__ismbcl0
-@ stub _o__ismbcl0_l
-@ stub _o__ismbcl1
-@ stub _o__ismbcl1_l
-@ stub _o__ismbcl2
-@ stub _o__ismbcl2_l
-@ stub _o__ismbclegal
-@ stub _o__ismbclegal_l
+@ cdecl _o__ismbcl0(long) ucrtbase._o__ismbcl0
+@ cdecl _o__ismbcl0_l(long ptr) ucrtbase._o__ismbcl0_l
+@ cdecl _o__ismbcl1(long) ucrtbase._o__ismbcl1
+@ cdecl _o__ismbcl1_l(long ptr) ucrtbase._o__ismbcl1_l
+@ cdecl _o__ismbcl2(long) ucrtbase._o__ismbcl2
+@ cdecl _o__ismbcl2_l(long ptr) ucrtbase._o__ismbcl2_l
+@ cdecl _o__ismbclegal(long) ucrtbase._o__ismbclegal
+@ cdecl _o__ismbclegal_l(long ptr) ucrtbase._o__ismbclegal_l
 @ stub _o__ismbclower
 @ stub _o__ismbclower_l
-@ stub _o__ismbcprint
+@ cdecl _o__ismbcprint(long) ucrtbase._o__ismbcprint
 @ stub _o__ismbcprint_l
-@ stub _o__ismbcpunct
+@ cdecl _o__ismbcpunct(long) ucrtbase._o__ismbcpunct
 @ stub _o__ismbcpunct_l
-@ stub _o__ismbcspace
+@ cdecl _o__ismbcspace(long) ucrtbase._o__ismbcspace
 @ stub _o__ismbcspace_l
-@ stub _o__ismbcsymbol
+@ cdecl _o__ismbcsymbol(long) ucrtbase._o__ismbcsymbol
 @ stub _o__ismbcsymbol_l
-@ stub _o__ismbcupper
+@ cdecl _o__ismbcupper(long) ucrtbase._o__ismbcupper
 @ stub _o__ismbcupper_l
-@ stub _o__ismbslead
+@ cdecl _o__ismbslead(ptr ptr) ucrtbase._o__ismbslead
 @ stub _o__ismbslead_l
-@ stub _o__ismbstrail
+@ cdecl _o__ismbstrail(ptr ptr) ucrtbase._o__ismbstrail
 @ stub _o__ismbstrail_l
-@ stub _o__iswctype_l
-@ stub _o__itoa
-@ stub _o__itoa_s
-@ stub _o__itow
-@ stub _o__itow_s
-@ stub _o__j0
-@ stub _o__j1
-@ stub _o__jn
-@ stub _o__kbhit
+@ cdecl _o__iswctype_l(long long ptr) ucrtbase._o__iswctype_l
+@ cdecl _o__itoa(long ptr long) ucrtbase._o__itoa
+@ cdecl _o__itoa_s(long ptr long long) ucrtbase._o__itoa_s
+@ cdecl _o__itow(long ptr long) ucrtbase._o__itow
+@ cdecl _o__itow_s(long ptr long long) ucrtbase._o__itow_s
+@ cdecl _o__j0(double) ucrtbase._o__j0
+@ cdecl _o__j1(double) ucrtbase._o__j1
+@ cdecl _o__jn(long double) ucrtbase._o__jn
+@ cdecl _o__kbhit() ucrtbase._o__kbhit
 @ stub _o__ld_int
-@ stub _o__ldclass
+@ cdecl _o__ldclass(double) ucrtbase._o__ldclass
 @ stub _o__ldexp
 @ stub _o__ldlog
-@ stub _o__ldpcomp
+@ cdecl _o__ldpcomp(double double) ucrtbase._o__ldpcomp
 @ stub _o__ldpoly
 @ stub _o__ldscale
-@ stub _o__ldsign
+@ cdecl _o__ldsign(double) ucrtbase._o__ldsign
 @ stub _o__ldsin
-@ stub _o__ldtest
+@ cdecl _o__ldtest(ptr) ucrtbase._o__ldtest
 @ stub _o__ldunscale
-@ stub _o__lfind
-@ stub _o__lfind_s
-@ stub _o__libm_sse2_acos_precise
-@ stub _o__libm_sse2_asin_precise
-@ stub _o__libm_sse2_atan_precise
-@ stub _o__libm_sse2_cos_precise
-@ stub _o__libm_sse2_exp_precise
-@ stub _o__libm_sse2_log10_precise
-@ stub _o__libm_sse2_log_precise
-@ stub _o__libm_sse2_pow_precise
-@ stub _o__libm_sse2_sin_precise
-@ stub _o__libm_sse2_sqrt_precise
-@ stub _o__libm_sse2_tan_precise
-@ stub _o__loaddll
-@ stub _o__localtime32
-@ stub _o__localtime32_s
-@ stub _o__localtime64
-@ stub _o__localtime64_s
-@ stub _o__lock_file
-@ stub _o__locking
-@ stub _o__logb
-@ stub _o__logbf
-@ stub _o__lsearch
+@ cdecl _o__lfind(ptr ptr ptr long ptr) ucrtbase._o__lfind
+@ cdecl _o__lfind_s(ptr ptr ptr long ptr ptr) ucrtbase._o__lfind_s
+@ cdecl -arch=i386 -norelay _o__libm_sse2_acos_precise() ucrtbase._o__libm_sse2_acos_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_asin_precise() ucrtbase._o__libm_sse2_asin_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_atan_precise() ucrtbase._o__libm_sse2_atan_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_cos_precise() ucrtbase._o__libm_sse2_cos_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_exp_precise() ucrtbase._o__libm_sse2_exp_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_log10_precise() ucrtbase._o__libm_sse2_log10_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_log_precise() ucrtbase._o__libm_sse2_log_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_pow_precise() ucrtbase._o__libm_sse2_pow_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_sin_precise() ucrtbase._o__libm_sse2_sin_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_sqrt_precise() ucrtbase._o__libm_sse2_sqrt_precise
+@ cdecl -arch=i386 -norelay _o__libm_sse2_tan_precise() ucrtbase._o__libm_sse2_tan_precise
+@ cdecl _o__loaddll(str) ucrtbase._o__loaddll
+@ cdecl _o__localtime32(ptr) ucrtbase._o__localtime32
+@ cdecl _o__localtime32_s(ptr ptr) ucrtbase._o__localtime32_s
+@ cdecl _o__localtime64(ptr) ucrtbase._o__localtime64
+@ cdecl _o__localtime64_s(ptr ptr) ucrtbase._o__localtime64_s
+@ cdecl _o__lock_file(ptr) ucrtbase._o__lock_file
+@ cdecl _o__locking(long long long) ucrtbase._o__locking
+@ cdecl _o__logb(double) ucrtbase._o__logb
+@ cdecl -arch=!i386 _o__logbf(float) ucrtbase._o__logbf
+@ cdecl _o__lsearch(ptr ptr ptr long ptr) ucrtbase._o__lsearch
 @ stub _o__lsearch_s
-@ stub _o__lseek
-@ stub _o__lseeki64
-@ stub _o__ltoa
-@ stub _o__ltoa_s
-@ stub _o__ltow
-@ stub _o__ltow_s
-@ stub _o__makepath
-@ stub _o__makepath_s
-@ stub _o__malloc_base
-@ stub _o__mbbtombc
+@ cdecl _o__lseek(long long long) ucrtbase._o__lseek
+@ cdecl -ret64 _o__lseeki64(long int64 long) ucrtbase._o__lseeki64
+@ cdecl _o__ltoa(long ptr long) ucrtbase._o__ltoa
+@ cdecl _o__ltoa_s(long ptr long long) ucrtbase._o__ltoa_s
+@ cdecl _o__ltow(long ptr long) ucrtbase._o__ltow
+@ cdecl _o__ltow_s(long ptr long long) ucrtbase._o__ltow_s
+@ cdecl _o__makepath(ptr str str str str) ucrtbase._o__makepath
+@ cdecl _o__makepath_s(ptr long str str str str) ucrtbase._o__makepath_s
+@ cdecl _o__malloc_base(long) ucrtbase._o__malloc_base
+@ cdecl _o__mbbtombc(long) ucrtbase._o__mbbtombc
 @ stub _o__mbbtombc_l
-@ stub _o__mbbtype
+@ cdecl _o__mbbtype(long long) ucrtbase._o__mbbtype
 @ stub _o__mbbtype_l
-@ stub _o__mbccpy
-@ stub _o__mbccpy_l
-@ stub _o__mbccpy_s
-@ stub _o__mbccpy_s_l
-@ stub _o__mbcjistojms
+@ cdecl _o__mbccpy(ptr ptr) ucrtbase._o__mbccpy
+@ cdecl _o__mbccpy_l(ptr ptr ptr) ucrtbase._o__mbccpy_l
+@ cdecl _o__mbccpy_s(ptr long ptr ptr) ucrtbase._o__mbccpy_s
+@ cdecl _o__mbccpy_s_l(ptr long ptr ptr ptr) ucrtbase._o__mbccpy_s_l
+@ cdecl _o__mbcjistojms(long) ucrtbase._o__mbcjistojms
 @ stub _o__mbcjistojms_l
-@ stub _o__mbcjmstojis
+@ cdecl _o__mbcjmstojis(long) ucrtbase._o__mbcjmstojis
 @ stub _o__mbcjmstojis_l
-@ stub _o__mbclen
+@ cdecl _o__mbclen(ptr) ucrtbase._o__mbclen
 @ stub _o__mbclen_l
-@ stub _o__mbctohira
+@ cdecl _o__mbctohira(long) ucrtbase._o__mbctohira
 @ stub _o__mbctohira_l
-@ stub _o__mbctokata
+@ cdecl _o__mbctokata(long) ucrtbase._o__mbctokata
 @ stub _o__mbctokata_l
-@ stub _o__mbctolower
+@ cdecl _o__mbctolower(long) ucrtbase._o__mbctolower
 @ stub _o__mbctolower_l
-@ stub _o__mbctombb
+@ cdecl _o__mbctombb(long) ucrtbase._o__mbctombb
 @ stub _o__mbctombb_l
-@ stub _o__mbctoupper
+@ cdecl _o__mbctoupper(long) ucrtbase._o__mbctoupper
 @ stub _o__mbctoupper_l
 @ stub _o__mblen_l
-@ stub _o__mbsbtype
+@ cdecl _o__mbsbtype(str long) ucrtbase._o__mbsbtype
 @ stub _o__mbsbtype_l
-@ stub _o__mbscat_s
-@ stub _o__mbscat_s_l
-@ stub _o__mbschr
+@ cdecl _o__mbscat_s(ptr long str) ucrtbase._o__mbscat_s
+@ cdecl _o__mbscat_s_l(ptr long str ptr) ucrtbase._o__mbscat_s_l
+@ cdecl _o__mbschr(str long) ucrtbase._o__mbschr
 @ stub _o__mbschr_l
-@ stub _o__mbscmp
+@ cdecl _o__mbscmp(str str) ucrtbase._o__mbscmp
 @ stub _o__mbscmp_l
-@ stub _o__mbscoll
-@ stub _o__mbscoll_l
-@ stub _o__mbscpy_s
-@ stub _o__mbscpy_s_l
-@ stub _o__mbscspn
-@ stub _o__mbscspn_l
-@ stub _o__mbsdec
+@ cdecl _o__mbscoll(str str) ucrtbase._o__mbscoll
+@ cdecl _o__mbscoll_l(str str ptr) ucrtbase._o__mbscoll_l
+@ cdecl _o__mbscpy_s(ptr long str) ucrtbase._o__mbscpy_s
+@ cdecl _o__mbscpy_s_l(ptr long str ptr) ucrtbase._o__mbscpy_s_l
+@ cdecl _o__mbscspn(str str) ucrtbase._o__mbscspn
+@ cdecl _o__mbscspn_l(str str ptr) ucrtbase._o__mbscspn_l
+@ cdecl _o__mbsdec(ptr ptr) ucrtbase._o__mbsdec
 @ stub _o__mbsdec_l
-@ stub _o__mbsicmp
+@ cdecl _o__mbsicmp(str str) ucrtbase._o__mbsicmp
 @ stub _o__mbsicmp_l
-@ stub _o__mbsicoll
-@ stub _o__mbsicoll_l
-@ stub _o__mbsinc
+@ cdecl _o__mbsicoll(str str) ucrtbase._o__mbsicoll
+@ cdecl _o__mbsicoll_l(str str ptr) ucrtbase._o__mbsicoll_l
+@ cdecl _o__mbsinc(str) ucrtbase._o__mbsinc
 @ stub _o__mbsinc_l
-@ stub _o__mbslen
-@ stub _o__mbslen_l
-@ stub _o__mbslwr
+@ cdecl _o__mbslen(str) ucrtbase._o__mbslen
+@ cdecl _o__mbslen_l(str ptr) ucrtbase._o__mbslen_l
+@ cdecl _o__mbslwr(str) ucrtbase._o__mbslwr
 @ stub _o__mbslwr_l
-@ stub _o__mbslwr_s
+@ cdecl _o__mbslwr_s(str long) ucrtbase._o__mbslwr_s
 @ stub _o__mbslwr_s_l
-@ stub _o__mbsnbcat
+@ cdecl _o__mbsnbcat(str str long) ucrtbase._o__mbsnbcat
 @ stub _o__mbsnbcat_l
-@ stub _o__mbsnbcat_s
+@ cdecl _o__mbsnbcat_s(str long ptr long) ucrtbase._o__mbsnbcat_s
 @ stub _o__mbsnbcat_s_l
-@ stub _o__mbsnbcmp
+@ cdecl _o__mbsnbcmp(str str long) ucrtbase._o__mbsnbcmp
 @ stub _o__mbsnbcmp_l
-@ stub _o__mbsnbcnt
+@ cdecl _o__mbsnbcnt(ptr long) ucrtbase._o__mbsnbcnt
 @ stub _o__mbsnbcnt_l
-@ stub _o__mbsnbcoll
-@ stub _o__mbsnbcoll_l
-@ stub _o__mbsnbcpy
+@ cdecl _o__mbsnbcoll(str str long) ucrtbase._o__mbsnbcoll
+@ cdecl _o__mbsnbcoll_l(str str long ptr) ucrtbase._o__mbsnbcoll_l
+@ cdecl _o__mbsnbcpy(ptr str long) ucrtbase._o__mbsnbcpy
 @ stub _o__mbsnbcpy_l
-@ stub _o__mbsnbcpy_s
-@ stub _o__mbsnbcpy_s_l
-@ stub _o__mbsnbicmp
+@ cdecl _o__mbsnbcpy_s(ptr long str long) ucrtbase._o__mbsnbcpy_s
+@ cdecl _o__mbsnbcpy_s_l(ptr long str long ptr) ucrtbase._o__mbsnbcpy_s_l
+@ cdecl _o__mbsnbicmp(str str long) ucrtbase._o__mbsnbicmp
 @ stub _o__mbsnbicmp_l
-@ stub _o__mbsnbicoll
-@ stub _o__mbsnbicoll_l
-@ stub _o__mbsnbset
+@ cdecl _o__mbsnbicoll(str str long) ucrtbase._o__mbsnbicoll
+@ cdecl _o__mbsnbicoll_l(str str long ptr) ucrtbase._o__mbsnbicoll_l
+@ cdecl _o__mbsnbset(ptr long long) ucrtbase._o__mbsnbset
 @ stub _o__mbsnbset_l
 @ stub _o__mbsnbset_s
 @ stub _o__mbsnbset_s_l
-@ stub _o__mbsncat
+@ cdecl _o__mbsncat(str str long) ucrtbase._o__mbsncat
 @ stub _o__mbsncat_l
 @ stub _o__mbsncat_s
 @ stub _o__mbsncat_s_l
-@ stub _o__mbsnccnt
+@ cdecl _o__mbsnccnt(str long) ucrtbase._o__mbsnccnt
 @ stub _o__mbsnccnt_l
-@ stub _o__mbsncmp
+@ cdecl _o__mbsncmp(str str long) ucrtbase._o__mbsncmp
 @ stub _o__mbsncmp_l
 @ stub _o__mbsncoll
 @ stub _o__mbsncoll_l
-@ stub _o__mbsncpy
+@ cdecl _o__mbsncpy(ptr str long) ucrtbase._o__mbsncpy
 @ stub _o__mbsncpy_l
 @ stub _o__mbsncpy_s
 @ stub _o__mbsncpy_s_l
-@ stub _o__mbsnextc
+@ cdecl _o__mbsnextc(str) ucrtbase._o__mbsnextc
 @ stub _o__mbsnextc_l
-@ stub _o__mbsnicmp
+@ cdecl _o__mbsnicmp(str str long) ucrtbase._o__mbsnicmp
 @ stub _o__mbsnicmp_l
 @ stub _o__mbsnicoll
 @ stub _o__mbsnicoll_l
-@ stub _o__mbsninc
+@ cdecl _o__mbsninc(str long) ucrtbase._o__mbsninc
 @ stub _o__mbsninc_l
-@ stub _o__mbsnlen
-@ stub _o__mbsnlen_l
-@ stub _o__mbsnset
+@ cdecl _o__mbsnlen(str long) ucrtbase._o__mbsnlen
+@ cdecl _o__mbsnlen_l(str long ptr) ucrtbase._o__mbsnlen_l
+@ cdecl _o__mbsnset(ptr long long) ucrtbase._o__mbsnset
 @ stub _o__mbsnset_l
 @ stub _o__mbsnset_s
 @ stub _o__mbsnset_s_l
-@ stub _o__mbspbrk
+@ cdecl _o__mbspbrk(str str) ucrtbase._o__mbspbrk
 @ stub _o__mbspbrk_l
-@ stub _o__mbsrchr
+@ cdecl _o__mbsrchr(str long) ucrtbase._o__mbsrchr
 @ stub _o__mbsrchr_l
-@ stub _o__mbsrev
+@ cdecl _o__mbsrev(str) ucrtbase._o__mbsrev
 @ stub _o__mbsrev_l
-@ stub _o__mbsset
+@ cdecl _o__mbsset(ptr long) ucrtbase._o__mbsset
 @ stub _o__mbsset_l
 @ stub _o__mbsset_s
 @ stub _o__mbsset_s_l
-@ stub _o__mbsspn
-@ stub _o__mbsspn_l
-@ stub _o__mbsspnp
+@ cdecl _o__mbsspn(str str) ucrtbase._o__mbsspn
+@ cdecl _o__mbsspn_l(str str ptr) ucrtbase._o__mbsspn_l
+@ cdecl _o__mbsspnp(str str) ucrtbase._o__mbsspnp
 @ stub _o__mbsspnp_l
-@ stub _o__mbsstr
+@ cdecl _o__mbsstr(str str) ucrtbase._o__mbsstr
 @ stub _o__mbsstr_l
-@ stub _o__mbstok
-@ stub _o__mbstok_l
-@ stub _o__mbstok_s
-@ stub _o__mbstok_s_l
-@ stub _o__mbstowcs_l
-@ stub _o__mbstowcs_s_l
+@ cdecl _o__mbstok(str str) ucrtbase._o__mbstok
+@ cdecl _o__mbstok_l(str str ptr) ucrtbase._o__mbstok_l
+@ cdecl _o__mbstok_s(str str ptr) ucrtbase._o__mbstok_s
+@ cdecl _o__mbstok_s_l(str str ptr ptr) ucrtbase._o__mbstok_s_l
+@ cdecl _o__mbstowcs_l(ptr str long ptr) ucrtbase._o__mbstowcs_l
+@ cdecl _o__mbstowcs_s_l(ptr ptr long str long ptr) ucrtbase._o__mbstowcs_s_l
 @ cdecl _o__mbstrlen(str) ucrtbase._o__mbstrlen
-@ stub _o__mbstrlen_l
+@ cdecl _o__mbstrlen_l(str ptr) ucrtbase._o__mbstrlen_l
 @ stub _o__mbstrnlen
 @ stub _o__mbstrnlen_l
-@ stub _o__mbsupr
+@ cdecl _o__mbsupr(str) ucrtbase._o__mbsupr
 @ stub _o__mbsupr_l
-@ stub _o__mbsupr_s
+@ cdecl _o__mbsupr_s(str long) ucrtbase._o__mbsupr_s
 @ stub _o__mbsupr_s_l
-@ stub _o__mbtowc_l
-@ stub _o__memicmp
-@ stub _o__memicmp_l
-@ stub _o__mkdir
-@ stub _o__mkgmtime32
-@ stub _o__mkgmtime64
-@ stub _o__mktemp
-@ stub _o__mktemp_s
-@ stub _o__mktime32
-@ stub _o__mktime64
-@ stub _o__msize
-@ stub _o__nextafter
-@ stub _o__nextafterf
-@ stub _o__open_osfhandle
-@ stub _o__pclose
-@ stub _o__pipe
-@ stub _o__popen
-@ stub _o__purecall
-@ stub _o__putc_nolock
-@ stub _o__putch
-@ stub _o__putch_nolock
-@ stub _o__putenv
-@ stub _o__putenv_s
-@ stub _o__putw
-@ stub _o__putwc_nolock
-@ stub _o__putwch
-@ stub _o__putwch_nolock
-@ stub _o__putws
-@ stub _o__read
-@ stub _o__realloc_base
-@ stub _o__recalloc
+@ cdecl _o__mbtowc_l(ptr str long ptr) ucrtbase._o__mbtowc_l
+@ cdecl _o__memicmp(str str long) ucrtbase._o__memicmp
+@ cdecl _o__memicmp_l(str str long ptr) ucrtbase._o__memicmp_l
+@ cdecl _o__mkdir(str) ucrtbase._o__mkdir
+@ cdecl _o__mkgmtime32(ptr) ucrtbase._o__mkgmtime32
+@ cdecl _o__mkgmtime64(ptr) ucrtbase._o__mkgmtime64
+@ cdecl _o__mktemp(str) ucrtbase._o__mktemp
+@ cdecl _o__mktemp_s(str long) ucrtbase._o__mktemp_s
+@ cdecl _o__mktime32(ptr) ucrtbase._o__mktime32
+@ cdecl _o__mktime64(ptr) ucrtbase._o__mktime64
+@ cdecl _o__msize(ptr) ucrtbase._o__msize
+@ cdecl _o__nextafter(double double) ucrtbase._o__nextafter
+@ cdecl -arch=x86_64 _o__nextafterf(float float) ucrtbase._o__nextafterf
+@ cdecl _o__open_osfhandle(long long) ucrtbase._o__open_osfhandle
+@ cdecl _o__pclose(ptr) ucrtbase._o__pclose
+@ cdecl _o__pipe(ptr long long) ucrtbase._o__pipe
+@ cdecl _o__popen(str str) ucrtbase._o__popen
+@ cdecl _o__purecall() ucrtbase._o__purecall
+@ cdecl _o__putc_nolock(long ptr) ucrtbase._o__putc_nolock
+@ cdecl _o__putch(long) ucrtbase._o__putch
+@ cdecl _o__putch_nolock(long) ucrtbase._o__putch_nolock
+@ cdecl _o__putenv(str) ucrtbase._o__putenv
+@ cdecl _o__putenv_s(str str) ucrtbase._o__putenv_s
+@ cdecl _o__putw(long ptr) ucrtbase._o__putw
+@ cdecl _o__putwc_nolock(long ptr) ucrtbase._o__putwc_nolock
+@ cdecl _o__putwch(long) ucrtbase._o__putwch
+@ cdecl _o__putwch_nolock(long) ucrtbase._o__putwch_nolock
+@ cdecl _o__putws(wstr) ucrtbase._o__putws
+@ cdecl _o__read(long ptr long) ucrtbase._o__read
+@ cdecl _o__realloc_base(ptr long) ucrtbase._o__realloc_base
+@ cdecl _o__recalloc(ptr long long) ucrtbase._o__recalloc
 @ cdecl _o__register_onexit_function(ptr ptr) ucrtbase._o__register_onexit_function
-@ stub _o__resetstkoflw
-@ stub _o__rmdir
-@ stub _o__rmtmp
-@ stub _o__scalb
-@ stub _o__scalbf
-@ stub _o__searchenv
-@ stub _o__searchenv_s
+@ cdecl _o__resetstkoflw() ucrtbase._o__resetstkoflw
+@ cdecl _o__rmdir(str) ucrtbase._o__rmdir
+@ cdecl _o__rmtmp() ucrtbase._o__rmtmp
+@ cdecl _o__scalb(double long) ucrtbase._o__scalb
+@ cdecl -arch=x86_64 _o__scalbf(float long) ucrtbase._o__scalbf
+@ cdecl _o__searchenv(str str ptr) ucrtbase._o__searchenv
+@ cdecl _o__searchenv_s(str str ptr long) ucrtbase._o__searchenv_s
 @ cdecl _o__seh_filter_dll(long ptr) ucrtbase._o__seh_filter_dll
 @ cdecl _o__seh_filter_exe(long ptr) ucrtbase._o__seh_filter_exe
-@ stub _o__set_abort_behavior
+@ cdecl _o__set_abort_behavior(long long) ucrtbase._o__set_abort_behavior
 @ cdecl _o__set_app_type(long) ucrtbase._o__set_app_type
-@ stub _o__set_doserrno
-@ stub _o__set_errno
+@ cdecl _o__set_doserrno(long) ucrtbase._o__set_doserrno
+@ cdecl _o__set_errno(long) ucrtbase._o__set_errno
 @ cdecl _o__set_fmode(long) ucrtbase._o__set_fmode
-@ stub _o__set_invalid_parameter_handler
-@ stub _o__set_new_handler
+@ cdecl _o__set_invalid_parameter_handler(ptr) ucrtbase._o__set_invalid_parameter_handler
+@ cdecl _o__set_new_handler(ptr) ucrtbase._o__set_new_handler
 @ cdecl _o__set_new_mode(long) ucrtbase._o__set_new_mode
-@ stub _o__set_thread_local_invalid_parameter_handler
-@ stub _o__seterrormode
-@ stub _o__setmbcp
+@ cdecl _o__set_thread_local_invalid_parameter_handler(ptr) ucrtbase._o__set_thread_local_invalid_parameter_handler
+@ cdecl _o__seterrormode(long) ucrtbase._o__seterrormode
+@ cdecl _o__setmbcp(long) ucrtbase._o__setmbcp
 @ cdecl _o__setmode(long long) ucrtbase._o__setmode
 @ stub _o__setsystime
-@ stub _o__sleep
-@ stub _o__sopen
-@ stub _o__sopen_dispatch
-@ stub _o__sopen_s
-@ stub _o__spawnv
-@ stub _o__spawnve
-@ stub _o__spawnvp
-@ stub _o__spawnvpe
-@ stub _o__splitpath
-@ stub _o__splitpath_s
-@ stub _o__stat32
-@ stub _o__stat32i64
-@ stub _o__stat64
-@ stub _o__stat64i32
-@ stub _o__strcoll_l
-@ stub _o__strdate
-@ stub _o__strdate_s
+@ cdecl _o__sleep(long) ucrtbase._o__sleep
+@ varargs _o__sopen(str long long) ucrtbase._o__sopen
+@ cdecl _o__sopen_dispatch(str long long long ptr long) ucrtbase._o__sopen_dispatch
+@ cdecl _o__sopen_s(ptr str long long long) ucrtbase._o__sopen_s
+@ cdecl _o__spawnv(long str ptr) ucrtbase._o__spawnv
+@ cdecl _o__spawnve(long str ptr ptr) ucrtbase._o__spawnve
+@ cdecl _o__spawnvp(long str ptr) ucrtbase._o__spawnvp
+@ cdecl _o__spawnvpe(long str ptr ptr) ucrtbase._o__spawnvpe
+@ cdecl _o__splitpath(str ptr ptr ptr ptr) ucrtbase._o__splitpath
+@ cdecl _o__splitpath_s(str ptr long ptr long ptr long ptr long) ucrtbase._o__splitpath_s
+@ cdecl _o__stat32(str ptr) ucrtbase._o__stat32
+@ cdecl _o__stat32i64(str ptr) ucrtbase._o__stat32i64
+@ cdecl _o__stat64(str ptr) ucrtbase._o__stat64
+@ cdecl _o__stat64i32(str ptr) ucrtbase._o__stat64i32
+@ cdecl _o__strcoll_l(str str ptr) ucrtbase._o__strcoll_l
+@ cdecl _o__strdate(ptr) ucrtbase._o__strdate
+@ cdecl _o__strdate_s(ptr long) ucrtbase._o__strdate_s
 @ cdecl _o__strdup(str) ucrtbase._o__strdup
-@ stub _o__strerror
+@ cdecl _o__strerror(long) ucrtbase._o__strerror
 @ stub _o__strerror_s
-@ stub _o__strftime_l
+@ cdecl _o__strftime_l(ptr long str ptr ptr) ucrtbase._o__strftime_l
 @ cdecl _o__stricmp(str str) ucrtbase._o__stricmp
-@ stub _o__stricmp_l
-@ stub _o__stricoll
-@ stub _o__stricoll_l
-@ stub _o__strlwr
-@ stub _o__strlwr_l
-@ stub _o__strlwr_s
-@ stub _o__strlwr_s_l
-@ stub _o__strncoll
-@ stub _o__strncoll_l
+@ cdecl _o__stricmp_l(str str ptr) ucrtbase._o__stricmp_l
+@ cdecl _o__stricoll(str str) ucrtbase._o__stricoll
+@ cdecl _o__stricoll_l(str str ptr) ucrtbase._o__stricoll_l
+@ cdecl _o__strlwr(str) ucrtbase._o__strlwr
+@ cdecl _o__strlwr_l(str ptr) ucrtbase._o__strlwr_l
+@ cdecl _o__strlwr_s(ptr long) ucrtbase._o__strlwr_s
+@ cdecl _o__strlwr_s_l(ptr long ptr) ucrtbase._o__strlwr_s_l
+@ cdecl _o__strncoll(str str long) ucrtbase._o__strncoll
+@ cdecl _o__strncoll_l(str str long ptr) ucrtbase._o__strncoll_l
 @ cdecl _o__strnicmp(str str long) ucrtbase._o__strnicmp
-@ stub _o__strnicmp_l
-@ stub _o__strnicoll
-@ stub _o__strnicoll_l
-@ stub _o__strnset_s
+@ cdecl _o__strnicmp_l(str str long ptr) ucrtbase._o__strnicmp_l
+@ cdecl _o__strnicoll(str str long) ucrtbase._o__strnicoll
+@ cdecl _o__strnicoll_l(str str long ptr) ucrtbase._o__strnicoll_l
+@ cdecl _o__strnset_s(str long long long) ucrtbase._o__strnset_s
 @ stub _o__strset_s
-@ stub _o__strtime
-@ stub _o__strtime_s
-@ stub _o__strtod_l
-@ stub _o__strtof_l
-@ stub _o__strtoi64
-@ stub _o__strtoi64_l
-@ stub _o__strtol_l
+@ cdecl _o__strtime(ptr) ucrtbase._o__strtime
+@ cdecl _o__strtime_s(ptr long) ucrtbase._o__strtime_s
+@ cdecl _o__strtod_l(str ptr ptr) ucrtbase._o__strtod_l
+@ cdecl _o__strtof_l(str ptr ptr) ucrtbase._o__strtof_l
+@ cdecl -ret64 _o__strtoi64(str ptr long) ucrtbase._o__strtoi64
+@ cdecl -ret64 _o__strtoi64_l(str ptr long ptr) ucrtbase._o__strtoi64_l
+@ cdecl _o__strtol_l(str ptr long ptr) ucrtbase._o__strtol_l
 @ stub _o__strtold_l
-@ stub _o__strtoll_l
-@ stub _o__strtoui64
-@ stub _o__strtoui64_l
-@ stub _o__strtoul_l
-@ stub _o__strtoull_l
-@ stub _o__strupr
-@ stub _o__strupr_l
-@ stub _o__strupr_s
-@ stub _o__strupr_s_l
-@ stub _o__strxfrm_l
-@ stub _o__swab
-@ stub _o__tell
-@ stub _o__telli64
-@ stub _o__timespec32_get
-@ stub _o__timespec64_get
-@ stub _o__tolower
-@ stub _o__tolower_l
-@ stub _o__toupper
-@ stub _o__toupper_l
-@ stub _o__towlower_l
-@ stub _o__towupper_l
-@ stub _o__tzset
-@ stub _o__ui64toa
-@ stub _o__ui64toa_s
-@ stub _o__ui64tow
-@ stub _o__ui64tow_s
-@ stub _o__ultoa
-@ stub _o__ultoa_s
-@ stub _o__ultow
-@ stub _o__ultow_s
-@ stub _o__umask
+@ cdecl -ret64 _o__strtoll_l(str ptr long ptr) ucrtbase._o__strtoll_l
+@ cdecl -ret64 _o__strtoui64(str ptr long) ucrtbase._o__strtoui64
+@ cdecl -ret64 _o__strtoui64_l(str ptr long ptr) ucrtbase._o__strtoui64_l
+@ cdecl _o__strtoul_l(str ptr long ptr) ucrtbase._o__strtoul_l
+@ cdecl -ret64 _o__strtoull_l(str ptr long ptr) ucrtbase._o__strtoull_l
+@ cdecl _o__strupr(str) ucrtbase._o__strupr
+@ cdecl _o__strupr_l(str ptr) ucrtbase._o__strupr_l
+@ cdecl _o__strupr_s(str long) ucrtbase._o__strupr_s
+@ cdecl _o__strupr_s_l(str long ptr) ucrtbase._o__strupr_s_l
+@ cdecl _o__strxfrm_l(ptr str long ptr) ucrtbase._o__strxfrm_l
+@ cdecl _o__swab(str str long) ucrtbase._o__swab
+@ cdecl _o__tell(long) ucrtbase._o__tell
+@ cdecl -ret64 _o__telli64(long) ucrtbase._o__telli64
+@ cdecl _o__timespec32_get(ptr long) ucrtbase._o__timespec32_get
+@ cdecl _o__timespec64_get(ptr long) ucrtbase._o__timespec64_get
+@ cdecl _o__tolower(long) ucrtbase._o__tolower
+@ cdecl _o__tolower_l(long ptr) ucrtbase._o__tolower_l
+@ cdecl _o__toupper(long) ucrtbase._o__toupper
+@ cdecl _o__toupper_l(long ptr) ucrtbase._o__toupper_l
+@ cdecl _o__towlower_l(long ptr) ucrtbase._o__towlower_l
+@ cdecl _o__towupper_l(long ptr) ucrtbase._o__towupper_l
+@ cdecl _o__tzset() ucrtbase._o__tzset
+@ cdecl _o__ui64toa(int64 ptr long) ucrtbase._o__ui64toa
+@ cdecl _o__ui64toa_s(int64 ptr long long) ucrtbase._o__ui64toa_s
+@ cdecl _o__ui64tow(int64 ptr long) ucrtbase._o__ui64tow
+@ cdecl _o__ui64tow_s(int64 ptr long long) ucrtbase._o__ui64tow_s
+@ cdecl _o__ultoa(long ptr long) ucrtbase._o__ultoa
+@ cdecl _o__ultoa_s(long ptr long long) ucrtbase._o__ultoa_s
+@ cdecl _o__ultow(long ptr long) ucrtbase._o__ultow
+@ cdecl _o__ultow_s(long ptr long long) ucrtbase._o__ultow_s
+@ cdecl _o__umask(long) ucrtbase._o__umask
 @ stub _o__umask_s
-@ stub _o__ungetc_nolock
-@ stub _o__ungetch
-@ stub _o__ungetch_nolock
-@ stub _o__ungetwc_nolock
-@ stub _o__ungetwch
-@ stub _o__ungetwch_nolock
-@ stub _o__unlink
-@ stub _o__unloaddll
-@ stub _o__unlock_file
-@ stub _o__utime32
-@ stub _o__utime64
-@ stub _o__waccess
-@ stub _o__waccess_s
-@ stub _o__wasctime
-@ stub _o__wasctime_s
-@ stub _o__wchdir
-@ stub _o__wchmod
-@ stub _o__wcreat
-@ stub _o__wcreate_locale
-@ stub _o__wcscoll_l
-@ stub _o__wcsdup
-@ stub _o__wcserror
-@ stub _o__wcserror_s
-@ stub _o__wcsftime_l
-@ stub _o__wcsicmp
-@ stub _o__wcsicmp_l
-@ stub _o__wcsicoll
-@ stub _o__wcsicoll_l
-@ stub _o__wcslwr
-@ stub _o__wcslwr_l
-@ stub _o__wcslwr_s
-@ stub _o__wcslwr_s_l
-@ stub _o__wcsncoll
-@ stub _o__wcsncoll_l
-@ stub _o__wcsnicmp
-@ stub _o__wcsnicmp_l
-@ stub _o__wcsnicoll
-@ stub _o__wcsnicoll_l
-@ stub _o__wcsnset
-@ stub _o__wcsnset_s
-@ stub _o__wcsset
-@ stub _o__wcsset_s
-@ stub _o__wcstod_l
-@ stub _o__wcstof_l
-@ stub _o__wcstoi64
-@ stub _o__wcstoi64_l
-@ stub _o__wcstol_l
+@ cdecl _o__ungetc_nolock(long ptr) ucrtbase._o__ungetc_nolock
+@ cdecl _o__ungetch(long) ucrtbase._o__ungetch
+@ cdecl _o__ungetch_nolock(long) ucrtbase._o__ungetch_nolock
+@ cdecl _o__ungetwc_nolock(long ptr) ucrtbase._o__ungetwc_nolock
+@ cdecl _o__ungetwch(long) ucrtbase._o__ungetwch
+@ cdecl _o__ungetwch_nolock(long) ucrtbase._o__ungetwch_nolock
+@ cdecl _o__unlink(str) ucrtbase._o__unlink
+@ cdecl _o__unloaddll(long) ucrtbase._o__unloaddll
+@ cdecl _o__unlock_file(ptr) ucrtbase._o__unlock_file
+@ cdecl _o__utime32(str ptr) ucrtbase._o__utime32
+@ cdecl _o__utime64(str ptr) ucrtbase._o__utime64
+@ cdecl _o__waccess(wstr long) ucrtbase._o__waccess
+@ cdecl _o__waccess_s(wstr long) ucrtbase._o__waccess_s
+@ cdecl _o__wasctime(ptr) ucrtbase._o__wasctime
+@ cdecl _o__wasctime_s(ptr long ptr) ucrtbase._o__wasctime_s
+@ cdecl _o__wchdir(wstr) ucrtbase._o__wchdir
+@ cdecl _o__wchmod(wstr long) ucrtbase._o__wchmod
+@ cdecl _o__wcreat(wstr long) ucrtbase._o__wcreat
+@ cdecl _o__wcreate_locale(long wstr) ucrtbase._o__wcreate_locale
+@ cdecl _o__wcscoll_l(wstr wstr ptr) ucrtbase._o__wcscoll_l
+@ cdecl _o__wcsdup(wstr) ucrtbase._o__wcsdup
+@ cdecl _o__wcserror(long) ucrtbase._o__wcserror
+@ cdecl _o__wcserror_s(ptr long long) ucrtbase._o__wcserror_s
+@ cdecl _o__wcsftime_l(ptr long wstr ptr ptr) ucrtbase._o__wcsftime_l
+@ cdecl _o__wcsicmp(wstr wstr) ucrtbase._o__wcsicmp
+@ cdecl _o__wcsicmp_l(wstr wstr ptr) ucrtbase._o__wcsicmp_l
+@ cdecl _o__wcsicoll(wstr wstr) ucrtbase._o__wcsicoll
+@ cdecl _o__wcsicoll_l(wstr wstr ptr) ucrtbase._o__wcsicoll_l
+@ cdecl _o__wcslwr(wstr) ucrtbase._o__wcslwr
+@ cdecl _o__wcslwr_l(wstr ptr) ucrtbase._o__wcslwr_l
+@ cdecl _o__wcslwr_s(wstr long) ucrtbase._o__wcslwr_s
+@ cdecl _o__wcslwr_s_l(wstr long ptr) ucrtbase._o__wcslwr_s_l
+@ cdecl _o__wcsncoll(wstr wstr long) ucrtbase._o__wcsncoll
+@ cdecl _o__wcsncoll_l(wstr wstr long ptr) ucrtbase._o__wcsncoll_l
+@ cdecl _o__wcsnicmp(wstr wstr long) ucrtbase._o__wcsnicmp
+@ cdecl _o__wcsnicmp_l(wstr wstr long ptr) ucrtbase._o__wcsnicmp_l
+@ cdecl _o__wcsnicoll(wstr wstr long) ucrtbase._o__wcsnicoll
+@ cdecl _o__wcsnicoll_l(wstr wstr long ptr) ucrtbase._o__wcsnicoll_l
+@ cdecl _o__wcsnset(wstr long long) ucrtbase._o__wcsnset
+@ cdecl _o__wcsnset_s(wstr long long long) ucrtbase._o__wcsnset_s
+@ cdecl _o__wcsset(wstr long) ucrtbase._o__wcsset
+@ cdecl _o__wcsset_s(wstr long long) ucrtbase._o__wcsset_s
+@ cdecl _o__wcstod_l(wstr ptr long) ucrtbase._o__wcstod_l
+@ cdecl _o__wcstof_l(wstr ptr ptr) ucrtbase._o__wcstof_l
+@ cdecl -ret64 _o__wcstoi64(wstr ptr long) ucrtbase._o__wcstoi64
+@ cdecl -ret64 _o__wcstoi64_l(wstr ptr long ptr) ucrtbase._o__wcstoi64_l
+@ cdecl _o__wcstol_l(wstr ptr long ptr) ucrtbase._o__wcstol_l
 @ stub _o__wcstold_l
-@ stub _o__wcstoll_l
-@ stub _o__wcstombs_l
-@ stub _o__wcstombs_s_l
-@ stub _o__wcstoui64
-@ stub _o__wcstoui64_l
-@ stub _o__wcstoul_l
-@ stub _o__wcstoull_l
-@ stub _o__wcsupr
-@ stub _o__wcsupr_l
-@ stub _o__wcsupr_s
-@ stub _o__wcsupr_s_l
-@ stub _o__wcsxfrm_l
-@ stub _o__wctime32
-@ stub _o__wctime32_s
-@ stub _o__wctime64
-@ stub _o__wctime64_s
-@ stub _o__wctomb_l
-@ stub _o__wctomb_s_l
-@ stub _o__wdupenv_s
-@ stub _o__wexecv
-@ stub _o__wexecve
-@ stub _o__wexecvp
-@ stub _o__wexecvpe
-@ stub _o__wfdopen
-@ stub _o__wfindfirst32
+@ cdecl -ret64 _o__wcstoll_l(wstr ptr long ptr) ucrtbase._o__wcstoll_l
+@ cdecl _o__wcstombs_l(ptr ptr long ptr) ucrtbase._o__wcstombs_l
+@ cdecl _o__wcstombs_s_l(ptr ptr long wstr long ptr) ucrtbase._o__wcstombs_s_l
+@ cdecl -ret64 _o__wcstoui64(wstr ptr long) ucrtbase._o__wcstoui64
+@ cdecl -ret64 _o__wcstoui64_l(wstr ptr long ptr) ucrtbase._o__wcstoui64_l
+@ cdecl _o__wcstoul_l(wstr ptr long ptr) ucrtbase._o__wcstoul_l
+@ cdecl -ret64 _o__wcstoull_l(wstr ptr long ptr) ucrtbase._o__wcstoull_l
+@ cdecl _o__wcsupr(wstr) ucrtbase._o__wcsupr
+@ cdecl _o__wcsupr_l(wstr ptr) ucrtbase._o__wcsupr_l
+@ cdecl _o__wcsupr_s(wstr long) ucrtbase._o__wcsupr_s
+@ cdecl _o__wcsupr_s_l(wstr long ptr) ucrtbase._o__wcsupr_s_l
+@ cdecl _o__wcsxfrm_l(ptr wstr long ptr) ucrtbase._o__wcsxfrm_l
+@ cdecl _o__wctime32(ptr) ucrtbase._o__wctime32
+@ cdecl _o__wctime32_s(ptr long ptr) ucrtbase._o__wctime32_s
+@ cdecl _o__wctime64(ptr) ucrtbase._o__wctime64
+@ cdecl _o__wctime64_s(ptr long ptr) ucrtbase._o__wctime64_s
+@ cdecl _o__wctomb_l(ptr long ptr) ucrtbase._o__wctomb_l
+@ cdecl _o__wctomb_s_l(ptr ptr long long ptr) ucrtbase._o__wctomb_s_l
+@ cdecl _o__wdupenv_s(ptr ptr wstr) ucrtbase._o__wdupenv_s
+@ cdecl _o__wexecv(wstr ptr) ucrtbase._o__wexecv
+@ cdecl _o__wexecve(wstr ptr ptr) ucrtbase._o__wexecve
+@ cdecl _o__wexecvp(wstr ptr) ucrtbase._o__wexecvp
+@ cdecl _o__wexecvpe(wstr ptr ptr) ucrtbase._o__wexecvpe
+@ cdecl _o__wfdopen(long wstr) ucrtbase._o__wfdopen
+@ cdecl _o__wfindfirst32(wstr ptr) ucrtbase._o__wfindfirst32
 @ stub _o__wfindfirst32i64
-@ stub _o__wfindfirst64
-@ stub _o__wfindfirst64i32
-@ stub _o__wfindnext32
+@ cdecl _o__wfindfirst64(wstr ptr) ucrtbase._o__wfindfirst64
+@ cdecl _o__wfindfirst64i32(wstr ptr) ucrtbase._o__wfindfirst64i32
+@ cdecl _o__wfindnext32(long ptr) ucrtbase._o__wfindnext32
 @ stub _o__wfindnext32i64
-@ stub _o__wfindnext64
-@ stub _o__wfindnext64i32
+@ cdecl _o__wfindnext64(long ptr) ucrtbase._o__wfindnext64
+@ cdecl _o__wfindnext64i32(long ptr) ucrtbase._o__wfindnext64i32
 @ cdecl _o__wfopen(wstr wstr) ucrtbase._o__wfopen
-@ stub _o__wfopen_s
-@ stub _o__wfreopen
-@ stub _o__wfreopen_s
-@ stub _o__wfsopen
-@ stub _o__wfullpath
-@ stub _o__wgetcwd
-@ stub _o__wgetdcwd
+@ cdecl _o__wfopen_s(ptr wstr wstr) ucrtbase._o__wfopen_s
+@ cdecl _o__wfreopen(wstr wstr ptr) ucrtbase._o__wfreopen
+@ cdecl _o__wfreopen_s(ptr wstr wstr ptr) ucrtbase._o__wfreopen_s
+@ cdecl _o__wfsopen(wstr wstr long) ucrtbase._o__wfsopen
+@ cdecl _o__wfullpath(ptr wstr long) ucrtbase._o__wfullpath
+@ cdecl _o__wgetcwd(wstr long) ucrtbase._o__wgetcwd
+@ cdecl _o__wgetdcwd(long wstr long) ucrtbase._o__wgetdcwd
 @ cdecl _o__wgetenv(wstr) ucrtbase._o__wgetenv
-@ stub _o__wgetenv_s
-@ stub _o__wmakepath
-@ stub _o__wmakepath_s
-@ stub _o__wmkdir
-@ stub _o__wmktemp
-@ stub _o__wmktemp_s
-@ stub _o__wperror
-@ stub _o__wpopen
-@ stub _o__wputenv
-@ stub _o__wputenv_s
-@ stub _o__wremove
-@ stub _o__wrename
-@ stub _o__write
-@ stub _o__wrmdir
-@ stub _o__wsearchenv
-@ stub _o__wsearchenv_s
+@ cdecl _o__wgetenv_s(ptr ptr long wstr) ucrtbase._o__wgetenv_s
+@ cdecl _o__wmakepath(ptr wstr wstr wstr wstr) ucrtbase._o__wmakepath
+@ cdecl _o__wmakepath_s(ptr long wstr wstr wstr wstr) ucrtbase._o__wmakepath_s
+@ cdecl _o__wmkdir(wstr) ucrtbase._o__wmkdir
+@ cdecl _o__wmktemp(wstr) ucrtbase._o__wmktemp
+@ cdecl _o__wmktemp_s(wstr long) ucrtbase._o__wmktemp_s
+@ cdecl _o__wperror(wstr) ucrtbase._o__wperror
+@ cdecl _o__wpopen(wstr wstr) ucrtbase._o__wpopen
+@ cdecl _o__wputenv(wstr) ucrtbase._o__wputenv
+@ cdecl _o__wputenv_s(wstr wstr) ucrtbase._o__wputenv_s
+@ cdecl _o__wremove(wstr) ucrtbase._o__wremove
+@ cdecl _o__wrename(wstr wstr) ucrtbase._o__wrename
+@ cdecl _o__write(long ptr long) ucrtbase._o__write
+@ cdecl _o__wrmdir(wstr) ucrtbase._o__wrmdir
+@ cdecl _o__wsearchenv(wstr wstr ptr) ucrtbase._o__wsearchenv
+@ cdecl _o__wsearchenv_s(wstr wstr ptr long) ucrtbase._o__wsearchenv_s
 @ cdecl _o__wsetlocale(long wstr) ucrtbase._o__wsetlocale
-@ stub _o__wsopen_dispatch
-@ stub _o__wsopen_s
-@ stub _o__wspawnv
-@ stub _o__wspawnve
-@ stub _o__wspawnvp
-@ stub _o__wspawnvpe
-@ stub _o__wsplitpath
-@ stub _o__wsplitpath_s
-@ stub _o__wstat32
-@ stub _o__wstat32i64
-@ stub _o__wstat64
-@ stub _o__wstat64i32
-@ stub _o__wstrdate
-@ stub _o__wstrdate_s
-@ stub _o__wstrtime
-@ stub _o__wstrtime_s
-@ stub _o__wsystem
-@ stub _o__wtmpnam_s
-@ stub _o__wtof
-@ stub _o__wtof_l
-@ stub _o__wtoi
-@ stub _o__wtoi64
-@ stub _o__wtoi64_l
-@ stub _o__wtoi_l
-@ stub _o__wtol
-@ stub _o__wtol_l
-@ stub _o__wtoll
-@ stub _o__wtoll_l
-@ stub _o__wunlink
-@ stub _o__wutime32
-@ stub _o__wutime64
-@ stub _o__y0
-@ stub _o__y1
-@ stub _o__yn
+@ cdecl _o__wsopen_dispatch(wstr long long long ptr long) ucrtbase._o__wsopen_dispatch
+@ cdecl _o__wsopen_s(ptr wstr long long long) ucrtbase._o__wsopen_s
+@ cdecl _o__wspawnv(long wstr ptr) ucrtbase._o__wspawnv
+@ cdecl _o__wspawnve(long wstr ptr ptr) ucrtbase._o__wspawnve
+@ cdecl _o__wspawnvp(long wstr ptr) ucrtbase._o__wspawnvp
+@ cdecl _o__wspawnvpe(long wstr ptr ptr) ucrtbase._o__wspawnvpe
+@ cdecl _o__wsplitpath(wstr ptr ptr ptr ptr) ucrtbase._o__wsplitpath
+@ cdecl _o__wsplitpath_s(wstr ptr long ptr long ptr long ptr long) ucrtbase._o__wsplitpath_s
+@ cdecl _o__wstat32(wstr ptr) ucrtbase._o__wstat32
+@ cdecl _o__wstat32i64(wstr ptr) ucrtbase._o__wstat32i64
+@ cdecl _o__wstat64(wstr ptr) ucrtbase._o__wstat64
+@ cdecl _o__wstat64i32(wstr ptr) ucrtbase._o__wstat64i32
+@ cdecl _o__wstrdate(ptr) ucrtbase._o__wstrdate
+@ cdecl _o__wstrdate_s(ptr long) ucrtbase._o__wstrdate_s
+@ cdecl _o__wstrtime(ptr) ucrtbase._o__wstrtime
+@ cdecl _o__wstrtime_s(ptr long) ucrtbase._o__wstrtime_s
+@ cdecl _o__wsystem(wstr) ucrtbase._o__wsystem
+@ cdecl _o__wtmpnam_s(ptr long) ucrtbase._o__wtmpnam_s
+@ cdecl _o__wtof(wstr) ucrtbase._o__wtof
+@ cdecl _o__wtof_l(wstr ptr) ucrtbase._o__wtof_l
+@ cdecl _o__wtoi(wstr) ucrtbase._o__wtoi
+@ cdecl -ret64 _o__wtoi64(wstr) ucrtbase._o__wtoi64
+@ cdecl -ret64 _o__wtoi64_l(wstr ptr) ucrtbase._o__wtoi64_l
+@ cdecl _o__wtoi_l(wstr ptr) ucrtbase._o__wtoi_l
+@ cdecl _o__wtol(wstr) ucrtbase._o__wtol
+@ cdecl _o__wtol_l(wstr ptr) ucrtbase._o__wtol_l
+@ cdecl -ret64 _o__wtoll(wstr) ucrtbase._o__wtoll
+@ cdecl -ret64 _o__wtoll_l(wstr ptr) ucrtbase._o__wtoll_l
+@ cdecl _o__wunlink(wstr) ucrtbase._o__wunlink
+@ cdecl _o__wutime32(wstr ptr) ucrtbase._o__wutime32
+@ cdecl _o__wutime64(wstr ptr) ucrtbase._o__wutime64
+@ cdecl _o__y0(double) ucrtbase._o__y0
+@ cdecl _o__y1(double) ucrtbase._o__y1
+@ cdecl _o__yn(long double) ucrtbase._o__yn
 @ cdecl _o_abort() ucrtbase._o_abort
 @ cdecl _o_acos(double) ucrtbase._o_acos
 @ cdecl -arch=!i386 _o_acosf(float) ucrtbase._o_acosf

@@ -16,7 +16,7 @@
 @ cdecl _fcvt(double long ptr ptr) ucrtbase._fcvt
 @ cdecl _fcvt_s(ptr long double long ptr ptr) ucrtbase._fcvt_s
 @ cdecl _gcvt(double long str) ucrtbase._gcvt
-@ cdecl _gcvt_s(ptr long  double long) ucrtbase._gcvt_s
+@ cdecl _gcvt_s(ptr long double long) ucrtbase._gcvt_s
 @ cdecl _i64toa(int64 ptr long) ucrtbase._i64toa
 @ cdecl _i64toa_s(int64 ptr long long) ucrtbase._i64toa_s
 @ cdecl _i64tow(int64 ptr long) ucrtbase._i64tow
