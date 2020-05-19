@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <signal.h>
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
@@ -50,6 +51,11 @@
 # undef GetCurrentThread
 # include <pthread.h>
 # include <mach-o/getsect.h>
+# include <crt_externs.h>
+# include <spawn.h>
+# ifndef _POSIX_SPAWN_DISABLE_ASLR
+#  define _POSIX_SPAWN_DISABLE_ASLR 0x0100
+# endif
 #endif
 
 #include "ntstatus.h"
@@ -75,6 +81,14 @@ static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(
 extern int __wine_main_argc;
 extern char **__wine_main_argv;
 extern char **__wine_main_environ;
+
+#if defined(linux) || defined(__APPLE__)
+static const BOOL use_preloader = TRUE;
+#else
+static const BOOL use_preloader = FALSE;
+#endif
+
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static int main_argc;
 static char **main_argv;
@@ -341,6 +355,121 @@ static void CDECL get_dll_path( const char ***paths, SIZE_T *maxlen )
 {
     *paths = dll_paths;
     *maxlen = dll_path_maxlen;
+}
+
+
+static void preloader_exec( char **argv )
+{
+    if (use_preloader)
+    {
+        static const char *preloader = "wine-preloader";
+        char *p;
+
+        if (!(p = strrchr( argv[1], '/' ))) p = argv[1];
+        else p++;
+
+        if (strlen(p) > 2 && !strcmp( p + strlen(p) - 2, "64" )) preloader = "wine64-preloader";
+        argv[0] = malloc( p - argv[1] + strlen(preloader) + 1 );
+        memcpy( argv[0], argv[1], p - argv[1] );
+        strcpy( argv[0] + (p - argv[1]), preloader );
+
+#ifdef __APPLE__
+        {
+            posix_spawnattr_t attr;
+            posix_spawnattr_init( &attr );
+            posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC | _POSIX_SPAWN_DISABLE_ASLR );
+            posix_spawn( NULL, argv[0], NULL, &attr, argv, *_NSGetEnviron() );
+            posix_spawnattr_destroy( &attr );
+        }
+#endif
+        execv( argv[0], argv );
+        free( argv[0] );
+    }
+    execv( argv[1], argv + 1 );
+}
+
+static NTSTATUS loader_exec( const char *loader, char **argv, int is_child_64bit )
+{
+    char *p, *path;
+
+    if (build_dir)
+    {
+        argv[1] = build_path( build_dir, is_child_64bit ? "loader/wine64" : "loader/wine" );
+        preloader_exec( argv );
+        return STATUS_INVALID_IMAGE_FORMAT;
+    }
+
+    if ((p = strrchr( loader, '/' ))) loader = p + 1;
+
+    argv[1] = build_path( bin_dir, loader );
+    preloader_exec( argv );
+
+    argv[1] = getenv( "WINELOADER" );
+    if (argv[1]) preloader_exec( argv );
+
+    if ((path = getenv( "PATH" )))
+    {
+        for (p = strtok( strdup( path ), ":" ); p; p = strtok( NULL, ":" ))
+        {
+            argv[1] = build_path( p, loader );
+            preloader_exec( argv );
+        }
+    }
+
+    argv[1] = build_path( BINDIR, loader );
+    preloader_exec( argv );
+    return STATUS_INVALID_IMAGE_FORMAT;
+}
+
+
+/***********************************************************************
+ *           exec_wineloader
+ *
+ * argv[0] and argv[1] must be reserved for the preloader and loader respectively.
+ */
+static NTSTATUS CDECL exec_wineloader( char **argv, int socketfd, int is_child_64bit,
+                                       ULONGLONG res_start, ULONGLONG res_end )
+{
+    const char *loader = argv0;
+    const char *loader_env = getenv( "WINELOADER" );
+    char preloader_reserve[64], socket_env[64];
+
+    if (!is_win64 ^ !is_child_64bit)
+    {
+        /* remap WINELOADER to the alternate 32/64-bit version if necessary */
+        if (loader_env)
+        {
+            int len = strlen( loader_env );
+            char *env = malloc( sizeof("WINELOADER=") + len + 2 );
+
+            if (!env) return STATUS_NO_MEMORY;
+            strcpy( env, "WINELOADER=" );
+            strcat( env, loader_env );
+            if (is_child_64bit)
+            {
+                strcat( env, "64" );
+            }
+            else
+            {
+                len += sizeof("WINELOADER=") - 1;
+                if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
+            }
+            loader = env;
+            putenv( env );
+        }
+        else loader = is_child_64bit ? "wine64" : "wine";
+    }
+
+    signal( SIGPIPE, SIG_DFL );
+
+    sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
+    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
+             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
+
+    putenv( preloader_reserve );
+    putenv( socket_env );
+
+    return loader_exec( loader, argv, is_child_64bit );
 }
 
 
@@ -619,6 +748,7 @@ static struct unix_funcs unix_funcs =
     get_version,
     get_build_id,
     get_host_version,
+    exec_wineloader,
     map_so_dll,
     mmap_add_reserved_area,
     mmap_remove_reserved_area,

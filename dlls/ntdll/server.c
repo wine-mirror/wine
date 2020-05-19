@@ -121,12 +121,6 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 #error Unsupported CPU
 #endif
 
-#if defined(linux) || defined(__APPLE__)
-static const BOOL use_preloader = TRUE;
-#else
-static const BOOL use_preloader = FALSE;
-#endif
-
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 const char *build_dir = NULL;
@@ -1226,119 +1220,6 @@ int server_pipe( int fd[2] )
         fcntl( fd[1], F_SETFD, FD_CLOEXEC );
     }
     return ret;
-}
-
-
-/***********************************************************************
- *           preloader_exec
- */
-static void preloader_exec( char **argv )
-{
-    if (use_preloader)
-    {
-        static const char *preloader = "wine-preloader";
-        char *p;
-
-        if (!(p = strrchr( argv[1], '/' ))) p = argv[1];
-        else p++;
-
-        if (strlen(p) > 2 && !strcmp( p + strlen(p) - 2, "64" )) preloader = "wine64-preloader";
-        argv[0] = malloc( p - argv[1] + strlen(preloader) + 1 );
-        memcpy( argv[0], argv[1], p - argv[1] );
-        strcpy( argv[0] + (p - argv[1]), preloader );
-
-#ifdef __APPLE__
-        {
-            posix_spawnattr_t attr;
-            posix_spawnattr_init( &attr );
-            posix_spawnattr_setflags( &attr, POSIX_SPAWN_SETEXEC | _POSIX_SPAWN_DISABLE_ASLR );
-            posix_spawn( NULL, argv[0], NULL, &attr, argv, *_NSGetEnviron() );
-            posix_spawnattr_destroy( &attr );
-        }
-#endif
-        execv( argv[0], argv );
-        free( argv[0] );
-    }
-    execv( argv[1], argv + 1 );
-}
-
-
-/***********************************************************************
- *           exec_wineloader
- *
- * argv[0] and argv[1] must be reserved for the preloader and loader respectively.
- */
-NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info )
-{
-    const int is_child_64bit = (pe_info->cpu == CPU_x86_64 || pe_info->cpu == CPU_ARM64);
-    const char *path, *loader = argv0;
-    const char *loader_env = getenv( "WINELOADER" );
-    char *p, preloader_reserve[64], socket_env[64];
-    ULONGLONG res_start = pe_info->base;
-    ULONGLONG res_end   = pe_info->base + pe_info->map_size;
-
-    if (!is_win64 ^ !is_child_64bit)
-    {
-        /* remap WINELOADER to the alternate 32/64-bit version if necessary */
-        if (loader_env)
-        {
-            int len = strlen( loader_env );
-            char *env = malloc( sizeof("WINELOADER=") + len + 2 );
-
-            if (!env) return STATUS_NO_MEMORY;
-            strcpy( env, "WINELOADER=" );
-            strcat( env, loader_env );
-            if (is_child_64bit)
-            {
-                strcat( env, "64" );
-            }
-            else
-            {
-                len += sizeof("WINELOADER=") - 1;
-                if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
-            }
-            loader = env;
-            putenv( env );
-        }
-        else loader = is_child_64bit ? "wine64" : "wine";
-    }
-
-    signal( SIGPIPE, SIG_DFL );
-
-    sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
-    sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
-             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
-
-    putenv( preloader_reserve );
-    putenv( socket_env );
-
-    if (build_dir)
-    {
-        argv[1] = build_path( build_dir, is_child_64bit ? "loader/wine64" : "loader/wine" );
-        preloader_exec( argv );
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
-
-    if ((p = strrchr( loader, '/' ))) loader = p + 1;
-
-    argv[1] = build_path( bin_dir, loader );
-    preloader_exec( argv );
-
-    argv[1] = getenv( "WINELOADER" );
-    if (argv[1]) preloader_exec( argv );
-
-    if ((path = getenv( "PATH" )))
-    {
-        for (p = strtok( strdup( path ), ":" ); p; p = strtok( NULL, ":" ))
-        {
-            argv[1] = build_path( p, loader );
-            preloader_exec( argv );
-        }
-    }
-
-    argv[1] = build_path( BINDIR, loader );
-    preloader_exec( argv );
-    return STATUS_INVALID_IMAGE_FORMAT;
 }
 
 

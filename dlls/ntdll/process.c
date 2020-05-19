@@ -1074,6 +1074,7 @@ static void set_stdio_fd( int stdin_fd, int stdout_fd )
 static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
                               const char *unixdir, char *winedebug, const pe_image_info_t *pe_info )
 {
+    const int is_child_64bit = (pe_info->cpu == CPU_x86_64 || pe_info->cpu == CPU_ARM64);
     pid_t pid;
     int stdin_fd = -1, stdout_fd = -1;
     char **argv;
@@ -1103,7 +1104,8 @@ static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int soc
             if (winedebug) putenv( winedebug );
             if (unixdir) chdir( unixdir );
 
-            exec_wineloader( argv, socketfd, pe_info );
+            unix_funcs->exec_wineloader( argv, socketfd, is_child_64bit,
+                                         pe_info->base, pe_info->base + pe_info->map_size );
             _exit(1);
         }
 
@@ -1533,12 +1535,14 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
 
     if (!status)
     {
+        const int is_child_64bit = (pe_info.cpu == CPU_x86_64 || pe_info.cpu == CPU_ARM64);
         char **argv = build_argv( &strW, 2 );
         if (argv)
         {
             do
             {
-                status = exec_wineloader( argv, socketfd[0], &pe_info );
+                status = unix_funcs->exec_wineloader( argv, socketfd[0], is_child_64bit,
+                                                      pe_info.base, pe_info.base + pe_info.map_size );
             }
 #ifdef __APPLE__
             while (errno == ENOTSUP && terminate_main_thread());
