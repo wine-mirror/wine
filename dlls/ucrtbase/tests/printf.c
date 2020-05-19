@@ -90,52 +90,55 @@ static int WINAPIV vsprintf_wrapper(unsigned __int64 options, char *str,
 
 static void test_snprintf (void)
 {
-    const char *tests[] = {"short", "justfit", "justfits", "muchlonger"};
+    const char *tests[] = {"short", "justfit", "justfits", "muchlonger", "", "1"};
     char buffer[8];
-    const int bufsiz = sizeof buffer;
-    unsigned int i;
+    int bufsizes[] = { 0, 1, sizeof(buffer) };
+    unsigned int i, j;
 
-    /* Legacy _snprintf style termination */
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
-        const char *fmt  = tests[i];
-        const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
-        const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
-        const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
+    for (j = 0; j < ARRAY_SIZE(bufsizes); j++) {
+        const int bufsiz = bufsizes[j];
+        /* Legacy _snprintf style termination */
+        for (i = 0; i < ARRAY_SIZE(tests); i++) {
+            const char *fmt  = tests[i];
+            const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
+            const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
+            const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
-        ok (n == expect, "\"%s\": expected %d, returned %d\n",
-            fmt, expect, n);
-        ok (!memcmp (fmt, buffer, valid),
-            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-    }
+            ok (n == expect, "\"%s\": expected %d, returned %d\n",
+                fmt, expect, n);
+            ok (!memcmp (fmt, buffer, valid),
+                "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
+        }
 
-    /* C99 snprintf style termination */
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
-        const char *fmt  = tests[i];
-        const int expect = strlen(fmt);
-        const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
-        const int valid  = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
+        /* C99 snprintf style termination */
+        for (i = 0; i < ARRAY_SIZE(tests); i++) {
+            const char *fmt  = tests[i];
+            const int expect = strlen(fmt);
+            const int n      = vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
+            const int valid  = n >= bufsiz ? (bufsiz > 0 ? bufsiz - 1 : 0) : n < 0 ? 0 : n;
 
-        ok (n == expect, "\"%s\": expected %d, returned %d\n",
-            fmt, expect, n);
-        ok (!memcmp (fmt, buffer, valid),
-            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-        ok (buffer[valid] == '\0',
-            "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
-    }
+            ok (n == expect, "\"%s\": expected %d, returned %d\n",
+                fmt, expect, n);
+            ok (!memcmp (fmt, buffer, valid),
+                "\"%s\": rendered \"%.*s\" bufsiz %d\n", fmt, valid, buffer, bufsiz);
+            ok (bufsiz == 0 || buffer[valid] == '\0',
+                "\"%s\": Missing null termination (ret %d) - is %d (bufsiz %d)\n", fmt, n, buffer[valid], bufsiz);
+        }
 
-    /* swprintf style termination */
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
-        const char *fmt  = tests[i];
-        const int expect = strlen(fmt) >= bufsiz ? -2 : strlen(fmt);
-        const int n      = vsprintf_wrapper (0, buffer, bufsiz, fmt);
-        const int valid  = n < 0 ? bufsiz - 1 : n;
+        /* swprintf style termination */
+        for (i = 0; i < ARRAY_SIZE(tests); i++) {
+            const char *fmt  = tests[i];
+            const int expect = strlen(fmt) >= bufsiz ? bufsiz > 0 ? -2 : -1 : strlen(fmt);
+            const int n      = vsprintf_wrapper (0, buffer, bufsiz, fmt);
+            const int valid  = n < 0 ? bufsiz > 0 ? bufsiz - 1 : 0 : n;
 
-        ok (n == expect, "\"%s\": expected %d, returned %d\n",
-            fmt, expect, n);
-        ok (!memcmp (fmt, buffer, valid),
-            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-        ok (buffer[valid] == '\0',
-            "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
+            ok (n == expect, "\"%s\": expected %d, returned %d\n",
+                fmt, expect, n);
+            ok (!memcmp (fmt, buffer, valid),
+                "\"%s\": rendered \"%.*s\" bufsiz %d\n", fmt, valid, buffer, bufsiz);
+            ok (bufsiz == 0 || buffer[valid] == '\0',
+                "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
+        }
     }
 
     ok (vsprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, NULL, 0, "abcd") == 4,
