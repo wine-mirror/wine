@@ -169,6 +169,22 @@ static VkColorComponentFlags vk_colour_write_mask_from_wined3d(uint32_t wined3d_
     return vk_mask;
 }
 
+static VkCullModeFlags vk_cull_mode_from_wined3d(enum wined3d_cull mode)
+{
+    switch (mode)
+    {
+        case WINED3D_CULL_NONE:
+            return VK_CULL_MODE_NONE;
+        case WINED3D_CULL_FRONT:
+            return VK_CULL_MODE_FRONT_BIT;
+        case WINED3D_CULL_BACK:
+            return VK_CULL_MODE_BACK_BIT;
+        default:
+            FIXME("Unhandled cull mode %#x.\n", mode);
+            return VK_CULL_MODE_NONE;
+    }
+}
+
 void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
         struct wined3d_context_vk *context_vk)
 {
@@ -1487,6 +1503,73 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->pipeline_desc.basePipelineIndex = -1;
 }
 
+static void wined3d_context_vk_update_rasterisation_state(const struct wined3d_context_vk *context_vk,
+        const struct wined3d_state *state, struct wined3d_graphics_pipeline_key_vk *key)
+{
+    const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
+    VkPipelineRasterizationStateCreateInfo *desc = &key->rs_desc;
+    const struct wined3d_rasterizer_state_desc *r;
+    float scale_bias;
+    union
+    {
+        uint32_t u32;
+        float f32;
+    } const_bias;
+
+    if (!state->rasterizer_state)
+    {
+        desc->depthClampEnable = VK_FALSE;
+        desc->cullMode = VK_CULL_MODE_BACK_BIT;
+        desc->frontFace = VK_FRONT_FACE_CLOCKWISE;
+        desc->depthBiasEnable = VK_FALSE;
+        desc->depthBiasConstantFactor = 0.0f;
+        desc->depthBiasClamp = 0.0f;
+        desc->depthBiasSlopeFactor = 0.0f;
+
+        return;
+    }
+
+    r = &state->rasterizer_state->desc;
+    desc->depthClampEnable = !r->depth_clip;
+    desc->cullMode = vk_cull_mode_from_wined3d(r->cull_mode);
+    desc->frontFace = r->front_ccw ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
+
+    scale_bias = r->scale_bias;
+    const_bias.f32 = r->depth_bias;
+    if (!scale_bias && !const_bias.f32)
+    {
+        desc->depthBiasEnable = VK_FALSE;
+        desc->depthBiasConstantFactor = 0.0f;
+        desc->depthBiasClamp = 0.0f;
+        desc->depthBiasSlopeFactor = 0.0f;
+
+        return;
+    }
+
+    desc->depthBiasEnable = VK_TRUE;
+    if (d3d_info->wined3d_creation_flags & WINED3D_LEGACY_DEPTH_BIAS)
+    {
+        const struct wined3d_rendertarget_view *dsv;
+
+        if ((dsv = state->fb.depth_stencil))
+        {
+            desc->depthBiasConstantFactor = -(float)const_bias.u32 / dsv->format->depth_bias_scale;
+            desc->depthBiasSlopeFactor = -(float)const_bias.u32;
+        }
+        else
+        {
+            desc->depthBiasConstantFactor = 0.0f;
+            desc->depthBiasSlopeFactor = 0.0f;
+        }
+    }
+    else
+    {
+        desc->depthBiasConstantFactor = const_bias.f32;
+        desc->depthBiasSlopeFactor = scale_bias;
+    }
+    desc->depthBiasClamp = r->depth_bias_clamp;
+}
+
 static void wined3d_context_vk_update_blend_state(const struct wined3d_context_vk *context_vk,
         const struct wined3d_state *state, struct wined3d_graphics_pipeline_key_vk *key)
 {
@@ -1654,6 +1737,13 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         }
         key->viewport.y += key->viewport.height;
         key->viewport.height = -key->viewport.height;
+
+        update = true;
+    }
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER))
+    {
+        wined3d_context_vk_update_rasterisation_state(context_vk, state, key);
 
         update = true;
     }
