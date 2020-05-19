@@ -1462,7 +1462,9 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_VIEWPORT))
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_VIEWPORT)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SCISSORRECT)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RASTERIZER))
     {
         key->viewport.x = state->viewports[0].x;
         key->viewport.y = state->viewports[0].y;
@@ -1471,10 +1473,22 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         key->viewport.minDepth = state->viewports[0].min_z;
         key->viewport.maxDepth = state->viewports[0].max_z;
 
-        key->scissor.offset.x = key->viewport.x;
-        key->scissor.offset.y = key->viewport.y;
-        key->scissor.extent.width = key->viewport.width;
-        key->scissor.extent.height = key->viewport.height;
+        if (state->rasterizer_state && state->rasterizer_state->desc.scissor)
+        {
+            const RECT *r = &state->scissor_rects[0];
+
+            key->scissor.offset.x = r->left;
+            key->scissor.offset.y = r->top;
+            key->scissor.extent.width =  r->right - r->left;
+            key->scissor.extent.height = r->bottom - r->top;
+        }
+        else
+        {
+            key->scissor.offset.x = key->viewport.x;
+            key->scissor.offset.y = key->viewport.y;
+            key->scissor.extent.width = key->viewport.width;
+            key->scissor.extent.height = key->viewport.height;
+        }
         key->viewport.y += key->viewport.height;
         key->viewport.height = -key->viewport.height;
 
