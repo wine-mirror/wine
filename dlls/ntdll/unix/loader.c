@@ -156,6 +156,17 @@ static void fatal_error( const char *err, ... )
     exit(1);
 }
 
+static void set_max_limit( int limit )
+{
+    struct rlimit rlimit;
+
+    if (!getrlimit( limit, &rlimit ))
+    {
+        rlimit.rlim_cur = rlimit.rlim_max;
+        setrlimit( limit, &rlimit );
+    }
+}
+
 /* canonicalize path and return its directory name */
 static char *realpath_dirname( const char *name )
 {
@@ -905,23 +916,11 @@ static void check_vmsplit( void *stack )
     }
 }
 
-static void set_max_limit( int limit )
-{
-    struct rlimit rlimit;
-
-    if (!getrlimit( limit, &rlimit ))
-    {
-        rlimit.rlim_cur = rlimit.rlim_max;
-        setrlimit( limit, &rlimit );
-    }
-}
-
 static int pre_exec(void)
 {
     int temp;
 
     check_vmsplit( &temp );
-    set_max_limit( RLIMIT_AS );
 #ifdef __i386__
     return 1;  /* we have a preloader on x86 */
 #else
@@ -1004,7 +1003,6 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 {
     HMODULE module;
 
-    wine_init_argv0_path( argv[0] );
     init_paths( argc, argv, envp );
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
@@ -1015,10 +1013,19 @@ void __wine_main( int argc, char *argv[], char *envp[] )
         check_command_line( argc, argv );
         if (pre_exec())
         {
-            wine_exec_wine_binary( NULL, argv, getenv( "WINELOADER" ));
+            char **new_argv = malloc( (argc + 2) * sizeof(*argv) );
+            memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
+            loader_exec( argv0, new_argv, is_win64 );
             fatal_error( "could not exec the wine loader\n" );
         }
     }
+
+#ifdef RLIMIT_NOFILE
+    set_max_limit( RLIMIT_NOFILE );
+#endif
+#ifdef RLIMIT_AS
+    set_max_limit( RLIMIT_AS );
+#endif
 
     virtual_init();
 
