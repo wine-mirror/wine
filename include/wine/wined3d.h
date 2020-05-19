@@ -2021,7 +2021,7 @@ struct wined3d_blend_state_desc
 {
     BOOL alpha_to_coverage;
     BOOL independent;
-    struct
+    struct wined3d_rendertarget_blend_state_desc
     {
         BOOL enable;
         enum wined3d_blend src;

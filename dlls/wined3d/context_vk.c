@@ -80,6 +80,95 @@ VkShaderStageFlagBits vk_shader_stage_from_wined3d(enum wined3d_shader_type shad
     }
 }
 
+static VkBlendFactor vk_blend_factor_from_wined3d(enum wined3d_blend blend,
+        const struct wined3d_format *dst_format, bool alpha)
+{
+    switch (blend)
+    {
+        case WINED3D_BLEND_ZERO:
+            return VK_BLEND_FACTOR_ZERO;
+        case WINED3D_BLEND_ONE:
+            return VK_BLEND_FACTOR_ONE;
+        case WINED3D_BLEND_SRCCOLOR:
+            return VK_BLEND_FACTOR_SRC_COLOR;
+        case WINED3D_BLEND_INVSRCCOLOR:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case WINED3D_BLEND_SRCALPHA:
+            return VK_BLEND_FACTOR_SRC_ALPHA;
+        case WINED3D_BLEND_INVSRCALPHA:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case WINED3D_BLEND_DESTALPHA:
+            if (dst_format->alpha_size)
+                return VK_BLEND_FACTOR_DST_ALPHA;
+            return VK_BLEND_FACTOR_ONE;
+        case WINED3D_BLEND_INVDESTALPHA:
+            if (dst_format->alpha_size)
+                return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            return VK_BLEND_FACTOR_ZERO;
+        case WINED3D_BLEND_DESTCOLOR:
+            return VK_BLEND_FACTOR_DST_COLOR;
+        case WINED3D_BLEND_INVDESTCOLOR:
+            return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case WINED3D_BLEND_SRCALPHASAT:
+            return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        case WINED3D_BLEND_BLENDFACTOR:
+            if (alpha)
+                return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+            return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case WINED3D_BLEND_INVBLENDFACTOR:
+            if (alpha)
+                return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+            return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+        case WINED3D_BLEND_SRC1COLOR:
+            return VK_BLEND_FACTOR_SRC1_COLOR;
+        case WINED3D_BLEND_INVSRC1COLOR:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+        case WINED3D_BLEND_SRC1ALPHA:
+            return VK_BLEND_FACTOR_SRC1_ALPHA;
+        case WINED3D_BLEND_INVSRC1ALPHA:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+        default:
+            FIXME("Unhandled blend %#x.\n", blend);
+            return VK_BLEND_FACTOR_ZERO;
+    }
+}
+
+static VkBlendOp vk_blend_op_from_wined3d(enum wined3d_blend_op op)
+{
+    switch (op)
+    {
+        case WINED3D_BLEND_OP_ADD:
+            return VK_BLEND_OP_ADD;
+        case WINED3D_BLEND_OP_SUBTRACT:
+            return VK_BLEND_OP_SUBTRACT;
+        case WINED3D_BLEND_OP_REVSUBTRACT:
+            return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case WINED3D_BLEND_OP_MIN:
+            return VK_BLEND_OP_MIN;
+        case WINED3D_BLEND_OP_MAX:
+            return VK_BLEND_OP_MAX;
+        default:
+            FIXME("Unhandled blend op %#x.\n", op);
+            return VK_BLEND_OP_ADD;
+    }
+}
+
+static VkColorComponentFlags vk_colour_write_mask_from_wined3d(uint32_t wined3d_mask)
+{
+    VkColorComponentFlags vk_mask = 0;
+
+    if (wined3d_mask & WINED3DCOLORWRITEENABLE_RED)
+        vk_mask |= VK_COLOR_COMPONENT_R_BIT;
+    if (wined3d_mask & WINED3DCOLORWRITEENABLE_GREEN)
+        vk_mask |= VK_COLOR_COMPONENT_G_BIT;
+    if (wined3d_mask & WINED3DCOLORWRITEENABLE_BLUE)
+        vk_mask |= VK_COLOR_COMPONENT_B_BIT;
+    if (wined3d_mask & WINED3DCOLORWRITEENABLE_ALPHA)
+        vk_mask |= VK_COLOR_COMPONENT_A_BIT;
+
+    return vk_mask;
+}
+
 void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
         struct wined3d_context_vk *context_vk)
 {
@@ -1144,6 +1233,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_vk->c.update_compute_unordered_access_view_bindings = 1;
     context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
+    context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
 
     VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
 
@@ -1336,6 +1426,11 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     VkPipelineShaderStageCreateInfo *stage;
     unsigned int i;
 
+    static const VkDynamicState dynamic_states[] =
+    {
+        VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+    };
+
     key = &context_vk->graphics.pipeline_key_vk;
     memset(key, 0, sizeof(*key));
 
@@ -1376,6 +1471,8 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->blend_desc.blendConstants[3] = 1.0f;
 
     key->dynamic_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    key->dynamic_desc.dynamicStateCount = ARRAY_SIZE(dynamic_states);
+    key->dynamic_desc.pDynamicStates = dynamic_states;
 
     key->pipeline_desc.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     key->pipeline_desc.pStages = key->stages;
@@ -1388,6 +1485,72 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->pipeline_desc.pColorBlendState = &key->blend_desc;
     key->pipeline_desc.pDynamicState = &key->dynamic_desc;
     key->pipeline_desc.basePipelineIndex = -1;
+}
+
+static void wined3d_context_vk_update_blend_state(const struct wined3d_context_vk *context_vk,
+        const struct wined3d_state *state, struct wined3d_graphics_pipeline_key_vk *key)
+{
+    VkPipelineColorBlendStateCreateInfo *desc = &key->blend_desc;
+    const struct wined3d_blend_state_desc *b;
+    unsigned int i;
+
+    desc->attachmentCount = context_vk->rt_count;
+
+    memset(key->blend_attachments, 0, sizeof(key->blend_attachments));
+    if (!state->blend_state)
+    {
+        for (i = 0; i < context_vk->rt_count; ++i)
+        {
+            key->blend_attachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+                    | VK_COLOR_COMPONENT_G_BIT
+                    | VK_COLOR_COMPONENT_B_BIT
+                    | VK_COLOR_COMPONENT_A_BIT;
+        }
+
+        return;
+    }
+
+    b = &state->blend_state->desc;
+    for (i = 0; i < context_vk->rt_count; ++i)
+    {
+        const struct wined3d_rendertarget_blend_state_desc *rt = &b->rt[b->independent ? i : 0];
+        const struct wined3d_rendertarget_view *rtv = state->fb.render_targets[i];
+        VkPipelineColorBlendAttachmentState *a = &key->blend_attachments[i];
+        enum wined3d_blend src_blend, dst_blend;
+        const struct wined3d_format *rt_format;
+
+        a->colorWriteMask = vk_colour_write_mask_from_wined3d(rt->writemask);
+        if (!rt->enable)
+            continue;
+
+        if (rtv)
+            rt_format = rtv->format;
+        else
+            rt_format = wined3d_get_format(context_vk->c.device->adapter, WINED3DFMT_NULL, 0);
+        a->blendEnable = VK_TRUE;
+
+        src_blend = rt->src;
+        dst_blend = rt->dst;
+        if (src_blend == WINED3D_BLEND_BOTHSRCALPHA)
+        {
+            src_blend = WINED3D_BLEND_SRCALPHA;
+            dst_blend = WINED3D_BLEND_INVSRCALPHA;
+        }
+        else if (src_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
+        {
+            src_blend = WINED3D_BLEND_INVSRCALPHA;
+            dst_blend = WINED3D_BLEND_SRCALPHA;
+        }
+        a->srcColorBlendFactor = vk_blend_factor_from_wined3d(src_blend, rt_format, FALSE);
+        a->dstColorBlendFactor = vk_blend_factor_from_wined3d(dst_blend, rt_format, FALSE);
+        a->colorBlendOp = vk_blend_op_from_wined3d(rt->op);
+
+        src_blend = rt->src_alpha;
+        dst_blend = rt->dst_alpha;
+        a->srcAlphaBlendFactor = vk_blend_factor_from_wined3d(src_blend, rt_format, TRUE);
+        a->dstAlphaBlendFactor = vk_blend_factor_from_wined3d(dst_blend, rt_format, TRUE);
+        a->alphaBlendOp = vk_blend_op_from_wined3d(rt->op_alpha);
+    }
 }
 
 static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_context_vk *context_vk,
@@ -1502,18 +1665,10 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND)
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
     {
-        key->blend_desc.attachmentCount = context_vk->rt_count;
-
-        memset(key->blend_attachments, 0, sizeof(key->blend_attachments));
-        for (i = 0; i < context_vk->rt_count; ++i)
-        {
-            key->blend_attachments[i].colorWriteMask = VK_COLOR_COMPONENT_R_BIT
-                    | VK_COLOR_COMPONENT_G_BIT
-                    | VK_COLOR_COMPONENT_B_BIT
-                    | VK_COLOR_COMPONENT_A_BIT;
-        }
+        wined3d_context_vk_update_blend_state(context_vk, state, key);
 
         update = true;
     }
@@ -2402,6 +2557,9 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         context_vk->c.update_shader_resource_bindings = 0;
         context_vk->c.update_unordered_access_view_bindings = 0;
     }
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND_FACTOR))
+        VK_CALL(vkCmdSetBlendConstants(vk_command_buffer, &state->blend_factor.r));
 
     memset(context_vk->c.dirty_graphics_states, 0, sizeof(context_vk->c.dirty_graphics_states));
     context_vk->c.shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
