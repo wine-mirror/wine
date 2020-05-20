@@ -3546,13 +3546,13 @@ static void test_WSAStringToAddress(void)
                 ipv6_tests[j].address[6], ipv6_tests[j].address[7] );
             ok( sockaddr6.sin6_scope_id == 0,
                 "WSAStringToAddress(%s) gave scope %d, expected 0\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr6.sin6_scope_id );
+                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_scope_id );
             ok( sockaddr6.sin6_port == ipv6_tests[j].port,
                 "WSAStringToAddress(%s) gave port %04x, expected %04x\n",
                 wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_port, ipv6_tests[j].port );
             ok( sockaddr6.sin6_flowinfo == 0,
                 "WSAStringToAddress(%s) gave flowinfo %d, expected 0\n",
-                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr6.sin6_flowinfo );
+                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_flowinfo );
         }
     }
 }
