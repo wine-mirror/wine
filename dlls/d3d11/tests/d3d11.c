@@ -2147,14 +2147,22 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_get_immediate_context(void)
+static void test_immediate_context(void)
 {
     ID3D11DeviceContext *immediate_context, *previous_immediate_context;
     ULONG expected_refcount, refcount;
+    ID3D11CommandList *command_list;
     ID3D11Multithread *multithread;
+    ID3D11Buffer *buffer[2];
     ID3D11Device *device;
     BOOL enabled;
     HRESULT hr;
+
+    static const unsigned int buffer_contents[] =
+    {
+        0x11111111, 0x22222222, 0x33333333, 0x44444444,
+        0x55555555, 0x66666666, 0x77777777, 0x88888888,
+    };
 
     if (!(device = create_device(NULL)))
     {
@@ -2204,6 +2212,23 @@ static void test_get_immediate_context(void)
     todo_wine ok(!enabled, "Multithread protection is %#x.\n", enabled);
 
     ID3D11Multithread_Release(multithread);
+
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+
+    hr = ID3D11DeviceContext_FinishCommandList(immediate_context, FALSE, &command_list);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    buffer[0] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 16, &buffer_contents[0]);
+    buffer[1] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, 16, &buffer_contents[4]);
+
+    ID3D11DeviceContext_CopyResource(immediate_context, (ID3D11Resource *)buffer[1], (ID3D11Resource *)buffer[0]);
+
+    hr = ID3D11DeviceContext_FinishCommandList(immediate_context, FALSE, &command_list);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11Buffer_Release(buffer[1]);
+    ID3D11Buffer_Release(buffer[0]);
+    ID3D11DeviceContext_Release(immediate_context);
 
 done:
     refcount = ID3D11DeviceContext_Release(immediate_context);
@@ -30086,7 +30111,7 @@ START_TEST(d3d11)
 
     queue_test(test_create_device);
     queue_for_each_feature_level(test_device_interfaces);
-    queue_test(test_get_immediate_context);
+    queue_test(test_immediate_context);
     queue_test(test_create_deferred_context);
     queue_test(test_create_texture1d);
     queue_test(test_texture1d_interfaces);

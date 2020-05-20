@@ -2416,9 +2416,9 @@ static UINT STDMETHODCALLTYPE d3d11_immediate_context_GetContextFlags(ID3D11Devi
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_FinishCommandList(ID3D11DeviceContext1 *iface,
         BOOL restore, ID3D11CommandList **command_list)
 {
-    FIXME("iface %p, restore %#x, command_list %p stub!\n", iface, restore, command_list);
+    TRACE("iface %p, restore %#x, command_list %p.\n", iface, restore, command_list);
 
-    return E_NOTIMPL;
+    return DXGI_ERROR_INVALID_CALL;
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion1(ID3D11DeviceContext1 *iface,
