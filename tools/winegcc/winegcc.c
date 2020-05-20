@@ -1462,13 +1462,10 @@ static void build(struct options* opts)
 static void forward(int argc, char **argv, struct options* opts)
 {
     strarray* args = strarray_alloc();
-    int j;
 
     strarray_addall(args, get_translator(opts));
-
-    for( j = 1; j < argc; j++ ) 
-	strarray_add(args, argv[j]);
-
+    strarray_addall(args, opts->compiler_args);
+    strarray_addall(args, opts->linker_args);
     spawn(opts->prefix, args, 0);
     strarray_free (args);
 }
