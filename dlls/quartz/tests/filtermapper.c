@@ -368,63 +368,6 @@ static void test_legacy_filter_registration(void)
     IFilterMapper2_Release(mapper2);
 }
 
-static ULONG getRefcount(IUnknown *iface)
-{
-    IUnknown_AddRef(iface);
-    return IUnknown_Release(iface);
-}
-
-static void test_ifiltermapper_from_filtergraph(void)
-{
-    IFilterGraph2* pgraph2 = NULL;
-    IFilterMapper2 *pMapper2 = NULL;
-    IFilterGraph *filtergraph = NULL;
-    HRESULT hr;
-    ULONG refcount;
-
-    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-    if (!pgraph2) goto out;
-
-    hr = IFilterGraph2_QueryInterface(pgraph2, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
-    ok(hr == S_OK, "IFilterGraph2_QueryInterface failed with %08x\n", hr);
-    if (!pMapper2) goto out;
-
-    refcount = getRefcount((IUnknown*)pgraph2);
-    ok(refcount == 2, "unexpected reference count: %u\n", refcount);
-    refcount = getRefcount((IUnknown*)pMapper2);
-    ok(refcount == 2, "unexpected reference count: %u\n", refcount);
-
-    IFilterMapper2_AddRef(pMapper2);
-    refcount = getRefcount((IUnknown*)pgraph2);
-    ok(refcount == 3, "unexpected reference count: %u\n", refcount);
-    refcount = getRefcount((IUnknown*)pMapper2);
-    ok(refcount == 3, "unexpected reference count: %u\n", refcount);
-    IFilterMapper2_Release(pMapper2);
-
-    hr = IFilterMapper2_QueryInterface(pMapper2, &IID_IFilterGraph, (LPVOID*)&filtergraph);
-    ok(hr == S_OK, "IFilterMapper2_QueryInterface failed with %08x\n", hr);
-    if (!filtergraph) goto out;
-
-    IFilterMapper2_Release(pMapper2);
-    pMapper2 = NULL;
-    IFilterGraph_Release(filtergraph);
-    filtergraph = NULL;
-
-    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&pMapper2);
-    ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-    if (!pMapper2) goto out;
-
-    hr = IFilterMapper2_QueryInterface(pMapper2, &IID_IFilterGraph, (LPVOID*)&filtergraph);
-    ok(hr == E_NOINTERFACE, "IFilterMapper2_QueryInterface unexpected result: %08x\n", hr);
-
-    out:
-
-    if (pMapper2) IFilterMapper2_Release(pMapper2);
-    if (filtergraph) IFilterGraph_Release(filtergraph);
-    if (pgraph2) IFilterGraph2_Release(pgraph2);
-}
-
 static void test_register_filter_with_null_clsMinorType(void)
 {
     static WCHAR wszPinName[] = L"Pin";
@@ -721,7 +664,6 @@ START_TEST(filtermapper)
     test_interfaces();
     test_fm2_enummatchingfilters();
     test_legacy_filter_registration();
-    test_ifiltermapper_from_filtergraph();
     test_register_filter_with_null_clsMinorType();
     test_parse_filter_data();
     test_aggregation();

@@ -2496,6 +2496,7 @@ static IUnknown test_outer = {&outer_vtbl};
 static void test_aggregation(void)
 {
     IFilterGraph2 *graph, *graph2;
+    IFilterMapper2 *mapper;
     IUnknown *unk, *unk2;
     HRESULT hr;
     ULONG ref;
@@ -2550,6 +2551,30 @@ static void test_aggregation(void)
     ref = IUnknown_Release(unk);
     ok(!ref, "Got unexpected refcount %d.\n", ref);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    /* Test the aggregated filter mapper. */
+
+    graph = create_graph();
+
+    ref = get_refcount(graph);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IFilterMapper2, (void **)&mapper);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = get_refcount(graph);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+    ref = get_refcount(mapper);
+    ok(ref == 2, "Got unexpected refcount %d.\n", ref);
+
+    hr = IFilterMapper2_QueryInterface(mapper, &IID_IFilterGraph2, (void **)&graph2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(graph2 == graph, "Got unexpected IFilterGraph2 %p.\n", graph2);
+    IFilterGraph2_Release(graph2);
+
+    IFilterMapper2_Release(mapper);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got unexpected refcount %d.\n", ref);
 }
 
 /* Test how methods from "control" interfaces (IBasicAudio, IBasicVideo,
