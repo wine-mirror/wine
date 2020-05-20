@@ -185,6 +185,39 @@ static VkCullModeFlags vk_cull_mode_from_wined3d(enum wined3d_cull mode)
     }
 }
 
+static VkPrimitiveTopology vk_topology_from_wined3d(enum wined3d_primitive_type t)
+{
+    switch (t)
+    {
+        case WINED3D_PT_POINTLIST:
+            return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case WINED3D_PT_LINELIST:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case WINED3D_PT_LINESTRIP:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case WINED3D_PT_TRIANGLELIST:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case WINED3D_PT_TRIANGLESTRIP:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case WINED3D_PT_TRIANGLEFAN:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+        case WINED3D_PT_LINELIST_ADJ:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY;
+        case WINED3D_PT_LINESTRIP_ADJ:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY;
+        case WINED3D_PT_TRIANGLELIST_ADJ:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY;
+        case WINED3D_PT_TRIANGLESTRIP_ADJ:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY;
+        case WINED3D_PT_PATCH:
+            return VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+        default:
+            FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(t));
+        case WINED3D_PT_UNDEFINED:
+            return ~0u;
+    }
+}
+
 void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
         struct wined3d_context_vk *context_vk)
 {
@@ -1462,7 +1495,6 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->input_desc.pVertexAttributeDescriptions = key->attributes;
 
     key->ia_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    key->ia_desc.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
     key->vp_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     key->vp_desc.viewportCount = 1;
@@ -1644,6 +1676,7 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
     struct wined3d_graphics_pipeline_key_vk *key;
     VkPipelineShaderStageCreateInfo *stage;
     struct wined3d_stream_info stream_info;
+    VkPrimitiveTopology vk_topology;
     VkShaderModule module;
     bool update = false;
     uint32_t mask;
@@ -1704,6 +1737,14 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
 
         key->input_desc.vertexBindingDescriptionCount = binding_count;
         key->input_desc.vertexAttributeDescriptionCount = attribute_count;
+
+        update = true;
+    }
+
+    vk_topology = vk_topology_from_wined3d(state->primitive_type);
+    if (key->ia_desc.topology != vk_topology)
+    {
+        key->ia_desc.topology = vk_topology;
 
         update = true;
     }
