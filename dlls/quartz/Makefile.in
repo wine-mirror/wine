@@ -8,7 +8,6 @@ C_SRCS = \
 	acmwrapper.c \
 	avidec.c \
 	dsoundrender.c \
-	enummoniker.c \
 	filesource.c \
 	filtergraph.c \
 	filtermapper.c \

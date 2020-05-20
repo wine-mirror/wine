@@ -200,6 +200,140 @@ static HRESULT enum_reg_filters_create(REGFILTER *filters, unsigned int count, I
     return S_OK;
 }
 
+struct enum_moniker
+{
+    IEnumMoniker IEnumMoniker_iface;
+    LONG refcount;
+
+    unsigned int index, count;
+    IMoniker **filters;
+};
+
+static struct enum_moniker *impl_from_IEnumMoniker(IEnumMoniker *iface)
+{
+    return CONTAINING_RECORD(iface, struct enum_moniker, IEnumMoniker_iface);
+}
+
+static HRESULT WINAPI enum_moniker_QueryInterface(IEnumMoniker *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IEnumMoniker))
+    {
+        IEnumMoniker_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enum_moniker_AddRef(IEnumMoniker *iface)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+    ULONG refcount = InterlockedIncrement(&enumerator->refcount);
+    TRACE("%p increasing refcount to %u.\n", enumerator, refcount);
+    return refcount;
+}
+
+static ULONG WINAPI enum_moniker_Release(IEnumMoniker *iface)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
+    unsigned int i;
+
+    TRACE("%p decreasing refcount to %u.\n", enumerator, refcount);
+    if (!refcount)
+    {
+        for (i = 0; i < enumerator->count; ++i)
+            IMoniker_Release(enumerator->filters[i]);
+        free(enumerator->filters);
+        free(enumerator);
+    }
+    return refcount;
+}
+
+static HRESULT WINAPI enum_moniker_Next(IEnumMoniker *iface, ULONG count,
+        IMoniker **filters, ULONG *ret_count)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+    unsigned int i;
+
+    TRACE("iface %p, count %u, filters %p, ret_count %p.\n", iface, count, filters, ret_count);
+
+    for (i = 0; i < count && enumerator->index + i < enumerator->count; ++i)
+        IMoniker_AddRef(filters[i] = enumerator->filters[enumerator->index + i]);
+
+    enumerator->index += i;
+    if (ret_count)
+        *ret_count = i;
+    return i ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI enum_moniker_Skip(IEnumMoniker *iface, ULONG count)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    enumerator->index += count;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_moniker_Reset(IEnumMoniker *iface)
+{
+    struct enum_moniker *enumerator = impl_from_IEnumMoniker(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    enumerator->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI enum_moniker_Clone(IEnumMoniker *iface, IEnumMoniker **out)
+{
+    TRACE("iface %p, out %p, unimplemented.\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static const IEnumMonikerVtbl enum_moniker_vtbl =
+{
+    enum_moniker_QueryInterface,
+    enum_moniker_AddRef,
+    enum_moniker_Release,
+    enum_moniker_Next,
+    enum_moniker_Skip,
+    enum_moniker_Reset,
+    enum_moniker_Clone,
+};
+
+static HRESULT enum_moniker_create(IMoniker **filters, unsigned int count, IEnumMoniker **out)
+{
+    struct enum_moniker *object;
+
+    *out = NULL;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (!(object->filters = malloc(count * sizeof(*object->filters))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(object->filters, filters, count * sizeof(*filters));
+
+    object->IEnumMoniker_iface.lpVtbl = &enum_moniker_vtbl;
+    object->refcount = 1;
+    object->count = count;
+
+    TRACE("Created enumerator %p.\n", object);
+    *out = &object->IEnumMoniker_iface;
+    return S_OK;
+}
+
 typedef struct FilterMapper3Impl
 {
     IUnknown IUnknown_inner;
@@ -1070,7 +1204,7 @@ static HRESULT WINAPI FilterMapper3_EnumMatchingFilters(
             /* no need to AddRef here as already AddRef'd above */
             ppMoniker[i] = ((struct MONIKER_MERIT *)monikers.pData)[i].pMoniker;
         }
-        hr = EnumMonikerImpl_Create(ppMoniker, nMonikerCount, ppEnum);
+        hr = enum_moniker_create(ppMoniker, nMonikerCount, ppEnum);
         CoTaskMemFree(ppMoniker);
     }
 

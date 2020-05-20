@@ -79,8 +79,6 @@ HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out) DECLSPEC_
 HRESULT vmr7_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vmr9_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
-HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum) DECLSPEC_HIDDEN;
-
 extern const char * qzdebugstr_guid(const GUID * id) DECLSPEC_HIDDEN;
 extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 
