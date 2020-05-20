@@ -715,6 +715,7 @@ SOURCES = \
 	wia_xp.idl \
 	wiadef.h \
 	wimgapi.h \
+	winapifamily.h \
 	winbase.h \
 	wincodec.idl \
 	wincodecsdk.idl \

@@ -23,6 +23,7 @@
 
 #include <basetsd.h>
 #include <guiddef.h>
+#include <winapifamily.h>
 
 #ifndef RC_INVOKED
 #include <ctype.h>
