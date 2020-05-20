@@ -623,19 +623,20 @@ static BOOL d2d_figure_add_vertex(struct d2d_figure *figure, D2D1_POINT_2F verte
     return TRUE;
 }
 
-static BOOL d2d_figure_insert_bezier_control(struct d2d_figure *figure, size_t idx, const D2D1_POINT_2F *p)
+static BOOL d2d_figure_insert_bezier_controls(struct d2d_figure *figure,
+        size_t idx, size_t count, const D2D1_POINT_2F *p)
 {
     if (!d2d_array_reserve((void **)&figure->bezier_controls, &figure->bezier_controls_size,
-            figure->bezier_control_count + 1, sizeof(*figure->bezier_controls)))
+            figure->bezier_control_count + count, sizeof(*figure->bezier_controls)))
     {
         ERR("Failed to grow bezier controls array.\n");
         return FALSE;
     }
 
-    memmove(&figure->bezier_controls[idx + 1], &figure->bezier_controls[idx],
+    memmove(&figure->bezier_controls[idx + count], &figure->bezier_controls[idx],
             (figure->bezier_control_count - idx) * sizeof(*figure->bezier_controls));
-    figure->bezier_controls[idx] = *p;
-    ++figure->bezier_control_count;
+    memcpy(&figure->bezier_controls[idx], p, count * sizeof(*figure->bezier_controls));
+    figure->bezier_control_count += count;
 
     return TRUE;
 }
@@ -1918,7 +1919,7 @@ static BOOL d2d_geometry_apply_intersections(struct d2d_geometry *geometry,
         d2d_point_lerp(&q[1], p[1], p[2], t);
 
         figure->bezier_controls[inter->control_idx + control_offset] = q[0];
-        if (!(d2d_figure_insert_bezier_control(figure, inter->control_idx + control_offset + 1, &q[1])))
+        if (!(d2d_figure_insert_bezier_controls(figure, inter->control_idx + control_offset + 1, 1, &q[1])))
             return FALSE;
         ++control_offset;
 
@@ -2824,7 +2825,7 @@ static BOOL d2d_geometry_split_bezier(struct d2d_geometry *geometry, const struc
     d2d_point_lerp(&q[2], &q[0], &q[1], 0.5f);
 
     figure->bezier_controls[idx->control_idx] = q[0];
-    if (!(d2d_figure_insert_bezier_control(figure, idx->control_idx + 1, &q[1])))
+    if (!(d2d_figure_insert_bezier_controls(figure, idx->control_idx + 1, 1, &q[1])))
         return FALSE;
     if (!(d2d_figure_insert_vertex(figure, idx->vertex_idx + 1, q[2])))
         return FALSE;
