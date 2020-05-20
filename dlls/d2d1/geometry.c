@@ -641,16 +641,17 @@ static BOOL d2d_figure_insert_bezier_controls(struct d2d_figure *figure,
     return TRUE;
 }
 
-static BOOL d2d_figure_add_bezier_control(struct d2d_figure *figure, const D2D1_POINT_2F *p)
+static BOOL d2d_figure_add_bezier_controls(struct d2d_figure *figure, size_t count, const D2D1_POINT_2F *p)
 {
     if (!d2d_array_reserve((void **)&figure->bezier_controls, &figure->bezier_controls_size,
-            figure->bezier_control_count + 1, sizeof(*figure->bezier_controls)))
+            figure->bezier_control_count + count, sizeof(*figure->bezier_controls)))
     {
         ERR("Failed to grow bezier controls array.\n");
         return FALSE;
     }
 
-    figure->bezier_controls[figure->bezier_control_count++] = *p;
+    memcpy(&figure->bezier_controls[figure->bezier_control_count], p, count * sizeof(*figure->bezier_controls));
+    figure->bezier_control_count += count;
 
     return TRUE;
 }
@@ -2597,7 +2598,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
         d2d_rect_get_bezier_bounds(&bezier_bounds, &figure->vertices[figure->vertex_count - 1],
                 &p, &beziers[i].point3);
 
-        if (!d2d_figure_add_bezier_control(figure, &p))
+        if (!d2d_figure_add_bezier_controls(figure, 1, &p))
         {
             ERR("Failed to add bezier control.\n");
             geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
@@ -3013,7 +3014,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
                 &beziers[i].point1, &beziers[i].point2);
 
         figure->vertex_types[figure->vertex_count - 1] = D2D_VERTEX_TYPE_BEZIER;
-        if (!d2d_figure_add_bezier_control(figure, &beziers[i].point1))
+        if (!d2d_figure_add_bezier_controls(figure, 1, &beziers[i].point1))
         {
             ERR("Failed to add bezier.\n");
             geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
