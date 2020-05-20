@@ -2155,6 +2155,7 @@ static void test_immediate_context(void)
     ID3D11Multithread *multithread;
     ID3D11Buffer *buffer[2];
     ID3D11Device *device;
+    unsigned int flags;
     BOOL enabled;
     HRESULT hr;
 
@@ -2214,6 +2215,9 @@ static void test_immediate_context(void)
     ID3D11Multithread_Release(multithread);
 
     ID3D11Device_GetImmediateContext(device, &immediate_context);
+
+    flags = ID3D11DeviceContext_GetContextFlags(immediate_context);
+    ok(!flags, "Got unexpected flags %#x.\n", flags);
 
     hr = ID3D11DeviceContext_FinishCommandList(immediate_context, FALSE, &command_list);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
