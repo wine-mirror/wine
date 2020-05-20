@@ -53,6 +53,7 @@
 @ cdecl wined3d_device_draw_primitive_instanced_indirect(ptr ptr long)
 @ cdecl wined3d_device_end_scene(ptr)
 @ cdecl wined3d_device_evict_managed_resources(ptr)
+@ cdecl wined3d_device_flush(ptr)
 @ cdecl wined3d_device_get_available_texture_mem(ptr)
 @ cdecl wined3d_device_get_blend_state(ptr ptr)
 @ cdecl wined3d_device_get_clip_status(ptr ptr)

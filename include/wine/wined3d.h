@@ -2334,6 +2334,7 @@ void __cdecl wined3d_device_draw_primitive_instanced_indirect(struct wined3d_dev
         struct wined3d_buffer *buffer, unsigned int offset);
 HRESULT __cdecl wined3d_device_end_scene(struct wined3d_device *device);
 void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);
+void __cdecl wined3d_device_flush(struct wined3d_device *device);
 UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_device *device);
 struct wined3d_blend_state * __cdecl wined3d_device_get_blend_state(const struct wined3d_device *device,
         struct wined3d_color *blend_factor);
