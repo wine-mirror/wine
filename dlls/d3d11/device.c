@@ -5252,7 +5252,13 @@ static void STDMETHODCALLTYPE d3d10_device_ClearState(ID3D10Device1 *iface)
 
 static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    wined3d_device_flush(device->wined3d_device);
+    wined3d_mutex_unlock();
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
