@@ -3489,7 +3489,7 @@ struct wined3d_state
     int base_vertex_index;
     int load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
     enum wined3d_primitive_type primitive_type;
-    GLint gl_patch_vertices;
+    unsigned int patch_vertex_count;
     struct wined3d_query *predicate;
     BOOL predicate_value;
 

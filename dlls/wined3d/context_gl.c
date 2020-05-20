@@ -4602,7 +4602,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
 
     if (state->primitive_type == WINED3D_PT_PATCH)
     {
-        GL_EXTCALL(glPatchParameteri(GL_PATCH_VERTICES, state->gl_patch_vertices));
+        GL_EXTCALL(glPatchParameteri(GL_PATCH_VERTICES, state->patch_vertex_count));
         checkGLcall("glPatchParameteri");
     }
 

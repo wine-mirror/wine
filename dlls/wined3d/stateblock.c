@@ -1819,7 +1819,7 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
 
     get_identity_matrix(&identity);
     state->primitive_type = WINED3D_PT_UNDEFINED;
-    state->gl_patch_vertices = 0;
+    state->patch_vertex_count = 0;
 
     /* Set some of the defaults for lights, transforms etc */
     state->transforms[WINED3D_TS_PROJECTION] = identity;

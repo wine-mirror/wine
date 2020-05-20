@@ -889,7 +889,7 @@ static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
             device_invalidate_state(cs->device, STATE_POINT_ENABLE);
         state->primitive_type = op->primitive_type;
     }
-    state->gl_patch_vertices = op->patch_vertex_count;
+    state->patch_vertex_count = op->patch_vertex_count;
 
     cs->device->adapter->adapter_ops->adapter_draw_primitive(cs->device, state, &op->parameters);
 
