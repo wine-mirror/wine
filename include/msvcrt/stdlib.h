@@ -175,7 +175,6 @@ int           __cdecl _set_error_mode(int);
 void          __cdecl _seterrormode(int);
 void          __cdecl _sleep(__msvcrt_ulong);
 void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
-long double   __cdecl _strtold(const char*,char**);
 void          __cdecl _swab(char*,char*,int);
 char*         __cdecl _ui64toa(unsigned __int64,char*,int);
 errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
