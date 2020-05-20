@@ -1092,8 +1092,6 @@ then
         WINE_TRY_CROSSCFLAGS([-Wwrite-strings])
         WINE_TRY_CROSSCFLAGS([-Wpointer-arith])
         WINE_TRY_CROSSCFLAGS([-Wlogical-op])
-        WINE_TRY_CROSSCFLAGS([-Wincompatible-library-redeclaration],
-                             [EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-incompatible-library-redeclaration"])
 
         case $host_cpu in
           *i[[3456789]]86*) WINE_TRY_CROSSCFLAGS([-fno-omit-frame-pointer]) ;;

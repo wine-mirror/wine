@@ -10417,37 +10417,6 @@ $as_echo "$ac_cv_crosscflags__Wlogical_op" >&6; }
 if test "x$ac_cv_crosscflags__Wlogical_op" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wlogical-op"
 fi
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wincompatible-library-redeclaration" >&5
-$as_echo_n "checking whether the cross-compiler supports -Wincompatible-library-redeclaration... " >&6; }
-if ${ac_cv_crosscflags__Wincompatible_library_redeclaration+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_cc=$CC
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wincompatible-library-redeclaration"
-CC="$CROSSCC"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_crosscflags__Wincompatible_library_redeclaration=yes
-else
-  ac_cv_crosscflags__Wincompatible_library_redeclaration=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-CC=$ac_wine_try_cflags_saved_cc
-ac_exeext=$ac_wine_try_cflags_saved_exeext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wincompatible_library_redeclaration" >&5
-$as_echo "$ac_cv_crosscflags__Wincompatible_library_redeclaration" >&6; }
-if test "x$ac_cv_crosscflags__Wincompatible_library_redeclaration" = xyes; then :
-  EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Wno-incompatible-library-redeclaration"
-fi
 
         case $host_cpu in
           *i[3456789]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-omit-frame-pointer" >&5
