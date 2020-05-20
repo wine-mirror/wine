@@ -414,6 +414,11 @@ static BOOL d2d_vertex_type_is_bezier(enum d2d_vertex_type t)
     return (t == D2D_VERTEX_TYPE_BEZIER || t == D2D_VERTEX_TYPE_SPLIT_BEZIER);
 }
 
+static BOOL d2d_vertex_type_is_split_bezier(enum d2d_vertex_type t)
+{
+    return t == D2D_VERTEX_TYPE_SPLIT_BEZIER;
+}
+
 /* This implementation is based on the paper "Adaptive Precision
  * Floating-Point Arithmetic and Fast Robust Geometric Predicates" and
  * associated (Public Domain) code by Jonathan Richard Shewchuk. */
@@ -3202,7 +3207,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
         for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
         {
             if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
-                    || figure->vertex_types[j] == D2D_VERTEX_TYPE_SPLIT_BEZIER)
+                    || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
                 continue;
 
             switch (type)
@@ -3405,7 +3410,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
         for (bezier_idx = 0, ++j; j < figure->vertex_count; ++j)
         {
             if (figure->vertex_types[j] == D2D_VERTEX_TYPE_NONE
-                    || figure->vertex_types[j] == D2D_VERTEX_TYPE_SPLIT_BEZIER)
+                    || d2d_vertex_type_is_split_bezier(figure->vertex_types[j]))
                 continue;
 
             switch (type)
