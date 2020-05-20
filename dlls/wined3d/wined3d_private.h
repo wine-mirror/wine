@@ -5949,6 +5949,16 @@ static inline VkImageAspectFlags vk_aspect_mask_from_format(const struct wined3d
     return mask;
 }
 
+static inline bool wined3d_primitive_type_is_list(enum wined3d_primitive_type t)
+{
+    return t == WINED3D_PT_POINTLIST
+            || t == WINED3D_PT_LINELIST
+            || t == WINED3D_PT_TRIANGLELIST
+            || t == WINED3D_PT_LINELIST_ADJ
+            || t == WINED3D_PT_TRIANGLELIST_ADJ
+            || t == WINED3D_PT_PATCH;
+}
+
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 

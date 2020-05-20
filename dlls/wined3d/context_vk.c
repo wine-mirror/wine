@@ -1745,6 +1745,8 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
     if (key->ia_desc.topology != vk_topology)
     {
         key->ia_desc.topology = vk_topology;
+        key->ia_desc.primitiveRestartEnable = !(d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART)
+                && !wined3d_primitive_type_is_list(state->primitive_type);
 
         update = true;
     }
