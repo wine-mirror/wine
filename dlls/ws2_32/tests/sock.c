@@ -3454,7 +3454,7 @@ static void test_WSAStringToAddress(void)
     };
 
     WCHAR inputW[64];
-    INT len, ret, expected_ret;
+    INT len, ret, expected_len, expected_ret;
     short expected_family;
     SOCKADDR_IN sockaddr;
     SOCKADDR_IN6 sockaddr6;
@@ -3465,13 +3465,16 @@ static void test_WSAStringToAddress(void)
     ret = WSAStringToAddressA( ipv4_tests[0].input, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
     ok( ret == SOCKET_ERROR, "WSAStringToAddressA() returned %d, expected SOCKET_ERROR\n", ret );
     ok( WSAGetLastError() == WSAEFAULT, "WSAStringToAddress() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
+    ok( len >= sizeof(sockaddr) || broken(len == 0) /* xp */,
+        "WSAStringToAddress() gave length %d, expected at least %d\n", len, sizeof(sockaddr) );
 
     for (i = 0; i < 2; i++)
     {
         for (j = 0; j < ARRAY_SIZE(ipv4_tests); j++)
         {
-            len = sizeof(sockaddr);
-            memset( &sockaddr, 0xab, len );
+            len = sizeof(sockaddr) + 10;
+            expected_len = ipv4_tests[j].error ? len : sizeof(sockaddr);
+            memset( &sockaddr, 0xab, sizeof(sockaddr) );
 
             WSASetLastError( 0 );
             if (i == 0)
@@ -3500,12 +3503,16 @@ static void test_WSAStringToAddress(void)
             ok( sockaddr.sin_port == ipv4_tests[j].port,
                 "WSAStringToAddress(%s) gave port %04x, expected %04x\n",
                 wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_port, ipv4_tests[j].port );
+            ok( len == expected_len,
+                "WSAStringToAddress(%s) gave length %d, expected %d\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), len, expected_len );
         }
 
         for (j = 0; j < ARRAY_SIZE(ipv6_tests); j++)
         {
-            len = sizeof(sockaddr6);
-            memset( &sockaddr6, 0xab, len );
+            len = sizeof(sockaddr6) + 10;
+            expected_len = ipv6_tests[j].error ? len : sizeof(sockaddr6);
+            memset( &sockaddr6, 0xab, sizeof(sockaddr6) );
 
             WSASetLastError( 0 );
             if (i == 0)
@@ -3553,6 +3560,9 @@ static void test_WSAStringToAddress(void)
             ok( sockaddr6.sin6_flowinfo == 0,
                 "WSAStringToAddress(%s) gave flowinfo %d, expected 0\n",
                 wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_flowinfo );
+            ok( len == expected_len,
+                "WSAStringToAddress(%s) gave length %d, expected %d\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), len, expected_len );
         }
     }
 }

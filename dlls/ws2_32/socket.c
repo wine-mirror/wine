@@ -8514,7 +8514,6 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEFAULT;
             break;
         }
-        *lpAddressLength = sizeof(SOCKADDR_IN);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN));
 
         status = RtlIpv4StringToAddressExA(AddressString, FALSE, &addr4->sin_addr, &addr4->sin_port);
@@ -8524,6 +8523,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             break;
         }
         addr4->sin_family = WS_AF_INET;
+        *lpAddressLength = sizeof(SOCKADDR_IN);
         break;
     }
     case WS_AF_INET6:
@@ -8537,7 +8537,6 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             res = WSAEFAULT;
             break;
         }
-        *lpAddressLength = sizeof(SOCKADDR_IN6);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN6));
 
         status = RtlIpv6StringToAddressExA(AddressString, &addr6->sin6_addr, &addr6->sin6_scope_id, &addr6->sin6_port);
@@ -8547,6 +8546,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
             break;
         }
         addr6->sin6_family = WS_AF_INET6;
+        *lpAddressLength = sizeof(SOCKADDR_IN6);
         break;
     }
     default:
