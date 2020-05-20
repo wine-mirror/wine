@@ -1427,6 +1427,9 @@ static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wi
     if (a->ia_desc.primitiveRestartEnable != b->ia_desc.primitiveRestartEnable)
         return a->ia_desc.primitiveRestartEnable - b->ia_desc.primitiveRestartEnable;
 
+    if (a->ts_desc.patchControlPoints != b->ts_desc.patchControlPoints)
+        return a->ts_desc.patchControlPoints - b->ts_desc.patchControlPoints;
+
     if ((ret = memcmp(&a->viewport, &b->viewport, sizeof(a->viewport))))
         return ret;
 
@@ -1496,6 +1499,8 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
 
     key->ia_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 
+    key->ts_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+
     key->vp_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     key->vp_desc.viewportCount = 1;
     key->vp_desc.pViewports = &key->viewport;
@@ -1526,6 +1531,7 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->pipeline_desc.pStages = key->stages;
     key->pipeline_desc.pVertexInputState = &key->input_desc;
     key->pipeline_desc.pInputAssemblyState = &key->ia_desc;
+    key->pipeline_desc.pTessellationState = &key->ts_desc;
     key->pipeline_desc.pViewportState = &key->vp_desc;
     key->pipeline_desc.pRasterizationState = &key->rs_desc;
     key->pipeline_desc.pMultisampleState = &key->ms_desc;
@@ -1747,6 +1753,13 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         key->ia_desc.topology = vk_topology;
         key->ia_desc.primitiveRestartEnable = !(d3d_info->wined3d_creation_flags & WINED3D_NO_PRIMITIVE_RESTART)
                 && !wined3d_primitive_type_is_list(state->primitive_type);
+
+        update = true;
+    }
+
+    if (key->ts_desc.patchControlPoints != state->patch_vertex_count)
+    {
+        key->ts_desc.patchControlPoints = state->patch_vertex_count;
 
         update = true;
     }

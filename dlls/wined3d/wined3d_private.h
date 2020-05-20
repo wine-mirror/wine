@@ -2331,6 +2331,7 @@ struct wined3d_graphics_pipeline_key_vk
 
     VkPipelineVertexInputStateCreateInfo input_desc;
     VkPipelineInputAssemblyStateCreateInfo ia_desc;
+    VkPipelineTessellationStateCreateInfo ts_desc;
     VkPipelineViewportStateCreateInfo vp_desc;
     VkPipelineRasterizationStateCreateInfo rs_desc;
     VkPipelineMultisampleStateCreateInfo ms_desc;
