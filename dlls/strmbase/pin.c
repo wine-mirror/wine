@@ -516,17 +516,20 @@ static HRESULT WINAPI source_Connect(IPin *iface, IPin *peer, const AM_MEDIA_TYP
         return hr;
     }
 
-    for (i = 0; pin->pFuncsTable->base.pin_get_media_type(&pin->pin, i, &candidate) == S_OK; ++i)
+    if (pin->pFuncsTable->base.pin_get_media_type)
     {
-        strmbase_dump_media_type(&candidate);
-        if (compare_media_types(mt, &candidate)
-                && pin->pFuncsTable->pfnAttemptConnection(pin, peer, &candidate) == S_OK)
+        for (i = 0; pin->pFuncsTable->base.pin_get_media_type(&pin->pin, i, &candidate) == S_OK; ++i)
         {
-            LeaveCriticalSection(&pin->pin.filter->csFilter);
+            strmbase_dump_media_type(&candidate);
+            if (compare_media_types(mt, &candidate)
+                    && pin->pFuncsTable->pfnAttemptConnection(pin, peer, &candidate) == S_OK)
+            {
+                LeaveCriticalSection(&pin->pin.filter->csFilter);
+                FreeMediaType(&candidate);
+                return S_OK;
+            }
             FreeMediaType(&candidate);
-            return S_OK;
         }
-        FreeMediaType(&candidate);
     }
 
     if (SUCCEEDED(IPin_EnumMediaTypes(peer, &enummt)))
