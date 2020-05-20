@@ -211,7 +211,6 @@ void*         __cdecl realloc(void*,size_t);
 void          __cdecl srand(unsigned int);
 float         __cdecl strtof(const char*,char**);
 double        __cdecl strtod(const char*,char**);
-double        __cdecl strtold(const char*,char**);
 __msvcrt_long __cdecl strtol(const char*,char**,int);
 __msvcrt_ulong __cdecl strtoul(const char*,char**,int);
 __int64       __cdecl strtoll_l(const char*,char**,int,_locale_t);
@@ -231,6 +230,11 @@ _ACRTIMP _invalid_parameter_handler __cdecl _get_thread_local_invalid_parameter_
 _ACRTIMP _invalid_parameter_handler __cdecl _set_thread_local_invalid_parameter_handler(_invalid_parameter_handler);
 void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const wchar_t *file,
                                 unsigned int line, uintptr_t arg);
+
+#ifdef _UCRT
+_ACRTIMP double __cdecl _strtold_l(const char*,char**,_locale_t);
+static inline long double strtold(const char *string, char **endptr) { return _strtold_l(string, endptr, NULL); }
+#endif /* _UCRT */
 
 #ifdef __cplusplus
 }
