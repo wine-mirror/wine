@@ -27,6 +27,8 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
+#include <langinfo.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
@@ -67,6 +69,8 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winnt.h"
+#include "winbase.h"
+#include "winnls.h"
 #include "winternl.h"
 #include "unix_private.h"
 #include "wine/library.h"
@@ -104,6 +108,8 @@ static const char *build_dir;
 static const char *config_dir;
 static const char **dll_paths;
 static SIZE_T dll_path_maxlen;
+
+static CPTABLEINFO unix_table;
 
 static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
 {
@@ -290,6 +296,135 @@ static void init_paths( int argc, char *argv[], char *envp[] )
     set_config_dir();
 }
 
+#if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
+
+/* charset to codepage map, sorted by name */
+static const struct { const char *name; UINT cp; } charset_names[] =
+{
+    { "ANSIX341968", 20127 },
+    { "BIG5", 950 },
+    { "BIG5HKSCS", 950 },
+    { "CP1250", 1250 },
+    { "CP1251", 1251 },
+    { "CP1252", 1252 },
+    { "CP1253", 1253 },
+    { "CP1254", 1254 },
+    { "CP1255", 1255 },
+    { "CP1256", 1256 },
+    { "CP1257", 1257 },
+    { "CP1258", 1258 },
+    { "CP932", 932 },
+    { "CP936", 936 },
+    { "CP949", 949 },
+    { "CP950", 950 },
+    { "EUCJP", 20932 },
+    { "EUCKR", 949 },
+    { "GB18030", 936  /* 54936 */ },
+    { "GB2312", 936 },
+    { "GBK", 936 },
+    { "IBM037", 37 },
+    { "IBM1026", 1026 },
+    { "IBM424", 20424 },
+    { "IBM437", 437 },
+    { "IBM500", 500 },
+    { "IBM850", 850 },
+    { "IBM852", 852 },
+    { "IBM855", 855 },
+    { "IBM857", 857 },
+    { "IBM860", 860 },
+    { "IBM861", 861 },
+    { "IBM862", 862 },
+    { "IBM863", 863 },
+    { "IBM864", 864 },
+    { "IBM865", 865 },
+    { "IBM866", 866 },
+    { "IBM869", 869 },
+    { "IBM874", 874 },
+    { "IBM875", 875 },
+    { "ISO88591", 28591 },
+    { "ISO885913", 28603 },
+    { "ISO885915", 28605 },
+    { "ISO88592", 28592 },
+    { "ISO88593", 28593 },
+    { "ISO88594", 28594 },
+    { "ISO88595", 28595 },
+    { "ISO88596", 28596 },
+    { "ISO88597", 28597 },
+    { "ISO88598", 28598 },
+    { "ISO88599", 28599 },
+    { "KOI8R", 20866 },
+    { "KOI8U", 21866 },
+    { "TIS620", 28601 },
+    { "UTF8", CP_UTF8 }
+};
+
+static void load_unix_cptable( unsigned int cp )
+{
+    const char *dir = build_dir ? build_dir : data_dir;
+    struct stat st;
+    char *name;
+    void *data;
+    int fd;
+
+    if (!(name = malloc( strlen(dir) + 22 ))) return;
+    sprintf( name, "%s/nls/c_%03u.nls", dir, cp );
+    if ((fd = open( name, O_RDONLY )) != -1)
+    {
+        fstat( fd, &st );
+        if ((data = malloc( st.st_size )) && st.st_size > 0x10000 &&
+            read( fd, data, st.st_size ) == st.st_size)
+        {
+            RtlInitCodePageTable( data, &unix_table );
+        }
+        else
+        {
+            free( data );
+        }
+        close( fd );
+    }
+    else ERR( "failed to load %s\n", name );
+    free( name );
+}
+
+static void init_unix_codepage(void)
+{
+    char charset_name[16];
+    const char *name;
+    size_t i, j;
+    int min = 0, max = ARRAY_SIZE(charset_names) - 1;
+
+    setlocale( LC_CTYPE, "" );
+    if (!(name = nl_langinfo( CODESET ))) return;
+
+    /* remove punctuation characters from charset name */
+    for (i = j = 0; name[i] && j < sizeof(charset_name)-1; i++)
+    {
+        if (name[i] >= '0' && name[i] <= '9') charset_name[j++] = name[i];
+        else if (name[i] >= 'A' && name[i] <= 'Z') charset_name[j++] = name[i];
+        else if (name[i] >= 'a' && name[i] <= 'z') charset_name[j++] = name[i] + ('A' - 'a');
+    }
+    charset_name[j] = 0;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        int res = strcmp( charset_names[pos].name, charset_name );
+        if (!res)
+        {
+            if (charset_names[pos].cp != CP_UTF8) load_unix_cptable( charset_names[pos].cp );
+            return;
+        }
+        if (res > 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    ERR( "unrecognized charset '%s'\n", name );
+}
+
+#else  /* __APPLE__ || __ANDROID__ */
+
+static void init_unix_codepage(void) { }
+
+#endif  /* __APPLE__ || __ANDROID__ */
 
 
 /*********************************************************************
@@ -369,6 +504,17 @@ static void CDECL get_dll_path( const char ***paths, SIZE_T *maxlen )
 {
     *paths = dll_paths;
     *maxlen = dll_path_maxlen;
+}
+
+
+/*************************************************************************
+ *		get_unix_codepage
+ *
+ * Return the Unix codepage data.
+ */
+static void CDECL get_unix_codepage( CPTABLEINFO *table )
+{
+    *table = unix_table;
 }
 
 
@@ -836,6 +982,7 @@ static struct unix_funcs unix_funcs =
     get_main_args,
     get_paths,
     get_dll_path,
+    get_unix_codepage,
     get_version,
     get_build_id,
     get_host_version,
@@ -1112,6 +1259,9 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 
     module = load_ntdll();
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
+
+    init_unix_codepage();
+
 #ifdef __APPLE__
     apple_main_thread();
 #endif
@@ -1144,6 +1294,7 @@ NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void 
 
     map_so_dll( nt, module );
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
+    init_unix_codepage();
     *(struct unix_funcs **)ptr_out = &unix_funcs;
     wine_mmap_enum_reserved_areas( add_area, NULL, 0 );
     return STATUS_SUCCESS;

@@ -23,7 +23,6 @@
 #include "wine/port.h"
 
 #include <locale.h>
-#include <langinfo.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -693,132 +692,10 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 }
 
 
-#if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
-
-/* charset to codepage map, sorted by name */
-static const struct { const char *name; UINT cp; } charset_names[] =
-{
-    { "ANSIX341968", 20127 },
-    { "BIG5", 950 },
-    { "BIG5HKSCS", 950 },
-    { "CP1250", 1250 },
-    { "CP1251", 1251 },
-    { "CP1252", 1252 },
-    { "CP1253", 1253 },
-    { "CP1254", 1254 },
-    { "CP1255", 1255 },
-    { "CP1256", 1256 },
-    { "CP1257", 1257 },
-    { "CP1258", 1258 },
-    { "CP932", 932 },
-    { "CP936", 936 },
-    { "CP949", 949 },
-    { "CP950", 950 },
-    { "EUCJP", 20932 },
-    { "EUCKR", 949 },
-    { "GB18030", 936  /* 54936 */ },
-    { "GB2312", 936 },
-    { "GBK", 936 },
-    { "IBM037", 37 },
-    { "IBM1026", 1026 },
-    { "IBM424", 20424 },
-    { "IBM437", 437 },
-    { "IBM500", 500 },
-    { "IBM850", 850 },
-    { "IBM852", 852 },
-    { "IBM855", 855 },
-    { "IBM857", 857 },
-    { "IBM860", 860 },
-    { "IBM861", 861 },
-    { "IBM862", 862 },
-    { "IBM863", 863 },
-    { "IBM864", 864 },
-    { "IBM865", 865 },
-    { "IBM866", 866 },
-    { "IBM869", 869 },
-    { "IBM874", 874 },
-    { "IBM875", 875 },
-    { "ISO88591", 28591 },
-    { "ISO885913", 28603 },
-    { "ISO885915", 28605 },
-    { "ISO88592", 28592 },
-    { "ISO88593", 28593 },
-    { "ISO88594", 28594 },
-    { "ISO88595", 28595 },
-    { "ISO88596", 28596 },
-    { "ISO88597", 28597 },
-    { "ISO88598", 28598 },
-    { "ISO88599", 28599 },
-    { "KOI8R", 20866 },
-    { "KOI8U", 21866 },
-    { "TIS620", 28601 },
-    { "UTF8", CP_UTF8 }
-};
-
-static void load_unix_cptable( unsigned int cp )
-{
-    const char *dir = build_dir ? build_dir : data_dir;
-    struct stat st;
-    char *name;
-    USHORT *data;
-    int fd;
-
-    if (!(name = RtlAllocateHeap( GetProcessHeap(), 0, strlen(dir) + 22 ))) return;
-    sprintf( name, "%s/nls/c_%03u.nls", dir, cp );
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        fstat( fd, &st );
-        if ((data = RtlAllocateHeap( GetProcessHeap(), 0, st.st_size )) &&
-            st.st_size > 0x10000 &&
-            read( fd, data, st.st_size ) == st.st_size)
-        {
-            RtlInitCodePageTable( data, &unix_table );
-        }
-        else
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, data );
-        }
-        close( fd );
-    }
-    else ERR( "failed to load %s\n", debugstr_a(name) );
-    RtlFreeHeap( GetProcessHeap(), 0, name );
-}
-
 void init_unix_codepage(void)
 {
-    char charset_name[16];
-    const char *name;
-    size_t i, j;
-    int min = 0, max = ARRAY_SIZE(charset_names) - 1;
-
-    setlocale( LC_CTYPE, "" );
-    if (!(name = nl_langinfo( CODESET ))) return;
-
-    /* remove punctuation characters from charset name */
-    for (i = j = 0; name[i] && j < sizeof(charset_name)-1; i++)
-        if (isalnum((unsigned char)name[i])) charset_name[j++] = name[i];
-    charset_name[j] = 0;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        int res = _strnicmp( charset_names[pos].name, charset_name, -1 );
-        if (!res)
-        {
-            if (charset_names[pos].cp != CP_UTF8) load_unix_cptable( charset_names[pos].cp );
-            return;
-        }
-        if (res > 0) max = pos - 1;
-        else min = pos + 1;
-    }
-    ERR( "unrecognized charset '%s'\n", name );
+    unix_funcs->get_unix_codepage( &unix_table );
 }
-
-#else  /* __APPLE__ || __ANDROID__ */
-
-void init_unix_codepage(void) { }
-
-#endif  /* __APPLE__ || __ANDROID__ */
 
 /* Unix format is: lang[_country][.charset][@modifier]
  * Windows format is: lang[-script][-country][_modifier] */
