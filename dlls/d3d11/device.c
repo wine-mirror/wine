@@ -2396,7 +2396,13 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearState(ID3D11DeviceCon
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_Flush(ID3D11DeviceContext1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+    wined3d_device_flush(device->wined3d_device);
+    wined3d_mutex_unlock();
 }
 
 static D3D11_DEVICE_CONTEXT_TYPE STDMETHODCALLTYPE d3d11_immediate_context_GetType(ID3D11DeviceContext1 *iface)
