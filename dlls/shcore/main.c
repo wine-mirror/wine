@@ -245,7 +245,7 @@ HRESULT WINAPI IUnknown_SetSite(IUnknown *obj, IUnknown *site)
 HRESULT WINAPI SetCurrentProcessExplicitAppUserModelID(const WCHAR *appid)
 {
     FIXME("%s: stub\n", debugstr_w(appid));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 HRESULT WINAPI GetCurrentProcessExplicitAppUserModelID(const WCHAR **appid)
