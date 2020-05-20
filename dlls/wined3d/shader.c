@@ -3541,7 +3541,7 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
-    args->point_size = state->gl_primitive_type == GL_POINTS;
+    args->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
     args->per_vertex_point_size = shader->reg_maps.point_size;
     args->next_shader_type = hull_shader ? WINED3D_SHADER_TYPE_HULL
             : geometry_shader ? WINED3D_SHADER_TYPE_GEOMETRY : WINED3D_SHADER_TYPE_PIXEL;
@@ -3899,7 +3899,7 @@ void find_gs_compile_args(const struct wined3d_state *state, const struct wined3
     args->output_count = pixel_shader ? pixel_shader->limits->packed_input : shader->limits->packed_output;
 
     if (!(args->primitive_type = shader->u.gs.input_type))
-        args->primitive_type = d3d_primitive_type_from_gl(state->gl_primitive_type);
+        args->primitive_type = state->primitive_type;
 
     init_interpolation_compile_args(args->interpolation_mode, pixel_shader, context->d3d_info);
 }
@@ -4155,7 +4155,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     }
 
     args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
-            && state->gl_primitive_type == GL_POINTS;
+            && state->primitive_type == WINED3D_PT_POINTLIST;
 
     if (d3d_info->ffp_alpha_test)
         args->alpha_test_func = WINED3D_CMP_ALWAYS - 1;

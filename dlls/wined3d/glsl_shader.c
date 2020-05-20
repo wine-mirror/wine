@@ -10348,7 +10348,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
         if (vshader->reg_maps.shader_version.major < 4)
         {
             reorder_shader_id = shader_glsl_generate_vs3_rasterizer_input_setup(priv, vshader, pshader,
-                    state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size,
+                    state->primitive_type == WINED3D_PT_POINTLIST && vshader->reg_maps.point_size,
                     d3d_info->emulated_flatshading
                     && state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT, gl_info);
             TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
@@ -11809,7 +11809,8 @@ static void glsl_vertex_pointsprite_core(struct wined3d_context *context,
 {
     static unsigned int once;
 
-    if (state->gl_primitive_type == GL_POINTS && !state->render_states[WINED3D_RS_POINTSPRITEENABLE] && !once++)
+    if (state->primitive_type == WINED3D_PT_POINTLIST
+            && !state->render_states[WINED3D_RS_POINTSPRITEENABLE] && !once++)
         FIXME("Non-point sprite points not supported in core profile.\n");
 }
 

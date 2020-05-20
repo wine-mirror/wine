@@ -1818,7 +1818,7 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
     TRACE("state %p, d3d_info %p.\n", state, d3d_info);
 
     get_identity_matrix(&identity);
-    state->gl_primitive_type = ~0u;
+    state->primitive_type = WINED3D_PT_UNDEFINED;
     state->gl_patch_vertices = 0;
 
     /* Set some of the defaults for lights, transforms etc */

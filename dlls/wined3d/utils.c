@@ -6334,7 +6334,7 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
     }
 
     settings->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
-            && state->gl_primitive_type == GL_POINTS;
+            && state->primitive_type == WINED3D_PT_POINTLIST;
 
     if (d3d_info->ffp_alpha_test)
         settings->alpha_test_func = WINED3D_CMP_ALWAYS - 1;
@@ -6498,7 +6498,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     if (si->position_transformed)
     {
         settings->transformed = 1;
-        settings->point_size = state->gl_primitive_type == GL_POINTS;
+        settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
         settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
@@ -6546,7 +6546,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
     settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];
     settings->lighting = !!state->render_states[WINED3D_RS_LIGHTING];
     settings->localviewer = !!state->render_states[WINED3D_RS_LOCALVIEWER];
-    settings->point_size = state->gl_primitive_type == GL_POINTS;
+    settings->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
     settings->per_vertex_point_size = !!(si->use_map & 1u << WINED3D_FFP_PSIZE);
 
     wined3d_get_material_colour_source(&diffuse_source, &emissive_source,

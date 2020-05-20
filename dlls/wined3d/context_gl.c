@@ -38,6 +38,52 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_synchronous);
 
 static DWORD wined3d_context_tls_idx;
 
+/* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
+ * actually have the same values in GL and D3D. */
+static GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
+{
+    switch (primitive_type)
+    {
+        case WINED3D_PT_POINTLIST:
+            return GL_POINTS;
+
+        case WINED3D_PT_LINELIST:
+            return GL_LINES;
+
+        case WINED3D_PT_LINESTRIP:
+            return GL_LINE_STRIP;
+
+        case WINED3D_PT_TRIANGLELIST:
+            return GL_TRIANGLES;
+
+        case WINED3D_PT_TRIANGLESTRIP:
+            return GL_TRIANGLE_STRIP;
+
+        case WINED3D_PT_TRIANGLEFAN:
+            return GL_TRIANGLE_FAN;
+
+        case WINED3D_PT_LINELIST_ADJ:
+            return GL_LINES_ADJACENCY_ARB;
+
+        case WINED3D_PT_LINESTRIP_ADJ:
+            return GL_LINE_STRIP_ADJACENCY_ARB;
+
+        case WINED3D_PT_TRIANGLELIST_ADJ:
+            return GL_TRIANGLES_ADJACENCY_ARB;
+
+        case WINED3D_PT_TRIANGLESTRIP_ADJ:
+            return GL_TRIANGLE_STRIP_ADJACENCY_ARB;
+
+        case WINED3D_PT_PATCH:
+            return GL_PATCHES;
+
+        default:
+            FIXME("Unhandled primitive type %s.\n", debug_d3dprimitivetype(primitive_type));
+        case WINED3D_PT_UNDEFINED:
+            return ~0u;
+    }
+}
+
 /* FBO helper functions */
 
 /* Context activation is done by the caller. */
@@ -3931,10 +3977,10 @@ static void wined3d_context_gl_draw_primitive_arrays(struct wined3d_context_gl *
     const struct wined3d_ffp_attrib_ops *ops = &context_gl->c.d3d_info->ffp_attrib_ops;
     GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
     const struct wined3d_stream_info *si = &context_gl->c.stream_info;
+    GLenum mode = gl_primitive_type_from_d3d(state->primitive_type);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int instanced_elements[ARRAY_SIZE(si->elements)];
     unsigned int instanced_element_count = 0;
-    GLenum mode = state->gl_primitive_type;
     const void *indices;
     unsigned int i, j;
 
@@ -4104,7 +4150,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
 
     ops = &d3d_info->ffp_attrib_ops;
 
-    gl_info->gl_ops.gl.p_glBegin(state->gl_primitive_type);
+    gl_info->gl_ops.gl.p_glBegin(gl_primitive_type_from_d3d(state->primitive_type));
 
     if (use_vs(state) || d3d_info->ffp_generic_attributes)
     {
@@ -4289,6 +4335,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
 static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_gl, const struct wined3d_state *state,
         const struct wined3d_indirect_draw_parameters *parameters, unsigned int idx_size)
 {
+    GLenum gl_primitive_type = gl_primitive_type_from_d3d(state->primitive_type);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_buffer *buffer = parameters->buffer;
     const void *offset;
@@ -4307,11 +4354,11 @@ static void wined3d_context_gl_draw_indirect(struct wined3d_context_gl *context_
         GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
         if (state->index_offset)
             FIXME("Ignoring index offset %u.\n", state->index_offset);
-        GL_EXTCALL(glDrawElementsIndirect(state->gl_primitive_type, idx_type, offset));
+        GL_EXTCALL(glDrawElementsIndirect(gl_primitive_type, idx_type, offset));
     }
     else
     {
-        GL_EXTCALL(glDrawArraysIndirect(state->gl_primitive_type, offset));
+        GL_EXTCALL(glDrawArraysIndirect(gl_primitive_type, offset));
     }
 
     GL_EXTCALL(glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0));
@@ -4545,7 +4592,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         else if (!context->transform_feedback_active)
         {
             enum wined3d_primitive_type primitive_type = shader->u.gs.output_type
-                    ? shader->u.gs.output_type : d3d_primitive_type_from_gl(state->gl_primitive_type);
+                    ? shader->u.gs.output_type : state->primitive_type;
             GLenum mode = gl_tfb_primitive_type_from_d3d(primitive_type);
             GL_EXTCALL(glBeginTransformFeedback(mode));
             checkGLcall("glBeginTransformFeedback");
@@ -4553,7 +4600,7 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         }
     }
 
-    if (state->gl_primitive_type == GL_PATCHES)
+    if (state->primitive_type == WINED3D_PT_PATCH)
     {
         GL_EXTCALL(glPatchParameteri(GL_PATCH_VERTICES, state->gl_patch_vertices));
         checkGLcall("glPatchParameteri");
