@@ -1838,7 +1838,7 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView3 *iface, MSG 
 	FIXME("(%p)->(%p: hwnd=%x msg=%x lp=%x wp=%x) stub\n",This,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
 #endif
 
-	if ((lpmsg->message>=WM_KEYFIRST) && (lpmsg->message>=WM_KEYLAST))
+	if ((lpmsg->message>=WM_KEYFIRST) && (lpmsg->message<=WM_KEYLAST))
 	{
 	  TRACE("-- key=0x04%lx\n",lpmsg->wParam) ;
 	}
