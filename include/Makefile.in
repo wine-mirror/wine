@@ -18,6 +18,7 @@ SOURCES = \
 	appcompatapi.h \
 	appmgmt.h \
 	appmodel.h \
+	asferr.h \
 	asptlb.idl \
 	asynot.idl \
 	asysta.idl \
