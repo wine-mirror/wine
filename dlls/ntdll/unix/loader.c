@@ -38,6 +38,9 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_PRCTL_H
+# include <sys/prctl.h>
+#endif
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
@@ -1193,6 +1196,68 @@ static int pre_exec(void)
 
 
 /***********************************************************************
+ *           set_process_name
+ *
+ * Change the process name in the ps output.
+ */
+static void set_process_name( int argc, char *argv[] )
+{
+    BOOL shift_strings;
+    char *p, *name;
+    int i;
+
+#ifdef HAVE_SETPROCTITLE
+    setproctitle("-%s", argv[1]);
+    shift_strings = FALSE;
+#else
+    p = argv[0];
+
+    shift_strings = (argc >= 2);
+    for (i = 1; i < argc; i++)
+    {
+        p += strlen(p) + 1;
+        if (p != argv[i])
+        {
+            shift_strings = FALSE;
+            break;
+        }
+    }
+#endif
+
+    if (shift_strings)
+    {
+        int offset = argv[1] - argv[0];
+        char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
+        memmove( argv[0], argv[1], end - argv[1] );
+        memset( end - offset, 0, offset );
+        for (i = 1; i < argc; i++)
+            argv[i-1] = argv[i] - offset;
+        argv[i-1] = NULL;
+    }
+    else
+    {
+        /* remove argv[0] */
+        memmove( argv, argv + 1, argc * sizeof(argv[0]) );
+    }
+
+    name = argv[0];
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+
+#if defined(HAVE_SETPROGNAME)
+    setprogname( name );
+#endif
+
+#ifdef HAVE_PRCTL
+#ifndef PR_SET_NAME
+# define PR_SET_NAME 15
+#endif
+    prctl( PR_SET_NAME, name );
+#endif  /* HAVE_PRCTL */
+}
+
+
+/***********************************************************************
  *           check_command_line
  *
  * Check if command line is one that needs to be handled specially.
@@ -1260,6 +1325,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     module = load_ntdll();
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
 
+    set_process_name( argc, argv );
     init_unix_codepage();
 
 #ifdef __APPLE__
@@ -1294,6 +1360,7 @@ NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void 
 
     map_so_dll( nt, module );
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
+    set_process_name( __wine_main_argc, __wine_main_argv );
     init_unix_codepage();
     *(struct unix_funcs **)ptr_out = &unix_funcs;
     wine_mmap_enum_reserved_areas( add_area, NULL, 0 );

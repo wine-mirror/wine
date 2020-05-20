@@ -28,9 +28,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#ifdef HAVE_SYS_PRCTL_H
-# include <sys/prctl.h>
-#endif
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
 #endif
@@ -187,67 +184,6 @@ int __cdecl __wine_dbg_output( const char *str )
     return unix_funcs->dbg_output( str );
 }
 
-/***********************************************************************
- *           set_process_name
- *
- * Change the process name in the ps output.
- */
-static void set_process_name( int argc, char *argv[] )
-{
-    BOOL shift_strings;
-    char *p, *name;
-    int i;
-
-#ifdef HAVE_SETPROCTITLE
-    setproctitle("-%s", argv[1]);
-    shift_strings = FALSE;
-#else
-    p = argv[0];
-
-    shift_strings = (argc >= 2);
-    for (i = 1; i < argc; i++)
-    {
-        p += strlen(p) + 1;
-        if (p != argv[i])
-        {
-            shift_strings = FALSE;
-            break;
-        }
-    }
-#endif
-
-    if (shift_strings)
-    {
-        int offset = argv[1] - argv[0];
-        char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
-        memmove( argv[0], argv[1], end - argv[1] );
-        memset( end - offset, 0, offset );
-        for (i = 1; i < argc; i++)
-            argv[i-1] = argv[i] - offset;
-        argv[i-1] = NULL;
-    }
-    else
-    {
-        /* remove argv[0] */
-        memmove( argv, argv + 1, argc * sizeof(argv[0]) );
-    }
-
-    name = argv[0];
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-
-#if defined(HAVE_SETPROGNAME)
-    setprogname( name );
-#endif
-
-#ifdef HAVE_PRCTL
-#ifndef PR_SET_NAME
-# define PR_SET_NAME 15
-#endif
-    prctl( PR_SET_NAME, name );
-#endif  /* HAVE_PRCTL */
-}
-
 HANDLE user_shared_data_init_done(void)
 {
     static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
@@ -382,7 +318,6 @@ TEB *thread_init(void)
 
     unix_funcs->dbg_init();
     unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
-    set_process_name( __wine_main_argc, __wine_main_argv );
 
     /* initialize time values in user_shared_data */
     NtQuerySystemTime( &now );
