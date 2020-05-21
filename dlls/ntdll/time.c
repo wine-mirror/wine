@@ -44,6 +44,7 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
 #include "wine/exception.h"
@@ -577,9 +578,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH RtlQueryPerformanceFrequency( LARGE_INTEGER *frequ
  * NtGetTickCount   (NTDLL.@)
  * ZwGetTickCount   (NTDLL.@)
  */
-ULONG WINAPI NtGetTickCount(void)
+ULONG WINAPI DECLSPEC_HOTPATCH NtGetTickCount(void)
 {
-    return monotonic_counter() / TICKSPERMSEC;
+    /* note: we ignore TickCountMultiplier */
+    return user_shared_data->u.TickCount.LowPart;
 }
 
 /* calculate the mday of dst change date, so that for instance Sun 5 Oct 2007
