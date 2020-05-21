@@ -201,13 +201,20 @@ static DWORD shape_select_language(const struct scriptshaping_cache *cache, DWOR
     return 0;
 }
 
-static void shape_add_feature(struct shaping_features *features, unsigned int tag)
+static void shape_add_feature_flags(struct shaping_features *features, unsigned int tag, unsigned int flags)
 {
     if (!dwrite_array_reserve((void **)&features->features, &features->capacity, features->count + 1,
             sizeof(*features->features)))
         return;
 
-    features->features[features->count++].tag = tag;
+    features->features[features->count].tag = tag;
+    features->features[features->count].flags = flags;
+    features->count++;
+}
+
+static void shape_add_feature(struct shaping_features *features, unsigned int tag)
+{
+    shape_add_feature_flags(features, tag, FEATURE_GLOBAL);
 }
 
 static int features_sorting_compare(const void *a, const void *b)
@@ -344,6 +351,8 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
         for (i = 0; i < ARRAY_SIZE(horizontal_features); ++i)
             shape_add_feature(&features, horizontal_features[i]);
     }
+    else
+        shape_add_feature_flags(&features, DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t'), FEATURE_GLOBAL_SEARCH);
 
     shape_merge_features(&features);
 

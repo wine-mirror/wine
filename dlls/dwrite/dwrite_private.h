@@ -505,10 +505,17 @@ extern struct scriptshaping_cache *create_scriptshaping_cache(void *context,
 extern void release_scriptshaping_cache(struct scriptshaping_cache*) DECLSPEC_HIDDEN;
 extern struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_fontface *fontface) DECLSPEC_HIDDEN;
 
+enum shaping_feature_flags
+{
+    FEATURE_GLOBAL = 0x1,
+    FEATURE_GLOBAL_SEARCH = 0x2,
+};
+
 struct shaping_feature
 {
     unsigned int tag;
     unsigned int index;
+    unsigned int flags;
 };
 
 struct shaping_features

@@ -4143,11 +4143,22 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
                     langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_index[j]));
             if (feature_index >= total_feature_count)
                 continue;
-            if (feature_list->features[feature_index].tag == features->features[i].tag)
+            if ((found = feature_list->features[feature_index].tag == features->features[i].tag))
             {
-                found = TRUE;
                 features->features[i].index = feature_index;
                 break;
+            }
+        }
+
+        if (!found && (features->features[i].flags & FEATURE_GLOBAL_SEARCH))
+        {
+            for (j = 0; j < total_feature_count; ++j)
+            {
+                if ((found = (feature_list->features[j].tag == features->features[i].tag)))
+                {
+                    features->features[i].index = j;
+                    break;
+                }
             }
         }
 
