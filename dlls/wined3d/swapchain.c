@@ -25,7 +25,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
@@ -565,21 +564,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     wined3d_swapchain_gl_rotate(swapchain, context);
 
     TRACE("SwapBuffers called, Starting new frame\n");
-    /* FPS support */
-    if (TRACE_ON(fps))
-    {
-        DWORD time = GetTickCount();
-        ++swapchain->frames;
-
-        /* every 1.5 seconds */
-        if (time - swapchain->prev_time > 1500)
-        {
-            TRACE_(fps)("%p @ approx %.2ffps\n",
-                    swapchain, 1000.0 * swapchain->frames / (time - swapchain->prev_time));
-            swapchain->prev_time = time;
-            swapchain->frames = 0;
-        }
-    }
 
     wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
     wined3d_texture_invalidate_location(swapchain->front_buffer, 0, ~WINED3D_LOCATION_DRAWABLE);
@@ -701,23 +685,6 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
     back->dc = dc;
     back->bitmap = bitmap;
     swapchain->back_buffers[0]->resource.heap_memory = data;
-
-    /* FPS support */
-    if (TRACE_ON(fps))
-    {
-        static LONG prev_time, frames;
-        DWORD time = GetTickCount();
-
-        ++frames;
-
-        /* every 1.5 seconds */
-        if (time - prev_time > 1500)
-        {
-            TRACE_(fps)("@ approx %.2ffps\n", 1000.0 * frames / (time - prev_time));
-            prev_time = time;
-            frames = 0;
-        }
-    }
 
     SetRect(&swapchain->front_buffer_update, 0, 0,
             swapchain->front_buffer->resource.width,

@@ -21,6 +21,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #define WINED3D_INITIAL_CS_SIZE 4096
 
@@ -528,6 +529,21 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
 
     swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->swap_interval, op->flags);
+
+    if (TRACE_ON(fps))
+    {
+        DWORD time = GetTickCount();
+        ++swapchain->frames;
+
+        /* every 1.5 seconds */
+        if (time - swapchain->prev_time > 1500)
+        {
+            TRACE_(fps)("%p @ approx %.2ffps\n",
+                    swapchain, 1000.0 * swapchain->frames / (time - swapchain->prev_time));
+            swapchain->prev_time = time;
+            swapchain->frames = 0;
+        }
+    }
 
     wined3d_resource_release(&swapchain->front_buffer->resource);
     for (i = 0; i < swapchain->state.desc.backbuffer_count; ++i)
