@@ -508,6 +508,7 @@ extern struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_font
 struct shaping_feature
 {
     unsigned int tag;
+    unsigned int index;
 };
 
 struct shaping_features

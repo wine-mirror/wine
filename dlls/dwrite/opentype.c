@@ -4099,6 +4099,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
 {
     UINT16 table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
     const struct ot_feature_list *feature_list;
+    UINT16 feature_index;
     unsigned int i, j, l;
 
     /* ScriptTable offset. */
@@ -4132,42 +4133,57 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     if (!feature_list)
         return;
 
-    /* Collect lookups for all given features. */
     for (i = 0; i < features->count; ++i)
     {
+        BOOL found = FALSE;
+
         for (j = 0; j < script_feature_count; ++j)
         {
-            UINT16 feature_index = table_read_be_word(&table->table, table->script_list + table_offset +
+            feature_index = table_read_be_word(&table->table, table->script_list + table_offset +
                     langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_index[j]));
             if (feature_index >= total_feature_count)
                 continue;
-
             if (feature_list->features[feature_index].tag == features->features[i].tag)
             {
-                WORD feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
-                WORD lookup_count;
+                found = TRUE;
+                features->features[i].index = feature_index;
+                break;
+            }
+        }
 
-                lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
-                        FIELD_OFFSET(struct ot_feature, lookup_count));
-                if (!lookup_count)
+        if (!found)
+            features->features[i].index = 0xffff;
+    }
+
+    /* Collect lookups for all given features. */
+    for (i = 0; i < features->count; ++i)
+    {
+        feature_index = features->features[i].index;
+        if (feature_index != 0xffff)
+        {
+            UINT16 feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
+            UINT16 lookup_count;
+
+            lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
+                    FIELD_OFFSET(struct ot_feature, lookup_count));
+            if (!lookup_count)
+                continue;
+
+            if (!dwrite_array_reserve((void **)&lookups->indexes, &lookups->capacity, lookups->count + lookup_count,
+                    sizeof(*lookups->indexes)))
+            {
+                return;
+            }
+
+            for (l = 0; l < lookup_count; ++l)
+            {
+                UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
+                        FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
+
+                if (lookup_index >= total_lookup_count)
                     continue;
 
-                if (!dwrite_array_reserve((void **)&lookups->indexes, &lookups->capacity, lookups->count + lookup_count,
-                        sizeof(*lookups->indexes)))
-                {
-                    return;
-                }
-
-                for (l = 0; l < lookup_count; ++l)
-                {
-                    UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
-                            FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
-
-                    if (lookup_index >= total_lookup_count)
-                        continue;
-
-                    lookups->indexes[lookups->count++] = lookup_index;
-                }
+                lookups->indexes[lookups->count++] = lookup_index;
             }
         }
     }
