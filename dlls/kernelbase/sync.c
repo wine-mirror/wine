@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
+static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
+
 /* check if current version is NT or Win95 */
 static inline BOOL is_version_nt(void)
 {
@@ -124,6 +126,34 @@ static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING 
 /***********************************************************************
  * Waits
  ***********************************************************************/
+
+
+/******************************************************************************
+ *           GetTickCount   (kernelbase.@)
+ */
+ULONG WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
+{
+    /* note: we ignore TickCountMultiplier */
+    return user_shared_data->u.TickCount.LowPart;
+}
+
+
+/******************************************************************************
+ *           GetTickCount64   (kernelbase.@)
+ */
+ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
+{
+    ULONG high, low;
+
+    do
+    {
+        high = user_shared_data->u.TickCount.High1Time;
+        low = user_shared_data->u.TickCount.LowPart;
+    }
+    while (high != user_shared_data->u.TickCount.High2Time);
+    /* note: we ignore TickCountMultiplier */
+    return (ULONGLONG)high << 32 | low;
+}
 
 
 static HANDLE normalize_handle_if_console( HANDLE handle )

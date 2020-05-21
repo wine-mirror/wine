@@ -725,8 +725,8 @@
 # @ stub GetThreadSelectedCpuSets
 @ stdcall GetThreadTimes(long ptr ptr ptr ptr)
 @ stdcall GetThreadUILanguage()
-@ stdcall GetTickCount() kernel32.GetTickCount
-@ stdcall -ret64 GetTickCount64() kernel32.GetTickCount64
+@ stdcall GetTickCount()
+@ stdcall -ret64 GetTickCount64()
 @ stdcall GetTimeFormatA(long long ptr str ptr long) kernel32.GetTimeFormatA
 @ stdcall GetTimeFormatEx(wstr long ptr wstr ptr long) kernel32.GetTimeFormatEx
 @ stdcall GetTimeFormatW(long long ptr wstr ptr long) kernel32.GetTimeFormatW
