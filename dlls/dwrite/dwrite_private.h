@@ -523,6 +523,8 @@ struct shaping_feature
     unsigned int tag;
     unsigned int index;
     unsigned int flags;
+    unsigned int max_value;
+    unsigned int default_value;
 };
 
 struct shaping_features

@@ -4169,33 +4169,40 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     /* Collect lookups for all given features. */
     for (i = 0; i < features->count; ++i)
     {
-        feature_index = features->features[i].index;
-        if (feature_index != 0xffff)
-        {
-            UINT16 feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
-            UINT16 lookup_count;
+        UINT16 feature_offset, lookup_count;
 
-            lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
-                    FIELD_OFFSET(struct ot_feature, lookup_count));
-            if (!lookup_count)
+        feature_index = features->features[i].index;
+
+        /* Feature wasn't found */
+        if (feature_index == 0xffff)
+            continue;
+
+        /* FIXME: skip non-global ones for now. */
+        if (!(features->features[i].flags & FEATURE_GLOBAL))
+            continue;
+
+        feature_offset = GET_BE_WORD(feature_list->features[feature_index].offset);
+
+        lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
+                FIELD_OFFSET(struct ot_feature, lookup_count));
+        if (!lookup_count)
+            continue;
+
+        if (!dwrite_array_reserve((void **)&lookups->indexes, &lookups->capacity, lookups->count + lookup_count,
+                sizeof(*lookups->indexes)))
+        {
+            return;
+        }
+
+        for (l = 0; l < lookup_count; ++l)
+        {
+            UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
+                    FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
+
+            if (lookup_index >= total_lookup_count)
                 continue;
 
-            if (!dwrite_array_reserve((void **)&lookups->indexes, &lookups->capacity, lookups->count + lookup_count,
-                    sizeof(*lookups->indexes)))
-            {
-                return;
-            }
-
-            for (l = 0; l < lookup_count; ++l)
-            {
-                UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
-                        FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
-
-                if (lookup_index >= total_lookup_count)
-                    continue;
-
-                lookups->indexes[lookups->count++] = lookup_index;
-            }
+            lookups->indexes[lookups->count++] = lookup_index;
         }
     }
 

@@ -201,20 +201,24 @@ static DWORD shape_select_language(const struct scriptshaping_cache *cache, DWOR
     return 0;
 }
 
-static void shape_add_feature_flags(struct shaping_features *features, unsigned int tag, unsigned int flags)
+static void shape_add_feature_full(struct shaping_features *features, unsigned int tag, unsigned int flags, unsigned int value)
 {
+    unsigned int i = features->count;
+
     if (!dwrite_array_reserve((void **)&features->features, &features->capacity, features->count + 1,
             sizeof(*features->features)))
         return;
 
-    features->features[features->count].tag = tag;
-    features->features[features->count].flags = flags;
+    features->features[i].tag = tag;
+    features->features[i].flags = flags;
+    features->features[i].max_value = value;
+    features->features[i].default_value = flags & FEATURE_GLOBAL ? value : 0;
     features->count++;
 }
 
 static void shape_add_feature(struct shaping_features *features, unsigned int tag)
 {
-    shape_add_feature_flags(features, tag, FEATURE_GLOBAL);
+    shape_add_feature_full(features, tag, FEATURE_GLOBAL, 1);
 }
 
 static int features_sorting_compare(const void *a, const void *b)
@@ -229,18 +233,16 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
     unsigned int j = 0, i;
 
     /* For now only consider global, enabled user features. */
-    if (user_features && context->user_features.range_lengths && context->user_features.range_count == 1)
+    if (user_features && context->user_features.range_lengths)
     {
+        unsigned int flags = context->user_features.range_count == 1 &&
+                context->user_features.range_lengths[0] == context->length ? FEATURE_GLOBAL : 0;
+
         for (i = 0; i < context->user_features.range_count; ++i)
         {
-            if (context->user_features.range_lengths[i] != context->length)
-                break;
-
             for (j = 0; j < user_features[i]->featureCount; ++j)
-            {
-                if (user_features[i]->features[j].parameter == 1)
-                    shape_add_feature(features, user_features[i]->features[j].nameTag);
-            }
+                shape_add_feature_full(features, user_features[i]->features[j].nameTag, flags,
+                        user_features[i]->features[j].parameter);
         }
     }
 
@@ -251,6 +253,21 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
     {
         if (features->features[i].tag != features->features[j].tag)
             features->features[++j] = features->features[i];
+        else
+        {
+            if (features->features[i].flags & FEATURE_GLOBAL)
+            {
+                features->features[j].flags |= FEATURE_GLOBAL;
+                features->features[j].max_value = features->features[i].max_value;
+                features->features[j].default_value = features->features[i].default_value;
+            }
+            else
+            {
+                if (features->features[j].flags & FEATURE_GLOBAL)
+                    features->features[j].flags ^= FEATURE_GLOBAL;
+                features->features[j].max_value = max(features->features[j].max_value, features->features[i].max_value);
+            }
+        }
     }
     features->count = j + 1;
 }
@@ -369,7 +386,7 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
             shape_add_feature(&features, horizontal_features[i]);
     }
     else
-        shape_add_feature_flags(&features, DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t'), FEATURE_GLOBAL_SEARCH);
+        shape_add_feature_full(&features, DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t'), FEATURE_GLOBAL | FEATURE_GLOBAL_SEARCH, 1);
 
     shape_merge_features(context, &features);
 
