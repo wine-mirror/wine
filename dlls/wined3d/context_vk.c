@@ -218,6 +218,35 @@ static VkPrimitiveTopology vk_topology_from_wined3d(enum wined3d_primitive_type 
     }
 }
 
+static VkStencilOp vk_stencil_op_from_wined3d(enum wined3d_stencil_op op)
+{
+    switch (op)
+    {
+        case WINED3D_STENCIL_OP_KEEP:
+            return VK_STENCIL_OP_KEEP;
+        case WINED3D_STENCIL_OP_ZERO:
+            return VK_STENCIL_OP_ZERO;
+        case WINED3D_STENCIL_OP_REPLACE:
+            return VK_STENCIL_OP_REPLACE;
+        case WINED3D_STENCIL_OP_INCR_SAT:
+            return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case WINED3D_STENCIL_OP_DECR_SAT:
+            return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case WINED3D_STENCIL_OP_INVERT:
+            return VK_STENCIL_OP_INVERT;
+        case WINED3D_STENCIL_OP_INCR:
+            return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case WINED3D_STENCIL_OP_DECR:
+            return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+        default:
+            if (!op)
+                WARN("Unhandled stencil operation %#x.\n", op);
+            else
+                FIXME("Unhandled stencil operation %#x.\n", op);
+            return VK_STENCIL_OP_KEEP;
+    }
+}
+
 void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
         struct wined3d_context_vk *context_vk)
 {
@@ -1811,11 +1840,44 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RENDER(WINED3D_RS_ZENABLE)))
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RENDER(WINED3D_RS_ZENABLE))
+            || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
     {
         key->ds_desc.depthTestEnable = !!state->render_states[WINED3D_RS_ZENABLE];
         key->ds_desc.depthWriteEnable = !!state->render_states[WINED3D_RS_ZWRITEENABLE];
         key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_ZFUNC]);
+        key->ds_desc.stencilTestEnable = state->fb.depth_stencil && state->render_states[WINED3D_RS_STENCILENABLE];
+        if (key->ds_desc.stencilTestEnable)
+        {
+            key->ds_desc.front.failOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILFAIL]);
+            key->ds_desc.front.passOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILPASS]);
+            key->ds_desc.front.depthFailOp = vk_stencil_op_from_wined3d(state->render_states[WINED3D_RS_STENCILZFAIL]);
+            key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_STENCILFUNC]);
+            key->ds_desc.front.compareMask = state->render_states[WINED3D_RS_STENCILMASK];
+            key->ds_desc.front.writeMask = state->render_states[WINED3D_RS_STENCILWRITEMASK];
+            key->ds_desc.front.reference = state->render_states[WINED3D_RS_STENCILREF]
+                    & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
+
+            if (state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE])
+            {
+                key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(
+                        state->render_states[WINED3D_RS_BACK_STENCILFAIL]);
+                key->ds_desc.back.passOp = vk_stencil_op_from_wined3d(
+                        state->render_states[WINED3D_RS_BACK_STENCILPASS]);
+                key->ds_desc.back.depthFailOp = vk_stencil_op_from_wined3d(
+                        state->render_states[WINED3D_RS_BACK_STENCILZFAIL]);
+                key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(
+                        state->render_states[WINED3D_RS_BACK_STENCILFUNC]);
+                key->ds_desc.back.compareMask = state->render_states[WINED3D_RS_STENCILMASK];
+                key->ds_desc.back.writeMask = state->render_states[WINED3D_RS_STENCILWRITEMASK];
+                key->ds_desc.back.reference = state->render_states[WINED3D_RS_STENCILREF]
+                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
+            }
+            else
+            {
+                key->ds_desc.back = key->ds_desc.front;
+            }
+        }
 
         update = true;
     }
