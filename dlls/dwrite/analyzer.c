@@ -1256,6 +1256,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.u.subst.max_glyph_count = max_glyph_count;
     context.glyph_count = g;
     context.language_tag = get_opentype_language(locale);
+    context.user_features.features = features;
+    context.user_features.range_lengths = feature_range_lengths;
+    context.user_features.range_count = feature_ranges;
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
     scriptprops = &dwritescripts_properties[script];
@@ -1321,6 +1324,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     context.advances = advances;
     context.offsets = offsets;
     context.language_tag = get_opentype_language(locale);
+    context.user_features.features = features;
+    context.user_features.range_lengths = feature_range_lengths;
+    context.user_features.range_count = feature_ranges;
 
     return shape_get_positions(&context, scriptprops->scripttags);
 }
@@ -1380,6 +1386,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     context.advances = advances;
     context.offsets = offsets;
     context.language_tag = get_opentype_language(locale);
+    context.user_features.features = features;
+    context.user_features.range_lengths = feature_range_lengths;
+    context.user_features.range_count = feature_ranges;
 
     return shape_get_positions(&context, scriptprops->scripttags);
 }

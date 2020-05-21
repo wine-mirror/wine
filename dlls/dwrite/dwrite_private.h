@@ -486,6 +486,13 @@ struct scriptshaping_context
         } subst;
     } u;
 
+    struct
+    {
+        const DWRITE_TYPOGRAPHIC_FEATURES **features;
+        const unsigned int *range_lengths;
+        unsigned int range_count;
+    } user_features;
+
     unsigned int glyph_count;
     float emsize;
     DWRITE_MEASURING_MODE measuring_mode;

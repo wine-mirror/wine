@@ -223,9 +223,26 @@ static int features_sorting_compare(const void *a, const void *b)
     return left->tag != right->tag ? (left->tag < right->tag ? -1 : 1) : 0;
 };
 
-static void shape_merge_features(struct shaping_features *features)
+static void shape_merge_features(struct scriptshaping_context *context, struct shaping_features *features)
 {
+    const DWRITE_TYPOGRAPHIC_FEATURES **user_features = context->user_features.features;
     unsigned int j = 0, i;
+
+    /* For now only consider global, enabled user features. */
+    if (user_features && context->user_features.range_lengths && context->user_features.range_count == 1)
+    {
+        for (i = 0; i < context->user_features.range_count; ++i)
+        {
+            if (context->user_features.range_lengths[i] != context->length)
+                break;
+
+            for (j = 0; j < user_features[i]->featureCount; ++j)
+            {
+                if (user_features[i]->features[j].parameter == 1)
+                    shape_add_feature(features, user_features[i]->features[j].nameTag);
+            }
+        }
+    }
 
     /* Sort and merge duplicates. */
     qsort(features->features, features->count, sizeof(*features->features), features_sorting_compare);
@@ -267,7 +284,7 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigne
             shape_add_feature(&features, horizontal_features[i]);
     }
 
-    shape_merge_features(&features);
+    shape_merge_features(context, &features);
 
     /* Resolve script tag to actually supported script. */
     if (cache->gpos.table.data)
@@ -354,7 +371,7 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
     else
         shape_add_feature_flags(&features, DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t'), FEATURE_GLOBAL_SEARCH);
 
-    shape_merge_features(&features);
+    shape_merge_features(context, &features);
 
     /* Resolve script tag to actually supported script. */
     if (cache->gsub.table.data)
