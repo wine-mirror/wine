@@ -287,6 +287,22 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjectsEx( DWORD count, const HAND
 
 
 /***********************************************************************
+ *           WaitOnAddress   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH WaitOnAddress( volatile void *addr, void *cmp, SIZE_T size, DWORD timeout )
+{
+    LARGE_INTEGER to;
+
+    if (timeout != INFINITE)
+    {
+        to.QuadPart = -(LONGLONG)timeout * 10000;
+        return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, &to ));
+    }
+    return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, NULL ));
+}
+
+
+/***********************************************************************
  * Events
  ***********************************************************************/
 

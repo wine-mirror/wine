@@ -200,21 +200,6 @@ BOOL WINAPI QuirkIsEnabled3(void *unk1, void *unk2)
     return FALSE;
 }
 
-/***********************************************************************
- *           WaitOnAddress   (KERNELBASE.@)
- */
-BOOL WINAPI WaitOnAddress(volatile void *addr, void *cmp, SIZE_T size, DWORD timeout)
-{
-    LARGE_INTEGER to;
-
-    if (timeout != INFINITE)
-    {
-        to.QuadPart = -(LONGLONG)timeout * 10000;
-        return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, &to ));
-    }
-    return set_ntstatus( RtlWaitOnAddress( (const void *)addr, cmp, size, NULL ));
-}
-
 HRESULT WINAPI QISearch(void *base, const QITAB *table, REFIID riid, void **obj)
 {
     const QITAB *ptr;
