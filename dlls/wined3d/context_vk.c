@@ -1811,6 +1811,15 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_RENDER(WINED3D_RS_ZENABLE)))
+    {
+        key->ds_desc.depthTestEnable = !!state->render_states[WINED3D_RS_ZENABLE];
+        key->ds_desc.depthWriteEnable = !!state->render_states[WINED3D_RS_ZWRITEENABLE];
+        key->ds_desc.depthCompareOp = vk_compare_op_from_wined3d(state->render_states[WINED3D_RS_ZFUNC]);
+
+        update = true;
+    }
+
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_BLEND)
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
     {
