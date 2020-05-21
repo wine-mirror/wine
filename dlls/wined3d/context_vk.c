@@ -1833,9 +1833,11 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
         update = true;
     }
 
-    if (key->ms_desc.rasterizationSamples != context_vk->sample_count)
+    if (key->ms_desc.rasterizationSamples != context_vk->sample_count
+            || isStateDirty(&context_vk->c, STATE_BLEND))
     {
         key->ms_desc.rasterizationSamples = context_vk->sample_count;
+        key->ms_desc.alphaToCoverageEnable = state->blend_state && state->blend_state->desc.alpha_to_coverage;
 
         update = true;
     }
