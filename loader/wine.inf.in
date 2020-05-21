@@ -2612,6 +2612,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,iexplore.exe
 11,,winetest.exe,-
 12,,fltmgr.sys,-
+12,,http.sys,-
 12,,ksecdd.sys,-
 12,,mountmgr.sys,-
 12,,ndis.sys,-
@@ -2664,6 +2665,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,notepad.exe
 11,,winetest.exe,-
 12,,fltmgr.sys
+12,,http.sys
 12,,ksecdd.sys
 12,,mountmgr.sys
 12,,ndis.sys
