@@ -53,7 +53,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 #endif
 
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
-static size_t user_shared_data_size;
 
 void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
 
@@ -183,6 +182,64 @@ int __cdecl __wine_dbg_output( const char *str )
     return unix_funcs->dbg_output( str );
 }
 
+static void fill_user_shared_data( struct _KUSER_SHARED_DATA *data )
+{
+    RTL_OSVERSIONINFOEXW version;
+    SYSTEM_CPU_INFORMATION sci;
+    SYSTEM_BASIC_INFORMATION sbi;
+    BOOLEAN *features = data->ProcessorFeatures;
+
+    version.dwOSVersionInfoSize = sizeof(version);
+    RtlGetVersion( &version );
+    virtual_get_system_info( &sbi );
+    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
+
+    data->TickCountMultiplier         = 1 << 24;
+    data->LargePageMinimum            = 2 * 1024 * 1024;
+    data->NtBuildNumber               = version.dwBuildNumber;
+    data->NtProductType               = version.wProductType;
+    data->ProductTypeIsValid          = TRUE;
+    data->NativeProcessorArchitecture = sci.Architecture;
+    data->NtMajorVersion              = version.dwMajorVersion;
+    data->NtMinorVersion              = version.dwMinorVersion;
+    data->SuiteMask                   = version.wSuiteMask;
+    data->NumberOfPhysicalPages       = sbi.MmNumberOfPhysicalPages;
+    wcscpy( data->NtSystemRoot, windows_dir );
+
+    switch (sci.Architecture)
+    {
+    case PROCESSOR_ARCHITECTURE_INTEL:
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        features[PF_COMPARE_EXCHANGE_DOUBLE]              = !!(sci.FeatureSet & CPU_FEATURE_CX8);
+        features[PF_MMX_INSTRUCTIONS_AVAILABLE]           = !!(sci.FeatureSet & CPU_FEATURE_MMX);
+        features[PF_XMMI_INSTRUCTIONS_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_SSE);
+        features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]         = !!(sci.FeatureSet & CPU_FEATURE_3DNOW);
+        features[PF_RDTSC_INSTRUCTION_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_TSC);
+        features[PF_PAE_ENABLED]                          = !!(sci.FeatureSet & CPU_FEATURE_PAE);
+        features[PF_XMMI64_INSTRUCTIONS_AVAILABLE]        = !!(sci.FeatureSet & CPU_FEATURE_SSE2);
+        features[PF_SSE3_INSTRUCTIONS_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_SSE3);
+        features[PF_XSAVE_ENABLED]                        = !!(sci.FeatureSet & CPU_FEATURE_XSAVE);
+        features[PF_COMPARE_EXCHANGE128]                  = !!(sci.FeatureSet & CPU_FEATURE_CX128);
+        features[PF_SSE_DAZ_MODE_AVAILABLE]               = !!(sci.FeatureSet & CPU_FEATURE_DAZ);
+        features[PF_NX_ENABLED]                           = !!(sci.FeatureSet & CPU_FEATURE_NX);
+        features[PF_SECOND_LEVEL_ADDRESS_TRANSLATION]     = !!(sci.FeatureSet & CPU_FEATURE_2NDLEV);
+        features[PF_VIRT_FIRMWARE_ENABLED]                = !!(sci.FeatureSet & CPU_FEATURE_VIRT);
+        features[PF_RDWRFSGSBASE_AVAILABLE]               = !!(sci.FeatureSet & CPU_FEATURE_RDFS);
+        features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM:
+        features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]       = !!(sci.FeatureSet & CPU_FEATURE_ARM_VFP_32);
+        features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]      = !!(sci.FeatureSet & CPU_FEATURE_ARM_NEON);
+        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = (sci.Level >= 8);
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = TRUE;
+        features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]  = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRC32);
+        features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRYPTO);
+        break;
+    }
+}
+
 HANDLE user_shared_data_init_done(void)
 {
     static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
@@ -194,11 +251,9 @@ HANDLE user_shared_data_init_done(void)
     HANDLE section;
     SIZE_T size;
     void *addr;
-    ULONG old_prot;
     int res, fd, needs_close;
 
-    section_size.HighPart = 0;
-    section_size.LowPart = user_shared_data_size;
+    section_size.QuadPart = sizeof(*user_shared_data);
 
     RtlInitUnicodeString( &wine_usd_str, wine_usdW );
     InitializeObjectAttributes( &attr, &wine_usd_str, OBJ_OPENIF, NULL, NULL );
@@ -213,8 +268,7 @@ HANDLE user_shared_data_init_done(void)
     if (status != STATUS_OBJECT_NAME_EXISTS)
     {
         addr = NULL;
-        size = user_shared_data_size;
-
+        size = sizeof(*user_shared_data);
         if ((status = NtMapViewOfSection( section, NtCurrentProcess(), &addr, 0, 0, 0,
                                           &size, 0, 0, PAGE_READWRITE )))
         {
@@ -222,16 +276,12 @@ HANDLE user_shared_data_init_done(void)
             exit(1);
         }
 
-        memcpy( addr, user_shared_data, user_shared_data_size );
+        fill_user_shared_data( addr );
         NtUnmapViewOfSection( NtCurrentProcess(), addr );
     }
 
-    addr = user_shared_data;
-    size = user_shared_data_size;
-    NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READONLY, &old_prot );
-
     if ((res = server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
-        (user_shared_data != mmap( user_shared_data, user_shared_data_size,
+        (user_shared_data != mmap( user_shared_data, sizeof(*user_shared_data),
                                    PROT_READ, MAP_SHARED | MAP_FIXED, fd, 0 )))
     {
         MESSAGE( "wine: failed to remap the process USD: %d\n", res );
@@ -251,11 +301,9 @@ HANDLE user_shared_data_init_done(void)
  */
 TEB *thread_init(void)
 {
-    SYSTEM_BASIC_INFORMATION sbi;
     TEB *teb;
     void *addr;
     SIZE_T size;
-    LARGE_INTEGER now;
     NTSTATUS status;
     struct ntdll_thread_data *thread_data;
 
@@ -266,15 +314,13 @@ TEB *thread_init(void)
     addr = (void *)0x7ffe0000;
     size = 0x1000;
     status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size,
-                                      MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+                                      MEM_RESERVE|MEM_COMMIT, PAGE_READONLY );
     if (status)
     {
         MESSAGE( "wine: failed to map the shared user data: %08x\n", status );
         exit(1);
     }
     user_shared_data = addr;
-    user_shared_data_size = size;
-    wcscpy( user_shared_data->NtSystemRoot, windows_dir );
 
     /* allocate and initialize the PEB and initial TEB */
 
@@ -317,20 +363,7 @@ TEB *thread_init(void)
 
     unix_funcs->dbg_init();
     unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
-
-    /* initialize time values in user_shared_data */
-    NtQuerySystemTime( &now );
-    user_shared_data->SystemTime.LowPart = now.u.LowPart;
-    user_shared_data->SystemTime.High1Time = user_shared_data->SystemTime.High2Time = now.u.HighPart;
-    user_shared_data->u.TickCountQuad = (now.QuadPart - server_start_time) / 10000;
-    user_shared_data->u.TickCount.High2Time = user_shared_data->u.TickCount.High1Time;
-    user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
-    user_shared_data->TickCountMultiplier = 1 << 24;
     fill_cpu_info();
-
-    virtual_get_system_info( &sbi );
-    user_shared_data->NumberOfPhysicalPages = sbi.MmNumberOfPhysicalPages;
-
     return teb;
 }
 

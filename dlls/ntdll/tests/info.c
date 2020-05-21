@@ -2261,7 +2261,6 @@ static void test_queryvirtualmemory(void)
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok(readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
     ok(mbi.AllocationBase == user_shared_data, "mbi.AllocationBase is 0x%p, expected 0x%p\n", mbi.AllocationBase, user_shared_data);
-    todo_wine
     ok(mbi.AllocationProtect == PAGE_READONLY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_READONLY);
     ok(mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
     ok(mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x\n", mbi.Protect);

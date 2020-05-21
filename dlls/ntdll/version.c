@@ -540,12 +540,6 @@ done:
     NtCurrentTeb()->Peb->OSBuildNumber  = current_version->dwBuildNumber;
     NtCurrentTeb()->Peb->OSPlatformId   = current_version->dwPlatformId;
 
-    user_shared_data->NtProductType      = current_version->wProductType;
-    user_shared_data->ProductTypeIsValid = TRUE;
-    user_shared_data->NtMajorVersion     = current_version->dwMajorVersion;
-    user_shared_data->NtMinorVersion     = current_version->dwMinorVersion;
-    user_shared_data->SuiteMask          = current_version->wSuiteMask;
-
     TRACE( "got %d.%d platform %d build %x name %s service pack %d.%d product %d\n",
            current_version->dwMajorVersion, current_version->dwMinorVersion,
            current_version->dwPlatformId, current_version->dwBuildNumber,
