@@ -321,8 +321,20 @@ static HRESULT wined3d_select_vulkan_queue_family(const struct wined3d_adapter_v
     return E_FAIL;
 }
 
-static void wined3d_disable_vulkan_features(VkPhysicalDeviceFeatures *features)
+struct wined3d_physical_device_info
 {
+    VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT vertex_divisor_features;
+
+    VkPhysicalDeviceFeatures2 features2;
+};
+
+static void wined3d_disable_vulkan_features(struct wined3d_physical_device_info *info)
+{
+    VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features = &info->vertex_divisor_features;
+    VkPhysicalDeviceFeatures *features = &info->features2.features;
+
+    vertex_divisor_features->vertexAttributeInstanceRateZeroDivisor = VK_FALSE;
+
     features->depthBounds = VK_FALSE;
     features->alphaToOne = VK_FALSE;
     features->textureCompressionETC2 = VK_FALSE;
@@ -405,6 +417,7 @@ static const struct
 }
 vulkan_device_extensions[] =
 {
+    {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u},
     {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1},
     {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1},
 };
@@ -472,12 +485,14 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
 {
     const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk_const(adapter);
     const char *enabled_device_extensions[ARRAY_SIZE(vulkan_device_extensions)];
+    VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features;
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
+    struct wined3d_physical_device_info physical_device_info;
     static const float priorities[] = {1.0f};
+    VkPhysicalDeviceFeatures2 *features2;
     struct wined3d_device_vk *device_vk;
     VkDevice vk_device = VK_NULL_HANDLE;
     VkDeviceQueueCreateInfo queue_info;
-    VkPhysicalDeviceFeatures features;
     VkPhysicalDevice physical_device;
     VkDeviceCreateInfo device_info;
     uint32_t queue_family_index;
@@ -492,8 +507,28 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
 
     physical_device = adapter_vk->physical_device;
 
-    VK_CALL(vkGetPhysicalDeviceFeatures(physical_device, &features));
-    wined3d_disable_vulkan_features(&features);
+    memset(&physical_device_info, 0, sizeof(physical_device_info));
+
+    vertex_divisor_features = &physical_device_info.vertex_divisor_features;
+    vertex_divisor_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
+
+    features2 = &physical_device_info.features2;
+    features2->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features2->pNext = vertex_divisor_features;
+
+    if (vk_info->vk_ops.vkGetPhysicalDeviceFeatures2)
+        VK_CALL(vkGetPhysicalDeviceFeatures2(physical_device, features2));
+    else
+        VK_CALL(vkGetPhysicalDeviceFeatures(physical_device, &features2->features));
+
+    if (!vertex_divisor_features->vertexAttributeInstanceRateDivisor)
+    {
+        WARN("Vertex attribute divisors not supported.\n");
+        hr = E_FAIL;
+        goto fail;
+    }
+
+    wined3d_disable_vulkan_features(&physical_device_info);
 
     queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queue_info.pNext = NULL;
@@ -503,7 +538,7 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     queue_info.pQueuePriorities = priorities;
 
     device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_info.pNext = NULL;
+    device_info.pNext = features2->pNext;
     device_info.flags = 0;
     device_info.queueCreateInfoCount = 1;
     device_info.pQueueCreateInfos = &queue_info;
@@ -516,7 +551,7 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
         hr = E_FAIL;
         goto fail;
     }
-    device_info.pEnabledFeatures = &features;
+    device_info.pEnabledFeatures = &features2->features;
 
     if ((vr = VK_CALL(vkCreateDevice(physical_device, &device_info, NULL, &vk_device))) < 0)
     {
@@ -1914,6 +1949,7 @@ static BOOL wined3d_init_vulkan(struct wined3d_vk_info *vk_info)
     if (!vk_ops->core_pfn) \
         vk_ops->core_pfn = (void *)VK_CALL(vkGetInstanceProcAddr(instance, #ext_pfn));
     MAP_INSTANCE_FUNCTION(vkGetPhysicalDeviceProperties2, vkGetPhysicalDeviceProperties2KHR)
+    MAP_INSTANCE_FUNCTION(vkGetPhysicalDeviceFeatures2, vkGetPhysicalDeviceFeaturess2KHR)
 #undef MAP_INSTANCE_FUNCTION
 
     vk_info->instance = instance;

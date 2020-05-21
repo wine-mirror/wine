@@ -1440,6 +1440,12 @@ static int wined3d_graphics_pipeline_vk_compare(const void *key, const struct wi
             return a->stages[i].module - b->stages[i].module;
     }
 
+    if (a->divisor_desc.vertexBindingDivisorCount != b->divisor_desc.vertexBindingDivisorCount)
+        return a->divisor_desc.vertexBindingDivisorCount - b->divisor_desc.vertexBindingDivisorCount;
+    if ((ret = memcmp(a->divisors, b->divisors,
+            a->divisor_desc.vertexBindingDivisorCount * sizeof(*a->divisors))))
+        return ret;
+
     if (a->input_desc.vertexAttributeDescriptionCount != b->input_desc.vertexAttributeDescriptionCount)
         return a->input_desc.vertexAttributeDescriptionCount - b->input_desc.vertexAttributeDescriptionCount;
     if ((ret = memcmp(a->attributes, b->attributes,
@@ -1525,6 +1531,9 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     key->input_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     key->input_desc.pVertexBindingDescriptions = key->bindings;
     key->input_desc.pVertexAttributeDescriptions = key->attributes;
+
+    key->divisor_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_DIVISOR_STATE_CREATE_INFO_EXT;
+    key->divisor_desc.pVertexBindingDivisors = key->divisors;
 
     key->ia_desc.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 
@@ -1706,8 +1715,8 @@ static void wined3d_context_vk_update_blend_state(const struct wined3d_context_v
 static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_context_vk *context_vk,
         const struct wined3d_state *state, VkPipelineLayout vk_pipeline_layout)
 {
+    unsigned int i, attribute_count, binding_count, divisor_count, stage_count;
     const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
-    unsigned int i, attribute_count, binding_count, stage_count;
     struct wined3d_graphics_pipeline_key_vk *key;
     VkPipelineShaderStageCreateInfo *stage;
     struct wined3d_stream_info stream_info;
@@ -1741,8 +1750,10 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX)))
     {
         wined3d_stream_info_from_declaration(&stream_info, state, d3d_info);
+        divisor_count = 0;
         for (i = 0, mask = 0, attribute_count = 0, binding_count = 0; i < ARRAY_SIZE(stream_info.elements); ++i)
         {
+            VkVertexInputBindingDivisorDescriptionEXT *d;
             struct wined3d_stream_info_element *e;
             VkVertexInputAttributeDescription *a;
             VkVertexInputBindingDescription *b;
@@ -1768,10 +1779,24 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             b->binding = binding;
             b->stride = e->stride;
             b->inputRate = e->divisor ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+
+            if (e->divisor > 1)
+            {
+                d = &key->divisors[divisor_count++];
+                d->binding = binding;
+                d->divisor = e->divisor;
+            }
         }
 
+        key->input_desc.pNext = NULL;
         key->input_desc.vertexBindingDescriptionCount = binding_count;
         key->input_desc.vertexAttributeDescriptionCount = attribute_count;
+
+        if (divisor_count)
+        {
+            key->input_desc.pNext = &key->divisor_desc;
+            key->divisor_desc.vertexBindingDivisorCount = divisor_count;
+        }
 
         update = true;
     }

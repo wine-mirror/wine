@@ -40,6 +40,7 @@
     VK_INSTANCE_PFN(vkGetPhysicalDeviceQueueFamilyProperties) \
     VK_INSTANCE_PFN(vkGetPhysicalDeviceSparseImageFormatProperties) \
     /* Vulkan 1.1 */ \
+    VK_INSTANCE_EXT_PFN(vkGetPhysicalDeviceFeatures2) \
     VK_INSTANCE_EXT_PFN(vkGetPhysicalDeviceProperties2)
 
 #define VK_DEVICE_FUNCS() \

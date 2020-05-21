@@ -2323,12 +2323,14 @@ struct wined3d_pipeline_layout_vk
 struct wined3d_graphics_pipeline_key_vk
 {
     VkPipelineShaderStageCreateInfo stages[WINED3D_SHADER_TYPE_GRAPHICS_COUNT];
+    VkVertexInputBindingDivisorDescriptionEXT divisors[MAX_ATTRIBS];
     VkVertexInputAttributeDescription attributes[MAX_ATTRIBS];
     VkVertexInputBindingDescription bindings[MAX_ATTRIBS];
     VkViewport viewport;
     VkRect2D scissor;
     VkPipelineColorBlendAttachmentState blend_attachments[WINED3D_MAX_RENDER_TARGETS];
 
+    VkPipelineVertexInputDivisorStateCreateInfoEXT divisor_desc;
     VkPipelineVertexInputStateCreateInfo input_desc;
     VkPipelineInputAssemblyStateCreateInfo ia_desc;
     VkPipelineTessellationStateCreateInfo ts_desc;
