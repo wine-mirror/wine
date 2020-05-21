@@ -3189,11 +3189,11 @@ static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identit
     if (!ai->arch || !ai->name || !ai->public_key) return STATUS_NO_SUCH_FILE;
 
     if (!(path = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(manifest_dirW) +
-                                  wcslen(user_shared_data->NtSystemRoot) * sizeof(WCHAR) )))
+                                  wcslen(windows_dir) * sizeof(WCHAR) )))
         return STATUS_NO_MEMORY;
 
-    wcscpy( path, user_shared_data->NtSystemRoot );
-    memcpy( path + wcslen(path), manifest_dirW, sizeof(manifest_dirW) );
+    wcscpy( path, windows_dir );
+    wcscat( path, manifest_dirW );
 
     if (!RtlDosPathNameToNtPathName_U( path, &path_us, NULL, NULL ))
     {

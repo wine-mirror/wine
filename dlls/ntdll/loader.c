@@ -69,6 +69,8 @@ typedef void  (CALLBACK *LDRENUMPROC)(LDR_DATA_TABLE_ENTRY *, void *, BOOLEAN *)
 
 const struct unix_funcs *unix_funcs = NULL;
 
+/* windows directory */
+const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
 /* system directory with trailing backslash */
 const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
                             's','y','s','t','e','m','3','2','\\',0};
@@ -2870,7 +2872,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         goto done;
     }
 
-    needed = (wcslen(user_shared_data->NtSystemRoot) * sizeof(WCHAR) +
+    needed = (wcslen(windows_dir) * sizeof(WCHAR) +
               sizeof(winsxsW) + info->ulAssemblyDirectoryNameLength + nameW.Length + 2*sizeof(WCHAR));
 
     if (!(*fullname = p = RtlAllocateHeap( GetProcessHeap(), 0, needed )))
@@ -2878,7 +2880,7 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         status = STATUS_NO_MEMORY;
         goto done;
     }
-    wcscpy( p, user_shared_data->NtSystemRoot );
+    wcscpy( p, windows_dir );
     p += wcslen(p);
     memcpy( p, winsxsW, sizeof(winsxsW) );
     p += ARRAY_SIZE( winsxsW );

@@ -50,8 +50,6 @@ static const UNICODE_STRING null_str = { 0, 0, NULL };
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
-static const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s',0};
-
 static BOOL first_prefix_start;  /* first ever process start in this prefix? */
 
 static inline SIZE_T get_env_length( const WCHAR *env )
