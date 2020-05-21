@@ -525,13 +525,19 @@ void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info)
     DWORD i, containerLen, provNameLen;
     LPBYTE data = (LPBYTE)info + sizeof(CRYPT_KEY_PROV_INFO);
 
-    info->pwszContainerName = (LPWSTR)data;
-    containerLen = (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
-    data += containerLen;
+    if (info->pwszContainerName)
+    {
+        info->pwszContainerName = (LPWSTR)data;
+        containerLen = (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
+        data += containerLen;
+    }
 
-    info->pwszProvName = (LPWSTR)data;
-    provNameLen = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
-    data += provNameLen;
+    if (info->pwszProvName)
+    {
+        info->pwszProvName = (LPWSTR)data;
+        provNameLen = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
+        data += provNameLen;
+    }
 
     if (info->cProvParam)
     {
