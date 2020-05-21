@@ -185,8 +185,6 @@ static void test_user_shared_data_time(void)
         t3 = GetTickCount();
     } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 
-    /* FIXME: not always in order, but should be close */
-    todo_wine_if(t1 > t2 && t1 - t2 < 50)
     ok(t1 <= t2, "USD TickCount / GetTickCount are out of order: %s %s\n",
        wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
     ok(t2 <= t3, "USD TickCount / GetTickCount are out of order: %s %s\n",

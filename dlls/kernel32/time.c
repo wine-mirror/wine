@@ -38,9 +38,6 @@
 #elif defined(HAVE_MACHINE_LIMITS_H)
 #include <machine/limits.h>
 #endif
-#ifdef __APPLE__
-# include <mach/mach_time.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -49,47 +46,19 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(time);
 
+static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
+
 static inline void longlong_to_filetime( LONGLONG t, FILETIME *ft )
 {
     ft->dwLowDateTime = (DWORD)t;
     ft->dwHighDateTime = (DWORD)(t >> 32);
-}
-
-#define TICKSPERSEC        10000000
-#define TICKSPERMSEC       10000
-
-/* return a monotonic time counter, in Win32 ticks */
-static inline ULONGLONG monotonic_counter(void)
-{
-    LARGE_INTEGER counter;
-
-#ifdef __APPLE__
-    static mach_timebase_info_data_t timebase;
-
-    if (!timebase.denom) mach_timebase_info( &timebase );
-#ifdef HAVE_MACH_CONTINUOUS_TIME
-    if (&mach_continuous_time != NULL)
-        return mach_continuous_time() * timebase.numer / timebase.denom / 100;
-#endif
-    return mach_absolute_time() * timebase.numer / timebase.denom / 100;
-#elif defined(HAVE_CLOCK_GETTIME)
-    struct timespec ts;
-#ifdef CLOCK_MONOTONIC_RAW
-    if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
-        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
-#endif
-    if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
-        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
-#endif
-
-    NtQueryPerformanceCounter( &counter, NULL );
-    return counter.QuadPart;
 }
 
 
@@ -394,24 +363,23 @@ BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFIL
  */
 ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
 {
-    return monotonic_counter() / TICKSPERMSEC;
+    ULONG high, low;
+
+    do
+    {
+        high = user_shared_data->u.TickCount.High1Time;
+        low = user_shared_data->u.TickCount.LowPart;
+    }
+    while (high != user_shared_data->u.TickCount.High2Time);
+    /* note: we ignore TickCountMultiplier */
+    return (ULONGLONG)high << 32 | low;
 }
 
 /***********************************************************************
  *           GetTickCount       (KERNEL32.@)
- *
- * Get the number of milliseconds the system has been running.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  The current tick count.
- *
- * NOTES
- *  The value returned will wrap around every 2^32 milliseconds.
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
 {
-    return monotonic_counter() / TICKSPERMSEC;
+    /* note: we ignore TickCountMultiplier */
+    return user_shared_data->u.TickCount.LowPart;
 }
