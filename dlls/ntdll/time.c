@@ -47,6 +47,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -1128,11 +1129,21 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
  */
 BOOL WINAPI RtlQueryUnbiasedInterruptTime(ULONGLONG *time)
 {
+    ULONG high, low;
+
     if (!time)
     {
         RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
         return FALSE;
     }
-    *time = monotonic_counter();
+
+    do
+    {
+        high = user_shared_data->InterruptTime.High1Time;
+        low = user_shared_data->InterruptTime.LowPart;
+    }
+    while (high != user_shared_data->InterruptTime.High2Time);
+    /* FIXME: should probably subtract InterruptTimeBias */
+    *time = (ULONGLONG)high << 32 | low;
     return TRUE;
 }
