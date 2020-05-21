@@ -210,6 +210,27 @@ static void shape_add_feature(struct shaping_features *features, unsigned int ta
     features->features[features->count++].tag = tag;
 }
 
+static int features_sorting_compare(const void *a, const void *b)
+{
+    const struct shaping_feature *left = a, *right = b;
+    return left->tag != right->tag ? (left->tag < right->tag ? -1 : 1) : 0;
+};
+
+static void shape_merge_features(struct shaping_features *features)
+{
+    unsigned int j = 0, i;
+
+    /* Sort and merge duplicates. */
+    qsort(features->features, features->count, sizeof(*features->features), features_sorting_compare);
+
+    for (i = 1; i < features->count; ++i)
+    {
+        if (features->features[i].tag != features->features[j].tag)
+            features->features[++j] = features->features[i];
+    }
+    features->count = j + 1;
+}
+
 HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts)
 {
     static const unsigned int common_features[] =
@@ -238,6 +259,8 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigne
         for (i = 0; i < ARRAY_SIZE(horizontal_features); ++i)
             shape_add_feature(&features, horizontal_features[i]);
     }
+
+    shape_merge_features(&features);
 
     /* Resolve script tag to actually supported script. */
     if (cache->gpos.table.data)
@@ -321,6 +344,8 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
         for (i = 0; i < ARRAY_SIZE(horizontal_features); ++i)
             shape_add_feature(&features, horizontal_features[i]);
     }
+
+    shape_merge_features(&features);
 
     /* Resolve script tag to actually supported script. */
     if (cache->gsub.table.data)
