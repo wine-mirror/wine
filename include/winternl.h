@@ -1368,6 +1368,21 @@ typedef struct _SYSTEM_CPU_INFORMATION {
 #define CPU_FEATURE_SSE2   0x00010000   /* SSE2 extensions (XMMI64) */
 #define CPU_FEATURE_DS     0x00020000   /* Debug Store */
 #define CPU_FEATURE_HTT    0x00040000   /* Hyper Threading Technology */
+#define CPU_FEATURE_SSE3   0x00080000   /* SSE3 extensions */
+#define CPU_FEATURE_CX128  0x00100000   /* cmpxchg16b instruction */
+#define CPU_FEATURE_XSAVE  0x00800000   /* XSAVE instructions */
+#define CPU_FEATURE_2NDLEV 0x04000000   /* Second-level address translation */
+#define CPU_FEATURE_VIRT   0x08000000   /* Virtualization support */
+#define CPU_FEATURE_RDFS   0x10000000   /* RDFSBASE etc. instructions */
+#define CPU_FEATURE_NX     0x20000000   /* Data execution prevention */
+
+/* FIXME: following values are made up, actual flags are unknown */
+#define CPU_FEATURE_PAE           0x00200000
+#define CPU_FEATURE_DAZ           0x00400000
+#define CPU_FEATURE_ARM_VFP_32    0x00000001
+#define CPU_FEATURE_ARM_NEON      0x00000002
+#define CPU_FEATURE_ARM_V8_CRC32  0x00000004
+#define CPU_FEATURE_ARM_V8_CRYPTO 0x00000008
 
 /* System Information Class 0x02 */
 

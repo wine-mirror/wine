@@ -1091,6 +1091,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 
         if(regs2[3] & (1 << 3 )) info->FeatureSet |= CPU_FEATURE_PSE;
         if(regs2[3] & (1 << 4 )) info->FeatureSet |= CPU_FEATURE_TSC;
+        if(regs2[3] & (1 << 6 )) info->FeatureSet |= CPU_FEATURE_PAE;
         if(regs2[3] & (1 << 8 )) info->FeatureSet |= CPU_FEATURE_CX8;
         if(regs2[3] & (1 << 11)) info->FeatureSet |= CPU_FEATURE_SEP;
         if(regs2[3] & (1 << 12)) info->FeatureSet |= CPU_FEATURE_MTRR;
@@ -1100,6 +1101,9 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
         if(regs2[3] & (1 << 24)) info->FeatureSet |= CPU_FEATURE_FXSR;
         if(regs2[3] & (1 << 25)) info->FeatureSet |= CPU_FEATURE_SSE;
         if(regs2[3] & (1 << 26)) info->FeatureSet |= CPU_FEATURE_SSE2;
+        if(regs2[2] & (1 << 0 )) info->FeatureSet |= CPU_FEATURE_SSE3;
+        if(regs2[2] & (1 << 13)) info->FeatureSet |= CPU_FEATURE_CX128;
+        if(regs2[2] & (1 << 27)) info->FeatureSet |= CPU_FEATURE_XSAVE;
 
         user_shared_data->ProcessorFeatures[PF_FLOATING_POINT_EMULATED]       = !(regs2[3] & 1);
         user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE]   = (regs2[3] >> 4) & 1;
@@ -1112,8 +1116,11 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
         user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]                 = (regs2[2] >> 27) & 1;
         user_shared_data->ProcessorFeatures[PF_COMPARE_EXCHANGE128]           = (regs2[2] >> 13) & 1;
 
-        if((regs2[3] & (1 << 26)) && (regs2[3] & (1 << 24))) /* has SSE2 and FXSAVE/FXRSTOR */
-            user_shared_data->ProcessorFeatures[PF_SSE_DAZ_MODE_AVAILABLE] = have_sse_daz_mode();
+        if((regs2[3] & (1 << 26)) && (regs2[3] & (1 << 24)) && have_sse_daz_mode()) /* has SSE2 and FXSAVE/FXRSTOR */
+        {
+            info->FeatureSet |= CPU_FEATURE_DAZ;
+            user_shared_data->ProcessorFeatures[PF_SSE_DAZ_MODE_AVAILABLE] = TRUE;
+        }
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
@@ -1134,7 +1141,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
                 user_shared_data->ProcessorFeatures[PF_NX_ENABLED]                   = (regs2[3] >> 20) & 1;
                 user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] >> 31) & 1;
                 user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] >> 27) & 1;
-                if (regs2[3] >> 31) info->FeatureSet |= CPU_FEATURE_3DNOW;
+                if (regs2[2] & (1 << 2))   info->FeatureSet |= CPU_FEATURE_VIRT;
+                if (regs2[3] & (1 << 20))  info->FeatureSet |= CPU_FEATURE_NX;
+                if (regs2[3] & (1 << 27))  info->FeatureSet |= CPU_FEATURE_TSC;
+                if (regs2[3] & (1u << 31)) info->FeatureSet |= CPU_FEATURE_3DNOW;
             }
         }
         else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
@@ -1147,6 +1157,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             info->Revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
             info->Revision |= regs2[0] & 0xf;                 /* stepping       */
 
+            if(regs2[2] & (1 << 5))  info->FeatureSet |= CPU_FEATURE_VIRT;
             if(regs2[3] & (1 << 21)) info->FeatureSet |= CPU_FEATURE_DS;
             user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED] = (regs2[2] >> 5) & 1;
 
@@ -1156,6 +1167,8 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
                 do_cpuid(0x80000001, regs2);  /* get vendor features */
                 user_shared_data->ProcessorFeatures[PF_NX_ENABLED] = (regs2[3] >> 20) & 1;
                 user_shared_data->ProcessorFeatures[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] >> 27) & 1;
+                if (regs2[3] & (1 << 20))  info->FeatureSet |= CPU_FEATURE_NX;
+                if (regs2[3] & (1 << 27))  info->FeatureSet |= CPU_FEATURE_TSC;
             }
         }
         else
@@ -1248,9 +1261,15 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             if (!_stricmp(line, "features"))
             {
                 if (strstr(value, "vfpv3"))
+                {
+                    info->FeatureSet |= CPU_FEATURE_ARM_VFP_32;
                     user_shared_data->ProcessorFeatures[PF_ARM_VFP_32_REGISTERS_AVAILABLE] = TRUE;
+                }
                 if (strstr(value, "neon"))
+                {
+                    info->FeatureSet |= CPU_FEATURE_ARM_NEON;
                     user_shared_data->ProcessorFeatures[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
+                }
                 continue;
             }
         }
@@ -1268,7 +1287,10 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
 
     valsize = sizeof(value);
     if (!sysctlbyname("hw.floatingpoint", &value, &valsize, NULL, 0))
+    {
+        info->FeatureSet |= CPU_FEATURE_ARM_VFP_32;
         user_shared_data->ProcessorFeatures[PF_ARM_VFP_32_REGISTERS_AVAILABLE] = value;
+    }
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
@@ -1316,9 +1338,15 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
             if (!_stricmp(line, "Features"))
             {
                 if (strstr(value, "crc32"))
+                {
+                    info->FeatureSet |= CPU_FEATURE_ARM_V8_CRC32;
                     user_shared_data->ProcessorFeatures[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE] = TRUE;
+                }
                 if (strstr(value, "aes"))
+                {
+                    info->FeatureSet |= CPU_FEATURE_ARM_V8_CRYPTO;
                     user_shared_data->ProcessorFeatures[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = TRUE;
+                }
                 continue;
             }
         }
