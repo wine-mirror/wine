@@ -300,6 +300,8 @@ extern void factory_unlock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
 extern HRESULT create_inmemory_fileloader(IDWriteFontFileLoader**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
         IDWriteFontResource **resource) DECLSPEC_HIDDEN;
+extern HRESULT fontface_get_glyphs(struct dwrite_fontface *fontface, UINT32 const *codepoints,
+        UINT32 count, UINT16 *glyphs);
 
 struct dwrite_fontface;
 
@@ -378,7 +380,6 @@ extern unsigned int opentype_get_gasp_flags(const struct dwrite_fonttable *gasp,
 
 /* BiDi helpers */
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
-extern WCHAR bidi_get_mirrored_char(WCHAR) DECLSPEC_HIDDEN;
 
 /* FreeType integration */
 struct dwrite_glyphbitmap
@@ -487,7 +488,9 @@ struct scriptshaping_context
         {
             UINT16 *glyphs;
             DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            UINT16 *clustermap;
             unsigned int max_glyph_count;
+            const WCHAR *digits;
         } subst;
     } u;
 
@@ -512,6 +515,8 @@ struct shaping_font_ops
     void (*grab_font_table)(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context);
     void (*release_font_table)(void *context, void *data_context);
     UINT16 (*get_font_upem)(void *context);
+    BOOL (*has_glyph)(void *context, unsigned int codepoint);
+    UINT16 (*get_glyph)(void *context, unsigned int codepoint);
 };
 
 extern struct scriptshaping_cache *create_scriptshaping_cache(void *context,

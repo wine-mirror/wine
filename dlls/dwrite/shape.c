@@ -362,8 +362,7 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
         DWRITE_MAKE_OPENTYPE_TAG('l','i','g','a'),
         DWRITE_MAKE_OPENTYPE_TAG('r','c','l','t'),
     };
-    struct scriptshaping_cache *cache = context->cache;
-    unsigned int script_index, language_index, script;
+    unsigned int script_index, language_index;
     struct shaping_features features = { 0 };
     unsigned int i;
 
@@ -396,13 +395,8 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
     shape_merge_features(context, &features);
 
     /* Resolve script tag to actually supported script. */
-    if (cache->gsub.table.data)
-    {
-        if ((script = shape_get_script_lang_index(context, scripts, MS_GSUB_TAG, &script_index, &language_index)))
-        {
-            opentype_layout_apply_gsub_features(context, script_index, language_index, &features);
-        }
-    }
+    shape_get_script_lang_index(context, scripts, MS_GSUB_TAG, &script_index, &language_index);
+    opentype_layout_apply_gsub_features(context, script_index, language_index, &features);
 
     heap_free(features.features);
 

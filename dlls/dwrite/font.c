@@ -272,11 +272,29 @@ static UINT16 dwrite_get_font_upem(void *context)
     return fontface->metrics.designUnitsPerEm;
 }
 
+static BOOL dwrite_has_glyph(void *context, unsigned int codepoint)
+{
+    struct dwrite_fontface *fontface = context;
+    UINT16 index = 0;
+    fontface_get_glyphs(fontface, &codepoint, 1, &index);
+    return !!index;
+}
+
+static UINT16 dwrite_get_glyph(void *context, unsigned int codepoint)
+{
+    struct dwrite_fontface *fontface = context;
+    UINT16 index = 0;
+    fontface_get_glyphs(fontface, &codepoint, 1, &index);
+    return index;
+}
+
 static const struct shaping_font_ops dwrite_font_ops =
 {
     dwrite_grab_font_table,
     dwrite_release_font_table,
     dwrite_get_font_upem,
+    dwrite_has_glyph,
+    dwrite_get_glyph,
 };
 
 struct scriptshaping_cache *fontface_get_shaping_cache(struct dwrite_fontface *fontface)
@@ -714,17 +732,9 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *ifa
     return S_OK;
 }
 
-static HRESULT fontface_get_glyphs(struct dwrite_fontface *fontface, UINT32 const *codepoints,
+HRESULT fontface_get_glyphs(struct dwrite_fontface *fontface, UINT32 const *codepoints,
         UINT32 count, UINT16 *glyphs)
 {
-    if (!glyphs)
-        return E_INVALIDARG;
-
-    if (!codepoints) {
-        memset(glyphs, 0, count * sizeof(*glyphs));
-        return E_INVALIDARG;
-    }
-
     freetype_get_glyphs(&fontface->IDWriteFontFace5_iface, fontface->charmap, codepoints, count, glyphs);
     return S_OK;
 }
@@ -735,6 +745,15 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace5 *iface, UI
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
 
     TRACE("%p, %p, %u, %p.\n", iface, codepoints, count, glyphs);
+
+    if (!glyphs)
+        return E_INVALIDARG;
+
+    if (!codepoints)
+    {
+        memset(glyphs, 0, count * sizeof(*glyphs));
+        return E_INVALIDARG;
+    }
 
     return fontface_get_glyphs(fontface, codepoints, count, glyphs);
 }
@@ -1390,8 +1409,7 @@ static BOOL WINAPI dwritefontface3_HasCharacter(IDWriteFontFace5 *iface, UINT32 
     TRACE("%p, %#x.\n", iface, ch);
 
     index = 0;
-    if (FAILED(fontface_get_glyphs(fontface, &ch, 1, &index)))
-        return FALSE;
+    fontface_get_glyphs(fontface, &ch, 1, &index);
 
     return index != 0;
 }

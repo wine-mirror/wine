@@ -280,16 +280,6 @@ static inline struct dwrite_fontfallback_builder *impl_from_IDWriteFontFallbackB
     return CONTAINING_RECORD(iface, struct dwrite_fontfallback_builder, IDWriteFontFallbackBuilder_iface);
 }
 
-static inline UINT32 decode_surrogate_pair(const WCHAR *str, UINT32 index, UINT32 end)
-{
-    if (index < end-1 && IS_SURROGATE_PAIR(str[index], str[index+1])) {
-        UINT32 ch = 0x10000 + ((str[index] - 0xd800) << 10) + (str[index+1] - 0xdc00);
-        TRACE("surrogate pair (%x %x) => %x\n", str[index], str[index+1], ch);
-        return ch;
-    }
-    return 0;
-}
-
 static inline UINT16 get_char_script(WCHAR c)
 {
     UINT16 script = get_table_entry(wine_scripts_table, c);
@@ -1059,15 +1049,17 @@ static UINT32 get_opentype_language(const WCHAR *locale)
     return language;
 }
 
-static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSubstitution *substitution, WCHAR *digits)
+static void get_number_substitutes(IDWriteNumberSubstitution *substitution, BOOL is_rtl, WCHAR *digits)
 {
     struct dwrite_numbersubstitution *numbersubst = unsafe_impl_from_IDWriteNumberSubstitution(substitution);
     DWRITE_NUMBER_SUBSTITUTION_METHOD method;
     WCHAR isolang[9];
     DWORD lctype;
 
+    digits[0] = 0;
+
     if (!numbersubst)
-        return DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE;
+        return;
 
     lctype = numbersubst->ignore_user_override ? LOCALE_NOUSEROVERRIDE : 0;
 
@@ -1096,7 +1088,6 @@ static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSub
     else
         method = numbersubst->method;
 
-    digits[0] = 0;
     switch (method)
     {
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_NATIONAL:
@@ -1125,7 +1116,8 @@ static DWRITE_NUMBER_SUBSTITUTION_METHOD get_number_substitutes(IDWriteNumberSub
         method = DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE;
     }
 
-    return method;
+    if ((method == DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL && !is_rtl) || method == DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE)
+        digits[0] = 0;
 }
 
 static void analyzer_dump_user_features(DWRITE_TYPOGRAPHIC_FEATURES const **features,
@@ -1153,14 +1145,11 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     DWRITE_SHAPING_GLYPH_PROPERTIES* glyph_props, UINT32* actual_glyph_count)
 {
     const struct dwritescript_properties *scriptprops;
-    DWRITE_NUMBER_SUBSTITUTION_METHOD method;
-    struct scriptshaping_context context;
+    struct scriptshaping_context context = { 0 };
     struct dwrite_fontface *font_obj;
     WCHAR digits[NATIVE_DIGITS_LEN];
-    unsigned int i, g, script;
-    BOOL update_cluster;
-    WCHAR *string;
-    HRESULT hr = S_OK;
+    unsigned int script;
+    HRESULT hr;
 
     TRACE("(%s:%u %p %d %d %s %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
         length, fontface, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), substitution,
@@ -1172,77 +1161,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     if (max_glyph_count < length)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    string = heap_calloc(length, sizeof(*string));
-    if (!string)
-        return E_OUTOFMEMORY;
-
-    method = get_number_substitutes(substitution, digits);
+    get_number_substitutes(substitution, is_rtl, digits);
 
     /* FIXME: have the shaping engine set this */
     memset(text_props, 0, length * sizeof(*text_props));
-
-    for (i = 0; i < length; i++) {
-        /* FIXME: set to better values */
-        glyph_props[i].justification = text[i] == ' ' ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
-        glyph_props[i].isClusterStart = 1;
-        glyph_props[i].isDiacritic = 0;
-        glyph_props[i].isZeroWidthSpace = 0;
-        glyph_props[i].reserved = 0;
-
-        clustermap[i] = i;
-
-        string[i] = text[i];
-        switch (method)
-        {
-        case DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL:
-            if (!is_rtl)
-                break;
-            /* fallthrough */
-        default:
-            if (string[i] >= '0' && string[i] <= '9')
-                string[i] = digits[string[i] - '0'];
-            break;
-        case DWRITE_NUMBER_SUBSTITUTION_METHOD_NONE:
-            ;
-        }
-    }
-
-    for (; i < max_glyph_count; i++) {
-        glyph_props[i].justification = SCRIPT_JUSTIFY_NONE;
-        glyph_props[i].isClusterStart = 0;
-        glyph_props[i].isDiacritic = 0;
-        glyph_props[i].isZeroWidthSpace = 0;
-        glyph_props[i].reserved = 0;
-    }
-
-    for (i = 0, g = 0, update_cluster = FALSE; i < length; i++) {
-        UINT32 codepoint;
-
-        if (!update_cluster) {
-            codepoint = decode_surrogate_pair(string, i, length);
-            if (!codepoint)
-                codepoint = is_rtl ? bidi_get_mirrored_char(string[i]) : string[i];
-            else
-                update_cluster = TRUE;
-
-            hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, &glyphs[g]);
-            if (FAILED(hr))
-                goto done;
-
-            g++;
-        }
-        else {
-            INT32 k;
-
-            update_cluster = FALSE;
-            /* mark surrogate halves with same cluster */
-            clustermap[i] = clustermap[i-1];
-            /* update following clusters */
-            for (k = i + 1; k >= 0 && k < length; k++)
-                clustermap[k]--;
-        }
-    }
-    *actual_glyph_count = g;
 
     font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
 
@@ -1253,8 +1175,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.is_sideways = is_sideways;
     context.u.subst.glyphs = glyphs;
     context.u.subst.glyph_props = glyph_props;
+    context.u.subst.clustermap = clustermap;
     context.u.subst.max_glyph_count = max_glyph_count;
-    context.glyph_count = g;
+    context.u.subst.digits = digits;
     context.language_tag = get_opentype_language(locale);
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
@@ -1265,12 +1188,13 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     scriptprops = &dwritescripts_properties[script];
     hr = shape_get_glyphs(&context, scriptprops->scripttags);
     if (SUCCEEDED(hr))
+    {
+        *actual_glyph_count = context.glyph_count;
         hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyphs, *actual_glyph_count,
                 text_props, glyph_props);
+    }
 
-done:
     heap_free(context.glyph_infos);
-    heap_free(string);
 
     return hr;
 }

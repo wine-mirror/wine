@@ -4187,6 +4187,9 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     unsigned int global_bit_mask = 1;
     UINT16 feature_index;
 
+    if (!table->table.data)
+        return;
+
     /* ScriptTable offset. */
     table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
             script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
@@ -4329,7 +4332,7 @@ static unsigned int shaping_features_get_mask(const struct shaping_features *fea
     if (!feature || feature->index == 0xffff)
         return 0;
 
-    *shift = feature->shift;
+    if (shift) *shift = feature->shift;
     return feature->mask;
 }
 
@@ -4671,6 +4674,67 @@ static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
     }
 }
 
+static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
+{
+    extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
+    WCHAR mirror;
+    /* TODO: check if mirroring for higher planes makes sense at all */
+    if (codepoint > 0xffff) return codepoint;
+    mirror = get_table_entry(wine_mirror_map, codepoint);
+    return mirror ? mirror : codepoint;
+}
+
+static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, const struct shaping_features *features)
+{
+    unsigned int rtlm_mask = shaping_features_get_mask(features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','m'), NULL);
+    const struct shaping_font_ops *font = context->cache->font;
+    UINT16 *clustermap = context->u.subst.clustermap;
+    const WCHAR *text = context->text;
+    unsigned int i, g, c, codepoint;
+    BOOL bmp;
+
+    memset(context->u.subst.glyph_props, 0, context->u.subst.max_glyph_count * sizeof(*context->u.subst.glyph_props));
+
+    for (i = 0; i < context->length; ++i)
+    {
+        g = context->glyph_count;
+
+        if ((bmp = !(IS_HIGH_SURROGATE(text[i]) && (i < context->length - 1) && IS_LOW_SURROGATE(text[i + 1]))))
+        {
+            codepoint = text[i];
+        }
+        else
+        {
+            codepoint = 0x10000 + ((text[i] - 0xd800) << 10) + (text[i + 1] - 0xdc00);
+        }
+
+        if (context->is_rtl)
+        {
+            c = unicode_get_mirrored_char(codepoint);
+            if (c != codepoint && font->has_glyph(context->cache->context, c))
+                codepoint = c;
+            else
+                context->glyph_infos[i].mask |= rtlm_mask;
+        }
+
+        /* TODO: should this check for glyph availability? */
+        if (*context->u.subst.digits && codepoint >= '0' && codepoint <= '9')
+            codepoint = context->u.subst.digits[codepoint - '0'];
+
+        context->u.subst.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
+        context->u.subst.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
+        context->u.subst.glyph_props[g].isClusterStart = 1;
+        context->glyph_count++;
+
+        clustermap[i] = i;
+        if (!bmp)
+        {
+            clustermap[i + 1] = i;
+            ++i;
+        }
+    }
+}
+
 HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features)
 {
@@ -4679,6 +4743,7 @@ HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *contex
 
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gsub, &lookups);
 
+    opentype_get_nominal_glyphs(context, features);
     opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
