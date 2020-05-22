@@ -61,6 +61,7 @@ struct topology_node
     MF_TOPOLOGY_TYPE node_type;
     TOPOID id;
     IUnknown *object;
+    IMFMediaType *input_type; /* Only for tee nodes. */
     struct node_streams inputs;
     struct node_streams outputs;
     CRITICAL_SECTION cs;
@@ -950,6 +951,8 @@ static ULONG WINAPI topology_node_Release(IMFTopologyNode *iface)
     {
         if (node->object)
             IUnknown_Release(node->object);
+        if (node->input_type)
+            IMFMediaType_Release(node->input_type);
         for (i = 0; i < node->inputs.count; ++i)
         {
             if (node->inputs.streams[i].preferred_type)
@@ -1361,14 +1364,7 @@ static HRESULT WINAPI topology_node_GetInputCount(IMFTopologyNode *iface, DWORD 
 
     TRACE("%p, %p.\n", iface, count);
 
-    switch (node->node_type)
-    {
-        case MF_TOPOLOGY_TEE_NODE:
-            *count = 0;
-            break;
-        default:
-            *count = node->inputs.count;
-    }
+    *count = node->inputs.count;
 
     return S_OK;
 }
@@ -1382,6 +1378,15 @@ static HRESULT WINAPI topology_node_GetOutputCount(IMFTopologyNode *iface, DWORD
     *count = node->outputs.count;
 
     return S_OK;
+}
+
+static void topology_node_set_stream_type(struct node_stream *stream, IMFMediaType *mediatype)
+{
+    if (stream->preferred_type)
+        IMFMediaType_Release(stream->preferred_type);
+    stream->preferred_type = mediatype;
+    if (stream->preferred_type)
+        IMFMediaType_AddRef(stream->preferred_type);
 }
 
 static HRESULT topology_node_connect_output(struct topology_node *node, DWORD output_index,
@@ -1406,7 +1411,16 @@ static HRESULT topology_node_connect_output(struct topology_node *node, DWORD ou
 
     hr = topology_node_reserve_streams(&node->outputs, output_index);
     if (SUCCEEDED(hr))
+    {
+        size_t old_count = connection->inputs.count;
         hr = topology_node_reserve_streams(&connection->inputs, input_index);
+        if (SUCCEEDED(hr) && !old_count && connection->input_type)
+        {
+            topology_node_set_stream_type(connection->inputs.streams, connection->input_type);
+            IMFMediaType_Release(connection->input_type);
+            connection->input_type = NULL;
+        }
+    }
 
     if (SUCCEEDED(hr))
     {
@@ -1524,13 +1538,7 @@ static HRESULT WINAPI topology_node_SetOutputPrefType(IMFTopologyNode *iface, DW
     if (node->node_type != MF_TOPOLOGY_OUTPUT_NODE)
     {
         if (SUCCEEDED(hr = topology_node_reserve_streams(&node->outputs, index)))
-        {
-            if (node->outputs.streams[index].preferred_type)
-                IMFMediaType_Release(node->outputs.streams[index].preferred_type);
-            node->outputs.streams[index].preferred_type = mediatype;
-            if (node->outputs.streams[index].preferred_type)
-                IMFMediaType_AddRef(node->outputs.streams[index].preferred_type);
-        }
+            topology_node_set_stream_type(&node->outputs.streams[index], mediatype);
     }
     else
         hr = E_NOTIMPL;
@@ -1538,6 +1546,18 @@ static HRESULT WINAPI topology_node_SetOutputPrefType(IMFTopologyNode *iface, DW
     LeaveCriticalSection(&node->cs);
 
     return hr;
+}
+
+static HRESULT topology_node_get_pref_type(struct node_streams *streams, unsigned int index, IMFMediaType **mediatype)
+{
+    *mediatype = streams->streams[index].preferred_type;
+    if (*mediatype)
+    {
+        IMFMediaType_AddRef(*mediatype);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI topology_node_GetOutputPrefType(IMFTopologyNode *iface, DWORD index, IMFMediaType **mediatype)
@@ -1550,13 +1570,7 @@ static HRESULT WINAPI topology_node_GetOutputPrefType(IMFTopologyNode *iface, DW
     EnterCriticalSection(&node->cs);
 
     if (index < node->outputs.count)
-    {
-        *mediatype = node->outputs.streams[index].preferred_type;
-        if (*mediatype)
-            IMFMediaType_AddRef(*mediatype);
-        else
-            hr = E_FAIL;
-    }
+        hr = topology_node_get_pref_type(&node->outputs, index, mediatype);
     else
         hr = E_INVALIDARG;
 
@@ -1574,25 +1588,40 @@ static HRESULT WINAPI topology_node_SetInputPrefType(IMFTopologyNode *iface, DWO
 
     EnterCriticalSection(&node->cs);
 
-    if (node->node_type != MF_TOPOLOGY_SOURCESTREAM_NODE && !(index > 0 && node->node_type == MF_TOPOLOGY_TEE_NODE))
+    switch (node->node_type)
     {
-        if (SUCCEEDED(hr = topology_node_reserve_streams(&node->inputs, index)))
-        {
-            if (index >= node->inputs.count)
+        case MF_TOPOLOGY_TEE_NODE:
+            if (index)
             {
-                memset(&node->inputs.streams[node->inputs.count], 0,
-                        (index - node->inputs.count + 1) * sizeof(*node->inputs.streams));
-                node->inputs.count = index + 1;
+                hr = MF_E_INVALIDTYPE;
+                break;
             }
-            if (node->inputs.streams[index].preferred_type)
-                IMFMediaType_Release(node->inputs.streams[index].preferred_type);
-            node->inputs.streams[index].preferred_type = mediatype;
-            if (node->inputs.streams[index].preferred_type)
-                IMFMediaType_AddRef(node->inputs.streams[index].preferred_type);
-        }
+            if (node->inputs.count)
+                topology_node_set_stream_type(&node->inputs.streams[index], mediatype);
+            else
+            {
+                if (node->input_type)
+                    IMFMediaType_Release(node->input_type);
+                node->input_type = mediatype;
+                if (node->input_type)
+                    IMFMediaType_AddRef(node->input_type);
+            }
+            break;
+        case MF_TOPOLOGY_SOURCESTREAM_NODE:
+            hr = E_NOTIMPL;
+            break;
+        default:
+            if (SUCCEEDED(hr = topology_node_reserve_streams(&node->inputs, index)))
+            {
+                if (index >= node->inputs.count)
+                {
+                    memset(&node->inputs.streams[node->inputs.count], 0,
+                            (index - node->inputs.count + 1) * sizeof(*node->inputs.streams));
+                    node->inputs.count = index + 1;
+                }
+                topology_node_set_stream_type(&node->inputs.streams[index], mediatype);
+            }
     }
-    else
-        hr = node->node_type == MF_TOPOLOGY_TEE_NODE ? MF_E_INVALIDTYPE : E_NOTIMPL;
 
     LeaveCriticalSection(&node->cs);
 
@@ -1610,11 +1639,12 @@ static HRESULT WINAPI topology_node_GetInputPrefType(IMFTopologyNode *iface, DWO
 
     if (index < node->inputs.count)
     {
-        *mediatype = node->inputs.streams[index].preferred_type;
-        if (*mediatype)
-            IMFMediaType_AddRef(*mediatype);
-        else
-            hr = E_FAIL;
+        hr = topology_node_get_pref_type(&node->inputs, index, mediatype);
+    }
+    else if (node->node_type == MF_TOPOLOGY_TEE_NODE && node->input_type)
+    {
+        *mediatype = node->input_type;
+        IMFMediaType_AddRef(*mediatype);
     }
     else
         hr = E_INVALIDARG;

@@ -114,11 +114,11 @@ static const IUnknownVtbl test_unk_vtbl =
 
 static void test_topology(void)
 {
+    IMFMediaType *mediatype, *mediatype2, *mediatype3;
     IMFCollection *collection, *collection2;
     IUnknown test_unk2 = { &test_unk_vtbl };
     IUnknown test_unk = { &test_unk_vtbl };
     IMFTopologyNode *node, *node2, *node3;
-    IMFMediaType *mediatype, *mediatype2;
     IMFTopology *topology, *topology2;
     MF_TOPOLOGY_TYPE node_type;
     UINT32 count, index;
@@ -516,6 +516,9 @@ static void test_topology(void)
     ok(mediatype2 == mediatype, "Unexpected mediatype instance.\n");
     IMFMediaType_Release(mediatype2);
 
+    hr = IMFTopologyNode_GetOutputPrefType(node, 0, &mediatype2);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = IMFTopologyNode_GetInputCount(node, &count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
     ok(count == 0, "Unexpected count %u.\n", count);
@@ -528,6 +531,23 @@ static void test_topology(void)
 
     hr = IMFTopologyNode_SetOutputPrefType(node, 4, mediatype);
     ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputPrefType(node, 0, &mediatype2);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&mediatype2);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    /* Changing output type does not change input type. */
+    hr = IMFTopologyNode_SetOutputPrefType(node, 4, mediatype2);
+    ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetInputPrefType(node, 0, &mediatype3);
+    ok(hr == S_OK, "Failed to get preferred type, hr %#x.\n", hr);
+    ok(mediatype3 == mediatype, "Unexpected mediatype instance.\n");
+    IMFMediaType_Release(mediatype3);
+
+    IMFMediaType_Release(mediatype2);
 
     hr = IMFTopologyNode_GetInputCount(node, &count);
     ok(hr == S_OK, "Failed to get output count, hr %#x.\n", hr);
@@ -545,6 +565,10 @@ static void test_topology(void)
 
     hr = IMFTopologyNode_SetInputPrefType(node, 3, mediatype);
     ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetInputCount(node, &count);
+    ok(hr == S_OK, "Failed to get input count, hr %#x.\n", hr);
+    ok(count == 4, "Unexpected count %u.\n", count);
 
     hr = IMFTopologyNode_SetOutputPrefType(node, 4, mediatype);
     ok(hr == S_OK, "Failed to set preferred type, hr %#x.\n", hr);
@@ -797,6 +821,70 @@ static void test_topology(void)
     ok(node_count == 1, "Unexpected node count.\n");
 
     IMFTopology_Release(topology2);
+    IMFTopology_Release(topology);
+}
+
+static void test_topology_tee_node(void)
+{
+    IMFTopologyNode *src_node, *tee_node;
+    IMFMediaType *mediatype, *mediatype2;
+    IMFTopology *topology;
+    unsigned int count;
+    HRESULT hr;
+
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Failed to create topology, hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &tee_node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetInputPrefType(tee_node, 0, mediatype);
+    ok(hr == S_OK, "Failed to set type, hr %#x.\n", hr);
+
+    /* Even though tee node has only one input and source has only one output,
+       it's possible to connect to higher inputs/outputs. */
+
+    /* SRC(0) -> TEE(0) */
+    hr = IMFTopologyNode_ConnectOutput(src_node, 0, tee_node, 0);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetInputCount(tee_node, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IMFTopologyNode_GetInputPrefType(tee_node, 0, &mediatype2);
+    ok(hr == S_OK, "Failed to get type, hr %#x.\n", hr);
+    ok(mediatype2 == mediatype, "Unexpected type.\n");
+    IMFMediaType_Release(mediatype2);
+
+    /* SRC(0) -> TEE(1) */
+    hr = IMFTopologyNode_ConnectOutput(src_node, 0, tee_node, 1);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetInputCount(tee_node, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+
+    hr = IMFTopologyNode_SetInputPrefType(tee_node, 1, mediatype);
+    ok(hr == MF_E_INVALIDTYPE, "Unexpected hr %#x.\n", hr);
+
+    /* SRC(1) -> TEE(1) */
+    hr = IMFTopologyNode_ConnectOutput(src_node, 1, tee_node, 1);
+    ok(hr == S_OK, "Failed to connect nodes, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetOutputCount(src_node, &count);
+    ok(hr == S_OK, "Failed to get count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+
+    IMFMediaType_Release(mediatype);
+    IMFTopologyNode_Release(src_node);
+    IMFTopologyNode_Release(tee_node);
     IMFTopology_Release(topology);
 }
 
@@ -3725,6 +3813,7 @@ static void test_MFGetTopoNodeCurrentType(void)
 START_TEST(mf)
 {
     test_topology();
+    test_topology_tee_node();
     test_topology_loader();
     test_MFGetService();
     test_sequencer_source();
