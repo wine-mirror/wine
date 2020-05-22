@@ -3298,7 +3298,8 @@ static void set_int_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_pt
 
 static void set_float_reg( CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr, int reg, M128A *val )
 {
-    *(&context->u.s.Xmm0 + reg) = *val;
+    /* Use a memcpy() to avoid issues if val is misaligned. */
+    memcpy(&context->u.s.Xmm0 + reg, val, sizeof(*val));
     if (ctx_ptr) ctx_ptr->u.FloatingContext[reg] = val;
 }
 
