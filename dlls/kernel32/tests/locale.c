@@ -93,6 +93,9 @@ static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
 static void (WINAPI *pRtlInitCodePageTable)(USHORT*,CPTABLEINFO*);
 static NTSTATUS (WINAPI *pRtlCustomCPToUnicodeN)(CPTABLEINFO*,WCHAR*,DWORD,DWORD*,const char*,DWORD);
+static NTSTATUS (WINAPI *pRtlGetSystemPreferredUILanguages)(DWORD,ULONG,ULONG*,WCHAR*,ULONG*);
+static NTSTATUS (WINAPI *pRtlGetThreadPreferredUILanguages)(DWORD,ULONG*,WCHAR*,ULONG*);
+static NTSTATUS (WINAPI *pRtlGetUserPreferredUILanguages)(DWORD,ULONG,ULONG*,WCHAR*,ULONG*);
 
 static void InitFunctionPointers(void)
 {
@@ -140,6 +143,9 @@ static void InitFunctionPointers(void)
   X(NtGetNlsSectionPtr);
   X(RtlInitCodePageTable);
   X(RtlCustomCPToUnicodeN);
+  X(RtlGetSystemPreferredUILanguages);
+  X(RtlGetThreadPreferredUILanguages);
+  X(RtlGetUserPreferredUILanguages);
 #undef X
 }
 
@@ -5328,9 +5334,9 @@ static void test_invariant(void)
 static void test_GetSystemPreferredUILanguages(void)
 {
     BOOL ret;
+    NTSTATUS status;
     ULONG count, size, size_id, size_name, size_buffer;
     WCHAR *buffer;
-
 
     if (!pGetSystemPreferredUILanguages)
     {
@@ -5482,12 +5488,45 @@ static void test_GetSystemPreferredUILanguages(void)
            "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
            buffer[size -2], buffer[size -1]);
 
+    /* ntdll version is the same, but apparently takes an extra second parameter */
+    count = 0;
+    size = size_buffer;
+    memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
+    status = pRtlGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, 0, &count, buffer, &size);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size % 5 == 1, "Expected size (%d) %% 5 == 1\n", size);
+    if (ret && size % 5 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0;
+    size = size_buffer;
+    status = pRtlGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, 0, &count, buffer, &size);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 5 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0;
+    size = 0;
+    status = pRtlGetSystemPreferredUILanguages(MUI_MACHINE_LANGUAGE_SETTINGS, 0, &count, NULL, &size);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 6 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
-todo_wine
     ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
-todo_wine
     ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     ok(size == size_id, "expected %u, got %u\n", size_id, size);
@@ -5524,6 +5563,7 @@ todo_wine
 static void test_GetThreadPreferredUILanguages(void)
 {
     BOOL ret;
+    NTSTATUS status;
     ULONG count, size, size_id;
     WCHAR *buf;
 
@@ -5552,12 +5592,18 @@ static void test_GetThreadPreferredUILanguages(void)
     ok(size_id, "expected size > 0\n");
     ok(size_id <= size, "expected size > 0\n");
 
+    /* ntdll function is the same */
+    size_id = count = 0;
+    status = pRtlGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
+    ok(!status, "got %x\n", status);
+    ok(count, "expected count > 0\n");
+    ok(size_id, "expected size > 0\n");
+    ok(size_id <= size, "expected size > 0\n");
+
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetThreadPreferredUILanguages(MUI_LANGUAGE_ID, &count, buf, &size);
-todo_wine
     ok(!ret, "Expected GetThreadPreferredUILanguages to fail\n");
-todo_wine
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
     ok(size == size_id, "expected %u, got %u\n", size_id, size);
@@ -5593,6 +5639,7 @@ todo_wine
 static void test_GetUserPreferredUILanguages(void)
 {
     BOOL ret;
+    NTSTATUS status;
     ULONG count, size, size_id, size_name, size_buffer;
     WCHAR *buffer;
 
@@ -5652,6 +5699,15 @@ static void test_GetUserPreferredUILanguages(void)
         skip("No valid buffer size\n");
         return;
     }
+
+    /* ntdll version is the same, but apparently takes an extra second parameter */
+    count = 0;
+    size_id = 0;
+    SetLastError(0xdeadbeef);
+    status = pRtlGetUserPreferredUILanguages(MUI_LANGUAGE_ID, 0, &count, NULL, &size_id);
+    ok(!status, "got %x\n", status);
+    ok(count, "Expected count > 0\n");
+    ok(size_id  % 5 == 1, "Expected size (%d) %% 5 == 1\n", size_id);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size_buffer * sizeof(WCHAR));
 

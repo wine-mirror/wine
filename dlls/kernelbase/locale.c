@@ -4542,6 +4542,16 @@ UINT WINAPI GetOEMCP(void)
 
 
 /***********************************************************************
+ *      GetProcessPreferredUILanguages   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetProcessPreferredUILanguages( DWORD flags, ULONG *count,
+                                                              WCHAR *buffer, ULONG *size )
+{
+    return set_ntstatus( RtlGetProcessPreferredUILanguages( flags, count, buffer, size ));
+}
+
+
+/***********************************************************************
  *	GetStringTypeA   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetStringTypeA( LCID locale, DWORD type, const char *src, int count,
@@ -4643,6 +4653,26 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetSystemDefaultUILanguage(void)
     LANGID lang;
     NtQueryInstallUILanguage( &lang );
     return lang;
+}
+
+
+/***********************************************************************
+ *      GetSystemPreferredUILanguages   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetSystemPreferredUILanguages( DWORD flags, ULONG *count,
+                                                             WCHAR *buffer, ULONG *size )
+{
+    return set_ntstatus( RtlGetSystemPreferredUILanguages( flags, 0, count, buffer, size ));
+}
+
+
+/***********************************************************************
+ *      GetThreadPreferredUILanguages   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetThreadPreferredUILanguages( DWORD flags, ULONG *count,
+                                                             WCHAR *buffer, ULONG *size )
+{
+    return set_ntstatus( RtlGetThreadPreferredUILanguages( flags, count, buffer, size ));
 }
 
 
@@ -4805,6 +4835,16 @@ GEOID WINAPI DECLSPEC_HOTPATCH GetUserGeoID( GEOCLASS geoclass )
         RegCloseKey( hkey );
     }
     return ret;
+}
+
+
+/******************************************************************************
+ *      GetUserPreferredUILanguages   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetUserPreferredUILanguages( DWORD flags, ULONG *count,
+                                                           WCHAR *buffer, ULONG *size )
+{
+    return set_ntstatus( RtlGetUserPreferredUILanguages( flags, 0, count, buffer, size ));
 }
 
 
@@ -5581,6 +5621,24 @@ INT WINAPI /* DECLSPEC_HOTPATCH */ SetCalendarInfoW( LCID lcid, CALID calendar, 
 {
     FIXME( "(%08x,%08x,%08x,%s): stub\n", lcid, calendar, type, debugstr_w(data) );
     return 0;
+}
+
+
+/***********************************************************************
+ *      SetProcessPreferredUILanguages   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetProcessPreferredUILanguages( DWORD flags, PCZZWSTR buffer, ULONG *count )
+{
+    return set_ntstatus( RtlSetProcessPreferredUILanguages( flags, buffer, count ));
+}
+
+
+/***********************************************************************
+ *      SetThreadPreferredUILanguages   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetThreadPreferredUILanguages( DWORD flags, PCZZWSTR buffer, ULONG *count )
+{
+    return set_ntstatus( RtlSetThreadPreferredUILanguages( flags, buffer, count ));
 }
 
 

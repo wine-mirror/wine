@@ -1005,6 +1005,105 @@ NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
 }
 
 
+static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG *count,
+                                                 WCHAR *buffer, ULONG *size )
+{
+    WCHAR name[LOCALE_NAME_MAX_LENGTH + 2];
+    NTSTATUS status;
+    ULONG len;
+
+    FIXME("(0x%x %p %p %p) returning a dummy value (current locale)\n", flags, count, buffer, size);
+
+    status = load_string( (flags & MUI_LANGUAGE_ID) ? LOCALE_ILANGUAGE : LOCALE_SNAME,
+                          lang, name, ARRAY_SIZE(name) );
+    if (status) return status;
+
+    len = wcslen( name ) + 2;
+    name[len - 1] = 0;
+    if (buffer)
+    {
+        if (len > *size)
+        {
+            *size = len;
+            return STATUS_BUFFER_TOO_SMALL;
+        }
+        memcpy( buffer, name, len * sizeof(WCHAR) );
+    }
+    *size = len;
+    *count = 1;
+    TRACE("returned variable content: %d, \"%s\", %d\n", *count, debugstr_w(buffer), *size);
+    return STATUS_SUCCESS;
+
+}
+
+/**************************************************************************
+ *      RtlGetProcessPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetProcessPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
+{
+    FIXME( "%08x, %p, %p %p\n", flags, count, buffer, size );
+    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlGetSystemPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetSystemPreferredUILanguages( DWORD flags, ULONG unknown, ULONG *count,
+                                                  WCHAR *buffer, ULONG *size )
+{
+    if (flags & ~(MUI_LANGUAGE_NAME | MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS)) return STATUS_INVALID_PARAMETER;
+    if ((flags & MUI_LANGUAGE_NAME) && (flags & MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
+    if (*size && !buffer) return STATUS_INVALID_PARAMETER;
+
+    return get_dummy_preferred_ui_language( flags, system_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlGetThreadPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetThreadPreferredUILanguages( DWORD flags, ULONG *count, WCHAR *buffer, ULONG *size )
+{
+    FIXME( "%08x, %p, %p %p\n", flags, count, buffer, size );
+    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlGetUserPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetUserPreferredUILanguages( DWORD flags, ULONG unknown, ULONG *count,
+                                                WCHAR *buffer, ULONG *size )
+{
+    if (flags & ~(MUI_LANGUAGE_NAME | MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
+    if ((flags & MUI_LANGUAGE_NAME) && (flags & MUI_LANGUAGE_ID)) return STATUS_INVALID_PARAMETER;
+    if (*size && !buffer) return STATUS_INVALID_PARAMETER;
+
+    return get_dummy_preferred_ui_language( flags, user_ui_language, count, buffer, size );
+}
+
+
+/**************************************************************************
+ *      RtlSetProcessPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetProcessPreferredUILanguages( DWORD flags, PCZZWSTR buffer, ULONG *count )
+{
+    FIXME( "%u, %p, %p\n", flags, buffer, count );
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlSetThreadPreferredUILanguages   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlSetThreadPreferredUILanguages( DWORD flags, PCZZWSTR buffer, ULONG *count )
+{
+    FIXME( "%u, %p, %p\n", flags, buffer, count );
+    return STATUS_SUCCESS;
+}
+
+
 /**************************************************************************
  *      NtGetNlsSectionPtr   (NTDLL.@)
  */
