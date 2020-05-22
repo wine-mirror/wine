@@ -603,7 +603,8 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
                 (ULONG_PTR)rva_to_ptr(ci.handler, dispatch->ImageBase);
             catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
             catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
-            catch_record.ExceptionInformation[8] = (ULONG_PTR)rva_to_ptr(
+            if (ci.ret_addr)
+                catch_record.ExceptionInformation[8] = (ULONG_PTR)rva_to_ptr(
                     ci.ret_addr + dispatch->FunctionEntry->BeginAddress, dispatch->ImageBase);
             RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
         }
