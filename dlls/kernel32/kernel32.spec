@@ -835,7 +835,7 @@
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
 @ stdcall -import GetSystemTimeAsFileTime(ptr)
 @ stdcall -import GetSystemTimePreciseAsFileTime(ptr)
-@ stdcall GetSystemTimes(ptr ptr ptr)
+@ stdcall -import GetSystemTimes(ptr ptr ptr)
 @ stdcall -import GetSystemWindowsDirectoryA(ptr long)
 @ stdcall -import GetSystemWindowsDirectoryW(ptr long)
 @ stdcall -import GetSystemWow64DirectoryA(ptr long)

@@ -698,7 +698,7 @@
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernel32.GetSystemTimeAdjustment
 @ stdcall GetSystemTimeAsFileTime(ptr)
 @ stdcall GetSystemTimePreciseAsFileTime(ptr)
-@ stdcall GetSystemTimes(ptr ptr ptr) kernel32.GetSystemTimes
+@ stdcall GetSystemTimes(ptr ptr ptr)
 @ stdcall GetSystemWindowsDirectoryA(ptr long)
 @ stdcall GetSystemWindowsDirectoryW(ptr long)
 @ stdcall GetSystemWow64Directory2A(ptr long long)
