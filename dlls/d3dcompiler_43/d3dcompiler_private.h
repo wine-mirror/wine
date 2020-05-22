@@ -648,9 +648,9 @@ enum hlsl_ir_node_type
     HLSL_IR_ASSIGNMENT = 0,
     HLSL_IR_CONSTANT,
     HLSL_IR_CONSTRUCTOR,
-    HLSL_IR_DEREF,
     HLSL_IR_EXPR,
     HLSL_IR_IF,
+    HLSL_IR_LOAD,
     HLSL_IR_LOOP,
     HLSL_IR_JUMP,
     HLSL_IR_SWIZZLE,
@@ -847,7 +847,7 @@ struct hlsl_deref
     struct hlsl_ir_node *offset;
 };
 
-struct hlsl_ir_deref
+struct hlsl_ir_load
 {
     struct hlsl_ir_node node;
     struct hlsl_deref src;
@@ -1004,10 +1004,10 @@ static inline struct hlsl_ir_expr *expr_from_node(const struct hlsl_ir_node *nod
     return CONTAINING_RECORD(node, struct hlsl_ir_expr, node);
 }
 
-static inline struct hlsl_ir_deref *deref_from_node(const struct hlsl_ir_node *node)
+static inline struct hlsl_ir_load *load_from_node(const struct hlsl_ir_node *node)
 {
-    assert(node->type == HLSL_IR_DEREF);
-    return CONTAINING_RECORD(node, struct hlsl_ir_deref, node);
+    assert(node->type == HLSL_IR_LOAD);
+    return CONTAINING_RECORD(node, struct hlsl_ir_load, node);
 }
 
 static inline struct hlsl_ir_constant *constant_from_node(const struct hlsl_ir_node *node)

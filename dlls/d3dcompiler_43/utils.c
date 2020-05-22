@@ -1450,7 +1450,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         return NULL;
     }
 
-    while (lhs->type != HLSL_IR_DEREF)
+    while (lhs->type != HLSL_IR_LOAD)
     {
         struct hlsl_ir_node *lhs_inner;
 
@@ -1527,7 +1527,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
 
     rhs = implicit_conversion(rhs, type, &rhs->loc);
 
-    assign->lhs = deref_from_node(lhs)->src;
+    assign->lhs = load_from_node(lhs)->src;
     if (assign_op != ASSIGN_OP_ASSIGN)
     {
         enum hlsl_ir_expr_op op = op_from_assignment(assign_op);
@@ -1791,9 +1791,9 @@ const char *debug_node_type(enum hlsl_ir_node_type type)
         "HLSL_IR_ASSIGNMENT",
         "HLSL_IR_CONSTANT",
         "HLSL_IR_CONSTRUCTOR",
-        "HLSL_IR_DEREF",
         "HLSL_IR_EXPR",
         "HLSL_IR_IF",
+        "HLSL_IR_LOAD",
         "HLSL_IR_LOOP",
         "HLSL_IR_JUMP",
         "HLSL_IR_SWIZZLE",
@@ -2096,8 +2096,8 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
         case HLSL_IR_EXPR:
             debug_dump_ir_expr(expr_from_node(instr));
             break;
-        case HLSL_IR_DEREF:
-            debug_dump_deref(&deref_from_node(instr)->src);
+        case HLSL_IR_LOAD:
+            debug_dump_deref(&load_from_node(instr)->src);
             break;
         case HLSL_IR_CONSTANT:
             debug_dump_ir_constant(constant_from_node(instr));
@@ -2195,9 +2195,9 @@ static void free_ir_constant(struct hlsl_ir_constant *constant)
     d3dcompiler_free(constant);
 }
 
-static void free_ir_deref(struct hlsl_ir_deref *deref)
+static void free_ir_load(struct hlsl_ir_load *load)
 {
-    d3dcompiler_free(deref);
+    d3dcompiler_free(load);
 }
 
 static void free_ir_swizzle(struct hlsl_ir_swizzle *swizzle)
@@ -2245,8 +2245,8 @@ void free_instr(struct hlsl_ir_node *node)
         case HLSL_IR_CONSTANT:
             free_ir_constant(constant_from_node(node));
             break;
-        case HLSL_IR_DEREF:
-            free_ir_deref(deref_from_node(node));
+        case HLSL_IR_LOAD:
+            free_ir_load(load_from_node(node));
             break;
         case HLSL_IR_SWIZZLE:
             free_ir_swizzle(swizzle_from_node(node));

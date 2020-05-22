@@ -561,30 +561,30 @@ static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct s
     return c;
 }
 
-static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct source_location loc)
+static struct hlsl_ir_load *new_var_load(struct hlsl_ir_var *var, const struct source_location loc)
 {
-    struct hlsl_ir_deref *deref = d3dcompiler_alloc(sizeof(*deref));
+    struct hlsl_ir_load *load = d3dcompiler_alloc(sizeof(*load));
 
-    if (!deref)
+    if (!load)
     {
         ERR("Out of memory.\n");
         return NULL;
     }
-    init_node(&deref->node, HLSL_IR_DEREF, var->data_type, loc);
-    deref->src.var = var;
-    return deref;
+    init_node(&load->node, HLSL_IR_LOAD, var->data_type, loc);
+    load->src.var = var;
+    return load;
 }
 
-static struct hlsl_ir_deref *new_deref(struct hlsl_ir_node *var_node, struct hlsl_ir_node *offset,
+static struct hlsl_ir_load *new_load(struct hlsl_ir_node *var_node, struct hlsl_ir_node *offset,
         struct hlsl_type *data_type, const struct source_location loc)
 {
     struct hlsl_ir_node *add = NULL;
-    struct hlsl_ir_deref *deref;
+    struct hlsl_ir_load *load;
     struct hlsl_ir_var *var;
 
-    if (var_node->type == HLSL_IR_DEREF)
+    if (var_node->type == HLSL_IR_LOAD)
     {
-        const struct hlsl_deref *src = &deref_from_node(var_node)->src;
+        const struct hlsl_deref *src = &load_from_node(var_node)->src;
 
         var = src->var;
         if (src->offset)
@@ -612,16 +612,16 @@ static struct hlsl_ir_deref *new_deref(struct hlsl_ir_node *var_node, struct hls
         list_add_after(&var_node->entry, &assign->node.entry);
     }
 
-    if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
+    if (!(load = d3dcompiler_alloc(sizeof(*load))))
         return NULL;
-    init_node(&deref->node, HLSL_IR_DEREF, data_type, loc);
-    deref->src.var = var;
-    deref->src.offset = offset;
-    list_add_after(&offset->entry, &deref->node.entry);
-    return deref;
+    init_node(&load->node, HLSL_IR_LOAD, data_type, loc);
+    load->src.var = var;
+    load->src.offset = offset;
+    list_add_after(&offset->entry, &load->node.entry);
+    return load;
 }
 
-static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
+static struct hlsl_ir_load *new_record_load(struct hlsl_ir_node *record,
         const struct hlsl_struct_field *field, const struct source_location loc)
 {
     struct hlsl_ir_constant *c;
@@ -630,10 +630,10 @@ static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
         return NULL;
     list_add_after(&record->entry, &c->node.entry);
 
-    return new_deref(record, &c->node, field->type, loc);
+    return new_load(record, &c->node, field->type, loc);
 }
 
-static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
+static struct hlsl_ir_load *new_array_load(struct hlsl_ir_node *array,
         struct hlsl_ir_node *index, const struct source_location loc)
 {
     const struct hlsl_type *expr_type = array->data_type;
@@ -641,7 +641,7 @@ static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
     struct hlsl_ir_constant *c;
     struct hlsl_ir_node *mul;
 
-    TRACE("Array dereference from type %s.\n", debug_hlsl_type(expr_type));
+    TRACE("Array load from type %s.\n", debug_hlsl_type(expr_type));
 
     if (expr_type->type == HLSL_CLASS_ARRAY)
     {
@@ -670,7 +670,7 @@ static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
     list_add_after(&c->node.entry, &mul->entry);
     index = mul;
 
-    return new_deref(array, index, data_type, loc);
+    return new_load(array, index, data_type, loc);
 }
 
 static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
@@ -679,7 +679,7 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
     struct hlsl_type *type = var->data_type;
     struct hlsl_struct_field *field;
     struct hlsl_ir_node *assignment;
-    struct hlsl_ir_deref *deref;
+    struct hlsl_ir_load *load;
     unsigned int i = 0;
 
     if (initializer_size(initializer) != components_count_type(type))
@@ -703,14 +703,13 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
         }
         if (components_count_type(field->type) == components_count_type(node->data_type))
         {
-            deref = new_record_deref(&new_var_deref(var, var->loc)->node, field, node->loc);
-            if (!deref)
+            if (!(load = new_record_load(&new_var_load(var, var->loc)->node, field, node->loc)))
             {
                 ERR("Out of memory.\n");
                 break;
             }
-            list_add_tail(list, &deref->node.entry);
-            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, node);
+            list_add_tail(list, &load->node.entry);
+            assignment = make_assignment(&load->node, ASSIGN_OP_ASSIGN, node);
             list_add_tail(list, &assignment->entry);
         }
         else
@@ -801,7 +800,7 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
         if (v->initializer.args_count)
         {
             unsigned int size = initializer_size(&v->initializer);
-            struct hlsl_ir_deref *deref;
+            struct hlsl_ir_load *load;
 
             TRACE("Variable with initializer.\n");
             if (type->type <= HLSL_CLASS_LAST_NUMERIC
@@ -857,9 +856,9 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
             list_move_tail(statements_list, v->initializer.instrs);
             d3dcompiler_free(v->initializer.instrs);
 
-            deref = new_var_deref(var, var->loc);
-            list_add_tail(statements_list, &deref->node.entry);
-            assignment = make_assignment(&deref->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
+            load = new_var_load(var, var->loc);
+            list_add_tail(statements_list, &load->node.entry);
+            assignment = make_assignment(&load->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
             list_add_tail(statements_list, &assignment->entry);
         }
@@ -1217,8 +1216,8 @@ static unsigned int evaluate_array_dimension(struct hlsl_ir_node *node)
         }
     }
     case HLSL_IR_CONSTRUCTOR:
-    case HLSL_IR_DEREF:
     case HLSL_IR_EXPR:
+    case HLSL_IR_LOAD:
     case HLSL_IR_SWIZZLE:
         FIXME("Unhandled type %s.\n", debug_node_type(node->type));
         return 0;
@@ -2244,7 +2243,7 @@ primary_expr:             C_FLOAT
                             }
                         | VAR_IDENTIFIER
                             {
-                                struct hlsl_ir_deref *deref;
+                                struct hlsl_ir_load *load;
                                 struct hlsl_ir_var *var;
 
                                 if (!(var = get_variable(hlsl_ctx.cur_scope, $1)))
@@ -2254,9 +2253,9 @@ primary_expr:             C_FLOAT
                                     set_parse_status(&hlsl_ctx.status, PARSE_ERR);
                                     YYABORT;
                                 }
-                                if ((deref = new_var_deref(var, get_location(&@1))))
+                                if ((load = new_var_load(var, get_location(&@1))))
                                 {
-                                    if (!($$ = make_list(&deref->node)))
+                                    if (!($$ = make_list(&load->node)))
                                         YYABORT;
                                 }
                                 else
@@ -2321,14 +2320,14 @@ postfix_expr:             primary_expr
                                     {
                                         if (!strcmp($3, field->name))
                                         {
-                                            struct hlsl_ir_deref *deref = new_record_deref(node, field, loc);
+                                            struct hlsl_ir_load *load = new_record_load(node, field, loc);
 
-                                            if (!deref)
+                                            if (!load)
                                             {
                                                 ERR("Out of memory\n");
                                                 YYABORT;
                                             }
-                                            $$ = append_unop($1, &deref->node);
+                                            $$ = append_unop($1, &load->node);
                                             break;
                                         }
                                     }
@@ -2361,7 +2360,7 @@ postfix_expr:             primary_expr
                             }
                         | postfix_expr '[' expr ']'
                             {
-                                struct hlsl_ir_deref *deref;
+                                struct hlsl_ir_load *load;
 
                                 if (node_from_list($3)->data_type->type != HLSL_CLASS_SCALAR)
                                 {
@@ -2371,13 +2370,13 @@ postfix_expr:             primary_expr
                                     YYABORT;
                                 }
 
-                                if (!(deref = new_array_deref(node_from_list($1), node_from_list($3), get_location(&@2))))
+                                if (!(load = new_array_load(node_from_list($1), node_from_list($3), get_location(&@2))))
                                 {
                                     free_instr_list($1);
                                     free_instr_list($3);
                                     YYABORT;
                                 }
-                                $$ = append_binop($1, $3, &deref->node);
+                                $$ = append_binop($1, $3, &load->node);
                             }
                           /* "var_modifiers" doesn't make sense in this case, but it's needed
                              in the grammar to avoid shift/reduce conflicts. */
@@ -2810,15 +2809,6 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
                 constructor->args[i]->last_read = instr->index;
             break;
         }
-        case HLSL_IR_DEREF:
-        {
-            struct hlsl_ir_deref *deref = deref_from_node(instr);
-            var = deref->src.var;
-            var->last_read = loop_last ? max(instr->index, loop_last) : instr->index;
-            if (deref->src.offset)
-                deref->src.offset->last_read = instr->index;
-            break;
-        }
         case HLSL_IR_EXPR:
         {
             struct hlsl_ir_expr *expr = expr_from_node(instr);
@@ -2843,6 +2833,15 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             struct hlsl_ir_jump *jump = jump_from_node(instr);
             if (jump->type == HLSL_IR_JUMP_RETURN && jump->return_value)
                 jump->return_value->last_read = instr->index;
+            break;
+        }
+        case HLSL_IR_LOAD:
+        {
+            struct hlsl_ir_load *load = load_from_node(instr);
+            var = load->src.var;
+            var->last_read = loop_last ? max(instr->index, loop_last) : instr->index;
+            if (load->src.offset)
+                load->src.offset->last_read = instr->index;
             break;
         }
         case HLSL_IR_LOOP:
