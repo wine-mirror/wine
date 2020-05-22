@@ -492,6 +492,7 @@ struct scriptshaping_context
         const unsigned int *range_lengths;
         unsigned int range_count;
     } user_features;
+    unsigned int global_mask;
 
     unsigned int glyph_count;
     float emsize;
@@ -525,6 +526,8 @@ struct shaping_feature
     unsigned int flags;
     unsigned int max_value;
     unsigned int default_value;
+    unsigned int mask;
+    unsigned int shift;
 };
 
 struct shaping_features
