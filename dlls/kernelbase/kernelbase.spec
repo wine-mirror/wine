@@ -635,7 +635,7 @@
 @ stdcall GetProcessPreferredUILanguages(long ptr ptr ptr) kernel32.GetProcessPreferredUILanguages
 @ stdcall GetProcessPriorityBoost(long ptr)
 @ stdcall GetProcessShutdownParameters(ptr ptr)
-@ stdcall GetProcessTimes(long ptr ptr ptr ptr) kernel32.GetProcessTimes
+@ stdcall GetProcessTimes(long ptr ptr ptr ptr)
 @ stdcall GetProcessVersion(long) kernel32.GetProcessVersion
 @ stdcall GetProcessWorkingSetSizeEx(long ptr ptr ptr)
 # @ stub GetProcessorSystemCycleTime

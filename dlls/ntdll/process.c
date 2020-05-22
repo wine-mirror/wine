@@ -32,6 +32,12 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_TIMES_H
+# include <sys/times.h>
+#endif
 #include <sys/types.h>
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
@@ -359,7 +365,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         break;
     case ProcessTimes:
         {
-            KERNEL_USER_TIMES pti;
+            KERNEL_USER_TIMES pti = {{{0}}};
 
             if (ProcessInformationLength >= sizeof(KERNEL_USER_TIMES))
             {
@@ -369,8 +375,15 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     ret = STATUS_INVALID_HANDLE;
                 else
                 {
-                    /* FIXME : User- and KernelTime have to be implemented */
-                    memset(&pti, 0, sizeof(KERNEL_USER_TIMES));
+                    long ticks = sysconf(_SC_CLK_TCK);
+                    struct tms tms;
+
+                    /* FIXME: user/kernel times only work for current process */
+                    if (ticks && times( &tms ) != -1)
+                    {
+                        pti.UserTime.QuadPart = (ULONGLONG)tms.tms_utime * 10000000 / ticks;
+                        pti.KernelTime.QuadPart = (ULONGLONG)tms.tms_stime * 10000000 / ticks;
+                    }
 
                     SERVER_START_REQ(get_process_info)
                     {

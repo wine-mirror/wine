@@ -791,7 +791,7 @@
 @ stdcall -import GetProcessPriorityBoost(long ptr)
 @ stdcall -import GetProcessShutdownParameters(ptr ptr)
 # @ stub GetProcessorSystemCycleTime
-@ stdcall GetProcessTimes(long ptr ptr ptr ptr)
+@ stdcall -import GetProcessTimes(long ptr ptr ptr ptr)
 # @ stub GetProcessUserModeExceptionPolicy
 @ stdcall GetProcessVersion(long)
 @ stdcall GetProcessWorkingSetSize(long ptr ptr)

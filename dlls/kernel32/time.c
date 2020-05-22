@@ -55,12 +55,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(time);
 
 static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
 
-static inline void longlong_to_filetime( LONGLONG t, FILETIME *ft )
-{
-    ft->dwLowDateTime = (DWORD)t;
-    ft->dwHighDateTime = (DWORD)(t >> 32);
-}
-
 
 /***********************************************************************
  *           GetSystemTimeAdjustment     (KERNEL32.@)
@@ -106,64 +100,6 @@ BOOL WINAPI SetSystemTimeAdjustment( DWORD dwTimeAdjustment, BOOL bTimeAdjustmen
 {
     /* Fake function for now... */
     FIXME("(%08x,%d): stub !\n", dwTimeAdjustment, bTimeAdjustmentDisabled);
-    return TRUE;
-}
-
-/*********************************************************************
- *      TIME_ClockTimeToFileTime    (olorin@fandra.org, 20-Sep-1998)
- *
- *  Used by GetProcessTimes to convert clock_t into FILETIME.
- *
- *      Differences to UnixTimeToFileTime:
- *          1) Divided by CLK_TCK
- *          2) Time is relative. There is no 'starting date', so there is
- *             no need for offset correction, like in UnixTimeToFileTime
- */
-static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
-{
-    long clocksPerSec = sysconf(_SC_CLK_TCK);
-    ULONGLONG secs = (ULONGLONG)unix_time * 10000000 / clocksPerSec;
-    filetime->dwLowDateTime  = (DWORD)secs;
-    filetime->dwHighDateTime = (DWORD)(secs >> 32);
-}
-
-/*********************************************************************
- *	GetProcessTimes				(KERNEL32.@)
- *
- *  Get the user and kernel execution times of a process,
- *  along with the creation and exit times if known.
- *
- * PARAMS
- *  hprocess       [in]  The process to be queried.
- *  lpCreationTime [out] The creation time of the process.
- *  lpExitTime     [out] The exit time of the process if exited.
- *  lpKernelTime   [out] The time spent in kernel routines in 100's of nanoseconds.
- *  lpUserTime     [out] The time spent in user routines in 100's of nanoseconds.
- *
- * RETURNS
- *  TRUE.
- *
- * NOTES
- *  olorin@fandra.org:
- *  Would be nice to subtract the cpu time used by Wine at startup.
- *  Also, there is a need to separate times used by different applications.
- *
- * BUGS
- *  KernelTime and UserTime are always for the current process
- */
-BOOL WINAPI GetProcessTimes( HANDLE hprocess, LPFILETIME lpCreationTime,
-    LPFILETIME lpExitTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime )
-{
-    struct tms tms;
-    KERNEL_USER_TIMES pti;
-
-    times(&tms);
-    TIME_ClockTimeToFileTime(tms.tms_utime,lpUserTime);
-    TIME_ClockTimeToFileTime(tms.tms_stime,lpKernelTime);
-    if (NtQueryInformationProcess( hprocess, ProcessTimes, &pti, sizeof(pti), NULL))
-        return FALSE;
-    longlong_to_filetime( pti.CreateTime.QuadPart, lpCreationTime );
-    longlong_to_filetime( pti.ExitTime.QuadPart, lpExitTime );
     return TRUE;
 }
 

@@ -791,6 +791,29 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetProcessShutdownParameters( LPDWORD level, LPDWO
 }
 
 
+/*********************************************************************
+ *           GetProcessTimes   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetProcessTimes( HANDLE process, FILETIME *create, FILETIME *exit,
+                                               FILETIME *kernel, FILETIME *user )
+{
+    KERNEL_USER_TIMES time;
+
+    if (!set_ntstatus( NtQueryInformationProcess( process, ProcessTimes, &time, sizeof(time), NULL )))
+        return FALSE;
+
+    create->dwLowDateTime  = time.CreateTime.u.LowPart;
+    create->dwHighDateTime = time.CreateTime.u.HighPart;
+    exit->dwLowDateTime    = time.ExitTime.u.LowPart;
+    exit->dwHighDateTime   = time.ExitTime.u.HighPart;
+    kernel->dwLowDateTime  = time.KernelTime.u.LowPart;
+    kernel->dwHighDateTime = time.KernelTime.u.HighPart;
+    user->dwLowDateTime    = time.UserTime.u.LowPart;
+    user->dwHighDateTime   = time.UserTime.u.HighPart;
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           GetProcessWorkingSetSizeEx   (kernelbase.@)
  */
