@@ -1696,6 +1696,7 @@ void      WINAPI KeInitializeSpinLock(KSPIN_LOCK*);
 void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
 void      WINAPI KeInitializeTimer(KTIMER*);
 void      WINAPI KeLeaveCriticalRegion(void);
+KAFFINITY WINAPI KeQueryActiveProcessors(void);
 void      WINAPI KeQuerySystemTime(LARGE_INTEGER*);
 void      WINAPI KeQueryTickCount(LARGE_INTEGER*);
 ULONG     WINAPI KeQueryTimeIncrement(void);
