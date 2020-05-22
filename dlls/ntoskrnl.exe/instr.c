@@ -35,6 +35,12 @@
 
 #define KSHARED_USER_DATA_PAGE_SIZE 0x1000
 
+enum instr_op
+{
+    INSTR_OP_MOV,
+    INSTR_OP_OR,
+};
+
 #ifdef __i386__
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -503,20 +509,42 @@ static inline int get_op_size( int long_op, int rex )
 }
 
 /* store an operand into a register */
-static void store_reg_word( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op, int rex )
+static void store_reg_word( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int long_op, int rex,
+        enum instr_op op )
 {
     int index = REGMODRM_REG( regmodrm, rex );
     BYTE *reg = (BYTE *)get_int_reg( context, index );
-    memcpy( reg, addr, get_op_size( long_op, rex ) );
+    int op_size = get_op_size( long_op, rex );
+    int i;
+
+    switch (op)
+    {
+        case INSTR_OP_MOV:
+            memcpy( reg, addr, op_size );
+            break;
+        case INSTR_OP_OR:
+            for (i = 0; i < op_size; ++i)
+                reg[i] |= addr[i];
+            break;
+    }
 }
 
 /* store an operand into a byte register */
-static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int rex )
+static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int rex, enum instr_op op )
 {
     int index = REGMODRM_REG( regmodrm, rex );
     BYTE *reg = (BYTE *)get_int_reg( context, index );
     if (!rex && index >= 4 && index < 8) reg -= (4 * sizeof(DWORD64) - 1); /* special case: ah, ch, dh, bh */
-    *reg = *addr;
+
+    switch (op)
+    {
+        case INSTR_OP_MOV:
+            *reg = *addr;
+            break;
+        case INSTR_OP_OR:
+            *reg |= *addr;
+            break;
+    }
 }
 
 /***********************************************************************
@@ -798,7 +826,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
                 TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
                 memcpy( &temp, wine_user_shared_data + offset, data_size );
-                store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex );
+                store_reg_word( context, instr[2], (BYTE *)&temp, long_op, rex, INSTR_OP_MOV );
                 context->Rip += prefixlen + len + 2;
                 return ExceptionContinueExecution;
             }
@@ -809,6 +837,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     case 0x8a: /* mov Eb, Gb */
     case 0x8b: /* mov Ev, Gv */
+    case 0x0b: /* or  Ev, Gv */
     {
         BYTE *data = INSTR_GetOperandAddr( context, instr + 1, prefixlen + 1, long_addr,
                                            rex, segprefix, &len );
@@ -820,8 +849,18 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
             TRACE("USD offset %#x at %p.\n", (unsigned int)offset, (void *)context->Rip);
             switch (*instr)
             {
-            case 0x8a: store_reg_byte( context, instr[1], wine_user_shared_data + offset, rex ); break;
-            case 0x8b: store_reg_word( context, instr[1], wine_user_shared_data + offset, long_op, rex ); break;
+                case 0x8a:
+                    store_reg_byte( context, instr[1], wine_user_shared_data + offset,
+                            rex, INSTR_OP_MOV );
+                    break;
+                case 0x8b:
+                    store_reg_word( context, instr[1], wine_user_shared_data + offset,
+                            long_op, rex, INSTR_OP_MOV );
+                    break;
+                case 0x0b:
+                    store_reg_word( context, instr[1], wine_user_shared_data + offset,
+                            long_op, rex, INSTR_OP_OR );
+                    break;
             }
             context->Rip += prefixlen + len + 1;
             return ExceptionContinueExecution;
