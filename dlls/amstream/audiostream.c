@@ -95,13 +95,10 @@ static void remove_queued_update(IAudioStreamSampleImpl *sample)
 
 static void flush_receive_queue(struct audio_stream *stream)
 {
-    while (!list_empty(&stream->receive_queue))
-    {
-        struct queued_receive *receive =
-            LIST_ENTRY(list_head(&stream->receive_queue), struct queued_receive, entry);
+    struct list *entry;
 
-        remove_queued_receive(receive);
-    }
+    while ((entry = list_head(&stream->receive_queue)))
+        remove_queued_receive(LIST_ENTRY(entry, struct queued_receive, entry));
 }
 
 static void process_update(IAudioStreamSampleImpl *sample, struct queued_receive *receive)
