@@ -538,13 +538,27 @@ static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs
         return NULL;
 
     init_node(&assign->node, HLSL_IR_ASSIGNMENT, rhs->data_type, rhs->loc);
-    assign->lhs.type = HLSL_IR_DEREF_VAR;
-    assign->lhs.v.var = lhs;
+    assign->lhs.var = lhs;
     assign->rhs = rhs;
     if (type_is_single_reg(lhs->data_type))
         assign->writemask = (1 << lhs->data_type->dimx) - 1;
 
     return assign;
+}
+
+static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct source_location loc)
+{
+    struct hlsl_type *type;
+    struct hlsl_ir_constant *c;
+
+    if (!(type = new_hlsl_type(d3dcompiler_strdup("uint"), HLSL_CLASS_SCALAR, HLSL_TYPE_UINT, 1, 1)))
+        return NULL;
+
+    if (!(c = d3dcompiler_alloc(sizeof(*c))))
+        return NULL;
+    init_node(&c->node, HLSL_IR_CONSTANT, type, loc);
+    c->v.value.u[0] = n;
+    return c;
 }
 
 static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct source_location loc)
@@ -557,61 +571,75 @@ static struct hlsl_ir_deref *new_var_deref(struct hlsl_ir_var *var, const struct
         return NULL;
     }
     init_node(&deref->node, HLSL_IR_DEREF, var->data_type, loc);
-    deref->src.type = HLSL_IR_DEREF_VAR;
-    deref->src.v.var = var;
+    deref->src.var = var;
     return deref;
 }
 
-static struct hlsl_ir_node *get_var_deref(struct hlsl_ir_node *node)
+static struct hlsl_ir_deref *new_deref(struct hlsl_ir_node *var_node, struct hlsl_ir_node *offset,
+        struct hlsl_type *data_type, const struct source_location loc)
 {
-    struct hlsl_ir_assignment *assign;
+    struct hlsl_ir_node *add = NULL;
     struct hlsl_ir_deref *deref;
     struct hlsl_ir_var *var;
-    char name[27];
 
-    if (node->type == HLSL_IR_DEREF)
-        return node;
+    if (var_node->type == HLSL_IR_DEREF)
+    {
+        const struct hlsl_deref *src = &deref_from_node(var_node)->src;
 
-    sprintf(name, "<deref-%p>", node);
-    if (!(var = new_synthetic_var(name, node->data_type, node->loc)))
-        return NULL;
+        var = src->var;
+        if (src->offset)
+        {
+            if (!(add = new_binary_expr(HLSL_IR_BINOP_ADD, src->offset, offset, loc)))
+                return NULL;
+            list_add_after(&offset->entry, &add->entry);
+            offset = add;
+        }
+    }
+    else
+    {
+        struct hlsl_ir_assignment *assign;
+        char name[27];
 
-    TRACE("Synthesized variable %p for %s node.\n", var, debug_node_type(node->type));
+        sprintf(name, "<deref-%p>", var_node);
+        if (!(var = new_synthetic_var(name, var_node->data_type, var_node->loc)))
+            return NULL;
 
-    if (!(assign = make_simple_assignment(var, node)))
-        return NULL;
-    list_add_after(&node->entry, &assign->node.entry);
+        TRACE("Synthesized variable %p for %s node.\n", var, debug_node_type(var_node->type));
 
-    if (!(deref = new_var_deref(var, var->loc)))
-        return NULL;
-    list_add_after(&assign->node.entry, &deref->node.entry);
-    return &deref->node;
-}
+        if (!(assign = make_simple_assignment(var, var_node)))
+            return NULL;
 
-static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
-        struct hlsl_struct_field *field, const struct source_location loc)
-{
-    struct hlsl_ir_deref *deref;
-
-    if (!(record = get_var_deref(record)))
-        return NULL;
+        list_add_after(&var_node->entry, &assign->node.entry);
+    }
 
     if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
         return NULL;
-
-    init_node(&deref->node, HLSL_IR_DEREF, field->type, loc);
-    deref->src.type = HLSL_IR_DEREF_RECORD;
-    deref->src.v.record.record = record;
-    deref->src.v.record.field = field;
+    init_node(&deref->node, HLSL_IR_DEREF, data_type, loc);
+    deref->src.var = var;
+    deref->src.offset = offset;
+    list_add_after(&offset->entry, &deref->node.entry);
     return deref;
+}
+
+static struct hlsl_ir_deref *new_record_deref(struct hlsl_ir_node *record,
+        const struct hlsl_struct_field *field, const struct source_location loc)
+{
+    struct hlsl_ir_constant *c;
+
+    if (!(c = new_uint_constant(field->reg_offset * 4, loc)))
+        return NULL;
+    list_add_after(&record->entry, &c->node.entry);
+
+    return new_deref(record, &c->node, field->type, loc);
 }
 
 static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
         struct hlsl_ir_node *index, const struct source_location loc)
 {
     const struct hlsl_type *expr_type = array->data_type;
-    struct hlsl_ir_deref *deref;
     struct hlsl_type *data_type;
+    struct hlsl_ir_constant *c;
+    struct hlsl_ir_node *mul;
 
     TRACE("Array dereference from type %s.\n", debug_hlsl_type(expr_type));
 
@@ -621,6 +649,7 @@ static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
     }
     else if (expr_type->type == HLSL_CLASS_MATRIX || expr_type->type == HLSL_CLASS_VECTOR)
     {
+        /* This needs to be lowered now, while we still have type information. */
         FIXME("Index of matrix or vector type.\n");
         return NULL;
     }
@@ -633,17 +662,15 @@ static struct hlsl_ir_deref *new_array_deref(struct hlsl_ir_node *array,
         return NULL;
     }
 
-    if (!(array = get_var_deref(array)))
+    if (!(c = new_uint_constant(data_type->reg_size * 4, loc)))
         return NULL;
-
-    if (!(deref = d3dcompiler_alloc(sizeof(*deref))))
+    list_add_after(&index->entry, &c->node.entry);
+    if (!(mul = new_binary_expr(HLSL_IR_BINOP_MUL, index, &c->node, loc)))
         return NULL;
+    list_add_after(&c->node.entry, &mul->entry);
+    index = mul;
 
-    init_node(&deref->node, HLSL_IR_DEREF, data_type, loc);
-    deref->src.type = HLSL_IR_DEREF_ARRAY;
-    deref->src.v.array.array = array;
-    deref->src.v.array.index = index;
-    return deref;
+    return new_deref(array, index, data_type, loc);
 }
 
 static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
@@ -2748,22 +2775,6 @@ static unsigned int index_instructions(struct list *instrs, unsigned int index)
     return index;
 }
 
-/* Walk the chain of derefs and retrieve the actual variable we care about. */
-static struct hlsl_ir_var *hlsl_var_from_deref(const struct hlsl_deref *deref)
-{
-    switch (deref->type)
-    {
-        case HLSL_IR_DEREF_VAR:
-            return deref->v.var;
-        case HLSL_IR_DEREF_ARRAY:
-            return hlsl_var_from_deref(&deref_from_node(deref->v.array.array)->src);
-        case HLSL_IR_DEREF_RECORD:
-            return hlsl_var_from_deref(&deref_from_node(deref->v.record.record)->src);
-    }
-    assert(0);
-    return NULL;
-}
-
 /* Compute the earliest and latest liveness for each variable. In the case that
  * a variable is accessed inside of a loop, we promote its liveness to extend
  * to at least the range of the entire loop. Note that we don't need to do this
@@ -2781,10 +2792,12 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
         case HLSL_IR_ASSIGNMENT:
         {
             struct hlsl_ir_assignment *assignment = assignment_from_node(instr);
-            var = hlsl_var_from_deref(&assignment->lhs);
+            var = assignment->lhs.var;
             if (!var->first_write)
                 var->first_write = loop_first ? min(instr->index, loop_first) : instr->index;
             assignment->rhs->last_read = instr->index;
+            if (assignment->lhs.offset)
+                assignment->lhs.offset->last_read = instr->index;
             break;
         }
         case HLSL_IR_CONSTANT:
@@ -2800,10 +2813,10 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
         case HLSL_IR_DEREF:
         {
             struct hlsl_ir_deref *deref = deref_from_node(instr);
-            var = hlsl_var_from_deref(&deref->src);
+            var = deref->src.var;
             var->last_read = loop_last ? max(instr->index, loop_last) : instr->index;
-            if (deref->src.type == HLSL_IR_DEREF_ARRAY)
-                deref->src.v.array.index->last_read = instr->index;
+            if (deref->src.offset)
+                deref->src.offset->last_read = instr->index;
             break;
         }
         case HLSL_IR_EXPR:

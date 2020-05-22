@@ -1437,29 +1437,6 @@ static unsigned int invert_swizzle(unsigned int *swizzle, unsigned int writemask
     return new_writemask;
 }
 
-static BOOL validate_lhs_deref(const struct hlsl_ir_node *lhs)
-{
-    struct hlsl_ir_deref *deref;
-
-    if (lhs->type != HLSL_IR_DEREF)
-    {
-        hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR, "invalid lvalue");
-        return FALSE;
-    }
-
-    deref = deref_from_node(lhs);
-
-    if (deref->src.type == HLSL_IR_DEREF_VAR)
-        return TRUE;
-    if (deref->src.type == HLSL_IR_DEREF_ARRAY)
-        return validate_lhs_deref(deref->src.v.array.array);
-    if (deref->src.type == HLSL_IR_DEREF_RECORD)
-        return validate_lhs_deref(deref->src.v.record.record);
-
-    assert(0);
-    return FALSE;
-}
-
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign_op assign_op,
         struct hlsl_ir_node *rhs)
 {
@@ -1513,12 +1490,6 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         lhs = lhs_inner;
     }
 
-    if (!validate_lhs_deref(lhs))
-    {
-        d3dcompiler_free(assign);
-        return NULL;
-    }
-
     TRACE("Creating proper assignment expression.\n");
     if (writemask == BWRITERSP_WRITEMASK_ALL)
         type = lhs->data_type;
@@ -1562,26 +1533,12 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         enum hlsl_ir_expr_op op = op_from_assignment(assign_op);
         struct hlsl_ir_node *expr;
 
-        if (assign->lhs.type != HLSL_IR_DEREF_VAR)
-        {
-            FIXME("LHS expression not supported in compound assignments yet.\n");
-            assign->rhs = rhs;
-        }
-        else
-        {
-            TRACE("Adding an expression for the compound assignment.\n");
-            expr = new_binary_expr(op, lhs, rhs, lhs->loc);
-            list_add_after(&rhs->entry, &expr->entry);
-            assign->rhs = expr;
-        }
+        TRACE("Adding an expression for the compound assignment.\n");
+        expr = new_binary_expr(op, lhs, rhs, lhs->loc);
+        list_add_after(&rhs->entry, &expr->entry);
+        rhs = expr;
     }
-    else
-    {
-        list_remove(&lhs->entry);
-        /* Don't recursively free the deref; we just copied its members. */
-        d3dcompiler_free(lhs);
-        assign->rhs = rhs;
-    }
+    assign->rhs = rhs;
 
     return &assign->node;
 }
@@ -1879,23 +1836,14 @@ static void debug_dump_ir_var(const struct hlsl_ir_var *var)
 
 static void debug_dump_deref(const struct hlsl_deref *deref)
 {
-    switch (deref->type)
+    wine_dbg_printf("deref(");
+    debug_dump_ir_var(deref->var);
+    wine_dbg_printf(")");
+    if (deref->offset)
     {
-        case HLSL_IR_DEREF_VAR:
-            wine_dbg_printf("deref(");
-            debug_dump_ir_var(deref->v.var);
-            wine_dbg_printf(")");
-            break;
-        case HLSL_IR_DEREF_ARRAY:
-            debug_dump_src(deref->v.array.array);
-            wine_dbg_printf("[");
-            debug_dump_src(deref->v.array.index);
-            wine_dbg_printf("]");
-            break;
-        case HLSL_IR_DEREF_RECORD:
-            debug_dump_src(deref->v.record.record);
-            wine_dbg_printf(".%s", debugstr_a(deref->v.record.field->name));
-            break;
+        wine_dbg_printf("[");
+        debug_dump_src(deref->offset);
+        wine_dbg_printf("]");
     }
 }
 

@@ -841,30 +841,10 @@ struct hlsl_ir_swizzle
     DWORD swizzle;
 };
 
-enum hlsl_ir_deref_type
-{
-    HLSL_IR_DEREF_VAR,
-    HLSL_IR_DEREF_ARRAY,
-    HLSL_IR_DEREF_RECORD,
-};
-
 struct hlsl_deref
 {
-    enum hlsl_ir_deref_type type;
-    union
-    {
-        struct hlsl_ir_var *var;
-        struct
-        {
-            struct hlsl_ir_node *array;
-            struct hlsl_ir_node *index;
-        } array;
-        struct
-        {
-            struct hlsl_ir_node *record;
-            struct hlsl_struct_field *field;
-        } record;
-    } v;
+    struct hlsl_ir_var *var;
+    struct hlsl_ir_node *offset;
 };
 
 struct hlsl_ir_deref
