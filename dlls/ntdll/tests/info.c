@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static NTSTATUS (WINAPI * pNtPowerInformation)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
@@ -76,6 +77,7 @@ static BOOL InitFunctionPtrs(void)
     }
 
     NTDLL_GET_PROC(NtQuerySystemInformation);
+    NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
     NTDLL_GET_PROC(NtPowerInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
@@ -738,6 +740,40 @@ static void test_query_interrupt(void)
     */
 
     HeapFree( GetProcessHeap(), 0, sii);
+}
+
+static void test_time_adjustment(void)
+{
+    SYSTEM_TIME_ADJUSTMENT_QUERY query;
+    SYSTEM_TIME_ADJUSTMENT adjust;
+    NTSTATUS status;
+    ULONG len;
+
+    memset( &query, 0xcc, sizeof(query) );
+    status = pNtQuerySystemInformation( SystemTimeAdjustmentInformation, &query, sizeof(query), &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status );
+    ok( len == sizeof(query) || broken(!len) /* winxp */, "wrong len %u\n", len );
+    ok( query.TimeAdjustmentDisabled == TRUE || query.TimeAdjustmentDisabled == FALSE,
+        "wrong value %x\n", query.TimeAdjustmentDisabled );
+
+    status = pNtQuerySystemInformation( SystemTimeAdjustmentInformation, &query, sizeof(query)-1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
+    ok( len == sizeof(query) || broken(!len) /* winxp */, "wrong len %u\n", len );
+
+    status = pNtQuerySystemInformation( SystemTimeAdjustmentInformation, &query, sizeof(query)+1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
+    ok( len == sizeof(query) || broken(!len) /* winxp */, "wrong len %u\n", len );
+
+    adjust.TimeAdjustment = query.TimeAdjustment;
+    adjust.TimeAdjustmentDisabled = query.TimeAdjustmentDisabled;
+    status = pNtSetSystemInformation( SystemTimeAdjustmentInformation, &adjust, sizeof(adjust) );
+    ok( status == STATUS_SUCCESS || status == STATUS_PRIVILEGE_NOT_HELD, "got %08x\n", status );
+    status = pNtSetSystemInformation( SystemTimeAdjustmentInformation, &adjust, sizeof(adjust)-1 );
+    todo_wine
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
+    status = pNtSetSystemInformation( SystemTimeAdjustmentInformation, &adjust, sizeof(adjust)+1 );
+    todo_wine
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status );
 }
 
 static void test_query_kerndebug(void)
@@ -2631,6 +2667,10 @@ START_TEST(info)
     /* 0x17 SystemInterruptInformation */
     trace("Starting test_query_interrupt()\n");
     test_query_interrupt();
+
+    /* 0x1c SystemTimeAdjustmentInformation */
+    trace("Starting test_time_adjustment()\n");
+    test_time_adjustment();
 
     /* 0x23 SystemKernelDebuggerInformation */
     trace("Starting test_query_kerndebug()\n");

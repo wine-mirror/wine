@@ -2937,6 +2937,19 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             FIXME("info_class SYSTEM_INTERRUPT_INFORMATION\n");
         }
         break;
+    case SystemTimeAdjustmentInformation:
+        {
+            SYSTEM_TIME_ADJUSTMENT_QUERY query = { 156250, 156250, TRUE };
+
+            len = sizeof(query);
+            if (Length == len)
+            {
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &query, len );
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
     case SystemKernelDebuggerInformation:
         {
             SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
