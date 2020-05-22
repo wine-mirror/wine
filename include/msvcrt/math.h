@@ -101,6 +101,9 @@ long __cdecl lrintf(float);
 long __cdecl lround(double);
 long __cdecl lroundf(float);
 
+_ACRTIMP double __cdecl scalbn(double,int);
+_ACRTIMP float  __cdecl scalbnf(float,int);
+
 double __cdecl _copysign (double, double);
 double __cdecl _chgsign (double);
 double __cdecl _scalb(double, __msvcrt_long);
