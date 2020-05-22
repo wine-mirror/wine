@@ -230,6 +230,29 @@ interface IMFTopology : IMFAttributes
     HRESULT GetOutputNodeCollection([out] IMFCollection **collection);
 }
 
+typedef struct _MFTOPONODE_ATTRIBUTE_UPDATE
+{
+    TOPOID NodeId;
+    GUID guidAttributeKey;
+    MF_ATTRIBUTE_TYPE attrType;
+    [switch_type(DWORD), switch_is(attrType)] union
+    {
+        [case(MF_ATTRIBUTE_UINT32)] UINT32 u32;
+        [case(MF_ATTRIBUTE_UINT64)] UINT64 u64;
+        [case(MF_ATTRIBUTE_DOUBLE)] double d;
+    };
+} MFTOPONODE_ATTRIBUTE_UPDATE;
+
+[
+    object,
+    uuid(676aa6dd-238a-410d-bb99-65668d01605a),
+]
+interface IMFTopologyNodeAttributeEditor : IUnknown
+{
+    HRESULT UpdateNodeAttributes([in] TOPOID id, [in] DWORD count,
+            [in, size_is(count)] MFTOPONODE_ATTRIBUTE_UPDATE *attr_updates);
+}
+
 [
     object,
     uuid(de9a6157-f660-4643-b56a-df9f7998c7cd),
@@ -1104,6 +1127,7 @@ cpp_quote("EXTERN_GUID(MF_TOPOLOGY_STATIC_PLAYBACK_OPTIMIZATIONS, 0xb86cac42, 0x
 cpp_quote("EXTERN_GUID(MF_RATE_CONTROL_SERVICE, 0x866fa297, 0xb802, 0x4bf8, 0x9d, 0xc9, 0x5e, 0x3b, 0x6a, 0x9f, 0x53, 0xc9);")
 cpp_quote("EXTERN_GUID(MF_LOCAL_MFT_REGISTRATION_SERVICE, 0xddf5cf9c, 0x4506, 0x45aa, 0xab, 0xf0, 0x6d, 0x5d, 0x94, 0xdd, 0x1b, 0x4a);")
 cpp_quote("EXTERN_C const GUID MF_SCRUBBING_SERVICE;")
+cpp_quote("EXTERN_GUID(MF_TOPONODE_ATTRIBUTE_EDITOR_SERVICE, 0x65656e1a, 0x077f, 0x4472, 0x83, 0xef, 0x31, 0x6f, 0x11, 0xd5, 0x08, 0x7a);")
 cpp_quote("EXTERN_GUID(MR_POLICY_VOLUME_SERVICE, 0x1abaa2ac, 0x9d3b, 0x47c6, 0xab, 0x48, 0xc5, 0x95, 0x06, 0xde, 0x78, 0x4d);")
 cpp_quote("EXTERN_GUID(MR_CAPTURE_POLICY_VOLUME_SERVICE, 0x24030acd, 0x107a, 0x4265, 0x97, 0x5c, 0x41, 0x4e, 0x33, 0xe6, 0x5f, 0x2a);")
 cpp_quote("EXTERN_GUID(MR_STREAM_VOLUME_SERVICE, 0xf8b5fa2f, 0x32ef, 0x46f5, 0xb1, 0x72, 0x13, 0x21, 0x21, 0x2f, 0xb2, 0xc4);")
