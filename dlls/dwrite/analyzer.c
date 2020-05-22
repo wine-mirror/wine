@@ -1259,6 +1259,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
     context.user_features.range_count = feature_ranges;
+    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * max_glyph_count);
 
     script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
     scriptprops = &dwritescripts_properties[script];
@@ -1268,6 +1269,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
                 text_props, glyph_props);
 
 done:
+    heap_free(context.glyph_infos);
     heap_free(string);
 
     return hr;
@@ -1284,6 +1286,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     struct scriptshaping_context context;
     struct dwrite_fontface *font_obj;
     unsigned int i, script;
+    HRESULT hr;
 
     TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
@@ -1327,8 +1330,13 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
     context.user_features.range_count = feature_ranges;
+    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
 
-    return shape_get_positions(&context, scriptprops->scripttags);
+    hr = shape_get_positions(&context, scriptprops->scripttags);
+
+    heap_free(context.glyph_infos);
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,
@@ -1344,6 +1352,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     DWRITE_MEASURING_MODE measuring_mode;
     struct dwrite_fontface *font_obj;
     unsigned int i, script;
+    HRESULT hr;
 
     TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
         clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, ppdip,
@@ -1389,8 +1398,13 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
     context.user_features.range_count = feature_ranges;
+    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
 
-    return shape_get_positions(&context, scriptprops->scripttags);
+    hr = shape_get_positions(&context, scriptprops->scripttags);
+
+    heap_free(context.glyph_infos);
+
+    return hr;
 }
 
 static HRESULT apply_cluster_spacing(float leading_spacing, float trailing_spacing, float min_advance_width,

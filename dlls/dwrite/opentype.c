@@ -4311,6 +4311,53 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     }
 }
 
+static int feature_search_compare(const void *a, const void* b)
+{
+    unsigned int tag = *(unsigned int *)a;
+    const struct shaping_feature *feature = b;
+
+    return tag < feature->tag ? -1 : tag > feature->tag ? 1 : 0;
+}
+
+static unsigned int shaping_features_get_mask(const struct shaping_features *features, unsigned int tag, unsigned int *shift)
+{
+    struct shaping_feature *feature;
+
+    feature = bsearch(&tag, features->features, features->count, sizeof(*features->features), feature_search_compare);
+
+    if (!feature || feature->index == 0xffff)
+        return 0;
+
+    *shift = feature->shift;
+    return feature->mask;
+}
+
+static void opentype_layout_set_glyph_masks(struct scriptshaping_context *context, const struct shaping_features *features)
+{
+   const DWRITE_TYPOGRAPHIC_FEATURES **user_features = context->user_features.features;
+   unsigned int f, r, g, start_glyph = 0, mask, shift, value;
+
+   for (g = 0; g < context->glyph_count; ++g)
+       context->glyph_infos[g].mask = context->global_mask;
+
+   /* FIXME: set shaper masks */
+
+   for (r = 0; r < context->user_features.range_count; ++r)
+   {
+       for (f = 0; f < user_features[r]->featureCount; ++f)
+       {
+           mask = shaping_features_get_mask(features, user_features[r]->features[f].nameTag, &shift);
+           if (!mask)
+               continue;
+
+           value = (user_features[r]->features[f].parameter << shift) & mask;
+           for (g = 0; g < context->user_features.range_lengths[r]; ++g)
+               context->glyph_infos[g + start_glyph].mask = (context->glyph_infos[g + start_glyph].mask & ~mask) | value;
+           start_glyph += context->user_features.range_lengths[r];
+       }
+   }
+}
+
 void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features)
 {
@@ -4318,6 +4365,8 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     unsigned int i;
 
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
+
+    opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
         opentype_layout_apply_gpos_lookup(context, lookups.lookups[i].index);
@@ -4628,6 +4677,8 @@ HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *contex
     unsigned int i;
 
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gsub, &lookups);
+
+    opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
         opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, lookups.lookups[i].index);

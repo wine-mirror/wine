@@ -461,6 +461,11 @@ struct scriptshaping_cache
     } gdef;
 };
 
+struct shaping_glyph_info
+{
+    unsigned int mask;
+};
+
 struct scriptshaping_context
 {
     struct scriptshaping_cache *cache;
@@ -493,6 +498,7 @@ struct scriptshaping_context
         unsigned int range_count;
     } user_features;
     unsigned int global_mask;
+    struct shaping_glyph_info *glyph_infos;
 
     unsigned int glyph_count;
     float emsize;
