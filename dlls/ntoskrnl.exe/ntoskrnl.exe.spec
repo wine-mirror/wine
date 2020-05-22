@@ -587,6 +587,7 @@
 @ stub KeProfileInterruptWithSource
 @ stub KePulseEvent
 @ stdcall KeQueryActiveProcessors()
+@ stdcall KeQueryActiveProcessorCountEx(long)
 @ stdcall KeQueryInterruptTime()
 @ stub KeQueryPriorityThread
 @ stub KeQueryRuntimeThread

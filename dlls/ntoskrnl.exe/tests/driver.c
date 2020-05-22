@@ -1710,6 +1710,36 @@ static void test_executable_pool(void)
 }
 #endif
 
+static void test_affinity(void)
+{
+    ULONG (WINAPI *pKeQueryActiveProcessorCountEx)(USHORT);
+    KAFFINITY (WINAPI *pKeQueryActiveProcessors)(void);
+    ULONG cpu_count, count;
+    KAFFINITY mask;
+
+    pKeQueryActiveProcessorCountEx = get_proc_address("KeQueryActiveProcessorCountEx");
+    if (!pKeQueryActiveProcessorCountEx)
+    {
+        win_skip("KeQueryActiveProcessorCountEx is not available.\n");
+        return;
+    }
+
+    pKeQueryActiveProcessors = get_proc_address("KeQueryActiveProcessors");
+    ok(!!pKeQueryActiveProcessors, "KeQueryActiveProcessors is not available.\n");
+
+    count = pKeQueryActiveProcessorCountEx(1);
+    todo_wine ok(!count, "Got unexpected count %u.\n", count);
+
+    cpu_count = pKeQueryActiveProcessorCountEx(0);
+    ok(cpu_count, "Got unexpected cpu_count %u.\n", cpu_count);
+
+    count = pKeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+    ok(count == cpu_count, "Got unexpected count %u.\n", count);
+
+    mask = pKeQueryActiveProcessors();
+    ok(mask == ~((~0u) << cpu_count), "Got unexpected mask %#lx.\n", mask);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -1763,6 +1793,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 #if defined(__i386__) || defined(__x86_64__)
     test_executable_pool();
 #endif
+    test_affinity();
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 

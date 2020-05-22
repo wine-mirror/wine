@@ -2385,6 +2385,12 @@ KAFFINITY WINAPI KeQueryActiveProcessors( void )
     return AffinityMask;
 }
 
+ULONG WINAPI KeQueryActiveProcessorCountEx(USHORT group_number)
+{
+    TRACE("group_number %u.\n", group_number);
+
+    return GetActiveProcessorCount(group_number);
+}
 
 /**********************************************************************
  *           KeQueryInterruptTime   (NTOSKRNL.EXE.@)
