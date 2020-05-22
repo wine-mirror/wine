@@ -3862,6 +3862,23 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemTime( SYSTEMTIME *systime )
 
 
 /***********************************************************************
+ *	GetSystemTimeAdjustment   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetSystemTimeAdjustment( DWORD *adjust, DWORD *increment, BOOL *disabled )
+{
+    SYSTEM_TIME_ADJUSTMENT_QUERY st;
+    ULONG len;
+
+    if (!set_ntstatus( NtQuerySystemInformation( SystemTimeAdjustmentInformation, &st, sizeof(st), &len )))
+        return FALSE;
+    *adjust    = st.TimeAdjustment;
+    *increment = st.TimeIncrement;
+    *disabled  = st.TimeAdjustmentDisabled;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *	GetSystemTimeAsFileTime   (kernelbase.@)
  */
 void WINAPI DECLSPEC_HOTPATCH GetSystemTimeAsFileTime( FILETIME *time )
@@ -3915,6 +3932,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetSystemTime( const SYSTEMTIME *systime )
 
     if (!SystemTimeToFileTime( systime, &ft )) return FALSE;
     return set_ntstatus( NtSetSystemTime( (LARGE_INTEGER *)&ft, NULL ));
+}
+
+
+/***********************************************************************
+ *	SetSystemTimeAdjustment   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH SetSystemTimeAdjustment( DWORD adjust, BOOL disabled )
+{
+    SYSTEM_TIME_ADJUSTMENT st;
+
+    st.TimeAdjustment = adjust;
+    st.TimeAdjustmentDisabled = disabled;
+    return set_ntstatus( NtSetSystemInformation( SystemTimeAdjustmentInformation, &st, sizeof(st) ));
 }
 
 

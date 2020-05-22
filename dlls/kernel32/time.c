@@ -56,53 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(time);
 static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
 
 
-/***********************************************************************
- *           GetSystemTimeAdjustment     (KERNEL32.@)
- *
- *  Get the period between clock interrupts and the amount the clock
- *  is adjusted each interrupt so as to keep it in sync with an external source.
- *
- * PARAMS
- *  lpTimeAdjustment [out] The clock adjustment per interrupt in 100's of nanoseconds.
- *  lpTimeIncrement  [out] The time between clock interrupts in 100's of nanoseconds.
- *  lpTimeAdjustmentDisabled [out] The clock synchronisation has been disabled.
- *
- * RETURNS
- *  TRUE.
- *
- * BUGS
- *  Only the special case of disabled time adjustments is supported.
- */
-BOOL WINAPI GetSystemTimeAdjustment( PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
-    PBOOL  lpTimeAdjustmentDisabled )
-{
-    *lpTimeAdjustment = 0;
-    *lpTimeIncrement = 10000000 / sysconf(_SC_CLK_TCK);
-    *lpTimeAdjustmentDisabled = TRUE;
-    return TRUE;
-}
-
-
-/***********************************************************************
- *              SetSystemTimeAdjustment  (KERNEL32.@)
- *
- *  Enables or disables the timing adjustments to the system's clock.
- *
- * PARAMS
- *  dwTimeAdjustment        [in] Number of units to add per clock interrupt.
- *  bTimeAdjustmentDisabled [in] Adjustment mode.
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: FALSE.
- */
-BOOL WINAPI SetSystemTimeAdjustment( DWORD dwTimeAdjustment, BOOL bTimeAdjustmentDisabled )
-{
-    /* Fake function for now... */
-    FIXME("(%08x,%d): stub !\n", dwTimeAdjustment, bTimeAdjustmentDisabled);
-    return TRUE;
-}
-
 /*********************************************************************
  *	GetCalendarInfoA				(KERNEL32.@)
  *

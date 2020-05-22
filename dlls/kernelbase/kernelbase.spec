@@ -695,7 +695,7 @@
 @ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr) kernel32.GetSystemPreferredUILanguages
 # @ stub GetSystemStateRootFolder
 @ stdcall GetSystemTime(ptr)
-@ stdcall GetSystemTimeAdjustment(ptr ptr ptr) kernel32.GetSystemTimeAdjustment
+@ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
 @ stdcall GetSystemTimeAsFileTime(ptr)
 @ stdcall GetSystemTimePreciseAsFileTime(ptr)
 @ stdcall GetSystemTimes(ptr ptr ptr)
@@ -1477,7 +1477,7 @@
 @ stdcall SetStdHandleEx(long long ptr)
 @ stdcall SetSystemFileCacheSize(long long long)
 @ stdcall SetSystemTime(ptr)
-@ stdcall SetSystemTimeAdjustment(long long) kernel32.SetSystemTimeAdjustment
+@ stdcall SetSystemTimeAdjustment(long long)
 @ stdcall SetThreadContext(long ptr)
 @ stdcall SetThreadDescription(ptr wstr)
 @ stdcall SetThreadErrorMode(long ptr)
