@@ -567,7 +567,7 @@ ULONG WINAPI EtwTraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, US
 /******************************************************************************
  *                  EtwTraceMessage (NTDLL.@)
  */
-ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number, ... )
+ULONG WINAPIV EtwTraceMessage( TRACEHANDLE handle, ULONG flags, LPGUID guid, /*USHORT*/ ULONG number, ... )
 {
     __ms_va_list valist;
     ULONG ret;
