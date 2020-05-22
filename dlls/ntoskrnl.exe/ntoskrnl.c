@@ -3957,3 +3957,10 @@ BOOLEAN WINAPI RtlIsNtDdiVersionAvailable(ULONG version)
     FIXME("stub: %d\n", version);
     return FALSE;
 }
+
+BOOLEAN WINAPI KdRefreshDebuggerNotPresent(void)
+{
+    TRACE(".\n");
+
+    return !KdDebuggerEnabled;
+}

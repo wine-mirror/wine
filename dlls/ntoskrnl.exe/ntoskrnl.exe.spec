@@ -517,6 +517,7 @@
 @ stub KdEnteredDebugger
 @ stub KdPollBreakIn
 @ stub KdPowerTransition
+@ stdcall KdRefreshDebuggerNotPresent()
 @ stub Ke386CallBios
 @ stdcall Ke386IoSetAccessProcess(ptr long)
 @ stub Ke386QueryIoAccessMap
