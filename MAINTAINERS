@@ -53,7 +53,7 @@ P:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/comctl32/
 
 Common Item Dialog
-P:	Vincent Povirk <vincent@codeweavers.com>
+P:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/comdlg32/itemdlg.c
 F:	dlls/comdlg32/tests/itemdlg.c
 
@@ -122,7 +122,7 @@ M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/dwrite/
 
 DotNet Runtime
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/mscoree/
 
 GDI
@@ -130,7 +130,7 @@ M:	Huw Davies <huw@codeweavers.com>
 F:	dlls/gdi32/
 
 GDIPlus
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/gdiplus/
 
 GPhoto Driver
@@ -202,7 +202,7 @@ F:	dlls/ole32/stubmanager.c
 F:	dlls/ole32/usrmarshal.c
 
 OLE Storage
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/ole32/filelockbytes.c
 F:	dlls/ole32/memlockbytes.c
 F:	dlls/ole32/stg_stream.c
@@ -243,7 +243,7 @@ F:	dlls/rpcrt4
 F:	tools/widl
 
 TWAIN
-P:	Vincent Povirk <vincent@codeweavers.com>
+P:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/twain_32/
 F:	dlls/sane.ds/
 F:	dlls/gphoto2.ds/
@@ -271,7 +271,7 @@ F:	dlls/mshtml/
 F:	dlls/shdocvw/
 
 Windows Imaging Component
-M:	Vincent Povirk <vincent@codeweavers.com>
+M:	Esme Povirk <vincent@codeweavers.com>
 F:	dlls/windowscodecs/
 F:	dlls/windowscodecsext/
 
@@ -315,7 +315,6 @@ F:	dlls/wpcap/
 
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org>
-P:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/winex11.drv/
 
 XML parsing
@@ -329,7 +328,7 @@ P:	Alex Henrie <alexhenrie24@gmail.com>
 P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 P:	Jacek Caban <jacek@codeweavers.com>
-P:	Vincent Povirk <vincent@codeweavers.com>
+P:	Esme Povirk <vincent@codeweavers.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
 F:	*
 F:	*/
