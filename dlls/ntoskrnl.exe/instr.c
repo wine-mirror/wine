@@ -39,6 +39,7 @@ enum instr_op
 {
     INSTR_OP_MOV,
     INSTR_OP_OR,
+    INSTR_OP_XOR,
 };
 
 #ifdef __i386__
@@ -526,6 +527,10 @@ static void store_reg_word( CONTEXT *context, BYTE regmodrm, const BYTE *addr, i
             for (i = 0; i < op_size; ++i)
                 reg[i] |= addr[i];
             break;
+        case INSTR_OP_XOR:
+            for (i = 0; i < op_size; ++i)
+                reg[i] ^= addr[i];
+            break;
     }
 }
 
@@ -543,6 +548,9 @@ static void store_reg_byte( CONTEXT *context, BYTE regmodrm, const BYTE *addr, i
             break;
         case INSTR_OP_OR:
             *reg |= *addr;
+            break;
+        case INSTR_OP_XOR:
+            *reg ^= *addr;
             break;
     }
 }
@@ -838,6 +846,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
     case 0x8a: /* mov Eb, Gb */
     case 0x8b: /* mov Ev, Gv */
     case 0x0b: /* or  Ev, Gv */
+    case 0x33: /* xor Ev, Gv */
     {
         BYTE *data = INSTR_GetOperandAddr( context, instr + 1, prefixlen + 1, long_addr,
                                            rex, segprefix, &len );
@@ -860,6 +869,10 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 case 0x0b:
                     store_reg_word( context, instr[1], wine_user_shared_data + offset,
                             long_op, rex, INSTR_OP_OR );
+                    break;
+                case 0x33:
+                    store_reg_word( context, instr[1], wine_user_shared_data + offset,
+                            long_op, rex, INSTR_OP_XOR );
                     break;
             }
             context->Rip += prefixlen + len + 1;
