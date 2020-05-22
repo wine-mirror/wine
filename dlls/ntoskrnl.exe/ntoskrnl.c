@@ -3412,8 +3412,8 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len, ULONG page_size )
 
     while (rel < end - 1 && rel->SizeOfBlock)
     {
-        void *page = get_rva( module, rel->VirtualAddress );
-        DWORD old_prot;
+        char *page = get_rva( module, rel->VirtualAddress );
+        DWORD old_prot1, old_prot2;
 
         if (rel->VirtualAddress >= len)
         {
@@ -3423,10 +3423,12 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len, ULONG page_size )
 
         /* Relocation entries may hang over the end of the page, so we need to
          * protect two pages. */
-        VirtualProtect( page, page_size * 2, PAGE_READWRITE, &old_prot );
+        VirtualProtect( page, page_size, PAGE_READWRITE, &old_prot1 );
+        VirtualProtect( page + page_size, page_size, PAGE_READWRITE, &old_prot2 );
         rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
                                          (USHORT *)(rel + 1), delta );
-        VirtualProtect( page, page_size * 2, old_prot, &old_prot );
+        VirtualProtect( page, page_size, old_prot1, &old_prot1 );
+        VirtualProtect( page + page_size, page_size, old_prot2, &old_prot2 );
         if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
     }
 
