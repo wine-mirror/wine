@@ -1612,15 +1612,7 @@ static HRESULT WINAPI topology_node_SetInputPrefType(IMFTopologyNode *iface, DWO
             break;
         default:
             if (SUCCEEDED(hr = topology_node_reserve_streams(&node->inputs, index)))
-            {
-                if (index >= node->inputs.count)
-                {
-                    memset(&node->inputs.streams[node->inputs.count], 0,
-                            (index - node->inputs.count + 1) * sizeof(*node->inputs.streams));
-                    node->inputs.count = index + 1;
-                }
                 topology_node_set_stream_type(&node->inputs.streams[index], mediatype);
-            }
     }
 
     LeaveCriticalSection(&node->cs);
