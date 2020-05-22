@@ -213,6 +213,7 @@ static void shape_add_feature_full(struct shaping_features *features, unsigned i
     features->features[i].flags = flags;
     features->features[i].max_value = value;
     features->features[i].default_value = flags & FEATURE_GLOBAL ? value : 0;
+    features->features[i].stage = features->stage;
     features->count++;
 }
 
@@ -267,6 +268,7 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
                     features->features[j].flags ^= FEATURE_GLOBAL;
                 features->features[j].max_value = max(features->features[j].max_value, features->features[i].max_value);
             }
+            features->features[j].stage = min(features->features[j].stage, features->features[i].stage);
         }
     }
     features->count = j + 1;

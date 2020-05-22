@@ -528,6 +528,7 @@ struct shaping_feature
     unsigned int default_value;
     unsigned int mask;
     unsigned int shift;
+    unsigned int stage;
 };
 
 struct shaping_features
@@ -535,6 +536,7 @@ struct shaping_features
     struct shaping_feature *features;
     size_t count;
     size_t capacity;
+    unsigned int stage;
 };
 
 extern void opentype_layout_scriptshaping_cache_init(struct scriptshaping_cache *cache) DECLSPEC_HIDDEN;

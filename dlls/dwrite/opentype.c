@@ -4131,14 +4131,57 @@ static int lookups_sorting_compare(const void *a, const void *b)
     return left->index < right->index ? -1 : left->index > right->index ? 1 : 0;
 };
 
+static void opentype_layout_add_lookups(const struct ot_feature_list *feature_list, UINT16 total_lookup_count,
+        struct ot_gsubgpos_table *table, struct shaping_feature *feature, struct lookups *lookups)
+{
+    UINT16 feature_offset, lookup_count;
+    unsigned int i, j;
+
+    /* Feature wasn't found */
+    if (feature->index == 0xffff)
+        return;
+
+    /* FIXME: skip non-global ones for now. */
+    if (!(feature->flags & FEATURE_GLOBAL))
+        return;
+
+    feature_offset = GET_BE_WORD(feature_list->features[feature->index].offset);
+
+    lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
+            FIELD_OFFSET(struct ot_feature, lookup_count));
+    if (!lookup_count)
+        return;
+
+    if (!dwrite_array_reserve((void **)&lookups->lookups, &lookups->capacity, lookups->count + lookup_count,
+            sizeof(*lookups->lookups)))
+    {
+        return;
+    }
+
+    for (i = 0; i < lookup_count; ++i)
+    {
+        UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
+                FIELD_OFFSET(struct ot_feature, lookuplist_index[i]));
+
+        if (lookup_index >= total_lookup_count)
+            continue;
+
+        j = lookups->count;
+        lookups->lookups[j].index = lookup_index;
+        lookups->lookups[j].mask = feature->mask;
+        lookups->count++;
+    }
+}
+
 static void opentype_layout_collect_lookups(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features, struct ot_gsubgpos_table *table,
         struct lookups *lookups)
 {
     UINT16 table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
     const struct ot_feature_list *feature_list;
+    unsigned int last_num_lookups = 0, stage;
     struct shaping_feature *feature;
-    unsigned int i, j, l, next_bit;
+    unsigned int i, j, next_bit;
     unsigned int global_bit_shift = 1;
     unsigned int global_bit_mask = 1;
     UINT16 feature_index;
@@ -4235,51 +4278,37 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
         }
     }
 
-    /* Collect lookups for all given features. */
-    for (i = 0; i < features->count; ++i)
+    for (stage = 0; stage <= features->stage; ++stage)
     {
-        UINT16 feature_offset, lookup_count;
-
-        feature = &features->features[i];
-
-        /* Feature wasn't found */
-        if (feature->index == 0xffff)
-            continue;
-
-        /* FIXME: skip non-global ones for now. */
-        if (!(feature->flags & FEATURE_GLOBAL))
-            continue;
-
-        feature_offset = GET_BE_WORD(feature_list->features[feature->index].offset);
-
-        lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
-                FIELD_OFFSET(struct ot_feature, lookup_count));
-        if (!lookup_count)
-            continue;
-
-        if (!dwrite_array_reserve((void **)&lookups->lookups, &lookups->capacity, lookups->count + lookup_count,
-                sizeof(*lookups->lookups)))
+        for (i = 0; i < features->count; ++i)
         {
-            return;
+            if (features->features[i].stage == stage)
+                opentype_layout_add_lookups(feature_list, total_lookup_count, table, &features->features[i], lookups);
         }
 
-        for (l = 0; l < lookup_count; ++l)
+        /* Sort and merge lookups for current stage. */
+        if (last_num_lookups < lookups->count)
         {
-            UINT16 lookup_index = table_read_be_word(&table->table, table->feature_list + feature_offset +
-                    FIELD_OFFSET(struct ot_feature, lookuplist_index[l]));
+            qsort(lookups->lookups + last_num_lookups, lookups->count - last_num_lookups, sizeof(*lookups->lookups),
+                    lookups_sorting_compare);
 
-            if (lookup_index >= total_lookup_count)
-                continue;
-
-            j = lookups->count;
-            lookups->lookups[j].index = lookup_index;
-            lookups->lookups[j].mask = feature->mask;
-            lookups->count++;
+            j = last_num_lookups;
+            for (i = j + 1; i < lookups->count; ++i)
+            {
+                if (lookups->lookups[i].index != lookups->lookups[j].index)
+                {
+                    lookups->lookups[++j] = lookups->lookups[i];
+                }
+                else
+                {
+                    lookups->lookups[j].mask |= lookups->lookups[i].mask;
+                }
+            }
+            lookups->count = j + 1;
         }
+
+        last_num_lookups = lookups->count;
     }
-
-    /* Sort lookups. */
-    qsort(lookups->lookups, lookups->count, sizeof(*lookups->lookups), lookups_sorting_compare);
 }
 
 void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
@@ -4291,13 +4320,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
 
     for (i = 0; i < lookups.count; ++i)
-    {
-        /* Skip duplicates. */
-        if (i && lookups.lookups[i].index == lookups.lookups[i - 1].index)
-            continue;
-
         opentype_layout_apply_gpos_lookup(context, lookups.lookups[i].index);
-    }
 
     heap_free(lookups.lookups);
 }
@@ -4607,13 +4630,7 @@ HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *contex
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gsub, &lookups);
 
     for (i = 0; i < lookups.count; ++i)
-    {
-        /* Skip duplicates. */
-        if (i && lookups.lookups[i].index == lookups.lookups[i - 1].index)
-            continue;
-
         opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, lookups.lookups[i].index);
-    }
 
     heap_free(lookups.lookups);
 
