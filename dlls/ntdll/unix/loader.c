@@ -1067,7 +1067,7 @@ static void apple_create_wine_thread( void *arg )
         if (!pthread_attr_getstacksize( &attr, &info.desired_size ) &&
             mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
         {
-            mmap_remove_reserved_area( info.stack, info.desired_size, 0 );
+            mmap_remove_reserved_area( info.stack, info.desired_size );
             pthread_attr_setstackaddr( &attr, (char*)info.stack + info.desired_size );
         }
 #endif
