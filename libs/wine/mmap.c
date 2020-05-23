@@ -215,7 +215,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
         /* If available, this will attempt a fixed mapping in-kernel */
         flags |= MAP_TRYFIXED;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-        if ( start && mmap( start, size, prot, flags | MAP_FIXED | MAP_EXCL, get_fdzero(), 0 ) )
+        if ( start && mmap( start, size, prot, flags | MAP_FIXED | MAP_EXCL, get_fdzero(), 0 ) != MAP_FAILED )
             return start;
 #elif defined(__svr4__) || defined(__NetBSD__) || defined(__APPLE__)
         if ( try_mmap_fixed( start, size, prot, flags, get_fdzero(), 0 ) )
