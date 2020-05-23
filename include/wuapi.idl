@@ -1330,6 +1330,15 @@ interface ISystemInformation : IDispatch
 coclass AutomaticUpdates { interface IAutomaticUpdates; }
 
 [
+    helpstring("UpdateInstaller Class"),
+    threading(both),
+    progid("Microsoft.Update.Installer.1"),
+    vi_progid("Microsoft.Update.Installer"),
+    uuid(d2e0fe7f-d23e-48e1-93c0-6fa8cc346474)
+]
+coclass UpdateInstaller { interface IUpdateInstaller; }
+
+[
     helpstring("UpdateSession Class"),
     threading(both),
     progid("Microsoft.Update.Session.1"),
