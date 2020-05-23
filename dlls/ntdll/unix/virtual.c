@@ -135,7 +135,11 @@ static void reserve_area( void *addr, void *end )
 
     if (!size) return;
 
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    ptr = mmap( addr, size, PROT_NONE, flags | MAP_FIXED | MAP_EXCL, -1, 0 );
+#else
     ptr = mmap( addr, size, PROT_NONE, flags, -1, 0 );
+#endif
     if (ptr == addr)
     {
         mmap_add_reserved_area( addr, size );
