@@ -4095,3 +4095,15 @@ HRESULT WINAPI ScriptGetFontFeatureTags( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANAL
 
     return SHAPE_GetFontFeatureTags(hdc, (ScriptCache *)*psc, psa, tagScript, tagLangSys, cMaxTags, pFeatureTags, pcTags);
 }
+
+HRESULT WINAPI ScriptGetFontAlternateGlyphs( HDC hdc, SCRIPT_CACHE *sc, SCRIPT_ANALYSIS *sa, OPENTYPE_TAG tag_script, OPENTYPE_TAG tag_langsys, OPENTYPE_TAG tag_feature,
+                 WORD id, int size, WORD *list, int *count )
+{
+    FIXME("(%p, %p, %p, %s, %s, %s, 0x%04x, %d, %p, %p)\n", hdc, sc, sa, debugstr_an((char*)&tag_script,4), debugstr_an((char*)&tag_langsys,4),
+          debugstr_an((char*)&tag_feature,4), id, size, list, count);
+
+    if(count)
+        *count = 0;
+
+    return E_NOTIMPL;
+}
