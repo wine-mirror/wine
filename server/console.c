@@ -99,7 +99,7 @@ static const struct object_ops console_ops =
 
 static enum server_fd_type console_get_fd_type( struct fd *fd );
 static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
-static void console_get_volume_info( struct fd *fd, unsigned int info_class );
+static int console_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 static int console_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int console_flush( struct fd *fd, struct async *async );
 static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
@@ -480,7 +480,7 @@ static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned 
     set_error( STATUS_INVALID_DEVICE_REQUEST );
 }
 
-static void console_get_volume_info( struct fd *fd, unsigned int info_class )
+static int console_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
 {
     switch (info_class)
     {
@@ -500,6 +500,7 @@ static void console_get_volume_info( struct fd *fd, unsigned int info_class )
     default:
         set_error( STATUS_NOT_IMPLEMENTED );
     }
+    return 0;
 }
 
 static struct object *create_console(void)

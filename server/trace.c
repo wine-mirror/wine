@@ -1993,12 +1993,14 @@ static void dump_get_file_info_reply( const struct get_file_info_reply *req )
 static void dump_get_volume_info_request( const struct get_volume_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    dump_async_data( ", async=", &req->async );
     fprintf( stderr, ", info_class=%08x", req->info_class );
 }
 
 static void dump_get_volume_info_reply( const struct get_volume_info_reply *req )
 {
-    dump_varargs_bytes( " data=", cur_size );
+    fprintf( stderr, " wait=%04x", req->wait );
+    dump_varargs_bytes( ", data=", cur_size );
 }
 
 static void dump_lock_file_request( const struct lock_file_request *req )

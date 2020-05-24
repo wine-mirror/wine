@@ -2369,9 +2369,10 @@ void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int 
 }
 
 /* default get_volume_info() routine */
-void no_fd_get_volume_info( struct fd *fd, unsigned int info_class )
+int no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
 }
 
 /* default ioctl() routine */
@@ -2666,12 +2667,16 @@ DECL_HANDLER(get_file_info)
 DECL_HANDLER(get_volume_info)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    struct async *async;
 
-    if (fd)
+    if (!fd) return;
+
+    if ((async = create_request_async( fd, fd->comp_flags, &req->async )))
     {
-        fd->fd_ops->get_volume_info( fd, req->info_class );
-        release_object( fd );
+        reply->wait = async_handoff( async, fd->fd_ops->get_volume_info( fd, async, req->info_class ), NULL, 1 );
+        release_object( async );
     }
+    release_object( fd );
 }
 
 /* open a file object */

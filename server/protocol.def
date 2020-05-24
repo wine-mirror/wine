@@ -1392,8 +1392,10 @@ enum server_fd_type
 /* Query volume information */
 @REQ(get_volume_info)
     obj_handle_t handle;        /* handle to the file */
+    async_data_t async;         /* async I/O parameters */
     unsigned int info_class;    /* queried information class */
 @REPLY
+    obj_handle_t wait;          /* handle to wait on for blocking read */
     VARARG(data,bytes);         /* volume info data */
 @END
 

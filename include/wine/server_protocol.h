@@ -1688,13 +1688,16 @@ struct get_volume_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    async_data_t async;
     unsigned int info_class;
-    char __pad_20[4];
+    char __pad_60[4];
 };
 struct get_volume_info_reply
 {
     struct reply_header __header;
+    obj_handle_t wait;
     /* VARARG(data,bytes); */
+    char __pad_12[4];
 };
 
 
@@ -6266,7 +6269,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 675
+#define SERVER_PROTOCOL_VERSION 676
 
 /* ### protocol_version end ### */
 

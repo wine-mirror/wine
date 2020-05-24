@@ -65,7 +65,7 @@ struct fd_ops
     /* query file info */
     void (*get_file_info)( struct fd *, obj_handle_t, unsigned int );
     /* query volume info */
-    void (*get_volume_info)( struct fd *, unsigned int );
+    int (*get_volume_info)( struct fd *, struct async *, unsigned int );
     /* perform an ioctl on the file */
     int (*ioctl)(struct fd *fd, ioctl_code_t code, struct async *async );
     /* queue an async operation */
@@ -114,7 +114,7 @@ extern int no_fd_write( struct fd *fd, struct async *async, file_pos_t pos );
 extern int no_fd_flush( struct fd *fd, struct async *async );
 extern void no_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 extern void default_fd_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
-extern void no_fd_get_volume_info( struct fd *fd, unsigned int info_class );
+extern int no_fd_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 extern int no_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern int default_fd_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 extern void no_fd_queue_async( struct fd *fd, struct async *async, int type, int count );
