@@ -3130,6 +3130,36 @@ static unsigned int opentype_layout_get_glyph_class(const struct dwrite_fonttabl
     return glyph_class;
 }
 
+static unsigned int opentype_set_glyph_props(struct scriptshaping_context *context, unsigned int g, UINT16 glyph)
+{
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int glyph_class = 0, props;
+
+    if (cache->gdef.classdef)
+    {
+        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef, context->u.subst.glyphs[g]);
+    }
+
+    switch (glyph_class)
+    {
+        case GDEF_CLASS_BASE:
+            props = GLYPH_PROP_BASE;
+            break;
+        case GDEF_CLASS_LIGATURE:
+            props = GLYPH_PROP_LIGATURE;
+            break;
+        case GDEF_CLASS_MARK:
+            props = GLYPH_PROP_MARK;
+            break;
+        default:
+            props = 0;
+    }
+
+    context->glyph_infos[g].props = props;
+
+    return props;
+}
+
 struct coverage_compare_format1_context
 {
     UINT16 glyph;
@@ -4377,6 +4407,8 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
 
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
 
+    for (i = 0; i < context->glyph_count; ++i)
+        opentype_set_glyph_props(context, i, context->u.pos.glyphs[i]);
     opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
@@ -4691,36 +4723,6 @@ static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
     return mirror ? mirror : codepoint;
 }
 
-static void opentype_subst_set_glyph_props(struct scriptshaping_context *context, unsigned int g)
-{
-    struct scriptshaping_cache *cache = context->cache;
-    unsigned int glyph_class = 0, props;
-
-    if (cache->gdef.classdef)
-    {
-        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef, context->u.subst.glyphs[g]);
-    }
-
-    switch (glyph_class)
-    {
-        case GDEF_CLASS_BASE:
-            props = GLYPH_PROP_BASE;
-            break;
-        case GDEF_CLASS_LIGATURE:
-            props = GLYPH_PROP_LIGATURE;
-            break;
-        case GDEF_CLASS_MARK:
-            props = GLYPH_PROP_MARK;
-            context->u.subst.glyph_props[g].isDiacritic = 1;
-            context->u.subst.glyph_props[g].isZeroWidthSpace = 1;
-            break;
-        default:
-            props = 0;
-    }
-
-    context->glyph_infos[g].props = props;
-}
-
 static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, const struct shaping_features *features)
 {
     unsigned int rtlm_mask = shaping_features_get_mask(features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','m'), NULL);
@@ -4761,7 +4763,11 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         context->u.subst.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.subst.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         context->u.subst.glyph_props[g].isClusterStart = 1;
-        opentype_subst_set_glyph_props(context, g);
+        if (opentype_set_glyph_props(context, g, context->u.subst.glyphs[g]) == GLYPH_PROP_MARK)
+        {
+            context->u.subst.glyph_props[g].isDiacritic = 1;
+            context->u.subst.glyph_props[g].isZeroWidthSpace = 1;
+        }
         context->glyph_count++;
 
         clustermap[i] = i;
