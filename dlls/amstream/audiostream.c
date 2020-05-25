@@ -429,18 +429,18 @@ static ULONG WINAPI audio_IAMMediaStream_Release(IAMMediaStream *iface)
 
 /*** IMediaStream methods ***/
 static HRESULT WINAPI audio_IAMMediaStream_GetMultiMediaStream(IAMMediaStream *iface,
-        IMultiMediaStream** multi_media_stream)
+        IMultiMediaStream **mmstream)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    if (!multi_media_stream)
+    if (!mmstream)
         return E_POINTER;
 
-    IMultiMediaStream_AddRef(This->parent);
-    *multi_media_stream = This->parent;
-
+    if (stream->parent)
+        IMultiMediaStream_AddRef(stream->parent);
+    *mmstream = stream->parent;
     return S_OK;
 }
 
