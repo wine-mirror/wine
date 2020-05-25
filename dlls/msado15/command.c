@@ -31,8 +31,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
 struct command
 {
-    _Command Command_iface;
-    LONG     ref;
+    _Command        Command_iface;
+    LONG            ref;
+    CommandTypeEnum type;
 };
 
 static inline struct command *impl_from_Command( _Command *iface )
@@ -193,14 +194,34 @@ static HRESULT WINAPI command_get_Parameters( _Command *iface, Parameters **para
 
 static HRESULT WINAPI command_put_CommandType( _Command *iface, CommandTypeEnum type )
 {
-    FIXME( "%p, %d\n", iface, type );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+
+    TRACE( "%p, %d\n", iface, type );
+
+    switch (type)
+    {
+    case adCmdUnspecified:
+    case adCmdUnknown:
+    case adCmdText:
+    case adCmdTable:
+    case adCmdStoredProc:
+    case adCmdFile:
+    case adCmdTableDirect:
+        command->type = type;
+        return S_OK;
+    }
+
+    return MAKE_ADO_HRESULT( adErrInvalidArgument );
 }
 
 static HRESULT WINAPI command_get_CommandType( _Command *iface, CommandTypeEnum *type )
 {
-    FIXME( "%p, %p\n", iface, type );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+
+    TRACE( "%p, %p\n", iface, type );
+
+    *type = command->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI command_get_Name(_Command *iface, BSTR *name)
@@ -305,6 +326,7 @@ HRESULT Command_create( void **obj )
 
     if (!(command = heap_alloc( sizeof(*command) ))) return E_OUTOFMEMORY;
     command->Command_iface.lpVtbl = &command_vtbl;
+    command->type = adCmdUnknown;
     command->ref = 1;
 
     *obj = &command->Command_iface;
