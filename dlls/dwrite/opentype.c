@@ -494,6 +494,13 @@ enum gsub_gpos_lookup_flags
     LOOKUP_FLAG_IGNORE_MASK = 0xe,
 };
 
+enum glyph_prop_flags
+{
+    GLYPH_PROP_BASE = LOOKUP_FLAG_IGNORE_BASE,
+    GLYPH_PROP_LIGATURE = LOOKUP_FLAG_IGNORE_LIGATURES,
+    GLYPH_PROP_MARK = LOOKUP_FLAG_IGNORE_MARKS,
+};
+
 enum gpos_lookup_type
 {
     GPOS_LOOKUP_SINGLE_ADJUSTMENT = 1,
@@ -4684,6 +4691,36 @@ static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
     return mirror ? mirror : codepoint;
 }
 
+static void opentype_subst_set_glyph_props(struct scriptshaping_context *context, unsigned int g)
+{
+    struct scriptshaping_cache *cache = context->cache;
+    unsigned int glyph_class = 0, props;
+
+    if (cache->gdef.classdef)
+    {
+        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef, context->u.subst.glyphs[g]);
+    }
+
+    switch (glyph_class)
+    {
+        case GDEF_CLASS_BASE:
+            props = GLYPH_PROP_BASE;
+            break;
+        case GDEF_CLASS_LIGATURE:
+            props = GLYPH_PROP_LIGATURE;
+            break;
+        case GDEF_CLASS_MARK:
+            props = GLYPH_PROP_MARK;
+            context->u.subst.glyph_props[g].isDiacritic = 1;
+            context->u.subst.glyph_props[g].isZeroWidthSpace = 1;
+            break;
+        default:
+            props = 0;
+    }
+
+    context->glyph_infos[g].props = props;
+}
+
 static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, const struct shaping_features *features)
 {
     unsigned int rtlm_mask = shaping_features_get_mask(features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','m'), NULL);
@@ -4724,6 +4761,7 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         context->u.subst.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.subst.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         context->u.subst.glyph_props[g].isClusterStart = 1;
+        opentype_subst_set_glyph_props(context, g);
         context->glyph_count++;
 
         clustermap[i] = i;

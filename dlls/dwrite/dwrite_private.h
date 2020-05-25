@@ -465,6 +465,7 @@ struct scriptshaping_cache
 struct shaping_glyph_info
 {
     unsigned int mask;
+    unsigned int props;
 };
 
 struct scriptshaping_context
