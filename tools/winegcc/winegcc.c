@@ -1188,6 +1188,8 @@ static void build(struct options* opts)
             add_library(opts, lib_dirs, files, file + 2 );
 	else if (file[1] == 'x')
 	    lang = file;
+        else if(file[1] == 'W')
+            strarray_add(files, file);
     }
 
     /* add the default libraries, if needed */
@@ -1392,6 +1394,9 @@ static void build(struct options* opts)
                     free( lib );
                 }
 		strarray_add(link_args, name);
+		break;
+	    case 'W':
+		strarray_add(link_args, files->base[j]);
 		break;
 	}
     }
@@ -1930,6 +1935,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl->base[j], "--debug-file") && j < Wl->size - 1)
                             {
                                 opts.debug_file = strdup( Wl->base[++j] );
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "--whole-archive") || !strcmp(Wl->base[j], "--no-whole-archive"))
+                            {
+                                strarray_add( opts.files, strmake( "-Wl,%s", Wl->base[j] ));
                                 continue;
                             }
                             if (!strcmp(Wl->base[j], "-static")) linking = -1;
