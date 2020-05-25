@@ -3425,19 +3425,19 @@ static void glyph_iterator_init(struct scriptshaping_context *context, unsigned 
     iter->len = len;
 }
 
-static BOOL glyph_iterator_match(const struct glyph_iterator *iter)
+static BOOL lookup_is_glyph_match(unsigned int glyph_props, unsigned int lookup_flags)
 {
-    struct scriptshaping_cache *cache = iter->context->cache;
+    if (glyph_props & lookup_flags & LOOKUP_FLAG_IGNORE_MASK)
+        return FALSE;
 
-    if (cache->gdef.classdef)
-    {
-        unsigned int glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef,
-                iter->context->u.pos.glyphs[iter->pos]);
-        if ((1 << glyph_class) & iter->flags & LOOKUP_FLAG_IGNORE_MASK)
-            return FALSE;
-    }
+    /* FIXME: match mark properties */
 
     return TRUE;
+}
+
+static BOOL glyph_iterator_match(const struct glyph_iterator *iter)
+{
+    return lookup_is_glyph_match(iter->context->glyph_infos[iter->pos].props, iter->flags);
 }
 
 static BOOL glyph_iterator_next(struct glyph_iterator *iter)
