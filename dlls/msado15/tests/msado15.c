@@ -742,6 +742,7 @@ static void test_Command(void)
     _ADO *ado;
     Command15 *command15;
     Command25 *command25;
+    CommandTypeEnum cmd_type = adCmdUnspecified;
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -757,6 +758,18 @@ static void test_Command(void)
     hr = _Command_QueryInterface( command, &IID_Command25, (void **)&command25 );
     ok( hr == S_OK, "got %08x\n", hr );
     Command25_Release( command25 );
+
+    hr = _Command_get_CommandType( command, &cmd_type );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cmd_type == adCmdUnknown, "got %08x\n", cmd_type );
+
+    _Command_put_CommandType( command, adCmdText );
+    hr = _Command_get_CommandType( command, &cmd_type );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cmd_type == adCmdText, "got %08x\n", cmd_type );
+
+    hr = _Command_put_CommandType( command, 0xdeadbeef );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08x\n", hr );
 
     _Command_Release( command );
 }
