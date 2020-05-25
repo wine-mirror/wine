@@ -194,6 +194,79 @@ interface IMFMediaEngine : IUnknown
     HRESULT OnVideoStreamTick([out] LONGLONG *time);
 }
 
+typedef enum MF_MEDIA_ENGINE_STATISTIC
+{
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_RENDERED,
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_DROPPED,
+    MF_MEDIA_ENGINE_STATISTIC_BYTES_DOWNLOADED,
+    MF_MEDIA_ENGINE_STATISTIC_BUFFER_PROGRESS,
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_PER_SECOND,
+    MF_MEDIA_ENGINE_STATISTIC_PLAYBACK_JITTER,
+    MF_MEDIA_ENGINE_STATISTIC_FRAMES_CORRUPTED,
+    MF_MEDIA_ENGINE_STATISTIC_TOTAL_FRAME_DELAY,
+} MF_MEDIA_ENGINE_STATISTIC;
+
+typedef enum MF_MEDIA_ENGINE_S3D_PACKING_MODE
+{
+    MF_MEDIA_ENGINE_S3D_PACKING_MODE_NONE,
+    MF_MEDIA_ENGINE_S3D_PACKING_MODE_SIDE_BY_SIDE,
+    MF_MEDIA_ENGINE_S3D_PACKING_MODE_TOP_BOTTOM
+} MF_MEDIA_ENGINE_S3D_PACKING_MODE;
+
+typedef enum MF_MEDIA_ENGINE_SEEK_MODE
+{
+    MF_MEDIA_ENGINE_SEEK_MODE_NORMAL,
+    MF_MEDIA_ENGINE_SEEK_MODE_APPROXIMATE,
+} MF_MEDIA_ENGINE_SEEK_MODE;
+
+[
+    object,
+    uuid(83015ead-b1e6-40d0-a98a-37145ffe1ad1),
+    local,
+    pointer_default(unique)
+]
+interface IMFMediaEngineEx : IMFMediaEngine
+{
+    HRESULT SetSourceFromByteStream([in] IMFByteStream *bytestream, [in] BSTR url);
+    HRESULT GetStatistics([in] MF_MEDIA_ENGINE_STATISTIC stat_id, [out] PROPVARIANT *stat);
+    HRESULT UpdateVideoStream([in] const MFVideoNormalizedRect *src,
+            [in] const RECT *dst, [in] const MFARGB *border_color);
+    double GetBalance();
+    HRESULT SetBalance([in] double balance);
+    BOOL IsPlaybackRateSupported([in] double rate);
+    HRESULT FrameStep([in] BOOL forward);
+    HRESULT GetResourceCharacteristics([out] DWORD *flags);
+    HRESULT GetPresentationAttribute([in] REFGUID attribute, [out] PROPVARIANT *value);
+    HRESULT GetNumberOfStreams([out] DWORD *stream_count);
+    HRESULT GetStreamAttribute([in] DWORD stream_index, [in] REFGUID attribute, [out] PROPVARIANT *value);
+    HRESULT GetStreamSelection([in] DWORD stream_index, [out] BOOL *enabled);
+    HRESULT SetStreamSelection([in] DWORD stream_index, [in] BOOL enabled);
+    HRESULT ApplyStreamSelections();
+    HRESULT IsProtected([out] BOOL *protected);
+    HRESULT InsertVideoEffect([in] IUnknown *effect, [in] BOOL is_optional);
+    HRESULT InsertAudioEffect([in] IUnknown *effect, [in] BOOL is_optional);
+    HRESULT RemoveAllEffects();
+    HRESULT SetTimelineMarkerTimer([in] double timeout);
+    HRESULT GetTimelineMarkerTimer([out] double *timeout);
+    HRESULT CancelTimelineMarkerTimer();
+    BOOL IsStereo3D();
+    HRESULT GetStereo3DFramePackingMode([out] MF_MEDIA_ENGINE_S3D_PACKING_MODE *mode);
+    HRESULT SetStereo3DFramePackingMode([in] MF_MEDIA_ENGINE_S3D_PACKING_MODE mode);
+    HRESULT GetStereo3DRenderMode([out] MF3DVideoOutputType *output_type);
+    HRESULT SetStereo3DRenderMode([in] MF3DVideoOutputType output_type);
+    HRESULT EnableWindowlessSwapchainMode([in] BOOL enable);
+    HRESULT GetVideoSwapchainHandle([out] HANDLE *swapchain);
+    HRESULT EnableHorizontalMirrorMode([in] BOOL enable);
+    HRESULT GetAudioStreamCategory([out] UINT32 *category);
+    HRESULT SetAudioStreamCategory([in] UINT32 category);
+    HRESULT GetAudioEndpointRole([out] UINT32 *role);
+    HRESULT SetAudioEndpointRole([in] UINT32 role);
+    HRESULT GetRealTimeMode([out] BOOL *enabled);
+    HRESULT SetRealTimeMode([in] BOOL enable);
+    HRESULT SetCurrentTimeEx([in] double seektime, [in] MF_MEDIA_ENGINE_SEEK_MODE mode);
+    HRESULT EnableTimeUpdateTimer([in] BOOL enable);
+}
+
 [
     object,
     uuid(4d645ace-26aa-4688-9be1-df3516990b93),

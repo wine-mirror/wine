@@ -107,6 +107,12 @@ enum _MFT_DRAIN_TYPE
     MFT_DRAIN_NO_TAILS      = 0x00000001
 };
 
+typedef enum _MF3DVideoOutputType
+{
+    MF3DVideoOutputType_BaseView,
+    MF3DVideoOutputType_Stereo
+} MF3DVideoOutputType;
+
 typedef struct _MFT_INPUT_STREAM_INFO
 {
     LONGLONG hnsMaxLatency;
