@@ -444,7 +444,11 @@ typedef struct _FULL_PTR_XLAT_TABLES {
 
 struct IRpcStubBuffer;
 
+#ifndef _ERROR_STATUS_T_DEFINED
 typedef ULONG error_status_t;
+#define _ERROR_STATUS_T_DEFINED
+#endif
+
 typedef void  * NDR_CCONTEXT;
 
 typedef struct _SCONTEXT_QUEUE {
