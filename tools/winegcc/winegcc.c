@@ -231,6 +231,7 @@ struct options
     const char* debug_file;
     strarray* prefix;
     strarray* lib_dirs;
+    strarray* args;
     strarray* linker_args;
     strarray* compiler_args;
     strarray* winebuild_args;
@@ -1459,7 +1460,7 @@ static void build(struct options* opts)
 }
 
 
-static void forward(int argc, char **argv, struct options* opts)
+static void forward( struct options *opts )
 {
     strarray* args = strarray_alloc();
 
@@ -1561,17 +1562,17 @@ static void parse_target_option( struct options *opts, const char *target )
     opts->target = xstrdup( target );
 }
 
-static int is_option( char **argv, int i, const char *option, const char **option_arg )
+static int is_option( struct options *opts, int i, const char *option, const char **option_arg )
 {
-    if (!strcmp( argv[i], option ))
+    if (!strcmp( opts->args->base[i], option ))
     {
-        if (!argv[i + 1]) error( "option %s requires an argument\n", argv[i] );
-        *option_arg = argv[i + 1];
+        if (opts->args->size == i) error( "option %s requires an argument\n", opts->args->base[i] );
+        *option_arg = opts->args->base[i + 1];
         return 1;
     }
-    if (!strncmp( argv[i], option, strlen(option) ) && argv[i][strlen(option)] == '=')
+    if (!strncmp( opts->args->base[i], option, strlen(option) ) && opts->args->base[i][strlen(option)] == '=')
     {
-        *option_arg = argv[i] + strlen(option) + 1;
+        *option_arg = opts->args->base[i] + strlen(option) + 1;
         return 1;
     }
     return 0;
@@ -1613,78 +1614,84 @@ int main(int argc, char **argv)
     opts.compiler_args = strarray_alloc();
     opts.winebuild_args = strarray_alloc();
     opts.delayimports = strarray_alloc();
+    opts.args = strarray_alloc();
     opts.pic = 1;
 
     /* determine the processor type */
     if (strendswith(argv[0], "winecpp")) opts.processor = proc_cpp;
     else if (strendswith(argv[0], "++")) opts.processor = proc_cxx;
     
-    /* parse options */
-    for ( i = 1 ; i < argc ; i++ ) 
+    for (i = 1; i < argc; i++)
     {
-        if (argv[i][0] == '-' && argv[i][1])  /* option, except '-' alone is stdin, which is a file */
+        strarray_add( opts.args, argv[i] );
+    }
+
+    /* parse options */
+    for (i = 0; i < opts.args->size; i++)
+    {
+        if (opts.args->base[i][0] == '-' && opts.args->base[i][1])  /* option, except '-' alone is stdin, which is a file */
 	{
 	    /* determine if this switch is followed by a separate argument */
 	    next_is_arg = 0;
 	    option_arg = 0;
-	    switch(argv[i][1])
+	    switch(opts.args->base[i][1])
 	    {
 		case 'x': case 'o': case 'D': case 'U':
 		case 'I': case 'A': case 'l': case 'u':
 		case 'b': case 'V': case 'G': case 'L':
 		case 'B': case 'R': case 'z':
-		    if (argv[i][2]) option_arg = &argv[i][2];
+		    if (opts.args->base[i][2]) option_arg = &opts.args->base[i][2];
 		    else next_is_arg = 1;
 		    break;
 		case 'i':
 		    next_is_arg = 1;
 		    break;
 		case 'a':
-		    if (strcmp("-aux-info", argv[i]) == 0)
+		    if (strcmp("-aux-info", opts.args->base[i]) == 0)
 			next_is_arg = 1;
-		    if (strcmp("-arch", argv[i]) == 0)
+		    if (strcmp("-arch", opts.args->base[i]) == 0)
 			next_is_arg = 1;
 		    break;
 		case 'X':
-		    if (strcmp("-Xlinker", argv[i]) == 0)
+		    if (strcmp("-Xlinker", opts.args->base[i]) == 0)
 			next_is_arg = 1;
 		    break;
 		case 'M':
-		    c = argv[i][2];
+		    c = opts.args->base[i][2];
 		    if (c == 'F' || c == 'T' || c == 'Q')
 		    {
-			if (argv[i][3]) option_arg = &argv[i][3];
+			if (opts.args->base[i][3]) option_arg = &opts.args->base[i][3];
 			else next_is_arg = 1;
 		    }
 		    break;
 		case 'f':
-		    if (strcmp("-framework", argv[i]) == 0)
+		    if (strcmp("-framework", opts.args->base[i]) == 0)
 			next_is_arg = 1;
 		    break;
                 case 't':
-                    next_is_arg = strcmp("-target", argv[i]) == 0;
+                    next_is_arg = strcmp("-target", opts.args->base[i]) == 0;
                     break;
 		case '-':
-		    next_is_arg = (strcmp("--param", argv[i]) == 0 ||
-                                   strcmp("--sysroot", argv[i]) == 0 ||
-                                   strcmp("--target", argv[i]) == 0 ||
-                                   strcmp("--wine-objdir", argv[i]) == 0 ||
-                                   strcmp("--winebuild", argv[i]) == 0 ||
-                                   strcmp("--lib-suffix", argv[i]) == 0);
+		    next_is_arg = (strcmp("--param", opts.args->base[i]) == 0 ||
+                                   strcmp("--sysroot", opts.args->base[i]) == 0 ||
+                                   strcmp("--target", opts.args->base[i]) == 0 ||
+                                   strcmp("--wine-objdir", opts.args->base[i]) == 0 ||
+                                   strcmp("--winebuild", opts.args->base[i]) == 0 ||
+                                   strcmp("--lib-suffix", opts.args->base[i]) == 0);
 		    break;
 	    }
 	    if (next_is_arg)
             {
-                if (i + 1 >= argc) error("option -%c requires an argument\n", argv[i][1]);
-                option_arg = argv[i+1];
+                if (i + 1 >= opts.args->size) error("option -%c requires an argument\n", opts.args->base[i][1]);
+                option_arg = opts.args->base[i+1];
             }
 
 	    /* determine what options go 'as is' to the linker & the compiler */
-	    raw_linker_arg = is_linker_arg(argv[i]);
+	    raw_linker_arg = is_linker_arg(opts.args->base[i]);
 	    raw_compiler_arg = !raw_linker_arg;
 
 	    /* do a bit of semantic analysis */
-            switch (argv[i][1]) 
+            switch (opts.args->base[i][1])
 	    {
 		case 'B':
 		    str = strdup(option_arg);
@@ -1703,26 +1710,26 @@ int main(int argc, char **argv)
                     break;
                 case 'c':        /* compile or assemble */
                     raw_compiler_arg = 0;
-		    if (argv[i][2] == 0) opts.compile_only = 1;
+		    if (opts.args->base[i][2] == 0) opts.compile_only = 1;
 		    /* fall through */
                 case 'S':        /* generate assembler code */
                 case 'E':        /* preprocess only */
-                    if (argv[i][2] == 0) linking = 0;
+                    if (opts.args->base[i][2] == 0) linking = 0;
                     break;
 		case 'f':
-		    if (strcmp("-fno-short-wchar", argv[i]) == 0)
+		    if (strcmp("-fno-short-wchar", opts.args->base[i]) == 0)
                         opts.noshortwchar = 1;
-		    else if (!strcmp("-fasynchronous-unwind-tables", argv[i]))
+		    else if (!strcmp("-fasynchronous-unwind-tables", opts.args->base[i]))
                         opts.unwind_tables = 1;
-		    else if (!strcmp("-fno-asynchronous-unwind-tables", argv[i]))
+		    else if (!strcmp("-fno-asynchronous-unwind-tables", opts.args->base[i]))
                         opts.unwind_tables = 0;
-                    else if (!strcmp("-fPIC", argv[i]) || !strcmp("-fpic", argv[i]))
+                    else if (!strcmp("-fPIC", opts.args->base[i]) || !strcmp("-fpic", opts.args->base[i]))
                         opts.pic = 1;
-                    else if (!strcmp("-fno-PIC", argv[i]) || !strcmp("-fno-pic", argv[i]))
+                    else if (!strcmp("-fno-PIC", opts.args->base[i]) || !strcmp("-fno-pic", opts.args->base[i]))
                         opts.pic = 0;
 		    break;
                 case 'i':
-                    if (!strcmp( "-isysroot", argv[i] )) opts.isysroot = argv[i + 1];
+                    if (!strcmp( "-isysroot", opts.args->base[i] )) opts.isysroot = opts.args->base[i + 1];
                     break;
 		case 'l':
 		    strarray_add(opts.files, strmake("-l%s", option_arg));
@@ -1736,36 +1743,36 @@ int main(int argc, char **argv)
                     linking = 0;
                     break;
 		case 'm':
-		    if (strcmp("-mno-cygwin", argv[i]) == 0)
+		    if (strcmp("-mno-cygwin", opts.args->base[i]) == 0)
                     {
 			opts.use_msvcrt = 1;
                         raw_compiler_arg = 0;
                     }
-		    else if (strcmp("-mwindows", argv[i]) == 0)
+		    else if (strcmp("-mwindows", opts.args->base[i]) == 0)
                     {
 			opts.gui_app = 1;
                         raw_compiler_arg = 0;
                     }
-		    else if (strcmp("-mconsole", argv[i]) == 0)
+		    else if (strcmp("-mconsole", opts.args->base[i]) == 0)
                     {
 			opts.gui_app = 0;
                         raw_compiler_arg = 0;
                     }
-		    else if (strcmp("-municode", argv[i]) == 0)
+		    else if (strcmp("-municode", opts.args->base[i]) == 0)
                     {
 			opts.unicode_app = 1;
                         raw_compiler_arg = 0;
                     }
-		    else if (strcmp("-mthreads", argv[i]) == 0)
+		    else if (strcmp("-mthreads", opts.args->base[i]) == 0)
                     {
                         raw_compiler_arg = 0;
                     }
-		    else if (strcmp("-m16", argv[i]) == 0)
+		    else if (strcmp("-m16", opts.args->base[i]) == 0)
                     {
 			opts.win16_app = 1;
                         raw_compiler_arg = 0;
                     }
-		    else if (strcmp("-m32", argv[i]) == 0)
+		    else if (strcmp("-m32", opts.args->base[i]) == 0)
                     {
                         if (opts.target_cpu == CPU_x86_64)
                             opts.target_cpu = CPU_x86;
@@ -1774,7 +1781,7 @@ int main(int argc, char **argv)
                         opts.force_pointer_size = 4;
 			raw_linker_arg = 1;
                     }
-		    else if (strcmp("-m64", argv[i]) == 0)
+		    else if (strcmp("-m64", opts.args->base[i]) == 0)
                     {
                         if (opts.target_cpu == CPU_x86)
                             opts.target_cpu = CPU_x86_64;
@@ -1783,25 +1790,25 @@ int main(int argc, char **argv)
                         opts.force_pointer_size = 8;
 			raw_linker_arg = 1;
                     }
-                    else if (!strcmp("-marm", argv[i] ) || !strcmp("-mthumb", argv[i] ))
+                    else if (!strcmp("-marm", opts.args->base[i] ) || !strcmp("-mthumb", opts.args->base[i] ))
                     {
-                        strarray_add(opts.winebuild_args, argv[i]);
+                        strarray_add(opts.winebuild_args, opts.args->base[i]);
 			raw_linker_arg = 1;
                     }
-                    else if (!strncmp("-mcpu=", argv[i], 6) ||
-                             !strncmp("-mfpu=", argv[i], 6) ||
-                             !strncmp("-march=", argv[i], 7) ||
-                             !strncmp("-mfloat-abi=", argv[i], 12))
-                        strarray_add(opts.winebuild_args, argv[i]);
+                    else if (!strncmp("-mcpu=", opts.args->base[i], 6) ||
+                             !strncmp("-mfpu=", opts.args->base[i], 6) ||
+                             !strncmp("-march=", opts.args->base[i], 7) ||
+                             !strncmp("-mfloat-abi=", opts.args->base[i], 12))
+                        strarray_add(opts.winebuild_args, opts.args->base[i]);
 		    break;
                 case 'n':
-                    if (strcmp("-nostdinc", argv[i]) == 0)
+                    if (strcmp("-nostdinc", opts.args->base[i]) == 0)
                         opts.nostdinc = 1;
-                    else if (strcmp("-nodefaultlibs", argv[i]) == 0)
+                    else if (strcmp("-nodefaultlibs", opts.args->base[i]) == 0)
                         opts.nodefaultlibs = 1;
-                    else if (strcmp("-nostdlib", argv[i]) == 0)
+                    else if (strcmp("-nostdlib", opts.args->base[i]) == 0)
                         opts.nostdlib = 1;
-                    else if (strcmp("-nostartfiles", argv[i]) == 0)
+                    else if (strcmp("-nostartfiles", opts.args->base[i]) == 0)
                         opts.nostartfiles = 1;
                     break;
 		case 'o':
@@ -1809,18 +1816,18 @@ int main(int argc, char **argv)
                     raw_compiler_arg = 0;
 		    break;
                 case 's':
-                    if (strcmp("-static", argv[i]) == 0) 
+                    if (strcmp("-static", opts.args->base[i]) == 0)
 			linking = -1;
-		    else if(strcmp("-save-temps", argv[i]) == 0)
+		    else if(strcmp("-save-temps", opts.args->base[i]) == 0)
 			keep_generated = 1;
-                    else if (strncmp("-specs=", argv[i], 7) == 0)
+                    else if (strncmp("-specs=", opts.args->base[i], 7) == 0)
                         raw_linker_arg = 1;
-		    else if(strcmp("-shared", argv[i]) == 0)
+		    else if(strcmp("-shared", opts.args->base[i]) == 0)
 		    {
 			opts.shared = 1;
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
-                    else if (strcmp("-s", argv[i]) == 0 && opts.target_platform == PLATFORM_APPLE)
+                    else if (strcmp("-s", opts.args->base[i]) == 0 && opts.target_platform == PLATFORM_APPLE)
                     {
                         /* On Mac, change -s into -Wl,-x. ld's -s switch
                          * is deprecated, and it doesn't work on Tiger with
@@ -1831,20 +1838,20 @@ int main(int argc, char **argv)
                     }
                     break;
                 case 't':
-                    if (is_option( argv, i, "-target", &option_arg ))
+                    if (is_option( &opts, i, "-target", &option_arg ))
                     {
                         parse_target_option( &opts, option_arg );
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;
                 case 'v':
-                    if (argv[i][2] == 0) verbose++;
+                    if (opts.args->base[i][2] == 0) verbose++;
                     break;
                 case 'W':
-                    if (strncmp("-Wl,", argv[i], 4) == 0)
+                    if (strncmp("-Wl,", opts.args->base[i], 4) == 0)
 		    {
                         unsigned int j;
-                        strarray* Wl = strarray_fromstring(argv[i] + 4, ",");
+                        strarray* Wl = strarray_fromstring(opts.args->base[i] + 4, ",");
                         for (j = 0; j < Wl->size; j++)
                         {
                             if (!strcmp(Wl->base[j], "--image-base") && j < Wl->size - 1)
@@ -1893,9 +1900,9 @@ int main(int argc, char **argv)
                         strarray_free(Wl);
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
-		    else if (strncmp("-Wb,", argv[i], 4) == 0)
+		    else if (strncmp("-Wb,", opts.args->base[i], 4) == 0)
 		    {
-			strarray* Wb = strarray_fromstring(argv[i] + 4, ",");
+			strarray* Wb = strarray_fromstring(opts.args->base[i] + 4, ",");
 			strarray_addall(opts.winebuild_args, Wb);
 			strarray_free(Wb);
                         /* don't pass it to the compiler, it generates errors */
@@ -1909,29 +1916,29 @@ int main(int argc, char **argv)
                     raw_compiler_arg = raw_linker_arg = 0;
 		    break;
                 case '-':
-                    if (strcmp("-static", argv[i]+1) == 0)
+                    if (strcmp("-static", opts.args->base[i]+1) == 0)
                         linking = -1;
-                    else if (is_option( argv, i, "--sysroot", &option_arg ))
+                    else if (is_option( &opts, i, "--sysroot", &option_arg ))
                     {
                         opts.sysroot = option_arg;
                         raw_linker_arg = 1;
                     }
-                    else if (is_option( argv, i, "--target", &option_arg ))
+                    else if (is_option( &opts, i, "--target", &option_arg ))
                     {
                         parse_target_option( &opts, option_arg );
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
-                    else if (is_option( argv, i, "--wine-objdir", &option_arg ))
+                    else if (is_option( &opts, i, "--wine-objdir", &option_arg ))
                     {
                         opts.wine_objdir = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
-                    else if (is_option( argv, i, "--winebuild", &option_arg ))
+                    else if (is_option( &opts, i, "--winebuild", &option_arg ))
                     {
                         opts.winebuild = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
-                    else if (is_option( argv, i, "--lib-suffix", &option_arg ))
+                    else if (is_option( &opts, i, "--lib-suffix", &option_arg ))
                     {
                         opts.lib_suffix = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
@@ -1942,15 +1949,15 @@ int main(int argc, char **argv)
 	    /* put the arg into the appropriate bucket */
 	    if (raw_linker_arg) 
 	    {
-		strarray_add(opts.linker_args, argv[i]);
-		if (next_is_arg && (i + 1 < argc)) 
-		    strarray_add(opts.linker_args, argv[i + 1]);
+		strarray_add( opts.linker_args, opts.args->base[i] );
+		if (next_is_arg && (i + 1 < opts.args->size))
+		    strarray_add( opts.linker_args, opts.args->base[i + 1] );
 	    }
 	    if (raw_compiler_arg)
 	    {
-		strarray_add(opts.compiler_args, argv[i]);
-		if (next_is_arg && (i + 1 < argc))
-		    strarray_add(opts.compiler_args, argv[i + 1]);
+		strarray_add( opts.compiler_args, opts.args->base[i] );
+		if (next_is_arg && (i + 1 < opts.args->size))
+		    strarray_add( opts.compiler_args, opts.args->base[i + 1] );
 	    }
 
 	    /* skip the next token if it's an argument */
@@ -1958,14 +1965,14 @@ int main(int argc, char **argv)
         }
 	else
 	{
-	    strarray_add(opts.files, argv[i]);
+	    strarray_add( opts.files, opts.args->base[i] );
 	} 
     }
 
     if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 
-    if (opts.files->size == 0) forward(argc, argv, &opts);
+    if (opts.files->size == 0) forward(&opts);
     else if (linking) build(&opts);
     else compile(&opts, lang);
 
