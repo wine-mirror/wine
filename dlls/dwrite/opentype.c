@@ -4420,6 +4420,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
 static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator *iter, const struct ot_lookup *lookup)
 {
     struct scriptshaping_cache *cache = iter->context->cache;
+    const struct dwrite_fonttable *gsub = &cache->gsub.table;
     UINT16 format, coverage;
     unsigned int i;
 
@@ -4436,10 +4437,9 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator
 
         if (format == 1)
         {
-            const struct ot_gsub_singlesubst_format1 *format1 = table_read_ensure(&cache->gsub.table, subtable_offset,
-                    sizeof(*format1));
+            const struct ot_gsub_singlesubst_format1 *format1 = table_read_ensure(gsub, subtable_offset, sizeof(*format1));
 
-            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
 
@@ -4448,12 +4448,11 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator
         }
         else if (format == 2)
         {
-            UINT16 count = table_read_be_word(&cache->gsub.table, subtable_offset +
-                    FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count));
-            const struct ot_gsub_singlesubst_format2 *format2 = table_read_ensure(&cache->gsub.table, subtable_offset,
+            UINT16 count = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count));
+            const struct ot_gsub_singlesubst_format2 *format2 = table_read_ensure(gsub, subtable_offset,
                     FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count) + count * sizeof(UINT16));
 
-            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
             if (coverage_index == GLYPH_NOT_COVERED || coverage_index >= count)
                 continue;
 
