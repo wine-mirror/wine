@@ -1258,8 +1258,6 @@ typedef struct _KUSER_SHARED_DATA {
     ULONG EnclaveFeatureMask[4];                           /* 0x36c */
     ULONG TelemetryCoverageRound;                          /* 0x37c */
     USHORT UserModeGlobalLogger[16];                       /* 0x380 */
-    ULONG HeapTracingPid[2];                               /* 0x390 */
-    ULONG CritSecTracingPid[2];                            /* 0x398 */
     ULONG ImageFileExecutionOptions;                       /* 0x3a0 */
     ULONG LangGenerationCount;                             /* 0x3a4 */
     ULONG ActiveProcessorAffinity;                         /* 0x3a8 */
