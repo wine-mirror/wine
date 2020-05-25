@@ -231,7 +231,7 @@ static int features_sorting_compare(const void *a, const void *b)
 static void shape_merge_features(struct scriptshaping_context *context, struct shaping_features *features)
 {
     const DWRITE_TYPOGRAPHIC_FEATURES **user_features = context->user_features.features;
-    unsigned int j = 0, i;
+    unsigned int i, j;
 
     /* For now only consider global, enabled user features. */
     if (user_features && context->user_features.range_lengths)
@@ -250,7 +250,7 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
     /* Sort and merge duplicates. */
     qsort(features->features, features->count, sizeof(*features->features), features_sorting_compare);
 
-    for (i = 1; i < features->count; ++i)
+    for (i = 1, j = 0; i < features->count; ++i)
     {
         if (features->features[i].tag != features->features[j].tag)
             features->features[++j] = features->features[i];
