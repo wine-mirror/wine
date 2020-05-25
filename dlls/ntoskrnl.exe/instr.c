@@ -815,7 +815,11 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 context->Rax = (ULONG)syscall_address;
                 break;
             }
-            default: return ExceptionContinueSearch;
+            default:
+                FIXME("reg %#x, returning 0.\n", reg);
+                context->Rdx = 0;
+                context->Rax = 0;
+                break;
             }
             context->Rip += prefixlen + 2;
             return ExceptionContinueExecution;
