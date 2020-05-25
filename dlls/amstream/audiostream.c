@@ -605,76 +605,45 @@ static ULONG WINAPI audio_IAudioMediaStream_Release(IAudioMediaStream *iface)
     return IAMMediaStream_Release(&This->IAMMediaStream_iface);
 }
 
-/*** IMediaStream methods ***/
 static HRESULT WINAPI audio_IAudioMediaStream_GetMultiMediaStream(IAudioMediaStream *iface,
-        IMultiMediaStream **multi_media_stream)
+        IMultiMediaStream **mmstream)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    TRACE("(%p/%p)->(%p)\n", iface, This, multi_media_stream);
-
-    if (!multi_media_stream)
-        return E_POINTER;
-
-    IMultiMediaStream_AddRef(This->parent);
-    *multi_media_stream = This->parent;
-
-    return S_OK;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_GetMultiMediaStream(&stream->IAMMediaStream_iface, mmstream);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_GetInformation(IAudioMediaStream *iface,
         MSPID *purpose_id, STREAM_TYPE *type)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    TRACE("(%p/%p)->(%p,%p)\n", iface, This, purpose_id, type);
-
-    if (purpose_id)
-        *purpose_id = This->purpose_id;
-    if (type)
-        *type = This->stream_type;
-
-    return S_OK;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_GetInformation(&stream->IAMMediaStream_iface, purpose_id, type);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_SetSameFormat(IAudioMediaStream *iface,
-        IMediaStream *stream_format, DWORD flags)
+        IMediaStream *other, DWORD flags)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%p,%x) stub!\n", iface, This, stream_format, flags);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_SetSameFormat(&stream->IAMMediaStream_iface, other, flags);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_AllocateSample(IAudioMediaStream *iface,
         DWORD flags, IStreamSample **sample)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%x,%p) stub!\n", iface, This, flags, sample);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_AllocateSample(&stream->IAMMediaStream_iface, flags, sample);
 }
 
 static HRESULT WINAPI audio_IAudioMediaStream_CreateSharedSample(IAudioMediaStream *iface,
         IStreamSample *existing_sample, DWORD flags, IStreamSample **sample)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%p,%x,%p) stub!\n", iface, This, existing_sample, flags, sample);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_CreateSharedSample(&stream->IAMMediaStream_iface, existing_sample, flags, sample);
 }
 
-static HRESULT WINAPI audio_IAudioMediaStream_SendEndOfStream(IAudioMediaStream *iface,
-        DWORD flags)
+static HRESULT WINAPI audio_IAudioMediaStream_SendEndOfStream(IAudioMediaStream *iface, DWORD flags)
 {
-    struct audio_stream *This = impl_from_IAudioMediaStream(iface);
-
-    FIXME("(%p/%p)->(%x) stub!\n", iface, This, flags);
-
-    return S_FALSE;
+    struct audio_stream *stream = impl_from_IAudioMediaStream(iface);
+    return IAMMediaStream_SendEndOfStream(&stream->IAMMediaStream_iface, flags);
 }
 
 /*** IAudioMediaStream methods ***/
