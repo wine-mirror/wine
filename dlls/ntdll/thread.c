@@ -239,6 +239,7 @@ static void fill_user_shared_data( struct _KUSER_SHARED_DATA *data )
         break;
     }
     data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
+    data->ActiveGroupCount = 1;
 }
 
 HANDLE user_shared_data_init_done(void)

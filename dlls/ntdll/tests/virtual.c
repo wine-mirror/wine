@@ -531,6 +531,9 @@ static void test_user_shared_data(void)
     ok(user_shared_data->ActiveProcessorCount == NtCurrentTeb()->Peb->NumberOfProcessors
             || broken(!user_shared_data->ActiveProcessorCount) /* before Win7 */,
             "Got unexpected ActiveProcessorCount %u.\n", user_shared_data->ActiveProcessorCount);
+    ok(user_shared_data->ActiveGroupCount == 1
+            || broken(!user_shared_data->ActiveGroupCount) /* before Win7 */,
+            "Got unexpected ActiveGroupCount %u.\n", user_shared_data->ActiveGroupCount);
 }
 
 START_TEST(virtual)
