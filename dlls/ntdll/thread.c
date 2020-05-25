@@ -238,6 +238,7 @@ static void fill_user_shared_data( struct _KUSER_SHARED_DATA *data )
         features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRYPTO);
         break;
     }
+    data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
 }
 
 HANDLE user_shared_data_init_done(void)
