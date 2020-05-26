@@ -31,7 +31,6 @@
 #include "wingdi.h"
 #include "controls.h"
 #include "user_private.h"
-#include "dbt.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -277,74 +276,6 @@ DWORD WINAPI RegisterTasklist (DWORD x)
 {
     FIXME("0x%08x\n",x);
     return TRUE;
-}
-
-static DWORD CALLBACK devnotify_window_callback(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
-{
-    SendMessageTimeoutW(handle, WM_DEVICECHANGE, flags, (LPARAM)header, SMTO_ABORTIFHUNG, 2000, NULL);
-    return 0;
-}
-
-static DWORD CALLBACK devnotify_service_callback(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
-{
-    FIXME("Support for service handles is not yet implemented!\n");
-    return 0;
-}
-
-struct device_notification_details
-{
-    DWORD (CALLBACK *cb)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
-    HANDLE handle;
-};
-
-extern HDEVNOTIFY WINAPI I_ScRegisterDeviceNotification( struct device_notification_details *details,
-        void *filter, DWORD flags );
-extern BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle );
-
-/***********************************************************************
- *		RegisterDeviceNotificationA (USER32.@)
- *
- * See RegisterDeviceNotificationW.
- */
-HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hRecipient, LPVOID pNotificationFilter, DWORD dwFlags)
-{
-    TRACE("(hwnd=%p, filter=%p,flags=0x%08x)\n",
-        hRecipient,pNotificationFilter,dwFlags);
-    if (pNotificationFilter)
-        FIXME("The notification filter will requires an A->W when filter support is implemented\n");
-    return RegisterDeviceNotificationW(hRecipient, pNotificationFilter, dwFlags);
-}
-
-/***********************************************************************
- *		RegisterDeviceNotificationW (USER32.@)
- */
-HDEVNOTIFY WINAPI RegisterDeviceNotificationW( HANDLE handle, void *filter, DWORD flags )
-{
-    struct device_notification_details details;
-
-    TRACE("handle %p, filter %p, flags %#x\n", handle, filter, flags);
-
-    if (flags & ~(DEVICE_NOTIFY_SERVICE_HANDLE | DEVICE_NOTIFY_ALL_INTERFACE_CLASSES))
-        FIXME("unhandled flags %#x\n", flags);
-
-    details.handle = handle;
-
-    if (flags & DEVICE_NOTIFY_SERVICE_HANDLE)
-        details.cb = devnotify_service_callback;
-    else
-        details.cb = devnotify_window_callback;
-
-    return I_ScRegisterDeviceNotification( &details, filter, 0 );
-}
-
-/***********************************************************************
- *		UnregisterDeviceNotification (USER32.@)
- */
-BOOL WINAPI UnregisterDeviceNotification( HDEVNOTIFY handle )
-{
-    TRACE("%p\n", handle);
-
-    return I_ScUnregisterDeviceNotification( handle );
 }
 
 /***********************************************************************
