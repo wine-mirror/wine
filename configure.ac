@@ -473,7 +473,6 @@ AC_CHECK_HEADERS(\
 	mach/mach.h \
 	mach/machine.h \
 	machine/cpu.h \
-	machine/limits.h \
 	machine/sysarch.h \
 	mntent.h \
 	ncurses.h \
@@ -503,7 +502,6 @@ AC_CHECK_HEADERS(\
 	sys/filio.h \
 	sys/ioctl.h \
 	sys/ipc.h \
-	sys/limits.h \
 	sys/link.h \
 	sys/mman.h \
 	sys/modem.h \
@@ -2217,7 +2215,6 @@ AC_CHECK_FUNCS(\
 	sysinfo \
 	tcdrain \
 	thr_kill2 \
-	timegm \
 	usleep
 )
 CFLAGS="$ac_save_CFLAGS"

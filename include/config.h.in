@@ -539,9 +539,6 @@
 /* Define to 1 if you have the <machine/cpu.h> header file. */
 #undef HAVE_MACHINE_CPU_H
 
-/* Define to 1 if you have the <machine/limits.h> header file. */
-#undef HAVE_MACHINE_LIMITS_H
-
 /* Define to 1 if you have the <machine/sysarch.h> header file. */
 #undef HAVE_MACHINE_SYSARCH_H
 
@@ -1021,9 +1018,6 @@
 /* Define to 1 if you have the <sys/ipc.h> header file. */
 #undef HAVE_SYS_IPC_H
 
-/* Define to 1 if you have the <sys/limits.h> header file. */
-#undef HAVE_SYS_LIMITS_H
-
 /* Define to 1 if you have the <sys/link.h> header file. */
 #undef HAVE_SYS_LINK_H
 
@@ -1161,9 +1155,6 @@
 
 /* Define to 1 if you have the <tiffio.h> header file. */
 #undef HAVE_TIFFIO_H
-
-/* Define to 1 if you have the `timegm' function. */
-#undef HAVE_TIMEGM
 
 /* Define to 1 if you have the `trunc' function. */
 #undef HAVE_TRUNC
