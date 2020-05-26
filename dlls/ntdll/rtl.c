@@ -546,10 +546,10 @@ SIZE_T WINAPI RtlCompareMemory( const VOID *Source1, const VOID *Source2, SIZE_T
  * RETURNS
  *  The byte position of the first byte at which Source1 is not dwVal.
  */
-SIZE_T WINAPI RtlCompareMemoryUlong(const ULONG *Source1, SIZE_T Length, ULONG dwVal)
+SIZE_T WINAPI RtlCompareMemoryUlong(VOID *Source1, SIZE_T Length, ULONG dwVal)
 {
     SIZE_T i;
-    for(i = 0; i < Length/sizeof(ULONG) && Source1[i] == dwVal; i++);
+    for(i = 0; i < Length/sizeof(ULONG) && ((ULONG *)Source1)[i] == dwVal; i++);
     return i * sizeof(ULONG);
 }
 
