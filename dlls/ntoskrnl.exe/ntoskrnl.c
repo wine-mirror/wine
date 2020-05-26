@@ -2485,7 +2485,7 @@ KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
  */
 void WINAPI KeRevertToUserAffinityThread(void)
 {
-    FIXME("() stub\n");
+    KeRevertToUserAffinityThreadEx(0);
 }
 
 void WINAPI KeRevertToUserAffinityThreadEx(KAFFINITY affinity)

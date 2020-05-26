@@ -1766,7 +1766,17 @@ static void test_affinity(void)
     mask = pKeSetSystemAffinityThreadEx(0x1);
     ok(mask == mask_all_cpus, "Got unexpected mask %#lx.\n", mask);
 
-    pKeRevertToUserAffinityThreadEx(mask_all_cpus);
+    pKeRevertToUserAffinityThreadEx(0);
+
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(!mask, "Got unexpected mask %#lx.\n", mask);
+
+    KeRevertToUserAffinityThread();
+
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(!mask, "Got unexpected mask %#lx.\n", mask);
+
+    KeRevertToUserAffinityThread();
 }
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
