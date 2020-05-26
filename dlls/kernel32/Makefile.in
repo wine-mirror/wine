@@ -29,7 +29,6 @@ C_SRCS = \
 	tape.c \
 	term.c \
 	thread.c \
-	time.c \
 	toolhelp.c \
 	version.c \
 	virtual.c \

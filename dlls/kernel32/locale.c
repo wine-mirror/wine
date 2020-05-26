@@ -172,6 +172,17 @@ BOOL WINAPI GetCPInfoExA( UINT codepage, DWORD dwFlags, LPCPINFOEXA cpinfo )
     return TRUE;
 }
 
+
+/*********************************************************************
+ *              GetDaylightFlag   (KERNEL32.@)
+ */
+BOOL WINAPI GetDaylightFlag(void)
+{
+    TIME_ZONE_INFORMATION tzinfo;
+    return GetTimeZoneInformation( &tzinfo) == TIME_ZONE_ID_DAYLIGHT;
+}
+
+
 /***********************************************************************
  *              EnumSystemCodePagesA   (KERNEL32.@)
  */
