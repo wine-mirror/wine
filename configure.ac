@@ -2249,9 +2249,6 @@ AC_CHECK_FUNCS(\
 	getprotobyname \
 	getprotobynumber \
 	getservbyport \
-	inet_addr \
-	inet_network \
-	inet_ntop \
 )
 
 dnl Check for clock_gettime which may be in -lrt

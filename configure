@@ -18296,9 +18296,6 @@ for ac_func in \
 	getprotobyname \
 	getprotobynumber \
 	getservbyport \
-	inet_addr \
-	inet_network \
-	inet_ntop \
 
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

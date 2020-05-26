@@ -5008,6 +5008,12 @@ static void test_inet_pton(void)
         "0x12345678", NULL, NULL},
         {AF_INET6, 0, 0, /* windows bug */
         "::1:2:3:4:5:6:7", NULL, NULL},
+        {AF_INET6, 1, 0,              /* Test 30 */
+        "::5efe:1.2.3.4", "::5efe:1.2.3.4",
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5e\xfe\x01\x02\x03\x04"},
+        {AF_INET6, 1, 0,
+        "::ffff:0:1.2.3.4", "::ffff:0:1.2.3.4",
+        "\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00\x01\x02\x03\x04"},
     };
     int i, ret;
     DWORD err;

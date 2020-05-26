@@ -8351,10 +8351,8 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
  */
 PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
 {
-#ifdef HAVE_INET_NTOP
-    struct WS_in6_addr *in6;
-    struct WS_in_addr  *in;
-    PCSTR pdst;
+    NTSTATUS status;
+    ULONG size = min( len, (ULONG)-1 );
 
     TRACE("family %d, addr (%p), buffer (%p), len %ld\n", family, addr, buffer, len);
     if (!buffer)
@@ -8367,14 +8365,12 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
     {
     case WS_AF_INET:
     {
-        in = addr;
-        pdst = inet_ntop( AF_INET, &in->WS_s_addr, buffer, len );
+        status = RtlIpv4AddressToStringExA( (IN_ADDR *)addr, 0, buffer, &size );
         break;
     }
     case WS_AF_INET6:
     {
-        in6 = addr;
-        pdst = inet_ntop( AF_INET6, in6->WS_s6_addr, buffer, len );
+        status = RtlIpv6AddressToStringExA( (IN6_ADDR *)addr, 0, 0, buffer, &size );
         break;
     }
     default:
@@ -8382,13 +8378,9 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
         return NULL;
     }
 
-    if (!pdst) SetLastError( STATUS_INVALID_PARAMETER );
-    return pdst;
-#else
-    FIXME( "not supported on this platform\n" );
-    SetLastError( WSAEAFNOSUPPORT );
+    if (status == STATUS_SUCCESS) return buffer;
+    SetLastError( STATUS_INVALID_PARAMETER );
     return NULL;
-#endif
 }
 
 /***********************************************************************
