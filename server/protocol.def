@@ -915,6 +915,7 @@ struct rawinput_device
     client_cpu_t cpu;              /* CPU that this process is running on */
     short int    debugger_present; /* process is being debugged */
     short int    debug_children;   /* inherit debugger to child processes */
+    VARARG(image,pe_image_info);   /* image info for main exe */
 @END
 
 

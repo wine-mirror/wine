@@ -621,6 +621,29 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         else
             ret = STATUS_INVALID_PARAMETER;
         break;
+
+    case ProcessImageInformation:
+        len = sizeof(SECTION_IMAGE_INFORMATION);
+        if (ProcessInformationLength == len)
+        {
+            if (ProcessInformation)
+            {
+                pe_image_info_t pe_info;
+
+                SERVER_START_REQ( get_process_info )
+                {
+                    req->handle = wine_server_obj_handle( ProcessHandle );
+                    wine_server_set_reply( req, &pe_info, sizeof(pe_info) );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                        virtual_fill_image_information( &pe_info, ProcessInformation );
+                }
+                SERVER_END_REQ;
+            }
+            else ret = STATUS_ACCESS_VIOLATION;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
     default:
         FIXME("(%p,info_class=%d,%p,0x%08x,%p) Unknown information class\n",
               ProcessHandle,ProcessInformationClass,

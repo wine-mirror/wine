@@ -1447,6 +1447,13 @@ DECL_HANDLER(get_process_info)
         reply->cpu              = process->cpu;
         reply->debugger_present = !!process->debugger;
         reply->debug_children   = process->debug_children;
+        if (get_reply_max_size())
+        {
+            const pe_image_info_t *info;
+            struct process_dll *exe = get_process_exe_module( process );
+            if (exe && (info = get_mapping_image_info( process, exe->base )))
+                set_reply_data( info, min( sizeof(*info), get_reply_max_size() ));
+        }
         release_object( process );
     }
 }

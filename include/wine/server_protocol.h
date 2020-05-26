@@ -962,6 +962,7 @@ struct get_process_info_reply
     client_cpu_t cpu;
     short int    debugger_present;
     short int    debug_children;
+    /* VARARG(image,pe_image_info); */
 };
 
 
@@ -6684,7 +6685,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 603
+#define SERVER_PROTOCOL_VERSION 604
 
 /* ### protocol_version end ### */
 

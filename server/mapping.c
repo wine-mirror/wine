@@ -127,6 +127,7 @@ struct memory_view
     struct fd      *fd;              /* fd for mapped file */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
+    pe_image_info_t image;           /* image info (for PE image mapping) */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
@@ -894,6 +895,15 @@ struct file *get_mapping_file( struct process *process, client_ptr_t base,
     return create_file_for_fd_obj( view->fd, access, sharing );
 }
 
+/* get the image info for a SEC_IMAGE mapping */
+const pe_image_info_t *get_mapping_image_info( struct process *process, client_ptr_t base )
+{
+    struct memory_view *view = find_mapped_view( process, base );
+
+    if (!view || !(view->flags & SEC_IMAGE)) return NULL;
+    return &view->image;
+}
+
 static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
@@ -1062,6 +1072,7 @@ DECL_HANDLER(map_view)
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
+        if (mapping->flags & SEC_IMAGE) view->image = mapping->image;
         list_add_tail( &current->process->views, &view->entry );
     }
 

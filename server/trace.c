@@ -1389,6 +1389,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     dump_client_cpu( ", cpu=", &req->cpu );
     fprintf( stderr, ", debugger_present=%d", req->debugger_present );
     fprintf( stderr, ", debug_children=%d", req->debug_children );
+    dump_varargs_pe_image_info( ", image=", cur_size );
 }
 
 static void dump_get_process_vm_counters_request( const struct get_process_vm_counters_request *req )

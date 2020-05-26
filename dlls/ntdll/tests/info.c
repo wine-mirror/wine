@@ -1821,6 +1821,34 @@ todo_wine
     heap_free(buffer);
 }
 
+static void test_query_process_image_info(void)
+{
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
+    NTSTATUS status;
+    SECTION_IMAGE_INFORMATION info;
+    ULONG len;
+
+    status = pNtQueryInformationProcess( NULL, ProcessImageInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_INVALID_HANDLE || broken(status == STATUS_INVALID_PARAMETER), /* winxp */
+        "got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info)-1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info)+1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status);
+
+    memset( &info, 0xcc, sizeof(info) );
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info), &len );
+    ok( status == STATUS_SUCCESS, "got %08x\n", status);
+    ok( len == sizeof(info), "wrong len %u\n", len );
+
+    ok( info.SubsystemVersionHigh == nt->OptionalHeader.MajorSubsystemVersion, "wrong major version %x/%x\n",
+        info.SubsystemVersionHigh, nt->OptionalHeader.MajorSubsystemVersion );
+    ok( info.SubsystemVersionLow == nt->OptionalHeader.MinorSubsystemVersion, "wrong minor version %x/%x\n",
+        info.SubsystemVersionLow, nt->OptionalHeader.MinorSubsystemVersion );
+}
+
 static void test_query_process_debug_object_handle(int argc, char **argv)
 {
     char cmdline[MAX_PATH];
@@ -2740,6 +2768,10 @@ START_TEST(info)
     /* 0x1F ProcessDebugFlags */
     trace("Starting test_process_debug_flags()\n");
     test_query_process_debug_flags(argc, argv);
+
+    /* 0x25 ProcessImageInformation */
+    trace("Starting test_process_image_info()\n");
+    test_query_process_image_info();
 
     /* 0x4C SystemFirmwareTableInformation */
     trace("Starting test_query_firmware()\n");
