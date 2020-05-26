@@ -521,12 +521,23 @@ static void wined3d_cs_exec_nop(struct wined3d_cs *cs, const void *data)
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
 {
+    struct wined3d_texture *logo_texture, *back_buffer;
     const struct wined3d_cs_present *op = data;
     struct wined3d_swapchain *swapchain;
     unsigned int i;
 
     swapchain = op->swapchain;
+    back_buffer = swapchain->back_buffers[0];
     wined3d_swapchain_set_window(swapchain, op->dst_window_override);
+
+    if ((logo_texture = swapchain->device->logo_texture))
+    {
+        RECT rect = {0, 0, logo_texture->resource.width, logo_texture->resource.height};
+
+        /* Blit the logo into the upper left corner of the back-buffer. */
+        wined3d_texture_blt(back_buffer, 0, &rect, logo_texture, 0,
+                &rect, WINED3D_BLT_SRC_CKEY, NULL, WINED3D_TEXF_POINT);
+    }
 
     swapchain->swapchain_ops->swapchain_present(swapchain, &op->src_rect, &op->dst_rect, op->swap_interval, op->flags);
 

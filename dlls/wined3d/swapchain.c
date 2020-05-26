@@ -469,7 +469,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
     const struct wined3d_fb_state *fb = &swapchain->device->cs->state.fb;
     struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
-    struct wined3d_texture *logo_texture, *cursor_texture;
+    struct wined3d_texture *cursor_texture;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
@@ -487,15 +487,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     gl_info = context_gl->gl_info;
 
     swapchain_gl_set_swap_interval(swapchain, context_gl, swap_interval);
-
-    if ((logo_texture = swapchain->device->logo_texture))
-    {
-        RECT rect = {0, 0, logo_texture->resource.width, logo_texture->resource.height};
-
-        /* Blit the logo into the upper left corner of the drawable. */
-        wined3d_texture_blt(back_buffer, 0, &rect, logo_texture, 0, &rect,
-                WINED3D_BLT_SRC_CKEY, NULL, WINED3D_TEXF_POINT);
-    }
 
     if ((cursor_texture = swapchain->device->cursor_texture)
             && swapchain->device->bCursorVisible && !swapchain->device->hardwareCursor)
