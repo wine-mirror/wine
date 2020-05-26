@@ -1660,12 +1660,21 @@ static const struct wined3d_query_ops wined3d_query_timestamp_vk_ops =
     .query_destroy = wined3d_query_vk_destroy,
 };
 
+static const struct wined3d_query_ops wined3d_query_timestamp_disjoint_vk_ops =
+{
+    .query_poll = wined3d_timestamp_disjoint_query_ops_poll,
+    .query_issue = wined3d_timestamp_disjoint_query_ops_issue,
+    .query_destroy = wined3d_query_vk_destroy,
+};
+
 HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_query_type type,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query)
 {
+    struct wined3d_query_data_timestamp_disjoint *disjoint_data;
     const struct wined3d_query_ops *ops = &wined3d_query_vk_ops;
     struct wined3d_query_vk *query_vk;
     unsigned int data_size;
+    void *data;
 
     TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
             device, type, parent, parent_ops, query);
@@ -1686,6 +1695,16 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
             data_size = sizeof(uint64_t);
             break;
 
+        case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
+            if (!wined3d_device_vk(device)->timestamp_bits)
+            {
+                WARN("Timestamp queries not supported.\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+            ops = &wined3d_query_timestamp_disjoint_vk_ops;
+            data_size = sizeof(struct wined3d_query_data_timestamp_disjoint);
+            break;
+
         default:
             FIXME("Unhandled query type %#x.\n", type);
             return WINED3DERR_NOTAVAILABLE;
@@ -1693,11 +1712,26 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
 
     if (!(query_vk = heap_alloc_zero(sizeof(*query_vk) + data_size)))
         return E_OUTOFMEMORY;
+    data = query_vk + 1;
 
-    wined3d_query_init(&query_vk->q, device, type, query_vk + 1, data_size, ops, parent, parent_ops);
+    wined3d_query_init(&query_vk->q, device, type, data, data_size, ops, parent, parent_ops);
     list_init(&query_vk->entry);
-    if (type == WINED3D_QUERY_TYPE_OCCLUSION)
-        query_vk->control_flags = VK_QUERY_CONTROL_PRECISE_BIT;
+
+    switch (type)
+    {
+        case WINED3D_QUERY_TYPE_OCCLUSION:
+            query_vk->control_flags = VK_QUERY_CONTROL_PRECISE_BIT;
+            break;
+
+        case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
+            disjoint_data = data;
+            disjoint_data->frequency = 1000000000 / wined3d_adapter_vk(device->adapter)->device_limits.timestampPeriod;
+            disjoint_data->disjoint = FALSE;
+            break;
+
+        default:
+            break;
+    }
 
     TRACE("Created query %p.\n", query_vk);
     *query = &query_vk->q;
