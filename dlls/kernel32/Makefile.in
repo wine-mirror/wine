@@ -24,7 +24,6 @@ C_SRCS = \
 	process.c \
 	profile.c \
 	resource.c \
-	string.c \
 	sync.c \
 	tape.c \
 	term.c \

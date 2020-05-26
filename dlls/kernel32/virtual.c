@@ -30,6 +30,7 @@
 # include <unistd.h>
 #endif
 
+#define WINE_NO_INLINE_STRING
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
@@ -40,6 +41,7 @@
 #include "winerror.h"
 #include "psapi.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "kernel_private.h"
@@ -255,4 +257,81 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
     }
     __ENDTRY
     return FALSE;
+}
+/***********************************************************************
+ *           lstrcatA   (KERNEL32.@)
+ *           lstrcat    (KERNEL32.@)
+ */
+LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
+{
+    __TRY
+    {
+        strcat( dst, src );
+    }
+    __EXCEPT( badptr_handler )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return dst;
+}
+
+
+/***********************************************************************
+ *           lstrcatW   (KERNEL32.@)
+ */
+LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
+{
+    __TRY
+    {
+        strcatW( dst, src );
+    }
+    __EXCEPT( badptr_handler )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return dst;
+}
+
+
+/***********************************************************************
+ *           lstrcpyA   (KERNEL32.@)
+ *           lstrcpy    (KERNEL32.@)
+ */
+LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
+{
+    __TRY
+    {
+        /* this is how Windows does it */
+        memmove( dst, src, strlen(src)+1 );
+    }
+    __EXCEPT( badptr_handler )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return dst;
+}
+
+
+/***********************************************************************
+ *           lstrcpyW   (KERNEL32.@)
+ */
+LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
+{
+    __TRY
+    {
+        strcpyW( dst, src );
+    }
+    __EXCEPT( badptr_handler )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    __ENDTRY
+    return dst;
 }
