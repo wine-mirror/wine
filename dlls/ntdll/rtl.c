@@ -1269,7 +1269,7 @@ NTSTATUS WINAPI RtlIpv6StringToAddressW(const WCHAR *str, const WCHAR **terminat
  */
 NTSTATUS WINAPI RtlIpv6StringToAddressExA(const char *str, IN6_ADDR *address, ULONG *scope, USHORT *port)
 {
-    WCHAR wstr[64];
+    WCHAR wstr[128];
 
     TRACE("(%s, %p, %p, %p)\n", debugstr_a(str), address, scope, port);
 
@@ -1286,7 +1286,7 @@ NTSTATUS WINAPI RtlIpv6StringToAddressExA(const char *str, IN6_ADDR *address, UL
  */
 NTSTATUS WINAPI RtlIpv6StringToAddressA(const char *str, const char **terminator, IN6_ADDR *address)
 {
-    WCHAR wstr[64];
+    WCHAR wstr[128];
     const WCHAR *wterminator = NULL;
     NTSTATUS ret;
 
