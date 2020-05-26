@@ -12,7 +12,6 @@ C_SRCS = \
 	console.c \
 	debugger.c \
 	editline.c \
-	environ.c \
 	file.c \
 	heap.c \
 	kernel_main.c \

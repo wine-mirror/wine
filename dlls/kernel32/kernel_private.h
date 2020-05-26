@@ -66,13 +66,7 @@ extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) 
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID) DECLSPEC_HIDDEN;
 
-/* environ.c */
-extern void ENV_CopyStartupInformation(void) DECLSPEC_HIDDEN;
-
 /* computername.c */
 extern void COMPUTERNAME_Init(void) DECLSPEC_HIDDEN;
-
-/* oldconfig.c */
-extern void convert_old_config(void) DECLSPEC_HIDDEN;
 
 #endif

@@ -33,7 +33,6 @@
 #include "wincon.h"
 #include "winternl.h"
 
-#include "wine/library.h"
 #include "kernel_private.h"
 #include "console_private.h"
 #include "wine/debug.h"
@@ -41,6 +40,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
 extern int CDECL __wine_set_signal_handler(unsigned, int (*)(unsigned));
+
+static STARTUPINFOA startup_infoA;
 
 /***********************************************************************
  *           set_entry_point
@@ -78,6 +79,45 @@ static void set_entry_point( HMODULE module, const char *name, DWORD rva )
 
 
 /***********************************************************************
+ *              GetStartupInfoA         (KERNEL32.@)
+ */
+VOID WINAPI GetStartupInfoA( LPSTARTUPINFOA info )
+{
+    *info = startup_infoA;
+}
+
+static void copy_startup_info(void)
+{
+    RTL_USER_PROCESS_PARAMETERS* rupp;
+    ANSI_STRING         ansi;
+
+    RtlAcquirePebLock();
+
+    rupp = NtCurrentTeb()->Peb->ProcessParameters;
+
+    startup_infoA.cb                   = sizeof(startup_infoA);
+    startup_infoA.lpReserved           = NULL;
+    startup_infoA.lpDesktop = !RtlUnicodeStringToAnsiString( &ansi, &rupp->Desktop, TRUE ) ? ansi.Buffer : NULL;
+    startup_infoA.lpTitle = !RtlUnicodeStringToAnsiString( &ansi, &rupp->WindowTitle, TRUE ) ? ansi.Buffer : NULL;
+    startup_infoA.dwX                  = rupp->dwX;
+    startup_infoA.dwY                  = rupp->dwY;
+    startup_infoA.dwXSize              = rupp->dwXSize;
+    startup_infoA.dwYSize              = rupp->dwYSize;
+    startup_infoA.dwXCountChars        = rupp->dwXCountChars;
+    startup_infoA.dwYCountChars        = rupp->dwYCountChars;
+    startup_infoA.dwFillAttribute      = rupp->dwFillAttribute;
+    startup_infoA.dwFlags              = rupp->dwFlags;
+    startup_infoA.wShowWindow          = rupp->wShowWindow;
+    startup_infoA.cbReserved2          = rupp->RuntimeInfo.MaximumLength;
+    startup_infoA.lpReserved2          = rupp->RuntimeInfo.MaximumLength ? (void*)rupp->RuntimeInfo.Buffer : NULL;
+    startup_infoA.hStdInput            = rupp->hStdInput ? rupp->hStdInput : INVALID_HANDLE_VALUE;
+    startup_infoA.hStdOutput           = rupp->hStdOutput ? rupp->hStdOutput : INVALID_HANDLE_VALUE;
+    startup_infoA.hStdError            = rupp->hStdError ? rupp->hStdError : INVALID_HANDLE_VALUE;
+
+    RtlReleasePebLock();
+}
+
+/***********************************************************************
  *           KERNEL process initialisation routine
  */
 static BOOL process_attach( HMODULE module )
@@ -94,8 +134,7 @@ static BOOL process_attach( HMODULE module )
 
     CONSOLE_Init(params);
 
-    /* copy process information from ntdll */
-    ENV_CopyStartupInformation();
+    copy_startup_info();
 
     if (!(GetVersion() & 0x80000000))
     {
