@@ -815,6 +815,29 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetProcessTimes( HANDLE process, FILETIME *create,
 
 
 /***********************************************************************
+ *           GetProcessVersion   (kernelbase.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetProcessVersion( DWORD pid )
+{
+    SECTION_IMAGE_INFORMATION info;
+    NTSTATUS status;
+    HANDLE process;
+
+    if (pid && pid != GetCurrentProcessId())
+    {
+        if (!(process = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, pid ))) return 0;
+        status = NtQueryInformationProcess( process, ProcessImageInformation, &info, sizeof(info), NULL );
+        CloseHandle( process );
+    }
+    else status = NtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation,
+                                             &info, sizeof(info), NULL );
+
+    if (!set_ntstatus( status )) return 0;
+    return MAKELONG( info.SubsystemVersionLow, info.SubsystemVersionHigh );
+}
+
+
+/***********************************************************************
  *           GetProcessWorkingSetSizeEx   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetProcessWorkingSetSizeEx( HANDLE process, SIZE_T *minset,

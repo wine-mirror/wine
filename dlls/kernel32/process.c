@@ -452,61 +452,6 @@ BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess, PDWORD_PTR process_mask, PD
 
 
 /***********************************************************************
- *           GetProcessVersion    (KERNEL32.@)
- */
-DWORD WINAPI GetProcessVersion( DWORD pid )
-{
-    HANDLE process;
-    NTSTATUS status;
-    PROCESS_BASIC_INFORMATION pbi;
-    SIZE_T count;
-    PEB peb;
-    IMAGE_DOS_HEADER dos;
-    IMAGE_NT_HEADERS nt;
-    DWORD ver = 0;
-
-    if (!pid || pid == GetCurrentProcessId())
-    {
-        IMAGE_NT_HEADERS *pnt;
-
-        if ((pnt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress )))
-            return ((pnt->OptionalHeader.MajorSubsystemVersion << 16) |
-                    pnt->OptionalHeader.MinorSubsystemVersion);
-        return 0;
-    }
-
-    process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
-    if (!process) return 0;
-
-    status = NtQueryInformationProcess(process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
-    if (status) goto err;
-
-    status = NtReadVirtualMemory(process, pbi.PebBaseAddress, &peb, sizeof(peb), &count);
-    if (status || count != sizeof(peb)) goto err;
-
-    memset(&dos, 0, sizeof(dos));
-    status = NtReadVirtualMemory(process, peb.ImageBaseAddress, &dos, sizeof(dos), &count);
-    if (status || count != sizeof(dos)) goto err;
-    if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto err;
-
-    memset(&nt, 0, sizeof(nt));
-    status = NtReadVirtualMemory(process, (char *)peb.ImageBaseAddress + dos.e_lfanew, &nt, sizeof(nt), &count);
-    if (status || count != sizeof(nt)) goto err;
-    if (nt.Signature != IMAGE_NT_SIGNATURE) goto err;
-
-    ver = MAKELONG(nt.OptionalHeader.MinorSubsystemVersion, nt.OptionalHeader.MajorSubsystemVersion);
-
-err:
-    CloseHandle(process);
-
-    if (status != STATUS_SUCCESS)
-        SetLastError(RtlNtStatusToDosError(status));
-
-    return ver;
-}
-
-
-/***********************************************************************
  *		SetProcessWorkingSetSize	[KERNEL32.@]
  * Sets the min/max working set sizes for a specified process.
  *

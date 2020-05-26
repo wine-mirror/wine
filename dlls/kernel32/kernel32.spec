@@ -793,7 +793,7 @@
 # @ stub GetProcessorSystemCycleTime
 @ stdcall -import GetProcessTimes(long ptr ptr ptr ptr)
 # @ stub GetProcessUserModeExceptionPolicy
-@ stdcall GetProcessVersion(long)
+@ stdcall -import GetProcessVersion(long)
 @ stdcall GetProcessWorkingSetSize(long ptr ptr)
 @ stdcall -import GetProcessWorkingSetSizeEx(long ptr ptr ptr)
 @ stdcall -import GetProductInfo(long long long long ptr)
