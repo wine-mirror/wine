@@ -4550,7 +4550,7 @@ static BOOL opentype_layout_context_match_lookahead(struct glyph_iterator *iter,
 }
 
 static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
-        unsigned int glyph_count, int lookup_index);
+        unsigned int glyph_count, int lookup_index, BOOL only_single);
 
 static BOOL opentype_layout_context_gsub_apply_lookup(struct glyph_iterator *iter, unsigned int count,
         unsigned int lookup_count, const UINT16 *lookup_records)
@@ -4559,7 +4559,7 @@ static BOOL opentype_layout_context_gsub_apply_lookup(struct glyph_iterator *ite
         FIXME("Only first lookup used.\n");
 
     opentype_layout_apply_gsub_lookup(iter->context, iter->pos + GET_BE_WORD(lookup_records[0]), count,
-            GET_BE_WORD(lookup_records[1]));
+            GET_BE_WORD(lookup_records[1]), TRUE);
 
     return TRUE;
 }
@@ -4661,7 +4661,7 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct glyph_i
 }
 
 static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
-        unsigned int glyph_count, int lookup_index)
+        unsigned int glyph_count, int lookup_index, BOOL only_single)
 {
     struct ot_gsubgpos_table *table = &context->cache->gsub;
     const struct ot_lookup_table *lookup_table;
@@ -4684,6 +4684,9 @@ static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
 
     lookup_type = GET_BE_WORD(lookup_table->lookup_type);
     lookup.flags = GET_BE_WORD(lookup_table->flags);
+
+    if (lookup_type != GSUB_LOOKUP_SINGLE_SUBST && only_single)
+        return;
 
     glyph_iterator_init(context, lookup.flags, first_glyph, glyph_count, &iter);
 
@@ -4798,7 +4801,7 @@ HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *contex
     opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
-        opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, lookups.lookups[i].index);
+        opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, lookups.lookups[i].index, FALSE);
 
     heap_free(lookups.lookups);
 
