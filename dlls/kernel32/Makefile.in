@@ -6,7 +6,6 @@ EXTRALIBS = $(COREFOUNDATION_LIBS) $(POLL_LIBS) $(RT_LIBS)
 EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b600000
 
 C_SRCS = \
-	actctx.c \
 	atom.c \
 	comm.c \
 	computername.c \
