@@ -805,6 +805,12 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
         devmode = &default_mode;
     }
 
+    if (lstrcmpiW(primary_adapter, devname))
+    {
+        FIXME("Changing non-primary adapter settings is currently unsupported.\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
     if (macdrv_get_displays(&displays, &num_displays))
         return DISP_CHANGE_FAILED;
 
