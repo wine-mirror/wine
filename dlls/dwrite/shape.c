@@ -400,5 +400,5 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
 
     heap_free(features.features);
 
-    return S_OK;
+    return (context->glyph_count <= context->u.subst.max_glyph_count) ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }

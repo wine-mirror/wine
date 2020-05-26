@@ -1173,10 +1173,11 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.length = length;
     context.is_rtl = is_rtl;
     context.is_sideways = is_sideways;
-    context.u.subst.glyphs = glyphs;
-    context.u.subst.glyph_props = glyph_props;
+    context.u.subst.glyphs = heap_calloc(max_glyph_count, sizeof(*glyphs));
+    context.u.subst.glyph_props = heap_calloc(max_glyph_count, sizeof(*glyph_props));
     context.u.subst.clustermap = clustermap;
     context.u.subst.max_glyph_count = max_glyph_count;
+    context.u.subst.capacity = max_glyph_count;
     context.u.subst.digits = digits;
     context.language_tag = get_opentype_language(locale);
     context.user_features.features = features;
@@ -1190,10 +1191,14 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     if (SUCCEEDED(hr))
     {
         *actual_glyph_count = context.glyph_count;
+        memcpy(glyphs, context.u.subst.glyphs, context.glyph_count * sizeof(*glyphs));
+        memcpy(glyph_props, context.u.subst.glyph_props, context.glyph_count * sizeof(*glyph_props));
         hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyphs, *actual_glyph_count,
                 text_props, glyph_props);
     }
 
+    heap_free(context.u.subst.glyph_props);
+    heap_free(context.u.subst.glyphs);
     heap_free(context.glyph_infos);
 
     return hr;

@@ -491,6 +491,7 @@ struct scriptshaping_context
             DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
             UINT16 *clustermap;
             unsigned int max_glyph_count;
+            unsigned int capacity;
             const WCHAR *digits;
         } subst;
     } u;
