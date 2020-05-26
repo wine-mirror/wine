@@ -49,6 +49,7 @@ struct _KTHREAD
     PEPROCESS process;
     CLIENT_ID id;
     unsigned int critical_region;
+    KAFFINITY user_affinity;
 };
 
 struct _ETHREAD

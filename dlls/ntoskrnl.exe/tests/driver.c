@@ -1713,6 +1713,7 @@ static void test_executable_pool(void)
 static void test_affinity(void)
 {
     KAFFINITY (WINAPI *pKeSetSystemAffinityThreadEx)(KAFFINITY affinity);
+    void (WINAPI *pKeRevertToUserAffinityThreadEx)(KAFFINITY affinity);
     ULONG (WINAPI *pKeQueryActiveProcessorCountEx)(USHORT);
     KAFFINITY (WINAPI *pKeQueryActiveProcessors)(void);
     KAFFINITY mask, mask_all_cpus;
@@ -1731,6 +1732,9 @@ static void test_affinity(void)
     pKeSetSystemAffinityThreadEx = get_proc_address("KeSetSystemAffinityThreadEx");
     ok(!!pKeSetSystemAffinityThreadEx, "KeSetSystemAffinityThreadEx is not available.\n");
 
+    pKeRevertToUserAffinityThreadEx = get_proc_address("KeRevertToUserAffinityThreadEx");
+    ok(!!pKeRevertToUserAffinityThreadEx, "KeRevertToUserAffinityThreadEx is not available.\n");
+
     count = pKeQueryActiveProcessorCountEx(1);
     todo_wine ok(!count, "Got unexpected count %u.\n", count);
 
@@ -1745,14 +1749,24 @@ static void test_affinity(void)
     mask = pKeQueryActiveProcessors();
     ok(mask == mask_all_cpus, "Got unexpected mask %#lx.\n", mask);
 
+    pKeRevertToUserAffinityThreadEx(0x2);
+
     mask = pKeSetSystemAffinityThreadEx(0);
     ok(!mask, "Got unexpected mask %#lx.\n", mask);
 
+    pKeRevertToUserAffinityThreadEx(0x2);
+
     mask = pKeSetSystemAffinityThreadEx(0x1);
-    ok(mask == mask_all_cpus, "Got unexpected mask %#lx.\n", mask);
+    ok(mask == 0x2, "Got unexpected mask %#lx.\n", mask);
 
     mask = pKeSetSystemAffinityThreadEx(~(KAFFINITY)0);
     ok(mask == 0x1, "Got unexpected mask %#lx.\n", mask);
+
+    pKeRevertToUserAffinityThreadEx(~(KAFFINITY)0);
+    mask = pKeSetSystemAffinityThreadEx(0x1);
+    ok(mask == mask_all_cpus, "Got unexpected mask %#lx.\n", mask);
+
+    pKeRevertToUserAffinityThreadEx(mask_all_cpus);
 }
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)

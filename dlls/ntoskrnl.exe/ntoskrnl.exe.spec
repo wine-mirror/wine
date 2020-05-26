@@ -619,6 +619,7 @@
 @ stdcall KeResetEvent(ptr)
 @ stub KeRestoreFloatingPointState
 @ stdcall KeRevertToUserAffinityThread()
+@ stdcall KeRevertToUserAffinityThreadEx(long)
 @ stub KeRundownQueue
 @ stub KeSaveFloatingPointState
 @ stub KeSaveStateForHibernate

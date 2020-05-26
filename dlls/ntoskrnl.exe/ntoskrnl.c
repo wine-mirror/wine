@@ -2267,6 +2267,7 @@ static void *create_thread_object( HANDLE handle )
 
     thread->header.Type = 6;
     thread->header.WaitListHead.Blink = INVALID_HANDLE_VALUE; /* mark as kernel object */
+    thread->user_affinity = 0;
 
     if (!NtQueryInformationThread( handle, ThreadBasicInformation, &info, sizeof(info), NULL ))
     {
@@ -2458,6 +2459,7 @@ VOID WINAPI KeSetSystemAffinityThread(KAFFINITY affinity)
 KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
 {
     DWORD_PTR system_affinity = KeQueryActiveProcessors();
+    PKTHREAD thread = KeGetCurrentThread();
     GROUP_AFFINITY old, new;
 
     TRACE("affinity %#lx.\n", affinity);
@@ -2467,11 +2469,14 @@ KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
     NtQueryInformationThread(GetCurrentThread(), ThreadGroupInformation,
             &old, sizeof(old), NULL);
 
+    if (old.Mask != system_affinity)
+        thread->user_affinity = old.Mask;
+
     memset(&new, 0, sizeof(new));
     new.Mask = affinity;
 
     return NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new))
-            ? 0 : old.Mask;
+            ? 0 : thread->user_affinity;
 }
 
 
@@ -2483,6 +2488,23 @@ void WINAPI KeRevertToUserAffinityThread(void)
     FIXME("() stub\n");
 }
 
+void WINAPI KeRevertToUserAffinityThreadEx(KAFFINITY affinity)
+{
+    DWORD_PTR system_affinity = KeQueryActiveProcessors();
+    PRKTHREAD thread = KeGetCurrentThread();
+    GROUP_AFFINITY new;
+
+    TRACE("affinity %#lx.\n", affinity);
+
+    affinity &= system_affinity;
+
+    memset(&new, 0, sizeof(new));
+    new.Mask = affinity ? affinity
+            : (thread->user_affinity ? thread->user_affinity : system_affinity);
+
+    NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new));
+    thread->user_affinity = affinity;
+}
 
 /***********************************************************************
  *           IoRegisterFileSystem   (NTOSKRNL.EXE.@)

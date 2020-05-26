@@ -1706,6 +1706,7 @@ void      WINAPI KeReleaseSpinLock(KSPIN_LOCK*,KIRQL);
 void      WINAPI KeReleaseSpinLockFromDpcLevel(KSPIN_LOCK*);
 LONG      WINAPI KeResetEvent(PRKEVENT);
 void      WINAPI KeRevertToUserAffinityThread(void);
+void      WINAPI KeRevertToUserAffinityThreadEx(KAFFINITY affinity);
 LONG      WINAPI KeSetEvent(PRKEVENT,KPRIORITY,BOOLEAN);
 KPRIORITY WINAPI KeSetPriorityThread(PKTHREAD,KPRIORITY);
 void      WINAPI KeSetSystemAffinityThread(KAFFINITY);
