@@ -73,7 +73,6 @@ static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
 static NTSTATUS  (WINAPI *pRtlIpv4AddressToStringExA)(const IN_ADDR *, USHORT, LPSTR, PULONG);
 static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressExA)(PCSTR, BOOLEAN, IN_ADDR *, PUSHORT);
-static CHAR *    (WINAPI *pRtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
 static NTSTATUS  (WINAPI *pRtlIpv6AddressToStringExA)(struct in6_addr *, ULONG, USHORT, PCHAR, PULONG);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExA)(PCSTR, struct in6_addr *, PULONG, PUSHORT);
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExW)(PCWSTR, struct in6_addr *, PULONG, PUSHORT);
@@ -114,7 +113,6 @@ static void InitFunctionPtrs(void)
         pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
         pRtlIpv4AddressToStringExA = (void *)GetProcAddress(hntdll, "RtlIpv4AddressToStringExA");
         pRtlIpv4StringToAddressExA = (void *)GetProcAddress(hntdll, "RtlIpv4StringToAddressExA");
-        pRtlIpv6AddressToStringA = (void *)GetProcAddress(hntdll, "RtlIpv6AddressToStringA");
         pRtlIpv6AddressToStringExA = (void *)GetProcAddress(hntdll, "RtlIpv6AddressToStringExA");
         pRtlIpv6StringToAddressExA = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExA");
         pRtlIpv6StringToAddressExW = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExW");
@@ -1801,22 +1799,16 @@ static void test_RtlIpv6AddressToString(void)
     };
     unsigned int i;
 
-    if (!pRtlIpv6AddressToStringA)
-    {
-        skip("RtlIpv6AddressToStringA not available\n");
-        return;
-    }
-
     memset(buffer, '#', sizeof(buffer));
     buffer[sizeof(buffer)-1] = 0;
     memset(&ip, 0, sizeof(ip));
-    result = pRtlIpv6AddressToStringA(&ip, buffer);
+    result = RtlIpv6AddressToStringA(&ip, buffer);
 
     len = strlen(buffer);
     ok(result == (buffer + len) && !strcmp(buffer, "::"),
        "got %p with '%s' (expected %p with '::')\n", result, buffer, buffer + len);
 
-    result = pRtlIpv6AddressToStringA(&ip, NULL);
+    result = RtlIpv6AddressToStringA(&ip, NULL);
     ok(result == (LPCSTR)~0 || broken(result == (LPCSTR)len) /* WinXP / Win2k3 */,
        "got %p, expected %p\n", result, (LPCSTR)~0);
 
@@ -1826,7 +1818,7 @@ static void test_RtlIpv6AddressToString(void)
         memset(buffer, '#', sizeof(buffer));
         buffer[sizeof(buffer)-1] = 0;
 
-        result = pRtlIpv6AddressToStringA(&ip, buffer);
+        result = RtlIpv6AddressToStringA(&ip, buffer);
         len = strlen(buffer);
         ok(result == (buffer + len) && !strcmp(buffer, tests[i].address),
            "got %p with '%s' (expected %p with '%s')\n", result, buffer, buffer + len, tests[i].address);
