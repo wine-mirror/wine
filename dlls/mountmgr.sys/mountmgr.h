@@ -51,7 +51,7 @@ enum device_type
 };
 
 extern NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
-                            enum device_type type, const GUID *guid ) DECLSPEC_HIDDEN;
+                            enum device_type type, const GUID *guid, const char *disk_serial ) DECLSPEC_HIDDEN;
 extern NTSTATUS remove_volume( const char *udi ) DECLSPEC_HIDDEN;
 extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                                 const char *mount_point, enum device_type type, const GUID *guid,
