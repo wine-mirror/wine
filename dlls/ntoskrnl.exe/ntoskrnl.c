@@ -2379,10 +2379,10 @@ LONG WINAPI KeInsertQueue(PRKQUEUE Queue, PLIST_ENTRY Entry)
  */
 KAFFINITY WINAPI KeQueryActiveProcessors( void )
 {
-    DWORD_PTR AffinityMask;
+    DWORD_PTR affinity_mask;
 
-    GetProcessAffinityMask( GetCurrentProcess(), &AffinityMask, NULL);
-    return AffinityMask;
+    GetProcessAffinityMask( GetCurrentProcess(), NULL, &affinity_mask);
+    return affinity_mask;
 }
 
 ULONG WINAPI KeQueryActiveProcessorCountEx(USHORT group_number)
