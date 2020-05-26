@@ -3137,7 +3137,7 @@ static unsigned int opentype_set_glyph_props(struct scriptshaping_context *conte
 
     if (cache->gdef.classdef)
     {
-        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef, context->u.subst.glyphs[g]);
+        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef, glyph);
     }
 
     switch (glyph_class)
@@ -3158,6 +3158,13 @@ static unsigned int opentype_set_glyph_props(struct scriptshaping_context *conte
     context->glyph_infos[g].props = props;
 
     return props;
+}
+
+static void opentype_set_subst_glyph_props(struct scriptshaping_context *context, unsigned int g, UINT16 glyph)
+{
+    unsigned int glyph_props = opentype_set_glyph_props(context, g, glyph);
+    context->u.subst.glyph_props[g].isDiacritic = !!(glyph_props == GLYPH_PROP_MARK);
+    context->u.subst.glyph_props[g].isZeroWidthSpace = !!(glyph_props == GLYPH_PROP_MARK);
 }
 
 struct coverage_compare_format1_context
@@ -4419,15 +4426,14 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
 
 static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator *iter, const struct ot_lookup *lookup)
 {
+    UINT16 format, coverage, orig_glyph = iter->context->u.subst.glyphs[iter->pos], glyph = orig_glyph;
     struct scriptshaping_cache *cache = iter->context->cache;
     const struct dwrite_fonttable *gsub = &cache->gsub.table;
-    UINT16 format, coverage;
     unsigned int i;
 
     for (i = 0; i < lookup->subtable_count; ++i)
     {
         unsigned int subtable_offset = opentype_layout_get_gsub_subtable(cache, lookup->offset, i);
-        UINT16 glyph = iter->context->u.subst.glyphs[iter->pos];
         unsigned int coverage_index;
 
         format = table_read_be_word(&cache->gsub.table, subtable_offset);
@@ -4443,7 +4449,7 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
 
-            iter->context->u.subst.glyphs[iter->pos] = glyph + GET_BE_WORD(format1->delta);
+            glyph = orig_glyph + GET_BE_WORD(format1->delta);
             break;
         }
         else if (format == 2)
@@ -4456,11 +4462,17 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator
             if (coverage_index == GLYPH_NOT_COVERED || coverage_index >= count)
                 continue;
 
-            iter->context->u.subst.glyphs[iter->pos] = GET_BE_WORD(format2->substitutes[coverage_index]);
+            glyph = GET_BE_WORD(format2->substitutes[coverage_index]);
             break;
         }
         else
             WARN("Unknown single substitution format %u.\n", format);
+    }
+
+    if (glyph != orig_glyph)
+    {
+        iter->context->u.subst.glyphs[iter->pos] = glyph;
+        opentype_set_subst_glyph_props(iter->context, iter->pos, glyph);
     }
 
     return FALSE;
@@ -4762,11 +4774,7 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         context->u.subst.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.subst.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         context->u.subst.glyph_props[g].isClusterStart = 1;
-        if (opentype_set_glyph_props(context, g, context->u.subst.glyphs[g]) == GLYPH_PROP_MARK)
-        {
-            context->u.subst.glyph_props[g].isDiacritic = 1;
-            context->u.subst.glyph_props[g].isZeroWidthSpace = 1;
-        }
+        opentype_set_subst_glyph_props(context, g, context->u.subst.glyphs[g]);
         context->glyph_count++;
 
         clustermap[i] = i;
