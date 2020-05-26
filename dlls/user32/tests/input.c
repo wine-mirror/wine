@@ -3004,6 +3004,12 @@ static void test_GetPointerType(void)
     ok(type == PT_MOUSE, " type %d\n", type );
 }
 
+static void test_UnregisterDeviceNotification(void)
+{
+    BOOL ret = UnregisterDeviceNotification(NULL);
+    ok(ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret);
+}
+
 START_TEST(input)
 {
     POINT pos;
@@ -3050,4 +3056,6 @@ START_TEST(input)
         test_GetPointerType();
     else
         win_skip("GetPointerType is not available\n");
+
+    test_UnregisterDeviceNotification();
 }

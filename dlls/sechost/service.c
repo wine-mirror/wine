@@ -2109,6 +2109,9 @@ BOOL WINAPI I_ScUnregisterDeviceNotification( HDEVNOTIFY handle )
 
     TRACE("%p\n", handle);
 
+    if (!handle)
+        return FALSE;
+
     EnterCriticalSection( &service_cs );
     list_remove( &registration->entry );
     LeaveCriticalSection(&service_cs);
