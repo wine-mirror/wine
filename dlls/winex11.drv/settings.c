@@ -329,6 +329,15 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
     return FALSE;
 }
 
+BOOL is_detached_mode(const DEVMODEW *mode)
+{
+    return mode->dmFields & DM_POSITION &&
+           mode->dmFields & DM_PELSWIDTH &&
+           mode->dmFields & DM_PELSHEIGHT &&
+           mode->dmPelsWidth == 0 &&
+           mode->dmPelsHeight == 0;
+}
+
 /***********************************************************************
  *		ChangeDisplaySettingsEx  (X11DRV.@)
  *
@@ -361,6 +370,12 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
     {
         FIXME("Changing non-primary adapter %s settings is currently unsupported.\n",
               wine_dbgstr_w(devname));
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    if (is_detached_mode(devmode))
+    {
+        FIXME("Detaching adapters is currently unsupported.\n");
         return DISP_CHANGE_SUCCESSFUL;
     }
 

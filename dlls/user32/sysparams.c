@@ -3287,6 +3287,15 @@ static void trace_devmode(const DEVMODEW *devmode)
     TRACE("\n");
 }
 
+static BOOL is_detached_mode(const DEVMODEW *mode)
+{
+    return mode->dmFields & DM_POSITION &&
+           mode->dmFields & DM_PELSWIDTH &&
+           mode->dmFields & DM_PELSHEIGHT &&
+           mode->dmPelsWidth == 0 &&
+           mode->dmPelsHeight == 0;
+}
+
 /***********************************************************************
  *		ChangeDisplaySettingsExW (USER32.@)
  */
@@ -3318,7 +3327,8 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
         if (devmode->dmSize < FIELD_OFFSET(DEVMODEW, dmICMMethod))
             return DISP_CHANGE_BADMODE;
 
-        if (((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
+        if (is_detached_mode(devmode) ||
+            ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel) ||
             ((devmode->dmFields & DM_PELSWIDTH) && devmode->dmPelsWidth) ||
             ((devmode->dmFields & DM_PELSHEIGHT) && devmode->dmPelsHeight) ||
             ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency))
