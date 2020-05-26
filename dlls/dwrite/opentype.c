@@ -4159,7 +4159,12 @@ static void opentype_layout_apply_gpos_lookup(struct scriptshaping_context *cont
 struct lookup
 {
     unsigned short index;
+    unsigned short type;
+    unsigned short flags;
+    unsigned short subtable_count;
+
     unsigned int mask;
+    unsigned int offset;
 };
 
 struct lookups
@@ -4176,11 +4181,45 @@ static int lookups_sorting_compare(const void *a, const void *b)
     return left->index < right->index ? -1 : left->index > right->index ? 1 : 0;
 };
 
+static BOOL opentype_layout_init_lookup(struct ot_gsubgpos_table *table, unsigned short lookup_index, unsigned int mask,
+        struct lookup *lookup)
+{
+    unsigned short subtable_count, lookup_type, flags;
+    const struct ot_lookup_table *lookup_table;
+    unsigned int offset;
+
+    if (!(offset = table_read_be_word(&table->table, table->lookup_list +
+            FIELD_OFFSET(struct ot_lookup_list, lookup[lookup_index]))))
+    {
+        return FALSE;
+    }
+
+    offset += table->lookup_list;
+
+    if (!(lookup_table = table_read_ensure(&table->table, offset, sizeof(*lookup_table))))
+        return FALSE;
+
+    if (!(subtable_count = GET_BE_WORD(lookup_table->subtable_count)))
+        return FALSE;
+
+    lookup_type = GET_BE_WORD(lookup_table->lookup_type);
+    flags = GET_BE_WORD(lookup_table->flags);
+
+    lookup->index = lookup_index;
+    lookup->type = lookup_type;
+    lookup->flags = flags;
+    lookup->subtable_count = subtable_count;
+    lookup->mask = mask;
+    lookup->offset = offset;
+
+    return TRUE;
+}
+
 static void opentype_layout_add_lookups(const struct ot_feature_list *feature_list, UINT16 total_lookup_count,
         struct ot_gsubgpos_table *table, struct shaping_feature *feature, struct lookups *lookups)
 {
     UINT16 feature_offset, lookup_count;
-    unsigned int i, j;
+    unsigned int i;
 
     /* Feature wasn't found */
     if (feature->index == 0xffff)
@@ -4211,10 +4250,8 @@ static void opentype_layout_add_lookups(const struct ot_feature_list *feature_li
         if (lookup_index >= total_lookup_count)
             continue;
 
-        j = lookups->count;
-        lookups->lookups[j].index = lookup_index;
-        lookups->lookups[j].mask = feature->mask;
-        lookups->count++;
+        if (opentype_layout_init_lookup(table, lookup_index, feature->mask, &lookups->lookups[lookups->count]))
+            lookups->count++;
     }
 }
 
@@ -4424,7 +4461,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     heap_free(lookups.lookups);
 }
 
-static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator *iter, const struct ot_lookup *lookup)
+static BOOL opentype_layout_apply_gsub_single_substitution(struct glyph_iterator *iter, const struct lookup *lookup)
 {
     UINT16 format, coverage, orig_glyph = iter->context->u.subst.glyphs[iter->pos], glyph = orig_glyph;
     struct scriptshaping_cache *cache = iter->context->cache;
@@ -4550,16 +4587,19 @@ static BOOL opentype_layout_context_match_lookahead(struct glyph_iterator *iter,
 }
 
 static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
-        unsigned int glyph_count, int lookup_index, BOOL only_single);
+        unsigned int glyph_count, struct lookup *lookup, BOOL only_single);
 
 static BOOL opentype_layout_context_gsub_apply_lookup(struct glyph_iterator *iter, unsigned int count,
         unsigned int lookup_count, const UINT16 *lookup_records)
 {
+    struct lookup lookup = { 0 };
+
     if (lookup_count > 1)
         FIXME("Only first lookup used.\n");
 
-    opentype_layout_apply_gsub_lookup(iter->context, iter->pos + GET_BE_WORD(lookup_records[0]), count,
-            GET_BE_WORD(lookup_records[1]), TRUE);
+    if (opentype_layout_init_lookup(&iter->context->cache->gsub, GET_BE_WORD(lookup_records[1]), 0, &lookup))
+        opentype_layout_apply_gsub_lookup(iter->context, iter->pos + GET_BE_WORD(lookup_records[0]), count,
+                &lookup, TRUE);
 
     return TRUE;
 }
@@ -4574,7 +4614,7 @@ static BOOL opentype_layout_apply_gsub_chain_context_lookup(struct glyph_iterato
             opentype_layout_context_gsub_apply_lookup(iter, input_count, lookup_count, lookup_records);
 }
 
-static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct glyph_iterator *iter, const struct ot_lookup *lookup)
+static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct glyph_iterator *iter, const struct lookup *lookup)
 {
     struct scriptshaping_cache *cache = iter->context->cache;
     UINT16 format, coverage;
@@ -4661,34 +4701,14 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct glyph_i
 }
 
 static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, unsigned int first_glyph,
-        unsigned int glyph_count, int lookup_index, BOOL only_single)
+        unsigned int glyph_count, struct lookup *lookup, BOOL only_single)
 {
-    struct ot_gsubgpos_table *table = &context->cache->gsub;
-    const struct ot_lookup_table *lookup_table;
     struct glyph_iterator iter;
-    struct ot_lookup lookup;
-    WORD lookup_type;
 
-    lookup.offset = table_read_be_word(&table->table, table->lookup_list + FIELD_OFFSET(struct ot_lookup_list, lookup[lookup_index]));
-    if (!lookup.offset)
+    if (lookup->type != GSUB_LOOKUP_SINGLE_SUBST && only_single)
         return;
 
-    lookup.offset += table->lookup_list;
-
-    if (!(lookup_table = table_read_ensure(&table->table, lookup.offset, sizeof(*lookup_table))))
-        return;
-
-    lookup.subtable_count = GET_BE_WORD(lookup_table->subtable_count);
-    if (!lookup.subtable_count)
-        return;
-
-    lookup_type = GET_BE_WORD(lookup_table->lookup_type);
-    lookup.flags = GET_BE_WORD(lookup_table->flags);
-
-    if (lookup_type != GSUB_LOOKUP_SINGLE_SUBST && only_single)
-        return;
-
-    glyph_iterator_init(context, lookup.flags, first_glyph, glyph_count, &iter);
+    glyph_iterator_init(context, lookup->flags, first_glyph, glyph_count, &iter);
 
     while (iter.pos < first_glyph + iter.len)
     {
@@ -4700,13 +4720,13 @@ static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             continue;
         }
 
-        switch (lookup_type)
+        switch (lookup->type)
         {
             case GSUB_LOOKUP_SINGLE_SUBST:
-                ret = opentype_layout_apply_gsub_single_substitution(&iter, &lookup);
+                ret = opentype_layout_apply_gsub_single_substitution(&iter, lookup);
                 break;
             case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
-                ret = opentype_layout_apply_gsub_chain_context_substitution(&iter, &lookup);
+                ret = opentype_layout_apply_gsub_chain_context_substitution(&iter, lookup);
                 break;
             case GSUB_LOOKUP_MULTIPLE_SUBST:
             case GSUB_LOOKUP_ALTERNATE_SUBST:
@@ -4714,10 +4734,10 @@ static void opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             case GSUB_LOOKUP_CONTEXTUAL_SUBST:
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
                 ret = FALSE;
-                WARN("Unimplemented lookup %d.\n", lookup_type);
+                WARN("Unimplemented lookup %d.\n", lookup->type);
                 break;
             default:
-                WARN("Unknown lookup type %u.\n", lookup_type);
+                WARN("Unknown lookup type %u.\n", lookup->type);
                 return;
         }
 
@@ -4801,7 +4821,7 @@ HRESULT opentype_layout_apply_gsub_features(struct scriptshaping_context *contex
     opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
-        opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, lookups.lookups[i].index, FALSE);
+        opentype_layout_apply_gsub_lookup(context, 0, context->glyph_count, &lookups.lookups[i], FALSE);
 
     heap_free(lookups.lookups);
 
