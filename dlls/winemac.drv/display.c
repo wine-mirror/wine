@@ -747,6 +747,23 @@ void check_retina_status(void)
     }
 }
 
+static BOOL get_primary_adapter(WCHAR *name)
+{
+    DISPLAY_DEVICEW dd;
+    DWORD i;
+
+    dd.cb = sizeof(dd);
+    for (i = 0; EnumDisplayDevicesW(NULL, i, &dd, 0); ++i)
+    {
+        if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+        {
+            lstrcpyW(name, dd.DeviceName);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 /***********************************************************************
  *              ChangeDisplaySettingsEx  (MACDRV.@)
@@ -755,7 +772,9 @@ void check_retina_status(void)
 LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
                                           HWND hwnd, DWORD flags, LPVOID lpvoid)
 {
+    WCHAR primary_adapter[CCHDEVICENAME];
     LONG ret = DISP_CHANGE_BADMODE;
+    DEVMODEW default_mode;
     int bpp;
     struct macdrv_display *displays;
     int num_displays;
@@ -769,6 +788,22 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     TRACE("%s %p %p 0x%08x %p\n", debugstr_w(devname), devmode, hwnd, flags, lpvoid);
 
     init_original_display_mode();
+
+    if (!get_primary_adapter(primary_adapter))
+        return DISP_CHANGE_FAILED;
+
+    if (!devname && !devmode)
+    {
+        default_mode.dmSize = sizeof(default_mode);
+        if (!EnumDisplaySettingsExW(primary_adapter, ENUM_REGISTRY_SETTINGS, &default_mode, 0))
+        {
+            ERR("Default mode not found for %s!\n", wine_dbgstr_w(primary_adapter));
+            return DISP_CHANGE_BADMODE;
+        }
+
+        devname = primary_adapter;
+        devmode = &default_mode;
+    }
 
     if (macdrv_get_displays(&displays, &num_displays))
         return DISP_CHANGE_FAILED;

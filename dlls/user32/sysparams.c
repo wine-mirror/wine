@@ -3300,6 +3300,9 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
     TRACE("%s %p %p %#x %p\n", debugstr_w(devname), devmode, hwnd, flags, lparam);
     TRACE("flags=%s\n", _CDS_flags(flags));
 
+    if (!devname && !devmode)
+        return USER_Driver->pChangeDisplaySettingsEx(NULL, NULL, hwnd, flags, lparam);
+
     if (!devname && devmode)
     {
         if (!get_primary_adapter(primary_adapter))

@@ -661,6 +661,7 @@ extern void X11DRV_resize_desktop(BOOL) DECLSPEC_HIDDEN;
 extern BOOL is_virtual_desktop(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_fullscreen(void) DECLSPEC_HIDDEN;
 extern BOOL create_desktop_win_data( Window win ) DECLSPEC_HIDDEN;
+extern BOOL get_primary_adapter(WCHAR *) DECLSPEC_HIDDEN;
 extern void X11DRV_Settings_AddDepthModes(void) DECLSPEC_HIDDEN;
 extern void X11DRV_Settings_AddOneMode(unsigned int width, unsigned int height, unsigned int bpp, unsigned int freq) DECLSPEC_HIDDEN;
 unsigned int X11DRV_Settings_GetModeCount(void) DECLSPEC_HIDDEN;
