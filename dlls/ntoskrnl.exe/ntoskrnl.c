@@ -2455,6 +2455,25 @@ VOID WINAPI KeSetSystemAffinityThread(KAFFINITY Affinity)
     FIXME("(%lx) stub\n", Affinity);
 }
 
+KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
+{
+    DWORD_PTR system_affinity = KeQueryActiveProcessors();
+    GROUP_AFFINITY old, new;
+
+    TRACE("affinity %#lx.\n", affinity);
+
+    affinity &= system_affinity;
+
+    NtQueryInformationThread(GetCurrentThread(), ThreadGroupInformation,
+            &old, sizeof(old), NULL);
+
+    memset(&new, 0, sizeof(new));
+    new.Mask = affinity;
+
+    return NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new))
+            ? 0 : old.Mask;
+}
+
 
 /***********************************************************************
  *           KeRevertToUserAffinityThread   (NTOSKRNL.EXE.@)
