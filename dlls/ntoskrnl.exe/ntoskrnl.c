@@ -2450,9 +2450,9 @@ KPRIORITY WINAPI KeSetPriorityThread( PKTHREAD Thread, KPRIORITY Priority )
 /***********************************************************************
  *           KeSetSystemAffinityThread   (NTOSKRNL.EXE.@)
  */
-VOID WINAPI KeSetSystemAffinityThread(KAFFINITY Affinity)
+VOID WINAPI KeSetSystemAffinityThread(KAFFINITY affinity)
 {
-    FIXME("(%lx) stub\n", Affinity);
+    KeSetSystemAffinityThreadEx(affinity);
 }
 
 KAFFINITY WINAPI KeSetSystemAffinityThreadEx(KAFFINITY affinity)
