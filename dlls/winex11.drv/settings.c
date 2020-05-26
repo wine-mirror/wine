@@ -357,6 +357,13 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         devmode = &default_mode;
     }
 
+    if (lstrcmpiW(primary_adapter, devname))
+    {
+        FIXME("Changing non-primary adapter %s settings is currently unsupported.\n",
+              wine_dbgstr_w(devname));
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
     for (i = 0; i < dd_mode_count; i++)
     {
         if (devmode->dmFields & DM_BITSPERPEL)
