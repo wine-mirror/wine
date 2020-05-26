@@ -44,6 +44,7 @@
 #include "ntsecapi.h"
 #include "winspool.h"
 #include "setupapi.h"
+#include "ntddstor.h"
 
 #include "wine/asm.h"
 #include "wine/debug.h"
@@ -140,7 +141,7 @@ static const struct column col_diskdrive[] =
     { L"MediaType",     CIM_STRING },
     { L"Model",         CIM_STRING },
     { L"PNPDeviceID",   CIM_STRING },
-    { L"SerialNumber",  CIM_STRING },
+    { L"SerialNumber",  CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Size",          CIM_UINT64 },
 };
 static const struct column col_diskdrivetodiskpartition[] =
@@ -2081,6 +2082,42 @@ static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
     }
     return free.QuadPart;
 }
+static WCHAR *get_diskdrive_serialnumber( WCHAR letter )
+{
+    WCHAR *ret = NULL;
+    STORAGE_DEVICE_DESCRIPTOR *desc;
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    STORAGE_PROPERTY_QUERY query = {0};
+    WCHAR drive[7];
+    DWORD size;
+
+    swprintf( drive, ARRAY_SIZE(drive), L"\\\\.\\%c:", letter );
+    handle = CreateFileW( drive, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (handle == INVALID_HANDLE_VALUE) goto done;
+
+    query.PropertyId = StorageDeviceProperty;
+    query.QueryType  = PropertyStandardQuery;
+
+    size = sizeof(*desc) + 256;
+    for (;;)
+    {
+        if (!(desc = heap_alloc( size ))) break;
+        if (DeviceIoControl( handle, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), desc, size, NULL, NULL ))
+        {
+            if (desc->SerialNumberOffset) ret = heap_strdupAW( (const char *)desc + desc->SerialNumberOffset );
+            heap_free( desc );
+            break;
+        }
+        heap_free( desc );
+        if (GetLastError() == ERROR_MORE_DATA) size = desc->Size;
+        else break;
+    }
+
+done:
+    if (handle != INVALID_HANDLE_VALUE) CloseHandle( handle );
+    if (!ret) ret = heap_strdupW( L"WINEHDISK" );
+    return ret;
+}
 
 static enum fill_status fill_diskdrive( struct table *table, const struct expr *cond )
 {
@@ -2114,7 +2151,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
             rec->mediatype     = (type == DRIVE_FIXED) ? L"Fixed hard disk" : L"Removable media";
             rec->model         = L"Wine Disk Drive";
             rec->pnpdevice_id  = L"IDE\\Disk\\VEN_WINE";
-            rec->serialnumber  = L"WINEHDISK";
+            rec->serialnumber  = get_diskdrive_serialnumber( root[0] );
             get_freespace( root, &size );
             rec->size          = size;
             if (!match_row( table, row, cond, &status ))

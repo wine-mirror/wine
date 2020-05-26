@@ -1456,6 +1456,31 @@ static void test_Win32_DesktopMonitor( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_DiskDrive( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_DiskDrive" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 static void test_Win32_DisplayControllerConfiguration( IWbemServices *services )
 {
     BSTR wql = SysAllocString( L"wql" );
@@ -1561,6 +1586,7 @@ START_TEST(query)
     test_Win32_ComputerSystemProduct( services );
     test_Win32_Bios( services );
     test_Win32_DesktopMonitor( services );
+    test_Win32_DiskDrive( services );
     test_Win32_DisplayControllerConfiguration( services );
     test_Win32_IP4RouteTable( services );
     test_Win32_OperatingSystem( services );
