@@ -336,13 +336,10 @@ BOOL WINAPI SetFileCompletionNotificationModes( HANDLE file, UCHAR flags )
 {
     FILE_IO_COMPLETION_NOTIFICATION_INFORMATION info;
     IO_STATUS_BLOCK io;
-    NTSTATUS status;
 
     info.Flags = flags;
-    status = NtSetInformationFile( file, &io, &info, sizeof(info), FileIoCompletionNotificationInformation );
-    if (status == STATUS_SUCCESS) return TRUE;
-    SetLastError( RtlNtStatusToDosError(status) );
-    return FALSE;
+    return set_ntstatus( NtSetInformationFile( file, &io, &info, sizeof(info),
+                                               FileIoCompletionNotificationInformation ));
 }
 
 
@@ -534,8 +531,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
                                            lpvOutBuffer, cbOutBuffer);
         if (lpcbBytesReturned) *lpcbBytesReturned = iosb.Information;
     }
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( status );
 }
 
 

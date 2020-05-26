@@ -1252,12 +1252,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
                 FIXME("Conversion not supported yet\n");
         }
         HeapFree(GetProcessHeap(), 0, ptr);
-        if (status != STATUS_SUCCESS)
-        {
-            SetLastError(RtlNtStatusToDosError(status));
-            return FALSE;
-        }
-        return TRUE;
+        return set_ntstatus( status );
     }
 
     if (!GetConsoleMode(hConsoleOutput, &mode) || !GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))

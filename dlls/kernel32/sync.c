@@ -103,41 +103,21 @@ static HANDLE normalize_handle_if_console(HANDLE handle)
 /***********************************************************************
  *           RegisterWaitForSingleObject   (KERNEL32.@)
  */
-BOOL WINAPI RegisterWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject,
-                WAITORTIMERCALLBACK Callback, PVOID Context,
-                ULONG dwMilliseconds, ULONG dwFlags)
+BOOL WINAPI RegisterWaitForSingleObject( HANDLE *wait, HANDLE object, WAITORTIMERCALLBACK callback,
+                                         void *context, ULONG timeout, ULONG flags )
 {
-    NTSTATUS status;
+    TRACE( "%p %p %p %p %d %d\n", wait, object, callback, context, timeout, flags );
 
-    TRACE("%p %p %p %p %d %d\n",
-          phNewWaitObject,hObject,Callback,Context,dwMilliseconds,dwFlags);
-
-    hObject = normalize_handle_if_console(hObject);
-    status = RtlRegisterWait( phNewWaitObject, hObject, Callback, Context, dwMilliseconds, dwFlags );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    object = normalize_handle_if_console( object );
+    return set_ntstatus( RtlRegisterWait( wait, object, callback, context, timeout, flags ));
 }
 
 /***********************************************************************
  *           UnregisterWait   (KERNEL32.@)
  */
-BOOL WINAPI UnregisterWait( HANDLE WaitHandle ) 
+BOOL WINAPI UnregisterWait( HANDLE handle )
 {
-    NTSTATUS status;
-
-    TRACE("%p\n",WaitHandle);
-
-    status = RtlDeregisterWait( WaitHandle );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( RtlDeregisterWait( handle ));
 }
 
 /***********************************************************************
@@ -310,16 +290,10 @@ HANDLE WINAPI OpenJobObjectW( DWORD access, BOOL inherit, LPCWSTR name )
     HANDLE ret;
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
 
     if (!get_open_object_attributes( &attr, &nameW, inherit, name )) return 0;
 
-    status = NtOpenJobObject( &ret, access, &attr );
-    if (status != STATUS_SUCCESS)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return 0;
-    }
+    if (!set_ntstatus( NtOpenJobObject( &ret, access, &attr ))) return 0;
     return ret;
 }
 
@@ -345,9 +319,7 @@ HANDLE WINAPI OpenJobObjectA( DWORD access, BOOL inherit, LPCSTR name )
  */
 BOOL WINAPI TerminateJobObject( HANDLE job, UINT exit_code )
 {
-    NTSTATUS status = NtTerminateJobObject( job, exit_code );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( NtTerminateJobObject( job, exit_code ));
 }
 
 /******************************************************************************
@@ -356,9 +328,7 @@ BOOL WINAPI TerminateJobObject( HANDLE job, UINT exit_code )
 BOOL WINAPI QueryInformationJobObject( HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info,
                                        DWORD len, DWORD *ret_len )
 {
-    NTSTATUS status = NtQueryInformationJobObject( job, class, info, len, ret_len );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( NtQueryInformationJobObject( job, class, info, len, ret_len ));
 }
 
 /******************************************************************************
@@ -366,9 +336,7 @@ BOOL WINAPI QueryInformationJobObject( HANDLE job, JOBOBJECTINFOCLASS class, LPV
  */
 BOOL WINAPI SetInformationJobObject( HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len )
 {
-    NTSTATUS status = NtSetInformationJobObject( job, class, info, len );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( NtSetInformationJobObject( job, class, info, len ));
 }
 
 /******************************************************************************
@@ -376,9 +344,7 @@ BOOL WINAPI SetInformationJobObject( HANDLE job, JOBOBJECTINFOCLASS class, LPVOI
  */
 BOOL WINAPI AssignProcessToJobObject( HANDLE job, HANDLE process )
 {
-    NTSTATUS status = NtAssignProcessToJobObject( job, process );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
+    return set_ntstatus( NtAssignProcessToJobObject( job, process ));
 }
 
 
@@ -545,18 +511,10 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
 BOOL WINAPI GetNamedPipeClientProcessId( HANDLE pipe, ULONG *id )
 {
     IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
 
-    TRACE( "%p %p\n", pipe, id );
-
-    status = NtFsControlFile( pipe, NULL, NULL, NULL, &iosb, FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE,
-                              (void *)"ClientProcessId", sizeof("ClientProcessId"), id, sizeof(*id) );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( NtFsControlFile( pipe, NULL, NULL, NULL, &iosb,
+                                          FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE, (void *)"ClientProcessId",
+                                          sizeof("ClientProcessId"), id, sizeof(*id) ));
 }
 
 /***********************************************************************
@@ -565,18 +523,10 @@ BOOL WINAPI GetNamedPipeClientProcessId( HANDLE pipe, ULONG *id )
 BOOL WINAPI GetNamedPipeServerProcessId( HANDLE pipe, ULONG *id )
 {
     IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
 
-    TRACE( "%p, %p\n", pipe, id );
-
-    status = NtFsControlFile( pipe, NULL, NULL, NULL, &iosb, FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE,
-                              (void *)"ServerProcessId", sizeof("ServerProcessId"), id, sizeof(*id) );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( NtFsControlFile( pipe, NULL, NULL, NULL, &iosb,
+                                          FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE, (void *)"ServerProcessId",
+                                          sizeof("ServerProcessId"), id, sizeof(*id) ));
 }
 
 /***********************************************************************
@@ -712,7 +662,6 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
     UNICODE_STRING nameW;
     LARGE_INTEGER timeout;
     IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
 
     TRACE("%s %d %d %p\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
@@ -742,13 +691,9 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
     else
         timeout.QuadPart = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
 
-    status = NtCreateMailslotFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr,
-                                   &iosb, 0, 0, nMaxMessageSize, &timeout );
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+    if (!set_ntstatus( NtCreateMailslotFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr,
+                                             &iosb, 0, 0, nMaxMessageSize, &timeout )))
         handle = INVALID_HANDLE_VALUE;
-    }
 
     RtlFreeUnicodeString( &nameW );
     return handle;
@@ -777,19 +722,13 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
 {
     FILE_MAILSLOT_QUERY_INFORMATION info;
     IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
 
     TRACE("%p %p %p %p %p\n",hMailslot, lpMaxMessageSize,
           lpNextSize, lpMessageCount, lpReadTimeout);
 
-    status = NtQueryInformationFile( hMailslot, &iosb, &info, sizeof info,
-                                     FileMailslotQueryInformation );
-
-    if( status != STATUS_SUCCESS )
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
+    if (!set_ntstatus( NtQueryInformationFile( hMailslot, &iosb, &info, sizeof info,
+                                               FileMailslotQueryInformation )))
         return FALSE;
-    }
 
     if( lpMaxMessageSize )
         *lpMaxMessageSize = info.MaximumMessageSize;
@@ -825,7 +764,6 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 {
     FILE_MAILSLOT_SET_INFORMATION info;
     IO_STATUS_BLOCK iosb;
-    NTSTATUS status;
 
     TRACE("%p %d\n", hMailslot, dwReadTimeout);
 
@@ -833,30 +771,17 @@ BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
         info.ReadTimeout.QuadPart = (ULONGLONG)dwReadTimeout * -10000;
     else
         info.ReadTimeout.QuadPart = ((LONGLONG)0x7fffffff << 32) | 0xffffffff;
-    status = NtSetInformationFile( hMailslot, &iosb, &info, sizeof info,
-                                   FileMailslotSetInformation );
-    if( status != STATUS_SUCCESS )
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
-    }
-    return TRUE;
+    return set_ntstatus( NtSetInformationFile( hMailslot, &iosb, &info, sizeof info,
+                                               FileMailslotSetInformation ));
 }
 
 
 /******************************************************************************
  *		BindIoCompletionCallback (KERNEL32.@)
  */
-BOOL WINAPI BindIoCompletionCallback( HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags)
+BOOL WINAPI BindIoCompletionCallback( HANDLE handle, LPOVERLAPPED_COMPLETION_ROUTINE func, ULONG flags )
 {
-    NTSTATUS status;
-
-    TRACE("(%p, %p, %d)\n", FileHandle, Function, Flags);
-
-    status = RtlSetIoCompletionCallback( FileHandle, (PRTL_OVERLAPPED_COMPLETION_ROUTINE)Function, Flags );
-    if (status == STATUS_SUCCESS) return TRUE;
-    SetLastError( RtlNtStatusToDosError(status) );
-    return FALSE;
+    return set_ntstatus( RtlSetIoCompletionCallback( handle, (PRTL_OVERLAPPED_COMPLETION_ROUTINE)func, flags ));
 }
 
 

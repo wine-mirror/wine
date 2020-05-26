@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -173,9 +174,8 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
     status = NtCreatePowerRequest( &handle, &nt_context );
     if (nt_context.Flags & POWER_REQUEST_CONTEXT_DETAILED_STRING)
         heap_free( nt_context.u.s.ReasonStrings );
-    if (status)
-        SetLastError( RtlNtStatusToDosError(status) );
-    return status == STATUS_SUCCESS ? handle : INVALID_HANDLE_VALUE;
+    if (!set_ntstatus( status )) return INVALID_HANDLE_VALUE;
+    return handle;
 }
 
 /***********************************************************************
@@ -183,10 +183,7 @@ HANDLE WINAPI PowerCreateRequest(REASON_CONTEXT *context)
  */
 BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
 {
-    NTSTATUS status = NtSetPowerRequest( request, type );
-    if (status)
-        SetLastError( RtlNtStatusToDosError(status) );
-    return status == STATUS_SUCCESS;
+    return set_ntstatus( NtSetPowerRequest( request, type ));
 }
 
 /***********************************************************************
@@ -194,8 +191,5 @@ BOOL WINAPI PowerSetRequest(HANDLE request, POWER_REQUEST_TYPE type)
  */
 BOOL WINAPI PowerClearRequest(HANDLE request, POWER_REQUEST_TYPE type)
 {
-    NTSTATUS status = NtClearPowerRequest( request, type );
-    if (status)
-        SetLastError( RtlNtStatusToDosError(status) );
-    return status == STATUS_SUCCESS;
+    return set_ntstatus( NtClearPowerRequest( request, type ));
 }

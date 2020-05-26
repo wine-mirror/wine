@@ -38,6 +38,7 @@
 #include "winnls.h"
 #include "winternl.h"
 
+#include "kernel_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
@@ -78,7 +79,6 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
     HANDLE                      hProcess;
     PROCESS_BASIC_INFORMATION   pbi;
     PPEB_LDR_DATA               pLdrData;
-    NTSTATUS                    status;
     PLIST_ENTRY                 head, curr;
     BOOL                        ret = FALSE;
 
@@ -94,9 +94,8 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
     else
         hProcess = GetCurrentProcess();
 
-    status = NtQueryInformationProcess( hProcess, ProcessBasicInformation,
-                                        &pbi, sizeof(pbi), NULL );
-    if (!status)
+    if (set_ntstatus( NtQueryInformationProcess( hProcess, ProcessBasicInformation,
+                                                 &pbi, sizeof(pbi), NULL )))
     {
         if (ReadProcessMemory( hProcess, &pbi.PebBaseAddress->LdrData,
                                &pLdrData, sizeof(pLdrData), NULL ) &&
@@ -133,7 +132,6 @@ static BOOL fetch_module( DWORD process, DWORD flags, LDR_DATA_TABLE_ENTRY **ldr
             ret = TRUE;
         }
     }
-    else SetLastError( RtlNtStatusToDosError( status ) );
 
     if (process) CloseHandle( hProcess );
     return ret;
