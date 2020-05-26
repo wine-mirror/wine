@@ -1609,12 +1609,23 @@ static HRESULT adapter_vk_create_query(struct wined3d_device *device, enum wined
     TRACE("device %p, type %#x, parent %p, parent_ops %p, query %p.\n",
             device, type, parent, parent_ops, query);
 
-    return WINED3DERR_NOTAVAILABLE;
+    return wined3d_query_vk_create(device, type, parent, parent_ops, query);
+}
+
+static void wined3d_query_vk_destroy_object(void *object)
+{
+    struct wined3d_query_vk *query_vk = object;
+
+    query_vk->q.query_ops->query_destroy(&query_vk->q);
 }
 
 static void adapter_vk_destroy_query(struct wined3d_query *query)
 {
-    TRACE("query %p.\n", query);
+    struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
+
+    TRACE("query_vk %p.\n", query_vk);
+
+    wined3d_cs_destroy_object(query->device->cs, wined3d_query_vk_destroy_object, query_vk);
 }
 
 static void adapter_vk_flush_context(struct wined3d_context *context)
