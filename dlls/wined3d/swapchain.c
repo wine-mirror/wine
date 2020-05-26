@@ -469,7 +469,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
     const struct wined3d_fb_state *fb = &swapchain->device->cs->state.fb;
     struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
-    struct wined3d_texture *cursor_texture;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
@@ -487,31 +486,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     gl_info = context_gl->gl_info;
 
     swapchain_gl_set_swap_interval(swapchain, context_gl, swap_interval);
-
-    if ((cursor_texture = swapchain->device->cursor_texture)
-            && swapchain->device->bCursorVisible && !swapchain->device->hardwareCursor)
-    {
-        RECT dst_rect =
-        {
-            swapchain->device->xScreenSpace - swapchain->device->xHotSpot,
-            swapchain->device->yScreenSpace - swapchain->device->yHotSpot,
-            swapchain->device->xScreenSpace + swapchain->device->cursorWidth - swapchain->device->xHotSpot,
-            swapchain->device->yScreenSpace + swapchain->device->cursorHeight - swapchain->device->yHotSpot,
-        };
-        RECT src_rect =
-        {
-            0, 0, cursor_texture->resource.width, cursor_texture->resource.height
-        };
-        const RECT clip_rect = {0, 0, back_buffer->resource.width, back_buffer->resource.height};
-
-        TRACE("Rendering the software cursor.\n");
-
-        if (desc->windowed)
-            MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&dst_rect, 2);
-        if (wined3d_clip_blit(&clip_rect, &dst_rect, &src_rect))
-            wined3d_texture_blt(back_buffer, 0, &dst_rect, cursor_texture, 0,
-                    &src_rect, WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
-    }
 
     TRACE("Presenting DC %p.\n", context_gl->dc);
 
