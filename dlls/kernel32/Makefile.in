@@ -10,7 +10,6 @@ C_SRCS = \
 	comm.c \
 	computername.c \
 	console.c \
-	cpu.c \
 	debugger.c \
 	editline.c \
 	environ.c \

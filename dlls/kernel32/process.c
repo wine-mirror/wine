@@ -53,7 +53,6 @@
 #include "kernel_private.h"
 #include "psapi.h"
 #include "wine/exception.h"
-#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/asm.h"
@@ -702,6 +701,46 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
     return S_OK;
 }
 
+/***********************************************************************
+ *           GetActiveProcessorGroupCount (KERNEL32.@)
+ */
+WORD WINAPI GetActiveProcessorGroupCount(void)
+{
+    FIXME("semi-stub, always returning 1\n");
+    return 1;
+}
+
+/***********************************************************************
+ *           GetActiveProcessorCount (KERNEL32.@)
+ */
+DWORD WINAPI GetActiveProcessorCount(WORD group)
+{
+    DWORD cpus = system_info.NumberOfProcessors;
+
+    FIXME("semi-stub, returning %u\n", cpus);
+    return cpus;
+}
+
+/***********************************************************************
+ *           GetMaximumProcessorCount (KERNEL32.@)
+ */
+DWORD WINAPI GetMaximumProcessorCount(WORD group)
+{
+    DWORD cpus = system_info.NumberOfProcessors;
+
+    FIXME("semi-stub, returning %u\n", cpus);
+    return cpus;
+}
+
+/***********************************************************************
+ *           GetEnabledXStateFeatures (KERNEL32.@)
+ */
+DWORD64 WINAPI GetEnabledXStateFeatures(void)
+{
+    FIXME("\n");
+    return 0;
+}
+
 /**********************************************************************
  *           GetNumaNodeProcessorMask     (KERNEL32.@)
  */
@@ -737,12 +776,9 @@ BOOL WINAPI GetNumaAvailableMemoryNodeEx(USHORT node, PULONGLONG available_bytes
  */
 BOOL WINAPI GetNumaProcessorNode(UCHAR processor, PUCHAR node)
 {
-    SYSTEM_INFO si;
-
     TRACE("(%d, %p)\n", processor, node);
 
-    GetSystemInfo( &si );
-    if (processor < si.dwNumberOfProcessors)
+    if (processor < system_info.NumberOfProcessors)
     {
         *node = 0;
         return TRUE;
