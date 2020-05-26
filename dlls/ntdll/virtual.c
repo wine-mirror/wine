@@ -2624,9 +2624,7 @@ SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T
     {
         if (!(view->protect & VPROT_SYSTEM))
         {
-            char *page = ROUND_ADDR( addr, page_mask );
-
-            while (bytes_read < size && (VIRTUAL_GetUnixProt( get_page_vprot( page )) & PROT_READ))
+            while (bytes_read < size && (VIRTUAL_GetUnixProt( get_page_vprot( addr )) & PROT_READ))
             {
                 SIZE_T block_size = min( size - bytes_read, page_size - ((UINT_PTR)addr & page_mask) );
                 memcpy( buffer, addr, block_size );
@@ -2634,7 +2632,6 @@ SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T
                 addr   = (const void *)((const char *)addr + block_size);
                 buffer = (void *)((char *)buffer + block_size);
                 bytes_read += block_size;
-                page += page_size;
             }
         }
     }
