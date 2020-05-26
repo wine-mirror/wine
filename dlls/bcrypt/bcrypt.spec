@@ -8,6 +8,7 @@
 @ stdcall BCryptDecrypt(ptr ptr long ptr ptr long ptr long ptr long)
 @ stub BCryptDeleteContext
 @ stdcall BCryptDeriveKey(ptr wstr ptr ptr long ptr long)
+@ stdcall BCryptDeriveKeyCapi(ptr ptr ptr long long)
 @ stdcall BCryptDeriveKeyPBKDF2(ptr ptr long ptr long int64 ptr long long)
 @ stdcall BCryptDestroyHash(ptr)
 @ stdcall BCryptDestroyKey(ptr)

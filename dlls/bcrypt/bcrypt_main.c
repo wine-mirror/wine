@@ -1609,6 +1609,53 @@ NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHA
     }
 }
 
+#define HMAC_PAD_LEN 64
+NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDLE halg, UCHAR *key, ULONG keylen, ULONG flags )
+{
+    struct hash *hash = handle;
+    UCHAR buf[MAX_HASH_OUTPUT_BYTES * 2];
+    NTSTATUS status;
+    ULONG len;
+
+    TRACE( "%p, %p, %p, %u, %08x\n", handle, halg, key, keylen, flags );
+
+    if (!key || !keylen) return STATUS_INVALID_PARAMETER;
+    if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
+    if (keylen > builtin_algorithms[hash->alg_id].hash_length * 2) return STATUS_INVALID_PARAMETER;
+
+    if (halg)
+    {
+        FIXME( "algorithm handle not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    len = builtin_algorithms[hash->alg_id].hash_length;
+    if ((status = BCryptFinishHash( handle, buf, len, 0 ))) return status;
+
+    if (len < keylen)
+    {
+        UCHAR pad1[HMAC_PAD_LEN], pad2[HMAC_PAD_LEN];
+        ULONG i;
+
+        for (i = 0; i < sizeof(pad1); i++)
+        {
+            pad1[i] = 0x36 ^ (i < len ? buf[i] : 0);
+            pad2[i] = 0x5c ^ (i < len ? buf[i] : 0);
+        }
+
+        if ((status = prepare_hash( hash )) ||
+            (status = BCryptHashData( handle, pad1, sizeof(pad1), 0 )) ||
+            (status = BCryptFinishHash( handle, buf, len, 0 ))) return status;
+
+        if ((status = prepare_hash( hash )) ||
+            (status = BCryptHashData( handle, pad2, sizeof(pad2), 0 )) ||
+            (status = BCryptFinishHash( handle, buf + len, len, 0 ))) return status;
+    }
+
+    memcpy( key, buf, keylen );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS pbkdf2( BCRYPT_HASH_HANDLE handle, UCHAR *pwd, ULONG pwd_len, UCHAR *salt, ULONG salt_len,
                         ULONGLONG iterations, ULONG i, UCHAR *dst, ULONG hash_len )
 {

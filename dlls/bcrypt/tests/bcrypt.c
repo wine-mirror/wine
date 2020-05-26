@@ -32,6 +32,7 @@ static NTSTATUS (WINAPI *pBCryptCreateHash)(BCRYPT_ALG_HANDLE, BCRYPT_HASH_HANDL
                                             ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptDecrypt)(BCRYPT_KEY_HANDLE, PUCHAR, ULONG, VOID *, PUCHAR, ULONG, PUCHAR, ULONG,
                                          ULONG *, ULONG);
+static NTSTATUS (WINAPI *pBCryptDeriveKeyCapi)(BCRYPT_HASH_HANDLE, BCRYPT_ALG_HANDLE, UCHAR *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptDeriveKeyPBKDF2)(BCRYPT_ALG_HANDLE, PUCHAR, ULONG, PUCHAR, ULONG, ULONGLONG,
                                                  PUCHAR, ULONG, ULONG);
 static NTSTATUS (WINAPI *pBCryptDestroyHash)(BCRYPT_HASH_HANDLE);
@@ -2356,6 +2357,71 @@ static void test_aes_vector(void)
     ok(!ret, "got %08x\n", ret);
 }
 
+static void test_BcryptDeriveKeyCapi(void)
+{
+    static const UCHAR expect[] =
+        {0xda,0x39,0xa3,0xee,0x5e,0x6b,0x4b,0x0d,0x32,0x55,0xbf,0xef,0x95,0x60,0x18,0x90,0xaf,0xd8,0x07,0x09};
+    static const UCHAR expect2[] =
+        {0x9b,0x03,0x17,0x41,0xf4,0x75,0x11,0xac,0xff,0x22,0xee,0x40,0xbb,0xe8,0xf9,0x74,0x17,0x26,0xb6,0xf2,
+         0xf8,0xc7,0x88,0x02,0x9a,0xdc,0x0d,0xd7,0x83,0x58,0xea,0x65,0x2e,0x8b,0x85,0xc6,0xdb,0xb7,0xed,0x1c};
+    BCRYPT_ALG_HANDLE alg;
+    BCRYPT_HASH_HANDLE hash;
+    UCHAR key[40];
+    NTSTATUS ret;
+
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA1_ALGORITHM, NULL, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0);
+    ok(!ret || broken(ret == STATUS_INVALID_PARAMETER) /* win2k8 */, "got %08x\n", ret);
+    if (ret == STATUS_INVALID_PARAMETER)
+    {
+        win_skip( "broken BCryptCreateHash\n" );
+        return;
+    }
+
+    ret = pBCryptDeriveKeyCapi(NULL, NULL, NULL, 0, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptDeriveKeyCapi(hash, NULL, NULL, 0, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptDeriveKeyCapi(hash, NULL, key, 0, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    ret = pBCryptDeriveKeyCapi(hash, NULL, key, 41, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+
+    memset(key, 0, sizeof(key));
+    ret = pBCryptDeriveKeyCapi(hash, NULL, key, 20, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(!memcmp(key, expect, sizeof(expect) - 1), "wrong key data\n");
+
+    ret = pBCryptDeriveKeyCapi(hash, NULL, key, 20, 0);
+    todo_wine ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+
+    ret = pBCryptHashData(hash, NULL, 0, 0);
+    todo_wine ok(ret == STATUS_INVALID_HANDLE, "got %08x\n", ret);
+
+    ret = pBCryptDestroyHash(hash);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptHashData(hash, (UCHAR *)"test", 4, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    /* padding */
+    memset(key, 0, sizeof(key));
+    ret = pBCryptDeriveKeyCapi(hash, NULL, key, 40, 0);
+    ok(!ret, "got %08x\n", ret);
+    ok(!memcmp(key, expect2, sizeof(expect2) - 1), "wrong key data\n");
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(!ret, "got %08x\n", ret);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -2370,6 +2436,7 @@ START_TEST(bcrypt)
     pBCryptCloseAlgorithmProvider = (void *)GetProcAddress(module, "BCryptCloseAlgorithmProvider");
     pBCryptCreateHash = (void *)GetProcAddress(module, "BCryptCreateHash");
     pBCryptDecrypt = (void *)GetProcAddress(module, "BCryptDecrypt");
+    pBCryptDeriveKeyCapi = (void *)GetProcAddress(module, "BCryptDeriveKeyCapi");
     pBCryptDeriveKeyPBKDF2 = (void *)GetProcAddress(module, "BCryptDeriveKeyPBKDF2");
     pBCryptDestroyHash = (void *)GetProcAddress(module, "BCryptDestroyHash");
     pBCryptDestroyKey = (void *)GetProcAddress(module, "BCryptDestroyKey");
@@ -2418,6 +2485,7 @@ START_TEST(bcrypt)
     test_BCryptSignHash();
     test_BCryptEnumAlgorithms();
     test_aes_vector();
+    test_BcryptDeriveKeyCapi();
 
     FreeLibrary(module);
 }
