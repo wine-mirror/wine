@@ -292,7 +292,7 @@ static void adapter_vk_destroy(struct wined3d_adapter *adapter)
 }
 
 static HRESULT wined3d_select_vulkan_queue_family(const struct wined3d_adapter_vk *adapter_vk,
-        uint32_t *queue_family_index)
+        uint32_t *queue_family_index, uint32_t *timestamp_bits)
 {
     VkPhysicalDevice physical_device = adapter_vk->physical_device;
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
@@ -311,6 +311,7 @@ static HRESULT wined3d_select_vulkan_queue_family(const struct wined3d_adapter_v
         if (queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             *queue_family_index = i;
+            *timestamp_bits = queue_properties[i].timestampValidBits;
             heap_free(queue_properties);
             return WINED3D_OK;
         }
@@ -496,13 +497,14 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     VkPhysicalDevice physical_device;
     VkDeviceCreateInfo device_info;
     uint32_t queue_family_index;
+    uint32_t timestamp_bits;
     VkResult vr;
     HRESULT hr;
 
     if (!(device_vk = heap_alloc_zero(sizeof(*device_vk))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = wined3d_select_vulkan_queue_family(adapter_vk, &queue_family_index)))
+    if (FAILED(hr = wined3d_select_vulkan_queue_family(adapter_vk, &queue_family_index, &timestamp_bits)))
         goto fail;
 
     physical_device = adapter_vk->physical_device;
@@ -564,6 +566,7 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     device_vk->vk_device = vk_device;
     VK_CALL(vkGetDeviceQueue(vk_device, queue_family_index, 0, &device_vk->vk_queue));
     device_vk->vk_queue_family_index = queue_family_index;
+    device_vk->timestamp_bits = timestamp_bits;
 
     device_vk->vk_info = *vk_info;
 #define LOAD_DEVICE_PFN(name) \

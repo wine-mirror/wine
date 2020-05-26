@@ -2495,6 +2495,7 @@ struct wined3d_context_vk
     struct list active_queries;
     struct wined3d_pending_queries_vk pending_queries;
     struct list free_occlusion_query_pools;
+    struct list free_timestamp_query_pools;
 
     struct wined3d_retired_objects_vk retired;
     struct wine_rb_tree render_passes;
@@ -3857,6 +3858,7 @@ struct wined3d_device_vk
     VkDevice vk_device;
     VkQueue vk_queue;
     uint32_t vk_queue_family_index;
+    uint32_t timestamp_bits;
 
     struct wined3d_vk_info vk_info;
 
