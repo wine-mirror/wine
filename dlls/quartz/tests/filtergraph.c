@@ -41,6 +41,12 @@ typedef struct TestFilterImpl
     UINT nPins;
 } TestFilterImpl;
 
+static BOOL compare_time(ULONGLONG x, ULONGLONG y, unsigned int max_diff)
+{
+    ULONGLONG diff = x > y ? x - y : y - x;
+    return diff <= max_diff;
+}
+
 static WCHAR *create_file(const WCHAR *name, const char *data, DWORD size)
 {
     static WCHAR pathW[MAX_PATH];
@@ -4057,13 +4063,13 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
-        ok(abs(time - 1234 * 10000) < 40 * 10000,
+        ok(compare_time(time, 1234 * 10000, 40 * 10000),
                 "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
-        ok(abs(current - 1234 * 10000) < 40 * 10000,
+        ok(compare_time(current, 1234 * 10000, 40 * 10000),
                 "Expected about 1234ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 9000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -4080,13 +4086,13 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
-        ok(abs(time - 1334 * 10000) < 80 * 10000,
+        ok(compare_time(time, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
-        ok(abs(current - 1334 * 10000) < 80 * 10000,
+        ok(compare_time(current, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 
@@ -4100,13 +4106,13 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
-        ok(abs(time - 1334 * 10000) < 80 * 10000,
+        ok(compare_time(time, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(time));
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     if (winetest_interactive) /* Timing problems make this test too liable to fail. */
-        ok(abs(current - 1334 * 10000) < 80 * 10000,
+        ok(compare_time(current, 1334 * 10000, 80 * 10000),
                 "Expected about 1334ms, got %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 8000 * 10000, "Got time %s.\n", wine_dbgstr_longlong(stop));
 

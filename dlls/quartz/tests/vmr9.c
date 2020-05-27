@@ -73,18 +73,19 @@ static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TY
 
 static BOOL compare_double(double f, double g, unsigned int ulps)
 {
-    int64_t x = *(int64_t *)&f;
-    int64_t y = *(int64_t *)&g;
+    uint64_t x = *(ULONGLONG *)&f;
+    uint64_t y = *(ULONGLONG *)&g;
 
-    if (x < 0)
-        x = INT64_MIN - x;
-    if (y < 0)
-        y = INT64_MIN - y;
+    if (f < 0)
+        x = ~x + 1;
+    else
+        x |= ((ULONGLONG)1)<<63;
+    if (g < 0)
+        y = ~y + 1;
+    else
+        y |= ((ULONGLONG)1)<<63;
 
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
+    return (x>y ? x-y : y-x) <= ulps;
 }
 
 static IFilterGraph2 *create_graph(void)
