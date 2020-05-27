@@ -174,7 +174,7 @@ static inline struct quartz_vmr *impl_from_IVMRWindowlessControl9(IVMRWindowless
 struct default_presenter
 {
     IVMRImagePresenter9 IVMRImagePresenter9_iface;
-    IVMRSurfaceAllocatorEx9 IVMRSurfaceAllocatorEx9_iface;
+    IVMRSurfaceAllocator9 IVMRSurfaceAllocator9_iface;
 
     LONG refCount;
 
@@ -195,9 +195,9 @@ static inline struct default_presenter *impl_from_IVMRImagePresenter9(IVMRImageP
     return CONTAINING_RECORD(iface, struct default_presenter, IVMRImagePresenter9_iface);
 }
 
-static inline struct default_presenter *impl_from_IVMRSurfaceAllocatorEx9(IVMRSurfaceAllocatorEx9 *iface)
+static inline struct default_presenter *impl_from_IVMRSurfaceAllocator9(IVMRSurfaceAllocator9 *iface)
 {
-    return CONTAINING_RECORD(iface, struct default_presenter, IVMRSurfaceAllocatorEx9_iface);
+    return CONTAINING_RECORD(iface, struct default_presenter, IVMRSurfaceAllocator9_iface);
 }
 
 static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *parent, LPVOID * ppv);
@@ -1367,7 +1367,8 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
 
         hr = VMR9DefaultAllocatorPresenterImpl_create(This, (LPVOID*)&This->presenter);
         if (SUCCEEDED(hr))
-            hr = IVMRImagePresenter9_QueryInterface(This->presenter, &IID_IVMRSurfaceAllocatorEx9, (LPVOID*)&This->allocator);
+            hr = IVMRImagePresenter9_QueryInterface(This->presenter,
+                    &IID_IVMRSurfaceAllocator9, (void **)&This->allocator);
         if (FAILED(hr))
         {
             ERR("Unable to find Presenter interface\n");
@@ -2530,8 +2531,8 @@ static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *if
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IVMRImagePresenter9))
         *ppv = &This->IVMRImagePresenter9_iface;
-    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorEx9))
-        *ppv = &This->IVMRSurfaceAllocatorEx9_iface;
+    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocator9))
+        *ppv = &This->IVMRSurfaceAllocator9_iface;
 
     if (*ppv)
     {
@@ -2667,25 +2668,22 @@ static const IVMRImagePresenter9Vtbl VMR9_ImagePresenter =
     VMR9_ImagePresenter_PresentImage
 };
 
-static HRESULT WINAPI VMR9_SurfaceAllocator_QueryInterface(IVMRSurfaceAllocatorEx9 *iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI VMR9_SurfaceAllocator_QueryInterface(IVMRSurfaceAllocator9 *iface, REFIID iid, void **out)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
-
-    return VMR9_ImagePresenter_QueryInterface(&This->IVMRImagePresenter9_iface, riid, ppv);
+    struct default_presenter *presenter = impl_from_IVMRSurfaceAllocator9(iface);
+    return IVMRImagePresenter9_QueryInterface(&presenter->IVMRImagePresenter9_iface, iid, out);
 }
 
-static ULONG WINAPI VMR9_SurfaceAllocator_AddRef(IVMRSurfaceAllocatorEx9 *iface)
+static ULONG WINAPI VMR9_SurfaceAllocator_AddRef(IVMRSurfaceAllocator9 *iface)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
-
-    return VMR9_ImagePresenter_AddRef(&This->IVMRImagePresenter9_iface);
+    struct default_presenter *presenter = impl_from_IVMRSurfaceAllocator9(iface);
+    return IVMRImagePresenter9_AddRef(&presenter->IVMRImagePresenter9_iface);
 }
 
-static ULONG WINAPI VMR9_SurfaceAllocator_Release(IVMRSurfaceAllocatorEx9 *iface)
+static ULONG WINAPI VMR9_SurfaceAllocator_Release(IVMRSurfaceAllocator9 *iface)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
-
-    return VMR9_ImagePresenter_Release(&This->IVMRImagePresenter9_iface);
+    struct default_presenter *presenter = impl_from_IVMRSurfaceAllocator9(iface);
+    return IVMRImagePresenter9_Release(&presenter->IVMRImagePresenter9_iface);
 }
 
 static HRESULT VMR9_SurfaceAllocator_SetAllocationSettings(struct default_presenter *This, VMR9AllocationInfo *allocinfo)
@@ -2827,9 +2825,10 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     return TRUE;
 }
 
-static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id, VMR9AllocationInfo *allocinfo, DWORD *numbuffers)
+static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, VMR9AllocationInfo *allocinfo, DWORD *numbuffers)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
+    struct default_presenter *This = impl_from_IVMRSurfaceAllocator9(iface);
 
     This->info = *allocinfo;
 
@@ -2842,16 +2841,17 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocato
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id)
+static HRESULT WINAPI VMR9_SurfaceAllocator_TerminateDevice(IVMRSurfaceAllocator9 *iface, DWORD_PTR cookie)
 {
-    TRACE("iface %p, id %#lx.\n", iface, id);
+    TRACE("iface %p, cookie %#lx.\n", iface, cookie);
 
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *iface, DWORD_PTR id, DWORD surfaceindex, DWORD flags, IDirect3DSurface9 **surface)
+static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, DWORD surfaceindex, DWORD flags, IDirect3DSurface9 **surface)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
+    struct default_presenter *This = impl_from_IVMRSurfaceAllocator9(iface);
 
     /* Update everything first, this is needed because the surface might be destroyed in the reset */
     if (!This->d3d9_dev)
@@ -2871,9 +2871,10 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocatorEx9 *
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9_SurfaceAllocator_AdviseNotify(IVMRSurfaceAllocatorEx9 *iface, IVMRSurfaceAllocatorNotify9 *allocnotify)
+static HRESULT WINAPI VMR9_SurfaceAllocator_AdviseNotify(IVMRSurfaceAllocator9 *iface,
+        IVMRSurfaceAllocatorNotify9 *allocnotify)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocatorEx9(iface);
+    struct default_presenter *This = impl_from_IVMRSurfaceAllocator9(iface);
 
     TRACE("(%p/%p)->(...)\n", iface, This);
 
@@ -2882,7 +2883,7 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_AdviseNotify(IVMRSurfaceAllocatorEx9
     return S_OK;
 }
 
-static const IVMRSurfaceAllocatorEx9Vtbl VMR9_SurfaceAllocator =
+static const IVMRSurfaceAllocator9Vtbl VMR9_SurfaceAllocator =
 {
     VMR9_SurfaceAllocator_QueryInterface,
     VMR9_SurfaceAllocator_AddRef,
@@ -2891,7 +2892,6 @@ static const IVMRSurfaceAllocatorEx9Vtbl VMR9_SurfaceAllocator =
     VMR9_SurfaceAllocator_TerminateDevice,
     VMR9_SurfaceAllocator_GetSurface,
     VMR9_SurfaceAllocator_AdviseNotify,
-    NULL /* This isn't the SurfaceAllocatorEx type yet, working on it */
 };
 
 static IDirect3D9 *init_d3d9(HMODULE d3d9_handle)
@@ -2940,7 +2940,7 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     }
 
     object->IVMRImagePresenter9_iface.lpVtbl = &VMR9_ImagePresenter;
-    object->IVMRSurfaceAllocatorEx9_iface.lpVtbl = &VMR9_SurfaceAllocator;
+    object->IVMRSurfaceAllocator9_iface.lpVtbl = &VMR9_SurfaceAllocator;
 
     object->refCount = 1;
     object->pVMR9 = parent;
