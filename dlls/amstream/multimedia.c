@@ -301,6 +301,7 @@ static HRESULT WINAPI multimedia_stream_GetFilter(IAMMultiMediaStream *iface,
 static void add_stream(struct multimedia_stream *mmstream, IAMMediaStream *stream, IMediaStream **ret_stream)
 {
     IMediaStreamFilter_AddMediaStream(mmstream->filter, stream);
+    IAMMediaStream_JoinAMMultiMediaStream(stream, &mmstream->IAMMultiMediaStream_iface);
     if (ret_stream)
     {
         *ret_stream = (IMediaStream *)stream;
@@ -377,19 +378,26 @@ static HRESULT WINAPI multimedia_stream_AddMediaStream(IAMMultiMediaStream *ifac
     }
 
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
-        hr = ddraw_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->type, &pStream);
+        hr = ddraw_stream_create(NULL, (void **)&pStream);
     else if (IsEqualGUID(PurposeId, &MSPID_PrimaryAudio))
-        hr = audio_stream_create((IMultiMediaStream*)iface, PurposeId, stream_object, This->type, &pStream);
+        hr = audio_stream_create(NULL, (void **)&pStream);
     else
         return MS_E_PURPOSEID;
 
-    if (SUCCEEDED(hr))
+    if (FAILED(hr))
+        return hr;
+
+    hr = IAMMediaStream_Initialize(pStream, stream_object, dwFlags, PurposeId, This->type);
+    if (FAILED(hr))
     {
-        add_stream(This, pStream, ret_stream);
         IAMMediaStream_Release(pStream);
+        return hr;
     }
 
-    return hr;
+    add_stream(This, pStream, ret_stream);
+    IAMMediaStream_Release(pStream);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,

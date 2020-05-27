@@ -730,7 +730,7 @@ static void test_add_stream(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(stream == (IMediaStream *)&teststream, "Streams didn't match.\n");
     if (hr == S_OK) IMediaStream_Release(stream);
-    todo_wine ok(teststream.mmstream == mmstream, "IAMMultiMediaStream objects didn't match.\n");
+    ok(teststream.mmstream == mmstream, "IAMMultiMediaStream objects didn't match.\n");
     ok(teststream.filter == stream_filter, "IMediaStreamFilter objects didn't match.\n");
     todo_wine ok(!!teststream.graph, "Expected a non-NULL graph.\n");
 

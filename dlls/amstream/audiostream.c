@@ -1273,13 +1273,12 @@ static const IMemInputPinVtbl audio_meminput_vtbl =
     audio_meminput_ReceiveCanBlock,
 };
 
-HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
-        IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
+HRESULT audio_stream_create(IUnknown *outer, void **out)
 {
     struct audio_stream *object;
-    HRESULT hr;
 
-    TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1295,21 +1294,9 @@ HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
     list_init(&object->receive_queue);
     list_init(&object->update_queue);
 
-    hr = IAMMediaStream_Initialize(&object->IAMMediaStream_iface, stream_object, 0, purpose_id, stream_type);
-    if (FAILED(hr))
-    {
-        IAMMediaStream_Release(&object->IAMMediaStream_iface);
-        return hr;
-    }
+    TRACE("Created audio stream %p.\n", object);
 
-    hr = IAMMediaStream_JoinAMMultiMediaStream(&object->IAMMediaStream_iface, (IAMMultiMediaStream *)parent);
-    if (FAILED(hr))
-    {
-        IAMMediaStream_Release(&object->IAMMediaStream_iface);
-        return hr;
-    }
-
-    *media_stream = &object->IAMMediaStream_iface;
+    *out = &object->IAMMediaStream_iface;
 
     return S_OK;
 }
