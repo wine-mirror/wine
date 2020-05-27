@@ -1617,6 +1617,59 @@ static const struct wined3d_query_ops wined3d_query_vk_ops =
     .query_destroy = wined3d_query_vk_destroy,
 };
 
+static BOOL wined3d_query_event_vk_poll(struct wined3d_query *query, uint32_t flags)
+{
+    struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
+    struct wined3d_context_vk *context_vk;
+    BOOL *signalled;
+
+    context_vk = wined3d_context_vk(context_acquire(query->device, NULL, 0));
+
+    signalled = (BOOL *)query->data;
+    if (flags & WINED3DGETDATA_FLUSH)
+        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
+    if (query_vk->command_buffer_id == context_vk->current_command_buffer.id)
+    {
+        context_release(&context_vk->c);
+        return *signalled = FALSE;
+    }
+
+    if (query_vk->command_buffer_id > context_vk->completed_command_buffer_id)
+        wined3d_context_vk_poll_command_buffers(context_vk);
+    *signalled = context_vk->completed_command_buffer_id >= query_vk->command_buffer_id;
+
+    context_release(&context_vk->c);
+
+    return *signalled;
+}
+
+static BOOL wined3d_query_event_vk_issue(struct wined3d_query *query, uint32_t flags)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(query->device);
+    struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
+    struct wined3d_context_vk *context_vk;
+
+    TRACE("query %p, flags %#x.\n", query, flags);
+
+    if (flags & WINED3DISSUE_END)
+    {
+        context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
+        wined3d_context_vk_reference_query(context_vk, query_vk);
+        context_release(&context_vk->c);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static const struct wined3d_query_ops wined3d_query_event_vk_ops =
+{
+    .query_poll = wined3d_query_event_vk_poll,
+    .query_issue = wined3d_query_event_vk_issue,
+    .query_destroy = wined3d_query_vk_destroy,
+};
+
 static BOOL wined3d_query_timestamp_vk_issue(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(query->device);
@@ -1681,6 +1734,11 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
 
     switch (type)
     {
+        case WINED3D_QUERY_TYPE_EVENT:
+            ops = &wined3d_query_event_vk_ops;
+            data_size = sizeof(BOOL);
+            break;
+
         case WINED3D_QUERY_TYPE_OCCLUSION:
             data_size = sizeof(uint64_t);
             break;
