@@ -1963,7 +1963,7 @@ static BOOL wined3d_init_vulkan(struct wined3d_vk_info *vk_info)
     if (!vk_ops->core_pfn) \
         vk_ops->core_pfn = (void *)VK_CALL(vkGetInstanceProcAddr(instance, #ext_pfn));
     MAP_INSTANCE_FUNCTION(vkGetPhysicalDeviceProperties2, vkGetPhysicalDeviceProperties2KHR)
-    MAP_INSTANCE_FUNCTION(vkGetPhysicalDeviceFeatures2, vkGetPhysicalDeviceFeaturess2KHR)
+    MAP_INSTANCE_FUNCTION(vkGetPhysicalDeviceFeatures2, vkGetPhysicalDeviceFeatures2KHR)
 #undef MAP_INSTANCE_FUNCTION
 
     vk_info->instance = instance;
