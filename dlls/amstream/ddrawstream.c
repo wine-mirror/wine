@@ -198,11 +198,26 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SendEndOfStream(IAMMediaStream *iface
 static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUnknown *source_object, DWORD flags,
                                                     REFMSPID purpose_id, const STREAM_TYPE stream_type)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
+    HRESULT hr;
 
-    FIXME("(%p/%p)->(%p,%x,%p,%u) stub!\n", This, iface, source_object, flags, purpose_id, stream_type);
+    TRACE("stream %p, source_object %p, flags %x, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
+            debugstr_guid(purpose_id), stream_type);
 
-    return S_FALSE;
+    if (!purpose_id)
+        return E_POINTER;
+
+    if (flags & AMMSF_CREATEPEER)
+        FIXME("AMMSF_CREATEPEER is not yet supported.\n");
+
+    stream->purpose_id = *purpose_id;
+    stream->stream_type = stream_type;
+
+    if (source_object
+            && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw7, (void **)&stream->ddraw)))
+        FIXME("Stream object doesn't implement IDirectDraw7 interface, hr %#x.\n", hr);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IAMMediaStream_SetState(IAMMediaStream *iface, FILTER_STATE state)
@@ -214,13 +229,15 @@ static HRESULT WINAPI ddraw_IAMMediaStream_SetState(IAMMediaStream *iface, FILTE
     return S_FALSE;
 }
 
-static HRESULT WINAPI ddraw_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *am_multi_media_stream)
+static HRESULT WINAPI ddraw_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface, IAMMultiMediaStream *mmstream)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, am_multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    return S_FALSE;
+    stream->parent = (IMultiMediaStream *)mmstream;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
@@ -929,13 +946,19 @@ HRESULT ddraw_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
 
     InitializeCriticalSection(&object->cs);
 
-    object->parent = parent;
-    object->purpose_id = *purpose_id;
-    object->stream_type = stream_type;
+    hr = IAMMediaStream_Initialize(&object->IAMMediaStream_iface, stream_object, 0, purpose_id, stream_type);
+    if (FAILED(hr))
+    {
+        IAMMediaStream_Release(&object->IAMMediaStream_iface);
+        return hr;
+    }
 
-    if (stream_object
-            && FAILED(hr = IUnknown_QueryInterface(stream_object, &IID_IDirectDraw7, (void **)&object->ddraw)))
-        FIXME("Stream object doesn't implement IDirectDraw7 interface, hr %#x.\n", hr);
+    hr = IAMMediaStream_JoinAMMultiMediaStream(&object->IAMMediaStream_iface, (IAMMultiMediaStream *)parent);
+    if (FAILED(hr))
+    {
+        IAMMediaStream_Release(&object->IAMMediaStream_iface);
+        return hr;
+    }
 
     *media_stream = &object->IAMMediaStream_iface;
 
