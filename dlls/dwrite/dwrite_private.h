@@ -484,6 +484,7 @@ struct scriptshaping_context
         {
             const UINT16 *glyphs;
             const DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            const UINT16 *clustermap;
         } pos;
         struct
         {
@@ -494,6 +495,12 @@ struct scriptshaping_context
             unsigned int capacity;
             const WCHAR *digits;
         } subst;
+        struct
+        {
+            UINT16 *glyphs;
+            DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            UINT16 *clustermap;
+        } buffer;
     } u;
 
     const struct ot_gsubgpos_table *table; /* Either GSUB or GPOS. */

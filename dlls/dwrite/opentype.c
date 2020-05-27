@@ -4436,18 +4436,40 @@ static unsigned int shaping_features_get_mask(const struct shaping_features *fea
     return feature->mask;
 }
 
+static void opentype_layout_get_glyph_range_for_text(struct scriptshaping_context *context, unsigned int start_char,
+        unsigned int end_char, unsigned int *start_glyph, unsigned int *end_glyph)
+{
+    *start_glyph = context->u.buffer.clustermap[start_char];
+    if (end_char >= context->length - 1)
+        *end_glyph = context->glyph_count - 1;
+    else
+        *end_glyph = context->u.buffer.clustermap[end_char + 1] - 1;
+}
+
 static void opentype_layout_set_glyph_masks(struct scriptshaping_context *context, const struct shaping_features *features)
 {
    const DWRITE_TYPOGRAPHIC_FEATURES **user_features = context->user_features.features;
-   unsigned int f, r, g, start_glyph = 0, mask, shift, value;
+   unsigned int f, r, g, start_char, mask, shift, value;
 
    for (g = 0; g < context->glyph_count; ++g)
        context->glyph_infos[g].mask = context->global_mask;
 
    /* FIXME: set shaper masks */
 
-   for (r = 0; r < context->user_features.range_count; ++r)
+   for (r = 0, start_char = 0; r < context->user_features.range_count; ++r)
    {
+       unsigned int start_glyph, end_glyph;
+
+       if (start_char >= context->length)
+           break;
+
+       opentype_layout_get_glyph_range_for_text(context, start_char, start_char + context->user_features.range_lengths[r],
+               &start_glyph, &end_glyph);
+       start_char += context->user_features.range_lengths[r];
+
+       if (start_glyph > end_glyph || end_glyph >= context->glyph_count)
+           continue;
+
        for (f = 0; f < user_features[r]->featureCount; ++f)
        {
            mask = shaping_features_get_mask(features, user_features[r]->features[f].nameTag, &shift);
@@ -4455,9 +4477,9 @@ static void opentype_layout_set_glyph_masks(struct scriptshaping_context *contex
                continue;
 
            value = (user_features[r]->features[f].parameter << shift) & mask;
-           for (g = 0; g < context->user_features.range_lengths[r]; ++g)
-               context->glyph_infos[g + start_glyph].mask = (context->glyph_infos[g + start_glyph].mask & ~mask) | value;
-           start_glyph += context->user_features.range_lengths[r];
+
+           for (g = start_glyph; g <= end_glyph; ++g)
+               context->glyph_infos[g].mask = (context->glyph_infos[g].mask & ~mask) | value;
        }
    }
 }
