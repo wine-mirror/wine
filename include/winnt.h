@@ -2675,6 +2675,13 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
 {
     return (struct _TEB *)__readgsqword(FIELD_OFFSET(NT_TIB, Self));
 }
+#elif defined(__arm__) && defined(__MINGW32__)
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    struct _TEB *teb;
+    __asm__("mrc p15, 0, %0, c13, c0, 2" : "=r" (teb));
+    return teb;
+}
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
