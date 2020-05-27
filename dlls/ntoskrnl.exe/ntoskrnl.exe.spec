@@ -546,6 +546,7 @@
 @ stub KeFindConfigurationNextEntry
 @ stub KeFlushEntireTb
 @ stdcall KeFlushQueuedDpcs()
+@ stdcall KeGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
 @ stdcall KeGetCurrentThread()
 @ stub KeGetPreviousMode
 @ stub KeGetRecommendedSharedDataAlignment
