@@ -3046,6 +3046,44 @@ static void test_audiostream_receive(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_audiostream_initialize(void)
+{
+    IAMMediaStream *stream;
+    STREAM_TYPE type;
+    MSPID mspid;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = CoCreateInstance(&CLSID_AMAudioStream, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMediaStream, (void **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IAMMediaStream_Initialize(stream, NULL, 0, NULL, STREAMTYPE_WRITE);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IAMMediaStream_Initialize(stream, NULL, 0, &test_mspid, STREAMTYPE_WRITE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_GetInformation(stream, &mspid, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&mspid, &test_mspid), "Got mspid %s.\n", wine_dbgstr_guid(&mspid));
+    ok(type == STREAMTYPE_WRITE, "Got type %u.\n", type);
+
+    hr = IAMMediaStream_Initialize(stream, NULL, 0, &MSPID_PrimaryAudio, STREAMTYPE_READ);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_GetInformation(stream, &mspid, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&mspid, &MSPID_PrimaryAudio), "Got mspid %s.\n", wine_dbgstr_guid(&mspid));
+    ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
+
+    ref = IAMMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void CALLBACK apc_func(ULONG_PTR param)
 {
 }
@@ -3507,6 +3545,106 @@ void test_audiostreamsample_completion_status(void)
     CloseHandle(event);
 }
 
+static void test_ddrawstream_initialize(void)
+{
+    IDirectDrawMediaStream *ddraw_stream;
+    IAMMediaStream *stream;
+    IDirectDraw *ddraw2;
+    IDirectDraw *ddraw;
+    STREAM_TYPE type;
+    MSPID mspid;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_AMDirectDrawStream, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMediaStream, (void **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IAMMediaStream_Initialize(stream, NULL, 0, NULL, STREAMTYPE_WRITE);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    hr = IAMMediaStream_Initialize(stream, NULL, 0, &test_mspid, STREAMTYPE_WRITE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_GetInformation(stream, &mspid, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&mspid, &test_mspid), "Got mspid %s.\n", wine_dbgstr_guid(&mspid));
+    ok(type == STREAMTYPE_WRITE, "Got type %u.\n", type);
+
+    hr = IAMMediaStream_Initialize(stream, (IUnknown *)ddraw, 0, &MSPID_PrimaryAudio, STREAMTYPE_READ);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_GetInformation(stream, &mspid, &type);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&mspid, &MSPID_PrimaryAudio), "Got mspid %s.\n", wine_dbgstr_guid(&mspid));
+    ok(type == STREAMTYPE_READ, "Got type %u.\n", type);
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw2 == ddraw, "Expected ddraw %p, got %p.\n", ddraw, ddraw2);
+
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IAMMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IDirectDraw_Release(ddraw2);
+    ref = IDirectDraw_Release(ddraw);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void check_ammediastream_join_am_multi_media_stream(const CLSID *clsid)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMultiMediaStream *mmstream2;
+    IAMMediaStream *stream;
+    HRESULT hr;
+    ULONG mmstream_ref;
+    ULONG ref;
+
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMediaStream, (void **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    mmstream_ref = get_refcount(mmstream);
+
+    hr = IAMMediaStream_JoinAMMultiMediaStream(stream, mmstream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = get_refcount(mmstream);
+    ok(ref == mmstream_ref, "Expected outstanding refcount %d, got %d.\n", mmstream_ref, ref);
+
+    hr = IAMMediaStream_GetMultiMediaStream(stream, &mmstream2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(mmstream2 == (IMultiMediaStream *)mmstream, "Expected mmstream %p, got %p.\n", mmstream, mmstream2);
+
+    IMultiMediaStream_Release(mmstream2);
+
+    hr = IAMMediaStream_JoinAMMultiMediaStream(stream, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMediaStream_GetMultiMediaStream(stream, &mmstream2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(mmstream2 == NULL, "Got mmstream %p.\n", mmstream2);
+
+    ref = IAMMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_ammediastream_join_am_multi_media_stream(void)
+{
+    check_ammediastream_join_am_multi_media_stream(&CLSID_AMAudioStream);
+    check_ammediastream_join_am_multi_media_stream(&CLSID_AMDirectDrawStream);
+}
+
 void test_mediastreamfilter_get_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -3681,9 +3819,14 @@ START_TEST(amstream)
     test_audiostream_set_state();
     test_audiostream_end_of_stream();
     test_audiostream_receive();
+    test_audiostream_initialize();
 
     test_audiostreamsample_update();
     test_audiostreamsample_completion_status();
+
+    test_ddrawstream_initialize();
+
+    test_ammediastream_join_am_multi_media_stream();
 
     test_mediastreamfilter_get_state();
     test_mediastreamfilter_stop_pause_run();
