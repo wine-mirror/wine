@@ -3876,6 +3876,38 @@ out:
     DestroyWindow(window);
 }
 
+static void test_mixing_prefs(void)
+{
+    IBaseFilter *filter = create_vmr9(VMR9Mode_Windowed);
+    IVMRMixerControl9 *mixer_control;
+    DWORD flags;
+    HRESULT hr;
+    ULONG ref;
+
+    set_mixing_mode(filter, 1);
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IVMRMixerControl9, (void **)&mixer_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRMixerControl9_GetMixingPrefs(mixer_control, &flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(flags == (MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY | MixerPref9_BiLinearFiltering
+            | MixerPref9_RenderTargetRGB), "Got flags %#x.\n", flags);
+
+    hr = IVMRMixerControl9_SetMixingPrefs(mixer_control, MixerPref9_NoDecimation
+            | MixerPref9_ARAdjustXorY | MixerPref9_PointFiltering | MixerPref9_RenderTargetRGB);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IVMRMixerControl9_GetMixingPrefs(mixer_control, &flags);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(flags == (MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY | MixerPref9_PointFiltering
+            | MixerPref9_RenderTargetRGB), "Got flags %#x.\n", flags);
+
+    IVMRMixerControl9_Release(mixer_control);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(vmr9)
 {
     IBaseFilter *filter;
@@ -3910,6 +3942,7 @@ START_TEST(vmr9)
     test_surface_allocator_notify_refcount();
     test_basic_video();
     test_windowless_size();
+    test_mixing_prefs();
 
     CoUninitialize();
 }

@@ -84,6 +84,7 @@ struct quartz_vmr
     BOOL allocator_is_ex;
 
     DWORD stream_count;
+    DWORD mixing_prefs;
 
     /*
      * The Video Mixing Renderer supports 3 modes, renderless, windowless and windowed
@@ -2227,7 +2228,10 @@ static HRESULT WINAPI mixer_control9_SetMixingPrefs(IVMRMixerControl9 *iface, DW
 
     FIXME("filter %p, flags %#x, stub!\n", filter, flags);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    filter->mixing_prefs = flags;
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
 }
 
 static HRESULT WINAPI mixer_control9_GetMixingPrefs(IVMRMixerControl9 *iface, DWORD *flags)
@@ -2236,8 +2240,9 @@ static HRESULT WINAPI mixer_control9_GetMixingPrefs(IVMRMixerControl9 *iface, DW
 
     FIXME("filter %p, flags %p, stub!\n", filter, flags);
 
-    *flags = MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY | MixerPref9_BiLinearFiltering | MixerPref9_RenderTargetRGB;
-
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    *flags = filter->mixing_prefs;
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
     return S_OK;
 }
 
@@ -2499,6 +2504,9 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     }
 
     object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    object->mixing_prefs = MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY
+            | MixerPref9_BiLinearFiltering | MixerPref9_RenderTargetRGB;
 
     TRACE("Created VMR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
