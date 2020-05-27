@@ -2583,19 +2583,21 @@ static ULONG WINAPI VMR9_ImagePresenter_Release(IVMRImagePresenter9 *iface)
     return refCount;
 }
 
-static HRESULT WINAPI VMR9_ImagePresenter_StartPresenting(IVMRImagePresenter9 *iface, DWORD_PTR id)
+static HRESULT WINAPI VMR9_ImagePresenter_StartPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
 {
-    struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
+    struct default_presenter *presenter = impl_from_IVMRImagePresenter9(iface);
 
-    TRACE("(%p/%p/%p)->(...) stub\n", iface, This,This->pVMR9);
+    TRACE("presenter %p, cookie %#Ix.\n", presenter, cookie);
+
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9_ImagePresenter_StopPresenting(IVMRImagePresenter9 *iface, DWORD_PTR id)
+static HRESULT WINAPI VMR9_ImagePresenter_StopPresenting(IVMRImagePresenter9 *iface, DWORD_PTR cookie)
 {
-    struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
+    struct default_presenter *presenter = impl_from_IVMRImagePresenter9(iface);
 
-    TRACE("(%p/%p/%p)->(...) stub\n", iface, This,This->pVMR9);
+    TRACE("presenter %p, cookie %#Ix.\n", presenter, cookie);
+
     return S_OK;
 }
 
@@ -2619,13 +2621,14 @@ static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(struct default_presen
     return hr;
 }
 
-static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *iface, DWORD_PTR id, VMR9PresentationInfo *info)
+static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *iface,
+        DWORD_PTR cookie, VMR9PresentationInfo *info)
 {
     struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
     HRESULT hr;
     BOOL render = FALSE;
 
-    TRACE("(%p/%p/%p)->(...) stub\n", iface, This, This->pVMR9);
+    TRACE("presenter %p, cookie %#Ix, info %p.\n", This, cookie, info);
 
     /* This might happen if we don't have active focus (eg on a different virtual desktop) */
     if (!This->d3d9_dev)
@@ -2857,14 +2860,14 @@ static HRESULT WINAPI VMR9_SurfaceAllocator_GetSurface(IVMRSurfaceAllocator9 *if
 }
 
 static HRESULT WINAPI VMR9_SurfaceAllocator_AdviseNotify(IVMRSurfaceAllocator9 *iface,
-        IVMRSurfaceAllocatorNotify9 *allocnotify)
+        IVMRSurfaceAllocatorNotify9 *notify)
 {
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocator9(iface);
+    struct default_presenter *presenter = impl_from_IVMRSurfaceAllocator9(iface);
 
-    TRACE("(%p/%p)->(...)\n", iface, This);
+    TRACE("presenter %p, notify %p.\n", presenter, notify);
 
     /* No AddRef taken here or the base VMR9 filter would never be destroyed */
-    This->SurfaceAllocatorNotify = allocnotify;
+    presenter->SurfaceAllocatorNotify = notify;
     return S_OK;
 }
 
