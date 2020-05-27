@@ -1699,17 +1699,18 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessContr
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9WindowlessControl_GetVideoPosition(IVMRWindowlessControl9 *iface, RECT *source, RECT *dest)
+static HRESULT WINAPI VMR9WindowlessControl_GetVideoPosition(IVMRWindowlessControl9 *iface, RECT *src, RECT *dst)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
 
-    if (source)
-        *source = This->window.src;
+    TRACE("filter %p, src %p, dst %p.\n", filter, src, dst);
 
-    if (dest)
-        *dest = This->window.dst;
+    if (src)
+        *src = filter->window.src;
 
-    FIXME("(%p/%p)->(%p/%p) stub\n", iface, This, source, dest);
+    if (dst)
+        *dst = filter->window.dst;
+
     return S_OK;
 }
 
@@ -1955,42 +1956,46 @@ static ULONG WINAPI VMR9SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotif
     return refcount;
 }
 
-static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurfaceAllocatorNotify9 *iface, DWORD_PTR id, IVMRSurfaceAllocator9 *alloc)
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(
+        IVMRSurfaceAllocatorNotify9 *iface, DWORD_PTR cookie, IVMRSurfaceAllocator9 *allocator)
 {
-    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
 
-    /* FIXME: This code is not tested!!! */
-    FIXME("(%p/%p)->(...) stub\n", iface, This);
-    This->cookie = id;
+    TRACE("filter %p, cookie %#Ix, allocator %p.\n", filter, cookie, allocator);
 
-    if (This->presenter)
+    filter->cookie = cookie;
+
+    if (filter->presenter)
         return VFW_E_WRONG_STATE;
 
-    if (FAILED(IVMRSurfaceAllocator9_QueryInterface(alloc, &IID_IVMRImagePresenter9, (void **)&This->presenter)))
+    if (FAILED(IVMRSurfaceAllocator9_QueryInterface(allocator, &IID_IVMRImagePresenter9, (void **)&filter->presenter)))
         return E_NOINTERFACE;
 
-    if (SUCCEEDED(IVMRSurfaceAllocator9_QueryInterface(alloc, &IID_IVMRSurfaceAllocatorEx9, (void **)&This->allocator)))
-        This->allocator_is_ex = 1;
+    if (SUCCEEDED(IVMRSurfaceAllocator9_QueryInterface(allocator,
+            &IID_IVMRSurfaceAllocatorEx9, (void **)&filter->allocator)))
+        filter->allocator_is_ex = 1;
     else
     {
-        This->allocator = (IVMRSurfaceAllocatorEx9 *)alloc;
-        IVMRSurfaceAllocator9_AddRef(alloc);
-        This->allocator_is_ex = 0;
+        filter->allocator = (IVMRSurfaceAllocatorEx9 *)allocator;
+        IVMRSurfaceAllocator9_AddRef(allocator);
+        filter->allocator_is_ex = 0;
     }
 
     return S_OK;
 }
 
-static HRESULT WINAPI VMR9SurfaceAllocatorNotify_SetD3DDevice(IVMRSurfaceAllocatorNotify9 *iface, IDirect3DDevice9 *device, HMONITOR monitor)
+static HRESULT WINAPI VMR9SurfaceAllocatorNotify_SetD3DDevice(IVMRSurfaceAllocatorNotify9 *iface,
+        IDirect3DDevice9 *device, HMONITOR monitor)
 {
-    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRSurfaceAllocatorNotify9(iface);
 
-    FIXME("(%p/%p)->(...) semi-stub\n", iface, This);
-    if (This->allocator_d3d9_dev)
-        IDirect3DDevice9_Release(This->allocator_d3d9_dev);
-    This->allocator_d3d9_dev = device;
-    IDirect3DDevice9_AddRef(This->allocator_d3d9_dev);
-    This->allocator_mon = monitor;
+    TRACE("filter %p, device %p, monitor %p.\n", filter, device, monitor);
+
+    if (filter->allocator_d3d9_dev)
+        IDirect3DDevice9_Release(filter->allocator_d3d9_dev);
+    filter->allocator_d3d9_dev = device;
+    IDirect3DDevice9_AddRef(device);
+    filter->allocator_mon = monitor;
 
     return S_OK;
 }
