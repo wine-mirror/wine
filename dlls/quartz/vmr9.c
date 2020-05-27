@@ -2751,8 +2751,10 @@ static UINT d3d9_adapter_from_hwnd(IDirect3D9 *d3d9, HWND hwnd, HMONITOR *mon_ou
     return d3d9_adapter;
 }
 
-static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9AllocationInfo *info, DWORD *numbuffers)
+static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocator9 *iface,
+        DWORD_PTR cookie, VMR9AllocationInfo *info, DWORD *numbuffers)
 {
+    struct default_presenter *This = impl_from_IVMRSurfaceAllocator9(iface);
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DDevice9 *device;
     DWORD d3d9_adapter;
@@ -2760,7 +2762,9 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     HWND window;
     HRESULT hr;
 
-    TRACE("(%p)->()\n", This);
+    TRACE("presenter %p, cookie %#Ix, info %p, numbuffers %p.\n", This, cookie, info, numbuffers);
+
+    This->info = *info;
 
     if (This->pVMR9->mode == VMR9Mode_Windowed)
         window = This->pVMR9->window.hwnd;
@@ -2783,7 +2787,7 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     if (FAILED(hr))
     {
         ERR("Could not create device: %08x\n", hr);
-        return FALSE;
+        return hr;
     }
 
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -2791,14 +2795,14 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     {
         WARN("Device does not support blitting from textures.\n");
         IDirect3DDevice9_Release(device);
-        return FALSE;
+        return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
 
     This->d3d9_dev = device;
     IVMRSurfaceAllocatorNotify9_SetD3DDevice(This->SurfaceAllocatorNotify, This->d3d9_dev, This->hMon);
 
     if (!(This->d3d9_surfaces = calloc(*numbuffers, sizeof(IDirect3DSurface9 *))))
-        return FALSE;
+        return E_OUTOFMEMORY;
 
     hr = VMR9_SurfaceAllocator_SetAllocationSettings(This, info);
     if (FAILED(hr))
@@ -2814,26 +2818,10 @@ static BOOL CreateRenderingWindow(struct default_presenter *This, VMR9Allocation
     if (FAILED(hr))
     {
         IVMRSurfaceAllocator9_TerminateDevice(This->pVMR9->allocator, This->pVMR9->cookie);
-        return FALSE;
+        return hr;
     }
 
     This->num_surfaces = *numbuffers;
-
-    return TRUE;
-}
-
-static HRESULT WINAPI VMR9_SurfaceAllocator_InitializeDevice(IVMRSurfaceAllocator9 *iface,
-        DWORD_PTR cookie, VMR9AllocationInfo *allocinfo, DWORD *numbuffers)
-{
-    struct default_presenter *This = impl_from_IVMRSurfaceAllocator9(iface);
-
-    This->info = *allocinfo;
-
-    if (!CreateRenderingWindow(This, allocinfo, numbuffers))
-    {
-        ERR("Failed to create rendering window, expect no output!\n");
-        return VFW_E_WRONG_STATE;
-    }
 
     return S_OK;
 }
