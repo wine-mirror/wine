@@ -2582,7 +2582,7 @@ static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm,
 
     len = wcslen( name );
     if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
-    maxlen = max( maxlen, dll_path_maxlen ) + len + sizeof(".so");
+    maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof(".so");
 
     if (!(file = RtlAllocateHeap( GetProcessHeap(), 0, maxlen ))) return STATUS_NO_MEMORY;
 
