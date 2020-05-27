@@ -61,6 +61,7 @@
 @ stub KefReleaseSpinLockFromDpcLevel
 @ stdcall KeGenericCallDpc(ptr ptr)
 @ stdcall KeSignalCallDpcDone(ptr)
+@ stdcall KeSignalCallDpcSynchronize(ptr)
 @ stub KiAcquireSpinLock
 @ stub KiReleaseSpinLock
 @ stdcall -fastcall ObfDereferenceObject(ptr)

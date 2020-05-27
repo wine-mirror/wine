@@ -75,6 +75,7 @@ KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 static TP_POOL *dpc_call_tp;
 static TP_CALLBACK_ENVIRON dpc_call_tpe;
 DECLARE_CRITICAL_SECTION(dpc_call_cs);
+static DWORD dpc_call_tls_index;
 
 /* tid of the thread running client request */
 static DWORD request_thread;
@@ -3161,6 +3162,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         KeQueryTickCount( &count );  /* initialize the global KeTickCount */
         NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
         ntoskrnl_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
+        dpc_call_tls_index = TlsAlloc();
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
@@ -4027,6 +4029,8 @@ struct generic_call_dpc_context
     ULONG *cpu_count_barrier;
     void *context;
     ULONG cpu_index;
+    ULONG current_barrier_flag;
+    LONG *barrier_passed_count;
 };
 
 static void WINAPI generic_call_dpc_callback(TP_CALLBACK_INSTANCE *instance, void *context)
@@ -4044,7 +4048,9 @@ static void WINAPI generic_call_dpc_callback(TP_CALLBACK_INSTANCE *instance, voi
     new.Mask = 1 << c->cpu_index;
     NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new));
 
+    TlsSetValue(dpc_call_tls_index, context);
     c->routine((PKDPC)0xdeadbeef, c->context, c->cpu_count_barrier, c->reverse_barrier);
+    TlsSetValue(dpc_call_tls_index, NULL);
     NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &old, sizeof(old));
 }
 
@@ -4054,6 +4060,7 @@ void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
     static struct generic_call_dpc_context *contexts;
     DEFERRED_REVERSE_BARRIER reverse_barrier;
     static ULONG last_cpu_count;
+    LONG barrier_passed_count;
     ULONG cpu_count_barrier;
     ULONG i;
 
@@ -4107,6 +4114,7 @@ void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
 
     memset(contexts, 0, sizeof(*contexts) * cpu_count);
     last_cpu_count = cpu_count;
+    barrier_passed_count = 0;
 
     for (i = 0; i < cpu_count; ++i)
     {
@@ -4115,6 +4123,7 @@ void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
         contexts[i].routine = routine;
         contexts[i].context = context;
         contexts[i].cpu_index = i;
+        contexts[i].barrier_passed_count = &barrier_passed_count;
 
         TrySubmitThreadpoolCallback(generic_call_dpc_callback, &contexts[i], &dpc_call_tpe);
     }
@@ -4123,6 +4132,43 @@ void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
         SwitchToThread();
 
     LeaveCriticalSection(&dpc_call_cs);
+}
+
+
+BOOLEAN WINAPI KeSignalCallDpcSynchronize(void *barrier)
+{
+    struct generic_call_dpc_context *context = TlsGetValue(dpc_call_tls_index);
+    DEFERRED_REVERSE_BARRIER *b = barrier;
+    LONG curr_flag, comp, done_value;
+    BOOL first;
+
+    TRACE("barrier %p, context %p.\n", barrier, context);
+
+    if (!context)
+    {
+        WARN("Called outside of DPC context.\n");
+        return FALSE;
+    }
+
+    context->current_barrier_flag ^= 0x80000000;
+    curr_flag = context->current_barrier_flag;
+
+    first = !context->cpu_index;
+    comp = curr_flag + context->cpu_index;
+    done_value = curr_flag + b->TotalProcessors;
+
+    if (first)
+        InterlockedExchange((LONG *)&b->Barrier, comp);
+
+    while (InterlockedCompareExchange((LONG *)&b->Barrier, comp + 1, comp) != done_value)
+        ;
+
+    InterlockedIncrement(context->barrier_passed_count);
+
+    while (first && InterlockedCompareExchange(context->barrier_passed_count, 0, b->TotalProcessors))
+        ;
+
+    return first;
 }
 
 void WINAPI KeSignalCallDpcDone(void *barrier)
