@@ -4923,6 +4923,20 @@ static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
     return mirror ? mirror : codepoint;
 }
 
+/*
+    * 034F          # Mn       COMBINING GRAPHEME JOINER
+    * 061C          # Cf       ARABIC LETTER MARK
+    * 180B..180D    # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+    * 180E          # Cf       MONGOLIAN VOWEL SEPARATOR
+    * 200B..200F    # Cf   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
+    * FEFF          # Cf       ZERO WIDTH NO-BREAK SPACE
+*/
+static unsigned int opentype_is_default_ignorable(unsigned int codepoint)
+{
+    return codepoint == 0x34f || codepoint == 0x61c || codepoint == 0xfeff ||
+            (codepoint >= 0x180b && codepoint <= 0x180e) || (codepoint >= 0x200b && codepoint <= 0x200f);
+}
+
 static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, const struct shaping_features *features)
 {
     unsigned int rtlm_mask = shaping_features_get_mask(features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','m'), NULL);
@@ -4964,6 +4978,8 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         context->u.subst.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         context->u.subst.glyph_props[g].isClusterStart = 1;
         opentype_set_subst_glyph_props(context, g, context->u.subst.glyphs[g]);
+        if (opentype_is_default_ignorable(codepoint))
+            context->u.subst.glyph_props[g].isZeroWidthSpace = 1;
         context->glyph_count++;
 
         clustermap[i] = i;
