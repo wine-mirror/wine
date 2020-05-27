@@ -380,6 +380,11 @@ GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     return Ok;
 }
 
+static unsigned int absdiff(unsigned int x, unsigned int y)
+{
+    return x > y ? x - y : y - x;
+}
+
 static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, ColorPalette *palette)
 {
     BYTE index = 0;
@@ -399,7 +404,7 @@ static inline UINT get_palette_index(BYTE r, BYTE g, BYTE b, BYTE a, ColorPalett
     */
     for(i=0;i<palette->Count;i++) {
         ARGB color=palette->Entries[i];
-        distance=abs(b-(color & 0xff)) + abs(g-(color>>8 & 0xff)) + abs(r-(color>>16 & 0xff)) + abs(a-(color>>24 & 0xff));
+        distance=absdiff(b, color & 0xff) + absdiff(g, color>>8 & 0xff) + absdiff(r, color>>16 & 0xff) + absdiff(a, color>>24 & 0xff);
         if (distance<best_distance) {
             best_distance=distance;
             index=i;
