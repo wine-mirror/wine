@@ -4011,3 +4011,8 @@ BOOLEAN WINAPI KdRefreshDebuggerNotPresent(void)
 
     return !KdDebuggerEnabled;
 }
+
+void WINAPI KeSignalCallDpcDone(void *barrier)
+{
+    InterlockedDecrement((LONG *)barrier);
+}

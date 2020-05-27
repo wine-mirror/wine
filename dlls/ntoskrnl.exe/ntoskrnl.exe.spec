@@ -59,6 +59,7 @@
 @ stub KeSetTimeUpdateNotifyRoutine
 @ stub KefAcquireSpinLockAtDpcLevel
 @ stub KefReleaseSpinLockFromDpcLevel
+@ stdcall KeSignalCallDpcDone(ptr)
 @ stub KiAcquireSpinLock
 @ stub KiReleaseSpinLock
 @ stdcall -fastcall ObfDereferenceObject(ptr)
