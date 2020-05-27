@@ -3546,7 +3546,7 @@ static BOOL check_file_time( const FILETIME *ft1, const FILETIME *ft2, UINT tole
 {
     ULONGLONG t1 = ((ULONGLONG)ft1->dwHighDateTime << 32) | ft1->dwLowDateTime;
     ULONGLONG t2 = ((ULONGLONG)ft2->dwHighDateTime << 32) | ft2->dwLowDateTime;
-    return abs(t1 - t2) <= tolerance;
+    return (t1 > t2 ? t1 - t2 : t2 - t1) <= tolerance;
 }
 
 static void test_ReplaceFileA(void)
