@@ -3082,334 +3082,136 @@ static void test_WSAEnumNetworkEvents(void)
     }
 }
 
-static void test_WSAAddressToStringA(void)
+static void test_WSAAddressToString(void)
 {
-    SOCKET v6 = INVALID_SOCKET;
+    static struct
+    {
+        ULONG address;
+        USHORT port;
+        char output[32];
+    }
+    ipv4_tests[] =
+    {
+        { 0, 0, "0.0.0.0" },
+        { 0xffffffff, 0, "255.255.255.255" },
+        { 0, 0xffff, "0.0.0.0:65535" },
+        { 0xffffffff, 0xffff, "255.255.255.255:65535" },
+    };
+    static struct
+    {
+        USHORT address[8];
+        ULONG scope;
+        USHORT port;
+        char output[64];
+    }
+    ipv6_tests[] =
+    {
+        { { 0, 0, 0, 0, 0, 0, 0, 0x100 }, 0, 0, "::1" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x100 }, 0, 0, "20ab::1" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0, 0xfa81, "[20ab::2001]:33274" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0x1234, 0xfa81, "[20ab::2001%4660]:33274" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0x1234, 0, "20ab::2001%4660" },
+    };
+    SOCKADDR_IN sockaddr;
+    SOCKADDR_IN6 sockaddr6;
+    char output[64];
+    WCHAR outputW[64], expected_outputW[64];
+    SOCKET v6;
     INT ret;
     DWORD len;
-    int GLE;
-    SOCKADDR_IN sockaddr;
-    CHAR address[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
-
-    CHAR expect1[] = "0.0.0.0";
-    CHAR expect2[] = "255.255.255.255";
-    CHAR expect3[] = "0.0.0.0:65535";
-    CHAR expect4[] = "255.255.255.255:65535";
-
-    SOCKADDR_IN6 sockaddr6;
-    CHAR address6[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
-
-    CHAR addr6_1[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
-    CHAR addr6_2[] = {0x20,0xab,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
-    CHAR addr6_3[] = {0x20,0xab,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x01};
-
-    CHAR expect6_1[] = "::1";
-    CHAR expect6_2[] = "20ab::1";
-    CHAR expect6_3[] = "[20ab::2001]:33274";
-    CHAR expect6_3_2[] = "[20ab::2001%4660]:33274";
-    CHAR expect6_3_3[] = "20ab::2001%4660";
+    int i, j;
 
     len = 0;
-
     sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0;
     sockaddr.sin_addr.s_addr = 0;
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    GLE = WSAGetLastError();
-    ok( (ret == SOCKET_ERROR && GLE == WSAEFAULT) || (ret == 0), 
-        "WSAAddressToStringA() failed unexpectedly: WSAGetLastError()=%d, ret=%d\n",
-        GLE, ret );
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
     sockaddr.sin_port = 0;
-    sockaddr.sin_addr.s_addr = 0;
+    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, output, &len );
+    ok( ret == SOCKET_ERROR, "WSAAddressToStringA() returned %d, expected SOCKET_ERROR\n", ret );
+    ok( WSAGetLastError() == WSAEFAULT, "WSAAddressToStringA() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
+    ok( len == 8, "WSAAddressToStringA() gave length %d, expected 8\n", len );
 
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
+    for (i = 0; i < 2; i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(ipv4_tests); j++)
+        {
+            sockaddr.sin_family = AF_INET;
+            sockaddr.sin_addr.s_addr = ipv4_tests[j].address;
+            sockaddr.sin_port = ipv4_tests[j].port;
 
-    ok( !strcmp( address, expect1 ), "Expected: %s, got: %s\n", expect1, address );
-    ok( len == sizeof( expect1 ), "Got size %d\n", len);
+            if (i == 0)
+            {
+                len = sizeof(output);
+                memset(output, 0, len);
+                ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, output, &len );
+                ok( !ret, "ipv4_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( lstrcmpA( output, ipv4_tests[j].output ) == 0,
+                    "ipv4_tests[%d]: got address %s, expected %s\n",
+                    j, wine_dbgstr_a(output), wine_dbgstr_a(ipv4_tests[j].output) );
+                ok( len == lstrlenA(ipv4_tests[j].output) + 1,
+                    "ipv4_tests[%d]: got length %d, expected %d\n",
+                    j, len, lstrlenA(ipv4_tests[j].output) + 1 );
+            }
+            else
+            {
+                len = sizeof(outputW);
+                memset(outputW, 0, len);
+                ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, outputW, &len );
+                MultiByteToWideChar( CP_ACP, 0, ipv4_tests[j].output, -1,
+                                     expected_outputW, ARRAY_SIZE(expected_outputW) );
+                ok( !ret, "ipv4_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( lstrcmpW( outputW, expected_outputW ) == 0,
+                    "ipv4_tests[%d]: got address %s, expected %s\n",
+                    j, wine_dbgstr_w(outputW), wine_dbgstr_w(expected_outputW) );
+                ok( len == lstrlenW(expected_outputW) + 1,
+                    "ipv4_tests[%d]: got length %d, expected %d\n",
+                    j, len, lstrlenW(expected_outputW) + 1 );
+            }
+        }
 
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0;
-    sockaddr.sin_addr.s_addr = 0xffffffff;
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !strcmp( address, expect2 ), "Expected: %s, got: %s\n", expect2, address );
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0xffff;
-    sockaddr.sin_addr.s_addr = 0;
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !strcmp( address, expect3 ), "Expected: %s, got: %s\n", expect3, address );
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0xffff;
-    sockaddr.sin_addr.s_addr = 0xffffffff;
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !strcmp( address, expect4 ), "Expected: %s, got: %s\n", expect4, address );
-    ok( len == sizeof( expect4 ), "Got size %d\n", len);
-
-    /*check to see it IPv6 is available */
-    v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-    if (v6 == INVALID_SOCKET) {
-        skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
-            WSAGetLastError(), WSAEAFNOSUPPORT);
-        goto end;
-    }
-    /* Test a short IPv6 address */
-    len = sizeof(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0x0000;
-    sockaddr6.sin6_scope_id = 0;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_1, sizeof(addr6_1));
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_1 ), "Expected: %s, got: %s\n", expect6_1, address6 );
-    ok( len == sizeof(expect6_1), "Got size %d\n", len);
-
-    /* Test a longer IPv6 address */
-    len = sizeof(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0x0000;
-    sockaddr6.sin6_scope_id = 0;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_2, sizeof(addr6_2));
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_2 ), "Expected: %s, got: %s\n", expect6_2, address6 );
-    ok( len == sizeof(expect6_2), "Got size %d\n", len);
-
-    /* Test IPv6 address and port number */
-    len = sizeof(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0xfa81;
-    sockaddr6.sin6_scope_id = 0;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_3 ), "Expected: %s, got: %s\n", expect6_3, address6 );
-    ok( len == sizeof(expect6_3), "Got size %d\n", len );
-
-    /* Test IPv6 address, port number and scope_id */
-    len = sizeof(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0xfa81;
-    sockaddr6.sin6_scope_id = 0x1234;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_3_2 ), "Expected: %s, got: %s\n", expect6_3_2, address6 );
-    ok( len == sizeof(expect6_3_2), "Got size %d\n", len );
-
-    /* Test IPv6 address and scope_id */
-    len = sizeof(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0x0000;
-    sockaddr6.sin6_scope_id = 0x1234;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
-
-    ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !strcmp( address6, expect6_3_3 ), "Expected: %s, got: %s\n", expect6_3_3, address6 );
-    ok( len == sizeof(expect6_3_3), "Got size %d\n", len );
-
-end:
-    if (v6 != INVALID_SOCKET)
+        /* check to see if IPv6 is available */
+        v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        if (v6 == INVALID_SOCKET) {
+            skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
+                WSAGetLastError(), WSAEAFNOSUPPORT);
+            continue;
+        }
         closesocket(v6);
-}
 
-static void test_WSAAddressToStringW(void)
-{
-    SOCKET v6 = INVALID_SOCKET;
-    INT ret;
-    DWORD len;
-    int GLE;
-    SOCKADDR_IN sockaddr;
-    WCHAR address[22]; /* 12 digits + 3 dots + ':' + 5 digits + '\0' */
+        for (j = 0; j < ARRAY_SIZE(ipv6_tests); j++)
+        {
+            sockaddr6.sin6_family = AF_INET6;
+            sockaddr6.sin6_scope_id = ipv6_tests[j].scope;
+            sockaddr6.sin6_port = ipv6_tests[j].port;
+            memcpy( sockaddr6.sin6_addr.s6_addr, ipv6_tests[j].address, sizeof(ipv6_tests[j].address) );
 
-    WCHAR expect1[] = { '0','.','0','.','0','.','0', 0 };
-    WCHAR expect2[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', 0 };
-    WCHAR expect3[] = { '0','.','0','.','0','.','0', ':', '6', '5', '5', '3', '5', 0 };
-    WCHAR expect4[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', ':',
-                        '6', '5', '5', '3', '5', 0 };
-
-    SOCKADDR_IN6 sockaddr6;
-    WCHAR address6[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
-
-    CHAR addr6_1[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
-    CHAR addr6_2[] = {0x20,0xab,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
-    CHAR addr6_3[] = {0x20,0xab,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x01};
-
-    WCHAR expect6_1[] = {':',':','1',0};
-    WCHAR expect6_2[] = {'2','0','a','b',':',':','1',0};
-    WCHAR expect6_3[] = {'[','2','0','a','b',':',':','2','0','0','1',']',':','3','3','2','7','4',0};
-    WCHAR expect6_3_2[] = {'[','2','0','a','b',':',':','2','0','0','1','%','4','6','6','0',']',':','3','3','2','7','4',0};
-    WCHAR expect6_3_3[] = {'2','0','a','b',':',':','2','0','0','1','%','6','5','5','3','4',0};
-
-    len = 0;
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0;
-    sockaddr.sin_addr.s_addr = 0;
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    GLE = WSAGetLastError();
-    ok( (ret == SOCKET_ERROR && GLE == WSAEFAULT) || (ret == 0), 
-        "WSAAddressToStringW() failed unexpectedly: WSAGetLastError()=%d, ret=%d\n",
-        GLE, ret );
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0;
-    sockaddr.sin_addr.s_addr = 0;
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !lstrcmpW( address, expect1 ), "Expected different address string\n" );
-    ok( len == ARRAY_SIZE(expect1), "Got size %d\n", len);
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0;
-    sockaddr.sin_addr.s_addr = 0xffffffff;
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !lstrcmpW( address, expect2 ), "Expected different address string\n" );
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0xffff;
-    sockaddr.sin_addr.s_addr = 0;
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !lstrcmpW( address, expect3 ), "Expected different address string\n" );
-
-    len = sizeof(address);
-
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = 0xffff;
-    sockaddr.sin_addr.s_addr = 0xffffffff;
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
-    ok( len == ARRAY_SIZE(expect4), "Got %d\n", len);
-
-    /*check to see it IPv6 is available */
-    v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-    if (v6 == INVALID_SOCKET) {
-        skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
-            WSAGetLastError(), WSAEAFNOSUPPORT);
-        goto end;
+            if (i == 0)
+            {
+                len = sizeof(output);
+                ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, output, &len );
+                ok( !ret, "ipv6_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( lstrcmpA( output, ipv6_tests[j].output ) == 0,
+                    "ipv6_tests[%d]: gave address %s, expected %s\n",
+                    j, wine_dbgstr_a(output), wine_dbgstr_a(ipv6_tests[j].output) );
+                ok( len == lstrlenA(ipv6_tests[j].output) + 1,
+                    "ipv6_tests[%d]: got length %d, expected %d\n",
+                    j, len, lstrlenA(ipv6_tests[j].output) + 1 );
+            }
+            else
+            {
+                len = sizeof(outputW);
+                ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, outputW, &len );
+                MultiByteToWideChar( CP_ACP, 0, ipv6_tests[j].output, -1,
+                                     expected_outputW, ARRAY_SIZE(expected_outputW) );
+                ok( !ret, "ipv6_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( lstrcmpW( outputW, expected_outputW ) == 0,
+                    "ipv6_tests[%d]: got address %s, expected %s\n",
+                    j, wine_dbgstr_w(outputW), wine_dbgstr_w(expected_outputW) );
+                ok( len == lstrlenW(expected_outputW) + 1,
+                    "ipv6_tests[%d]: got length %d, expected %d\n",
+                    j, len, lstrlenW(expected_outputW) + 1 );
+            }
+        }
     }
-
-    /* Test a short IPv6 address */
-    len = ARRAY_SIZE(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0x0000;
-    sockaddr6.sin6_scope_id = 0;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_1, sizeof(addr6_1));
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_1 ), "Wrong string returned\n" );
-    ok( len == ARRAY_SIZE(expect6_1), "Got %d\n", len);
-
-    /* Test a longer IPv6 address */
-    len = ARRAY_SIZE(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0x0000;
-    sockaddr6.sin6_scope_id = 0;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_2, sizeof(addr6_2));
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
-    ok( !lstrcmpW( address6, expect6_2 ), "Wrong string returned\n" );
-    ok( len == ARRAY_SIZE(expect6_2), "Got %d\n", len);
-
-    /* Test IPv6 address and port number */
-    len = ARRAY_SIZE(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0xfa81;
-    sockaddr6.sin6_scope_id = 0;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_3 ),
-        "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3), wine_dbgstr_w(address6) );
-    ok( len == ARRAY_SIZE(expect6_3), "Got %d\n", len );
-
-    /* Test IPv6 address, port number and scope_id */
-    len = ARRAY_SIZE(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0xfa81;
-    sockaddr6.sin6_scope_id = 0x1234;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_3_2 ),
-        "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3_2), wine_dbgstr_w(address6) );
-    ok( len == ARRAY_SIZE(expect6_3_2), "Got %d\n", len );
-
-    /* Test IPv6 address and scope_id */
-    len = ARRAY_SIZE(address6);
-
-    sockaddr6.sin6_family = AF_INET6;
-    sockaddr6.sin6_port = 0x0000;
-    sockaddr6.sin6_scope_id = 0xfffe;
-    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
-
-    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-    ok( !lstrcmpW( address6, expect6_3_3 ),
-        "Expected: %s, got: %s\n", wine_dbgstr_w(expect6_3_3), wine_dbgstr_w(address6) );
-    ok( len == ARRAY_SIZE(expect6_3_3), "Got %d\n", len );
-
-end:
-    if (v6 != INVALID_SOCKET)
-        closesocket(v6);
 }
 
 static void test_WSAStringToAddress(void)
@@ -11579,10 +11381,7 @@ START_TEST( sock )
     test_WSASocket();
     test_WSADuplicateSocket();
     test_WSAEnumNetworkEvents();
-
-    test_WSAAddressToStringA();
-    test_WSAAddressToStringW();
-
+    test_WSAAddressToString();
     test_WSAStringToAddress();
 
     test_errors();
