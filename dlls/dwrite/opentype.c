@@ -3200,9 +3200,10 @@ static int coverage_compare_format2(const void *g, const void *r)
         return 0;
 }
 
-static unsigned int opentype_layout_is_glyph_covered(const struct dwrite_fonttable *table, DWORD coverage,
+static unsigned int opentype_layout_is_glyph_covered(const struct scriptshaping_context *context, unsigned int coverage,
         UINT16 glyph)
 {
+    const struct dwrite_fonttable *table = &context->table->table;
     WORD format = table_read_be_word(table, coverage), count;
 
     count = table_read_be_word(table, coverage + 2);
@@ -3505,7 +3506,7 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
             const struct ot_gpos_singlepos_format1 *format1 = table_read_ensure(&cache->gpos.table, subtable_offset,
                     FIELD_OFFSET(struct ot_gpos_singlepos_format1, value[value_len]));
 
-            coverage_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset + coverage,
+            coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage,
                     context->u.pos.glyphs[iter->pos]);
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
@@ -3520,7 +3521,7 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
             const struct ot_gpos_singlepos_format2 *format2 = table_read_ensure(&cache->gpos.table, subtable_offset,
                     FIELD_OFFSET(struct ot_gpos_singlepos_format2, values) + value_count * value_len * sizeof(WORD));
 
-            coverage_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset + coverage,
+            coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage,
                     context->u.pos.glyphs[iter->pos]);
             if (coverage_index == GLYPH_NOT_COVERED || coverage_index >= value_count)
                 continue;
@@ -3579,8 +3580,8 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
         if (!coverage)
             continue;
 
-        coverage_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    coverage, context->u.pos.glyphs[first_glyph]);
+        coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage,
+                context->u.pos.glyphs[first_glyph]);
         if (coverage_index == GLYPH_NOT_COVERED)
             continue;
 
@@ -3777,8 +3778,8 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
             entry_count = table_read_be_word(&cache->gpos.table, subtable_offset +
                     FIELD_OFFSET(struct ot_gpos_cursive_format1, count));
 
-            glyph_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    coverage_offset, context->u.pos.glyphs[iter->pos]);
+            glyph_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage_offset,
+                    context->u.pos.glyphs[iter->pos]);
             if (glyph_index == GLYPH_NOT_COVERED || glyph_index >= entry_count)
                 continue;
 
@@ -3791,8 +3792,8 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
             if (!glyph_iterator_prev(&prev_iter))
                 continue;
 
-            glyph_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    coverage_offset, context->u.pos.glyphs[prev_iter.pos]);
+            glyph_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage_offset,
+                    context->u.pos.glyphs[prev_iter.pos]);
             if (glyph_index == GLYPH_NOT_COVERED || glyph_index >= entry_count)
                 continue;
 
@@ -3882,8 +3883,8 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshap
 
             mark_class_count = GET_BE_WORD(format1->mark_class_count);
 
-            mark_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    GET_BE_WORD(format1->mark_coverage), context->u.pos.glyphs[iter->pos]);
+            mark_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(format1->mark_coverage),
+                    context->u.pos.glyphs[iter->pos]);
 
             if (mark_index == GLYPH_NOT_COVERED || mark_index >= GET_BE_WORD(mark_array->count))
                 continue;
@@ -3893,8 +3894,8 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshap
             if (!glyph_iterator_prev(&base_iter))
                 continue;
 
-            base_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    GET_BE_WORD(format1->base_coverage), context->u.pos.glyphs[base_iter.pos]);
+            base_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(format1->base_coverage),
+                    context->u.pos.glyphs[base_iter.pos]);
             if (base_index == GLYPH_NOT_COVERED || base_index >= GET_BE_WORD(base_array->count))
                 continue;
 
@@ -3940,8 +3941,8 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshapi
             if (!format1)
                 continue;
 
-            mark_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    GET_BE_WORD(format1->mark_coverage), context->u.pos.glyphs[iter->pos]);
+            mark_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(format1->mark_coverage),
+                    context->u.pos.glyphs[iter->pos]);
             if (mark_index == GLYPH_NOT_COVERED)
                 continue;
 
@@ -3949,8 +3950,8 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshapi
             if (!glyph_iterator_prev(&lig_iter))
                 continue;
 
-            lig_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    GET_BE_WORD(format1->lig_coverage), context->u.pos.glyphs[lig_iter.pos]);
+            lig_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(format1->lig_coverage),
+                    context->u.pos.glyphs[lig_iter.pos]);
             if (lig_index == GLYPH_NOT_COVERED)
                 continue;
 
@@ -3990,8 +3991,8 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
             if (!format1)
                 continue;
 
-            mark1_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    GET_BE_WORD(format1->mark1_coverage), context->u.pos.glyphs[iter->pos]);
+            mark1_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(format1->mark1_coverage),
+                    context->u.pos.glyphs[iter->pos]);
 
             mark1_array_offset = subtable_offset + GET_BE_WORD(format1->mark1_array);
             if (!(count = table_read_be_word(&cache->gpos.table, mark1_array_offset)))
@@ -4023,8 +4024,8 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
             if (!mark2_array)
                 continue;
 
-            mark2_index = opentype_layout_is_glyph_covered(&cache->gpos.table, subtable_offset +
-                    GET_BE_WORD(format1->mark2_coverage), context->u.pos.glyphs[mark_iter.pos]);
+            mark2_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(format1->mark2_coverage),
+                    context->u.pos.glyphs[mark_iter.pos]);
 
             if (mark2_index == GLYPH_NOT_COVERED || mark2_index >= count)
                 continue;
@@ -4181,7 +4182,7 @@ static int lookups_sorting_compare(const void *a, const void *b)
     return left->index < right->index ? -1 : left->index > right->index ? 1 : 0;
 };
 
-static BOOL opentype_layout_init_lookup(struct ot_gsubgpos_table *table, unsigned short lookup_index, unsigned int mask,
+static BOOL opentype_layout_init_lookup(const struct ot_gsubgpos_table *table, unsigned short lookup_index, unsigned int mask,
         struct lookup *lookup)
 {
     unsigned short subtable_count, lookup_type, flags;
@@ -4216,7 +4217,7 @@ static BOOL opentype_layout_init_lookup(struct ot_gsubgpos_table *table, unsigne
 }
 
 static void opentype_layout_add_lookups(const struct ot_feature_list *feature_list, UINT16 total_lookup_count,
-        struct ot_gsubgpos_table *table, struct shaping_feature *feature, struct lookups *lookups)
+        const struct ot_gsubgpos_table *table, struct shaping_feature *feature, struct lookups *lookups)
 {
     UINT16 feature_offset, lookup_count;
     unsigned int i;
@@ -4256,7 +4257,7 @@ static void opentype_layout_add_lookups(const struct ot_feature_list *feature_li
 }
 
 static void opentype_layout_collect_lookups(struct scriptshaping_context *context, unsigned int script_index,
-        unsigned int language_index, const struct shaping_features *features, struct ot_gsubgpos_table *table,
+        unsigned int language_index, const struct shaping_features *features, const struct ot_gsubgpos_table *table,
         struct lookups *lookups)
 {
     UINT16 table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
@@ -4464,7 +4465,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
 static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_context *context, const struct lookup *lookup)
 {
     struct scriptshaping_cache *cache = context->cache;
-    const struct dwrite_fonttable *gsub = &cache->gsub.table;
+    const struct dwrite_fonttable *gsub = &context->table->table;
     UINT16 format, coverage, orig_glyph, glyph;
     unsigned int i, idx;
     BOOL ret;
@@ -4477,16 +4478,15 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_
         unsigned int subtable_offset = opentype_layout_get_gsub_subtable(cache, lookup->offset, i);
         unsigned int coverage_index;
 
-        format = table_read_be_word(&cache->gsub.table, subtable_offset);
+        format = table_read_be_word(gsub, subtable_offset);
 
-        coverage = table_read_be_word(&cache->gsub.table, subtable_offset +
-                FIELD_OFFSET(struct ot_gsub_singlesubst_format1, coverage));
+        coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format1, coverage));
 
         if (format == 1)
         {
             const struct ot_gsub_singlesubst_format1 *format1 = table_read_ensure(gsub, subtable_offset, sizeof(*format1));
 
-            coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
+            coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage, glyph);
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
 
@@ -4499,7 +4499,7 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_
             const struct ot_gsub_singlesubst_format2 *format2 = table_read_ensure(gsub, subtable_offset,
                     FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count) + count * sizeof(UINT16));
 
-            coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
+            coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage, glyph);
             if (coverage_index == GLYPH_NOT_COVERED || coverage_index >= count)
                 continue;
 
@@ -4525,7 +4525,6 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_
 static BOOL opentype_layout_context_match_input(struct scriptshaping_context *context, unsigned int subtable_offset,
         unsigned int count, const UINT16 *input, unsigned int *end_offset, unsigned int *match_positions)
 {
-    struct scriptshaping_cache *cache = context->cache;
     struct glyph_iterator iter;
     unsigned int i;
     UINT16 glyph;
@@ -4544,11 +4543,8 @@ static BOOL opentype_layout_context_match_input(struct scriptshaping_context *co
 
         /* TODO: this only covers Format3 substitution */
         glyph = context->u.subst.glyphs[iter.pos];
-        if (opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(input[i]),
-                glyph) == GLYPH_NOT_COVERED)
-        {
+        if (opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(input[i]), glyph) == GLYPH_NOT_COVERED)
             return FALSE;
-        }
 
         match_positions[i] = iter.pos;
     }
@@ -4573,11 +4569,8 @@ static BOOL opentype_layout_context_match_backtrack(struct scriptshaping_context
             return FALSE;
 
         glyph = context->u.subst.glyphs[iter.pos];
-        if (opentype_layout_is_glyph_covered(&context->cache->gsub.table, subtable_offset + GET_BE_WORD(backtrack[i]),
-                glyph) == GLYPH_NOT_COVERED)
-        {
+        if (opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(backtrack[i]), glyph) == GLYPH_NOT_COVERED)
             return FALSE;
-        }
     }
 
     *match_start = iter.pos;
@@ -4588,7 +4581,6 @@ static BOOL opentype_layout_context_match_backtrack(struct scriptshaping_context
 static BOOL opentype_layout_context_match_lookahead(struct scriptshaping_context *context, unsigned int subtable_offset,
         unsigned int count, const UINT16 *lookahead, unsigned int offset, unsigned int *end_index)
 {
-    struct scriptshaping_cache *cache = context->cache;
     struct glyph_iterator iter;
     unsigned int i;
     UINT16 glyph;
@@ -4601,11 +4593,8 @@ static BOOL opentype_layout_context_match_lookahead(struct scriptshaping_context
             return FALSE;
 
         glyph = context->u.subst.glyphs[iter.pos];
-        if (opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(lookahead[i]),
-                glyph) == GLYPH_NOT_COVERED)
-        {
+        if (opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(lookahead[i]), glyph) == GLYPH_NOT_COVERED)
             return FALSE;
-        }
     }
 
     *end_index = iter.pos;
@@ -4637,7 +4626,7 @@ static BOOL opentype_layout_context_gsub_apply_lookup(struct scriptshaping_conte
         orig_len = context->glyph_count;
 
         lookup_index = GET_BE_WORD(lookup_records[i+1]);
-        if (opentype_layout_init_lookup(&context->cache->gsub, lookup_index, 0, &lookup))
+        if (opentype_layout_init_lookup(context->table, lookup_index, 0, &lookup))
             opentype_layout_apply_gsub_lookup(context, &lookup);
 
         delta = context->glyph_count - orig_len;
@@ -4698,6 +4687,7 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
         const struct lookup *lookup)
 {
     struct scriptshaping_cache *cache = context->cache;
+    const struct dwrite_fonttable *table = &context->table->table;
     UINT16 format, coverage;
     BOOL ret = FALSE;
     unsigned int i;
@@ -4708,14 +4698,14 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
         UINT16 glyph = context->u.subst.glyphs[context->cur];
         unsigned int coverage_index = GLYPH_NOT_COVERED;
 
-        format = table_read_be_word(&cache->gsub.table, subtable_offset);
+        format = table_read_be_word(&context->table->table, subtable_offset);
 
         if (format == 1)
         {
-            coverage = table_read_be_word(&cache->gsub.table, subtable_offset +
+            coverage = table_read_be_word(table, subtable_offset +
                     FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
 
-            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage, glyph);
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
 
@@ -4724,10 +4714,9 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
         }
         else if (format == 2)
         {
-            coverage = table_read_be_word(&cache->gsub.table, subtable_offset +
-                    FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
+            coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
 
-            coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + coverage, glyph);
+            coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage, glyph);
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
 
@@ -4741,30 +4730,27 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
 
             unsigned int offset = subtable_offset + 2 /* format */;
 
-            backtrack_count = table_read_be_word(&cache->gsub.table, offset);
+            backtrack_count = table_read_be_word(table, offset);
             offset += 2;
-            backtrack = table_read_ensure(&cache->gsub.table, offset, backtrack_count * sizeof(*backtrack));
+            backtrack = table_read_ensure(table, offset, backtrack_count * sizeof(*backtrack));
             offset += backtrack_count * sizeof(*backtrack);
 
-            input_count = table_read_be_word(&cache->gsub.table, offset);
+            input_count = table_read_be_word(table, offset);
             offset += 2;
-            input = table_read_ensure(&cache->gsub.table, offset, input_count * sizeof(*input));
+            input = table_read_ensure(table, offset, input_count * sizeof(*input));
             offset += input_count * sizeof(*input);
 
-            lookahead_count = table_read_be_word(&cache->gsub.table, offset);
+            lookahead_count = table_read_be_word(table, offset);
             offset += 2;
-            lookahead = table_read_ensure(&cache->gsub.table, offset, lookahead_count * sizeof(*lookahead));
+            lookahead = table_read_ensure(table, offset, lookahead_count * sizeof(*lookahead));
             offset += lookahead_count * sizeof(*lookahead);
 
-            lookup_count = table_read_be_word(&cache->gsub.table, offset);
+            lookup_count = table_read_be_word(table, offset);
             offset += 2;
-            lookup_records = table_read_ensure(&cache->gsub.table, offset, lookup_count * 2 * sizeof(*lookup_records));
+            lookup_records = table_read_ensure(table, offset, lookup_count * 2 * sizeof(*lookup_records));
 
             if (input)
-            {
-                coverage_index = opentype_layout_is_glyph_covered(&cache->gsub.table, subtable_offset + GET_BE_WORD(input[0]),
-                        glyph);
-            }
+                coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + GET_BE_WORD(input[0]), glyph);
 
             if (coverage_index == GLYPH_NOT_COVERED)
                 continue;
@@ -4877,7 +4863,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     unsigned int i;
     BOOL ret;
 
-    opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gsub, &lookups);
+    opentype_layout_collect_lookups(context, script_index, language_index, features, context->table, &lookups);
 
     opentype_get_nominal_glyphs(context, features);
     opentype_layout_set_glyph_masks(context, features);

@@ -496,6 +496,7 @@ struct scriptshaping_context
         } subst;
     } u;
 
+    const struct ot_gsubgpos_table *table; /* Either GSUB or GPOS. */
     struct
     {
         const DWRITE_TYPOGRAPHIC_FEATURES **features;
