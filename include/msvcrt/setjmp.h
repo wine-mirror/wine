@@ -147,6 +147,9 @@ int __cdecl _setjmp(jmp_buf);
 void __cdecl longjmp(jmp_buf,int);
 
 #if defined(_WIN64) && defined(__GNUC__)
+# ifdef _UCRT
+#  define _setjmpex __intrinsic_setjmpex
+# endif
 int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,void*);
 # define setjmp(buf)   _setjmpex(buf,__builtin_frame_address(0))
 # define setjmpex(buf) _setjmpex(buf,__builtin_frame_address(0))
