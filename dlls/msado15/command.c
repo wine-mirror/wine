@@ -31,9 +31,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
 struct command
 {
-    _Command        Command_iface;
-    LONG            ref;
-    CommandTypeEnum type;
+    _Command         Command_iface;
+    LONG             ref;
+    CommandTypeEnum  type;
+    BSTR             text;
 };
 
 static inline struct command *impl_from_Command( _Command *iface )
@@ -79,6 +80,7 @@ static ULONG WINAPI command_Release( _Command *iface )
     if (!ref)
     {
         TRACE( "destroying %p\n", command );
+        heap_free( command->text );
         heap_free( command );
     }
     return ref;
@@ -137,14 +139,27 @@ static HRESULT WINAPI command_put_ActiveConnection( _Command *iface, VARIANT con
 
 static HRESULT WINAPI command_get_CommandText( _Command *iface, BSTR *text )
 {
-    FIXME( "%p, %p\n", iface, text );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    BSTR cmd_text = NULL;
+
+    TRACE( "%p, %p\n", command, text );
+
+    if (command->text && !(cmd_text = SysAllocString( command->text ))) return E_OUTOFMEMORY;
+    *text = cmd_text;
+    return S_OK;
 }
 
 static HRESULT WINAPI command_put_CommandText( _Command *iface, BSTR text )
 {
-    FIXME( "%p, %s\n", iface, debugstr_w(text) );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    WCHAR *source = NULL;
+
+    TRACE( "%p, %s\n", command, debugstr_w( text ) );
+
+    if (text && !(source = strdupW( text ))) return E_OUTOFMEMORY;
+    heap_free( command->text );
+    command->text = source;
+    return S_OK;
 }
 
 static HRESULT WINAPI command_get_CommandTimeout( _Command *iface, LONG *timeout )
@@ -327,6 +342,7 @@ HRESULT Command_create( void **obj )
     if (!(command = heap_alloc( sizeof(*command) ))) return E_OUTOFMEMORY;
     command->Command_iface.lpVtbl = &command_vtbl;
     command->type = adCmdUnknown;
+    command->text = NULL;
     command->ref = 1;
 
     *obj = &command->Command_iface;

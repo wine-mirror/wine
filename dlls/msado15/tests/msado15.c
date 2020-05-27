@@ -743,6 +743,7 @@ static void test_Command(void)
     Command15 *command15;
     Command25 *command25;
     CommandTypeEnum cmd_type = adCmdUnspecified;
+    BSTR cmd_text = (BSTR)"test";
 
     hr = CoCreateInstance( &CLSID_Command, NULL, CLSCTX_INPROC_SERVER, &IID__Command, (void **)&command );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -770,6 +771,31 @@ static void test_Command(void)
 
     hr = _Command_put_CommandType( command, 0xdeadbeef );
     ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08x\n", hr );
+
+    hr = _Command_get_CommandText( command, &cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !cmd_text, "got %s\n", wine_dbgstr_w( cmd_text ));
+
+    hr = _Command_put_CommandText( command, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    cmd_text = SysAllocString( L"" );
+    hr = _Command_put_CommandText( command, cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( cmd_text );
+
+    hr = _Command_get_CommandText( command,  &cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cmd_text && !*cmd_text, "got %p\n", cmd_text );
+
+    cmd_text = SysAllocString( L"test" );
+    hr = _Command_put_CommandText( command, cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( cmd_text );
+
+    hr = _Command_get_CommandText( command,  &cmd_text );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !wcscmp( L"test", cmd_text ), "got %p\n", wine_dbgstr_w( cmd_text ) );
 
     _Command_Release( command );
 }
