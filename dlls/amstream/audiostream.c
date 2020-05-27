@@ -502,11 +502,24 @@ static HRESULT WINAPI audio_IAMMediaStream_SendEndOfStream(IAMMediaStream *iface
 static HRESULT WINAPI audio_IAMMediaStream_Initialize(IAMMediaStream *iface, IUnknown *source_object, DWORD flags,
                                                     REFMSPID purpose_id, const STREAM_TYPE stream_type)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p,%x,%p,%u) stub!\n", This, iface, source_object, flags, purpose_id, stream_type);
+    TRACE("stream %p, source_object %p, flags %x, purpose_id %s, stream_type %u.\n", stream, source_object, flags,
+            debugstr_guid(purpose_id), stream_type);
 
-    return S_FALSE;
+    if (!purpose_id)
+        return E_POINTER;
+
+    if (source_object)
+        FIXME("Specifying a stream object is not yet supported.\n");
+
+    if (flags & AMMSF_CREATEPEER)
+        FIXME("AMMSF_CREATEPEER is not yet supported.\n");
+
+    stream->purpose_id = *purpose_id;
+    stream->stream_type = stream_type;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_SetState(IAMMediaStream *iface, FILTER_STATE state)
@@ -530,13 +543,15 @@ static HRESULT WINAPI audio_IAMMediaStream_SetState(IAMMediaStream *iface, FILTE
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_JoinAMMultiMediaStream(IAMMediaStream *iface,
-        IAMMultiMediaStream *am_multi_media_stream)
+        IAMMultiMediaStream *mmstream)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, am_multi_media_stream);
+    TRACE("stream %p, mmstream %p.\n", stream, mmstream);
 
-    return S_FALSE;
+    stream->parent = (IMultiMediaStream *)mmstream;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_IAMMediaStream_JoinFilter(IAMMediaStream *iface, IMediaStreamFilter *filter)
@@ -1262,11 +1277,9 @@ HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
         IUnknown *stream_object, STREAM_TYPE stream_type, IAMMediaStream **media_stream)
 {
     struct audio_stream *object;
+    HRESULT hr;
 
     TRACE("(%p,%s,%p,%p)\n", parent, debugstr_guid(purpose_id), stream_object, media_stream);
-
-    if (stream_object)
-        FIXME("Specifying a stream object is not yet supported.\n");
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1279,11 +1292,22 @@ HRESULT audio_stream_create(IMultiMediaStream *parent, const MSPID *purpose_id,
     object->ref = 1;
 
     InitializeCriticalSection(&object->cs);
-    object->parent = parent;
-    object->purpose_id = *purpose_id;
-    object->stream_type = stream_type;
     list_init(&object->receive_queue);
     list_init(&object->update_queue);
+
+    hr = IAMMediaStream_Initialize(&object->IAMMediaStream_iface, stream_object, 0, purpose_id, stream_type);
+    if (FAILED(hr))
+    {
+        IAMMediaStream_Release(&object->IAMMediaStream_iface);
+        return hr;
+    }
+
+    hr = IAMMediaStream_JoinAMMultiMediaStream(&object->IAMMediaStream_iface, (IAMMultiMediaStream *)parent);
+    if (FAILED(hr))
+    {
+        IAMMediaStream_Release(&object->IAMMediaStream_iface);
+        return hr;
+    }
 
     *media_stream = &object->IAMMediaStream_iface;
 
