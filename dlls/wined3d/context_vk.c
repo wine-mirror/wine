@@ -2920,16 +2920,18 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer)
     {
-        struct wined3d_bo_vk *bo = &wined3d_buffer_vk(state->index_buffer)->bo;
+        struct wined3d_buffer_vk *buffer_vk = wined3d_buffer_vk(state->index_buffer);
+        const VkDescriptorBufferInfo *buffer_info;
         VkIndexType idx_type;
 
         if (state->index_format == WINED3DFMT_R16_UINT)
             idx_type = VK_INDEX_TYPE_UINT16;
         else
             idx_type = VK_INDEX_TYPE_UINT32;
-        wined3d_context_vk_reference_bo(context_vk, bo);
-        VK_CALL(vkCmdBindIndexBuffer(vk_command_buffer, bo->vk_buffer,
-                bo->buffer_offset + state->index_offset, idx_type));
+        buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
+        wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+        VK_CALL(vkCmdBindIndexBuffer(vk_command_buffer, buffer_info->buffer,
+                buffer_info->offset + state->index_offset, idx_type));
     }
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL))
