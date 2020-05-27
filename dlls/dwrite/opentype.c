@@ -569,6 +569,14 @@ struct ot_gsub_singlesubst_format2
     UINT16 substitutes[1];
 };
 
+struct ot_gsub_altsubst_format1
+{
+    UINT16 format;
+    UINT16 coverage;
+    UINT16 count;
+    UINT16 sets[1];
+};
+
 struct ot_gsub_chaincontext_subst_format1
 {
     UINT16 format;
@@ -3256,6 +3264,23 @@ static inline unsigned int dwrite_popcount(unsigned int x)
 #endif
 }
 
+static inline unsigned int dwrite_ctz(unsigned int x)
+{
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+    return __builtin_ctz(x);
+#else
+    unsigned int c = 32;
+    x &= - (int) x;
+    if (x) c--;
+    if (x & 0x0000ffff) c -= 16;
+    if (x & 0x00ff00ff) c -= 8;
+    if (x & 0x0f0f0f0f) c -= 4;
+    if (x & 0x33333333) c -= 2;
+    if (x & 0x55555555) c -= 1;
+    return c;
+#endif
+}
+
 static inline unsigned int dwrite_log2i(unsigned int x)
 {
 #if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
@@ -4505,6 +4530,61 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_
     return ret;
 }
 
+static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
+        unsigned int subtable_offset)
+{
+    const struct dwrite_fonttable *gsub = &context->table->table;
+    UINT16 format, coverage, orig_glyph, glyph;
+    unsigned int idx, coverage_index, offset;
+    BOOL ret;
+
+    idx = context->cur;
+    orig_glyph = glyph = context->u.subst.glyphs[idx];
+
+    format = table_read_be_word(gsub, subtable_offset);
+
+    if (format == 1)
+    {
+        const struct ot_gsub_altsubst_format1 *format1 = table_read_ensure(gsub, subtable_offset, sizeof(*format1));
+        unsigned int count, shift, alt_index;
+
+        coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_altsubst_format1, coverage));
+
+        coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            return FALSE;
+
+        if (coverage_index >= GET_BE_WORD(format1->count))
+            return FALSE;
+
+        offset = table_read_be_word(gsub, subtable_offset +
+                FIELD_OFFSET(struct ot_gsub_altsubst_format1, sets[coverage_index]));
+
+        count = table_read_be_word(gsub, subtable_offset + offset);
+        if (!count)
+            return FALSE;
+
+        shift = dwrite_ctz(lookup->mask);
+        alt_index = (lookup->mask & context->glyph_infos[idx].mask) >> shift;
+
+        if (alt_index > count || !alt_index)
+            return FALSE;
+
+        glyph = table_read_be_word(gsub, subtable_offset + offset + sizeof(count) + (alt_index - 1) * sizeof(glyph));
+    }
+    else
+        WARN("Unexpected alternate substitution format %d.\n", format);
+
+    if ((ret = (glyph != orig_glyph)))
+    {
+        context->u.subst.glyphs[idx] = glyph;
+        opentype_set_subst_glyph_props(context, idx, glyph);
+        context->cur++;
+    }
+
+    return ret;
+}
+
 #define CHAIN_CONTEXT_MAX_LENGTH 64
 
 static BOOL opentype_layout_context_match_input(struct scriptshaping_context *context, unsigned int subtable_offset,
@@ -4785,11 +4865,13 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             case GSUB_LOOKUP_SINGLE_SUBST:
                 ret = opentype_layout_apply_gsub_single_substitution(context, lookup, subtable_offset);
                 break;
+            case GSUB_LOOKUP_ALTERNATE_SUBST:
+                ret = opentype_layout_apply_gsub_alt_substitution(context, lookup, subtable_offset);
+                break;
             case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
                 ret = opentype_layout_apply_gsub_chain_context_substitution(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_MULTIPLE_SUBST:
-            case GSUB_LOOKUP_ALTERNATE_SUBST:
             case GSUB_LOOKUP_LIGATURE_SUBST:
             case GSUB_LOOKUP_CONTEXTUAL_SUBST:
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
