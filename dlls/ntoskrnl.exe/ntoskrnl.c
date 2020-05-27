@@ -72,6 +72,10 @@ KSERVICE_TABLE_DESCRIPTOR KeServiceDescriptorTable[4] = { { 0 } };
 
 #define MAX_SERVICE_NAME 260
 
+static TP_POOL *dpc_call_tp;
+static TP_CALLBACK_ENVIRON dpc_call_tpe;
+DECLARE_CRITICAL_SECTION(dpc_call_cs);
+
 /* tid of the thread running client request */
 static DWORD request_thread;
 
@@ -3160,6 +3164,10 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
+
+        if (dpc_call_tp)
+            CloseThreadpool(dpc_call_tp);
+
         HeapDestroy( ntoskrnl_heap );
         RtlRemoveVectoredExceptionHandler( handler );
         break;
@@ -4010,6 +4018,111 @@ BOOLEAN WINAPI KdRefreshDebuggerNotPresent(void)
     TRACE(".\n");
 
     return !KdDebuggerEnabled;
+}
+
+struct generic_call_dpc_context
+{
+    DEFERRED_REVERSE_BARRIER *reverse_barrier;
+    PKDEFERRED_ROUTINE routine;
+    ULONG *cpu_count_barrier;
+    void *context;
+    ULONG cpu_index;
+};
+
+static void WINAPI generic_call_dpc_callback(TP_CALLBACK_INSTANCE *instance, void *context)
+{
+    struct generic_call_dpc_context *c = context;
+    GROUP_AFFINITY old, new;
+
+    TRACE("instance %p, context %p.\n", instance, context);
+
+    NtQueryInformationThread(GetCurrentThread(), ThreadGroupInformation,
+            &old, sizeof(old), NULL);
+
+    memset(&new, 0, sizeof(new));
+
+    new.Mask = 1 << c->cpu_index;
+    NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &new, sizeof(new));
+
+    c->routine((PKDPC)0xdeadbeef, c->context, c->cpu_count_barrier, c->reverse_barrier);
+    NtSetInformationThread(GetCurrentThread(), ThreadGroupInformation, &old, sizeof(old));
+}
+
+void WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE routine, void *context)
+{
+    ULONG cpu_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+    static struct generic_call_dpc_context *contexts;
+    DEFERRED_REVERSE_BARRIER reverse_barrier;
+    static ULONG last_cpu_count;
+    ULONG cpu_count_barrier;
+    ULONG i;
+
+    TRACE("routine %p, context %p.\n", routine, context);
+
+    EnterCriticalSection(&dpc_call_cs);
+
+    if (!dpc_call_tp)
+    {
+        if (!(dpc_call_tp = CreateThreadpool(NULL)))
+        {
+            ERR("Could not create thread pool.\n");
+            LeaveCriticalSection(&dpc_call_cs);
+            return;
+        }
+
+        SetThreadpoolThreadMinimum(dpc_call_tp, cpu_count);
+        SetThreadpoolThreadMaximum(dpc_call_tp, cpu_count);
+
+        memset(&dpc_call_tpe, 0, sizeof(dpc_call_tpe));
+        dpc_call_tpe.Version = 1;
+        dpc_call_tpe.Pool = dpc_call_tp;
+    }
+
+    reverse_barrier.Barrier = cpu_count;
+    reverse_barrier.TotalProcessors = cpu_count;
+    cpu_count_barrier = cpu_count;
+
+    if (contexts)
+    {
+        if (last_cpu_count < cpu_count)
+        {
+            static struct generic_call_dpc_context *new_contexts;
+            if (!(new_contexts = heap_realloc(contexts, sizeof(*contexts) * cpu_count)))
+            {
+                ERR("No memory.\n");
+                LeaveCriticalSection(&dpc_call_cs);
+                return;
+            }
+            contexts = new_contexts;
+            SetThreadpoolThreadMinimum(dpc_call_tp, cpu_count);
+            SetThreadpoolThreadMaximum(dpc_call_tp, cpu_count);
+        }
+    }
+    else if (!(contexts = heap_alloc(sizeof(*contexts) * cpu_count)))
+    {
+        ERR("No memory.\n");
+        LeaveCriticalSection(&dpc_call_cs);
+        return;
+    }
+
+    memset(contexts, 0, sizeof(*contexts) * cpu_count);
+    last_cpu_count = cpu_count;
+
+    for (i = 0; i < cpu_count; ++i)
+    {
+        contexts[i].reverse_barrier = &reverse_barrier;
+        contexts[i].cpu_count_barrier = &cpu_count_barrier;
+        contexts[i].routine = routine;
+        contexts[i].context = context;
+        contexts[i].cpu_index = i;
+
+        TrySubmitThreadpoolCallback(generic_call_dpc_callback, &contexts[i], &dpc_call_tpe);
+    }
+
+    while (InterlockedCompareExchange((LONG *)&cpu_count_barrier, 0, 0))
+        SwitchToThread();
+
+    LeaveCriticalSection(&dpc_call_cs);
 }
 
 void WINAPI KeSignalCallDpcDone(void *barrier)

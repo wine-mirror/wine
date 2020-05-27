@@ -122,6 +122,12 @@ typedef struct _KMUTANT {
     UCHAR ApcDisable;
 } KMUTANT, *PKMUTANT, *RESTRICTED_POINTER PRKMUTANT, KMUTEX, *PKMUTEX, *RESTRICTED_POINTER PRKMUTEX;
 
+typedef struct _DEFERRED_REVERSE_BARRIER
+{
+    ULONG Barrier;
+    ULONG TotalProcessors;
+} DEFERRED_REVERSE_BARRIER;
+
 typedef enum _KWAIT_REASON
 {
     Executive,
@@ -1686,6 +1692,7 @@ BOOLEAN   WINAPI KeCancelTimer(KTIMER*);
 void      WINAPI KeClearEvent(PRKEVENT);
 NTSTATUS  WINAPI KeDelayExecutionThread(KPROCESSOR_MODE,BOOLEAN,LARGE_INTEGER*);
 void      WINAPI KeEnterCriticalRegion(void);
+void      WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE,PVOID);
 ULONG     WINAPI KeGetCurrentProcessorNumber(void);
 PKTHREAD  WINAPI KeGetCurrentThread(void);
 void      WINAPI KeInitializeEvent(PRKEVENT,EVENT_TYPE,BOOLEAN);
