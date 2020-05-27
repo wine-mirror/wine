@@ -97,7 +97,6 @@ struct quartz_vmr
 
     /* Presentation related members */
     IDirect3DDevice9 *allocator_d3d9_dev;
-    HMONITOR allocator_mon;
     IDirect3DSurface9 **surfaces;
     DWORD num_surfaces;
     DWORD cur_surface;
@@ -1987,7 +1986,6 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_SetD3DDevice(IVMRSurfaceAllocat
         IDirect3DDevice9_Release(filter->allocator_d3d9_dev);
     filter->allocator_d3d9_dev = device;
     IDirect3DDevice9_AddRef(device);
-    filter->allocator_mon = monitor;
 
     return S_OK;
 }
@@ -2001,7 +1999,6 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_ChangeD3DDevice(IVMRSurfaceAllo
         IDirect3DDevice9_Release(This->allocator_d3d9_dev);
     This->allocator_d3d9_dev = device;
     IDirect3DDevice9_AddRef(This->allocator_d3d9_dev);
-    This->allocator_mon = monitor;
 
     return S_OK;
 }
