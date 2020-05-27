@@ -36,6 +36,12 @@
 
 #include "winmm_test.h"
 
+static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+    return diff <= max_diff;
+}
+
 static const char * line_flags(DWORD fdwLine)
 {
     static char flags[100];
@@ -253,11 +259,11 @@ static void mixer_test_controlA(HMIXEROBJ mix, MIXERCONTROLA *control)
                    mmsys_error(rc));
                 if (rc==MMSYSERR_NOERROR) {
                     /* result may not match exactly because of rounding */
-                    ok(abs(ret_value.dwValue-new_value.dwValue)<=1,
+                    ok(compare_uint(ret_value.dwValue, new_value.dwValue, 1),
                        "Couldn't change value from %d to %d, returned %d\n",
                        value.dwValue,new_value.dwValue,ret_value.dwValue);
 
-                    if (abs(ret_value.dwValue-new_value.dwValue)<=1) {
+                    if (compare_uint(ret_value.dwValue, new_value.dwValue, 1)) {
                         details.cbStruct = sizeof(MIXERCONTROLDETAILS);
                         details.dwControlID = control->dwControlID;
                         details.cChannels = 1;
@@ -632,11 +638,11 @@ static void mixer_test_controlW(HMIXEROBJ mix, MIXERCONTROLW *control)
                    mmsys_error(rc));
                 if (rc==MMSYSERR_NOERROR) {
                     /* result may not match exactly because of rounding */
-                    ok(abs(ret_value.dwValue-new_value.dwValue)<=1,
+                    ok(compare_uint(ret_value.dwValue, new_value.dwValue, 1),
                        "Couldn't change value from %d to %d, returned %d\n",
                        value.dwValue,new_value.dwValue,ret_value.dwValue);
 
-                    if (abs(ret_value.dwValue-new_value.dwValue)<=1) {
+                    if (compare_uint(ret_value.dwValue, new_value.dwValue, 1)) {
                         details.cbStruct = sizeof(MIXERCONTROLDETAILS);
                         details.dwControlID = control->dwControlID;
                         details.cChannels = 1;
