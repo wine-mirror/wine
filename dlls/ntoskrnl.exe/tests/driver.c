@@ -1779,6 +1779,117 @@ static void test_affinity(void)
     KeRevertToUserAffinityThread();
 }
 
+struct test_dpc_func_context
+{
+    volatile LONG call_count;
+    volatile LONG selected_count;
+    volatile DEFERRED_REVERSE_BARRIER sync_barrier_start_value, sync_barrier_mid_value, sync_barrier_end_value;
+    volatile LONG done_barrier_start_value;
+};
+
+static BOOLEAN (WINAPI *pKeSignalCallDpcSynchronize)(void *barrier);
+static void (WINAPI *pKeSignalCallDpcDone)(void *barrier);
+
+static void WINAPI test_dpc_func(PKDPC Dpc, void *context, void *cpu_count,
+        void *reverse_barrier)
+{
+    DEFERRED_REVERSE_BARRIER *barrier = reverse_barrier;
+    struct test_dpc_func_context *data = context;
+
+    InterlockedIncrement(&data->call_count);
+
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_start_value.Barrier,
+            *(volatile LONG *)&barrier->Barrier, 0);
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_start_value.TotalProcessors,
+            *(volatile LONG *)&barrier->TotalProcessors, 0);
+
+    if (pKeSignalCallDpcSynchronize(reverse_barrier))
+        InterlockedIncrement(&data->selected_count);
+
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_mid_value.Barrier,
+            *(volatile LONG *)&barrier->Barrier, 0);
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_mid_value.TotalProcessors,
+            *(volatile LONG *)&barrier->TotalProcessors, 0);
+
+    data->done_barrier_start_value =  *(volatile LONG *)cpu_count;
+
+    if (pKeSignalCallDpcSynchronize(reverse_barrier))
+        InterlockedIncrement(&data->selected_count);
+
+    pKeSignalCallDpcSynchronize(reverse_barrier);
+    pKeSignalCallDpcSynchronize(reverse_barrier);
+
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_end_value.Barrier,
+            *(volatile LONG *)&barrier->Barrier, 0);
+    InterlockedCompareExchange((volatile LONG*)&data->sync_barrier_end_value.TotalProcessors,
+            *(volatile LONG *)&barrier->TotalProcessors, 0);
+
+    pKeSignalCallDpcDone(cpu_count);
+}
+
+static void test_dpc(void)
+{
+    void (WINAPI *pKeGenericCallDpc)(PKDEFERRED_ROUTINE routine, void *context);
+    struct test_dpc_func_context data;
+    KAFFINITY cpu_mask;
+    ULONG cpu_count;
+
+    pKeGenericCallDpc = get_proc_address("KeGenericCallDpc");
+    if (!pKeGenericCallDpc)
+    {
+        win_skip("KeGenericCallDpc is not available.\n");
+        return;
+    }
+
+    pKeSignalCallDpcDone = get_proc_address("KeSignalCallDpcDone");
+    ok(!!pKeSignalCallDpcDone, "KeSignalCallDpcDone is not available.\n");
+    pKeSignalCallDpcSynchronize = get_proc_address("KeSignalCallDpcSynchronize");
+    ok(!!pKeSignalCallDpcSynchronize, "KeSignalCallDpcSynchronize is not available.\n");
+
+
+    cpu_mask = KeQueryActiveProcessors();
+    cpu_count = 0;
+    while (cpu_mask)
+    {
+        if (cpu_mask & 1)
+            ++cpu_count;
+
+        cpu_mask >>= 1;
+    }
+
+    memset(&data, 0, sizeof(data));
+
+    KeSetSystemAffinityThread(0x1);
+
+    pKeGenericCallDpc(test_dpc_func, &data);
+    ok(data.call_count == cpu_count, "Got unexpected call_count %u.\n", data.call_count);
+    ok(data.selected_count == 2, "Got unexpected selected_count %u.\n", data.selected_count);
+    ok(data.sync_barrier_start_value.Barrier == cpu_count,
+            "Got unexpected sync_barrier_start_value.Barrier %d.\n",
+            data.sync_barrier_start_value.Barrier);
+    ok(data.sync_barrier_start_value.TotalProcessors == cpu_count,
+            "Got unexpected sync_barrier_start_value.TotalProcessors %d.\n",
+            data.sync_barrier_start_value.TotalProcessors);
+
+    ok(data.sync_barrier_mid_value.Barrier == (0x80000000 | cpu_count),
+            "Got unexpected sync_barrier_mid_value.Barrier %d.\n",
+            data.sync_barrier_mid_value.Barrier);
+    ok(data.sync_barrier_mid_value.TotalProcessors == cpu_count,
+            "Got unexpected sync_barrier_mid_value.TotalProcessors %d.\n",
+            data.sync_barrier_mid_value.TotalProcessors);
+
+    ok(data.sync_barrier_end_value.Barrier == cpu_count,
+            "Got unexpected sync_barrier_end_value.Barrier %d.\n",
+            data.sync_barrier_end_value.Barrier);
+    ok(data.sync_barrier_end_value.TotalProcessors == cpu_count,
+            "Got unexpected sync_barrier_end_value.TotalProcessors %d.\n",
+            data.sync_barrier_end_value.TotalProcessors);
+
+    ok(data.done_barrier_start_value == cpu_count, "Got unexpected done_barrier_start_value %d.\n", data.done_barrier_start_value);
+
+    KeRevertToUserAffinityThread();
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -1833,6 +1944,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_executable_pool();
 #endif
     test_affinity();
+    test_dpc();
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
