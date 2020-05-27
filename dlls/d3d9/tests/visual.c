@@ -3160,7 +3160,7 @@ done:
 }
 
 static void generate_bumpmap_textures(IDirect3DDevice9 *device) {
-    unsigned int i, x, y;
+    int i, x, y;
     HRESULT hr;
     IDirect3DTexture9 *texture[2] = {NULL, NULL};
     D3DLOCKED_RECT locked_rect;
