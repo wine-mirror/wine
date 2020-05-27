@@ -405,8 +405,7 @@ static void check_exe( const sec_verify *verify )
         dir = (void*) ((BYTE*) dos + sec[verify->rsrc_section].VirtualAddress);
 
         ok( dir->Characteristics == 0, "Characteristics wrong\n");
-        ok( dir->TimeDateStamp == 0 || abs( dir->TimeDateStamp - GetTickCount() ) < 1000 /* nt4 */,
-            "TimeDateStamp wrong %u\n", dir->TimeDateStamp);
+        ok( dir->TimeDateStamp == 0, "TimeDateStamp wrong %u\n", dir->TimeDateStamp);
         ok( dir->MajorVersion == 4, "MajorVersion wrong\n");
         ok( dir->MinorVersion == 0, "MinorVersion wrong\n");
 
