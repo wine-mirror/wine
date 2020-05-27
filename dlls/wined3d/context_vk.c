@@ -2878,7 +2878,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     }
 
-    if (indexed)
+    if (indexed || (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer))
     {
         wined3d_buffer_load(state->index_buffer, &context_vk->c, state);
         if (!wined3d_buffer_vk(state->index_buffer)->bo_user.valid)
