@@ -1408,6 +1408,21 @@ bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk,
             pool_info.pipelineStatistics = 0;
             break;
 
+        case WINED3D_QUERY_TYPE_PIPELINE_STATISTICS:
+            pool_info.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;
+            pool_info.pipelineStatistics = VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_VERTICES_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_INPUT_ASSEMBLY_PRIMITIVES_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_VERTEX_SHADER_INVOCATIONS_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_INVOCATIONS_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_GEOMETRY_SHADER_PRIMITIVES_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_CLIPPING_INVOCATIONS_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_CLIPPING_PRIMITIVES_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_CONTROL_SHADER_PATCHES_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_TESSELLATION_EVALUATION_SHADER_INVOCATIONS_BIT
+                    | VK_QUERY_PIPELINE_STATISTIC_COMPUTE_SHADER_INVOCATIONS_BIT;
+            break;
+
         default:
             FIXME("Unhandled query type %#x.\n", type);
             return false;
@@ -1428,12 +1443,15 @@ bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk,
         struct wined3d_context_vk *context_vk, const struct wined3d_query_pool_idx_vk *pool_idx)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_query_data_pipeline_statistics *ps_tmp;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_query_data_pipeline_statistics *ps_result;
     VkResult vr;
     union
     {
         uint64_t occlusion;
         uint64_t timestamp;
+        struct wined3d_query_data_pipeline_statistics pipeline_statistics;
     } tmp, *result;
 
     if ((vr = VK_CALL(vkGetQueryPoolResults(device_vk->vk_device, pool_idx->pool_vk->vk_query_pool,
@@ -1455,6 +1473,22 @@ bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk,
 
         case WINED3D_QUERY_TYPE_TIMESTAMP:
             result->timestamp = tmp.timestamp;
+            break;
+
+        case WINED3D_QUERY_TYPE_PIPELINE_STATISTICS:
+            ps_result = &result->pipeline_statistics;
+            ps_tmp = &tmp.pipeline_statistics;
+            ps_result->vertices_submitted += ps_tmp->vertices_submitted;
+            ps_result->primitives_submitted += ps_tmp->primitives_submitted;
+            ps_result->vs_invocations += ps_tmp->vs_invocations;
+            ps_result->gs_invocations += ps_tmp->gs_invocations;
+            ps_result->gs_primitives += ps_tmp->gs_primitives;
+            ps_result->clipping_input_primitives += ps_tmp->clipping_input_primitives;
+            ps_result->clipping_output_primitives += ps_tmp->clipping_output_primitives;
+            ps_result->ps_invocations += ps_tmp->ps_invocations;
+            ps_result->hs_invocations += ps_tmp->hs_invocations;
+            ps_result->ds_invocations += ps_tmp->ds_invocations;
+            ps_result->cs_invocations += ps_tmp->cs_invocations;
             break;
 
         default:
@@ -1761,6 +1795,10 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
             }
             ops = &wined3d_query_timestamp_disjoint_vk_ops;
             data_size = sizeof(struct wined3d_query_data_timestamp_disjoint);
+            break;
+
+        case WINED3D_QUERY_TYPE_PIPELINE_STATISTICS:
+            data_size = sizeof(struct wined3d_query_data_pipeline_statistics);
             break;
 
         default:
