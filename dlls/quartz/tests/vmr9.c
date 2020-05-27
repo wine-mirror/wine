@@ -2852,6 +2852,7 @@ static HRESULT WINAPI allocator_QueryInterface(IVMRSurfaceAllocator9 *iface, REF
         IVMRImagePresenter9_AddRef(&presenter_iface);
         return S_OK;
     }
+    ok(!IsEqualGUID(iid, &IID_IVMRSurfaceAllocatorEx9), "Unexpected query for IVMRSurfaceAllocatorEx9.\n");
     *out = NULL;
     return E_NOTIMPL;
 }
