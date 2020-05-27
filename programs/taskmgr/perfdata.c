@@ -51,6 +51,11 @@ static SYSTEM_CACHE_INFORMATION        SystemCacheInfo;
 static SYSTEM_HANDLE_INFORMATION       SystemHandleInfo;
 static PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION SystemProcessorTimeInfo = NULL;
 
+static size_t size_diff(size_t x, size_t y)
+{
+    return x > y ? x - y : y - x;
+}
+
 BOOL PerfDataInitialize(void)
 {
     LONG    status;
@@ -266,12 +271,12 @@ void PerfDataRefresh(void)
         pPerfData[Idx].vmCounters.WorkingSetSize = pSPI->vmCounters.WorkingSetSize;
         pPerfData[Idx].vmCounters.PeakWorkingSetSize = pSPI->vmCounters.PeakWorkingSetSize;
         if (pPDOld)
-            pPerfData[Idx].WorkingSetSizeDelta = labs(pSPI->vmCounters.WorkingSetSize - pPDOld->vmCounters.WorkingSetSize);
+            pPerfData[Idx].WorkingSetSizeDelta = size_diff(pSPI->vmCounters.WorkingSetSize, pPDOld->vmCounters.WorkingSetSize);
         else
             pPerfData[Idx].WorkingSetSizeDelta = 0;
         pPerfData[Idx].vmCounters.PageFaultCount = pSPI->vmCounters.PageFaultCount;
         if (pPDOld)
-            pPerfData[Idx].PageFaultCountDelta = labs(pSPI->vmCounters.PageFaultCount - pPDOld->vmCounters.PageFaultCount);
+            pPerfData[Idx].PageFaultCountDelta = size_diff(pSPI->vmCounters.PageFaultCount, pPDOld->vmCounters.PageFaultCount);
         else
             pPerfData[Idx].PageFaultCountDelta = 0;
         pPerfData[Idx].vmCounters.VirtualSize = pSPI->vmCounters.VirtualSize;
