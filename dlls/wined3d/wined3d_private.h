@@ -4169,6 +4169,20 @@ static inline void wined3d_texture_get_level_box(const struct wined3d_texture *t
             0, wined3d_texture_get_level_depth(texture, level));
 }
 
+static inline bool wined3d_texture_is_full_rect(const struct wined3d_texture *texture,
+        unsigned int level, const RECT *r)
+{
+    unsigned int t;
+
+    t = wined3d_texture_get_level_width(texture, level);
+    if ((r->left && r->right) || abs(r->right - r->left) != t)
+        return false;
+    t = wined3d_texture_get_level_height(texture, level);
+    if ((r->top && r->bottom) || abs(r->bottom - r->top) != t)
+        return false;
+    return true;
+}
+
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture,
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, DWORD flags,

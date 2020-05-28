@@ -44,19 +44,6 @@ static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
     masks[2] = ((1u << format->blue_size) - 1) << format->blue_offset;
 }
 
-static BOOL texture2d_is_full_rect(const struct wined3d_texture *texture, unsigned int level, const RECT *r)
-{
-    unsigned int t;
-
-    t = wined3d_texture_get_level_width(texture, level);
-    if ((r->left && r->right) || abs(r->right - r->left) != t)
-        return FALSE;
-    t = wined3d_texture_get_level_height(texture, level);
-    if ((r->top && r->bottom) || abs(r->bottom - r->top) != t)
-        return FALSE;
-    return TRUE;
-}
-
 /* See also float_16_to_32() in wined3d_private.h */
 static inline unsigned short float_32_to_16(const float *in)
 {
@@ -1664,9 +1651,9 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
             TRACE("Not doing download because the source format needs conversion.\n");
         else if (!(src_texture->flags & WINED3D_TEXTURE_DOWNLOADABLE))
             TRACE("Not doing download because texture is not downloadable.\n");
-        else if (!texture2d_is_full_rect(src_texture, src_sub_resource_idx % src_texture->level_count, &src_rect))
+        else if (!wined3d_texture_is_full_rect(src_texture, src_sub_resource_idx % src_texture->level_count, &src_rect))
             TRACE("Not doing download because of partial download (src).\n");
-        else if (!texture2d_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, &dst_rect))
+        else if (!wined3d_texture_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, &dst_rect))
             TRACE("Not doing download because of partial download (dst).\n");
         else
         {
