@@ -121,7 +121,11 @@ typedef struct DdsFrameDecode {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     IWICDdsFrameDecode IWICDdsFrameDecode_iface;
     LONG ref;
+    UINT width;
+    UINT height;
 } DdsFrameDecode;
+
+static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *, UINT, UINT, UINT, IWICBitmapFrameDecode **);
 
 static inline BOOL has_extended_header(DDS_HEADER *header)
 {
@@ -643,15 +647,35 @@ static HRESULT WINAPI DdsDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI DdsDecoder_GetFrame(IWICBitmapDecoder *iface,
                                           UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    HRESULT hr;
-    DdsFrameDecode *frame_decode;
+    DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    UINT frame_per_texture, array_index, mip_level, slice_index, depth;
 
-    FIXME("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
+    TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
-    hr = DdsFrameDecode_CreateInstance(&frame_decode);
-    if (hr == S_OK) *ppIBitmapFrame = &frame_decode->IWICBitmapFrameDecode_iface;
+    if (!ppIBitmapFrame) return E_INVALIDARG;
 
-    return hr;
+    EnterCriticalSection(&This->lock);
+
+    if (!This->initialized) {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    frame_per_texture = This->info.frame_count / This->info.array_size;
+    array_index = index / frame_per_texture;
+    slice_index = index % frame_per_texture;
+    depth = This->info.depth;
+    mip_level = 0;
+    while (slice_index >= depth)
+    {
+        slice_index -= depth;
+        mip_level++;
+        if (depth > 1) depth /= 2;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return DdsDecoder_Dds_GetFrame(&This->IWICDdsDecoder_iface, array_index, mip_level, slice_index, ppIBitmapFrame);
 }
 
 static const IWICBitmapDecoderVtbl DdsDecoder_Vtbl = {
@@ -730,9 +754,49 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
                                               UINT arrayIndex, UINT mipLevel, UINT sliceIndex,
                                               IWICBitmapFrameDecode **bitmapFrame)
 {
-    TRACE("(%p,%u,%u,%u,%p): Stub.\n", iface, arrayIndex, mipLevel, sliceIndex, bitmapFrame);
+    DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
+    HRESULT hr;
+    UINT width = 0, height = 0;
+    int j;
+    DdsFrameDecode *frame_decode;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%u,%u,%u,%p)\n", iface, arrayIndex, mipLevel, sliceIndex, bitmapFrame);
+
+    if (!bitmapFrame) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->initialized) {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    if (arrayIndex >= This->info.array_size || mipLevel >= This->info.mip_levels || sliceIndex >= This->info.depth) {
+        hr = E_INVALIDARG;
+        goto end;
+    }
+
+    width = This->info.width;
+    height = This->info.height;
+    for (j = 0; j < mipLevel; j++)
+    {
+        if (width > 1) width /= 2;
+        if (height > 1) height /= 2;
+    }
+
+    hr = DdsFrameDecode_CreateInstance(&frame_decode);
+    if (hr != S_OK) goto end;
+
+    frame_decode->width = width;
+    frame_decode->height = height;
+    *bitmapFrame = &frame_decode->IWICBitmapFrameDecode_iface;
+
+    hr = S_OK;
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static const IWICDdsDecoderVtbl DdsDecoder_Dds_Vtbl = {
