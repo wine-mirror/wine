@@ -849,14 +849,16 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
     UNWIND_HISTORY_TABLE table;
     DISPATCHER_CONTEXT dispatch;
-    CONTEXT context;
+    CONTEXT context, prev_context;
     NTSTATUS status;
 
     context = *orig_context;
     dispatch.TargetPc      = 0;
     dispatch.ContextRecord = &context;
     dispatch.HistoryTable  = &table;
-    dispatch.NonVolatileRegisters = (BYTE *)&context.u.s.X19;
+    prev_context = context;
+    dispatch.NonVolatileRegisters = (BYTE *)&prev_context.u.s.X19;
+
     for (;;)
     {
         status = virtual_unwind( UNW_FLAG_EHANDLER, &dispatch, &context );
@@ -933,6 +935,7 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
         }
 
         if (context.Sp == (ULONG64)NtCurrentTeb()->Tib.StackBase) break;
+        prev_context = context;
     }
     return STATUS_UNHANDLED_EXCEPTION;
 }
