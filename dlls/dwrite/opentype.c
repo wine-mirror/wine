@@ -569,6 +569,14 @@ struct ot_gsub_singlesubst_format2
     UINT16 substitutes[1];
 };
 
+struct ot_gsub_multsubst_format1
+{
+    UINT16 format;
+    UINT16 coverage;
+    UINT16 seq_count;
+    UINT16 seq[1];
+};
+
 struct ot_gsub_altsubst_format1
 {
     UINT16 format;
@@ -4506,6 +4514,167 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_
     return ret;
 }
 
+static BOOL opentype_layout_gsub_ensure_buffer(struct scriptshaping_context *context, unsigned int count)
+{
+    DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+    struct shaping_glyph_info *glyph_infos;
+    unsigned int new_capacity;
+    UINT16 *glyphs;
+    BOOL ret;
+
+    if (context->u.subst.capacity >= count)
+        return TRUE;
+
+    new_capacity = context->u.subst.capacity * 2;
+
+    if ((glyphs = heap_realloc(context->u.subst.glyphs, new_capacity * sizeof(*glyphs))))
+        context->u.subst.glyphs = glyphs;
+    if ((glyph_props = heap_realloc(context->u.subst.glyph_props, new_capacity * sizeof(*glyph_props))))
+        context->u.subst.glyph_props = glyph_props;
+    if ((glyph_infos = heap_realloc(context->glyph_infos, new_capacity * sizeof(*glyph_infos))))
+        context->glyph_infos = glyph_infos;
+
+    if ((ret = (glyphs && glyph_props && glyph_infos)))
+        context->u.subst.capacity = new_capacity;
+
+    return ret;
+}
+
+static unsigned int opentype_layout_get_next_char_index(const struct scriptshaping_context *context, unsigned int idx)
+{
+    unsigned int start = 0, end = context->length - 1, mid, ret = ~0u;
+
+    for (;;)
+    {
+        mid = (start + end) / 2;
+
+        if (context->u.buffer.clustermap[mid] <= idx)
+        {
+            if (mid == end) break;
+            start = mid + 1;
+        }
+        else
+        {
+            ret = mid;
+            if (mid == start) break;
+            end = mid - 1;
+        }
+    }
+
+    return ret;
+}
+
+static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
+        unsigned int subtable_offset)
+{
+    const struct dwrite_fonttable *gsub = &context->table->table;
+    UINT16 format, coverage, orig_glyph, glyph, seq_count, glyph_count;
+    const struct ot_gsub_multsubst_format1 *format1;
+    unsigned int i, idx, coverage_index;
+    const UINT16 *glyphs;
+
+    idx = context->cur;
+    orig_glyph = glyph = context->u.subst.glyphs[idx];
+
+    format = table_read_be_word(gsub, subtable_offset);
+
+    coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_multsubst_format1, coverage));
+
+    if (format == 1)
+    {
+        coverage_index = opentype_layout_is_glyph_covered(context, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            return FALSE;
+
+        seq_count = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_multsubst_format1, seq_count));
+
+        format1 = table_read_ensure(gsub, subtable_offset, FIELD_OFFSET(struct ot_gsub_multsubst_format1, seq[seq_count]));
+
+        if (!seq_count || seq_count <= coverage_index || !format1)
+            return FALSE;
+
+        glyph_count = table_read_be_word(gsub, subtable_offset + GET_BE_WORD(format1->seq[coverage_index]));
+
+        glyphs = table_read_ensure(gsub, subtable_offset + GET_BE_WORD(format1->seq[coverage_index]) + 2,
+                glyph_count * sizeof(*glyphs));
+        if (!glyphs)
+            return FALSE;
+
+        if (glyph_count == 1)
+        {
+            /* Equivalent of single substitution. */
+            glyph = GET_BE_WORD(glyphs[0]);
+
+            if (glyph != orig_glyph)
+            {
+                context->u.subst.glyphs[idx] = glyph;
+                opentype_set_subst_glyph_props(context, idx, glyph);
+            }
+
+            context->cur++;
+        }
+        else if (glyph_count == 0)
+        {
+            context->cur++;
+        }
+        else
+        {
+            unsigned int shift_len, src_idx, dest_idx, mask;
+
+            /* Current glyph is also replaced. */
+            glyph_count--;
+
+            if (!(opentype_layout_gsub_ensure_buffer(context, context->glyph_count + glyph_count)))
+                return FALSE;
+
+            shift_len = context->cur + 1 < context->glyph_count ? context->glyph_count - context->cur - 1 : 0;
+
+            if (shift_len)
+            {
+                src_idx = context->cur + 1;
+                dest_idx = src_idx + glyph_count;
+
+                memmove(&context->u.subst.glyphs[dest_idx], &context->u.subst.glyphs[src_idx],
+                        shift_len * sizeof(*context->u.subst.glyphs));
+                memmove(&context->u.subst.glyph_props[dest_idx], &context->u.subst.glyph_props[src_idx],
+                        shift_len * sizeof(*context->u.subst.glyph_props));
+                memmove(&context->glyph_infos[dest_idx], &context->glyph_infos[src_idx],
+                        shift_len * sizeof(*context->glyph_infos));
+            }
+
+            mask = context->glyph_infos[context->cur].mask;
+            for (i = 0, idx = context->cur; i <= glyph_count; ++i)
+            {
+                glyph = GET_BE_WORD(glyphs[i]);
+                context->u.subst.glyphs[idx + i] = glyph;
+                if (i)
+                    context->u.subst.glyph_props[idx + i].isClusterStart = 0;
+                opentype_set_subst_glyph_props(context, idx + i, glyph);
+                /* Inherit feature mask from original matched glyph. */
+                context->glyph_infos[idx + i].mask = mask;
+            }
+
+            /* Update following clusters. */
+            idx = opentype_layout_get_next_char_index(context, context->cur);
+            if (idx != ~0u)
+            {
+                for (i = idx; i < context->length; ++i)
+                    context->u.subst.clustermap[i] += glyph_count;
+            }
+
+            context->cur += glyph_count + 1;
+            context->glyph_count += glyph_count;
+        }
+    }
+    else
+    {
+        WARN("Unknown multiple substitution format %u.\n", format);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
@@ -4822,13 +4991,15 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             case GSUB_LOOKUP_SINGLE_SUBST:
                 ret = opentype_layout_apply_gsub_single_substitution(context, lookup, subtable_offset);
                 break;
+            case GSUB_LOOKUP_MULTIPLE_SUBST:
+                ret = opentype_layout_apply_gsub_mult_substitution(context, lookup, subtable_offset);
+                break;
             case GSUB_LOOKUP_ALTERNATE_SUBST:
                 ret = opentype_layout_apply_gsub_alt_substitution(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
                 ret = opentype_layout_apply_gsub_chain_context_substitution(context, lookup, subtable_offset);
                 break;
-            case GSUB_LOOKUP_MULTIPLE_SUBST:
             case GSUB_LOOKUP_LIGATURE_SUBST:
             case GSUB_LOOKUP_CONTEXTUAL_SUBST:
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
