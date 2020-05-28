@@ -59,6 +59,7 @@ enum media_engine_flags
 {
     /* MF_MEDIA_ENGINE_CREATEFLAGS_MASK is 0x1f. */
     FLAGS_ENGINE_SHUT_DOWN = 0x20,
+    FLAGS_ENGINE_AUTO_PLAY = 0x40,
 };
 
 struct media_engine
@@ -73,6 +74,14 @@ struct media_engine
     unsigned int flags;
     CRITICAL_SECTION cs;
 };
+
+static void media_engine_set_flag(struct media_engine *engine, unsigned int mask, BOOL value)
+{
+    if (value)
+        engine->flags |= mask;
+    else
+        engine->flags &= ~mask;
+}
 
 static inline struct media_engine *impl_from_IMFMediaEngine(IMFMediaEngine *iface)
 {
@@ -306,16 +315,29 @@ static BOOL WINAPI media_engine_IsEnded(IMFMediaEngine *iface)
 
 static BOOL WINAPI media_engine_GetAutoPlay(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    BOOL value;
 
-    return FALSE;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    value = !!(engine->flags & FLAGS_ENGINE_AUTO_PLAY);
+    LeaveCriticalSection(&engine->cs);
+
+    return value;
 }
 
 static HRESULT WINAPI media_engine_SetAutoPlay(IMFMediaEngine *iface, BOOL autoplay)
 {
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+
     FIXME("(%p, %d): stub.\n", iface, autoplay);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&engine->cs);
+    media_engine_set_flag(engine, FLAGS_ENGINE_AUTO_PLAY, autoplay);
+    LeaveCriticalSection(&engine->cs);
+
+    return S_OK;
 }
 
 static BOOL WINAPI media_engine_GetLoop(IMFMediaEngine *iface)

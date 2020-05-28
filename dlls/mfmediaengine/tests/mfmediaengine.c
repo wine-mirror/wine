@@ -338,7 +338,6 @@ todo_wine
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_SetAutoPlay(media_engine, TRUE);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     state = IMFMediaEngine_GetAutoPlay(media_engine);
