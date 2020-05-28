@@ -2097,14 +2097,29 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
-{
-    CONTEXT context;
-
-    RtlCaptureContext( &context );
-    rec->ExceptionAddress = (LPVOID)context.Pc;
-    RtlRaiseStatus( NtRaiseException( rec, &context, TRUE ));
-}
+__ASM_STDCALL_FUNC( RtlRaiseException, 4,
+                   "sub sp, sp, #0x3b0\n\t" /* 0x390 (context) + 0x20 */
+                   "stp x29, x30, [sp]\n\t"
+                   __ASM_CFI(".cfi_def_cfa x29, 944\n\t")
+                   __ASM_CFI(".cfi_offset x30, -936\n\t")
+                   __ASM_CFI(".cfi_offset x29, -944\n\t")
+                   "mov x29, sp\n\t"
+                   "str x0,  [sp, #0x10]\n\t"
+                   "add x0,  sp, #0x20\n\t"
+                   "bl " __ASM_NAME("RtlCaptureContext") "\n\t"
+                   "add x1,  sp, #0x20\n\t"      /* context pointer */
+                   "add x2,  sp, #0x3b0\n\t"     /* orig stack pointer */
+                   "str x2,  [x1, #0x100]\n\t"   /* context->Sp */
+                   "ldr x0,  [sp, #0x10]\n\t"    /* original first parameter */
+                   "str x0,  [x1, #0x08]\n\t"    /* context->X0 */
+                   "ldp x4, x5, [sp]\n\t"        /* frame pointer, return address */
+                   "stp x4, x5, [x1, #0xf0]\n\t" /* context->Fp, Lr */
+                   "str  x5, [x1, #0x108]\n\t"   /* context->Pc */
+                   "str  x5, [x1, #0x108]\n\t"   /* context->Pc */
+                   "str  x5, [x0, #0x10]\n\t"    /* rec->ExceptionAddress */
+                   "mov  x2, #1\n\t"
+                   "bl " __ASM_NAME("NtRaiseException") "\n\t"
+                   "bl " __ASM_NAME("RtlRaiseStatus") /* does not return */ );
 
 /*************************************************************************
  *             RtlCaptureStackBackTrace (NTDLL.@)
