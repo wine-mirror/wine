@@ -35,6 +35,8 @@
 
 static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 
+static IMFMediaEngineClassFactory *factory;
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown *obj, ULONG ref, int line)
 {
@@ -114,24 +116,19 @@ static void test_factory(void)
     UINT token;
     HRESULT hr;
 
-    CoInitialize(NULL);
-
-    hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IMFMediaEngineClassFactory, (void **)&factory);
-    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */,
-       "Failed to create class factory, hr %#x.\n", hr);
-
-    hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, (IUnknown *)factory, CLSCTX_INPROC_SERVER,
-                          &IID_IMFMediaEngineClassFactory, (void **)&factory2);
-    ok(hr == CLASS_E_NOAGGREGATION || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */,
-       "Unexpected hr %#x.\n", hr);
-
-    if (!factory)
+    hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IMFMediaEngineClassFactory,
+            (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */, "Failed to create class factory, hr %#x.\n", hr);
+    if (FAILED(hr))
     {
-        win_skip("Not IMFMediaEngineClassFactory support.\n");
-        CoUninitialize();
+        win_skip("Media Engine is not supported.\n");
         return;
     }
+
+    /* Aggregation is not supported. */
+    hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, (IUnknown *)factory, CLSCTX_INPROC_SERVER,
+            &IID_IMFMediaEngineClassFactory, (void **)&factory2);
+    ok(hr == CLASS_E_NOAGGREGATION, "Unexpected hr %#x.\n", hr);
 
     hr = pMFCreateDXGIDeviceManager(&token, &manager);
     ok(hr == S_OK, "MFCreateDXGIDeviceManager failed: %#x.\n", hr);
@@ -163,13 +160,64 @@ static void test_factory(void)
     IMFAttributes_Release(attributes);
     IMFDXGIDeviceManager_Release(manager);
     IMFMediaEngineClassFactory_Release(factory);
+}
 
-    CoUninitialize();
+static void test_CreateInstance(void)
+{
+    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+    IMFMediaEngineNotify *notify = &notify_impl.IMFMediaEngineNotify_iface;
+    IMFDXGIDeviceManager *manager;
+    IMFMediaEngine *media_engine;
+    IMFAttributes *attributes;
+    UINT token;
+    HRESULT hr;
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "Failed to create dxgi device manager, hr %#x.\n", hr);
+
+    hr = MFCreateAttributes(&attributes, 3);
+    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+            attributes, &media_engine);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_OPM_HWND, NULL);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE,
+            attributes, &media_engine);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    IMFAttributes_DeleteAllItems(attributes);
+
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)notify);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, MF_MEDIA_ENGINE_WAITFORSTABLE_STATE, attributes, &media_engine);
+    ok(hr == S_OK, "Failed to create media engine, hr %#x.\n", hr);
+
+    IMFMediaEngine_Release(media_engine);
+    IMFAttributes_Release(attributes);
+    IMFDXGIDeviceManager_Release(manager);
 }
 
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
+
+    CoInitialize(NULL);
+
+    hr = CoCreateInstance(&CLSID_MFMediaEngineClassFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IMFMediaEngineClassFactory,
+            (void **)&factory);
+    if (FAILED(hr))
+    {
+        win_skip("Media Engine is not supported.\n");
+        CoUninitialize();
+        return;
+    }
 
     init_functions();
 
@@ -177,6 +225,11 @@ START_TEST(mfmediaengine)
     ok(hr == S_OK, "MFStartup failed: %#x.\n", hr);
 
     test_factory();
+    test_CreateInstance();
+
+    IMFMediaEngineClassFactory_Release(factory);
+
+    CoUninitialize();
 
     MFShutdown();
 }
