@@ -859,7 +859,7 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
                 dispatch.ContextRecord = &context;
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
-                                  &context, NULL, &frame, NULL );
+                                  &context, &dispatch.HandlerData, &frame, NULL );
                 goto unwind_done;
             }
             default:
@@ -889,7 +889,7 @@ static NTSTATUS call_function_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_con
                 dispatch.ContextRecord = &context;
                 RtlVirtualUnwind( UNW_FLAG_NHANDLER, dispatch.ImageBase,
                                   dispatch.ControlPc, dispatch.FunctionEntry,
-                                  &context, NULL, &frame, NULL );
+                                  &context, &dispatch.HandlerData, &frame, NULL );
                 teb_frame = teb_frame->Prev;
                 goto unwind_done;
             }
