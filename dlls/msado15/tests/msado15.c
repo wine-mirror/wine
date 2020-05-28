@@ -666,6 +666,7 @@ static void test_Connection(void)
     _Connection *connection;
     IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
+    IConnectionPointContainer *pointcontainer;
     LONG state, timeout;
     BSTR str, str2;
 
@@ -678,6 +679,10 @@ static void test_Connection(void)
     hr = _Connection_QueryInterface(connection, &IID_ISupportErrorInfo, (void**)&errorinfo);
     ok(hr == S_OK, "Failed to get ISupportErrorInfo interface\n");
     ISupportErrorInfo_Release(errorinfo);
+
+    hr = _Connection_QueryInterface(connection, &IID_IConnectionPointContainer, (void**)&pointcontainer);
+    ok(hr == S_OK, "Failed to get IConnectionPointContainer interface %08x\n", hr);
+    IConnectionPointContainer_Release(pointcontainer);
 
 if (0)   /* Crashes on windows */
 {

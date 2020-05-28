@@ -20,6 +20,8 @@
 #include "windef.h"
 #include "winbase.h"
 #define COBJMACROS
+#include "initguid.h"
+#include "ocidl.h"
 #include "objbase.h"
 #include "msado15_backcompat.h"
 
@@ -32,12 +34,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
 struct connection
 {
-    _Connection       Connection_iface;
-    ISupportErrorInfo ISupportErrorInfo_iface;
-    LONG              refs;
-    ObjectStateEnum   state;
-    LONG              timeout;
-    WCHAR            *datasource;
+    _Connection               Connection_iface;
+    ISupportErrorInfo         ISupportErrorInfo_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
+    LONG                      refs;
+    ObjectStateEnum           state;
+    LONG                      timeout;
+    WCHAR                    *datasource;
 };
 
 static inline struct connection *impl_from_Connection( _Connection *iface )
@@ -48,6 +51,11 @@ static inline struct connection *impl_from_Connection( _Connection *iface )
 static inline struct connection *impl_from_ISupportErrorInfo( ISupportErrorInfo *iface )
 {
     return CONTAINING_RECORD( iface, struct connection, ISupportErrorInfo_iface );
+}
+
+static inline struct connection *impl_from_IConnectionPointContainer( IConnectionPointContainer *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection, IConnectionPointContainer_iface );
 }
 
 static ULONG WINAPI connection_AddRef( _Connection *iface )
@@ -82,6 +90,10 @@ static HRESULT WINAPI connection_QueryInterface( _Connection *iface, REFIID riid
     else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
         *obj = &connection->ISupportErrorInfo_iface;
+    }
+    else if (IsEqualGUID( riid, &IID_IConnectionPointContainer ))
+    {
+        *obj = &connection->IConnectionPointContainer_iface;
     }
     else
     {
@@ -397,6 +409,50 @@ static const struct ISupportErrorInfoVtbl support_error_vtbl =
     supporterror_InterfaceSupportsErrorInfo
 };
 
+static HRESULT WINAPI connpointcontainer_QueryInterface( IConnectionPointContainer *iface,
+        REFIID riid, void **obj )
+{
+    struct connection *connection = impl_from_IConnectionPointContainer( iface );
+    return connection_QueryInterface( &connection->Connection_iface, riid, obj );
+}
+
+static ULONG WINAPI connpointcontainer_AddRef( IConnectionPointContainer *iface )
+{
+    struct connection *connection = impl_from_IConnectionPointContainer( iface );
+    return connection_AddRef( &connection->Connection_iface );
+}
+
+static ULONG WINAPI connpointcontainer_Release( IConnectionPointContainer *iface )
+{
+    struct connection *connection = impl_from_IConnectionPointContainer( iface );
+    return connection_Release( &connection->Connection_iface );
+}
+
+static HRESULT WINAPI connpointcontainer_EnumConnectionPoints( IConnectionPointContainer *iface,
+        IEnumConnectionPoints **points )
+{
+    struct connection *connection = impl_from_IConnectionPointContainer( iface );
+    FIXME( "%p, %p\n", connection, points );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connpointcontainer_FindConnectionPoint( IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **point )
+{
+    struct connection *connection = impl_from_IConnectionPointContainer( iface );
+    FIXME( "%p, %s, %p\n", connection, debugstr_guid( riid ), point );
+    return E_NOTIMPL;
+}
+
+static const struct IConnectionPointContainerVtbl connpointcontainer_vtbl =
+{
+    connpointcontainer_QueryInterface,
+    connpointcontainer_AddRef,
+    connpointcontainer_Release,
+    connpointcontainer_EnumConnectionPoints,
+    connpointcontainer_FindConnectionPoint
+};
+
 HRESULT Connection_create( void **obj )
 {
     struct connection *connection;
@@ -404,6 +460,7 @@ HRESULT Connection_create( void **obj )
     if (!(connection = heap_alloc( sizeof(*connection) ))) return E_OUTOFMEMORY;
     connection->Connection_iface.lpVtbl = &connection_vtbl;
     connection->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
+    connection->IConnectionPointContainer_iface.lpVtbl = &connpointcontainer_vtbl;
     connection->refs = 1;
     connection->state = adStateClosed;
     connection->timeout = 30;
