@@ -332,15 +332,32 @@ static HRESULT WINAPI HTMLTableCell_get_borderColorDark(IHTMLTableCell *iface, V
 static HRESULT WINAPI HTMLTableCell_put_width(IHTMLTableCell *iface, VARIANT v)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    hres = variant_to_nsstr(&v, FALSE, &nsstr);
+    if(FAILED(hres))
+        return hres;
+
+    nsres = nsIDOMHTMLTableCellElement_SetWidth(This->nscell, &nsstr);
+    nsAString_Finish(&nsstr);
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLTableCell_get_width(IHTMLTableCell *iface, VARIANT *p)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLTableCellElement_GetWidth(This->nscell, &nsstr);
+    return return_nsstr_variant(nsres, &nsstr, NSSTR_IMPLICIT_PX, p);
 }
 
 static HRESULT WINAPI HTMLTableCell_put_height(IHTMLTableCell *iface, VARIANT v)

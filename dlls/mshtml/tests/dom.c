@@ -7649,6 +7649,29 @@ static void test_td_elem(IHTMLDocument2 *doc, IHTMLElement *div)
     ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"110"), "height = %s\n", wine_dbgstr_variant(&v));
     VariantClear(&v);
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 200;
+    hres = IHTMLTableCell_put_width(cell, v);
+    ok(hres == S_OK, "put_width failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_width(cell, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"200"), "width = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"210px");
+    hres = IHTMLTableCell_put_width(cell, v);
+    ok(hres == S_OK, "put_width failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&v));
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_width(cell, &v);
+    ok(hres == S_OK, "get_width failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"210"), "width = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
     /* Restore Original */
     hres = IHTMLTableCell_put_bgColor(cell, vDefaultbg);
     ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
