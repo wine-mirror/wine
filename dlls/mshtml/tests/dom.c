@@ -7564,7 +7564,7 @@ static void test_td_elem(IHTMLDocument2 *doc, IHTMLElement *div)
     HRESULT hres;
     LONG lval;
     BSTR str;
-    VARIANT vbg, vDefaultbg;
+    VARIANT vbg, vDefaultbg, v;
 
     test_elem_set_innerhtml((IUnknown*)div,
                             L"<table id=\"tbl\"><tbody>"
@@ -7625,6 +7625,29 @@ static void test_td_elem(IHTMLDocument2 *doc, IHTMLElement *div)
     ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!lstrcmpW(V_BSTR(&vbg), L"#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 100;
+    hres = IHTMLTableCell_put_height(cell, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_height(cell, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"100"), "height = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"110px");
+    hres = IHTMLTableCell_put_height(cell, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+    SysFreeString(V_BSTR(&v));
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLTableCell_get_height(cell, &v);
+    ok(hres == S_OK, "get_height failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !lstrcmpW(V_BSTR(&v), L"110"), "height = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
 
     /* Restore Original */
     hres = IHTMLTableCell_put_bgColor(cell, vDefaultbg);
