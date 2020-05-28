@@ -2141,6 +2141,7 @@ AC_CACHE_CHECK([whether CFI directives are supported in assembly code], ac_cv_c_
                       ac_cv_c_cfi_support="yes",ac_cv_c_cfi_support="no"))
 if test "$ac_cv_c_cfi_support" = "yes"
 then
+   DLLFLAGS="$DLLFLAGS -fasynchronous-unwind-tables"
    LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
 else
    if test "x$enable_win64" = "xyes"

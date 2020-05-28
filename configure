@@ -17909,6 +17909,7 @@ fi
 $as_echo "$ac_cv_c_cfi_support" >&6; }
 if test "$ac_cv_c_cfi_support" = "yes"
 then
+   DLLFLAGS="$DLLFLAGS -fasynchronous-unwind-tables"
    LDDLLFLAGS="$LDDLLFLAGS -fasynchronous-unwind-tables"
 else
    if test "x$enable_win64" = "xyes"
