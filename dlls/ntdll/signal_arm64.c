@@ -527,6 +527,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
         *frame = context->Sp;
         context->Pc = context->u.s.Lr;
         context->Sp = context->Sp + sizeof(ULONG64);
+        context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
         return STATUS_SUCCESS;
     }
 
@@ -577,6 +578,7 @@ static NTSTATUS libunwind_virtual_unwind( ULONG_PTR ip, ULONG_PTR *frame, CONTEX
     unw_get_reg( &cursor, UNW_AARCH64_X30, (unw_word_t *)&context->u.s.Lr );
     unw_get_reg( &cursor, UNW_AARCH64_SP,  (unw_word_t *)&context->Sp );
     context->Pc = context->u.s.Lr;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
 
     TRACE( "next function pc=%016lx%s\n", context->Pc, rc ? "" : " (last frame)" );
     TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
@@ -614,10 +616,17 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     dispatch->ScopeIndex       = 0;
     dispatch->EstablisherFrame = 0;
     dispatch->ControlPc        = context->Pc;
+    /*
+     * TODO: CONTEXT_UNWOUND_TO_CALL should be cleared if unwound past a
+     * signal frame.
+     */
+    dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
 
     /* first look for PE exception information */
 
-    if ((dispatch->FunctionEntry = lookup_function_info( context->Pc, &dispatch->ImageBase, &module )))
+    if ((dispatch->FunctionEntry = lookup_function_info(
+             context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0),
+             &dispatch->ImageBase, &module )))
     {
         dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, context->Pc,
                                                       dispatch->FunctionEntry, context,
@@ -654,6 +663,7 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     dispatch->EstablisherFrame = context->u.s.Fp;
     dispatch->LanguageHandler = NULL;
     context->Pc = context->u.s.Lr;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     return STATUS_SUCCESS;
 }
 
@@ -1758,6 +1768,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 
     TRACE( "ret: lr=%lx sp=%lx handler=%p\n", context->u.s.Lr, context->Sp, handler );
     context->Pc = context->u.s.Lr;
+    context->ContextFlags |= CONTEXT_UNWOUND_TO_CALL;
     *frame_ret = context->Sp;
     return handler;
 }
