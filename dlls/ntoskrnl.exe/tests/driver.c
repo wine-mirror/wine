@@ -382,6 +382,14 @@ static void test_critical_region(BOOL is_dispatcher)
        "KeAreApcsDisabled returned %x\n", result);
 }
 
+static void sleep_1ms(void)
+{
+    LARGE_INTEGER timeout;
+
+    timeout.QuadPart = -1 * 10000;
+    KeDelayExecutionThread( KernelMode, FALSE, &timeout );
+}
+
 static void sleep(void)
 {
     LARGE_INTEGER timeout;
@@ -447,18 +455,32 @@ static void WINAPI remove_lock_thread(void *arg)
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
 
+struct test_sync_dpc_context
+{
+    BOOL called;
+};
+
+static void WINAPI test_sync_dpc(KDPC *dpc, void *context, void *system_argument1, void *system_argument2)
+{
+    struct test_sync_dpc_context *c = context;
+
+    c->called = TRUE;
+}
+
 static void test_sync(void)
 {
     static const ULONG wine_tag = 0x454e4957; /* WINE */
-    KSEMAPHORE semaphore, semaphore2;
+    struct test_sync_dpc_context dpc_context;
     KEVENT manual_event, auto_event, *event;
-    KTIMER timer;
+    KSEMAPHORE semaphore, semaphore2;
     IO_REMOVE_LOCK remove_lock;
     LARGE_INTEGER timeout;
     OBJECT_ATTRIBUTES attr;
     HANDLE handle, thread;
     void *objs[2];
+    KTIMER timer;
     NTSTATUS ret;
+    KDPC dpc;
     int i;
 
     KeInitializeEvent(&manual_event, NotificationEvent, FALSE);
@@ -711,13 +733,19 @@ static void test_sync(void)
     KeCancelTimer(&timer);
     KeInitializeTimerEx(&timer, SynchronizationTimer);
 
-    KeSetTimerEx(&timer, timeout, 0, NULL);
+    memset(&dpc_context, 0, sizeof(dpc_context));
+    KeInitializeDpc(&dpc, test_sync_dpc, &dpc_context);
+
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
 
     ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(!dpc_context.called, "DPC was called unexpectedly.\n");
 
     ret = wait_single(&timer, -40 * 10000);
     ok(ret == 0, "got %#x\n", ret);
+    sleep_1ms();
+    ok(dpc_context.called, "DPC was not called.\n");
 
     ret = wait_single(&timer, -40 * 10000);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
@@ -742,6 +770,60 @@ static void test_sync(void)
 
     KeCancelTimer(&timer);
 
+    /* Test cancelling timer. */
+    dpc_context.called = 0;
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(!dpc_context.called, "DPC was called.\n");
+
+    KeCancelTimer(&timer);
+    dpc_context.called = 0;
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(!dpc_context.called, "DPC was called.\n");
+
+    KeSetTimerEx(&timer, timeout, 20, &dpc);
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    KeCancelTimer(&timer);
+    /* Test reinitializing timer. */
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+    KeInitializeTimerEx(&timer, SynchronizationTimer);
+    dpc_context.called = 0;
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+    sleep_1ms();
+    todo_wine ok(dpc_context.called, "DPC was not called.\n");
+
+    ret = wait_single(&timer, 0);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    sleep_1ms();
+    todo_wine ok(dpc_context.called, "DPC was not called.\n");
+
+    dpc_context.called = 0;
+    KeSetTimerEx(&timer, timeout, 0, &dpc);
+    ret = wait_single(&timer, -40 * 10000);
+    ok(ret == 0, "got %#x\n", ret);
+    sleep_1ms();
+    ok(dpc_context.called, "DPC was not called.\n");
+
+    KeCancelTimer(&timer);
     /* remove locks */
 
     IoInitializeRemoveLockEx(&remove_lock, wine_tag, 0, 0, sizeof(IO_REMOVE_LOCK_COMMON_BLOCK));
