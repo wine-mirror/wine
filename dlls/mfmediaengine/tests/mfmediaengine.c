@@ -105,6 +105,34 @@ static IMFMediaEngineNotifyVtbl media_engine_notify_vtbl =
     media_engine_notify_EventNotify,
 };
 
+static IMFMediaEngine *create_media_engine(IMFMediaEngineNotify *callback)
+{
+    IMFDXGIDeviceManager *manager;
+    IMFMediaEngine *media_engine;
+    IMFAttributes *attributes;
+    UINT token;
+    HRESULT hr;
+
+    hr = pMFCreateDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "Failed to create dxgi device manager, hr %#x.\n", hr);
+
+    hr = MFCreateAttributes(&attributes, 3);
+    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, (IUnknown *)callback);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFAttributes_SetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, DXGI_FORMAT_UNKNOWN);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaEngineClassFactory_CreateInstance(factory, 0, attributes, &media_engine);
+    ok(hr == S_OK, "Failed to create media engine, hr %#x.\n", hr);
+
+    IMFAttributes_Release(attributes);
+    IMFDXGIDeviceManager_Release(manager);
+
+    return media_engine;
+}
+
 static void test_factory(void)
 {
     struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
@@ -204,6 +232,173 @@ static void test_CreateInstance(void)
     IMFDXGIDeviceManager_Release(manager);
 }
 
+static void test_Shutdown(void)
+{
+    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    IMFMediaTimeRange *time_range;
+    IMFMediaEngine *media_engine;
+    unsigned int state;
+    DWORD cx, cy;
+    double val;
+    HRESULT hr;
+    BSTR str;
+
+    media_engine = create_media_engine(callback);
+
+    hr = IMFMediaEngine_Shutdown(media_engine);
+todo_wine
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_Shutdown(media_engine);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN || broken(hr == S_OK) /* before win10 */, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_SetSource(media_engine, NULL);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_GetCurrentSource(media_engine, &str);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_GetNetworkState(media_engine);
+    ok(!state, "Unexpected state %d.\n", state);
+
+    /* Preload mode is still accessible. */
+    state = IMFMediaEngine_GetPreload(media_engine);
+todo_wine
+    ok(!state, "Unexpected state %d.\n", state);
+
+    hr = IMFMediaEngine_SetPreload(media_engine, MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_GetPreload(media_engine);
+todo_wine
+    ok(state == MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC, "Unexpected state %d.\n", state);
+
+    hr = IMFMediaEngine_GetBuffered(media_engine, &time_range);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_Load(media_engine);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    str = SysAllocString(L"video/mp4");
+    hr = IMFMediaEngine_CanPlayType(media_engine, str, &state);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    SysFreeString(str);
+
+    state = IMFMediaEngine_GetReadyState(media_engine);
+    ok(!state, "Unexpected state %d.\n", state);
+
+    state = IMFMediaEngine_IsSeeking(media_engine);
+    ok(!state, "Unexpected state %d.\n", state);
+
+    val = IMFMediaEngine_GetCurrentTime(media_engine);
+    ok(val == 0.0, "Unexpected time %f.\n", val);
+
+    hr = IMFMediaEngine_SetCurrentTime(media_engine, 1.0);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    val = IMFMediaEngine_GetStartTime(media_engine);
+    ok(val == 0.0, "Unexpected time %f.\n", val);
+
+    state = IMFMediaEngine_IsPaused(media_engine);
+todo_wine
+    ok(!!state, "Unexpected state %d.\n", state);
+
+    val = IMFMediaEngine_GetDefaultPlaybackRate(media_engine);
+todo_wine
+    ok(val == 1.0, "Unexpected rate %f.\n", val);
+
+    hr = IMFMediaEngine_SetDefaultPlaybackRate(media_engine, 2.0);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    val = IMFMediaEngine_GetPlaybackRate(media_engine);
+todo_wine
+    ok(val == 1.0, "Unexpected rate %f.\n", val);
+
+    hr = IMFMediaEngine_GetPlayed(media_engine, &time_range);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_GetSeekable(media_engine, &time_range);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_IsEnded(media_engine);
+    ok(!state, "Unexpected state %d.\n", state);
+
+    /* Autoplay mode is still accessible. */
+    state = IMFMediaEngine_GetAutoPlay(media_engine);
+    ok(!state, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetAutoPlay(media_engine, TRUE);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_GetAutoPlay(media_engine);
+todo_wine
+    ok(!!state, "Unexpected state.\n");
+
+    /* Loop mode is still accessible. */
+    state = IMFMediaEngine_GetLoop(media_engine);
+    ok(!state, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetLoop(media_engine, TRUE);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_GetLoop(media_engine);
+todo_wine
+    ok(!!state, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_Play(media_engine);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_Pause(media_engine);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_GetMuted(media_engine);
+    ok(!state, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetMuted(media_engine, TRUE);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    val = IMFMediaEngine_GetVolume(media_engine);
+todo_wine
+    ok(val == 1.0, "Unexpected value %f.\n", val);
+
+    val = IMFMediaEngine_SetVolume(media_engine, 2.0);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_HasVideo(media_engine);
+    ok(!state, "Unexpected state.\n");
+
+    state = IMFMediaEngine_HasAudio(media_engine);
+    ok(!state, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_GetNativeVideoSize(media_engine, &cx, &cy);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_GetVideoAspectRatio(media_engine, &cx, &cy);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaEngine_Release(media_engine);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -226,6 +421,7 @@ START_TEST(mfmediaengine)
 
     test_factory();
     test_CreateInstance();
+    test_Shutdown();
 
     IMFMediaEngineClassFactory_Release(factory);
 
