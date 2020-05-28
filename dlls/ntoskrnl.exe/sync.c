@@ -83,9 +83,11 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
         {
             switch (objs[i]->Type)
             {
+            case TYPE_MANUAL_TIMER:
             case TYPE_MANUAL_EVENT:
                 objs[i]->WaitListHead.Blink = CreateEventW( NULL, TRUE, objs[i]->SignalState, NULL );
                 break;
+            case TYPE_AUTO_TIMER:
             case TYPE_AUTO_EVENT:
                 objs[i]->WaitListHead.Blink = CreateEventW( NULL, FALSE, objs[i]->SignalState, NULL );
                 break;
@@ -99,9 +101,6 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
                     semaphore->Header.SignalState, semaphore->Limit, NULL );
                 break;
             }
-            case TYPE_MANUAL_TIMER:
-            case TYPE_AUTO_TIMER:
-                break;
             }
         }
 
@@ -137,6 +136,8 @@ NTSTATUS WINAPI KeWaitForMultipleObjects(ULONG count, void *pobjs[],
         {
             switch (objs[i]->Type)
             {
+            case TYPE_AUTO_TIMER:
+            case TYPE_MANUAL_TIMER:
             case TYPE_MANUAL_EVENT:
             case TYPE_AUTO_EVENT:
             case TYPE_SEMAPHORE:
@@ -394,7 +395,11 @@ static void CALLBACK ke_timer_complete_proc(PTP_CALLBACK_INSTANCE instance, void
 
     TRACE("instance %p, timer %p, tp_timer %p.\n", instance, timer, tp_timer);
 
-    SetEvent(timer->Header.WaitListHead.Blink);
+    EnterCriticalSection( &sync_cs );
+    timer->Header.SignalState = TRUE;
+    if (timer->Header.WaitListHead.Blink)
+        SetEvent(timer->Header.WaitListHead.Blink);
+    LeaveCriticalSection( &sync_cs );
 }
 
 /***********************************************************************
@@ -440,7 +445,6 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
 
     ret = timer->Header.Inserted;
     timer->Header.Inserted = TRUE;
-    timer->Header.WaitListHead.Blink = CreateEventW( NULL, timer->Header.Type == TYPE_MANUAL_TIMER, FALSE, NULL );
 
     if (!timer->TimerListEntry.Blink)
         timer->TimerListEntry.Blink = (void *)CreateThreadpoolTimer(ke_timer_complete_proc, timer, NULL);
@@ -478,11 +482,15 @@ BOOLEAN WINAPI KeCancelTimer( KTIMER *timer )
             timer->TimerListEntry.Blink = NULL;
         }
     }
+    timer->Header.SignalState = FALSE;
+    if (timer->Header.WaitListHead.Blink && !*((ULONG_PTR *)&timer->Header.WaitListHead.Flink))
+    {
+        CloseHandle(timer->Header.WaitListHead.Blink);
+        timer->Header.WaitListHead.Blink = NULL;
+    }
 
     ret = timer->Header.Inserted;
     timer->Header.Inserted = FALSE;
-    CloseHandle(timer->Header.WaitListHead.Blink);
-    timer->Header.WaitListHead.Blink = NULL;
     LeaveCriticalSection( &sync_cs );
 
     return ret;
