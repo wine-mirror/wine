@@ -1459,6 +1459,20 @@ struct wined3d_blitter *wined3d_cpu_blitter_create(void)
     return blitter;
 }
 
+static bool wined3d_is_colour_blit(enum wined3d_blit_op blit_op)
+{
+    switch (blit_op)
+    {
+        case WINED3D_BLIT_OP_COLOR_BLIT:
+        case WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST:
+        case WINED3D_BLIT_OP_COLOR_BLIT_CKEY:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         const struct wined3d_box *src_box, DWORD flags, const struct wined3d_blt_fx *fx,
@@ -1701,7 +1715,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     if (!(dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
         dst_location = dst_texture->resource.map_binding;
     else if (dst_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE
-            && (scale || convert || blit_op != WINED3D_BLIT_OP_COLOR_BLIT))
+            && (scale || convert || !wined3d_is_colour_blit(blit_op)))
         dst_location = WINED3D_LOCATION_RB_RESOLVED;
     else
         dst_location = dst_texture->resource.draw_binding;
