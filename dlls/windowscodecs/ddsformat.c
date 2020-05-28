@@ -93,6 +93,18 @@ typedef struct {
     DWORD miscFlags2;
 } DDS_HEADER_DXT10;
 
+typedef struct dds_info {
+    UINT width;
+    UINT height;
+    UINT depth;
+    UINT mip_levels;
+    UINT array_size;
+    UINT frame_count;
+    DXGI_FORMAT format;
+    WICDdsDimension dimension;
+    WICDdsAlphaMode alpha_mode;
+} dds_info;
+
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICDdsDecoder IWICDdsDecoder_iface;
@@ -102,6 +114,7 @@ typedef struct DdsDecoder {
     CRITICAL_SECTION lock;
     DDS_HEADER header;
     DDS_HEADER_DXT10 header_dxt10;
+    dds_info info;
 } DdsDecoder;
 
 typedef struct DdsFrameDecode {
@@ -172,6 +185,45 @@ static WICDdsAlphaMode get_alpha_mode_from_fourcc(DWORD fourcc)
         return WICDdsAlphaModeStraight;
     default:
         return WICDdsAlphaModeUnknown;
+    }
+}
+
+static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *header_dxt10)
+{
+    int i;
+    UINT depth;
+
+    info->width = header->width;
+    info->height = header->height;
+    info->depth = 1;
+    info->mip_levels = 1;
+    info->array_size = 1;
+    if (header->depth) info->depth = header->depth;
+    if (header->mipMapCount) info->mip_levels = header->mipMapCount;
+
+    if (has_extended_header(header)) {
+        if (header_dxt10->arraySize) info->array_size = header_dxt10->arraySize;
+        info->format = header_dxt10->dxgiFormat;
+        info->dimension = get_dimension(NULL, header_dxt10);
+        info->alpha_mode = header_dxt10->miscFlags2 & 0x00000008;
+    } else {
+        info->format = get_format_from_fourcc(header->ddspf.fourCC);
+        info->dimension = get_dimension(header, NULL);
+        info->alpha_mode = get_alpha_mode_from_fourcc(header->ddspf.fourCC);
+    }
+
+    /* get frame count */
+    if (info->depth == 1) {
+        info->frame_count = info->array_size * info->mip_levels;
+    } else {
+        info->frame_count = 0;
+        depth = info->depth;
+        for (i = 0; i < info->mip_levels; i++)
+        {
+            info->frame_count += depth;
+            if (depth > 1) depth /= 2;
+        }
+        info->frame_count *= info->array_size;
     }
 }
 
@@ -497,6 +549,8 @@ static HRESULT WINAPI DdsDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         }
     }
 
+    get_dds_info(&This->info, &This->header, &This->header_dxt10);
+
     This->initialized = TRUE;
     This->stream = pIStream;
     IStream_AddRef(pIStream);
@@ -571,33 +625,17 @@ static HRESULT WINAPI DdsDecoder_GetFrameCount(IWICBitmapDecoder *iface,
                                                UINT *pCount)
 {
     DdsDecoder *This = impl_from_IWICBitmapDecoder(iface);
-    UINT arraySize = 1, mipMapCount = 1, depth = 1;
-    int i;
 
     if (!pCount) return E_INVALIDARG;
     if (!This->initialized) return WINCODEC_ERR_WRONGSTATE;
 
     EnterCriticalSection(&This->lock);
 
-    if (This->header.mipMapCount) mipMapCount = This->header.mipMapCount;
-    if (This->header.depth) depth = This->header.depth;
-    if (has_extended_header(&This->header) && This->header_dxt10.arraySize) arraySize = This->header_dxt10.arraySize;
-
-    if (depth == 1) {
-        *pCount = arraySize * mipMapCount;
-    } else {
-        *pCount = 0;
-        for (i = 0; i < mipMapCount; i++)
-        {
-            *pCount += depth;
-            if (depth > 1) depth /= 2;
-        }
-        *pCount *= arraySize;
-    }
+    *pCount = This->info.frame_count;
 
     LeaveCriticalSection(&This->lock);
 
-    TRACE("(%p) <-- %d\n", iface, *pCount);
+    TRACE("(%p) -> %d\n", iface, *pCount);
 
     return S_OK;
 }
@@ -667,24 +705,14 @@ static HRESULT WINAPI DdsDecoder_Dds_GetParameters(IWICDdsDecoder *iface,
         goto end;
     }
 
-    parameters->Width = This->header.width;
-    parameters->Height = This->header.height;
-    parameters->Depth = 1;
-    parameters->MipLevels = 1;
-    parameters->ArraySize = 1;
-    if (This->header.depth) parameters->Depth = This->header.depth;
-    if (This->header.mipMapCount) parameters->MipLevels = This->header.mipMapCount;
-
-    if (has_extended_header(&This->header)) {
-        if (This->header_dxt10.arraySize) parameters->ArraySize = This->header_dxt10.arraySize;
-        parameters->DxgiFormat = This->header_dxt10.dxgiFormat;
-        parameters->Dimension = get_dimension(NULL, &This->header_dxt10);
-        parameters->AlphaMode = This->header_dxt10.miscFlags2 & 0x00000008;
-    } else {
-        parameters->DxgiFormat = get_format_from_fourcc(This->header.ddspf.fourCC);
-        parameters->Dimension = get_dimension(&This->header, NULL);
-        parameters->AlphaMode = get_alpha_mode_from_fourcc(This->header.ddspf.fourCC);
-    }
+    parameters->Width = This->info.width;
+    parameters->Height = This->info.height;
+    parameters->Depth = This->info.depth;
+    parameters->MipLevels = This->info.mip_levels;
+    parameters->ArraySize = This->info.array_size;
+    parameters->DxgiFormat = This->info.format;
+    parameters->Dimension = This->info.dimension;
+    parameters->AlphaMode = This->info.alpha_mode;
 
     TRACE("(%p) -> (%dx%d depth=%d mipLevels=%d arraySize=%d dxgiFormat=0x%x dimension=0x%x alphaMode=0x%x)\n",
           iface, parameters->Width, parameters->Height, parameters->Depth, parameters->MipLevels,
