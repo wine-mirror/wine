@@ -60,6 +60,7 @@ enum media_engine_flags
     /* MF_MEDIA_ENGINE_CREATEFLAGS_MASK is 0x1f. */
     FLAGS_ENGINE_SHUT_DOWN = 0x20,
     FLAGS_ENGINE_AUTO_PLAY = 0x40,
+    FLAGS_ENGINE_LOOP = 0x80,
 };
 
 struct media_engine
@@ -342,16 +343,29 @@ static HRESULT WINAPI media_engine_SetAutoPlay(IMFMediaEngine *iface, BOOL autop
 
 static BOOL WINAPI media_engine_GetLoop(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    BOOL value;
 
-    return FALSE;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    value = !!(engine->flags & FLAGS_ENGINE_LOOP);
+    LeaveCriticalSection(&engine->cs);
+
+    return value;
 }
 
 static HRESULT WINAPI media_engine_SetLoop(IMFMediaEngine *iface, BOOL loop)
 {
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+
     FIXME("(%p, %d): stub.\n", iface, loop);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&engine->cs);
+    media_engine_set_flag(engine, FLAGS_ENGINE_LOOP, loop);
+    LeaveCriticalSection(&engine->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
