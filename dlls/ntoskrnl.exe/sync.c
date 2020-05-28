@@ -443,7 +443,9 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
 
     EnterCriticalSection( &sync_cs );
 
-    ret = timer->Header.Inserted;
+    if ((ret = timer->Header.Inserted))
+        KeCancelTimer(timer);
+
     timer->Header.Inserted = TRUE;
 
     if (!timer->TimerListEntry.Blink)
