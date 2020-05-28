@@ -1258,3 +1258,10 @@ void WINAPI IoReleaseRemoveLockAndWaitEx( IO_REMOVE_LOCK *lock, void *tag, ULONG
     else if (count > 0)
         KeWaitForSingleObject( &lock->Common.RemoveEvent, Executive, KernelMode, FALSE, NULL );
 }
+
+BOOLEAN WINAPI KeSetTimer(KTIMER *timer, LARGE_INTEGER duetime, KDPC *dpc)
+{
+    TRACE("timer %p, duetime %I64x, dpc %p.\n", timer, duetime.QuadPart, dpc);
+
+    return KeSetTimerEx(timer, duetime, 0, dpc);
+}
