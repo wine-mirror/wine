@@ -1467,7 +1467,10 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
         else if (*ptr < 0xd6)  /* save_reg_x */
             restore_regs( 19 + ((val >> 5) & 0xf), 1, -(val & 0x1f) - 1, context, ptrs );
         else if (*ptr < 0xd8)  /* save_lrpair */
-            restore_regs( 19 + ((val >> 6) & 0x7), 2, val & 0x3f, context, ptrs );
+        {
+            restore_regs( 19 + 2 * ((val >> 6) & 0x7), 1, val & 0x3f, context, ptrs );
+            restore_regs( 30, 1, (val & 0x3f) + 1, context, ptrs );
+        }
         else if (*ptr < 0xda)  /* save_fregp */
             restore_fpregs( 8 + ((val >> 6) & 0x7), save_next, val & 0x3f, context, ptrs );
         else if (*ptr < 0xdc)  /* save_fregp_x */
