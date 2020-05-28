@@ -54,16 +54,24 @@ enum media_engine_mode
     MEDIA_ENGINE_FRAME_SERVER_MODE,
 };
 
+/* Used with create flags. */
+enum media_engine_flags
+{
+    /* MF_MEDIA_ENGINE_CREATEFLAGS_MASK is 0x1f. */
+    FLAGS_ENGINE_SHUT_DOWN = 0x20,
+};
+
 struct media_engine
 {
     IMFMediaEngine IMFMediaEngine_iface;
     LONG refcount;
-    DWORD flags;
     IMFMediaEngineNotify *callback;
     UINT64 playback_hwnd;
     DXGI_FORMAT output_format;
     IMFDXGIDeviceManager *dxgi_manager;
     enum media_engine_mode mode;
+    unsigned int flags;
+    CRITICAL_SECTION cs;
 };
 
 static inline struct media_engine *impl_from_IMFMediaEngine(IMFMediaEngine *iface)
@@ -104,6 +112,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFMediaEngineNotify_Release(engine->callback);
     if (engine->dxgi_manager)
         IMFDXGIDeviceManager_Release(engine->dxgi_manager);
+    DeleteCriticalSection(&engine->cs);
     heap_free(engine);
 }
 
@@ -395,9 +404,19 @@ static HRESULT WINAPI media_engine_GetVideoAspectRatio(IMFMediaEngine *iface, DW
 
 static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngine *iface)
 {
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
+
     FIXME("(%p): stub.\n", iface);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        engine->flags |= FLAGS_ENGINE_SHUT_DOWN;
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngine *iface, IUnknown *surface,
@@ -490,9 +509,14 @@ static ULONG WINAPI media_engine_factory_Release(IMFMediaEngineClassFactory *ifa
     return 1;
 }
 
-static HRESULT init_media_engine(IMFAttributes *attributes, struct media_engine *engine)
+static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct media_engine *engine)
 {
     HRESULT hr;
+
+    engine->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
+    engine->refcount = 1;
+    engine->flags = flags & MF_MEDIA_ENGINE_CREATEFLAGS_MASK;
+    InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
                                   (void **)&engine->callback);
@@ -522,7 +546,7 @@ static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFac
     struct media_engine *object;
     HRESULT hr;
 
-    TRACE("(%p, %#x, %p, %p).\n", iface, flags, attributes, engine);
+    TRACE("%p, %#x, %p, %p.\n", iface, flags, attributes, engine);
 
     if (!attributes || !engine)
         return E_POINTER;
@@ -531,16 +555,12 @@ static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFac
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = init_media_engine(attributes, object);
+    hr = init_media_engine(flags, attributes, object);
     if (FAILED(hr))
     {
         free_media_engine(object);
         return hr;
     }
-
-    object->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
-    object->refcount = 1;
-    object->flags = flags;
 
     *engine = &object->IMFMediaEngine_iface;
 

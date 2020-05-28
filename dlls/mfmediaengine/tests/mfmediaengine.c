@@ -247,11 +247,9 @@ static void test_Shutdown(void)
     media_engine = create_media_engine(callback);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-todo_wine
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     hr = IMFMediaEngine_Shutdown(media_engine);
-todo_wine
     ok(hr == MF_E_SHUTDOWN || broken(hr == S_OK) /* before win10 */, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_SetSource(media_engine, NULL);
