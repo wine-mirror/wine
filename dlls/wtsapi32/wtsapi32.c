@@ -341,6 +341,12 @@ BOOL WINAPI WTSQuerySessionInformationW(
     FIXME("Stub %p 0x%08x %d %p %p\n", hServer, SessionId, WTSInfoClass,
         Buffer, BytesReturned);
 
+    if (!Buffer || !BytesReturned)
+    {
+        SetLastError(ERROR_INVALID_USER_BUFFER);
+        return FALSE;
+    }
+
     if (WTSInfoClass == WTSUserName)
     {
         WCHAR *username;
@@ -353,6 +359,11 @@ BOOL WINAPI WTSQuerySessionInformationW(
         *Buffer = username;
         *BytesReturned = count * sizeof(WCHAR);
         return TRUE;
+    }
+    else
+    {
+        *Buffer = NULL;
+        *BytesReturned = 0;
     }
     return FALSE;
 }

@@ -97,6 +97,25 @@ static void test_WTSQuerySessionInformation(void)
     char *buf2;
     DWORD count;
 
+    SetLastError(0xdeadbeef);
+    count = 0;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(count == 0, "got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    count = 1;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(count == 1, "got %u\n", count);
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf1, NULL);
+    ok(!ret, "got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "got %u\n", GetLastError());
+
     count = 0;
     buf1 = NULL;
     ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &buf1, &count);
