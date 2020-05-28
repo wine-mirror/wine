@@ -392,9 +392,15 @@ LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
 static void CALLBACK ke_timer_complete_proc(PTP_CALLBACK_INSTANCE instance, void *timer_, PTP_TIMER tp_timer)
 {
     KTIMER *timer = timer_;
+    KDPC *dpc = timer->Dpc;
 
     TRACE("instance %p, timer %p, tp_timer %p.\n", instance, timer, tp_timer);
 
+    if (dpc && dpc->DeferredRoutine)
+    {
+        TRACE("Calling dpc->DeferredRoutine %p, dpc->DeferredContext %p.\n", dpc->DeferredRoutine, dpc->DeferredContext);
+        dpc->DeferredRoutine(dpc, dpc->DeferredContext, dpc->SystemArgument1, dpc->SystemArgument2);
+    }
     EnterCriticalSection( &sync_cs );
     timer->Header.SignalState = TRUE;
     if (timer->Header.WaitListHead.Blink)
@@ -435,12 +441,6 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
     TRACE("timer %p, duetime %s, period %d, dpc %p.\n",
         timer, wine_dbgstr_longlong(duetime.QuadPart), period, dpc);
 
-    if (dpc)
-    {
-        FIXME("Unhandled DPC %p.\n", dpc);
-        return FALSE;
-    }
-
     EnterCriticalSection( &sync_cs );
 
     if ((ret = timer->Header.Inserted))
@@ -456,6 +456,7 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
 
     timer->DueTime.QuadPart = duetime.QuadPart;
     timer->Period = period;
+    timer->Dpc = dpc;
 
     SetThreadpoolTimer((TP_TIMER *)timer->TimerListEntry.Blink, (FILETIME *)&duetime, period, 0);
     LeaveCriticalSection( &sync_cs );
