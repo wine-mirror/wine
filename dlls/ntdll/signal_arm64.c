@@ -69,6 +69,29 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 static pthread_key_t teb_key;
 
+/* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
+struct MSVCRT_JUMP_BUFFER
+{
+    unsigned __int64 Frame;
+    unsigned __int64 Reserved;
+    unsigned __int64 X19;
+    unsigned __int64 X20;
+    unsigned __int64 X21;
+    unsigned __int64 X22;
+    unsigned __int64 X23;
+    unsigned __int64 X24;
+    unsigned __int64 X25;
+    unsigned __int64 X26;
+    unsigned __int64 X27;
+    unsigned __int64 X28;
+    unsigned __int64 Fp;
+    unsigned __int64 Lr;
+    unsigned __int64 Sp;
+    unsigned long Fpcr;
+    unsigned long Fpsr;
+    double D[8];
+};
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -1773,6 +1796,115 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
     return handler;
 }
 
+/**********************************************************************
+ *           call_consolidate_callback
+ *
+ * Wrapper function to call a consolidate callback from a fake frame.
+ * If the callback executes RtlUnwindEx (like for example done in C++ handlers),
+ * we have to skip all frames which were already processed. To do that we
+ * trick the unwinding functions into thinking the call came from somewhere
+ * else. All CFI instructions are either DW_CFA_def_cfa_expression or
+ * DW_CFA_expression, and the expressions have the following format:
+ *
+ * DW_OP_breg29; sleb128 0x10           | Load x29 + 0x10
+ * DW_OP_deref                          | Get *(x29 + 0x10) == context
+ * DW_OP_plus_uconst; uleb128 <OFFSET>  | Add offset to get struct member
+ * [DW_OP_deref]                        | Dereference, only for CFA
+ */
+extern void * WINAPI call_consolidate_callback( CONTEXT *context,
+                                                void *(CALLBACK *callback)(EXCEPTION_RECORD *),
+                                                EXCEPTION_RECORD *rec,
+                                                TEB *teb );
+__ASM_GLOBAL_FUNC( call_consolidate_callback,
+                   "stp x29, x30, [sp, #-0x20]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
+                   __ASM_CFI(".cfi_offset 29, -32\n\t")
+                   __ASM_CFI(".cfi_offset 30, -24\n\t")
+                   "mov x29, sp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
+                   "str x0, [sp, 0x10]\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
+                   __ASM_CFI(".cfi_escape 0x0f,0x07,0x8d,0x10,0x06,0x23,0x80,0x02,0x06\n\t") /* CFA */
+                   __ASM_CFI(".cfi_escape 0x10,0x13,0x06,0x8d,0x10,0x06,0x23,0xa0,0x01\n\t") /* x19 */
+                   __ASM_CFI(".cfi_escape 0x10,0x14,0x06,0x8d,0x10,0x06,0x23,0xa8,0x01\n\t") /* x20 */
+                   __ASM_CFI(".cfi_escape 0x10,0x15,0x06,0x8d,0x10,0x06,0x23,0xb0,0x01\n\t") /* x21 */
+                   __ASM_CFI(".cfi_escape 0x10,0x16,0x06,0x8d,0x10,0x06,0x23,0xb8,0x01\n\t") /* x22 */
+                   __ASM_CFI(".cfi_escape 0x10,0x17,0x06,0x8d,0x10,0x06,0x23,0xc0,0x01\n\t") /* x23 */
+                   __ASM_CFI(".cfi_escape 0x10,0x18,0x06,0x8d,0x10,0x06,0x23,0xc8,0x01\n\t") /* x24 */
+                   __ASM_CFI(".cfi_escape 0x10,0x19,0x06,0x8d,0x10,0x06,0x23,0xd0,0x01\n\t") /* x25 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1a,0x06,0x8d,0x10,0x06,0x23,0xd8,0x01\n\t") /* x26 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1b,0x06,0x8d,0x10,0x06,0x23,0xe0,0x01\n\t") /* x27 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1c,0x06,0x8d,0x10,0x06,0x23,0xe8,0x01\n\t") /* x28 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x06,0x8d,0x10,0x06,0x23,0xf0,0x01\n\t") /* x29 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x06,0x8d,0x10,0x06,0x23,0xf8,0x01\n\t") /* x30 */
+                   __ASM_CFI(".cfi_escape 0x10,0x48,0x06,0x8d,0x10,0x06,0x23,0x90,0x03\n\t") /* d8  */
+                   __ASM_CFI(".cfi_escape 0x10,0x49,0x06,0x8d,0x10,0x06,0x23,0xa0,0x03\n\t") /* d9  */
+                   __ASM_CFI(".cfi_escape 0x10,0x4a,0x06,0x8d,0x10,0x06,0x23,0xb0,0x03\n\t") /* d10 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4b,0x06,0x8d,0x10,0x06,0x23,0xc0,0x03\n\t") /* d11 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4c,0x06,0x8d,0x10,0x06,0x23,0xd0,0x03\n\t") /* d12 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4d,0x06,0x8d,0x10,0x06,0x23,0xe0,0x03\n\t") /* d13 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4e,0x06,0x8d,0x10,0x06,0x23,0xf0,0x03\n\t") /* d14 */
+                   __ASM_CFI(".cfi_escape 0x10,0x4f,0x06,0x8d,0x10,0x06,0x23,0x80,0x04\n\t") /* d15 */
+                   "mov x0,  x2\n\t"
+                   "mov x18, x3\n\t"
+                   "blr x1\n\t"
+                   __ASM_CFI(".cfi_restore_state\n\t")
+                   "ldp x29, x30, [sp], #32\n\t"
+                   __ASM_CFI(".cfi_restore 30\n\t")
+                   __ASM_CFI(".cfi_restore 29\n\t")
+                   __ASM_CFI(".cfi_def_cfa 31, 0\n\t")
+                   "ret")
+
+/*******************************************************************
+ *              RtlRestoreContext (NTDLL.@)
+ */
+void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
+{
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
+
+    if (rec && rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
+    {
+        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
+        int i;
+
+        context->u.s.X19 = jmp->X19;
+        context->u.s.X20 = jmp->X20;
+        context->u.s.X21 = jmp->X21;
+        context->u.s.X22 = jmp->X22;
+        context->u.s.X23 = jmp->X23;
+        context->u.s.X24 = jmp->X24;
+        context->u.s.X25 = jmp->X25;
+        context->u.s.X26 = jmp->X26;
+        context->u.s.X27 = jmp->X27;
+        context->u.s.X28 = jmp->X28;
+        context->u.s.Fp  = jmp->Fp;
+        context->u.s.Lr  = jmp->Lr;
+        context->Sp      = jmp->Sp;
+        context->Fpcr    = jmp->Fpcr;
+        context->Fpsr    = jmp->Fpsr;
+
+        for (i = 0; i < 8; i++)
+            context->V[8+i].D[0] = jmp->D[0];
+    }
+    else if (rec && rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters >= 1)
+    {
+        PVOID (CALLBACK *consolidate)(EXCEPTION_RECORD *) = (void *)rec->ExceptionInformation[0];
+        TRACE( "calling consolidate callback %p (rec=%p)\n", consolidate, rec );
+        rec->ExceptionInformation[10] = (ULONG_PTR)&context->u.s.X19;
+
+        context->Pc = (ULONG64)call_consolidate_callback( context, consolidate, rec, NtCurrentTeb() );
+    }
+
+    /* hack: remove no longer accessible TEB frames */
+    while ((ULONG64)teb_frame < context->Sp)
+    {
+        TRACE( "removing TEB frame: %p\n", teb_frame );
+        teb_frame = __wine_pop_frame( teb_frame );
+    }
+
+    TRACE( "returning to %lx stack %lx\n", context->Pc, context->Sp );
+    set_cpu_context( context );
+}
 
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
@@ -1909,7 +2041,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 
     context->u.s.X0 = (ULONG64)retval;
     context->Pc     = (ULONG64)target_ip;
-    set_cpu_context( context );
+    RtlRestoreContext(context, rec);
 }
 
 
