@@ -299,9 +299,14 @@ static ULONG WINAPI DdsFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI DdsFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
                                              UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub.\n", iface, puiWidth, puiHeight);
+    DdsFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
 
-    return E_NOTIMPL;
+    *puiWidth = This->width;
+    *puiHeight = This->height;
+
+    TRACE("(%p) -> (%d,%d)\n", iface, *puiWidth, *puiHeight);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DdsFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,

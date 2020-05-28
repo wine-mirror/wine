@@ -383,7 +383,7 @@ static void test_dds_decoder_frame_size(IWICBitmapDecoder *decoder, IWICBitmapFr
     if (hr != S_OK) goto end;
 
     hr = IWICBitmapFrameDecode_GetSize(frame_decode, &width, &height);
-    todo_wine ok (hr == S_OK, "%d: GetSize failed for frame %d, hr=%x\n", i, frame_index, hr);
+    ok (hr == S_OK, "%d: GetSize failed for frame %d, hr=%x\n", i, frame_index, hr);
     if (hr != S_OK) goto end;
 
     depth = params.Depth;
