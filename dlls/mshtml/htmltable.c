@@ -1014,26 +1014,6 @@ static HRESULT var2str(const VARIANT *p, nsAString *nsstr)
     return ret ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT nsstr_to_truncated_bstr(const nsAString *nsstr, BSTR *ret_ptr)
-{
-    const PRUnichar *str, *ptr, *end = NULL;
-    BSTR ret;
-
-    nsAString_GetData(nsstr, &str);
-
-    for(ptr = str; is_digit(*ptr); ptr++);
-    if(*ptr == '.') {
-        for(end = ptr++; is_digit(*ptr); ptr++);
-        if(*ptr)
-            end = NULL;
-    }
-
-    ret = end ? SysAllocStringLen(str, end-str) : SysAllocString(str);
-
-    *ret_ptr = ret;
-    return ret ? S_OK : E_OUTOFMEMORY;
-}
-
 static HRESULT WINAPI HTMLTable_QueryInterface(IHTMLTable *iface,
                                                          REFIID riid, void **ppv)
 {
@@ -1244,7 +1224,7 @@ static HRESULT WINAPI HTMLTable_get_cellPadding(IHTMLTable *iface, VARIANT *p)
 
     nsAString_Init(&val, NULL);
     nsres = nsIDOMHTMLTableElement_GetCellPadding(This->nstable, &val);
-    return return_nsstr_variant(nsres, &val, p);
+    return return_nsstr_variant(nsres, &val, 0, p);
 }
 
 static HRESULT WINAPI HTMLTable_put_background(IHTMLTable *iface, BSTR v)
@@ -1440,25 +1420,13 @@ static HRESULT WINAPI HTMLTable_get_width(IHTMLTable *iface, VARIANT *p)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
     nsAString val;
-    BSTR bstr;
     nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
+
     nsAString_Init(&val, NULL);
     nsres = nsIDOMHTMLTableElement_GetWidth(This->nstable, &val);
-    if (NS_FAILED(nsres)){
-        ERR("Get Width failed!\n");
-        nsAString_Finish(&val);
-        return E_FAIL;
-    }
-
-    hres = nsstr_to_truncated_bstr(&val, &bstr);
-    nsAString_Finish(&val);
-
-    V_VT(p) = VT_BSTR;
-    V_BSTR(p) = bstr;
-    return hres;
+    return return_nsstr_variant(nsres, &val, NSSTR_IMPLICIT_PX, p);
 }
 
 static HRESULT WINAPI HTMLTable_put_height(IHTMLTable *iface, VARIANT v)

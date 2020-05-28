@@ -1234,7 +1234,7 @@ static HRESULT WINAPI HTMLDOMNode3_get_namespaceURI(IHTMLDOMNode3 *iface, VARIAN
 
     nsAString_InitDepend(&nsstr, NULL);
     nsres = nsIDOMNode_GetNamespaceURI(This->nsnode, &nsstr);
-    return return_nsstr_variant(nsres, &nsstr, p);
+    return return_nsstr_variant(nsres, &nsstr, 0, p);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_put_textContent(IHTMLDOMNode3 *iface, VARIANT v)
@@ -1266,7 +1266,7 @@ static HRESULT WINAPI HTMLDOMNode3_get_textContent(IHTMLDOMNode3 *iface, VARIANT
 
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMNode_GetTextContent(This->nsnode, &nsstr);
-    return return_nsstr_variant(nsres, &nsstr, p);
+    return return_nsstr_variant(nsres, &nsstr, 0, p);
 }
 
 static HRESULT WINAPI HTMLDOMNode3_isEqualNode(IHTMLDOMNode3 *iface, IHTMLDOMNode3 *otherNode, VARIANT_BOOL *isEqual)

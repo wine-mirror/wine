@@ -7911,6 +7911,16 @@ static void test_table_elem(IHTMLElement *elem)
     VariantClear(&vDefaultbg);
 
     V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"12px");
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    VariantClear(&v);
+    hres = IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!lstrcmpW(V_BSTR(&v), L"12"), "Expected 12, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = SysAllocString(L"11");
     hres = IHTMLTable_put_width(table, v);
     ok(hres == S_OK, "put_width = %08x\n", hres);

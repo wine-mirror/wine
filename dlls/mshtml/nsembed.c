@@ -962,10 +962,8 @@ HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
     return S_OK;
 }
 
-HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p)
+HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, unsigned flags, VARIANT *p)
 {
-    const PRUnichar *str;
-
     if(NS_FAILED(nsres)) {
         ERR("failed: %08x\n", nsres);
         nsAString_Finish(nsstr);
@@ -976,10 +974,24 @@ HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, VARIANT *p)
         TRACE("ret null\n");
         V_VT(p) = VT_NULL;
     }else {
+        const WCHAR *str;
+        size_t len;
         nsAString_GetData(nsstr, &str);
-        TRACE("ret %s\n", debugstr_w(str));
+        len = wcslen(str);
+        if(flags & NSSTR_IMPLICIT_PX) {
+            const WCHAR *iter;
+            if(len > 2 && !wcscmp(str + len - 2, L"px"))
+                len -= 2;
+            for(iter = str; iter < str + len && is_digit(*iter); iter++);
+            if(*iter == '.') {
+                const WCHAR *dot = iter++;
+                while(iter < str + len && is_digit(*iter)) iter++;
+                if(iter == str + len && dot) len = dot - str;
+            }
+        }
+        TRACE("ret %s\n", debugstr_wn(str, len));
         if(*str) {
-            V_BSTR(p) = SysAllocString(str);
+            V_BSTR(p) = SysAllocStringLen(str, len);
             if(!V_BSTR(p)) {
                 nsAString_Finish(nsstr);
                 return E_OUTOFMEMORY;
