@@ -135,6 +135,8 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
 
+typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
+
 /* stack layout when calling an exception raise function */
 struct stack_layout
 {
@@ -1046,6 +1048,24 @@ static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *cont
     raise_status( status, rec );
 }
 
+extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func, void *sp );
+__ASM_GLOBAL_FUNC( raise_func_trampoline,
+                   __ASM_CFI(".cfi_signal_frame\n\t")
+                   "stp x29, x30, [sp, #-0x20]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
+                   __ASM_CFI(".cfi_offset 29, -32\n\t")
+                   __ASM_CFI(".cfi_offset 30, -24\n\t")
+                   "mov x29, sp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
+                   "str x3, [sp, 0x10]\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
+                   __ASM_CFI(".cfi_escape 0x0f,0x03,0x8d,0x10,0x06\n\t") /* CFA */
+                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x02,0x8d,0x00\n\t") /* x29 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x02,0x8d,0x08\n\t") /* x30 */
+                   "blr x2\n\t"
+                   __ASM_CFI(".cfi_restore_state\n\t")
+                   "brk #1")
+
 /***********************************************************************
  *           setup_raise_exception
  *
@@ -1060,10 +1080,13 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
         restore_context( &stack->context, sigcontext );
         return;
     }
+    REGn_sig(3, sigcontext) = SP_sig(sigcontext); /* original stack pointer, fourth arg for raise_func_trampoline */
     SP_sig(sigcontext) = (ULONG_PTR)stack;
-    PC_sig(sigcontext) = (ULONG_PTR)raise_generic_exception;
+    LR_sig(sigcontext) = PC_sig(sigcontext);
+    PC_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline; /* raise_generic_exception; */
     REGn_sig(0, sigcontext) = (ULONG_PTR)&stack->rec;  /* first arg for raise_generic_exception */
     REGn_sig(1, sigcontext) = (ULONG_PTR)&stack->context; /* second arg for raise_generic_exception */
+    REGn_sig(2, sigcontext) = (ULONG_PTR)raise_generic_exception; /* third arg for raise_func_trampoline */
     REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
 }
 
