@@ -1711,7 +1711,7 @@ static void test_RtlIpv6AddressToString(void)
     LPCSTR result;
     IN6_ADDR ip;
     DWORD_PTR len;
-    struct
+    static const struct
     {
         PCSTR address;
         int ip[8];
@@ -1835,7 +1835,7 @@ static void test_RtlIpv6AddressToStringEx(void)
     NTSTATUS res;
     IN6_ADDR ip;
     ULONG len;
-    struct
+    static const struct
     {
         PCSTR address;
         ULONG scopeid;
