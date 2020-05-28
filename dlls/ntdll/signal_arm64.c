@@ -265,8 +265,8 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
                     "stp x23, x24, [x0, #0xc0]\n\t"  /* context->X23,X24 */
                     "stp x25, x26, [x0, #0xd0]\n\t"  /* context->X25,X26 */
                     "stp x27, x28, [x0, #0xe0]\n\t"  /* context->X27,X28 */
-                    "stp x29, x30, [x0, #0xf0]\n\t"   /* context->Fp,Lr */
-                    "add x1, x29, #0x10\n\t"
+                    "stp x29, x30, [x0, #0xf0]\n\t"  /* context->Fp,Lr */
+                    "mov x1, sp\n\t"
                     "stp x1, x30, [x0, #0x100]\n\t"  /* context->Sp,Pc */
                     "mov w1, #0x400000\n\t"          /* CONTEXT_ARM64 */
                     "add w1, w1, #0x3\n\t"           /* CONTEXT_FULL */
