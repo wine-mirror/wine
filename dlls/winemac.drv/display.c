@@ -53,6 +53,7 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW 
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
+DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
 
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
@@ -1568,6 +1569,11 @@ static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *m
     /* Write DEVPROPKEY_MONITOR_GPU_LUID */
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_GPU_LUID,
                                    DEVPROP_TYPE_INT64, (const BYTE *)gpu_luid, sizeof(*gpu_luid), 0))
+        goto done;
+
+    /* Write DEVPROPKEY_MONITOR_OUTPUT_ID */
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_OUTPUT_ID,
+                                   DEVPROP_TYPE_UINT32, (const BYTE *)&video_index, sizeof(video_index), 0))
         goto done;
 
     /* Create driver key */
