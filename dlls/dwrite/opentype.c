@@ -4648,7 +4648,10 @@ static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_co
                 glyph = GET_BE_WORD(glyphs[i]);
                 context->u.subst.glyphs[idx + i] = glyph;
                 if (i)
+                {
                     context->u.subst.glyph_props[idx + i].isClusterStart = 0;
+                    context->u.buffer.glyph_props[idx + i].components = 0;
+                }
                 opentype_set_subst_glyph_props(context, idx + i, glyph);
                 /* Inherit feature mask from original matched glyph. */
                 context->glyph_infos[idx + i].mask = mask;
@@ -5081,11 +5084,12 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
             codepoint = context->u.subst.digits[codepoint - '0'];
 
         context->u.subst.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
-        context->u.subst.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
-        context->u.subst.glyph_props[g].isClusterStart = 1;
+        context->u.buffer.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
+        context->u.buffer.glyph_props[g].isClusterStart = 1;
         opentype_set_subst_glyph_props(context, g, context->u.subst.glyphs[g]);
         if (opentype_is_default_ignorable(codepoint))
-            context->u.subst.glyph_props[g].isZeroWidthSpace = 1;
+            context->u.buffer.glyph_props[g].isZeroWidthSpace = 1;
+        context->u.buffer.glyph_props[g].components = 1;
         context->glyph_count++;
 
         clustermap[i] = i;

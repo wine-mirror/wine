@@ -468,6 +468,17 @@ struct shaping_glyph_info
     unsigned int props;
 };
 
+struct shaping_glyph_properties
+{
+    UINT16 justification : 4;
+    UINT16 isClusterStart : 1;
+    UINT16 isDiacritic : 1;
+    UINT16 isZeroWidthSpace : 1;
+    UINT16 reserved : 1;
+    UINT16 components : 4;
+    UINT16 reserved2 : 4;
+};
+
 struct scriptshaping_context
 {
     struct scriptshaping_cache *cache;
@@ -498,7 +509,7 @@ struct scriptshaping_context
         struct
         {
             UINT16 *glyphs;
-            DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            struct shaping_glyph_properties *glyph_props;
             UINT16 *clustermap;
         } buffer;
     } u;
