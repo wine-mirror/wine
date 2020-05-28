@@ -3079,9 +3079,13 @@ MM_SYSTEMSIZE WINAPI MmQuerySystemSize(void)
 /***********************************************************************
  *           KeInitializeDpc   (NTOSKRNL.EXE.@)
  */
-VOID WINAPI KeInitializeDpc(PRKDPC Dpc, PKDEFERRED_ROUTINE DeferredRoutine, PVOID DeferredContext)
+void WINAPI KeInitializeDpc(KDPC *dpc, PKDEFERRED_ROUTINE deferred_routine, void *deferred_context)
 {
-    FIXME("stub\n");
+    FIXME("dpc %p, deferred_routine %p, deferred_context %p semi-stub.\n",
+            dpc, deferred_routine, deferred_context);
+
+    dpc->DeferredRoutine = deferred_routine;
+    dpc->DeferredContext = deferred_context;
 }
 
 /***********************************************************************
