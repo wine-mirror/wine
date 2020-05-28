@@ -571,15 +571,5 @@ extern void opentype_layout_apply_gsub_features(struct scriptshaping_context *co
 extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features) DECLSPEC_HIDDEN;
 
-struct scriptshaping_ops
-{
-    HRESULT (*contextual_shaping)(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices, UINT32* actual_glyph_count);
-    HRESULT (*set_text_glyphs_props)(struct scriptshaping_context *context, UINT16 *clustermap, UINT16 *glyph_indices,
-                                     UINT32 glyphcount, DWRITE_SHAPING_TEXT_PROPERTIES *text_props, DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props);
-    const struct shaping_features *gpos_features;
-};
-
-extern const struct scriptshaping_ops default_shaping_ops DECLSPEC_HIDDEN;
-
 extern HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
 extern HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;

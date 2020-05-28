@@ -34,11 +34,11 @@ extern const unsigned short wine_scripts_table[] DECLSPEC_HIDDEN;
 /* Number of characters needed for LOCALE_SNATIVEDIGITS */
 #define NATIVE_DIGITS_LEN 11
 
-struct dwritescript_properties {
+struct dwritescript_properties
+{
     DWRITE_SCRIPT_PROPERTIES props;
     UINT32 scripttags[3]; /* Maximum 2 script tags, 0-terminated. */
     BOOL is_complex;
-    const struct scriptshaping_ops *ops;
 };
 
 #define _OT(a,b,c,d) DWRITE_MAKE_OPENTYPE_TAG(a,b,c,d)
@@ -1194,8 +1194,6 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         *actual_glyph_count = context.glyph_count;
         memcpy(glyphs, context.u.subst.glyphs, context.glyph_count * sizeof(*glyphs));
         memcpy(glyph_props, context.u.subst.glyph_props, context.glyph_count * sizeof(*glyph_props));
-        hr = default_shaping_ops.set_text_glyphs_props(&context, clustermap, glyphs, *actual_glyph_count,
-                text_props, glyph_props);
     }
 
     heap_free(context.u.subst.glyph_props);
