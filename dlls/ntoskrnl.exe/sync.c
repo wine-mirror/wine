@@ -388,6 +388,15 @@ LONG WINAPI KeReleaseMutex( PRKMUTEX mutex, BOOLEAN wait )
     return ret;
 }
 
+static void CALLBACK ke_timer_complete_proc(PTP_CALLBACK_INSTANCE instance, void *timer_, PTP_TIMER tp_timer)
+{
+    KTIMER *timer = timer_;
+
+    TRACE("instance %p, timer %p, tp_timer %p.\n", instance, timer, tp_timer);
+
+    SetEvent(timer->Header.WaitListHead.Blink);
+}
+
 /***********************************************************************
  *           KeInitializeTimerEx   (NTOSKRNL.EXE.@)
  */
@@ -431,9 +440,18 @@ BOOLEAN WINAPI KeSetTimerEx( KTIMER *timer, LARGE_INTEGER duetime, LONG period, 
 
     ret = timer->Header.Inserted;
     timer->Header.Inserted = TRUE;
-    timer->Header.WaitListHead.Blink = CreateWaitableTimerW( NULL, timer->Header.Type == TYPE_MANUAL_TIMER, NULL );
-    SetWaitableTimer( timer->Header.WaitListHead.Blink, &duetime, period, NULL, NULL, FALSE );
+    timer->Header.WaitListHead.Blink = CreateEventW( NULL, timer->Header.Type == TYPE_MANUAL_TIMER, FALSE, NULL );
 
+    if (!timer->TimerListEntry.Blink)
+        timer->TimerListEntry.Blink = (void *)CreateThreadpoolTimer(ke_timer_complete_proc, timer, NULL);
+
+    if (!timer->TimerListEntry.Blink)
+        ERR("Could not create thread pool timer.\n");
+
+    timer->DueTime.QuadPart = duetime.QuadPart;
+    timer->Period = period;
+
+    SetThreadpoolTimer((TP_TIMER *)timer->TimerListEntry.Blink, (FILETIME *)&duetime, period, 0);
     LeaveCriticalSection( &sync_cs );
 
     return ret;
@@ -446,6 +464,21 @@ BOOLEAN WINAPI KeCancelTimer( KTIMER *timer )
     TRACE("timer %p.\n", timer);
 
     EnterCriticalSection( &sync_cs );
+    if (timer->TimerListEntry.Blink)
+    {
+        SetThreadpoolTimer((TP_TIMER *)timer->TimerListEntry.Blink, NULL, 0, 0);
+
+        LeaveCriticalSection( &sync_cs );
+        WaitForThreadpoolTimerCallbacks((TP_TIMER *)timer->TimerListEntry.Blink, TRUE);
+        EnterCriticalSection( &sync_cs );
+
+        if (timer->TimerListEntry.Blink)
+        {
+            CloseThreadpoolTimer((TP_TIMER *)timer->TimerListEntry.Blink);
+            timer->TimerListEntry.Blink = NULL;
+        }
+    }
+
     ret = timer->Header.Inserted;
     timer->Header.Inserted = FALSE;
     CloseHandle(timer->Header.WaitListHead.Blink);
