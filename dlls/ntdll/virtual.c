@@ -195,6 +195,177 @@ static void *preload_reserve_end;
 static BOOL use_locks;
 static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
 
+struct range_entry
+{
+    void *base;
+    void *end;
+};
+
+static struct range_entry *free_ranges;
+static struct range_entry *free_ranges_end;
+
+
+/***********************************************************************
+ *           free_ranges_lower_bound
+ *
+ * Returns the first range whose end is not less than addr, or end if there's none.
+ */
+static struct range_entry *free_ranges_lower_bound( void *addr )
+{
+    struct range_entry *begin = free_ranges;
+    struct range_entry *end = free_ranges_end;
+    struct range_entry *mid;
+
+    while (begin < end)
+    {
+        mid = begin + (end - begin) / 2;
+        if (mid->end < addr)
+            begin = mid + 1;
+        else
+            end = mid;
+    }
+
+    return begin;
+}
+
+
+/***********************************************************************
+ *           free_ranges_insert_view
+ *
+ * Updates the free_ranges after a new view has been created.
+ */
+static void free_ranges_insert_view( struct file_view *view )
+{
+    void *view_base = ROUND_ADDR( view->base, granularity_mask );
+    void *view_end = ROUND_ADDR( (char *)view->base + view->size + granularity_mask, granularity_mask );
+    struct range_entry *range = free_ranges_lower_bound( view_base );
+    struct range_entry *next = range + 1;
+
+    /* free_ranges initial value is such that the view is either inside range or before another one. */
+    assert( range != free_ranges_end );
+    assert( range->end > view_base || next != free_ranges_end );
+
+    /* this happens because virtual_alloc_thread_stack shrinks a view, then creates another one on top,
+     * or because AT_ROUND_TO_PAGE was used with NtMapViewOfSection to force 4kB aligned mapping. */
+    if ((range->end > view_base && range->base >= view_end) ||
+        (range->end == view_base && next->base >= view_end))
+    {
+        /* on Win64, assert that it's correctly aligned so we're not going to be in trouble later */
+        assert( (!is_win64 && !is_wow64) || view->base == view_base );
+        WARN( "range %p - %p is already mapped\n", view_base, view_end );
+        return;
+    }
+
+    /* this should never happen */
+    if (range->base > view_base || range->end < view_end)
+        ERR( "range %p - %p is already partially mapped\n", view_base, view_end );
+    assert( range->base <= view_base && range->end >= view_end );
+
+    /* need to split the range in two */
+    if (range->base < view_base && range->end > view_end)
+    {
+        memmove( next + 1, next, (free_ranges_end - next) * sizeof(struct range_entry) );
+        free_ranges_end += 1;
+        if ((char *)free_ranges_end - (char *)free_ranges > view_block_size)
+            MESSAGE( "Free range sequence is full, trouble ahead!\n" );
+        assert( (char *)free_ranges_end - (char *)free_ranges <= view_block_size );
+
+        next->base = view_end;
+        next->end = range->end;
+        range->end = view_base;
+    }
+    else
+    {
+        /* otherwise we just have to shrink it */
+        if (range->base < view_base)
+            range->end = view_base;
+        else
+            range->base = view_end;
+
+        if (range->base < range->end) return;
+
+        /* and possibly remove it if it's now empty */
+        memmove( range, next, (free_ranges_end - next) * sizeof(struct range_entry) );
+        free_ranges_end -= 1;
+        assert( free_ranges_end - free_ranges > 0 );
+    }
+}
+
+
+/***********************************************************************
+ *           free_ranges_remove_view
+ *
+ * Updates the free_ranges after a view has been destroyed.
+ */
+static void free_ranges_remove_view( struct file_view *view )
+{
+    void *view_base = ROUND_ADDR( view->base, granularity_mask );
+    void *view_end = ROUND_ADDR( (char *)view->base + view->size + granularity_mask, granularity_mask );
+    struct range_entry *range = free_ranges_lower_bound( view_base );
+    struct range_entry *next = range + 1;
+
+    /* It's possible to use AT_ROUND_TO_PAGE on 32bit with NtMapViewOfSection to force 4kB alignment,
+     * and this breaks our assumptions. Look at the views around to check if the range is still in use. */
+#ifndef _WIN64
+    struct file_view *prev_view = WINE_RB_ENTRY_VALUE( wine_rb_prev( &view->entry ), struct file_view, entry );
+    struct file_view *next_view = WINE_RB_ENTRY_VALUE( wine_rb_next( &view->entry ), struct file_view, entry );
+    void *prev_view_base = prev_view ? ROUND_ADDR( prev_view->base, granularity_mask ) : NULL;
+    void *prev_view_end = prev_view ? ROUND_ADDR( (char *)prev_view->base + prev_view->size + granularity_mask, granularity_mask ) : NULL;
+    void *next_view_base = next_view ? ROUND_ADDR( next_view->base, granularity_mask ) : NULL;
+    void *next_view_end = next_view ? ROUND_ADDR( (char *)next_view->base + next_view->size + granularity_mask, granularity_mask ) : NULL;
+
+    if ((prev_view_base < view_end && prev_view_end > view_base) ||
+        (next_view_base < view_end && next_view_end > view_base))
+    {
+        WARN( "range %p - %p is still mapped\n", view_base, view_end );
+        return;
+    }
+#endif
+
+    /* free_ranges initial value is such that the view is either inside range or before another one. */
+    assert( range != free_ranges_end );
+    assert( range->end > view_base || next != free_ranges_end );
+
+    /* this should never happen, but we can safely ignore it */
+    if (range->base <= view_base && range->end >= view_end)
+    {
+        WARN( "range %p - %p is already unmapped\n", view_base, view_end );
+        return;
+    }
+
+    /* this should never happen */
+    if (range->base < view_end && range->end > view_base)
+        ERR( "range %p - %p is already partially unmapped\n", view_base, view_end );
+    assert( range->end <= view_base || range->base >= view_end );
+
+    /* merge with next if possible */
+    if (range->end == view_base && next->base == view_end)
+    {
+        range->end = next->end;
+        memmove( next, next + 1, (free_ranges_end - next - 1) * sizeof(struct range_entry) );
+        free_ranges_end -= 1;
+        assert( free_ranges_end - free_ranges > 0 );
+    }
+    /* or try growing the range */
+    else if (range->end == view_base)
+        range->end = view_end;
+    else if (range->base == view_end)
+        range->base = view_base;
+    /* otherwise create a new one */
+    else
+    {
+        memmove( range + 1, range, (free_ranges_end - range) * sizeof(struct range_entry) );
+        free_ranges_end += 1;
+        if ((char *)free_ranges_end - (char *)free_ranges > view_block_size)
+            MESSAGE( "Free range sequence is full, trouble ahead!\n" );
+        assert( (char *)free_ranges_end - (char *)free_ranges <= view_block_size );
+
+        range->base = view_base;
+        range->end = view_end;
+    }
+}
+
+
 static inline int is_view_valloc( const struct file_view *view )
 {
     return !(view->protect & (SEC_FILE | SEC_RESERVE | SEC_COMMIT));
@@ -833,6 +1004,8 @@ static void delete_view( struct file_view *view ) /* [in] View */
 {
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     set_page_vprot( view->base, view->size, 0 );
+    if (unix_funcs->mmap_is_in_reserved_area( view->base, view->size ))
+        free_ranges_remove_view( view );
     wine_rb_remove( &views_tree, &view->entry );
     *(struct file_view **)view = next_free_view;
     next_free_view = view;
@@ -880,6 +1053,8 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     set_page_vprot( base, size, vprot );
 
     wine_rb_put( &views_tree, view->base, &view->entry );
+    if (unix_funcs->mmap_is_in_reserved_area( view->base, view->size ))
+        free_ranges_insert_view( view );
 
     *view_ret = view;
 
@@ -1981,9 +2156,9 @@ void virtual_init(void)
     /* try to find space in a reserved area for the views and pages protection table */
 #ifdef _WIN64
     pages_vprot_size = ((size_t)address_space_limit >> page_shift >> pages_vprot_shift) + 1;
-    alloc_views.size = view_block_size + pages_vprot_size * sizeof(*pages_vprot);
+    alloc_views.size = 2 * view_block_size + pages_vprot_size * sizeof(*pages_vprot);
 #else
-    alloc_views.size = view_block_size + (1U << (32 - page_shift));
+    alloc_views.size = 2 * view_block_size + (1U << (32 - page_shift));
 #endif
     if (unix_funcs->mmap_enum_reserved_areas( alloc_virtual_heap, &alloc_views, 1 ))
         unix_funcs->mmap_remove_reserved_area( alloc_views.base, alloc_views.size );
@@ -1993,8 +2168,13 @@ void virtual_init(void)
     assert( alloc_views.base != (void *)-1 );
     view_block_start = alloc_views.base;
     view_block_end = view_block_start + view_block_size / sizeof(*view_block_start);
-    pages_vprot = (void *)((char *)alloc_views.base + view_block_size);
+    free_ranges = (void *)((char *)alloc_views.base + view_block_size);
+    pages_vprot = (void *)((char *)alloc_views.base + 2 * view_block_size);
     wine_rb_init( &views_tree, compare_view );
+
+    free_ranges[0].base = (void *)0;
+    free_ranges[0].end = (void *)~0;
+    free_ranges_end = free_ranges + 1;
 
     /* make the DOS area accessible (except the low 64K) to hide bugs in broken apps like Excel 2003 */
     size = (char *)address_space_start - (char *)0x10000;
