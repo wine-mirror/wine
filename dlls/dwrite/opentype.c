@@ -3466,12 +3466,26 @@ struct ot_lookup
     unsigned int flags;
 };
 
+enum iterator_match
+{
+    /* First two to fit matching callback result. */
+    ITER_NO = 0,
+    ITER_YES = 1,
+    ITER_MAYBE,
+};
+
+typedef BOOL (*p_match_func)(UINT16 glyph, UINT16 glyph_data, const void *match_data);
+
 struct glyph_iterator
 {
     struct scriptshaping_context *context;
     unsigned int flags;
     unsigned int pos;
     unsigned int len;
+    unsigned int mask;
+    p_match_func match_func;
+    const UINT16 *glyph_data;
+    const void *match_data;
 };
 
 static void glyph_iterator_init(struct scriptshaping_context *context, unsigned int flags, unsigned int pos,
@@ -3481,6 +3495,10 @@ static void glyph_iterator_init(struct scriptshaping_context *context, unsigned 
     iter->flags = flags;
     iter->pos = pos;
     iter->len = len;
+    iter->mask = ~0u; /* TODO: input sequences should be using actual mask */
+    iter->match_func = NULL;
+    iter->match_data = NULL;
+    iter->glyph_data = NULL;
 }
 
 struct ot_gdef_mark_glyph_sets
@@ -3535,21 +3553,48 @@ static BOOL lookup_is_glyph_match(const struct scriptshaping_context *context, u
     return TRUE;
 }
 
-static BOOL glyph_iterator_match(const struct glyph_iterator *iter)
+static enum iterator_match glyph_iterator_may_skip(const struct glyph_iterator *iter)
 {
-    return lookup_is_glyph_match(iter->context, iter->pos, iter->flags);
+    if (!lookup_is_glyph_match(iter->context, iter->pos, iter->flags))
+        return ITER_YES;
+
+    return ITER_NO;
+}
+
+static enum iterator_match glyph_iterator_may_match(const struct glyph_iterator *iter)
+{
+    if (!(iter->mask & iter->context->glyph_infos[iter->pos].mask))
+        return ITER_NO;
+
+    if (iter->match_func)
+        return !!iter->match_func(iter->context->u.buffer.glyphs[iter->pos], *iter->glyph_data, iter->match_data);
+
+    return ITER_MAYBE;
 }
 
 static BOOL glyph_iterator_next(struct glyph_iterator *iter)
 {
+    enum iterator_match skip, match;
+
     while (iter->pos + iter->len < iter->context->glyph_count)
     {
         ++iter->pos;
-        if (glyph_iterator_match(iter))
+
+        skip = glyph_iterator_may_skip(iter);
+        if (skip == ITER_YES)
+            continue;
+
+        match = glyph_iterator_may_match(iter);
+        if (match == ITER_YES || (match == ITER_MAYBE && skip == ITER_NO))
         {
             --iter->len;
+            if (iter->glyph_data)
+                ++iter->glyph_data;
             return TRUE;
         }
+
+        if (skip == ITER_NO)
+            return FALSE;
     }
 
     return FALSE;
@@ -3557,17 +3602,27 @@ static BOOL glyph_iterator_next(struct glyph_iterator *iter)
 
 static BOOL glyph_iterator_prev(struct glyph_iterator *iter)
 {
-    if (!iter->pos)
-        return FALSE;
+    enum iterator_match skip, match;
 
     while (iter->pos > iter->len - 1)
     {
         --iter->pos;
-        if (glyph_iterator_match(iter))
+
+        skip = glyph_iterator_may_skip(iter);
+        if (skip == ITER_YES)
+            continue;
+
+        match = glyph_iterator_may_match(iter);
+        if (match == ITER_YES || (match == ITER_MAYBE && skip == ITER_NO))
         {
             --iter->len;
+            if (iter->glyph_data)
+                ++iter->glyph_data;
             return TRUE;
         }
+
+        if (skip == ITER_NO)
+            return FALSE;
     }
 
     return FALSE;
