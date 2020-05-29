@@ -2194,9 +2194,10 @@ static void wined3d_context_vk_bind_vertex_buffers(struct wined3d_context_vk *co
     VkDeviceSize offsets[ARRAY_SIZE(state->streams)] = {0};
     VkBuffer buffers[ARRAY_SIZE(state->streams)];
     const struct wined3d_stream_state *stream;
+    const VkDescriptorBufferInfo *buffer_info;
+    struct wined3d_buffer_vk *buffer_vk;
     struct wined3d_buffer *buffer;
     unsigned int i, first, count;
-    struct wined3d_bo_vk *bo;
 
     first = 0;
     count = 0;
@@ -2206,10 +2207,11 @@ static void wined3d_context_vk_bind_vertex_buffers(struct wined3d_context_vk *co
 
         if ((buffer = stream->buffer))
         {
-            bo = &wined3d_buffer_vk(buffer)->bo;
-            wined3d_context_vk_reference_bo(context_vk, bo);
-            buffers[count] = bo->vk_buffer;
-            offsets[count] = bo->buffer_offset + stream->offset;
+            buffer_vk = wined3d_buffer_vk(buffer);
+            buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
+            wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+            buffers[count] = buffer_info->buffer;
+            offsets[count] = buffer_info->offset + stream->offset;
             ++count;
             continue;
         }
