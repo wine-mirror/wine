@@ -1356,6 +1356,7 @@ typedef void * (NTAPI *PALLOCATE_FUNCTION)(POOL_TYPE, SIZE_T, ULONG);
 typedef void * (NTAPI *PALLOCATE_FUNCTION_EX)(POOL_TYPE, SIZE_T, ULONG, PLOOKASIDE_LIST_EX);
 typedef void (NTAPI *PFREE_FUNCTION)(void *);
 typedef void (NTAPI *PFREE_FUNCTION_EX)(void *, PLOOKASIDE_LIST_EX);
+typedef void (NTAPI *PCALLBACK_FUNCTION)(void *, void *, void *);
 
 #ifdef _WIN64
 #define LOOKASIDE_ALIGN DECLSPEC_CACHEALIGN
@@ -1627,6 +1628,7 @@ PSLIST_ENTRY WINAPI ExInterlockedPushEntrySList(PSLIST_HEADER,PSLIST_ENTRY,PKSPI
 LIST_ENTRY * WINAPI ExInterlockedRemoveHeadList(LIST_ENTRY*,KSPIN_LOCK*);
 BOOLEAN   WINAPI ExIsResourceAcquiredExclusiveLite(ERESOURCE*);
 ULONG     WINAPI ExIsResourceAcquiredSharedLite(ERESOURCE*);
+void *    WINAPI ExRegisterCallback(PCALLBACK_OBJECT,PCALLBACK_FUNCTION,void*);
 void    FASTCALL ExReleaseFastMutexUnsafe(PFAST_MUTEX);
 void      WINAPI ExReleaseResourceForThreadLite(ERESOURCE*,ERESOURCE_THREAD);
 ULONG     WINAPI ExSetTimerResolution(ULONG,BOOLEAN);

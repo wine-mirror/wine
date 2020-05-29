@@ -2062,6 +2062,14 @@ NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
     return STATUS_SUCCESS;
 }
 
+void * WINAPI ExRegisterCallback(PCALLBACK_OBJECT callback_object,
+        PCALLBACK_FUNCTION callback_function, void *callback_context)
+{
+    FIXME("callback_object %p, callback_function %p, callback_context %p stub.\n",
+            callback_object, callback_function, callback_context);
+
+    return (void *)0xdeadbeef;
+}
 
 /***********************************************************************
  *           ExFreePool   (NTOSKRNL.EXE.@)
@@ -3046,6 +3054,7 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
         if (!pFunc)
         {
            hMod = GetModuleHandleW( halW );
+
            if (hMod) pFunc = GetProcAddress( hMod, routineNameA.Buffer );
         }
         RtlFreeAnsiString( &routineNameA );

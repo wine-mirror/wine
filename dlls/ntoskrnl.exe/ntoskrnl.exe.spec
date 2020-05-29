@@ -183,7 +183,7 @@
 @ stub ExRaiseException
 @ stub ExRaiseHardError
 @ stub ExRaiseStatus
-@ stub ExRegisterCallback
+@ stdcall ExRegisterCallback(ptr ptr ptr)
 @ stub ExReinitializeResourceLite
 @ stdcall ExReleaseResourceForThreadLite(ptr long)
 @ extern ExSemaphoreObjectType
