@@ -797,40 +797,43 @@ static void *map_free_area( void *base, void *end, size_t size, int top_down, in
  */
 static void *find_reserved_free_area( void *base, void *end, size_t size, int top_down )
 {
-    struct wine_rb_entry *first = find_view_inside_range( &base, &end, top_down );
+    struct range_entry *range;
     void *start;
+
+    base = ROUND_ADDR( (char *)base + granularity_mask, granularity_mask );
+    end = (char *)ROUND_ADDR( (char *)end - size, granularity_mask ) + size;
 
     if (top_down)
     {
-        start = ROUND_ADDR( (char *)end - size, granularity_mask );
-        if (start >= end || start < base) return NULL;
+        start = (char *)end - size;
+        range = free_ranges_lower_bound( start );
+        assert(range != free_ranges_end && range->end >= start);
 
-        while (first)
+        if ((char *)range->end - (char *)start < size) start = ROUND_ADDR( (char *)range->end - size, granularity_mask );
+        do
         {
-            struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
-
-            if ((char *)view->base + view->size <= (char *)start) break;
-            start = ROUND_ADDR( (char *)view->base - size, granularity_mask );
-            /* stop if remaining space is not large enough */
-            if (!start || start >= end || start < base) return NULL;
-            first = wine_rb_prev( first );
+            if (start >= end || start < base || (char *)end - (char *)start < size) return NULL;
+            if (start < range->end && start >= range->base && (char *)range->end - (char *)start >= size) break;
+            if (--range < free_ranges) return NULL;
+            start = ROUND_ADDR( (char *)range->end - size, granularity_mask );
         }
+        while (1);
     }
     else
     {
-        start = ROUND_ADDR( (char *)base + granularity_mask, granularity_mask );
-        if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
+        start = base;
+        range = free_ranges_lower_bound( start );
+        assert(range != free_ranges_end && range->end >= start);
 
-        while (first)
+        if (start < range->base) start = ROUND_ADDR( (char *)range->base + granularity_mask, granularity_mask );
+        do
         {
-            struct file_view *view = WINE_RB_ENTRY_VALUE( first, struct file_view, entry );
-
-            if ((char *)view->base >= (char *)start + size) break;
-            start = ROUND_ADDR( (char *)view->base + view->size + granularity_mask, granularity_mask );
-            /* stop if remaining space is not large enough */
-            if (!start || start >= end || (char *)end - (char *)start < size) return NULL;
-            first = wine_rb_next( first );
+            if (start >= end || start < base || (char *)end - (char *)start < size) return NULL;
+            if (start < range->end && start >= range->base && (char *)range->end - (char *)start >= size) break;
+            if (++range == free_ranges_end) return NULL;
+            start = ROUND_ADDR( (char *)range->base + granularity_mask, granularity_mask );
         }
+        while (1);
     }
     return start;
 }
