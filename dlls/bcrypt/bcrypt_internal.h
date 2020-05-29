@@ -137,6 +137,7 @@ enum alg_id
     ALG_ID_RSA_SIGN,
     ALG_ID_ECDSA_P256,
     ALG_ID_ECDSA_P384,
+    ALG_ID_DSA,
 
     /* rng */
     ALG_ID_RNG,

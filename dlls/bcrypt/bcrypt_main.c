@@ -118,6 +118,7 @@ builtin_algorithms[] =
     {  BCRYPT_RSA_SIGN_ALGORITHM,   BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P256_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_ECDSA_P384_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
+    {  BCRYPT_DSA_ALGORITHM,        BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_RNG_ALGORITHM,        BCRYPT_RNG_INTERFACE,                   0,      0,    0 },
 };
 
@@ -541,6 +542,13 @@ static NTSTATUS get_rsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *b
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS get_dsa_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+{
+    if (!strcmpW( prop, BCRYPT_PADDING_SCHEMES )) return STATUS_NOT_SUPPORTED;
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
 {
     NTSTATUS status;
@@ -557,11 +565,14 @@ NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR
     case ALG_ID_RSA:
         return get_rsa_property( alg->mode, prop, buf, size, ret_size );
 
+    case ALG_ID_DSA:
+        return get_dsa_property( alg->mode, prop, buf, size, ret_size );
+
     default:
         break;
     }
 
-    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    FIXME( "unsupported property %s algorithm %u\n", debugstr_w(prop), alg->id );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -924,15 +935,8 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
         memcpy( output + sizeof(len), key->u.s.secret, key->u.s.secret_len );
         return STATUS_SUCCESS;
     }
-    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ))
-    {
-        *size = key->u.a.pubkey_len;
-        if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
-
-        memcpy( output, key->u.a.pubkey, key->u.a.pubkey_len );
-        return STATUS_SUCCESS;
-    }
-    else if (!strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
+    else if (!strcmpW( type, BCRYPT_RSAPUBLIC_BLOB ) || !strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ) ||
+             !strcmpW( type, BCRYPT_ECCPUBLIC_BLOB ))
     {
         *size = key->u.a.pubkey_len;
         if (output_len < key->u.a.pubkey_len) return STATUS_SUCCESS;
@@ -1233,6 +1237,28 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         if ((status = key_asymmetric_init( key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, BCRYPT_DSA_PUBLIC_BLOB ))
+    {
+        BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)input;
+        ULONG size;
+
+        if (input_len < sizeof(*dsa_blob)) return STATUS_INVALID_PARAMETER;
+        if ((alg->id != ALG_ID_DSA) || dsa_blob->dwMagic != BCRYPT_DSA_PUBLIC_MAGIC)
+            return STATUS_NOT_SUPPORTED;
+
+        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+
+        size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
+        if ((status = key_asymmetric_init( key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size )))
         {
             heap_free( key );
             return status;
