@@ -618,6 +618,12 @@ struct ot_gsub_chaincontext_subst_format1
     UINT16 rulesets[1];
 };
 
+struct ot_gsub_ruleset
+{
+    UINT16 count;
+    UINT16 offsets[1];
+};
+
 struct ot_feature
 {
     WORD feature_params;
@@ -3525,6 +3531,11 @@ struct ot_gdef_mark_glyph_sets
     DWORD offsets[1];
 };
 
+static BOOL opentype_match_glyph_func(UINT16 glyph, UINT16 glyph_data, const struct match_data *data)
+{
+    return glyph == glyph_data;
+}
+
 static BOOL opentype_match_coverage_func(UINT16 glyph, UINT16 glyph_data, const struct match_data *data)
 {
     const struct match_context *mc = data->mc;
@@ -5139,7 +5150,9 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
 {
     struct match_context mc = { .context = context, .mask = lookup->mask };
     const struct dwrite_fonttable *table = &context->table->table;
-    unsigned int coverage_index = GLYPH_NOT_COVERED;
+    unsigned int i, coverage_index = GLYPH_NOT_COVERED, count, offset;
+    unsigned int backtrack_count, input_count, lookahead_count, lookup_count;
+    const UINT16 *backtrack, *lookahead, *input, *lookup_records;
     UINT16 glyph, format, coverage;
     BOOL ret = FALSE;
 
@@ -5149,6 +5162,8 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
 
     if (format == 1)
     {
+        const struct ot_gsub_ruleset *ruleset;
+
         coverage = table_read_be_word(table, subtable_offset +
                 FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
 
@@ -5156,7 +5171,49 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
         if (coverage_index == GLYPH_NOT_COVERED)
             return FALSE;
 
-        WARN("Chaining contextual substitution (1) is not supported.\n");
+        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1,
+                ruleset_count));
+        if (coverage_index >= count)
+            return FALSE;
+
+        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1,
+                rulesets[coverage_index]));
+        offset += subtable_offset;
+
+        count = table_read_be_word(table, offset);
+        ruleset = table_read_ensure(table, offset, count * sizeof(ruleset->offsets));
+
+        mc.match_func = opentype_match_glyph_func;
+        for (i = 0; i < count; ++i)
+        {
+            unsigned int rule_offset = offset + GET_BE_WORD(ruleset->offsets[i]);
+
+            backtrack_count = table_read_be_word(table, rule_offset);
+            rule_offset += 2;
+            backtrack = table_read_ensure(table, rule_offset, backtrack_count * sizeof(*backtrack));
+            rule_offset += backtrack_count * sizeof(*backtrack);
+
+            input_count = table_read_be_word(table, rule_offset);
+            rule_offset += 2;
+            input = table_read_ensure(table, rule_offset, input_count * sizeof(*input));
+            rule_offset += input_count * sizeof(*input);
+
+            lookahead_count = table_read_be_word(table, rule_offset);
+            rule_offset += 2;
+            lookahead = table_read_ensure(table, rule_offset, lookahead_count * sizeof(*lookahead));
+            rule_offset += lookahead_count * sizeof(*lookahead);
+
+            lookup_count = table_read_be_word(table, rule_offset);
+            rule_offset += 2;
+            lookup_records = table_read_ensure(table, rule_offset, lookup_count * 2 * sizeof(*lookup_records));
+
+            /* First applicable rule is used. */
+            if (opentype_layout_apply_gsub_chain_context_lookup(backtrack_count, backtrack, input_count, input, lookahead_count,
+                    lookahead, lookup_count, lookup_records, &mc))
+            {
+                return TRUE;
+            }
+        }
     }
     else if (format == 2)
     {
@@ -5174,7 +5231,7 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
         unsigned int backtrack_count, input_count, lookahead_count, lookup_count;
         const UINT16 *backtrack, *lookahead, *input, *lookup_records;
 
-        unsigned int offset = subtable_offset + 2 /* format */;
+        offset = subtable_offset + 2 /* format */;
 
         backtrack_count = table_read_be_word(table, offset);
         offset += 2;
