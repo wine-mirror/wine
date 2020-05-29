@@ -91,7 +91,7 @@
 #include "unix_private.h"
 #include "ddk/wdm.h"
 
-WINE_DECLARE_DEBUG_CHANNEL(server);
+WINE_DEFAULT_DEBUG_CHANNEL(server);
 
 #ifndef MSG_CMSG_CLOEXEC
 #define MSG_CMSG_CLOEXEC 0
@@ -126,6 +126,27 @@ timeout_t server_start_time = 0;  /* time of server startup */
 sigset_t server_block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 static pid_t server_pid;
+
+static RTL_CRITICAL_SECTION fd_cache_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &fd_cache_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": fd_cache_section") }
+};
+static RTL_CRITICAL_SECTION fd_cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+/* atomically exchange a 64-bit value */
+static inline LONG64 interlocked_xchg64( LONG64 *dest, LONG64 val )
+{
+#ifdef _WIN64
+    return (LONG64)InterlockedExchangePointer( (void **)dest, (void *)val );
+#else
+    LONG64 tmp = *dest;
+    while (InterlockedCompareExchange64( dest, val, tmp ) != tmp) tmp = *dest;
+    return tmp;
+#endif
+}
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -185,6 +206,26 @@ static DECLSPEC_NORETURN void server_protocol_perror( const char *err )
 
 
 /***********************************************************************
+ *           server_enter_uninterrupted_section
+ */
+void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
+{
+    pthread_sigmask( SIG_BLOCK, &server_block_set, sigset );
+    RtlEnterCriticalSection( cs );
+}
+
+
+/***********************************************************************
+ *           server_leave_uninterrupted_section
+ */
+void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
+{
+    RtlLeaveCriticalSection( cs );
+    pthread_sigmask( SIG_SETMASK, sigset, NULL );
+}
+
+
+/***********************************************************************
  *           server_send_fd
  *
  * Send a file descriptor to the server.
@@ -240,7 +281,7 @@ void CDECL server_send_fd( int fd )
  *
  * Receive a file descriptor passed from the server.
  */
-int CDECL receive_fd( obj_handle_t *handle )
+static int receive_fd( obj_handle_t *handle )
 {
     struct iovec vec;
     struct msghdr msghdr;
@@ -292,6 +333,232 @@ int CDECL receive_fd( obj_handle_t *handle )
     }
     /* the server closed the connection; time to die... */
     for (;;) NtTerminateThread( GetCurrentThread(), 0 );
+}
+
+
+/***********************************************************************/
+/* fd cache support */
+
+union fd_cache_entry
+{
+    LONG64 data;
+    struct
+    {
+        int fd;
+        enum server_fd_type type : 5;
+        unsigned int        access : 3;
+        unsigned int        options : 24;
+    } s;
+};
+
+C_ASSERT( sizeof(union fd_cache_entry) == sizeof(LONG64) );
+
+#define FD_CACHE_BLOCK_SIZE  (65536 / sizeof(union fd_cache_entry))
+#define FD_CACHE_ENTRIES     128
+
+static union fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
+static union fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
+
+static inline unsigned int handle_to_index( HANDLE handle, unsigned int *entry )
+{
+    unsigned int idx = (wine_server_obj_handle(handle) >> 2) - 1;
+    *entry = idx / FD_CACHE_BLOCK_SIZE;
+    return idx % FD_CACHE_BLOCK_SIZE;
+}
+
+
+/***********************************************************************
+ *           add_fd_to_cache
+ *
+ * Caller must hold fd_cache_section.
+ */
+static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
+                            unsigned int access, unsigned int options )
+{
+    unsigned int entry, idx = handle_to_index( handle, &entry );
+    union fd_cache_entry cache;
+
+    if (entry >= FD_CACHE_ENTRIES)
+    {
+        FIXME( "too many allocated handles, not caching %p\n", handle );
+        return FALSE;
+    }
+
+    if (!fd_cache[entry])  /* do we need to allocate a new block of entries? */
+    {
+        if (!entry) fd_cache[0] = fd_cache_initial_block;
+        else
+        {
+            void *ptr = wine_anon_mmap( NULL, FD_CACHE_BLOCK_SIZE * sizeof(union fd_cache_entry),
+                                        PROT_READ | PROT_WRITE, 0 );
+            if (ptr == MAP_FAILED) return FALSE;
+            fd_cache[entry] = ptr;
+        }
+    }
+
+    /* store fd+1 so that 0 can be used as the unset value */
+    cache.s.fd = fd + 1;
+    cache.s.type = type;
+    cache.s.access = access;
+    cache.s.options = options;
+    cache.data = interlocked_xchg64( &fd_cache[entry][idx].data, cache.data );
+    assert( !cache.s.fd );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           get_cached_fd
+ */
+static inline NTSTATUS get_cached_fd( HANDLE handle, int *fd, enum server_fd_type *type,
+                                      unsigned int *access, unsigned int *options )
+{
+    unsigned int entry, idx = handle_to_index( handle, &entry );
+    union fd_cache_entry cache;
+
+    if (entry >= FD_CACHE_ENTRIES || !fd_cache[entry]) return STATUS_INVALID_HANDLE;
+
+    cache.data = InterlockedCompareExchange64( &fd_cache[entry][idx].data, 0, 0 );
+    if (!cache.data) return STATUS_INVALID_HANDLE;
+
+    /* if fd type is invalid, fd stores an error value */
+    if (cache.s.type == FD_TYPE_INVALID) return cache.s.fd - 1;
+
+    *fd = cache.s.fd - 1;
+    if (type) *type = cache.s.type;
+    if (access) *access = cache.s.access;
+    if (options) *options = cache.s.options;
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           server_remove_fd_from_cache
+ */
+int CDECL server_remove_fd_from_cache( HANDLE handle )
+{
+    unsigned int entry, idx = handle_to_index( handle, &entry );
+    int fd = -1;
+
+    if (entry < FD_CACHE_ENTRIES && fd_cache[entry])
+    {
+        union fd_cache_entry cache;
+        cache.data = interlocked_xchg64( &fd_cache[entry][idx].data, 0 );
+        if (cache.s.type != FD_TYPE_INVALID) fd = cache.s.fd - 1;
+    }
+
+    return fd;
+}
+
+
+/***********************************************************************
+ *           server_get_unix_fd
+ *
+ * The returned unix_fd should be closed iff needs_close is non-zero.
+ */
+int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
+                              int *needs_close, enum server_fd_type *type, unsigned int *options )
+{
+    sigset_t sigset;
+    obj_handle_t fd_handle;
+    int ret, fd = -1;
+    unsigned int access = 0;
+
+    *unix_fd = -1;
+    *needs_close = 0;
+    wanted_access &= FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA;
+
+    ret = get_cached_fd( handle, &fd, type, &access, options );
+    if (ret != STATUS_INVALID_HANDLE) goto done;
+
+    server_enter_uninterrupted_section( &fd_cache_section, &sigset );
+    ret = get_cached_fd( handle, &fd, type, &access, options );
+    if (ret == STATUS_INVALID_HANDLE)
+    {
+        SERVER_START_REQ( get_handle_fd )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            if (!(ret = wine_server_call( req )))
+            {
+                if (type) *type = reply->type;
+                if (options) *options = reply->options;
+                access = reply->access;
+                if ((fd = receive_fd( &fd_handle )) != -1)
+                {
+                    assert( wine_server_ptr_handle(fd_handle) == handle );
+                    *needs_close = (!reply->cacheable ||
+                                    !add_fd_to_cache( handle, fd, reply->type,
+                                                      reply->access, reply->options ));
+                }
+                else ret = STATUS_TOO_MANY_OPENED_FILES;
+            }
+            else if (reply->cacheable)
+            {
+                add_fd_to_cache( handle, ret, FD_TYPE_INVALID, 0, 0 );
+            }
+        }
+        SERVER_END_REQ;
+    }
+    server_leave_uninterrupted_section( &fd_cache_section, &sigset );
+
+done:
+    if (!ret && ((access & wanted_access) != wanted_access))
+    {
+        ret = STATUS_ACCESS_DENIED;
+        if (*needs_close) close( fd );
+    }
+    if (!ret) *unix_fd = fd;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           server_fd_to_handle
+ */
+NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
+{
+    NTSTATUS ret;
+
+    *handle = 0;
+    wine_server_send_fd( fd );
+
+    SERVER_START_REQ( alloc_file_handle )
+    {
+        req->access     = access;
+        req->attributes = attributes;
+        req->fd         = fd;
+        if (!(ret = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           server_handle_to_fd
+ *
+ * Retrieve the file descriptor corresponding to a file handle.
+ */
+NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
+                                    unsigned int *options )
+{
+    int needs_close;
+    NTSTATUS ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, options );
+
+    if (!ret && !needs_close)
+    {
+        if ((*unix_fd = dup(*unix_fd)) == -1) ret = STATUS_TOO_MANY_OPENED_FILES;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           server_release_fd
+ */
+void CDECL server_release_fd( HANDLE handle, int unix_fd )
+{
+    close( unix_fd );
 }
 
 

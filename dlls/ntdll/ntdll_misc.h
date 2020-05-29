@@ -127,9 +127,6 @@ extern unsigned int server_select( const select_op_t *select_op, data_size_t siz
 extern unsigned int server_wait( const select_op_t *select_op, data_size_t size,
                                  UINT flags, const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
-extern int server_remove_fd_from_cache( HANDLE handle ) DECLSPEC_HIDDEN;
-extern int server_get_unix_fd( HANDLE handle, unsigned int access, int *unix_fd,
-                               int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;
 extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
 extern NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;

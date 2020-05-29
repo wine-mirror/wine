@@ -530,7 +530,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
 
     io_status->Information = 0;
 
-    if ((status = server_get_unix_fd( device, 0, &fd, &needs_close, NULL, NULL )))
+    if ((status = unix_funcs->server_get_unix_fd( device, 0, &fd, &needs_close, NULL, NULL )))
         goto error;
 
     switch (io_control)

@@ -199,7 +199,7 @@ void map_user_shared_data(void)
         MESSAGE( "wine: failed to open the USD section: %08x\n", status );
         exit(1);
     }
-    if ((res = server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
+    if ((res = unix_funcs->server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
         (user_shared_data != mmap( user_shared_data, sizeof(*user_shared_data),
                                    PROT_READ, MAP_SHARED | MAP_FIXED, fd, 0 )))
     {

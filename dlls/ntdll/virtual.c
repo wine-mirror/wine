@@ -1815,7 +1815,7 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zer
     SERVER_END_REQ;
     if (res) return res;
 
-    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
+    if ((res = unix_funcs->server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
     if (sec_flags & SEC_IMAGE)
     {
@@ -1823,8 +1823,8 @@ NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zer
         {
             int shared_fd, shared_needs_close;
 
-            if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
-                                           &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
+            if ((res = unix_funcs->server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
+                                                       &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
             res = map_image( handle, access, unix_handle, alloc_type & MEM_TOP_DOWN, zero_bits_64, image_info,
                              shared_fd, needs_close, addr_ptr );
             if (shared_needs_close) close( shared_fd );

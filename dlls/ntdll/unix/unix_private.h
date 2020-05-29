@@ -61,7 +61,15 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
 
 extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
-extern int CDECL receive_fd( obj_handle_t *handle ) DECLSPEC_HIDDEN;
+extern int CDECL server_remove_fd_from_cache( HANDLE handle ) DECLSPEC_HIDDEN;
+extern int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
+                                     int *needs_close, enum server_fd_type *type,
+                                     unsigned int *options ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned int attributes,
+                                           HANDLE *handle ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
+                                           unsigned int *options ) DECLSPEC_HIDDEN;
+extern void CDECL server_release_fd( HANDLE handle, int unix_fd ) DECLSPEC_HIDDEN;
 extern int CDECL server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 extern void CDECL server_init_process(void) DECLSPEC_HIDDEN;
 extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;

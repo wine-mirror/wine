@@ -951,7 +951,7 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
     async_commio *commio = arg;
     int fd, needs_close;
 
-    if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
+    if (!unix_funcs->server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
         DWORD new_mstat, dummy, cookie;
@@ -1141,7 +1141,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, &type, NULL )))
+    if ((status = unix_funcs->server_get_unix_fd( hDevice, access, &fd, &needs_close, &type, NULL )))
         goto error;
     if (type != FD_TYPE_SERIAL)
     {

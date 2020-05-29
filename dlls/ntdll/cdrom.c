@@ -2844,7 +2844,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL, NULL )))
+    if ((status = unix_funcs->server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL, NULL )))
     {
         if (status == STATUS_BAD_DEVICE_TYPE) return status;  /* no associated fd */
         goto error;

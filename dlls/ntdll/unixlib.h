@@ -25,7 +25,7 @@
 #include "wine/debug.h"
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 8
+#define NTDLL_UNIXLIB_VERSION 9
 
 struct unix_funcs
 {
@@ -52,7 +52,14 @@ struct unix_funcs
 
     /* server functions */
     void          (CDECL *server_send_fd)( int fd );
-    int           (CDECL *receive_fd)( obj_handle_t *handle );
+    int           (CDECL *server_remove_fd_from_cache)( HANDLE handle );
+    int           (CDECL *server_get_unix_fd)( HANDLE handle, unsigned int wanted_access, int *unix_fd,
+                                               int *needs_close, enum server_fd_type *type, unsigned int *options );
+    NTSTATUS      (CDECL *server_fd_to_handle)( int fd, unsigned int access, unsigned int attributes,
+                                                HANDLE *handle );
+    NTSTATUS      (CDECL *server_handle_to_fd)( HANDLE handle, unsigned int access, int *unix_fd,
+                                                unsigned int *options );
+    void          (CDECL *server_release_fd)( HANDLE handle, int unix_fd );
     int           (CDECL *server_pipe)( int fd[2] );
     void          (CDECL *server_init_process)(void);
     void          (CDECL *server_init_process_done)(void);

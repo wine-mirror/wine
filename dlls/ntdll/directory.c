@@ -1946,7 +1946,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryDirectoryFile( HANDLE handle, HANDLE ev
     }
     if (!buffer) return STATUS_ACCESS_VIOLATION;
 
-    if ((status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
+    if ((status = unix_funcs->server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
         return status;
 
     io->Information = 0;
@@ -2436,7 +2436,7 @@ NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
         return STATUS_NO_MEMORY;
     strcpy( unix_name->Buffer, "." );
 
-    if ((status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
+    if ((status = unix_funcs->server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
         goto done;
 
     if (type != FD_TYPE_DIR)
@@ -2638,7 +2638,7 @@ NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *
         return STATUS_NO_MEMORY;
     unix_name[0] = '.';
 
-    if (!(status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
+    if (!(status = unix_funcs->server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
     {
         if (type != FD_TYPE_DIR)
         {
@@ -2867,7 +2867,7 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
     NTSTATUS status;
     int unix_fd, needs_close;
 
-    if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )))
+    if (!(status = unix_funcs->server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )))
     {
         struct stat st;
         char *mount_point = NULL;
@@ -2949,7 +2949,7 @@ NTSTATUS DIR_get_unix_cwd( char **cwd )
         if (status != STATUS_SUCCESS) goto done;
     }
 
-    if ((status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )) == STATUS_SUCCESS)
+    if ((status = unix_funcs->server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )) == STATUS_SUCCESS)
     {
         RtlEnterCriticalSection( &dir_section );
 

@@ -542,8 +542,8 @@ static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb, NTSTAT
     {
     case STATUS_ALERTED: /* got some new data */
         /* check to see if the data is ready (non-blocking) */
-        if ((status = server_get_unix_fd( fileio->io.handle, FILE_READ_DATA, &fd,
-                                          &needs_close, NULL, NULL )))
+        if ((status = unix_funcs->server_get_unix_fd( fileio->io.handle, FILE_READ_DATA, &fd,
+                                                      &needs_close, NULL, NULL )))
             break;
 
         result = virtual_locked_read(fd, &fileio->buffer[fileio->already], fileio->count-fileio->already);
@@ -862,8 +862,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
-    status = server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle,
-                                 &needs_close, &type, &options );
+    status = unix_funcs->server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle,
+                                             &needs_close, &type, &options );
     if (status && status != STATUS_BAD_DEVICE_TYPE) return status;
 
     if (!virtual_check_buffer_for_write( buffer, length )) return STATUS_ACCESS_VIOLATION;
@@ -1062,8 +1062,8 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
-    status = server_get_unix_fd( file, FILE_READ_DATA, &unix_handle,
-                                 &needs_close, &type, &options );
+    status = unix_funcs->server_get_unix_fd( file, FILE_READ_DATA, &unix_handle,
+                                             &needs_close, &type, &options );
     if (status) return status;
 
     if ((type != FD_TYPE_FILE) ||
@@ -1137,8 +1137,8 @@ static NTSTATUS FILE_AsyncWriteService( void *user, IO_STATUS_BLOCK *iosb, NTSTA
     {
     case STATUS_ALERTED:
         /* write some data (non-blocking) */
-        if ((status = server_get_unix_fd( fileio->io.handle, FILE_WRITE_DATA, &fd,
-                                          &needs_close, &type, NULL )))
+        if ((status = unix_funcs->server_get_unix_fd( fileio->io.handle, FILE_WRITE_DATA, &fd,
+                                                      &needs_close, &type, NULL )))
             break;
 
         if (!fileio->count && (type == FD_TYPE_MAILSLOT || type == FD_TYPE_SOCKET))
@@ -1231,12 +1231,12 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
-    status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
-                                 &needs_close, &type, &options );
+    status = unix_funcs->server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
+                                             &needs_close, &type, &options );
     if (status == STATUS_ACCESS_DENIED)
     {
-        status = server_get_unix_fd( hFile, FILE_APPEND_DATA, &unix_handle,
-                                     &needs_close, &type, &options );
+        status = unix_funcs->server_get_unix_fd( hFile, FILE_APPEND_DATA, &unix_handle,
+                                                 &needs_close, &type, &options );
         append_write = TRUE;
     }
     if (status && status != STATUS_BAD_DEVICE_TYPE) return status;
@@ -1458,8 +1458,8 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     if (length % page_size) return STATUS_INVALID_PARAMETER;
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
-    status = server_get_unix_fd( file, FILE_WRITE_DATA, &unix_handle,
-                                 &needs_close, &type, &options );
+    status = unix_funcs->server_get_unix_fd( file, FILE_WRITE_DATA, &unix_handle,
+                                             &needs_close, &type, &options );
     if (status) return status;
 
     if ((type != FD_TYPE_FILE) ||
@@ -2459,7 +2459,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, &options )))
+    if ((io->u.Status = unix_funcs->server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, &options )))
     {
         if (io->u.Status != STATUS_BAD_DEVICE_TYPE) return io->u.Status;
         return server_get_file_info( hFile, io, ptr, len, class );
@@ -2561,7 +2561,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 if (size > 0x10000) size = 0x10000;
                 if ((tmpbuf = RtlAllocateHeap( GetProcessHeap(), 0, size )))
                 {
-                    if (!server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
+                    if (!unix_funcs->server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
                     {
                         int res = recv( fd, tmpbuf, size, MSG_PEEK );
                         info->MessagesAvailable = (res > 0);
@@ -2693,7 +2693,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             const FILE_BASIC_INFORMATION *info = ptr;
             LARGE_INTEGER mtime, atime;
 
-            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+            if ((io->u.Status = unix_funcs->server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
                 return io->u.Status;
 
             mtime.QuadPart = info->LastWriteTime.QuadPart == -1 ? 0 : info->LastWriteTime.QuadPart;
@@ -2733,7 +2733,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         {
             const FILE_POSITION_INFORMATION *info = ptr;
 
-            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+            if ((io->u.Status = unix_funcs->server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
                 return io->u.Status;
 
             if (lseek( fd, info->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
@@ -2750,7 +2750,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             struct stat st;
             const FILE_END_OF_FILE_INFORMATION *info = ptr;
 
-            if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+            if ((io->u.Status = unix_funcs->server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
                 return io->u.Status;
 
             /* first try normal truncate */
@@ -2869,7 +2869,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             struct stat st;
             const FILE_VALID_DATA_LENGTH_INFORMATION *info = ptr;
 
-            if ((io->u.Status = server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL )))
+            if ((io->u.Status = unix_funcs->server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL )))
                 return io->u.Status;
 
             if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
@@ -3269,7 +3269,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
     int fd, needs_close;
     struct stat st;
 
-    io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
+    io->u.Status = unix_funcs->server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
     if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
     {
         SERVER_START_REQ( get_volume_info )
@@ -3577,9 +3577,9 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
 
     if (!io || !virtual_check_buffer_for_write( io, sizeof(*io) )) return STATUS_ACCESS_VIOLATION;
 
-    ret = server_get_unix_fd( hFile, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
+    ret = unix_funcs->server_get_unix_fd( hFile, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
     if (ret == STATUS_ACCESS_DENIED)
-        ret = server_get_unix_fd( hFile, FILE_APPEND_DATA, &fd, &needs_close, &type, NULL );
+        ret = unix_funcs->server_get_unix_fd( hFile, FILE_APPEND_DATA, &fd, &needs_close, &type, NULL );
 
     if (!ret && type == FD_TYPE_SERIAL)
     {

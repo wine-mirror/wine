@@ -366,7 +366,7 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
             if (dest) *dest = wine_server_ptr_handle( reply->handle );
             if (reply->closed && reply->self)
             {
-                int fd = server_remove_fd_from_cache( source );
+                int fd = unix_funcs->server_remove_fd_from_cache( source );
                 if (fd != -1) close( fd );
             }
         }
@@ -385,7 +385,7 @@ static LONG WINAPI invalid_handle_exception_handler( EXCEPTION_POINTERS *eptr )
 NTSTATUS close_handle( HANDLE handle )
 {
     NTSTATUS ret;
-    int fd = server_remove_fd_from_cache( handle );
+    int fd = unix_funcs->server_remove_fd_from_cache( handle );
 
     SERVER_START_REQ( close_handle )
     {
