@@ -85,6 +85,9 @@ static DWORD client_tid;
 
 static HANDLE ntoskrnl_heap;
 
+static PLOAD_IMAGE_NOTIFY_ROUTINE load_image_notify_routines[8];
+static unsigned int load_image_notify_routine_count;
+
 struct wine_driver
 {
     DRIVER_OBJECT driver_obj;
@@ -3001,10 +3004,21 @@ NTSTATUS WINAPI PsRemoveCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE
 /***********************************************************************
  *           PsRemoveLoadImageNotifyRoutine  (NTOSKRNL.EXE.@)
  */
- NTSTATUS WINAPI PsRemoveLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine)
+NTSTATUS WINAPI PsRemoveLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
  {
-    FIXME( "stub: %p\n", NotifyRoutine );
-    return STATUS_SUCCESS;
+    unsigned int i;
+
+    TRACE("routine %p.\n", routine);
+
+    for (i = 0; i < load_image_notify_routine_count; ++i)
+        if (load_image_notify_routines[i] == routine)
+        {
+            --load_image_notify_routine_count;
+            memmove(&load_image_notify_routines[i], &load_image_notify_routines[i + 1],
+                    sizeof(*load_image_notify_routines) * (load_image_notify_routine_count - i));
+            return STATUS_SUCCESS;
+        }
+    return STATUS_PROCEDURE_NOT_FOUND;
  }
 
 
@@ -3160,7 +3174,13 @@ NTSTATUS WINAPI IoWMIOpenBlock(LPCGUID guid, ULONG desired_access, PVOID *data_b
  */
 NTSTATUS WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
 {
-    FIXME("(%p) stub\n", routine);
+    FIXME("routine %p, semi-stub.\n", routine);
+
+    if (load_image_notify_routine_count == ARRAY_SIZE(load_image_notify_routines))
+        return STATUS_INSUFFICIENT_RESOURCES;
+
+    load_image_notify_routines[load_image_notify_routine_count++] = routine;
+
     return STATUS_SUCCESS;
 }
 
