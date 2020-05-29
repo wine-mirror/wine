@@ -462,7 +462,7 @@
 @ stub IoReportTargetDeviceChange
 @ stub IoReportTargetDeviceChangeAsynchronous
 @ stub IoRequestDeviceEject
-@ stub IoReuseIrp
+@ stdcall IoReuseIrp(ptr long)
 @ stub IoSetCompletionRoutineEx
 @ stdcall IoSetDeviceInterfaceState(ptr long)
 @ stub IoSetDeviceToVerify

@@ -975,6 +975,17 @@ void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
             (PIO_STACK_LOCATION)(irp + 1) + stack_size;
 }
 
+void WINAPI IoReuseIrp(IRP *irp, NTSTATUS iostatus)
+{
+    UCHAR AllocationFlags;
+
+    TRACE("irp %p, iostatus %#x.\n", irp, iostatus);
+
+    AllocationFlags = irp->AllocationFlags;
+    IoInitializeIrp(irp, irp->Size, irp->StackCount);
+    irp->AllocationFlags = AllocationFlags;
+    irp->IoStatus.u.Status = iostatus;
+}
 
 /***********************************************************************
  *           IoInitializeTimer   (NTOSKRNL.EXE.@)

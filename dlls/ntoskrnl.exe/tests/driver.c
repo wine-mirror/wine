@@ -211,9 +211,18 @@ static void *get_proc_address(const char *name)
 static FILE_OBJECT *last_created_file;
 static unsigned int create_count, close_count;
 
+static NTSTATUS WINAPI test_irp_struct_completion_routine(DEVICE_OBJECT *reserved, IRP *irp, void *context)
+{
+    unsigned int *result = context;
+
+    *result = 1;
+    return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
 static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    unsigned int irp_completion_result;
 
     ok(device == upper_device, "Expected device %p, got %p.\n", upper_device, device);
     ok(last_created_file != NULL, "last_created_file = NULL\n");
@@ -225,6 +234,34 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
        "IRP thread is not the current thread\n");
 
     ok(IoGetRequestorProcess(irp) == IoGetCurrentProcess(), "processes didn't match\n");
+
+    irp = IoAllocateIrp(1, FALSE);
+    ok(irp->AllocationFlags == IRP_ALLOCATED_FIXED_SIZE, "Got unexpected irp->AllocationFlags %#x.\n",
+            irp->AllocationFlags);
+    ok(irp->CurrentLocation == 2,
+            "Got unexpected irp->CurrentLocation %u.\n", irp->CurrentLocation);
+    IoSetCompletionRoutine(irp, test_irp_struct_completion_routine, &irp_completion_result,
+            TRUE, TRUE, TRUE);
+
+    irp_completion_result = 0;
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    --irp->CurrentLocation;
+    --irp->Tail.Overlay.CurrentStackLocation;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    ok(irp->CurrentLocation == 2,
+            "Got unexpected irp->CurrentLocation %u.\n", irp->CurrentLocation);
+    ok(irp_completion_result, "IRP completion was not called.\n");
+
+    --irp->CurrentLocation;
+    --irp->Tail.Overlay.CurrentStackLocation;
+    IoReuseIrp(irp, STATUS_UNSUCCESSFUL);
+    ok(irp->CurrentLocation == 2,
+            "Got unexpected irp->CurrentLocation %u.\n", irp->CurrentLocation);
+    ok(irp->AllocationFlags == IRP_ALLOCATED_FIXED_SIZE, "Got unexpected irp->AllocationFlags %#x.\n",
+            irp->AllocationFlags);
+
+    IoFreeIrp(irp);
 }
 
 static void test_mdl_map(void)
