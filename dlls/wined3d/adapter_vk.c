@@ -844,6 +844,9 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
     void *map_ptr;
     VkResult vr;
 
+    if (bo->map_ptr)
+        return bo->map_ptr;
+
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context_vk->c.device);
 
@@ -872,6 +875,9 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
         return NULL;
     }
 
+    if (sizeof(map_ptr) >= sizeof(uint64_t))
+        bo->map_ptr = map_ptr;
+
     return map_ptr;
 }
 
@@ -880,6 +886,9 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
     struct wined3d_bo_slab_vk *slab;
+
+    if (bo->map_ptr)
+        return;
 
     if ((slab = bo->slab))
     {

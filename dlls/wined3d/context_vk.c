@@ -483,6 +483,7 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
         return FALSE;
     }
 
+    bo->map_ptr = NULL;
     bo->buffer_offset = 0;
     bo->size = size;
     bo->usage = usage;
@@ -791,6 +792,8 @@ void wined3d_context_vk_destroy_sampler(struct wined3d_context_vk *context_vk,
 
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)
 {
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     size_t object_size, idx;
 
     TRACE("context_vk %p, bo %p.\n", context_vk, bo);
@@ -810,6 +813,8 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
         return;
     }
 
+    if (bo->map_ptr)
+        VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
     wined3d_context_vk_destroy_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
 }
 

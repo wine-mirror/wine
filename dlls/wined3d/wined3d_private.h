@@ -1554,6 +1554,7 @@ struct wined3d_bo_vk
     struct wined3d_bo_slab_vk *slab;
 
     VkDeviceMemory vk_memory;
+    void *map_ptr;
 
     VkDeviceSize buffer_offset;
     VkDeviceSize memory_offset;
