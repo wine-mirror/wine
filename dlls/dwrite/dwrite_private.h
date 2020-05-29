@@ -459,6 +459,8 @@ struct scriptshaping_cache
     {
         struct dwrite_fonttable table;
         unsigned int classdef;
+        unsigned int markattachclassdef;
+        unsigned int markglyphsetdef;
     } gdef;
 };
 
