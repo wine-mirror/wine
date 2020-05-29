@@ -307,7 +307,6 @@ todo_wine
     ok(val == 0.0, "Unexpected time %f.\n", val);
 
     state = IMFMediaEngine_IsPaused(media_engine);
-todo_wine
     ok(!!state, "Unexpected state %d.\n", state);
 
     val = IMFMediaEngine_GetDefaultPlaybackRate(media_engine);
@@ -393,6 +392,37 @@ todo_wine
     IMFMediaEngine_Release(media_engine);
 }
 
+static void test_Play(void)
+{
+    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    IMFMediaEngine *media_engine;
+    HRESULT hr;
+    BOOL ret;
+
+    media_engine = create_media_engine(callback);
+
+    ret = IMFMediaEngine_IsPaused(media_engine);
+    ok(ret, "Unexpected state %d.\n", ret);
+
+    hr = IMFMediaEngine_Play(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaEngine_IsPaused(media_engine);
+    ok(!ret, "Unexpected state %d.\n", ret);
+
+    hr = IMFMediaEngine_Play(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_Shutdown(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaEngine_IsPaused(media_engine);
+    ok(!ret, "Unexpected state %d.\n", ret);
+
+    IMFMediaEngine_Release(media_engine);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -416,6 +446,7 @@ START_TEST(mfmediaengine)
     test_factory();
     test_CreateInstance();
     test_Shutdown();
+    test_Play();
 
     IMFMediaEngineClassFactory_Release(factory);
 

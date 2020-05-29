@@ -61,6 +61,8 @@ enum media_engine_flags
     FLAGS_ENGINE_SHUT_DOWN = 0x20,
     FLAGS_ENGINE_AUTO_PLAY = 0x40,
     FLAGS_ENGINE_LOOP = 0x80,
+    FLAGS_ENGINE_PAUSED = 0x100,
+    FLAGS_ENGINE_WAITING = 0x200,
 };
 
 struct media_engine
@@ -328,9 +330,16 @@ static double WINAPI media_engine_GetDuration(IMFMediaEngine *iface)
 
 static BOOL WINAPI media_engine_IsPaused(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    BOOL value;
 
-    return FALSE;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    value = !!(engine->flags & FLAGS_ENGINE_PAUSED);
+    LeaveCriticalSection(&engine->cs);
+
+    return value;
 }
 
 static double WINAPI media_engine_GetDefaultPlaybackRate(IMFMediaEngine *iface)
@@ -438,9 +447,31 @@ static HRESULT WINAPI media_engine_SetLoop(IMFMediaEngine *iface, BOOL loop)
 
 static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    PROPVARIANT var;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
+
+    if (!(engine->flags & FLAGS_ENGINE_WAITING))
+    {
+        engine->flags &= ~FLAGS_ENGINE_PAUSED;
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
+
+        var.vt = VT_EMPTY;
+        IMFMediaSession_Start(engine->session, &GUID_NULL, &var);
+
+        engine->flags |= FLAGS_ENGINE_WAITING;
+    }
+
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_WAITING, 0, 0);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_engine_Pause(IMFMediaEngine *iface)
@@ -623,7 +654,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
     engine->session_events.lpVtbl = &media_engine_session_events_vtbl;
     engine->refcount = 1;
-    engine->flags = flags & MF_MEDIA_ENGINE_CREATEFLAGS_MASK;
+    engine->flags = (flags & MF_MEDIA_ENGINE_CREATEFLAGS_MASK) | FLAGS_ENGINE_PAUSED;
     InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
