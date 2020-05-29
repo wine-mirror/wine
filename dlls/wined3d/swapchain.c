@@ -467,8 +467,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     struct wined3d_swapchain_gl *swapchain_gl = wined3d_swapchain_gl(swapchain);
     const struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
-    const struct wined3d_fb_state *fb = &swapchain->device->cs->state.fb;
-    struct wined3d_rendertarget_view *dsv = fb->depth_stencil;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
@@ -532,26 +530,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
     wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
     wined3d_texture_invalidate_location(swapchain->front_buffer, 0, ~WINED3D_LOCATION_DRAWABLE);
-    /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
-     * and INTEXTURE copies can keep their old content if they have any defined content.
-     * If the swapeffect is COPY, the content remains the same.
-     *
-     * The FLIP swap effect is not implemented yet. We could mark WINED3D_LOCATION_DRAWABLE
-     * up to date and hope WGL flipped front and back buffers and read this data into
-     * the FBO. Don't bother about this for now. */
-    if (desc->swap_effect == WINED3D_SWAP_EFFECT_DISCARD
-            || desc->swap_effect == WINED3D_SWAP_EFFECT_FLIP_DISCARD)
-        wined3d_texture_validate_location(swapchain->back_buffers[desc->backbuffer_count - 1],
-                0, WINED3D_LOCATION_DISCARDED);
-
-    if (dsv && dsv->resource->type != WINED3D_RTYPE_BUFFER)
-    {
-        struct wined3d_texture *ds = texture_from_resource(dsv->resource);
-
-        if ((desc->flags & WINED3D_SWAPCHAIN_DISCARD_DEPTHSTENCIL
-                || ds->flags & WINED3D_TEXTURE_DISCARD))
-            wined3d_texture_validate_location(ds, dsv->sub_resource_idx, WINED3D_LOCATION_DISCARDED);
-    }
 
     context_release(context);
 }
