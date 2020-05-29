@@ -2807,9 +2807,9 @@ void FASTCALL ObfDereferenceObject( void *obj )
 /***********************************************************************
  *           ObRegisterCallbacks (NTOSKRNL.EXE.@)
  */
-NTSTATUS WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION *callBack, void **handle)
+NTSTATUS WINAPI ObRegisterCallbacks(POB_CALLBACK_REGISTRATION callback, void **handle)
 {
-    FIXME( "stub: %p %p\n", callBack, handle );
+    FIXME( "callback %p, handle %p.\n", callback, handle );
 
     if(handle)
         *handle = UlongToHandle(0xdeadbeaf);
