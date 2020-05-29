@@ -21,10 +21,11 @@
 #ifndef __NTDLL_UNIXLIB_H
 #define __NTDLL_UNIXLIB_H
 
+#include "wine/server.h"
 #include "wine/debug.h"
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 7
+#define NTDLL_UNIXLIB_VERSION 8
 
 struct unix_funcs
 {
@@ -40,7 +41,6 @@ struct unix_funcs
     /* loader functions */
     NTSTATUS      (CDECL *exec_wineloader)( char **argv, int socketfd, int is_child_64bit,
                                             ULONGLONG res_start, ULONGLONG res_end );
-    void          (CDECL *start_server)( BOOL debug );
 
     /* virtual memory functions */
     NTSTATUS      (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );
@@ -49,6 +49,15 @@ struct unix_funcs
     int           (CDECL *mmap_is_in_reserved_area)( void *addr, SIZE_T size );
     int           (CDECL *mmap_enum_reserved_areas)( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
                                                      void *arg, int top_down );
+
+    /* server functions */
+    void          (CDECL *server_send_fd)( int fd );
+    int           (CDECL *receive_fd)( obj_handle_t *handle );
+    int           (CDECL *server_pipe)( int fd[2] );
+    void          (CDECL *server_init_process)(void);
+    void          (CDECL *server_init_process_done)(void);
+    size_t        (CDECL *server_init_thread)( void *entry_point, BOOL *suspend, unsigned int *cpus,
+                                               BOOL *wow64, timeout_t *start_time );
 
     /* debugging functions */
     void          (CDECL *dbg_init)(void);

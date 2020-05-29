@@ -373,7 +373,7 @@ static void start_thread( struct startup_info *info )
     thread_data->pthread_id = pthread_self();
 
     signal_init_thread( teb );
-    server_init_thread( info->entry_point, &suspend );
+    unix_funcs->server_init_thread( info->entry_point, &suspend, NULL, NULL, NULL );
     signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg, suspend );
 }
 
@@ -451,7 +451,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
         if ((status = alloc_object_attributes( &thread_attr, &objattr, &len ))) return status;
     }
 
-    if (server_pipe( request_pipe ) == -1)
+    if (unix_funcs->server_pipe( request_pipe ) == -1)
     {
         RtlFreeHeap( GetProcessHeap(), 0, objattr );
         return STATUS_TOO_MANY_OPENED_FILES;

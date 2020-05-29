@@ -4381,7 +4381,8 @@ void __wine_process_init(void)
 
     /* setup the server connection */
     server_init_process();
-    info_size = server_init_thread( peb, &suspend );
+    info_size = unix_funcs->server_init_thread( peb, &suspend, &server_cpus,
+                                                &is_wow64, &server_start_time );
 
     peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
     peb->LoaderLock = &loader_section;

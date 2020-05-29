@@ -116,7 +116,6 @@ extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
 extern void server_init_process_done(void) DECLSPEC_HIDDEN;
-extern size_t server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
@@ -131,7 +130,6 @@ extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *
 extern int server_remove_fd_from_cache( HANDLE handle ) DECLSPEC_HIDDEN;
 extern int server_get_unix_fd( HANDLE handle, unsigned int access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;
-extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
 extern NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;

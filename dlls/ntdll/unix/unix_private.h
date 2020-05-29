@@ -60,4 +60,18 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 
 extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
 
+extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
+extern int CDECL receive_fd( obj_handle_t *handle ) DECLSPEC_HIDDEN;
+extern int CDECL server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
+extern void CDECL server_init_process(void) DECLSPEC_HIDDEN;
+extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
+extern size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int *cpus,
+                                        BOOL *wow64, timeout_t *start_time ) DECLSPEC_HIDDEN;
+
+extern const char *data_dir DECLSPEC_HIDDEN;
+extern const char *build_dir DECLSPEC_HIDDEN;
+extern const char *config_dir DECLSPEC_HIDDEN;
+
+extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
+
 #endif /* __NTDLL_UNIX_PRIVATE_H */
