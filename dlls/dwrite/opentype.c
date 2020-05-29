@@ -3167,14 +3167,15 @@ static unsigned int opentype_layout_get_glyph_class(const struct dwrite_fonttabl
     return glyph_class;
 }
 
-static unsigned int opentype_set_glyph_props(struct scriptshaping_context *context, unsigned int g, UINT16 glyph)
+static unsigned int opentype_set_glyph_props(struct scriptshaping_context *context, unsigned int idx)
 {
     struct scriptshaping_cache *cache = context->cache;
     unsigned int glyph_class = 0, props;
 
     if (cache->gdef.classdef)
     {
-        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef, glyph);
+        glyph_class = opentype_layout_get_glyph_class(&cache->gdef.table, cache->gdef.classdef,
+                context->u.buffer.glyphs[idx]);
     }
 
     switch (glyph_class)
@@ -3192,16 +3193,16 @@ static unsigned int opentype_set_glyph_props(struct scriptshaping_context *conte
             props = 0;
     }
 
-    context->glyph_infos[g].props = props;
+    context->glyph_infos[idx].props = props;
 
     return props;
 }
 
-static void opentype_set_subst_glyph_props(struct scriptshaping_context *context, unsigned int g, UINT16 glyph)
+static void opentype_set_subst_glyph_props(struct scriptshaping_context *context, unsigned int idx)
 {
-    unsigned int glyph_props = opentype_set_glyph_props(context, g, glyph);
-    context->u.subst.glyph_props[g].isDiacritic = !!(glyph_props == GLYPH_PROP_MARK);
-    context->u.subst.glyph_props[g].isZeroWidthSpace = !!(glyph_props == GLYPH_PROP_MARK);
+    unsigned int glyph_props = opentype_set_glyph_props(context, idx);
+    context->u.subst.glyph_props[idx].isDiacritic = !!(glyph_props == GLYPH_PROP_MARK);
+    context->u.subst.glyph_props[idx].isZeroWidthSpace = !!(glyph_props == GLYPH_PROP_MARK);
 }
 
 struct coverage_compare_format1_context
@@ -4459,7 +4460,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
 
     for (i = 0; i < context->glyph_count; ++i)
-        opentype_set_glyph_props(context, i, context->u.pos.glyphs[i]);
+        opentype_set_glyph_props(context, i);
     opentype_layout_set_glyph_masks(context, features);
 
     for (i = 0; i < lookups.count; ++i)
@@ -4491,7 +4492,7 @@ static void opentype_layout_replace_glyph(struct scriptshaping_context *context,
     if (glyph != orig_glyph)
     {
         context->u.subst.glyphs[context->cur] = glyph;
-        opentype_set_subst_glyph_props(context, context->cur, glyph);
+        opentype_set_subst_glyph_props(context, context->cur);
     }
     context->cur++;
 }
@@ -4673,7 +4674,7 @@ static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_co
                     context->u.subst.glyph_props[idx + i].isClusterStart = 0;
                     context->u.buffer.glyph_props[idx + i].components = 0;
                 }
-                opentype_set_subst_glyph_props(context, idx + i, glyph);
+                opentype_set_subst_glyph_props(context, idx + i);
                 /* Inherit feature mask from original matched glyph. */
                 context->glyph_infos[idx + i].mask = mask;
             }
@@ -5181,10 +5182,10 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         if (*context->u.subst.digits && codepoint >= '0' && codepoint <= '9')
             codepoint = context->u.subst.digits[codepoint - '0'];
 
-        context->u.subst.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
+        context->u.buffer.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.buffer.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         context->u.buffer.glyph_props[g].isClusterStart = 1;
-        opentype_set_subst_glyph_props(context, g, context->u.subst.glyphs[g]);
+        opentype_set_subst_glyph_props(context, g);
         if (opentype_is_default_ignorable(codepoint))
             context->u.buffer.glyph_props[g].isZeroWidthSpace = 1;
         context->u.buffer.glyph_props[g].components = 1;
