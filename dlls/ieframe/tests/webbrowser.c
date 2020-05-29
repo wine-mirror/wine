@@ -4056,6 +4056,7 @@ static void test_SetAdvise(void)
     IViewObject2 *view;
     IAdviseSink *sink;
     IOleObject *oleobj;
+    IDispatch *doc;
     DWORD aspects, flags;
 
     if (!(browser = create_webbrowser())) return;
@@ -4114,6 +4115,11 @@ static void test_SetAdvise(void)
 
     hr = IViewObject2_SetAdvise(view, 0, 0, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    doc = (void*)0xdeadbeef;
+    hr = IWebBrowser2_get_Document(browser, &doc);
+    ok(hr == S_FALSE, "get_Document failed: %08x\n", hr);
+    ok(!doc, "doc = %p\n", doc);
 
     IOleObject_Release(oleobj);
     IViewObject2_Release(view);

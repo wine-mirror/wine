@@ -404,7 +404,7 @@ static HRESULT WINAPI WebBrowser_get_Document(IWebBrowser2 *iface, IDispatch **p
     }
 
     *ppDisp = disp;
-    return S_OK;
+    return disp ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI WebBrowser_get_TopLevelContainer(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
