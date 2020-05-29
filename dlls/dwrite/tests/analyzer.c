@@ -1748,9 +1748,6 @@ if (0) {
     IDWriteFontFace_Release(fontface);
 
     /* Test setting glyph properties from GDEF. */
-if (strcmp(winetest_platform, "wine"))
-{
-
     hr = IDWriteFactory_GetSystemFontCollection(factory, &syscoll, FALSE);
     ok(hr == S_OK, "Failed to get system collection, hr %#x.\n", hr);
 
@@ -1794,7 +1791,6 @@ if (strcmp(winetest_platform, "wine"))
     }
 
     IDWriteFontCollection_Release(syscoll);
-}
 
     IDWriteTextAnalyzer_Release(analyzer);
 }
