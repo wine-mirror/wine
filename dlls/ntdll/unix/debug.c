@@ -33,8 +33,11 @@
 # include <unistd.h>
 #endif
 
+#include "windef.h"
+#include "winnt.h"
+#include "winternl.h"
+#include "unix_private.h"
 #include "wine/debug.h"
-#include "ntdll_misc.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(pid);
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);

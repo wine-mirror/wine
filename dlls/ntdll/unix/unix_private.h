@@ -23,6 +23,33 @@
 
 #include "unixlib.h"
 
+struct debug_info
+{
+    unsigned int str_pos;       /* current position in strings buffer */
+    unsigned int out_pos;       /* current position in output buffer */
+    char         strings[1024]; /* buffer for temporary strings */
+    char         output[1024];  /* current output line */
+};
+
+/* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
+struct ntdll_thread_data
+{
+    struct debug_info *debug_info;    /* info for debugstr functions */
+    void              *start_stack;   /* stack for thread startup */
+    int                request_fd;    /* fd for sending server requests */
+    int                reply_fd;      /* fd for receiving server replies */
+    int                wait_fd[2];    /* fd for sleeping server requests */
+    BOOL               wow64_redir;   /* Wow64 filesystem redirection flag */
+    pthread_t          pthread_id;    /* pthread thread id */
+};
+
+C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
+
+static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
+{
+    return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
+}
+
 void CDECL mmap_add_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
