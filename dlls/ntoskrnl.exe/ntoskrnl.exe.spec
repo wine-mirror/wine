@@ -191,7 +191,7 @@
 @ stdcall ExSetTimerResolution(long long)
 @ stub ExSystemExceptionFilter
 @ stdcall ExSystemTimeToLocalTime(ptr ptr) RtlSystemTimeToLocalTime
-@ stub ExUnregisterCallback
+@ stdcall ExUnregisterCallback(ptr)
 @ stdcall ExUuidCreate(ptr)
 @ stub ExVerifySuite
 @ stub ExWindowStationObjectType

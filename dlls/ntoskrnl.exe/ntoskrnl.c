@@ -2071,6 +2071,11 @@ void * WINAPI ExRegisterCallback(PCALLBACK_OBJECT callback_object,
     return (void *)0xdeadbeef;
 }
 
+void WINAPI ExUnregisterCallback(void *callback_registration)
+{
+    FIXME("callback_registration %p stub.\n", callback_registration);
+}
+
 /***********************************************************************
  *           ExFreePool   (NTOSKRNL.EXE.@)
  */
