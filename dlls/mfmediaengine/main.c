@@ -66,6 +66,7 @@ enum media_engine_flags
 struct media_engine
 {
     IMFMediaEngine IMFMediaEngine_iface;
+    IMFAsyncCallback session_events;
     LONG refcount;
     IMFMediaEngineNotify *callback;
     UINT64 playback_hwnd;
@@ -73,6 +74,7 @@ struct media_engine
     IMFDXGIDeviceManager *dxgi_manager;
     enum media_engine_mode mode;
     unsigned int flags;
+    IMFMediaSession *session;
     CRITICAL_SECTION cs;
 };
 
@@ -88,6 +90,70 @@ static inline struct media_engine *impl_from_IMFMediaEngine(IMFMediaEngine *ifac
 {
     return CONTAINING_RECORD(iface, struct media_engine, IMFMediaEngine_iface);
 }
+
+static struct media_engine *impl_from_session_events_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_engine, session_events);
+}
+
+static HRESULT WINAPI media_engine_session_events_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_engine_session_events_AddRef(IMFAsyncCallback *iface)
+{
+    struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
+    return IMFMediaEngine_AddRef(&engine->IMFMediaEngine_iface);
+}
+
+static ULONG WINAPI media_engine_session_events_Release(IMFAsyncCallback *iface)
+{
+    struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
+    return IMFMediaEngine_Release(&engine->IMFMediaEngine_iface);
+}
+
+static HRESULT WINAPI media_engine_session_events_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
+    IMFMediaEvent *event = NULL;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaSession_EndGetEvent(engine->session, result, &event)))
+        WARN("Failed to get session event, hr %#x.\n", hr);
+
+    if (event)
+        IMFMediaEvent_Release(event);
+
+    if (FAILED(hr = IMFMediaSession_BeginGetEvent(engine->session, iface, NULL)))
+        WARN("Failed to subscribe to session events, hr %#x.\n", hr);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl media_engine_session_events_vtbl =
+{
+    media_engine_session_events_QueryInterface,
+    media_engine_session_events_AddRef,
+    media_engine_session_events_Release,
+    media_engine_session_events_GetParameters,
+    media_engine_session_events_Invoke,
+};
 
 static HRESULT WINAPI media_engine_QueryInterface(IMFMediaEngine *iface, REFIID riid, void **obj)
 {
@@ -122,6 +188,8 @@ static void free_media_engine(struct media_engine *engine)
         IMFMediaEngineNotify_Release(engine->callback);
     if (engine->dxgi_manager)
         IMFDXGIDeviceManager_Release(engine->dxgi_manager);
+    if (engine->session)
+        IMFMediaSession_Release(engine->session);
     DeleteCriticalSection(&engine->cs);
     heap_free(engine);
 }
@@ -449,7 +517,10 @@ static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngine *iface)
     if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
         hr = MF_E_SHUTDOWN;
     else
+    {
         engine->flags |= FLAGS_ENGINE_SHUT_DOWN;
+        IMFMediaSession_Shutdown(engine->session);
+    }
     LeaveCriticalSection(&engine->cs);
 
     return hr;
@@ -550,6 +621,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     HRESULT hr;
 
     engine->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
+    engine->session_events.lpVtbl = &media_engine_session_events_vtbl;
     engine->refcount = 1;
     engine->flags = flags & MF_MEDIA_ENGINE_CREATEFLAGS_MASK;
     InitializeCriticalSection(&engine->cs);
@@ -558,6 +630,12 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
                                   (void **)&engine->callback);
     if (FAILED(hr))
         return MF_E_ATTRIBUTENOTFOUND;
+
+    if (FAILED(hr = MFCreateMediaSession(NULL, &engine->session)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaSession_BeginGetEvent(engine->session, &engine->session_events, NULL)))
+        return hr;
 
     IMFAttributes_GetUINT64(attributes, &MF_MEDIA_ENGINE_PLAYBACK_HWND, &engine->playback_hwnd);
     IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_DXGI_MANAGER, &IID_IMFDXGIDeviceManager,
