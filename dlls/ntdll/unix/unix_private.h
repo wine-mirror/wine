@@ -60,6 +60,7 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 
 extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
 
+extern unsigned int CDECL server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
 extern int CDECL server_remove_fd_from_cache( HANDLE handle ) DECLSPEC_HIDDEN;
 extern int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,

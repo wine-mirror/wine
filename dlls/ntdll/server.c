@@ -143,98 +143,6 @@ static DECLSPEC_NORETURN void server_protocol_perror( const char *err )
 
 
 /***********************************************************************
- *           send_request
- *
- * Send a request to the server.
- */
-static unsigned int send_request( const struct __server_request_info *req )
-{
-    unsigned int i;
-    int ret;
-
-    if (!req->u.req.request_header.request_size)
-    {
-        if ((ret = write( ntdll_get_thread_data()->request_fd, &req->u.req,
-                          sizeof(req->u.req) )) == sizeof(req->u.req)) return STATUS_SUCCESS;
-
-    }
-    else
-    {
-        struct iovec vec[__SERVER_MAX_DATA+1];
-
-        vec[0].iov_base = (void *)&req->u.req;
-        vec[0].iov_len = sizeof(req->u.req);
-        for (i = 0; i < req->data_count; i++)
-        {
-            vec[i+1].iov_base = (void *)req->data[i].ptr;
-            vec[i+1].iov_len = req->data[i].size;
-        }
-        if ((ret = writev( ntdll_get_thread_data()->request_fd, vec, i+1 )) ==
-            req->u.req.request_header.request_size + sizeof(req->u.req)) return STATUS_SUCCESS;
-    }
-
-    if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
-    if (errno == EPIPE) abort_thread(0);
-    if (errno == EFAULT) return STATUS_ACCESS_VIOLATION;
-    server_protocol_perror( "write" );
-}
-
-
-/***********************************************************************
- *           read_reply_data
- *
- * Read data from the reply buffer; helper for wait_reply.
- */
-static void read_reply_data( void *buffer, size_t size )
-{
-    int ret;
-
-    for (;;)
-    {
-        if ((ret = read( ntdll_get_thread_data()->reply_fd, buffer, size )) > 0)
-        {
-            if (!(size -= ret)) return;
-            buffer = (char *)buffer + ret;
-            continue;
-        }
-        if (!ret) break;
-        if (errno == EINTR) continue;
-        if (errno == EPIPE) break;
-        server_protocol_perror("read");
-    }
-    /* the server closed the connection; time to die... */
-    abort_thread(0);
-}
-
-
-/***********************************************************************
- *           wait_reply
- *
- * Wait for a reply from the server.
- */
-static inline unsigned int wait_reply( struct __server_request_info *req )
-{
-    read_reply_data( &req->u.reply, sizeof(req->u.reply) );
-    if (req->u.reply.reply_header.reply_size)
-        read_reply_data( req->reply_data, req->u.reply.reply_header.reply_size );
-    return req->u.reply.reply_header.error;
-}
-
-
-/***********************************************************************
- *           server_call_unlocked
- */
-unsigned int server_call_unlocked( void *req_ptr )
-{
-    struct __server_request_info * const req = req_ptr;
-    unsigned int ret;
-
-    if ((ret = send_request( req ))) return ret;
-    return wait_reply( req );
-}
-
-
-/***********************************************************************
  *           wine_server_call (NTDLL.@)
  *
  * Perform a server call.
@@ -258,13 +166,7 @@ unsigned int server_call_unlocked( void *req_ptr )
  */
 unsigned int CDECL wine_server_call( void *req_ptr )
 {
-    sigset_t old_set;
-    unsigned int ret;
-
-    pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
-    ret = server_call_unlocked( req_ptr );
-    pthread_sigmask( SIG_SETMASK, &old_set, NULL );
-    return ret;
+    return unix_funcs->server_call( req_ptr );
 }
 
 
@@ -582,7 +484,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                     suspend_context = FALSE; /* server owns the context now */
                 }
                 if (context) wine_server_set_reply( req, &server_context, sizeof(server_context) );
-                ret = server_call_unlocked( req );
+                ret = unix_funcs->server_call_unlocked( req );
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
                 if (wine_server_reply_size( reply ))

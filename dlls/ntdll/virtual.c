@@ -2390,7 +2390,7 @@ unsigned int virtual_locked_server_call( void *req_ptr )
     server_enter_uninterrupted_section( &csVirtual, &sigset );
     if (!(ret = check_write_access( addr, size, &has_write_watch )))
     {
-        ret = server_call_unlocked( req );
+        ret = unix_funcs->server_call_unlocked( req );
         if (has_write_watch) update_write_watches( addr, size, wine_server_reply_size( req ));
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );

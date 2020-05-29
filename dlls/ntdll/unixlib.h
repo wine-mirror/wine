@@ -25,7 +25,7 @@
 #include "wine/debug.h"
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 9
+#define NTDLL_UNIXLIB_VERSION 10
 
 struct unix_funcs
 {
@@ -51,6 +51,8 @@ struct unix_funcs
                                                      void *arg, int top_down );
 
     /* server functions */
+    unsigned int  (CDECL *server_call_unlocked)( void *req_ptr );
+    unsigned int  (CDECL *server_call)( void *req_ptr );
     void          (CDECL *server_send_fd)( int fd );
     int           (CDECL *server_remove_fd_from_cache)( HANDLE handle );
     int           (CDECL *server_get_unix_fd)( HANDLE handle, unsigned int wanted_access, int *unix_fd,

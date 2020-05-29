@@ -996,6 +996,8 @@ static struct unix_funcs unix_funcs =
     mmap_remove_reserved_area,
     mmap_is_in_reserved_area,
     mmap_enum_reserved_areas,
+    server_call_unlocked,
+    wine_server_call,
     server_send_fd,
     server_remove_fd_from_cache,
     server_get_unix_fd,
