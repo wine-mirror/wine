@@ -748,7 +748,10 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 
 static void close_recordset( struct recordset *recordset )
 {
-    ULONG row, col, col_count = get_column_count( recordset );
+    ULONG row, col, col_count;
+
+    if (!recordset->fields) return;
+    col_count = get_column_count( recordset );
 
     recordset->fields->recordset = NULL;
     Fields_Release( &recordset->fields->Fields_iface );
