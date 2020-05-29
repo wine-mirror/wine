@@ -476,9 +476,26 @@ static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
 
 static HRESULT WINAPI media_engine_Pause(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (!(engine->flags & FLAGS_ENGINE_PAUSED))
+    {
+        engine->flags &= ~FLAGS_ENGINE_WAITING;
+        engine->flags |= FLAGS_ENGINE_PAUSED;
+
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PAUSE, 0, 0);
+    }
+
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
+
+    LeaveCriticalSection(&engine->cs);
+
+    return S_OK;
 }
 
 static BOOL WINAPI media_engine_GetMuted(IMFMediaEngine *iface)

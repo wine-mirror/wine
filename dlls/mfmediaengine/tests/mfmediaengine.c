@@ -421,6 +421,23 @@ static void test_Play(void)
     ok(!ret, "Unexpected state %d.\n", ret);
 
     IMFMediaEngine_Release(media_engine);
+
+    /* Play -> Pause */
+    media_engine = create_media_engine(callback);
+
+    hr = IMFMediaEngine_Play(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaEngine_IsPaused(media_engine);
+    ok(!ret, "Unexpected state %d.\n", ret);
+
+    hr = IMFMediaEngine_Pause(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaEngine_IsPaused(media_engine);
+    ok(!!ret, "Unexpected state %d.\n", ret);
+
+    IMFMediaEngine_Release(media_engine);
 }
 
 START_TEST(mfmediaengine)
