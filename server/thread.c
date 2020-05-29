@@ -1489,17 +1489,11 @@ DECL_HANDLER(terminate_thread)
 {
     struct thread *thread;
 
-    reply->self = 0;
-    reply->last = 0;
     if ((thread = get_thread_from_handle( req->handle, THREAD_TERMINATE )))
     {
         thread->exit_code = req->exit_code;
         if (thread != current) kill_thread( thread, 1 );
-        else
-        {
-            reply->self = 1;
-            reply->last = (thread->process->running_threads == 1);
-        }
+        else reply->self = 1;
         release_object( thread );
     }
 }

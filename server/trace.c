@@ -1368,7 +1368,6 @@ static void dump_terminate_thread_request( const struct terminate_thread_request
 static void dump_terminate_thread_reply( const struct terminate_thread_reply *req )
 {
     fprintf( stderr, " self=%d", req->self );
-    fprintf( stderr, ", last=%d", req->last );
 }
 
 static void dump_get_process_info_request( const struct get_process_info_request *req )

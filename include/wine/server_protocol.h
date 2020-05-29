@@ -938,7 +938,7 @@ struct terminate_thread_reply
 {
     struct reply_header __header;
     int          self;
-    int          last;
+    char __pad_12[4];
 };
 
 
@@ -6685,7 +6685,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 604
+#define SERVER_PROTOCOL_VERSION 605
 
 /* ### protocol_version end ### */
 

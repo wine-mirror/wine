@@ -814,7 +814,6 @@ C_ASSERT( FIELD_OFFSET(struct terminate_thread_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct terminate_thread_request, exit_code) == 16 );
 C_ASSERT( sizeof(struct terminate_thread_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct terminate_thread_reply, self) == 8 );
-C_ASSERT( FIELD_OFFSET(struct terminate_thread_reply, last) == 12 );
 C_ASSERT( sizeof(struct terminate_thread_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_process_info_request) == 16 );

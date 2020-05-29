@@ -738,17 +738,19 @@ NTSTATUS WINAPI NtAlertThread( HANDLE handle )
 NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 {
     NTSTATUS ret;
-    BOOL self;
+    BOOL self = (handle == GetCurrentThread());
 
-    SERVER_START_REQ( terminate_thread )
+    if (!self || exit_code)
     {
-        req->handle    = wine_server_obj_handle( handle );
-        req->exit_code = exit_code;
-        ret = wine_server_call( req );
-        self = !ret && reply->self;
+        SERVER_START_REQ( terminate_thread )
+        {
+            req->handle    = wine_server_obj_handle( handle );
+            req->exit_code = exit_code;
+            ret = wine_server_call( req );
+            self = !ret && reply->self;
+        }
+        SERVER_END_REQ;
     }
-    SERVER_END_REQ;
-
     if (self) abort_thread( exit_code );
     return ret;
 }

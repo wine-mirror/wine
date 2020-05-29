@@ -896,7 +896,6 @@ struct rawinput_device
     int          exit_code;    /* thread exit code */
 @REPLY
     int          self;         /* suicide? */
-    int          last;         /* last thread in this process? */
 @END
 
 
