@@ -3185,17 +3185,14 @@ todo_wine
     CloseHandle( handle2 );
     fdi.DoDeleteFile = TRUE;
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
-    todo_wine
     ok( res == STATUS_DIRECTORY_NOT_EMPTY, "unexpected FileDispositionInformation result (expected STATUS_DIRECTORY_NOT_EMPTY, got %x)\n", res );
     fileDeleted = DeleteFileA( buffer );
     ok( fileDeleted, "File should have been deleted\n" );
     buffer[dirpos] = '\0';
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-    todo_wine
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
     fileDeleted = RemoveDirectoryA( buffer );
-todo_wine
     ok( fileDeleted, "Directory should have been deleted\n" );
 }
 

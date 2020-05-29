@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -2364,6 +2365,31 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     return fd;
 }
 
+static int is_dir_empty( int fd )
+{
+    DIR *dir;
+    int empty;
+    struct dirent *de;
+
+    if ((fd = dup( fd )) == -1)
+        return -1;
+
+    if (!(dir = fdopendir( fd )))
+    {
+        close( fd );
+        return -1;
+    }
+
+    empty = 1;
+    while (empty && (de = readdir( dir )))
+    {
+        if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
+        empty = 0;
+    }
+    closedir( dir );
+    return empty;
+}
+
 /* set disposition for the fd */
 static void set_fd_disposition( struct fd *fd, int unlink )
 {
@@ -2381,24 +2407,38 @@ static void set_fd_disposition( struct fd *fd, int unlink )
         return;
     }
 
-    if (fstat( fd->unix_fd, &st ) == -1)
+    if (unlink)
     {
-        file_set_error();
-        return;
-    }
-
-    /* can't unlink special files */
-    if (unlink && !S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    /* can't unlink files we don't have permission to write */
-    if (unlink && !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)) && !S_ISDIR(st.st_mode))
-    {
-        set_error( STATUS_CANNOT_DELETE );
-        return;
+        if (fstat( fd->unix_fd, &st ) == -1)
+        {
+            file_set_error();
+            return;
+        }
+        if (S_ISREG( st.st_mode ))  /* can't unlink files we don't have permission to write */
+        {
+            if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+            {
+                set_error( STATUS_CANNOT_DELETE );
+                return;
+            }
+        }
+        else if (S_ISDIR( st.st_mode ))  /* can't remove non-empty directories */
+        {
+            switch (is_dir_empty( fd->unix_fd ))
+            {
+            case -1:
+                file_set_error();
+                return;
+            case 0:
+                set_error( STATUS_DIRECTORY_NOT_EMPTY );
+                return;
+            }
+        }
+        else  /* can't unlink special files */
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
     }
 
     fd->closed->unlink = unlink ? 1 : 0;
