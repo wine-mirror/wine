@@ -2059,7 +2059,7 @@ NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
 {
     FIXME("(%p, %p, %u, %u): stub\n", obj, attr, create, allow_multiple);
 
-    return STATUS_NOT_IMPLEMENTED;
+    return STATUS_SUCCESS;
 }
 
 
