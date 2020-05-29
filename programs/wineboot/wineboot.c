@@ -60,8 +60,12 @@
 #include <intrin.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windows.h>
 #include <winternl.h>
+#include <ddk/wdm.h>
 #include <sddl.h>
 #include <wine/svcctl.h>
 #include <wine/asm.h>
@@ -185,6 +189,89 @@ static DWORD set_reg_value( HKEY hkey, const WCHAR *name, const WCHAR *value )
 static DWORD set_reg_value_dword( HKEY hkey, const WCHAR *name, DWORD value )
 {
     return RegSetValueExW( hkey, name, 0, REG_DWORD, (const BYTE *)&value, sizeof(value) );
+}
+
+static void create_user_shared_data(void)
+{
+    struct _KUSER_SHARED_DATA *data;
+    RTL_OSVERSIONINFOEXW version;
+    SYSTEM_CPU_INFORMATION sci;
+    SYSTEM_BASIC_INFORMATION sbi;
+    BOOLEAN *features;
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING name;
+    NTSTATUS status;
+    HANDLE handle;
+
+    RtlInitUnicodeString( &name, L"\\KernelObjects\\__wine_user_shared_data" );
+    InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
+    if ((status = NtOpenSection( &handle, SECTION_ALL_ACCESS, &attr )))
+    {
+        ERR( "cannot open __wine_user_shared_data: %x\n", status );
+        return;
+    }
+    data = MapViewOfFile( handle, FILE_MAP_WRITE, 0, 0, sizeof(*data) );
+    CloseHandle( handle );
+    if (!data)
+    {
+        ERR( "cannot map __wine_user_shared_data\n" );
+        return;
+    }
+
+    version.dwOSVersionInfoSize = sizeof(version);
+    RtlGetVersion( &version );
+    NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
+    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
+
+    data->TickCountMultiplier         = 1 << 24;
+    data->LargePageMinimum            = 2 * 1024 * 1024;
+    data->NtBuildNumber               = version.dwBuildNumber;
+    data->NtProductType               = version.wProductType;
+    data->ProductTypeIsValid          = TRUE;
+    data->NativeProcessorArchitecture = sci.Architecture;
+    data->NtMajorVersion              = version.dwMajorVersion;
+    data->NtMinorVersion              = version.dwMinorVersion;
+    data->SuiteMask                   = version.wSuiteMask;
+    data->NumberOfPhysicalPages       = sbi.MmNumberOfPhysicalPages;
+    wcscpy( data->NtSystemRoot, L"C:\\windows" );
+
+    features = data->ProcessorFeatures;
+    switch (sci.Architecture)
+    {
+    case PROCESSOR_ARCHITECTURE_INTEL:
+    case PROCESSOR_ARCHITECTURE_AMD64:
+        features[PF_COMPARE_EXCHANGE_DOUBLE]              = !!(sci.FeatureSet & CPU_FEATURE_CX8);
+        features[PF_MMX_INSTRUCTIONS_AVAILABLE]           = !!(sci.FeatureSet & CPU_FEATURE_MMX);
+        features[PF_XMMI_INSTRUCTIONS_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_SSE);
+        features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]         = !!(sci.FeatureSet & CPU_FEATURE_3DNOW);
+        features[PF_RDTSC_INSTRUCTION_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_TSC);
+        features[PF_PAE_ENABLED]                          = !!(sci.FeatureSet & CPU_FEATURE_PAE);
+        features[PF_XMMI64_INSTRUCTIONS_AVAILABLE]        = !!(sci.FeatureSet & CPU_FEATURE_SSE2);
+        features[PF_SSE3_INSTRUCTIONS_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_SSE3);
+        features[PF_XSAVE_ENABLED]                        = !!(sci.FeatureSet & CPU_FEATURE_XSAVE);
+        features[PF_COMPARE_EXCHANGE128]                  = !!(sci.FeatureSet & CPU_FEATURE_CX128);
+        features[PF_SSE_DAZ_MODE_AVAILABLE]               = !!(sci.FeatureSet & CPU_FEATURE_DAZ);
+        features[PF_NX_ENABLED]                           = !!(sci.FeatureSet & CPU_FEATURE_NX);
+        features[PF_SECOND_LEVEL_ADDRESS_TRANSLATION]     = !!(sci.FeatureSet & CPU_FEATURE_2NDLEV);
+        features[PF_VIRT_FIRMWARE_ENABLED]                = !!(sci.FeatureSet & CPU_FEATURE_VIRT);
+        features[PF_RDWRFSGSBASE_AVAILABLE]               = !!(sci.FeatureSet & CPU_FEATURE_RDFS);
+        features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM:
+        features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]       = !!(sci.FeatureSet & CPU_FEATURE_ARM_VFP_32);
+        features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]      = !!(sci.FeatureSet & CPU_FEATURE_ARM_NEON);
+        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = (sci.Level >= 8);
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = TRUE;
+        features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]  = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRC32);
+        features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRYPTO);
+        break;
+    }
+    data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
+    data->ActiveGroupCount = 1;
+
+    UnmapViewOfFile( data );
 }
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -1502,6 +1589,7 @@ int __cdecl main( int argc, char *argv[] )
 
     ResetEvent( event );  /* in case this is a restart */
 
+    create_user_shared_data();
     create_hardware_registry_keys();
     create_dynamic_registry_keys();
     create_environment_registry_keys();

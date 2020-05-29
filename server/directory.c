@@ -380,9 +380,13 @@ void init_directories(void)
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
+    /* mappings */
+    static const WCHAR user_dataW[] = {'_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a'};
+    static const struct unicode_str user_data_str = {user_dataW, sizeof(user_dataW)};
+
     struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel;
     struct object *link_dosdev, *link_global, *link_nul, *link_pipe, *link_mailslot;
-    struct object *named_pipe_device, *mailslot_device, *null_device;
+    struct object *named_pipe_device, *mailslot_device, *null_device, *user_data_mapping;
     struct keyed_event *keyed_event;
     unsigned int i;
 
@@ -428,6 +432,10 @@ void init_directories(void)
     }
     keyed_event = create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, 0, NULL );
     make_object_static( (struct object *)keyed_event );
+
+    /* user data mapping */
+    user_data_mapping = create_user_data_mapping( &dir_kernel->obj, &user_data_str, 0, NULL );
+    make_object_static( user_data_mapping );
 
     /* the objects hold references so we can release these directories */
     release_object( dir_global );

@@ -1529,7 +1529,6 @@ void server_init_process_done(void)
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
     void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
     NTSTATUS status;
-    HANDLE usd_handle = user_shared_data_init_done();
     int suspend;
 
 #ifdef __APPLE__
@@ -1553,12 +1552,10 @@ void server_init_process_done(void)
 #endif
         req->entry    = wine_server_client_ptr( entry );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
-        req->usd_handle = wine_server_obj_handle( usd_handle );
         status = wine_server_call( req );
         suspend = reply->suspend;
     }
     SERVER_END_REQ;
-    NtClose( usd_handle );
 
     assert( !status );
     signal_start_process( entry, suspend );

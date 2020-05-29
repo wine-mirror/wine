@@ -782,10 +782,10 @@ static unsigned int get_mapping_flags( obj_handle_t handle, unsigned int flags )
 }
 
 
-static struct object *create_mapping( struct object *root, const struct unicode_str *name,
-                                      unsigned int attr, mem_size_t size, unsigned int flags,
-                                      obj_handle_t handle, unsigned int file_access,
-                                      const struct security_descriptor *sd )
+static struct mapping *create_mapping( struct object *root, const struct unicode_str *name,
+                                       unsigned int attr, mem_size_t size, unsigned int flags,
+                                       obj_handle_t handle, unsigned int file_access,
+                                       const struct security_descriptor *sd )
 {
     struct mapping *mapping;
     struct file *file;
@@ -798,7 +798,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
     if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-        return &mapping->obj;  /* Nothing else to do */
+        return mapping;  /* Nothing else to do */
 
     mapping->size        = size;
     mapping->fd          = NULL;
@@ -837,7 +837,7 @@ static struct object *create_mapping( struct object *root, const struct unicode_
         if (flags & SEC_IMAGE)
         {
             unsigned int err = get_image_params( mapping, st.st_size, unix_fd );
-            if (!err) return &mapping->obj;
+            if (!err) return mapping;
             set_error( err );
             goto error;
         }
@@ -873,14 +873,14 @@ static struct object *create_mapping( struct object *root, const struct unicode_
                                                  FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
         allow_fd_caching( mapping->fd );
     }
-    return &mapping->obj;
+    return mapping;
 
  error:
     release_object( mapping );
     return NULL;
 }
 
-struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
+static struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct mapping *)get_handle_obj( process, handle, access, &mapping_ops );
 }
@@ -955,36 +955,39 @@ int get_page_size(void)
     return page_mask + 1;
 }
 
-void init_kusd_mapping( struct mapping *mapping )
+struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
+                                        unsigned int attr, const struct security_descriptor *sd )
 {
     void *ptr;
+    struct mapping *mapping;
 
-    if (user_shared_data) return;
-    grab_object( mapping );
-    make_object_static( &mapping->obj );
+    if (!(mapping = create_mapping( root, name, OBJ_OPENIF, sizeof(KSHARED_USER_DATA),
+                                    SEC_COMMIT, 0, FILE_READ_DATA | FILE_WRITE_DATA, NULL ))) return NULL;
     ptr = mmap( NULL, mapping->size, PROT_WRITE, MAP_SHARED, get_unix_fd( mapping->fd ), 0 );
     if (ptr != MAP_FAILED) user_shared_data = ptr;
+    return &mapping->obj;
 }
 
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    struct object *root, *obj;
+    struct object *root;
+    struct mapping *mapping;
     struct unicode_str name;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
 
-    if ((obj = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
-                               req->file_handle, req->file_access, sd )))
+    if ((mapping = create_mapping( root, &name, objattr->attributes, req->size, req->flags,
+                                   req->file_handle, req->file_access, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, obj, req->access, objattr->attributes );
+            reply->handle = alloc_handle( current->process, &mapping->obj, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, obj,
+            reply->handle = alloc_handle_no_access_check( current->process, &mapping->obj,
                                                           req->access, objattr->attributes );
-        release_object( obj );
+        release_object( mapping );
     }
 
     if (root) release_object( root );

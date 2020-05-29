@@ -4397,6 +4397,7 @@ void __wine_process_init(void)
     FILE_umask = umask(0777);
     umask( FILE_umask );
 
+    map_user_shared_data();
     load_global_options();
     version_init();
 

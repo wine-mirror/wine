@@ -182,106 +182,23 @@ int __cdecl __wine_dbg_output( const char *str )
     return unix_funcs->dbg_output( str );
 }
 
-static void fill_user_shared_data( struct _KUSER_SHARED_DATA *data )
-{
-    RTL_OSVERSIONINFOEXW version;
-    SYSTEM_CPU_INFORMATION sci;
-    SYSTEM_BASIC_INFORMATION sbi;
-    BOOLEAN *features = data->ProcessorFeatures;
-
-    version.dwOSVersionInfoSize = sizeof(version);
-    RtlGetVersion( &version );
-    virtual_get_system_info( &sbi );
-    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
-
-    data->TickCountMultiplier         = 1 << 24;
-    data->LargePageMinimum            = 2 * 1024 * 1024;
-    data->NtBuildNumber               = version.dwBuildNumber;
-    data->NtProductType               = version.wProductType;
-    data->ProductTypeIsValid          = TRUE;
-    data->NativeProcessorArchitecture = sci.Architecture;
-    data->NtMajorVersion              = version.dwMajorVersion;
-    data->NtMinorVersion              = version.dwMinorVersion;
-    data->SuiteMask                   = version.wSuiteMask;
-    data->NumberOfPhysicalPages       = sbi.MmNumberOfPhysicalPages;
-    wcscpy( data->NtSystemRoot, windows_dir );
-
-    switch (sci.Architecture)
-    {
-    case PROCESSOR_ARCHITECTURE_INTEL:
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        features[PF_COMPARE_EXCHANGE_DOUBLE]              = !!(sci.FeatureSet & CPU_FEATURE_CX8);
-        features[PF_MMX_INSTRUCTIONS_AVAILABLE]           = !!(sci.FeatureSet & CPU_FEATURE_MMX);
-        features[PF_XMMI_INSTRUCTIONS_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_SSE);
-        features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]         = !!(sci.FeatureSet & CPU_FEATURE_3DNOW);
-        features[PF_RDTSC_INSTRUCTION_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_TSC);
-        features[PF_PAE_ENABLED]                          = !!(sci.FeatureSet & CPU_FEATURE_PAE);
-        features[PF_XMMI64_INSTRUCTIONS_AVAILABLE]        = !!(sci.FeatureSet & CPU_FEATURE_SSE2);
-        features[PF_SSE3_INSTRUCTIONS_AVAILABLE]          = !!(sci.FeatureSet & CPU_FEATURE_SSE3);
-        features[PF_XSAVE_ENABLED]                        = !!(sci.FeatureSet & CPU_FEATURE_XSAVE);
-        features[PF_COMPARE_EXCHANGE128]                  = !!(sci.FeatureSet & CPU_FEATURE_CX128);
-        features[PF_SSE_DAZ_MODE_AVAILABLE]               = !!(sci.FeatureSet & CPU_FEATURE_DAZ);
-        features[PF_NX_ENABLED]                           = !!(sci.FeatureSet & CPU_FEATURE_NX);
-        features[PF_SECOND_LEVEL_ADDRESS_TRANSLATION]     = !!(sci.FeatureSet & CPU_FEATURE_2NDLEV);
-        features[PF_VIRT_FIRMWARE_ENABLED]                = !!(sci.FeatureSet & CPU_FEATURE_VIRT);
-        features[PF_RDWRFSGSBASE_AVAILABLE]               = !!(sci.FeatureSet & CPU_FEATURE_RDFS);
-        features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM:
-        features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]       = !!(sci.FeatureSet & CPU_FEATURE_ARM_VFP_32);
-        features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]      = !!(sci.FeatureSet & CPU_FEATURE_ARM_NEON);
-        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = (sci.Level >= 8);
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM64:
-        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = TRUE;
-        features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]  = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRC32);
-        features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.FeatureSet & CPU_FEATURE_ARM_V8_CRYPTO);
-        break;
-    }
-    data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
-    data->ActiveGroupCount = 1;
-}
-
-HANDLE user_shared_data_init_done(void)
+void map_user_shared_data(void)
 {
     static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
                                       '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     UNICODE_STRING wine_usd_str;
-    LARGE_INTEGER section_size;
     NTSTATUS status;
     HANDLE section;
-    SIZE_T size;
-    void *addr;
     int res, fd, needs_close;
-
-    section_size.QuadPart = sizeof(*user_shared_data);
 
     RtlInitUnicodeString( &wine_usd_str, wine_usdW );
     InitializeObjectAttributes( &attr, &wine_usd_str, OBJ_OPENIF, NULL, NULL );
-    if ((status = NtCreateSection( &section, SECTION_ALL_ACCESS, &attr,
-                                   &section_size, PAGE_READWRITE, SEC_COMMIT, NULL )) &&
-        status != STATUS_OBJECT_NAME_EXISTS)
+    if ((status = NtOpenSection( &section, SECTION_ALL_ACCESS, &attr )))
     {
-        MESSAGE( "wine: failed to create or open the USD section: %08x\n", status );
+        MESSAGE( "wine: failed to open the USD section: %08x\n", status );
         exit(1);
     }
-
-    if (status != STATUS_OBJECT_NAME_EXISTS)
-    {
-        addr = NULL;
-        size = sizeof(*user_shared_data);
-        if ((status = NtMapViewOfSection( section, NtCurrentProcess(), &addr, 0, 0, 0,
-                                          &size, 0, 0, PAGE_READWRITE )))
-        {
-            MESSAGE( "wine: failed to initialize the USD section: %08x\n", status );
-            exit(1);
-        }
-
-        fill_user_shared_data( addr );
-        NtUnmapViewOfSection( NtCurrentProcess(), addr );
-    }
-
     if ((res = server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
         (user_shared_data != mmap( user_shared_data, sizeof(*user_shared_data),
                                    PROT_READ, MAP_SHARED | MAP_FIXED, fd, 0 )))
@@ -290,8 +207,7 @@ HANDLE user_shared_data_init_done(void)
         exit(1);
     }
     if (needs_close) close( fd );
-
-    return section;
+    NtClose( section );
 }
 
 /***********************************************************************
