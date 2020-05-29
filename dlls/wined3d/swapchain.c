@@ -113,6 +113,45 @@ void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl)
     }
 }
 
+static void wined3d_swapchain_vk_destroy_vulkan_swapchain(struct wined3d_swapchain_vk *swapchain_vk)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(swapchain_vk->s.device);
+    const struct wined3d_vk_info *vk_info;
+    unsigned int i;
+    VkResult vr;
+
+    TRACE("swapchain_vk %p.\n", swapchain_vk);
+
+    vk_info = &wined3d_adapter_vk(device_vk->d.adapter)->vk_info;
+
+    if ((vr = VK_CALL(vkQueueWaitIdle(device_vk->vk_queue))) < 0)
+        ERR("Failed to wait on queue, vr %s.\n", wined3d_debug_vkresult(vr));
+    heap_free(swapchain_vk->vk_images);
+    for (i = 0; i < swapchain_vk->image_count; ++i)
+    {
+        VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].available, NULL));
+        VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].presentable, NULL));
+    }
+    heap_free(swapchain_vk->vk_semaphores);
+    VK_CALL(vkDestroySwapchainKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, NULL));
+    VK_CALL(vkDestroySurfaceKHR(vk_info->instance, swapchain_vk->vk_surface, NULL));
+}
+
+static void wined3d_swapchain_vk_destroy_object(void *object)
+{
+    wined3d_swapchain_vk_destroy_vulkan_swapchain(object);
+}
+
+void wined3d_swapchain_vk_cleanup(struct wined3d_swapchain_vk *swapchain_vk)
+{
+    struct wined3d_cs *cs = swapchain_vk->s.device->cs;
+
+    wined3d_cs_destroy_object(cs, wined3d_swapchain_vk_destroy_object, swapchain_vk);
+    wined3d_cs_finish(cs, WINED3D_CS_QUEUE_DEFAULT);
+
+    wined3d_swapchain_cleanup(&swapchain_vk->s);
+}
+
 ULONG CDECL wined3d_swapchain_incref(struct wined3d_swapchain *swapchain)
 {
     ULONG refcount = InterlockedIncrement(&swapchain->ref);
@@ -551,10 +590,561 @@ static const struct wined3d_swapchain_ops swapchain_gl_ops =
     swapchain_frontbuffer_updated,
 };
 
+static bool wined3d_swapchain_vk_present_mode_supported(struct wined3d_swapchain_vk *swapchain_vk,
+        VkPresentModeKHR vk_present_mode)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(swapchain_vk->s.device);
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_adapter_vk *adapter_vk;
+    VkPhysicalDevice vk_physical_device;
+    VkPresentModeKHR *vk_modes;
+    bool supported = false;
+    uint32_t count, i;
+    VkResult vr;
+
+    adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
+    vk_physical_device = adapter_vk->physical_device;
+    vk_info = &adapter_vk->vk_info;
+
+    if ((vr = VK_CALL(vkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device,
+            swapchain_vk->vk_surface, &count, NULL))) < 0)
+    {
+        ERR("Failed to get supported present mode count, vr %s.\n", wined3d_debug_vkresult(vr));
+        return false;
+    }
+
+    if (!(vk_modes = heap_calloc(count, sizeof(*vk_modes))))
+        return false;
+
+    if ((vr = VK_CALL(vkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device,
+            swapchain_vk->vk_surface, &count, vk_modes))) < 0)
+    {
+        ERR("Failed to get supported present modes, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto done;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        if (vk_modes[i] == vk_present_mode)
+        {
+            supported = true;
+            goto done;
+        }
+    }
+
+done:
+    heap_free(vk_modes);
+    return supported;
+}
+
+static VkFormat wined3d_swapchain_vk_select_vk_format(struct wined3d_swapchain_vk *swapchain_vk,
+        VkSurfaceKHR vk_surface)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(swapchain_vk->s.device);
+    const struct wined3d_swapchain_desc *desc = &swapchain_vk->s.state.desc;
+    const struct wined3d_vk_info *vk_info;
+    struct wined3d_adapter_vk *adapter_vk;
+    const struct wined3d_format *format;
+    VkPhysicalDevice vk_physical_device;
+    VkSurfaceFormatKHR *vk_formats;
+    uint32_t format_count, i;
+    VkFormat vk_format;
+    VkResult vr;
+
+    adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
+    vk_physical_device = adapter_vk->physical_device;
+    vk_info = &adapter_vk->vk_info;
+
+    if ((format = wined3d_get_format(&adapter_vk->a, desc->backbuffer_format, WINED3D_BIND_RENDER_TARGET)))
+        vk_format = wined3d_format_vk(format)->vk_format;
+    else
+        vk_format = VK_FORMAT_B8G8R8A8_UNORM;
+
+    vr = VK_CALL(vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, vk_surface, &format_count, NULL));
+    if (vr < 0 || !format_count)
+    {
+        WARN("Failed to get supported surface format count, vr %s.\n", wined3d_debug_vkresult(vr));
+        return VK_FORMAT_UNDEFINED;
+    }
+
+    if (!(vk_formats = heap_calloc(format_count, sizeof(*vk_formats))))
+        return VK_FORMAT_UNDEFINED;
+
+    if ((vr = VK_CALL(vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device,
+            vk_surface, &format_count, vk_formats))) < 0)
+    {
+        WARN("Failed to get supported surface formats, vr %s.\n", wined3d_debug_vkresult(vr));
+        heap_free(vk_formats);
+        return VK_FORMAT_UNDEFINED;
+    }
+
+    for (i = 0; i < format_count; ++i)
+    {
+        if (vk_formats[i].format == vk_format && vk_formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            break;
+    }
+    if (i == format_count)
+    {
+        /* Try to create a swapchain with format conversion. */
+        vk_format = VK_FORMAT_B8G8R8A8_UNORM;
+        WARN("Failed to find Vulkan swapchain format for %s.\n", debug_d3dformat(desc->backbuffer_format));
+        for (i = 0; i < format_count; ++i)
+        {
+            if (vk_formats[i].format == vk_format && vk_formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+                break;
+        }
+    }
+    heap_free(vk_formats);
+    if (i == format_count)
+    {
+        FIXME("Failed to find Vulkan swapchain format for %s.\n", debug_d3dformat(desc->backbuffer_format));
+        return VK_FORMAT_UNDEFINED;
+    }
+
+    TRACE("Using Vulkan swapchain format %#x.\n", vk_format);
+
+    return vk_format;
+}
+
+static bool wined3d_swapchain_vk_create_vulkan_swapchain_images(struct wined3d_swapchain_vk *swapchain_vk,
+        VkSwapchainKHR vk_swapchain)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(swapchain_vk->s.device);
+    const struct wined3d_vk_info *vk_info;
+    VkSemaphoreCreateInfo semaphore_info;
+    uint32_t image_count, i;
+    VkResult vr;
+
+    vk_info = &wined3d_adapter_vk(device_vk->d.adapter)->vk_info;
+
+    if ((vr = VK_CALL(vkGetSwapchainImagesKHR(device_vk->vk_device, vk_swapchain, &image_count, NULL))) < 0)
+    {
+        ERR("Failed to get image count, vr %s\n", wined3d_debug_vkresult(vr));
+        return false;
+    }
+
+    if (!(swapchain_vk->vk_images = heap_calloc(image_count, sizeof(*swapchain_vk->vk_images))))
+    {
+        ERR("Failed to allocate images array.\n");
+        return false;
+    }
+
+    if ((vr = VK_CALL(vkGetSwapchainImagesKHR(device_vk->vk_device,
+            vk_swapchain, &image_count, swapchain_vk->vk_images))) < 0)
+    {
+        ERR("Failed to get swapchain images, vr %s.\n", wined3d_debug_vkresult(vr));
+        heap_free(swapchain_vk->vk_images);
+        return false;
+    }
+
+    if (!(swapchain_vk->vk_semaphores = heap_calloc(image_count, sizeof(*swapchain_vk->vk_semaphores))))
+    {
+        ERR("Failed to allocate semaphores array.\n");
+        heap_free(swapchain_vk->vk_images);
+        return false;
+    }
+
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    semaphore_info.pNext = NULL;
+    semaphore_info.flags = 0;
+    for (i = 0; i < image_count; ++i)
+    {
+        if ((vr = VK_CALL(vkCreateSemaphore(device_vk->vk_device,
+                &semaphore_info, NULL, &swapchain_vk->vk_semaphores[i].available))) < 0)
+        {
+            ERR("Failed to create semaphore, vr %s.\n", wined3d_debug_vkresult(vr));
+            goto fail;
+        }
+
+        if ((vr = VK_CALL(vkCreateSemaphore(device_vk->vk_device,
+                &semaphore_info, NULL, &swapchain_vk->vk_semaphores[i].presentable))) < 0)
+        {
+            ERR("Failed to create semaphore, vr %s.\n", wined3d_debug_vkresult(vr));
+            goto fail;
+        }
+    }
+    swapchain_vk->image_count = image_count;
+
+    return true;
+
+fail:
+    for (i = 0; i < image_count; ++i)
+    {
+        if (swapchain_vk->vk_semaphores[i].available)
+            VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].available, NULL));
+        if (swapchain_vk->vk_semaphores[i].presentable)
+            VK_CALL(vkDestroySemaphore(device_vk->vk_device, swapchain_vk->vk_semaphores[i].presentable, NULL));
+    }
+    heap_free(swapchain_vk->vk_semaphores);
+    heap_free(swapchain_vk->vk_images);
+    return false;
+}
+
+static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapchain_vk *swapchain_vk)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(swapchain_vk->s.device);
+    const struct wined3d_swapchain_desc *desc = &swapchain_vk->s.state.desc;
+    VkSwapchainCreateInfoKHR vk_swapchain_desc;
+    VkWin32SurfaceCreateInfoKHR surface_desc;
+    unsigned int width, height, image_count;
+    const struct wined3d_vk_info *vk_info;
+    VkSurfaceCapabilitiesKHR surface_caps;
+    struct wined3d_adapter_vk *adapter_vk;
+    VkPresentModeKHR vk_present_mode;
+    VkSwapchainKHR vk_swapchain;
+    VkImageUsageFlags usage;
+    VkSurfaceKHR vk_surface;
+    VkBool32 supported;
+    VkFormat vk_format;
+    VkResult vr;
+
+    adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
+    vk_info = &adapter_vk->vk_info;
+
+    surface_desc.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surface_desc.pNext = NULL;
+    surface_desc.flags = 0;
+    surface_desc.hinstance = (HINSTANCE)GetWindowLongPtrW(swapchain_vk->s.win_handle, GWLP_HINSTANCE);
+    surface_desc.hwnd = swapchain_vk->s.win_handle;
+    if ((vr = VK_CALL(vkCreateWin32SurfaceKHR(vk_info->instance, &surface_desc, NULL, &vk_surface))) < 0)
+    {
+        ERR("Failed to create Vulkan surface, vr %s.\n", wined3d_debug_vkresult(vr));
+        return E_FAIL;
+    }
+    swapchain_vk->vk_surface = vk_surface;
+
+    if ((vr = VK_CALL(vkGetPhysicalDeviceSurfaceSupportKHR(adapter_vk->physical_device,
+            device_vk->vk_queue_family_index, vk_surface, &supported))) < 0 || !supported)
+    {
+        ERR("Queue family does not support presentation on this surface, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+
+    if ((vk_format = wined3d_swapchain_vk_select_vk_format(swapchain_vk, vk_surface)) == VK_FORMAT_UNDEFINED)
+    {
+        ERR("Failed to select swapchain format.\n");
+        goto fail;
+    }
+
+    if ((vr = VK_CALL(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(adapter_vk->physical_device,
+            swapchain_vk->vk_surface, &surface_caps))) < 0)
+    {
+        ERR("Failed to get surface capabilities, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+
+    image_count = desc->backbuffer_count;
+    if (image_count < surface_caps.minImageCount)
+        image_count = surface_caps.minImageCount;
+    else if (surface_caps.maxImageCount && image_count > surface_caps.maxImageCount)
+        image_count = surface_caps.maxImageCount;
+
+    if (image_count != desc->backbuffer_count)
+        WARN("Image count %u is not supported (%u-%u).\n", desc->backbuffer_count,
+                surface_caps.minImageCount, surface_caps.maxImageCount);
+
+    width = desc->backbuffer_width;
+    if (width < surface_caps.minImageExtent.width)
+        width = surface_caps.minImageExtent.width;
+    else if (width > surface_caps.maxImageExtent.width)
+        width = surface_caps.maxImageExtent.width;
+
+    height = desc->backbuffer_height;
+    if (height < surface_caps.minImageExtent.height)
+        height = surface_caps.minImageExtent.height;
+    else if (height > surface_caps.maxImageExtent.height)
+        height = surface_caps.maxImageExtent.height;
+
+    if (width != desc->backbuffer_width || height != desc->backbuffer_height)
+        WARN("Swapchain dimensions %ux%u are not supported (%u-%u x %u-%u).\n",
+                desc->backbuffer_width, desc->backbuffer_height,
+                surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width,
+                surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
+
+    usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    usage |= surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    usage |= surface_caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (!(usage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) || !(usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT))
+        WARN("Transfer not supported for swapchain images.\n");
+
+    if (!(surface_caps.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR))
+    {
+        FIXME("Unsupported alpha mode, %#x.\n", surface_caps.supportedCompositeAlpha);
+        goto fail;
+    }
+
+    vk_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+    if (!swapchain_vk->s.swap_interval)
+    {
+        if (wined3d_swapchain_vk_present_mode_supported(swapchain_vk, VK_PRESENT_MODE_IMMEDIATE_KHR))
+            vk_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+        else
+            FIXME("Unsupported swap interval %u.\n", swapchain_vk->s.swap_interval);
+    }
+
+    vk_swapchain_desc.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    vk_swapchain_desc.pNext = NULL;
+    vk_swapchain_desc.flags = 0;
+    vk_swapchain_desc.surface = vk_surface;
+    vk_swapchain_desc.minImageCount = image_count;
+    vk_swapchain_desc.imageFormat = vk_format;
+    vk_swapchain_desc.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    vk_swapchain_desc.imageExtent.width = width;
+    vk_swapchain_desc.imageExtent.height = height;
+    vk_swapchain_desc.imageArrayLayers = 1;
+    vk_swapchain_desc.imageUsage = usage;
+    vk_swapchain_desc.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    vk_swapchain_desc.queueFamilyIndexCount = 0;
+    vk_swapchain_desc.pQueueFamilyIndices = NULL;
+    vk_swapchain_desc.preTransform = surface_caps.currentTransform;
+    vk_swapchain_desc.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    vk_swapchain_desc.presentMode = vk_present_mode;
+    vk_swapchain_desc.clipped = VK_TRUE;
+    vk_swapchain_desc.oldSwapchain = VK_NULL_HANDLE;
+    if ((vr = VK_CALL(vkCreateSwapchainKHR(device_vk->vk_device, &vk_swapchain_desc, NULL, &vk_swapchain))) < 0)
+    {
+        ERR("Failed to create Vulkan swapchain, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+    swapchain_vk->vk_swapchain = vk_swapchain;
+
+    if (!wined3d_swapchain_vk_create_vulkan_swapchain_images(swapchain_vk, vk_swapchain))
+    {
+        VK_CALL(vkDestroySwapchainKHR(device_vk->vk_device, vk_swapchain, NULL));
+        goto fail;
+    }
+
+    return WINED3D_OK;
+
+fail:
+    VK_CALL(vkDestroySurfaceKHR(vk_info->instance, vk_surface, NULL));
+    return E_FAIL;
+}
+
+static HRESULT wined3d_swapchain_vk_recreate(struct wined3d_swapchain_vk *swapchain_vk)
+{
+    TRACE("swapchain_vk %p.\n", swapchain_vk);
+
+    wined3d_swapchain_vk_destroy_vulkan_swapchain(swapchain_vk);
+
+    return wined3d_swapchain_vk_create_vulkan_swapchain(swapchain_vk);
+}
+
+static void wined3d_swapchain_vk_set_swap_interval(struct wined3d_swapchain_vk *swapchain_vk,
+        unsigned int swap_interval)
+{
+    if (swap_interval > 1)
+    {
+        if (swap_interval <= 4)
+            FIXME("Unsupported swap interval %u.\n", swap_interval);
+        swap_interval = 1;
+    }
+
+    if (swapchain_vk->s.swap_interval == swap_interval)
+        return;
+
+    swapchain_vk->s.swap_interval = swap_interval;
+    wined3d_swapchain_vk_recreate(swapchain_vk);
+}
+
+static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
+        struct wined3d_context_vk *context_vk, const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval)
+{
+    struct wined3d_texture_vk *back_buffer_vk = wined3d_texture_vk(swapchain_vk->s.back_buffers[0]);
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(swapchain_vk->s.device);
+    const struct wined3d_swapchain_desc *desc = &swapchain_vk->s.state.desc;
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    VkCommandBuffer vk_command_buffer;
+    VkPresentInfoKHR present_desc;
+    unsigned int present_idx;
+    VkImageLayout vk_layout;
+    uint32_t image_idx;
+    VkImageBlit blit;
+    VkResult vr;
+    HRESULT hr;
+
+    static const VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    wined3d_swapchain_vk_set_swap_interval(swapchain_vk, swap_interval);
+
+    present_idx = swapchain_vk->current++ % swapchain_vk->image_count;
+    wined3d_context_vk_wait_command_buffer(context_vk, swapchain_vk->vk_semaphores[present_idx].command_buffer_id);
+    vr = VK_CALL(vkAcquireNextImageKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, UINT64_MAX,
+            swapchain_vk->vk_semaphores[present_idx].available, VK_NULL_HANDLE, &image_idx));
+    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        if (FAILED(hr = wined3d_swapchain_vk_recreate(swapchain_vk)))
+        {
+            ERR("Failed to recreate swapchain, hr %#x.\n", hr);
+            return;
+        }
+        vr = VK_CALL(vkAcquireNextImageKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, UINT64_MAX,
+                swapchain_vk->vk_semaphores[present_idx].available, VK_NULL_HANDLE, &image_idx));
+    }
+    if (vr < 0)
+    {
+        ERR("Failed to acquire next Vulkan image, vr %s.\n", wined3d_debug_vkresult(vr));
+        return;
+    }
+
+    vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk);
+
+    wined3d_context_vk_end_current_render_pass(context_vk);
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
+            VK_ACCESS_TRANSFER_READ_BIT,
+            back_buffer_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            back_buffer_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            0, VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            swapchain_vk->vk_images[image_idx], VK_IMAGE_ASPECT_COLOR_BIT);
+
+    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.srcSubresource.mipLevel = 0;
+    blit.srcSubresource.baseArrayLayer = 0;
+    blit.srcSubresource.layerCount = 1;
+    blit.srcOffsets[0].x = src_rect->left;
+    blit.srcOffsets[0].y = src_rect->top;
+    blit.srcOffsets[0].z = 0;
+    blit.srcOffsets[1].x = src_rect->right;
+    blit.srcOffsets[1].y = src_rect->bottom;
+    blit.srcOffsets[1].z = 1;
+    blit.dstSubresource = blit.srcSubresource;
+    blit.dstOffsets[0].x = dst_rect->left;
+    blit.dstOffsets[0].y = dst_rect->top;
+    blit.dstOffsets[0].z = 0;
+    blit.dstOffsets[1].x = dst_rect->right;
+    blit.dstOffsets[1].y = dst_rect->bottom;
+    blit.dstOffsets[1].z = 1;
+    VK_CALL(vkCmdBlitImage(vk_command_buffer,
+            back_buffer_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            swapchain_vk->vk_images[image_idx], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1, &blit, VK_FILTER_NEAREST));
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT, 0,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            swapchain_vk->vk_images[image_idx], VK_IMAGE_ASPECT_COLOR_BIT);
+
+    if (desc->swap_effect == WINED3D_SWAP_EFFECT_DISCARD || desc->swap_effect == WINED3D_SWAP_EFFECT_FLIP_DISCARD)
+        vk_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    else
+        vk_layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_ACCESS_TRANSFER_READ_BIT,
+            vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
+            vk_layout, back_buffer_vk->layout,
+            back_buffer_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    swapchain_vk->vk_semaphores[present_idx].command_buffer_id = context_vk->current_command_buffer.id;
+    wined3d_context_vk_submit_command_buffer(context_vk,
+            1, &swapchain_vk->vk_semaphores[present_idx].available, &wait_stage,
+            1, &swapchain_vk->vk_semaphores[present_idx].presentable);
+
+    present_desc.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_desc.pNext = NULL;
+    present_desc.waitSemaphoreCount = 1;
+    present_desc.pWaitSemaphores = &swapchain_vk->vk_semaphores[present_idx].presentable;
+    present_desc.swapchainCount = 1;
+    present_desc.pSwapchains = &swapchain_vk->vk_swapchain;
+    present_desc.pImageIndices = &image_idx;
+    present_desc.pResults = NULL;
+    if ((vr = VK_CALL(vkQueuePresentKHR(device_vk->vk_queue, &present_desc))))
+        ERR("Present returned vr %s.\n", wined3d_debug_vkresult(vr));
+}
+
+static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_texture_sub_resource *sub_resource;
+    struct wined3d_texture_vk *texture, *texture_prev;
+    struct wined3d_allocator_block *memory0;
+    VkDescriptorImageInfo vk_info0;
+    VkDeviceMemory vk_memory0;
+    VkImageLayout vk_layout0;
+    VkImage vk_image0;
+    DWORD locations0;
+    unsigned int i;
+    uint64_t id0;
+
+    static const DWORD supported_locations = WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_RB_MULTISAMPLE;
+
+    if (swapchain->state.desc.backbuffer_count < 2)
+        return;
+
+    texture_prev = wined3d_texture_vk(swapchain->back_buffers[0]);
+
+    /* Back buffer 0 is already in the draw binding. */
+    vk_image0 = texture_prev->vk_image;
+    memory0 = texture_prev->memory;
+    vk_memory0 = texture_prev->vk_memory;
+    vk_layout0 = texture_prev->layout;
+    id0 = texture_prev->command_buffer_id;
+    vk_info0 = texture_prev->default_image_info;
+    locations0 = texture_prev->t.sub_resources[0].locations;
+
+    for (i = 1; i < swapchain->state.desc.backbuffer_count; ++i)
+    {
+        texture = wined3d_texture_vk(swapchain->back_buffers[i]);
+        sub_resource = &texture->t.sub_resources[0];
+
+        if (!(sub_resource->locations & supported_locations))
+            wined3d_texture_load_location(&texture->t, 0, &context_vk->c, texture->t.resource.draw_binding);
+
+        texture_prev->vk_image = texture->vk_image;
+        texture_prev->memory = texture->memory;
+        texture_prev->vk_memory = texture->vk_memory;
+        texture_prev->layout = texture->layout;
+        texture_prev->command_buffer_id = texture->command_buffer_id;
+        texture_prev->default_image_info = texture->default_image_info;
+
+        wined3d_texture_validate_location(&texture_prev->t, 0, sub_resource->locations & supported_locations);
+        wined3d_texture_invalidate_location(&texture_prev->t, 0, ~(sub_resource->locations & supported_locations));
+
+        texture_prev = texture;
+    }
+
+    texture_prev->vk_image = vk_image0;
+    texture_prev->memory = memory0;
+    texture_prev->vk_memory = vk_memory0;
+    texture_prev->layout = vk_layout0;
+    texture_prev->command_buffer_id = id0;
+    texture_prev->default_image_info = vk_info0;
+
+    wined3d_texture_validate_location(&texture_prev->t, 0, locations0 & supported_locations);
+    wined3d_texture_invalidate_location(&texture_prev->t, 0, ~(locations0 & supported_locations));
+
+    device_invalidate_state(swapchain->device, STATE_FRAMEBUFFER);
+}
+
 static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT *src_rect,
         const RECT *dst_rect, unsigned int swap_interval, uint32_t flags)
 {
-    FIXME("Not implemented.\n");
+    struct wined3d_swapchain_vk *swapchain_vk = wined3d_swapchain_vk(swapchain);
+    struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
+    struct wined3d_context_vk *context_vk;
+
+    context_vk = wined3d_context_vk(context_acquire(swapchain->device, back_buffer, 0));
+
+    wined3d_texture_load_location(back_buffer, 0, &context_vk->c, back_buffer->resource.draw_binding);
+
+    if (swapchain_vk->vk_swapchain)
+        wined3d_swapchain_vk_blit(swapchain_vk, context_vk, src_rect, dst_rect, swap_interval);
+
+    wined3d_swapchain_vk_rotate(swapchain, context_vk);
+
+    wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
+    wined3d_texture_invalidate_location(swapchain->front_buffer, 0, ~WINED3D_LOCATION_DRAWABLE);
+
+    TRACE("Starting new frame.\n");
+
+    context_release(&context_vk->c);
 }
 
 static const struct wined3d_swapchain_ops swapchain_vk_ops =
@@ -994,13 +1584,30 @@ HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl, str
     return hr;
 }
 
-HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain *swapchain_vk, struct wined3d_device *device,
+HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk, struct wined3d_device *device,
         struct wined3d_swapchain_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
+    HRESULT hr;
+
     TRACE("swapchain_vk %p, device %p, desc %p, parent %p, parent_ops %p.\n",
             swapchain_vk, device, desc, parent, parent_ops);
 
-    return wined3d_swapchain_init(swapchain_vk, device, desc, parent, parent_ops, &swapchain_vk_ops);
+    if (FAILED(hr = wined3d_swapchain_init(&swapchain_vk->s, device, desc, parent, parent_ops, &swapchain_vk_ops)))
+        return hr;
+
+    if (swapchain_vk->s.win_handle == GetDesktopWindow())
+    {
+        WARN("Creating a desktop window swapchain.\n");
+        return hr;
+    }
+
+    if (FAILED(hr = wined3d_swapchain_vk_create_vulkan_swapchain(swapchain_vk)))
+    {
+        wined3d_swapchain_cleanup(&swapchain_vk->s);
+        return hr;
+    }
+
+    return hr;
 }
 
 HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
