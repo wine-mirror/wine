@@ -2068,13 +2068,76 @@ static void adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
     wined3d_driver_info_init(&adapter_vk->a.driver_info, gpu_description, vram_bytes, sysmem_bytes);
 }
 
-static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter *adapter, uint32_t wined3d_creation_flags)
+static enum wined3d_feature_level feature_level_from_caps(const struct shader_caps *shader_caps)
 {
-    struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
+    unsigned int shader_model;
+
+    shader_model = min(shader_caps->vs_version, shader_caps->ps_version);
+    shader_model = min(shader_model, max(shader_caps->gs_version, 3));
+    shader_model = min(shader_model, max(shader_caps->hs_version, 4));
+    shader_model = min(shader_model, max(shader_caps->ds_version, 4));
+
+    if (shader_model >= 5)
+        return WINED3D_FEATURE_LEVEL_11_1;
+
+    if (shader_model >= 4)
+        return WINED3D_FEATURE_LEVEL_10_1;
+
+    return WINED3D_FEATURE_LEVEL_NONE;
+}
+
+static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_vk, uint32_t wined3d_creation_flags)
+{
+    struct wined3d_d3d_info *d3d_info = &adapter_vk->a.d3d_info;
+    struct wined3d_vertex_caps vertex_caps;
+    struct fragment_caps fragment_caps;
+    struct shader_caps shader_caps;
+
+    adapter_vk->a.shader_backend->shader_get_caps(&adapter_vk->a, &shader_caps);
+    adapter_vk->a.vertex_pipe->vp_get_caps(&adapter_vk->a, &vertex_caps);
+    adapter_vk->a.fragment_pipe->get_caps(&adapter_vk->a, &fragment_caps);
+
+    d3d_info->limits.vs_version = shader_caps.vs_version;
+    d3d_info->limits.hs_version = shader_caps.hs_version;
+    d3d_info->limits.ds_version = shader_caps.ds_version;
+    d3d_info->limits.gs_version = shader_caps.gs_version;
+    d3d_info->limits.ps_version = shader_caps.ps_version;
+    d3d_info->limits.cs_version = shader_caps.cs_version;
+    d3d_info->limits.vs_uniform_count = shader_caps.vs_uniform_count;
+    d3d_info->limits.ps_uniform_count = shader_caps.ps_uniform_count;
+    d3d_info->limits.varying_count = shader_caps.varying_count;
+    d3d_info->limits.ffp_textures = fragment_caps.MaxSimultaneousTextures;
+    d3d_info->limits.ffp_blend_stages = fragment_caps.MaxTextureBlendStages;
+    d3d_info->limits.ffp_vertex_blend_matrices = vertex_caps.max_vertex_blend_matrices;
+    d3d_info->limits.active_light_count = vertex_caps.max_active_lights;
+
+    d3d_info->limits.max_rt_count = WINED3D_MAX_RENDER_TARGETS;
+    d3d_info->limits.max_clip_distances = WINED3D_MAX_CLIP_DISTANCES;
+    d3d_info->limits.texture_size = adapter_vk->device_limits.maxImageDimension2D;
+    d3d_info->limits.pointsize_max = adapter_vk->device_limits.pointSizeRange[1];
 
     d3d_info->wined3d_creation_flags = wined3d_creation_flags;
 
-    d3d_info->texture_swizzle = TRUE;
+    d3d_info->xyzrhw = vertex_caps.xyzrhw;
+    d3d_info->emulated_flatshading = vertex_caps.emulated_flatshading;
+    d3d_info->ffp_generic_attributes = vertex_caps.ffp_generic_attributes;
+    d3d_info->ffp_alpha_test = false;
+    d3d_info->vs_clipping = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_VS_CLIPPING);
+    d3d_info->shader_color_key = !!(fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_COLOR_KEY);
+    d3d_info->shader_double_precision = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_DOUBLE_PRECISION);
+    d3d_info->shader_output_interpolation = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_OUTPUT_INTERPOLATION);
+    d3d_info->viewport_array_index_any_shader = false; /* VK_EXT_shader_viewport_index_layer */
+    d3d_info->texture_npot = true;
+    d3d_info->texture_npot_conditional = true;
+    d3d_info->draw_base_vertex_offset = true;
+    d3d_info->vertex_bgra = true;
+    d3d_info->texture_swizzle = true;
+    d3d_info->srgb_read_control = false;
+    d3d_info->srgb_write_control = false;
+    d3d_info->clip_control = true;
+    d3d_info->full_ffp_varyings = !!(shader_caps.wined3d_caps & WINED3D_SHADER_CAP_FULL_FFP_VARYINGS);
+    d3d_info->scaled_resolve = false;
+    d3d_info->feature_level = feature_level_from_caps(&shader_caps);
 
     d3d_info->multisample_draw_location = WINED3D_LOCATION_TEXTURE_RGB;
 }
@@ -2130,7 +2193,7 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     adapter->misc_state_template = misc_state_template_vk;
     adapter->shader_backend = wined3d_spirv_shader_backend_init_vk();
 
-    wined3d_adapter_vk_init_d3d_info(adapter, wined3d_creation_flags);
+    wined3d_adapter_vk_init_d3d_info(adapter_vk, wined3d_creation_flags);
 
     return TRUE;
 
