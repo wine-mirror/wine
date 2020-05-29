@@ -308,21 +308,79 @@ static const WCHAR driver2_path[] = {
     '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r','2',0
 };
 
+static IMAGE_INFO test_image_info;
+static int test_load_image_notify_count;
+static WCHAR test_load_image_name[MAX_PATH];
+
+static void WINAPI test_load_image_notify_routine(UNICODE_STRING *image_name, HANDLE process_id,
+        IMAGE_INFO *image_info)
+{
+    if (test_load_image_notify_count == -1
+            || (image_name->Buffer && wcsstr(image_name->Buffer, L".tmp")))
+    {
+        ++test_load_image_notify_count;
+        test_image_info = *image_info;
+        wcscpy(test_load_image_name, image_name->Buffer);
+    }
+}
+
 static void test_load_driver(void)
 {
-    UNICODE_STRING name;
+    static WCHAR image_path_key_name[] = L"ImagePath";
+    RTL_QUERY_REGISTRY_TABLE query_table[2];
+    UNICODE_STRING name, image_path;
     NTSTATUS ret;
+
+    ret = PsSetLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+
+    /* Routine gets registered twice on Windows. */
+    ret = PsSetLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+
+    RtlInitUnicodeString(&image_path, NULL);
+    memset(query_table, 0, sizeof(query_table));
+    query_table[0].QueryRoutine = NULL;
+    query_table[0].Name = image_path_key_name;
+    query_table[0].EntryContext = &image_path;
+    query_table[0].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_TYPECHECK;
+    query_table[0].DefaultType = REG_EXPAND_SZ << RTL_QUERY_REGISTRY_TYPECHECK_SHIFT;
+
+    ret = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, driver2_path, query_table, NULL, NULL);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+    ok(!!image_path.Buffer, "image_path.Buffer is NULL.\n");
 
     RtlInitUnicodeString(&name, driver2_path);
 
     ret = ZwLoadDriver(&name);
     ok(!ret, "got %#x\n", ret);
 
+    ok(test_load_image_notify_count == 2, "Got unexpected test_load_image_notify_count %u.\n",
+            test_load_image_notify_count);
+    ok(test_image_info.ImageAddressingMode == IMAGE_ADDRESSING_MODE_32BIT,
+            "Got unexpected ImageAddressingMode %#x.\n", test_image_info.ImageAddressingMode);
+    ok(test_image_info.SystemModeImage,
+            "Got unexpected SystemModeImage %#x.\n", test_image_info.SystemModeImage);
+    ok(!wcscmp(test_load_image_name, image_path.Buffer), "Image path names do not match.\n");
+
+    test_load_image_notify_count = -1;
+
     ret = ZwLoadDriver(&name);
     ok(ret == STATUS_IMAGE_ALREADY_LOADED, "got %#x\n", ret);
 
     ret = ZwUnloadDriver(&name);
     ok(!ret, "got %#x\n", ret);
+
+    ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+    ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
+    ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
+    ok(ret == STATUS_PROCEDURE_NOT_FOUND, "Got unexpected status %#x.\n", ret);
+
+    ok(test_load_image_notify_count == -1, "Got unexpected test_load_image_notify_count %u.\n",
+            test_load_image_notify_count);
+    RtlFreeUnicodeString(&image_path);
 }
 
 static NTSTATUS wait_single(void *obj, ULONGLONG timeout)

@@ -3673,6 +3673,30 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
     TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
     module = load_driver_module( str );
+
+    if (module && load_image_notify_routine_count)
+    {
+        UNICODE_STRING module_name;
+        IMAGE_NT_HEADERS *nt;
+        IMAGE_INFO info;
+        unsigned int i;
+
+        RtlInitUnicodeString(&module_name, str);
+        nt = RtlImageNtHeader(module);
+        memset(&info, 0, sizeof(info));
+        info.u.s.ImageAddressingMode = IMAGE_ADDRESSING_MODE_32BIT;
+        info.u.s.SystemModeImage = TRUE;
+        info.ImageSize = nt->OptionalHeader.SizeOfImage;
+        info.ImageBase = module;
+
+        for (i = 0; i < load_image_notify_routine_count; ++i)
+        {
+            TRACE("Calling image load notify %p.\n", load_image_notify_routines[i]);
+            load_image_notify_routines[i](&module_name, NULL, &info);
+            TRACE("Called image load notify %p.\n", load_image_notify_routines[i]);
+        }
+    }
+
     HeapFree( GetProcessHeap(), 0, path );
     return module;
 }
