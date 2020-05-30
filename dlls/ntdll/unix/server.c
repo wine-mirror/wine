@@ -542,9 +542,9 @@ static inline NTSTATUS get_cached_fd( HANDLE handle, int *fd, enum server_fd_typ
 
 
 /***********************************************************************
- *           server_remove_fd_from_cache
+ *           remove_fd_from_cache
  */
-int CDECL server_remove_fd_from_cache( HANDLE handle )
+static int remove_fd_from_cache( HANDLE handle )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
     int fd = -1;
@@ -1121,4 +1121,54 @@ size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int 
     default:
         server_protocol_error( "init_thread failed with status %x\n", ret );
     }
+}
+
+
+/******************************************************************************
+ *           NtDuplicateObject
+ */
+NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE dest_process, HANDLE *dest,
+                                   ACCESS_MASK access, ULONG attributes, ULONG options )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( dup_handle )
+    {
+        req->src_process = wine_server_obj_handle( source_process );
+        req->src_handle  = wine_server_obj_handle( source );
+        req->dst_process = wine_server_obj_handle( dest_process );
+        req->access      = access;
+        req->attributes  = attributes;
+        req->options     = options;
+        if (!(ret = wine_server_call( req )))
+        {
+            if (dest) *dest = wine_server_ptr_handle( reply->handle );
+            if (reply->closed && reply->self)
+            {
+                int fd = remove_fd_from_cache( source );
+                if (fd != -1) close( fd );
+            }
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *           NtClose
+ */
+NTSTATUS WINAPI NtClose( HANDLE handle )
+{
+    NTSTATUS ret;
+    int fd = remove_fd_from_cache( handle );
+
+    SERVER_START_REQ( close_handle )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (fd != -1) close( fd );
+    return ret;
 }

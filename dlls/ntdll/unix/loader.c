@@ -983,6 +983,8 @@ static HMODULE load_ntdll(void)
  */
 static struct unix_funcs unix_funcs =
 {
+    NtClose,
+    NtDuplicateObject,
     get_main_args,
     get_paths,
     get_dll_path,
@@ -999,7 +1001,6 @@ static struct unix_funcs unix_funcs =
     server_call_unlocked,
     wine_server_call,
     server_send_fd,
-    server_remove_fd_from_cache,
     server_get_unix_fd,
     server_fd_to_handle,
     server_handle_to_fd,
