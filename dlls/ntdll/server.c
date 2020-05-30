@@ -722,6 +722,8 @@ void server_init_process_done(void)
     NTSTATUS status;
     int suspend;
 
+    unix_funcs->server_init_process_done();
+
     /* Install signal handlers; this cannot be done earlier, since we cannot
      * send exceptions to the debugger before the create process event that
      * is sent by REQ_INIT_PROCESS_DONE.
