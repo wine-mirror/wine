@@ -4281,3 +4281,8 @@ void * WINAPI PsGetProcessSectionBaseAddress(PEPROCESS process)
     TRACE("returning %p.\n", image_base);
     return image_base;
 }
+
+void WINAPI KeStackAttachProcess(KPROCESS *process, KAPC_STATE *apc_state)
+{
+    FIXME("process %p, apc_state %p stub.\n", process, apc_state);
+}
