@@ -4286,3 +4286,8 @@ void WINAPI KeStackAttachProcess(KPROCESS *process, KAPC_STATE *apc_state)
 {
     FIXME("process %p, apc_state %p stub.\n", process, apc_state);
 }
+
+void WINAPI KeUnstackDetachProcess(KAPC_STATE *apc_state)
+{
+    FIXME("apc_state %p stub.\n", apc_state);
+}

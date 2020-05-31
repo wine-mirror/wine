@@ -648,7 +648,7 @@
 @ stub KeSynchronizeExecution
 @ stub KeTerminateThread
 @ extern KeTickCount
-@ stub KeUnstackDetachProcess
+@ stdcall KeUnstackDetachProcess(ptr)
 @ stub KeUpdateRunTime
 @ stub KeUpdateSystemTime
 @ stub KeUserModeCallback
