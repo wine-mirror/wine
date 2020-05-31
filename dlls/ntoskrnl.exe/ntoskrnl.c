@@ -4248,3 +4248,33 @@ void WINAPI KeSignalCallDpcDone(void *barrier)
 {
     InterlockedDecrement((LONG *)barrier);
 }
+
+void * WINAPI PsGetProcessSectionBaseAddress(PEPROCESS process)
+{
+    void *image_base;
+    NTSTATUS status;
+    SIZE_T size;
+    HANDLE h;
+
+    TRACE("process %p.\n", process);
+
+    if ((status = ObOpenObjectByPointer(process, 0, NULL, PROCESS_ALL_ACCESS, NULL, KernelMode, &h)))
+    {
+        WARN("Error opening process object, status %#x.\n", status);
+        return NULL;
+    }
+
+    status = NtReadVirtualMemory(h, &process->info.PebBaseAddress->ImageBaseAddress,
+            &image_base, sizeof(image_base), &size);
+
+    NtClose(h);
+
+    if (status || size != sizeof(image_base))
+    {
+        WARN("Error reading process memory, status %#x, size %lu.\n", status, size);
+        return NULL;
+    }
+
+    TRACE("returning %p.\n", image_base);
+    return image_base;
+}
