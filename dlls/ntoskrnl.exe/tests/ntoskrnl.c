@@ -148,8 +148,9 @@ static void main_test(void)
     static const WCHAR dokW[] = {'d','o','k',0};
     WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
     struct test_input *test_input;
-    UNICODE_STRING pathU;
     DWORD len, written, read;
+    ULONG64 modified_value;
+    UNICODE_STRING pathU;
     LONG new_failures;
     char buffer[512];
     HANDLE okfile;
@@ -165,12 +166,19 @@ static void main_test(void)
     test_input->running_under_wine = !strcmp(winetest_platform, "wine");
     test_input->winetest_report_success = winetest_report_success;
     test_input->winetest_debug = winetest_debug;
+    test_input->process_id = GetCurrentProcessId();
+    test_input->teststr_offset = (SIZE_T)((BYTE *)&teststr - (BYTE *)NtCurrentTeb()->Peb->ImageBaseAddress);
+    test_input->modified_value = &modified_value;
+    modified_value = 0;
+
     memcpy(test_input->path, pathU.Buffer, len);
     res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input,
                           offsetof( struct test_input, path[len / sizeof(WCHAR)]),
                           &new_failures, sizeof(new_failures), &written, NULL);
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(written == sizeof(new_failures), "got size %x\n", written);
+
+    todo_wine ok(modified_value == 0xdeadbeeffeedcafe, "Got unexpected value %#I64x.\n", modified_value);
 
     okfile = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(okfile != INVALID_HANDLE_VALUE, "failed to create %s: %u\n", wine_dbgstr_w(pathW), GetLastError());

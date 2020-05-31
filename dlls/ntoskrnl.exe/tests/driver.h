@@ -42,6 +42,9 @@ struct test_input
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
+    DWORD process_id;
+    SIZE_T teststr_offset;
+    ULONG64 *modified_value;
     WCHAR path[1];
 };
 

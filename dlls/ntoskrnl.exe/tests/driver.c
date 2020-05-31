@@ -2067,6 +2067,71 @@ static void test_dpc(void)
     KeRevertToUserAffinityThread();
 }
 
+static void test_process_memory(const struct test_input *test_input)
+{
+    NTSTATUS (WINAPI *pMmCopyVirtualMemory)(PEPROCESS fromprocess, void *fromaddress, PEPROCESS toprocess,
+            void *toaddress, SIZE_T bufsize, KPROCESSOR_MODE mode, SIZE_T *copied);
+    char buffer[sizeof(teststr)];
+    ULONG64 modified_value;
+    PEPROCESS process;
+    KAPC_STATE state;
+    NTSTATUS status;
+    SIZE_T size;
+    BYTE *base;
+
+    pMmCopyVirtualMemory = get_proc_address("MmCopyVirtualMemory");
+
+    status = PsLookupProcessByProcessId((HANDLE)(ULONG_PTR)test_input->process_id, &process);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+
+    if (status)
+        return;
+
+    if (0) /* Crashes on Windows. */
+        PsGetProcessSectionBaseAddress(NULL);
+
+    base = PsGetProcessSectionBaseAddress(process);
+    ok(!!base, "Got NULL base address.\n");
+
+    ok(process == PsGetCurrentProcess(), "Got unexpected process %p, PsGetCurrentProcess() %p.\n",
+            process, PsGetCurrentProcess());
+
+    modified_value = 0xdeadbeeffeedcafe;
+    if (pMmCopyVirtualMemory)
+    {
+        size = 0xdeadbeef;
+        status = pMmCopyVirtualMemory(process, base + test_input->teststr_offset, PsGetCurrentProcess(),
+                buffer, sizeof(buffer), UserMode, &size);
+        todo_wine ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#x.\n", status);
+        ok(!size, "Got unexpected size %#lx.\n", size);
+
+        memset(buffer, 0, sizeof(buffer));
+        size = 0xdeadbeef;
+        if (0)  /* Passing NULL for the copied size address hangs Windows. */
+            pMmCopyVirtualMemory(process, base + test_input->teststr_offset, PsGetCurrentProcess(),
+                                 buffer, sizeof(buffer), KernelMode, NULL);
+        status = pMmCopyVirtualMemory(process, base + test_input->teststr_offset, PsGetCurrentProcess(),
+                buffer, sizeof(buffer), KernelMode, &size);
+        todo_wine ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        todo_wine ok(size == sizeof(buffer), "Got unexpected size %lu.\n", size);
+        todo_wine ok(!strcmp(buffer, teststr), "Got unexpected test string.\n");
+    }
+    else
+    {
+       win_skip("MmCopyVirtualMemory is not available.\n");
+    }
+
+    if (!test_input->running_under_wine)
+    {
+        KeStackAttachProcess((PKPROCESS)process, &state);
+        todo_wine ok(!strcmp(teststr, (char *)(base + test_input->teststr_offset)),
+                "Strings do not match.\n");
+        *test_input->modified_value = modified_value;
+        KeUnstackDetachProcess(&state);
+    }
+    ObDereferenceObject(process);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -2122,6 +2187,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 #endif
     test_affinity();
     test_dpc();
+    test_process_memory(test_input);
 
     if (main_test_work_item) return STATUS_UNEXPECTED_IO_ERROR;
 
