@@ -619,7 +619,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 
             if (! is_tablet_cursor(target->name, device_type))
             {
-                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device.  If this is wrong, please report it to wine-devel@winehq.org\n",
+                WARN("Skipping device %d [name %s|type %s]; not apparently a tablet cursor type device\n",
                      loop, devices[loop].name, debugstr_a(device_type));
                 break;
             }
