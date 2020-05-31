@@ -52,6 +52,7 @@ struct _KAPC;
 struct _IRP;
 struct _DEVICE_OBJECT;
 struct _DRIVER_OBJECT;
+struct _KPROCESS;
 
 typedef VOID (WINAPI *PKDEFERRED_ROUTINE)(struct _KDPC *, PVOID, PVOID, PVOID);
 typedef VOID (WINAPI *PKSTART_ROUTINE)(PVOID);
@@ -224,11 +225,21 @@ typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _KTHREAD *PKTHREAD, *PRKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
+typedef struct _KPROCESS KPROCESS, *PKPROCESS, *PRKPROCESS;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
 typedef struct _OBJECT_HANDLE_INFORMATION *POBJECT_HANDLE_INFORMATION;
 typedef struct _ZONE_HEADER *PZONE_HEADER;
 typedef struct _LOOKASIDE_LIST_EX *PLOOKASIDE_LIST_EX;
+
+typedef struct _KAPC_STATE
+{
+     LIST_ENTRY ApcListHead[2];
+     PKPROCESS Process;
+     UCHAR KernelApcInProgress;
+     UCHAR KernelApcPending;
+     UCHAR UserApcPending;
+} KAPC_STATE, *PKAPC_STATE;
 
 #define FM_LOCK_BIT 0x1
 
