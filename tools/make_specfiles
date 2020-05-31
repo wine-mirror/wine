@@ -288,6 +288,7 @@ my @dll_groups =
   "api-ms-win-core-xstate-l2-1-0",
   "api-ms-win-core-processtopology-obsolete-l1-1-0",
   "api-ms-win-core-util-l1-1-0",
+  "api-ms-win-downlevel-kernel32-l2-1-0",
   "ext-ms-win-kernel32-package-current-l1-1-0",
   "ext-ms-win-kernel32-package-l1-1-1",
  ],
