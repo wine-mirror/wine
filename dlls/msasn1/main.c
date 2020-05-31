@@ -190,3 +190,21 @@ void WINAPI ASN1_CloseDecoder(ASN1decoding_t decoder)
 {
     FIXME("(%p): Stub!\n", decoder);
 }
+
+ASN1error_e WINAPI ASN1_Decode(ASN1decoding_t decoder, void **outdata, ASN1uint32_t pdunum,
+                               ASN1uint32_t flags, ASN1octet_t *buf, ASN1uint32_t bufsize)
+{
+    FIXME("(%p %p %u %08x %p %u): Stub!\n", decoder, outdata, pdunum, flags, buf, bufsize);
+
+    if (!decoder)
+        return ASN1_ERR_BADARGS;
+
+    if (!buf || !bufsize)
+    {
+        decoder->err = ASN1_ERR_BADARGS;
+        return ASN1_ERR_BADARGS;
+    }
+
+    decoder->err = ASN1_ERR_BADPDU;
+    return ASN1_ERR_BADPDU;
+}
