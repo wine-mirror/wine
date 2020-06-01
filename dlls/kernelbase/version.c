@@ -1544,3 +1544,13 @@ LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFullName( HANDLE process, UINT32 *
     FIXME( "(%p %p %p): stub\n", process, length, name );
     return APPMODEL_ERROR_NO_PACKAGE;
 }
+
+
+/***********************************************************************
+ *         GetPackageFamilyName   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFamilyName( HANDLE process, UINT32 *length, WCHAR *name )
+{
+    FIXME( "(%p %p %p): stub\n", process, length, name );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}

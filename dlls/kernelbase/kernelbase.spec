@@ -591,7 +591,7 @@
 # @ stub GetPackageApplicationPropertyString
 # @ stub GetPackageApplicationResourcesContext
 # @ stub GetPackageContext
-# @ stub GetPackageFamilyName
+@ stdcall GetPackageFamilyName(long ptr ptr)
 # @ stub GetPackageFamilyNameFromToken
 @ stdcall GetPackageFullName(long ptr ptr)
 # @ stub GetPackageFullNameFromToken
