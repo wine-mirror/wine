@@ -436,9 +436,9 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     /* frame format information tests */
 
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, NULL);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, &format_info);
-    todo_wine ok (hr == S_OK, "%d: [frame %d] GetFormatInfo failed, hr=%x\n", i, frame_index, hr);
+    ok (hr == S_OK, "%d: [frame %d] GetFormatInfo failed, hr=%x\n", i, frame_index, hr);
     if (hr != S_OK) goto end;
 
     ok (format_info.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,

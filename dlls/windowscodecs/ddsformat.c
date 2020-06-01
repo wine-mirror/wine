@@ -105,6 +105,15 @@ typedef struct dds_info {
     WICDdsAlphaMode alpha_mode;
 } dds_info;
 
+typedef struct dds_frame_info {
+    UINT width;
+    UINT height;
+    DXGI_FORMAT format;
+    UINT bytes_per_block;
+    UINT block_width;
+    UINT block_height;
+} dds_frame_info;
+
 typedef struct DdsDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
     IWICDdsDecoder IWICDdsDecoder_iface;
@@ -121,8 +130,7 @@ typedef struct DdsFrameDecode {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     IWICDdsFrameDecode IWICDdsFrameDecode_iface;
     LONG ref;
-    UINT width;
-    UINT height;
+    dds_frame_info info;
 } DdsFrameDecode;
 
 static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *, UINT, UINT, UINT, IWICBitmapFrameDecode **);
@@ -231,6 +239,27 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
     }
 }
 
+static UINT get_bytes_per_block(DXGI_FORMAT format)
+{
+    switch(format)
+    {
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+            return 8;
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC2_TYPELESS:
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+        case DXGI_FORMAT_BC3_UNORM:
+        case DXGI_FORMAT_BC3_TYPELESS:
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            return 16;
+        default:
+            WARN("DXGI format 0x%x is not supported in DDS decoder\n", format);
+            return 0;
+    }
+}
+
 static inline DdsDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsDecoder, IWICBitmapDecoder_iface);
@@ -303,8 +332,8 @@ static HRESULT WINAPI DdsFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
 
     if (!puiWidth || !puiHeight) return E_INVALIDARG;
 
-    *puiWidth = This->width;
-    *puiHeight = This->height;
+    *puiWidth = This->info.width;
+    *puiHeight = This->info.height;
 
     TRACE("(%p) -> (%d,%d)\n", iface, *puiWidth, *puiHeight);
 
@@ -411,9 +440,19 @@ static HRESULT WINAPI DdsFrameDecode_Dds_GetSizeInBlocks(IWICDdsFrameDecode *ifa
 static HRESULT WINAPI DdsFrameDecode_Dds_GetFormatInfo(IWICDdsFrameDecode *iface,
                                                        WICDdsFormatInfo *formatInfo)
 {
-    FIXME("(%p,%p): stub.\n", iface, formatInfo);
+    DdsFrameDecode *This = impl_from_IWICDdsFrameDecode(iface);
 
-    return E_NOTIMPL;
+    if (!formatInfo) return E_INVALIDARG;
+
+    formatInfo->DxgiFormat = This->info.format;
+    formatInfo->BytesPerBlock = This->info.bytes_per_block;
+    formatInfo->BlockWidth = This->info.block_width;
+    formatInfo->BlockHeight = This->info.block_height;
+
+    TRACE("(%p,%p) -> (0x%x,%d,%d,%d)\n", iface, formatInfo,
+          formatInfo->DxgiFormat, formatInfo->BytesPerBlock, formatInfo->BlockWidth, formatInfo->BlockHeight);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DdsFrameDecode_Dds_CopyBlocks(IWICDdsFrameDecode *iface,
@@ -794,8 +833,12 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     hr = DdsFrameDecode_CreateInstance(&frame_decode);
     if (hr != S_OK) goto end;
 
-    frame_decode->width = width;
-    frame_decode->height = height;
+    frame_decode->info.width = width;
+    frame_decode->info.height = height;
+    frame_decode->info.format = This->info.format;
+    frame_decode->info.bytes_per_block = get_bytes_per_block(This->info.format);
+    frame_decode->info.block_width = 4;
+    frame_decode->info.block_height = 4;
     *bitmapFrame = &frame_decode->IWICBitmapFrameDecode_iface;
 
     hr = S_OK;
