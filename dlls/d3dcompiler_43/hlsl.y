@@ -213,6 +213,15 @@ static void declare_predefined_types(struct hlsl_scope *scope)
     };
     char name[10];
 
+    static const char *const sampler_names[] =
+    {
+        "sampler",
+        "sampler1D",
+        "sampler2D",
+        "sampler3D",
+        "samplerCUBE"
+    };
+
     for (bt = 0; bt <= HLSL_TYPE_LAST_SCALAR; ++bt)
     {
         for (y = 1; y <= 4; ++y)
@@ -234,11 +243,21 @@ static void declare_predefined_types(struct hlsl_scope *scope)
                         sprintf(name, "%s", names[bt]);
                         type = new_hlsl_type(d3dcompiler_strdup(name), HLSL_CLASS_SCALAR, bt, x, y);
                         add_type_to_scope(scope, type);
+                        hlsl_ctx.builtin_types.scalar[bt] = type;
                     }
                 }
             }
         }
     }
+
+    for (bt = 0; bt <= HLSL_SAMPLER_DIM_MAX; ++bt)
+    {
+        type = new_hlsl_type(d3dcompiler_strdup(sampler_names[bt]), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
+        type->sampler_dim = bt;
+        hlsl_ctx.builtin_types.sampler[bt] = type;
+    }
+
+    hlsl_ctx.builtin_types.Void = new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_OBJECT, HLSL_TYPE_VOID, 1, 1);
 
     /* DX8 effects predefined types */
     type = new_hlsl_type(d3dcompiler_strdup("DWORD"), HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1);
@@ -548,15 +567,11 @@ static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs
 
 static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct source_location loc)
 {
-    struct hlsl_type *type;
     struct hlsl_ir_constant *c;
-
-    if (!(type = new_hlsl_type(d3dcompiler_strdup("uint"), HLSL_CLASS_SCALAR, HLSL_TYPE_UINT, 1, 1)))
-        return NULL;
 
     if (!(c = d3dcompiler_alloc(sizeof(*c))))
         return NULL;
-    init_node(&c->node, HLSL_IR_CONSTANT, type, loc);
+    init_node(&c->node, HLSL_IR_CONSTANT, hlsl_ctx.builtin_types.scalar[HLSL_TYPE_UINT], loc);
     c->v.value.u[0] = n;
     return c;
 }
@@ -1814,60 +1829,48 @@ type:                     base_type
                                 $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $5, $7);
                             }
 
-base_type:                KW_VOID
-                            {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("void"), HLSL_CLASS_OBJECT, HLSL_TYPE_VOID, 1, 1);
-                            }
-                        | KW_SAMPLER
-                            {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
-                                $$->sampler_dim = HLSL_SAMPLER_DIM_GENERIC;
-                            }
-                        | KW_SAMPLER1D
-                            {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler1D"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
-                                $$->sampler_dim = HLSL_SAMPLER_DIM_1D;
-                            }
-                        | KW_SAMPLER2D
-                            {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler2D"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
-                                $$->sampler_dim = HLSL_SAMPLER_DIM_2D;
-                            }
-                        | KW_SAMPLER3D
-                            {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("sampler3D"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
-                                $$->sampler_dim = HLSL_SAMPLER_DIM_3D;
-                            }
-                        | KW_SAMPLERCUBE
-                            {
-                                $$ = new_hlsl_type(d3dcompiler_strdup("samplerCUBE"), HLSL_CLASS_OBJECT, HLSL_TYPE_SAMPLER, 1, 1);
-                                $$->sampler_dim = HLSL_SAMPLER_DIM_CUBE;
-                            }
-                        | TYPE_IDENTIFIER
-                            {
-                                struct hlsl_type *type;
+base_type:
 
-                                type = get_type(hlsl_ctx.cur_scope, $1, TRUE);
-                                $$ = type;
-                                d3dcompiler_free($1);
-                            }
-                        | KW_STRUCT TYPE_IDENTIFIER
-                            {
-                                struct hlsl_type *type;
-
-                                type = get_type(hlsl_ctx.cur_scope, $2, TRUE);
-                                if (type->type != HLSL_CLASS_STRUCT)
-                                {
-                                    hlsl_message("Line %u: redefining %s as a structure.\n",
-                                            hlsl_ctx.line_no, $2);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                }
-                                else
-                                {
-                                    $$ = type;
-                                }
-                                d3dcompiler_free($2);
-                            }
+      KW_VOID
+        {
+            $$ = hlsl_ctx.builtin_types.Void;
+        }
+    | KW_SAMPLER
+        {
+            $$ = hlsl_ctx.builtin_types.sampler[HLSL_SAMPLER_DIM_GENERIC];
+        }
+    | KW_SAMPLER1D
+        {
+            $$ = hlsl_ctx.builtin_types.sampler[HLSL_SAMPLER_DIM_1D];
+        }
+    | KW_SAMPLER2D
+        {
+            $$ = hlsl_ctx.builtin_types.sampler[HLSL_SAMPLER_DIM_2D];
+        }
+    | KW_SAMPLER3D
+        {
+            $$ = hlsl_ctx.builtin_types.sampler[HLSL_SAMPLER_DIM_3D];
+        }
+    | KW_SAMPLERCUBE
+        {
+            $$ = hlsl_ctx.builtin_types.sampler[HLSL_SAMPLER_DIM_3D];
+        }
+    | TYPE_IDENTIFIER
+        {
+            $$ = get_type(hlsl_ctx.cur_scope, $1, TRUE);
+            d3dcompiler_free($1);
+        }
+    | KW_STRUCT TYPE_IDENTIFIER
+        {
+            $$ = get_type(hlsl_ctx.cur_scope, $2, TRUE);
+            if ($$->type != HLSL_CLASS_STRUCT)
+            {
+                hlsl_message("Line %u: redefining %s as a structure.\n",
+                        hlsl_ctx.line_no, $2);
+                set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+            }
+            d3dcompiler_free($2);
+        }
 
 declaration_statement:    declaration
                         | struct_declaration
@@ -2207,8 +2210,8 @@ primary_expr:             C_FLOAT
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
-                                init_node(&c->node, HLSL_IR_CONSTANT, new_hlsl_type(d3dcompiler_strdup("float"),
-                                        HLSL_CLASS_SCALAR, HLSL_TYPE_FLOAT, 1, 1), get_location(&@1));
+                                init_node(&c->node, HLSL_IR_CONSTANT,
+                                        hlsl_ctx.builtin_types.scalar[HLSL_TYPE_FLOAT], get_location(&@1));
                                 c->v.value.f[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
@@ -2221,8 +2224,8 @@ primary_expr:             C_FLOAT
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
-                                init_node(&c->node, HLSL_IR_CONSTANT, new_hlsl_type(d3dcompiler_strdup("int"),
-                                        HLSL_CLASS_SCALAR, HLSL_TYPE_INT, 1, 1), get_location(&@1));
+                                init_node(&c->node, HLSL_IR_CONSTANT,
+                                        hlsl_ctx.builtin_types.scalar[HLSL_TYPE_INT], get_location(&@1));
                                 c->v.value.i[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
@@ -2235,8 +2238,8 @@ primary_expr:             C_FLOAT
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
-                                init_node(&c->node, HLSL_IR_CONSTANT, new_hlsl_type(d3dcompiler_strdup("bool"),
-                                        HLSL_CLASS_SCALAR, HLSL_TYPE_BOOL, 1, 1), get_location(&@1));
+                                init_node(&c->node, HLSL_IR_CONSTANT,
+                                        hlsl_ctx.builtin_types.scalar[HLSL_TYPE_BOOL], get_location(&@1));
                                 c->v.value.b[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;

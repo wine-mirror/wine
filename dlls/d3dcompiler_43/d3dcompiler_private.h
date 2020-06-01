@@ -595,6 +595,7 @@ enum hlsl_sampler_dim
    HLSL_SAMPLER_DIM_2D,
    HLSL_SAMPLER_DIM_3D,
    HLSL_SAMPLER_DIM_CUBE,
+   HLSL_SAMPLER_DIM_MAX = HLSL_SAMPLER_DIM_CUBE
 };
 
 enum hlsl_matrix_majority
@@ -983,6 +984,13 @@ struct hlsl_parse_ctx
     const struct hlsl_ir_function_decl *cur_function;
 
     enum hlsl_matrix_majority matrix_majority;
+
+    struct
+    {
+        struct hlsl_type *scalar[HLSL_TYPE_LAST_SCALAR + 1];
+        struct hlsl_type *sampler[HLSL_SAMPLER_DIM_MAX + 1];
+        struct hlsl_type *Void;
+    } builtin_types;
 };
 
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
