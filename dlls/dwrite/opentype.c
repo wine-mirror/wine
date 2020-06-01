@@ -5610,6 +5610,19 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
     }
 }
 
+static BOOL opentype_is_gsub_lookup_reversed(const struct scriptshaping_context *context, const struct lookup *lookup)
+{
+    unsigned int subtable_offset, lookup_type = lookup->type;
+
+    if (lookup->type == GSUB_LOOKUP_EXTENSION_SUBST)
+    {
+        subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, 0);
+        /* Assumes format 1. */
+        lookup_type = table_read_be_word(&context->table->table, subtable_offset + 2);
+    }
+    return lookup_type == GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST;
+}
+
 void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features)
 {
@@ -5626,19 +5639,38 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     {
         const struct lookup *lookup = &lookups.lookups[i];
 
-        context->cur = 0;
-        while (context->cur < context->glyph_count)
+        if (!opentype_is_gsub_lookup_reversed(context, lookup))
         {
-            ret = FALSE;
-
-            if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
-                    lookup_is_glyph_match(context, context->cur, lookup->flags))
+            context->cur = 0;
+            while (context->cur < context->glyph_count)
             {
-                ret = opentype_layout_apply_gsub_lookup(context, lookup);
-            }
+                ret = FALSE;
 
-            if (!ret)
-                context->cur++;
+                if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
+                        lookup_is_glyph_match(context, context->cur, lookup->flags))
+                {
+                    ret = opentype_layout_apply_gsub_lookup(context, lookup);
+                }
+
+                if (!ret)
+                    context->cur++;
+            }
+        }
+        else
+        {
+            context->cur = context->glyph_count - 1;
+
+            for (;;)
+            {
+                if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
+                        lookup_is_glyph_match(context, context->cur, lookup->flags))
+                {
+                    opentype_layout_apply_gsub_lookup(context, lookup);
+                }
+
+                if (context->cur == 0) break;
+                --context->cur;
+            }
         }
     }
 
