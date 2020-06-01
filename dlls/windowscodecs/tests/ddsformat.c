@@ -382,6 +382,12 @@ static void test_dds_decoder_frame_size(IWICBitmapDecoder *decoder, IWICBitmapFr
     ok (hr == S_OK, "%d: GetParameters failed, hr=%x\n", i, hr);
     if (hr != S_OK) goto end;
 
+    hr = IWICBitmapFrameDecode_GetSize(frame_decode, NULL, NULL);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICBitmapFrameDecode_GetSize(frame_decode, NULL, &height);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICBitmapFrameDecode_GetSize(frame_decode, &width, NULL);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICBitmapFrameDecode_GetSize(frame_decode, &width, &height);
     ok (hr == S_OK, "%d: GetSize failed for frame %d, hr=%x\n", i, frame_index, hr);
     if (hr != S_OK) goto end;

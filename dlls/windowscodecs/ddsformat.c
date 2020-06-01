@@ -301,6 +301,8 @@ static HRESULT WINAPI DdsFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
 {
     DdsFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
 
+    if (!puiWidth || !puiHeight) return E_INVALIDARG;
+
     *puiWidth = This->width;
     *puiHeight = This->height;
 
