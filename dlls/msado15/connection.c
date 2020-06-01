@@ -32,6 +32,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
+struct connection;
+
+struct connection_point
+{
+    IConnectionPoint   IConnectionPoint_iface;
+    struct connection *conn;
+    const IID         *riid;
+};
+
 struct connection
 {
     _Connection               Connection_iface;
@@ -41,6 +50,7 @@ struct connection
     ObjectStateEnum           state;
     LONG                      timeout;
     WCHAR                    *datasource;
+    struct connection_point   cp_connev;
 };
 
 static inline struct connection *impl_from_Connection( _Connection *iface )
@@ -56,6 +66,11 @@ static inline struct connection *impl_from_ISupportErrorInfo( ISupportErrorInfo 
 static inline struct connection *impl_from_IConnectionPointContainer( IConnectionPointContainer *iface )
 {
     return CONTAINING_RECORD( iface, struct connection, IConnectionPointContainer_iface );
+}
+
+static inline struct connection_point *impl_from_IConnectionPoint( IConnectionPoint *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection_point, IConnectionPoint_iface );
 }
 
 static ULONG WINAPI connection_AddRef( _Connection *iface )
@@ -453,6 +468,86 @@ static const struct IConnectionPointContainerVtbl connpointcontainer_vtbl =
     connpointcontainer_FindConnectionPoint
 };
 
+static HRESULT WINAPI connpoint_QueryInterface( IConnectionPoint *iface, REFIID riid, void **obj )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+
+    if (IsEqualGUID( &IID_IUnknown, riid ) || IsEqualGUID( &IID_IConnectionPoint, riid ))
+    {
+        *obj = &connpoint->IConnectionPoint_iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid( riid ) );
+        return E_NOINTERFACE;
+    }
+
+    connection_AddRef( &connpoint->conn->Connection_iface );
+    return S_OK;
+}
+
+static ULONG WINAPI connpoint_AddRef( IConnectionPoint *iface )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    return IConnectionPointContainer_AddRef( &connpoint->conn->IConnectionPointContainer_iface );
+}
+
+static ULONG WINAPI connpoint_Release( IConnectionPoint *iface )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    return IConnectionPointContainer_Release( &connpoint->conn->IConnectionPointContainer_iface );
+}
+
+static HRESULT WINAPI connpoint_GetConnectionInterface( IConnectionPoint *iface, IID *iid )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %p\n", connpoint, iid );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connpoint_GetConnectionPointContainer( IConnectionPoint *iface,
+        IConnectionPointContainer **container )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %p\n", connpoint, container );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connpoint_Advise( IConnectionPoint *iface, IUnknown *unk_sink,
+        DWORD *cookie )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %p, %p\n", connpoint, unk_sink, cookie );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connpoint_Unadvise( IConnectionPoint *iface, DWORD cookie )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %d\n", connpoint, cookie );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connpoint_EnumConnections( IConnectionPoint *iface,
+        IEnumConnections **points )
+{
+    struct connection_point *connpoint = impl_from_IConnectionPoint( iface );
+    FIXME( "%p, %p\n", connpoint, points );
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointVtbl connpoint_vtbl =
+{
+    connpoint_QueryInterface,
+    connpoint_AddRef,
+    connpoint_Release,
+    connpoint_GetConnectionInterface,
+    connpoint_GetConnectionPointContainer,
+    connpoint_Advise,
+    connpoint_Unadvise,
+    connpoint_EnumConnections
+};
+
 HRESULT Connection_create( void **obj )
 {
     struct connection *connection;
@@ -465,6 +560,10 @@ HRESULT Connection_create( void **obj )
     connection->state = adStateClosed;
     connection->timeout = 30;
     connection->datasource = NULL;
+
+    connection->cp_connev.conn = connection;
+    connection->cp_connev.riid = &DIID_ConnectionEvents;
+    connection->cp_connev.IConnectionPoint_iface.lpVtbl = &connpoint_vtbl;
 
     *obj = &connection->Connection_iface;
     TRACE( "returning iface %p\n", *obj );
