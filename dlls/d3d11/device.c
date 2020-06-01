@@ -3887,8 +3887,9 @@ static HRESULT STDMETHODCALLTYPE d3d_device_inner_QueryInterface(IUnknown *iface
     {
         *out = &device->ID3D11Device2_iface;
     }
-    else if (IsEqualGUID(riid, &IID_ID3D10Device1)
-            || IsEqualGUID(riid, &IID_ID3D10Device))
+    else if (!device->d3d11_only
+            && (IsEqualGUID(riid, &IID_ID3D10Device1)
+            || IsEqualGUID(riid, &IID_ID3D10Device)))
     {
         *out = &device->ID3D10Device1_iface;
     }
@@ -6241,6 +6242,7 @@ void d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->refcount = 1;
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
+    device->d3d11_only = FALSE;
 
     d3d11_immediate_context_init(&device->immediate_context, device);
     ID3D11DeviceContext1_Release(&device->immediate_context.ID3D11DeviceContext1_iface);

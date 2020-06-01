@@ -2110,8 +2110,8 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     check_interface(device, &IID_IDXGIDevice, TRUE, FALSE);
     check_interface(device, &IID_IDXGIDevice1, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Multithread, TRUE, TRUE); /* Not available on all Windows versions. */
-    todo_wine check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
-    todo_wine check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
+    check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
+    check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
     check_interface(device, &IID_ID3D11InfoQueue, enable_debug_layer, FALSE);
 
     hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
@@ -2516,7 +2516,7 @@ static void test_texture1d_interfaces(void)
 
         d3d10_device = (ID3D10Device *)0xdeadbeef;
         ID3D10Texture1D_GetDevice(d3d10_texture, &d3d10_device);
-        todo_wine ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
+        ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
         if (d3d10_device) ID3D10Device_Release(d3d10_device);
 
         ID3D10Texture1D_Release(d3d10_texture);
@@ -2913,7 +2913,7 @@ static void test_texture2d_interfaces(void)
 
         d3d10_device = (ID3D10Device *)0xdeadbeef;
         ID3D10Texture2D_GetDevice(d3d10_texture, &d3d10_device);
-        todo_wine ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
+        ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
         if (d3d10_device) ID3D10Device_Release(d3d10_device);
 
         ID3D10Texture2D_Release(d3d10_texture);
@@ -3172,7 +3172,7 @@ static void test_texture3d_interfaces(void)
 
         d3d10_device = (ID3D10Device *)0xdeadbeef;
         ID3D10Texture3D_GetDevice(d3d10_texture, &d3d10_device);
-        todo_wine ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
+        ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
         if (d3d10_device) ID3D10Device_Release(d3d10_device);
 
         ID3D10Texture3D_Release(d3d10_texture);
@@ -3461,7 +3461,7 @@ static void test_create_buffer(void)
 
         d3d10_device = (ID3D10Device *)0xdeadbeef;
         ID3D10Buffer_GetDevice(d3d10_buffer, &d3d10_device);
-        todo_wine ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
+        ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
         if (d3d10_device) ID3D10Device_Release(d3d10_device);
 
         ID3D10Buffer_Release(d3d10_buffer);
@@ -6621,8 +6621,8 @@ static void test_device_context_state(void)
         return;
     }
 
-    todo_wine check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
-    todo_wine check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
+    check_interface(device, &IID_ID3D10Device, FALSE, FALSE);
+    check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
 
     feature_level = ID3D11Device1_GetFeatureLevel(device);
     ID3D11Device1_GetImmediateContext1(device, &context);
