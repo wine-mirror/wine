@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Austin English
+ * Copyright (C) 2020 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,6 +18,8 @@
  */
 #ifndef __MS_ASN1_H__
 #define __MS_ASN1_H__
+
+#include <pshpack8.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,6 +159,13 @@ typedef enum tagASN1error_e
   ASN1_WRN_EXTENDED = 1001,
   ASN1_WRN_NOEOD = 1002,
 } ASN1error_e;
+
+enum
+{
+  ASN1_CHOICE_BASE = 1,
+  ASN1_CHOICE_INVALID = -1,
+  ASN1_CHOICE_EXTENSION = 0
+};
 
 #define ASN1_SUCCEEDED(ret) (((int)(ret)) >= 0)
 #define ASN1_FAILED(ret)    (((int)(ret)) < 0)
@@ -301,6 +311,7 @@ void         WINAPI ASN1_CloseEncoder(ASN1encoding_t);
 void         WINAPI ASN1_CloseEncoder2(ASN1encoding_t);
 void         WINAPI ASN1_CloseModule(ASN1module_t);
 ASN1error_e  WINAPI ASN1_CreateDecoder(ASN1module_t, ASN1decoding_t*,ASN1octet_t*, ASN1uint32_t, ASN1decoding_t);
+ASN1error_e  WINAPI ASN1_CreateDecoderEx(ASN1module_t, ASN1decoding_t*,ASN1octet_t*, ASN1uint32_t, ASN1decoding_t, ASN1uint32_t);
 ASN1error_e  WINAPI ASN1_CreateEncoder(ASN1module_t, ASN1encoding_t*, ASN1octet_t*, ASN1uint32_t, ASN1encoding_t);
 ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t,ASN1encodingrule_e,ASN1uint32_t,ASN1uint32_t,const ASN1GenericFun_t [],const ASN1GenericFun_t [],const ASN1FreeFun_t [],const ASN1uint32_t [],ASN1magic_t);
 ASN1error_e  WINAPI ASN1_Decode(ASN1decoding_t, void** , ASN1uint32_t, ASN1uint32_t, ASN1octet_t*, ASN1uint32_t);
@@ -351,5 +362,7 @@ void         WINAPI ASN1ztcharstring_free(ASN1charstring_t*);
 #ifdef __cplusplus
 }
 #endif
+
+#include <poppack.h>
 
 #endif /* __MS_ASN1_H__ */
