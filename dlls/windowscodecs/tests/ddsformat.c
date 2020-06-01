@@ -456,13 +456,13 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     /* size in blocks tests */
 
     hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, NULL, NULL);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, NULL, &height_in_blocks);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, NULL);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, &height_in_blocks);
-    todo_wine ok (hr == S_OK, "%d: [frame %d] GetSizeInBlocks failed, hr=%x\n", i, frame_index, hr);
+    ok (hr == S_OK, "%d: [frame %d] GetSizeInBlocks failed, hr=%x\n", i, frame_index, hr);
     if (hr != S_OK) goto end;
 
     expected_width_in_blocks = (expected_width + format_info.BlockWidth - 1) / format_info.BlockWidth;

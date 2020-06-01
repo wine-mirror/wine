@@ -112,6 +112,8 @@ typedef struct dds_frame_info {
     UINT bytes_per_block;
     UINT block_width;
     UINT block_height;
+    UINT width_in_blocks;
+    UINT height_in_blocks;
 } dds_frame_info;
 
 typedef struct DdsDecoder {
@@ -432,9 +434,16 @@ static ULONG WINAPI DdsFrameDecode_Dds_Release(IWICDdsFrameDecode *iface)
 static HRESULT WINAPI DdsFrameDecode_Dds_GetSizeInBlocks(IWICDdsFrameDecode *iface,
                                                          UINT *widthInBlocks, UINT *heightInBlocks)
 {
-    FIXME("(%p,%p,%p): stub.\n", iface, widthInBlocks, heightInBlocks);
+    DdsFrameDecode *This = impl_from_IWICDdsFrameDecode(iface);
 
-    return E_NOTIMPL;
+    if (!widthInBlocks || !heightInBlocks) return E_INVALIDARG;
+
+    *widthInBlocks = This->info.width_in_blocks;
+    *heightInBlocks = This->info.height_in_blocks;
+
+    TRACE("(%p,%p,%p) -> (%d,%d)\n", iface, widthInBlocks, heightInBlocks, *widthInBlocks, *heightInBlocks);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DdsFrameDecode_Dds_GetFormatInfo(IWICDdsFrameDecode *iface,
@@ -839,6 +848,8 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
     frame_decode->info.bytes_per_block = get_bytes_per_block(This->info.format);
     frame_decode->info.block_width = 4;
     frame_decode->info.block_height = 4;
+    frame_decode->info.width_in_blocks = (width + frame_decode->info.block_width - 1) / frame_decode->info.block_width;
+    frame_decode->info.height_in_blocks = (width + frame_decode->info.block_height - 1) / frame_decode->info.block_height;
     *bitmapFrame = &frame_decode->IWICBitmapFrameDecode_iface;
 
     hr = S_OK;
