@@ -288,7 +288,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
         }
 
         format->type = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@%S"),
-                                                registered_name_type_prefix, buffer);
+                                                registered_name_type_prefix, (const WCHAR*)buffer);
     }
 
     list_add_tail(&format_list, &format->entry);
