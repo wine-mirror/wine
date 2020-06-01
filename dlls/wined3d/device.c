@@ -1099,6 +1099,7 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
     memset(device->state.fb.render_targets, 0, sizeof(device->state.fb.render_targets));
     if (FAILED(hr = device->adapter->adapter_ops->adapter_init_3d(device)))
         goto err_out;
+    device->d3d_initialized = TRUE;
 
     device_init_swapchain_state(device, swapchain);
 
@@ -1153,7 +1154,6 @@ static void device_free_blend_state(struct wine_rb_entry *entry, void *context)
 
 void wined3d_device_uninit_3d(struct wined3d_device *device)
 {
-    BOOL no3d = device->wined3d->flags & WINED3D_NO3D;
     struct wined3d_resource *resource, *cursor;
     struct wined3d_rendertarget_view *view;
     struct wined3d_texture *texture;
@@ -1161,7 +1161,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
 
     TRACE("device %p.\n", device);
 
-    if (!device->d3d_initialized && !no3d)
+    if (!device->d3d_initialized)
     {
         ERR("Called while 3D support was not initialised.\n");
         return;

@@ -4618,8 +4618,6 @@ static HRESULT adapter_gl_init_3d(struct wined3d_device *device)
     if (!wined3d_swapchain_gl(device->swapchains[0])->context_count)
         return E_FAIL;
 
-    device->d3d_initialized = TRUE;
-
     return WINED3D_OK;
 }
 
