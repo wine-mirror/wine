@@ -2039,10 +2039,7 @@ static void debug_dump_ir_jump(const struct hlsl_ir_jump *jump)
             wine_dbg_printf("discard");
             break;
         case HLSL_IR_JUMP_RETURN:
-            wine_dbg_printf("return ");
-            if (jump->return_value)
-                debug_dump_src(jump->return_value);
-            wine_dbg_printf(";");
+            wine_dbg_printf("return");
             break;
     }
 }

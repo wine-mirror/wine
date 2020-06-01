@@ -722,6 +722,7 @@ struct hlsl_ir_function
 struct hlsl_ir_function_decl
 {
     struct hlsl_type *return_type;
+    struct hlsl_ir_var *return_var;
     struct source_location loc;
     struct wine_rb_entry entry;
     struct hlsl_ir_function *func;
@@ -832,7 +833,6 @@ struct hlsl_ir_jump
 {
     struct hlsl_ir_node node;
     enum hlsl_ir_jump_type type;
-    struct hlsl_ir_node *return_value;
 };
 
 struct hlsl_ir_swizzle

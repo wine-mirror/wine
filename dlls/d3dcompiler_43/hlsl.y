@@ -507,35 +507,6 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
-static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source_location loc)
-{
-    struct hlsl_type *return_type = hlsl_ctx.cur_function->return_type;
-    struct hlsl_ir_jump *jump = d3dcompiler_alloc(sizeof(*jump));
-    if (!jump)
-    {
-        ERR("Out of memory\n");
-        return NULL;
-    }
-    init_node(&jump->node, HLSL_IR_JUMP, NULL, loc);
-    jump->type = HLSL_IR_JUMP_RETURN;
-    if (value)
-    {
-        if (!(jump->return_value = implicit_conversion(value, return_type, &loc)))
-        {
-            d3dcompiler_free(jump);
-            return NULL;
-        }
-    }
-    else if (!type_is_void(return_type))
-    {
-        hlsl_report_message(loc, HLSL_LEVEL_ERROR, "non-void function must return a value");
-        d3dcompiler_free(jump);
-        return NULL;
-    }
-
-    return jump;
-}
-
 static struct hlsl_ir_var *new_synthetic_var(const char *name, struct hlsl_type *type,
         const struct source_location loc)
 {
@@ -576,6 +547,39 @@ static struct hlsl_ir_assignment *new_assignment(struct hlsl_ir_var *var, struct
 static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs, struct hlsl_ir_node *rhs)
 {
     return new_assignment(lhs, NULL, rhs, 0, rhs->loc);
+}
+
+static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *return_value, struct source_location loc)
+{
+    struct hlsl_type *return_type = hlsl_ctx.cur_function->return_type;
+    struct hlsl_ir_jump *jump;
+
+    if (return_value)
+    {
+        struct hlsl_ir_assignment *assignment;
+
+        if (!(return_value = implicit_conversion(return_value, return_type, &loc)))
+            return NULL;
+
+        if (!(assignment = make_simple_assignment(hlsl_ctx.cur_function->return_var, return_value)))
+            return NULL;
+        list_add_after(&return_value->entry, &assignment->node.entry);
+    }
+    else if (!type_is_void(return_type))
+    {
+        hlsl_report_message(loc, HLSL_LEVEL_ERROR, "non-void function must return a value");
+        return NULL;
+    }
+
+    if (!(jump = d3dcompiler_alloc(sizeof(*jump))))
+    {
+        ERR("Out of memory\n");
+        return NULL;
+    }
+    init_node(&jump->node, HLSL_IR_JUMP, NULL, loc);
+    jump->type = HLSL_IR_JUMP_RETURN;
+
+    return jump;
 }
 
 static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct source_location loc)
@@ -1264,6 +1268,21 @@ static struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type
     decl->parameters = parameters;
     decl->semantic = semantic;
     decl->loc = loc;
+
+    if (!type_is_void(return_type))
+    {
+        struct hlsl_ir_var *return_var;
+        char name[28];
+
+        sprintf(name, "<retval-%p>", decl);
+        if (!(return_var = new_synthetic_var(name, return_type, loc)))
+        {
+            d3dcompiler_free(decl);
+            return NULL;
+        }
+        decl->return_var = return_var;
+    }
+
     return decl;
 }
 
@@ -2818,8 +2837,6 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
                 assignment->lhs.offset->last_read = instr->index;
             break;
         }
-        case HLSL_IR_CONSTANT:
-            break;
         case HLSL_IR_CONSTRUCTOR:
         {
             struct hlsl_ir_constructor *constructor = constructor_from_node(instr);
@@ -2847,13 +2864,6 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             iff->condition->last_read = instr->index;
             break;
         }
-        case HLSL_IR_JUMP:
-        {
-            struct hlsl_ir_jump *jump = jump_from_node(instr);
-            if (jump->type == HLSL_IR_JUMP_RETURN && jump->return_value)
-                jump->return_value->last_read = instr->index;
-            break;
-        }
         case HLSL_IR_LOAD:
         {
             struct hlsl_ir_load *load = load_from_node(instr);
@@ -2876,7 +2886,8 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             swizzle->val->last_read = instr->index;
             break;
         }
-        default:
+        case HLSL_IR_CONSTANT:
+        case HLSL_IR_JUMP:
             break;
         }
     }
@@ -2898,6 +2909,9 @@ static void compute_liveness(struct hlsl_ir_function_decl *entry_func)
         if (var->modifiers & HLSL_STORAGE_OUT)
             var->last_read = UINT_MAX;
     }
+
+    if (entry_func->return_var)
+        entry_func->return_var->last_read = UINT_MAX;
 
     compute_liveness_recurse(entry_func->body, 0, 0);
 }
