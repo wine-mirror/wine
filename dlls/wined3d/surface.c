@@ -1537,12 +1537,6 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
 
     flags &= ~(WINED3D_BLT_SYNCHRONOUS | WINED3D_BLT_DO_NOT_WAIT | WINED3D_BLT_WAIT);
 
-    if (!device->d3d_initialized)
-    {
-        WARN("D3D not initialized, using CPU blit fallback.\n");
-        goto cpu;
-    }
-
     if (flags & ~simple_blit)
     {
         WARN_(d3d_perf)("Using CPU fallback for complex blit (%#x).\n", flags);
@@ -1629,7 +1623,8 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
         blit_op = WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST;
     }
     else if ((src_sub_resource->locations & surface_simple_locations)
-            && !(dst_sub_resource->locations & surface_simple_locations))
+            && !(dst_sub_resource->locations & surface_simple_locations)
+            && (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
     {
         /* Upload */
         if (scale)
