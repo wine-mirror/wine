@@ -610,7 +610,7 @@ struct ot_gsub_lig
     UINT16 components[1];
 };
 
-struct ot_gsub_chaincontext_subst_format1
+struct ot_gsub_context_subst_format1
 {
     UINT16 format;
     UINT16 coverage;
@@ -5205,6 +5205,157 @@ static BOOL opentype_layout_apply_chain_rule_set(const struct match_context *mc,
     return FALSE;
 }
 
+static BOOL opentype_layout_apply_gsub_context_lookup(unsigned int input_count, const UINT16 *input, unsigned int lookup_count,
+        const UINT16 *lookup_records, const struct match_context *mc)
+{
+    unsigned int match_positions[GLYPH_CONTEXT_MAX_LENGTH];
+    unsigned int match_length = 0;
+
+    return opentype_layout_context_match_input(mc, input_count, input, &match_length, match_positions) &&
+            opentype_layout_context_gsub_apply_lookup(mc->context, input_count, match_positions, lookup_count,
+                    lookup_records, match_length);
+}
+
+static BOOL opentype_layout_apply_rule_set(const struct match_context *mc, unsigned int offset)
+{
+    unsigned int input_count, lookup_count;
+    const struct dwrite_fonttable *table = &mc->context->table->table;
+    const UINT16 *input, *lookup_records;
+    const struct ot_gsub_ruleset *ruleset;
+    unsigned int i, count;
+
+    count = table_read_be_word(table, offset);
+    ruleset = table_read_ensure(table, offset, count * sizeof(ruleset->offsets));
+
+    for (i = 0; i < count; ++i)
+    {
+        unsigned int rule_offset = offset + GET_BE_WORD(ruleset->offsets[i]);
+
+        if (!(input_count = table_read_be_word(table, rule_offset)))
+            continue;
+        rule_offset += 2;
+
+        if (!(lookup_count = table_read_be_word(table, rule_offset)))
+            continue;
+        rule_offset += 2;
+
+        if (!(input = table_read_ensure(table, rule_offset, (input_count - 1) * sizeof(*input))))
+            continue;
+        rule_offset += (input_count - 1) * sizeof(*input);
+
+        if (!(lookup_records = table_read_ensure(table, rule_offset, lookup_count * 2 * sizeof(*lookup_records))))
+            continue;
+
+        /* First applicable rule is used. */
+        if (opentype_layout_apply_gsub_context_lookup(input_count, input, lookup_count, lookup_records, mc))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL opentype_layout_apply_gsub_context_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
+        unsigned int subtable_offset)
+{
+    struct match_context mc = { .context = context, .mask = lookup->mask };
+    const struct dwrite_fonttable *table = &context->table->table;
+    unsigned int coverage_index = GLYPH_NOT_COVERED, count, offset;
+    UINT16 glyph, format, coverage;
+    BOOL ret = FALSE;
+
+    glyph = context->u.subst.glyphs[context->cur];
+
+    format = table_read_be_word(table, subtable_offset);
+
+    if (format == 1)
+    {
+        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1, coverage));
+
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            return FALSE;
+
+        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1,
+                ruleset_count));
+        if (coverage_index >= count)
+            return FALSE;
+
+        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1,
+                rulesets[coverage_index]));
+        offset += subtable_offset;
+
+        mc.match_func = opentype_match_glyph_func;
+
+        ret = opentype_layout_apply_rule_set(&mc, offset);
+    }
+    else if (format == 2)
+    {
+        unsigned int input_classdef, rule_set_idx;
+
+        offset = subtable_offset + 2 /* format */;
+
+        coverage = table_read_be_word(table, offset);
+        offset += 2;
+
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            return FALSE;
+
+        input_classdef = table_read_be_word(table, offset) + subtable_offset;
+        offset += 2;
+
+        count = table_read_be_word(table, offset);
+        offset+= 2;
+
+        rule_set_idx = opentype_layout_get_glyph_class(table, input_classdef, glyph);
+        if (rule_set_idx >= count)
+            return FALSE;
+
+        offset = table_read_be_word(table, offset + rule_set_idx * 2);
+        offset += subtable_offset;
+
+        mc.input_offset = input_classdef;
+        mc.match_func = opentype_match_class_func;
+
+        ret = opentype_layout_apply_rule_set(&mc, offset);
+    }
+    else if (format == 3)
+    {
+        unsigned int input_count, lookup_count;
+        const UINT16 *input, *lookup_records;
+
+        offset = subtable_offset + 2 /* format */;
+
+        input_count = table_read_be_word(table, offset);
+        offset += 2;
+
+        if (!input_count)
+            return FALSE;
+
+        lookup_count = table_read_be_word(table, offset);
+        offset += 2;
+
+        if (!(input = table_read_ensure(table, offset, sizeof(*input) * input_count)))
+            return FALSE;
+        offset += sizeof(*input) * input_count;
+
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(input[0]), glyph);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            return FALSE;
+
+        lookup_records = table_read_ensure(table, offset, lookup_count * 2 * sizeof(*lookup_records));
+
+        mc.input_offset = subtable_offset;
+        mc.match_func = opentype_match_coverage_func;
+
+        ret = opentype_layout_apply_gsub_context_lookup(input_count, input + 1, lookup_count, lookup_records, &mc);
+    }
+    else
+        WARN("Unknown contextual substitution format %u.\n", format);
+
+    return ret;
+}
+
 static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
@@ -5220,19 +5371,17 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
 
     if (format == 1)
     {
-        coverage = table_read_be_word(table, subtable_offset +
-                FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1, coverage));
+        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1, coverage));
 
         coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
         if (coverage_index == GLYPH_NOT_COVERED)
             return FALSE;
 
-        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1,
-                ruleset_count));
+        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1, ruleset_count));
         if (coverage_index >= count)
             return FALSE;
 
-        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_chaincontext_subst_format1,
+        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1,
                 rulesets[coverage_index]));
         offset += subtable_offset;
 
@@ -5357,10 +5506,12 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
             case GSUB_LOOKUP_LIGATURE_SUBST:
                 ret = opentype_layout_apply_gsub_lig_substitution(context, lookup, subtable_offset);
                 break;
+            case GSUB_LOOKUP_CONTEXTUAL_SUBST:
+                ret = opentype_layout_apply_gsub_context_substitution(context, lookup, subtable_offset);
+                break;
             case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
                 ret = opentype_layout_apply_gsub_chain_context_substitution(context, lookup, subtable_offset);
                 break;
-            case GSUB_LOOKUP_CONTEXTUAL_SUBST:
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
                 WARN("Unimplemented lookup %d.\n", lookup->type);
                 break;
