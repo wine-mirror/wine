@@ -22,12 +22,12 @@
 #include "initguid.h"
 
 #define COBJMACROS
-#include "d3d11.h"
+#include "d3d10.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, unsigned int flags,
-        const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, ID3D11Device **device);
+HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d11, IDXGIFactory *factory, IDXGIAdapter *adapter,
+        unsigned int flags, const D3D_FEATURE_LEVEL *feature_levels, unsigned int level_count, void **device);
 
 HRESULT WINAPI D3D10CoreRegisterLayers(void)
 {
@@ -39,20 +39,27 @@ HRESULT WINAPI D3D10CoreRegisterLayers(void)
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
         unsigned int flags, D3D_FEATURE_LEVEL feature_level, ID3D10Device **device)
 {
-    ID3D11Device *device11;
+    IUnknown *dxgi_device;
+    HMODULE d3d11;
     HRESULT hr;
 
     TRACE("factory %p, adapter %p, flags %#x, feature_level %#x, device %p.\n",
             factory, adapter, flags, feature_level, device);
 
-    if (FAILED(hr = D3D11CoreCreateDevice(factory, adapter, flags, &feature_level, 1, &device11)))
-        return hr;
-
-    hr = ID3D11Device_QueryInterface(device11, &IID_ID3D10Device, (void **)device);
-    ID3D11Device_Release(device11);
+    d3d11 = LoadLibraryA("d3d11.dll");
+    hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, &feature_level, 1, (void **)&dxgi_device);
+    FreeLibrary(d3d11);
     if (FAILED(hr))
     {
-        ERR("Device should implement ID3D10Device, returning E_FAIL.\n");
+        WARN("Failed to create device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IUnknown_QueryInterface(dxgi_device, &IID_ID3D10Device, (void **)device);
+    IUnknown_Release(dxgi_device);
+    if (FAILED(hr))
+    {
+        ERR("Failed to query ID3D10Device interface, returning E_FAIL.\n");
         return E_FAIL;
     }
 
