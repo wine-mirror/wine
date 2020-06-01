@@ -320,7 +320,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     struct wined3d_context *context;
     DWORD map_binding;
 
-    if (!(conv = find_converter(src_format->id, dst_format->id)) && (!device->d3d_initialized
+    if (!(conv = find_converter(src_format->id, dst_format->id)) && ((device->wined3d->flags & WINED3D_NO3D)
             || !is_identity_fixup(src_format->color_fixup) || src_format->conv_byte_count
             || !is_identity_fixup(dst_format->color_fixup) || dst_format->conv_byte_count
             || ((src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
