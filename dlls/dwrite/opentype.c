@@ -5180,10 +5180,12 @@ static BOOL opentype_layout_apply_chain_rule_set(const struct match_context *mc,
         backtrack = table_read_ensure(table, rule_offset, backtrack_count * sizeof(*backtrack));
         rule_offset += backtrack_count * sizeof(*backtrack);
 
-        input_count = table_read_be_word(table, rule_offset);
+        if (!(input_count = table_read_be_word(table, rule_offset)))
+            continue;
+
         rule_offset += 2;
-        input = table_read_ensure(table, rule_offset, input_count * sizeof(*input));
-        rule_offset += input_count * sizeof(*input);
+        input = table_read_ensure(table, rule_offset, (input_count - 1) * sizeof(*input));
+        rule_offset += (input_count - 1) * sizeof(*input);
 
         lookahead_count = table_read_be_word(table, rule_offset);
         rule_offset += 2;
