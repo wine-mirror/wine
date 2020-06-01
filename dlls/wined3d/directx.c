@@ -2573,6 +2573,8 @@ static void adapter_no3d_uninit_3d(struct wined3d_device *device)
 
     context_no3d = &wined3d_device_no3d(device)->context_no3d;
     device->blitter->ops->blitter_destroy(device->blitter, NULL);
+    wined3d_cs_finish(device->cs, WINED3D_CS_QUEUE_DEFAULT);
+
     device_context_remove(device, context_no3d);
     wined3d_context_cleanup(context_no3d);
 }
