@@ -20,6 +20,7 @@
 #define COBJMACROS
 #include <initguid.h>
 #include <oledb.h>
+#include <olectl.h>
 #include <msado15_backcompat.h>
 #include "wine/test.h"
 
@@ -805,10 +806,36 @@ static void test_Command(void)
     _Command_Release( command );
 }
 
+static void test_ConnectionPoint(void)
+{
+    HRESULT hr;
+    ULONG refs;
+    IConnectionPoint *point;
+    IConnectionPointContainer *pointcontainer;
+
+    hr = CoCreateInstance( &CLSID_Connection, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IConnectionPointContainer, (void**)&pointcontainer );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_ConnectionEvents, NULL );
+    ok( hr == E_POINTER, "got %08x\n", hr );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_RecordsetEvents, &point );
+    ok( hr == CONNECT_E_NOCONNECTION, "got %08x\n", hr );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_ConnectionEvents, &point );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    refs = IConnectionPoint_Release( point );
+    ok( refs == 1, "got %u", refs );
+
+    IConnectionPointContainer_Release( pointcontainer );
+}
+
 START_TEST(msado15)
 {
     CoInitialize( NULL );
     test_Connection();
+    test_ConnectionPoint();
     test_Fields();
     test_Recordset();
     test_Stream();

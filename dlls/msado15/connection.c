@@ -23,6 +23,7 @@
 #include "initguid.h"
 #include "ocidl.h"
 #include "objbase.h"
+#include "olectl.h"
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
@@ -455,8 +456,20 @@ static HRESULT WINAPI connpointcontainer_FindConnectionPoint( IConnectionPointCo
         REFIID riid, IConnectionPoint **point )
 {
     struct connection *connection = impl_from_IConnectionPointContainer( iface );
-    FIXME( "%p, %s, %p\n", connection, debugstr_guid( riid ), point );
-    return E_NOTIMPL;
+
+    TRACE( "%p, %s %p\n", connection, debugstr_guid( riid ), point );
+
+    if (!point) return E_POINTER;
+
+    if (IsEqualIID( riid, connection->cp_connev.riid ))
+    {
+        *point = &connection->cp_connev.IConnectionPoint_iface;
+        IConnectionPoint_AddRef( *point );
+        return S_OK;
+    }
+
+    FIXME( "unsupported connection point %s\n", debugstr_guid( riid ) );
+    return CONNECT_E_NOCONNECTION;
 }
 
 static const struct IConnectionPointContainerVtbl connpointcontainer_vtbl =
