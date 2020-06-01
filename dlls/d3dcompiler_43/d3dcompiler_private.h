@@ -1096,7 +1096,6 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *left, enum parse_assig
         struct hlsl_ir_node *right) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
-struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type, struct list *parameters) DECLSPEC_HIDDEN;
 void init_functions_tree(struct wine_rb_tree *funcs) DECLSPEC_HIDDEN;
 void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_function_decl *decl,
         BOOL intrinsic) DECLSPEC_HIDDEN;

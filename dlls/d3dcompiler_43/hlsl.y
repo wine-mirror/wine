@@ -1248,6 +1248,20 @@ static unsigned int evaluate_array_dimension(struct hlsl_ir_node *node)
     }
 }
 
+static struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type,
+        struct list *parameters, const char *semantic, struct source_location loc)
+{
+    struct hlsl_ir_function_decl *decl;
+
+    if (!(decl = d3dcompiler_alloc(sizeof(*decl))))
+        return NULL;
+    decl->return_type = return_type;
+    decl->parameters = parameters;
+    decl->semantic = semantic;
+    decl->loc = loc;
+    return decl;
+}
+
 %}
 
 %locations
@@ -1648,15 +1662,12 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                     FIXME("Unexpected register reservation for a function.\n");
                                     d3dcompiler_free($7.reg_reservation);
                                 }
-                                $$.decl = new_func_decl($2, $5);
-                                if (!$$.decl)
+                                if (!($$.decl = new_func_decl($2, $5, $7.semantic, get_location(&@3))))
                                 {
                                     ERR("Out of memory.\n");
                                     YYABORT;
                                 }
                                 $$.name = $3;
-                                $$.decl->semantic = $7.semantic;
-                                $$.decl->loc = get_location(&@3);
                                 hlsl_ctx.cur_function = $$.decl;
                             }
 

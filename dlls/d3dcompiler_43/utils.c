@@ -1587,22 +1587,6 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx)
     return TRUE;
 }
 
-struct hlsl_ir_function_decl *new_func_decl(struct hlsl_type *return_type, struct list *parameters)
-{
-    struct hlsl_ir_function_decl *decl;
-
-    decl = d3dcompiler_alloc(sizeof(*decl));
-    if (!decl)
-    {
-        ERR("Out of memory.\n");
-        return NULL;
-    }
-    decl->return_type = return_type;
-    decl->parameters = parameters;
-
-    return decl;
-}
-
 static int compare_param_hlsl_types(const struct hlsl_type *t1, const struct hlsl_type *t2)
 {
     if (t1->type != t2->type)
