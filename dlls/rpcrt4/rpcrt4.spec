@@ -388,7 +388,7 @@
 @ stub RpcFreeAuthorizationContext # wxp
 @ stdcall RpcGetAsyncCallStatus(ptr) RpcAsyncGetCallStatus
 @ stub RpcIfIdVectorFree
-@ stub RpcIfInqId
+@ stdcall RpcIfInqId(ptr ptr)
 @ stdcall RpcImpersonateClient(ptr)
 @ stdcall RpcInitializeAsyncHandle(ptr long) RpcAsyncInitializeHandle
 @ stdcall RpcMgmtEnableIdleCleanup()
