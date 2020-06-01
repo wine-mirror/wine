@@ -278,6 +278,11 @@ static void declare_predefined_types(struct hlsl_scope *scope)
     add_type_to_scope(scope, type);
 }
 
+static BOOL type_is_void(const struct hlsl_type *type)
+{
+    return type->type == HLSL_CLASS_OBJECT && type->base_type == HLSL_TYPE_VOID;
+}
+
 static BOOL append_conditional_break(struct list *cond_list)
 {
     struct hlsl_ir_node *condition, *not;
@@ -521,7 +526,7 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *value, struct source
             return NULL;
         }
     }
-    else if (return_type->base_type != HLSL_TYPE_VOID)
+    else if (!type_is_void(return_type))
     {
         hlsl_report_message(loc, HLSL_LEVEL_ERROR, "non-void function must return a value");
         d3dcompiler_free(jump);
@@ -1482,7 +1487,7 @@ hlsl_prog:                /* empty */
                                     }
                                 }
 
-                                if ($2.decl->return_type->base_type == HLSL_TYPE_VOID && $2.decl->semantic)
+                                if (type_is_void($2.decl->return_type) && $2.decl->semantic)
                                 {
                                     hlsl_report_message($2.decl->loc, HLSL_LEVEL_ERROR,
                                             "void function with a semantic");
@@ -1651,7 +1656,7 @@ func_prototype:           var_modifiers type var_identifier '(' parameters ')' c
                                             HLSL_LEVEL_ERROR, "redefinition of '%s'\n", $3);
                                     YYABORT;
                                 }
-                                if ($2->base_type == HLSL_TYPE_VOID && $7.semantic)
+                                if (type_is_void($2) && $7.semantic)
                                 {
                                     hlsl_report_message(get_location(&@7),
                                             HLSL_LEVEL_ERROR, "void function with a semantic");
