@@ -4403,9 +4403,10 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
         unsigned int language_index, const struct shaping_features *features, const struct ot_gsubgpos_table *table,
         struct lookups *lookups)
 {
-    UINT16 table_offset, langsys_offset, script_feature_count, total_feature_count, total_lookup_count;
+    unsigned int last_num_lookups = 0, stage, script_feature_count = 0;
+    UINT16 total_feature_count, total_lookup_count;
     const struct ot_feature_list *feature_list;
-    unsigned int last_num_lookups = 0, stage;
+    const struct ot_langsys *langsys = NULL;
     struct shaping_feature *feature;
     unsigned int i, j, next_bit;
     unsigned int global_bit_shift = 1;
@@ -4415,23 +4416,31 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     if (!table->table.data)
         return;
 
-    /* ScriptTable offset. */
-    table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
-            script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
-    if (!table_offset)
-        return;
+    if (script_index != ~0u)
+    {
+        unsigned int table_offset, langsys_offset;
 
-    if (language_index == ~0u)
-        langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset);
-    else
-        langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset +
-                FIELD_OFFSET(struct ot_script, langsys) + language_index * sizeof(struct ot_langsys_record) +
-                FIELD_OFFSET(struct ot_langsys_record, langsys));
+        /* ScriptTable offset. */
+        table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
+                script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
+        if (!table_offset)
+            return;
 
-    script_feature_count = table_read_be_word(&table->table, table->script_list + table_offset + langsys_offset +
-            FIELD_OFFSET(struct ot_langsys, feature_count));
-    if (!script_feature_count)
-        return;
+        if (language_index == ~0u)
+            langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset);
+        else
+            langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset +
+                    FIELD_OFFSET(struct ot_script, langsys) + language_index * sizeof(struct ot_langsys_record) +
+                    FIELD_OFFSET(struct ot_langsys_record, langsys));
+        langsys_offset += table->script_list + table_offset;
+
+        script_feature_count = table_read_be_word(&table->table, langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_count));
+        if (script_feature_count)
+            langsys = table_read_ensure(&table->table, langsys_offset,
+                    FIELD_OFFSET(struct ot_langsys, feature_index[script_feature_count]));
+        if (!langsys)
+            script_feature_count = 0;
+    }
 
     total_feature_count = table_read_be_word(&table->table, table->feature_list);
     if (!total_feature_count)
@@ -4467,8 +4476,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
 
         for (j = 0; j < script_feature_count; ++j)
         {
-            feature_index = table_read_be_word(&table->table, table->script_list + table_offset +
-                    langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_index[j]));
+            feature_index = GET_BE_WORD(langsys->feature_index[j]);
             if (feature_index >= total_feature_count)
                 continue;
             if ((found = feature_list->features[feature_index].tag == feature->tag))
