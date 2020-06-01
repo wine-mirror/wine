@@ -1440,6 +1440,11 @@ my %scripts =
     "Medefaidrin"            => 146,
     "Old_Sogdian"            => 147,
     "Sogdian"                => 148,
+    # Win10 2004
+    "Elymaic"                => 149,
+    "Nyiakeng_Puachue_Hmong" => 150,
+    "Nandinagari"            => 151,
+    "Wancho"                 => 152,
 );
 
 ################################################################
