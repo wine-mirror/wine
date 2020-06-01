@@ -2323,14 +2323,9 @@ postfix_expr:             primary_expr
                                     {
                                         if (!strcmp($3, field->name))
                                         {
-                                            struct hlsl_ir_load *load = new_record_load(node, field, loc);
-
-                                            if (!load)
-                                            {
-                                                ERR("Out of memory\n");
+                                            if (!new_record_load(node, field, loc))
                                                 YYABORT;
-                                            }
-                                            $$ = append_unop($1, &load->node);
+                                            $$ = $1;
                                             break;
                                         }
                                     }
