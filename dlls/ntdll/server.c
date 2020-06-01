@@ -258,9 +258,8 @@ static void invoke_apc( const user_apc_t *apc )
  */
 static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
 {
-    SIZE_T size;
+    SIZE_T size, bits;
     void *addr;
-    pe_image_info_t image_info;
 
     memset( result, 0, sizeof(*result) );
 
@@ -282,11 +281,13 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         result->type = call->type;
         addr = wine_server_get_ptr( call->virtual_alloc.addr );
         size = call->virtual_alloc.size;
-        if ((ULONG_PTR)addr == call->virtual_alloc.addr && size == call->virtual_alloc.size)
+        bits = call->virtual_alloc.zero_bits;
+        if ((ULONG_PTR)addr == call->virtual_alloc.addr && size == call->virtual_alloc.size &&
+            bits == call->virtual_alloc.zero_bits)
         {
-            result->virtual_alloc.status = virtual_alloc( &addr, call->virtual_alloc.zero_bits_64, &size,
-                                                          call->virtual_alloc.op_type,
-                                                          call->virtual_alloc.prot );
+            result->virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, bits, &size,
+                                                                    call->virtual_alloc.op_type,
+                                                                    call->virtual_alloc.prot );
             result->virtual_alloc.addr = wine_server_client_ptr( addr );
             result->virtual_alloc.size = size;
         }
@@ -384,16 +385,16 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         result->type = call->type;
         addr = wine_server_get_ptr( call->map_view.addr );
         size = call->map_view.size;
-        if ((ULONG_PTR)addr == call->map_view.addr && size == call->map_view.size)
+        bits = call->map_view.zero_bits;
+        if ((ULONG_PTR)addr == call->map_view.addr && size == call->map_view.size &&
+            bits == call->map_view.zero_bits)
         {
             LARGE_INTEGER offset;
             offset.QuadPart = call->map_view.offset;
-            result->map_view.status = virtual_map_section( wine_server_ptr_handle(call->map_view.handle),
-                                                           &addr,
-                                                           call->map_view.zero_bits_64, 0,
-                                                           &offset, &size,
-                                                           call->map_view.alloc_type, call->map_view.prot,
-                                                           &image_info );
+            result->map_view.status = NtMapViewOfSection( wine_server_ptr_handle(call->map_view.handle),
+                                                          NtCurrentProcess(),
+                                                          &addr, bits, 0, &offset, &size, 0,
+                                                          call->map_view.alloc_type, call->map_view.prot );
             result->map_view.addr = wine_server_client_ptr( addr );
             result->map_view.size = size;
         }

@@ -177,9 +177,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
     case APC_VIRTUAL_ALLOC:
         dump_uint64( "APC_VIRTUAL_ALLOC,addr==", &call->virtual_alloc.addr );
         dump_uint64( ",size=", &call->virtual_alloc.size );
-        fprintf( stderr, ",zero_bits_64=%u,op_type=%x,prot=%x",
-                 call->virtual_alloc.zero_bits_64, call->virtual_alloc.op_type,
-                 call->virtual_alloc.prot );
+        dump_uint64( ",zero_bits=", &call->virtual_alloc.zero_bits );
+        fprintf( stderr, ",op_type=%x,prot=%x", call->virtual_alloc.op_type, call->virtual_alloc.prot );
         break;
     case APC_VIRTUAL_FREE:
         dump_uint64( "APC_VIRTUAL_FREE,addr=", &call->virtual_free.addr );
@@ -211,8 +210,8 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",addr=", &call->map_view.addr );
         dump_uint64( ",size=", &call->map_view.size );
         dump_uint64( ",offset=", &call->map_view.offset );
-        fprintf( stderr, ",zero_bits_64=%u,alloc_type=%x,prot=%x",
-                 call->map_view.zero_bits_64, call->map_view.alloc_type, call->map_view.prot );
+        dump_uint64( ",zero_bits=", &call->map_view.zero_bits );
+        fprintf( stderr, ",alloc_type=%x,prot=%x", call->map_view.alloc_type, call->map_view.prot );
         break;
     case APC_UNMAP_VIEW:
         dump_uint64( "APC_UNMAP_VIEW,addr=", &call->unmap_view.addr );

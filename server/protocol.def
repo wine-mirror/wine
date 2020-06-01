@@ -509,7 +509,7 @@ typedef union
         unsigned int     op_type;      /* type of operation */
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
-        unsigned int     zero_bits_64; /* number of zero high bits */
+        mem_size_t       zero_bits;    /* number of zero high bits */
         unsigned int     prot;         /* memory protection flags */
     } virtual_alloc;
     struct
@@ -560,9 +560,9 @@ typedef union
         client_ptr_t     addr;         /* requested address */
         mem_size_t       size;         /* allocation size */
         file_pos_t       offset;       /* file offset */
+        mem_size_t       zero_bits;    /* number of zero high bits */
         unsigned int     alloc_type;   /* allocation type */
-        unsigned short   zero_bits_64; /* number of zero high bits */
-        unsigned short   prot;         /* memory protection flags */
+        unsigned int     prot;         /* memory protection flags */
     } map_view;
     struct
     {

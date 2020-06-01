@@ -719,7 +719,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
 
 C_ASSERT( sizeof(abstime_t) == 8 );
 C_ASSERT( sizeof(affinity_t) == 8 );
-C_ASSERT( sizeof(apc_call_t) == 40 );
+C_ASSERT( sizeof(apc_call_t) == 48 );
 C_ASSERT( sizeof(apc_param_t) == 8 );
 C_ASSERT( sizeof(apc_result_t) == 40 );
 C_ASSERT( sizeof(async_data_t) == 40 );
@@ -891,7 +891,7 @@ C_ASSERT( FIELD_OFFSET(struct unload_dll_request, base) == 16 );
 C_ASSERT( sizeof(struct unload_dll_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_request, call) == 16 );
-C_ASSERT( sizeof(struct queue_apc_request) == 56 );
+C_ASSERT( sizeof(struct queue_apc_request) == 64 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_reply, handle) == 8 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_reply, self) == 12 );
 C_ASSERT( sizeof(struct queue_apc_reply) == 16 );
@@ -937,8 +937,8 @@ C_ASSERT( FIELD_OFFSET(struct select_request, size) == 32 );
 C_ASSERT( FIELD_OFFSET(struct select_request, prev_apc) == 36 );
 C_ASSERT( sizeof(struct select_request) == 40 );
 C_ASSERT( FIELD_OFFSET(struct select_reply, call) == 8 );
-C_ASSERT( FIELD_OFFSET(struct select_reply, apc_handle) == 48 );
-C_ASSERT( sizeof(struct select_reply) == 56 );
+C_ASSERT( FIELD_OFFSET(struct select_reply, apc_handle) == 56 );
+C_ASSERT( sizeof(struct select_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, manual_reset) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, initial_state) == 20 );

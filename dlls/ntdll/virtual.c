@@ -2959,6 +2959,11 @@ void virtual_set_large_address_space(void)
 NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR zero_bits,
                                          SIZE_T *size_ptr, ULONG type, ULONG protect )
 {
+    void *base;
+    unsigned int vprot;
+    BOOL is_dos_memory = FALSE;
+    struct file_view *view;
+    sigset_t sigset;
     SIZE_T size = *size_ptr;
     NTSTATUS status = STATUS_SUCCESS;
     unsigned short zero_bits_64 = zero_bits_win_to_64( zero_bits );
@@ -2979,7 +2984,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
         call.virtual_alloc.type         = APC_VIRTUAL_ALLOC;
         call.virtual_alloc.addr         = wine_server_client_ptr( *ret );
         call.virtual_alloc.size         = *size_ptr;
-        call.virtual_alloc.zero_bits_64 = zero_bits_64;
+        call.virtual_alloc.zero_bits    = zero_bits;
         call.virtual_alloc.op_type      = type;
         call.virtual_alloc.prot         = protect;
         status = server_queue_process_apc( process, &call, &result );
@@ -2992,26 +2997,6 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
         }
         return result.virtual_alloc.status;
     }
-
-    return virtual_alloc( ret, zero_bits_64, size_ptr, type, protect );
-}
-
-
-/***********************************************************************
- *             virtual_alloc   (NTDLL.@)
- *
- * Same as NtAllocateVirtualMemory for the current process.
- */
-NTSTATUS virtual_alloc( PVOID *ret, unsigned short zero_bits_64, SIZE_T *size_ptr,
-                        ULONG type, ULONG protect )
-{
-    void *base;
-    unsigned int vprot;
-    SIZE_T size = *size_ptr;
-    NTSTATUS status = STATUS_SUCCESS;
-    BOOL is_dos_memory = FALSE;
-    struct file_view *view;
-    sigset_t sigset;
 
     /* Round parameters to a page boundary */
 
@@ -3709,7 +3694,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         call.map_view.addr         = wine_server_client_ptr( *addr_ptr );
         call.map_view.size         = *size_ptr;
         call.map_view.offset       = offset.QuadPart;
-        call.map_view.zero_bits_64 = zero_bits_64;
+        call.map_view.zero_bits    = zero_bits;
         call.map_view.alloc_type   = alloc_type;
         call.map_view.prot         = protect;
         res = server_queue_process_apc( process, &call, &result );

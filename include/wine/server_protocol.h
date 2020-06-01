@@ -493,7 +493,7 @@ typedef union
         unsigned int     op_type;
         client_ptr_t     addr;
         mem_size_t       size;
-        unsigned int     zero_bits_64;
+        mem_size_t       zero_bits;
         unsigned int     prot;
     } virtual_alloc;
     struct
@@ -544,9 +544,9 @@ typedef union
         client_ptr_t     addr;
         mem_size_t       size;
         file_pos_t       offset;
+        mem_size_t       zero_bits;
         unsigned int     alloc_type;
-        unsigned short   zero_bits_64;
-        unsigned short   prot;
+        unsigned int     prot;
     } map_view;
     struct
     {
@@ -1270,7 +1270,7 @@ struct select_reply
     apc_call_t   call;
     obj_handle_t apc_handle;
     /* VARARG(context,context); */
-    char __pad_52[4];
+    char __pad_60[4];
 };
 #define SELECT_ALERTABLE     1
 #define SELECT_INTERRUPTIBLE 2
@@ -6683,7 +6683,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 606
+#define SERVER_PROTOCOL_VERSION 607
 
 /* ### protocol_version end ### */
 
