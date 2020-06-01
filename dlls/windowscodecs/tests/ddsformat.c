@@ -395,6 +395,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     IWICDdsDecoder *dds_decoder = NULL;
     IWICDdsFrameDecode *dds_frame = NULL;
     UINT width, height ,expected_width, expected_height, slice_index, depth;
+    UINT width_in_blocks, height_in_blocks, expected_width_in_blocks, expected_height_in_blocks;
     WICDdsFormatInfo format_info;
 
     hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICDdsDecoder, (void **)&dds_decoder);
@@ -451,6 +452,25 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
         "%d: [frame %d] Got unexpected block width %d\n", i, frame_index, format_info.BlockWidth);
     ok (format_info.BlockHeight == 4 || format_info.BlockHeight == 1,
         "%d: [frame %d] Got unexpected block height %d\n", i, frame_index, format_info.BlockHeight);
+
+    /* size in blocks tests */
+
+    hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, NULL, NULL);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, NULL, &height_in_blocks);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, NULL);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, &height_in_blocks);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] GetSizeInBlocks failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) goto end;
+
+    expected_width_in_blocks = (expected_width + format_info.BlockWidth - 1) / format_info.BlockWidth;
+    expected_height_in_blocks = (expected_height + format_info.BlockHeight - 1) / format_info.BlockHeight;
+    ok (width_in_blocks == expected_width_in_blocks,
+        "%d: [frame %d] Expected width in blocks %d, got %d\n", i, frame_index, expected_width_in_blocks, width_in_blocks);
+    ok (height_in_blocks == expected_height_in_blocks,
+        "%d: [frame %d] Expected height in blocks %d, got %d\n", i, frame_index, expected_height_in_blocks, height_in_blocks);
 
 end:
     if (dds_decoder) IWICDdsDecoder_Release(dds_decoder);
