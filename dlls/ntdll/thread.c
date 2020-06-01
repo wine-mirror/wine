@@ -413,7 +413,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
         call.create_thread.reserve = stack_reserve;
         call.create_thread.commit  = stack_commit;
         call.create_thread.suspend = suspended;
-        status = server_queue_process_apc( process, &call, &result );
+        status = unix_funcs->server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.create_thread.status == STATUS_SUCCESS)

@@ -61,6 +61,12 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
 
 extern unsigned int CDECL server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
+extern unsigned int CDECL server_select( const select_op_t *select_op, data_size_t size, UINT flags,
+                                         timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
+                                         user_apc_t *user_apc ) DECLSPEC_HIDDEN;
+extern unsigned int CDECL server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
+                                       const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
+extern unsigned int CDECL server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
 extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
 extern int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                      int *needs_close, enum server_fd_type *type,
@@ -94,6 +100,9 @@ extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
+
+extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
+extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
 
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
 extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;

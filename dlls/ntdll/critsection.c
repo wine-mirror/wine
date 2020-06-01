@@ -232,7 +232,7 @@ static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
         time.QuadPart = timeout * (LONGLONG)-10000000;
         select_op.wait.op = SELECT_WAIT;
         select_op.wait.handles[0] = wine_server_obj_handle( sem );
-        ret = server_wait( &select_op, offsetof( select_op_t, wait.handles[1] ), 0, &time );
+        ret = unix_funcs->server_wait( &select_op, offsetof( select_op_t, wait.handles[1] ), 0, &time );
     }
     return ret;
 }

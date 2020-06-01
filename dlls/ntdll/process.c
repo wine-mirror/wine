@@ -1797,7 +1797,7 @@ NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
     memset( &call, 0, sizeof(call) );
 
     call.type = APC_BREAK_PROCESS;
-    status = server_queue_process_apc( process, &call, &result );
+    status = unix_funcs->server_queue_process_apc( process, &call, &result );
     if (status) return status;
     return result.break_process.status;
 }

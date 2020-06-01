@@ -27,7 +27,7 @@
 struct ldt_copy;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 12
+#define NTDLL_UNIXLIB_VERSION 13
 
 struct unix_funcs
 {
@@ -73,6 +73,12 @@ struct unix_funcs
     /* server functions */
     unsigned int  (CDECL *server_call_unlocked)( void *req_ptr );
     unsigned int  (CDECL *server_call)( void *req_ptr );
+    unsigned int  (CDECL *server_select)( const select_op_t *select_op, data_size_t size, UINT flags,
+                                          timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
+                                          user_apc_t *user_apc );
+    unsigned int  (CDECL *server_wait)( const select_op_t *select_op, data_size_t size, UINT flags,
+                                        const LARGE_INTEGER *timeout );
+    unsigned int  (CDECL *server_queue_process_apc)( HANDLE process, const apc_call_t *call, apc_result_t *result );
     void          (CDECL *server_send_fd)( int fd );
     int           (CDECL *server_get_unix_fd)( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                                int *needs_close, enum server_fd_type *type, unsigned int *options );

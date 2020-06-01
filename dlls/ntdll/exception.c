@@ -114,7 +114,7 @@ void wait_suspend( CONTEXT *context )
     int saved_errno = errno;
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL, NULL );
+    unix_funcs->server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL, NULL );
 
     errno = saved_errno;
 }
@@ -159,7 +159,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *con
     {
         select_op.wait.op = SELECT_WAIT;
         select_op.wait.handles[0] = handle;
-        server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, &exception_context, NULL, NULL );
+        unix_funcs->server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE, TIMEOUT_INFINITE, &exception_context, NULL, NULL );
 
         SERVER_START_REQ( get_exception_status )
         {

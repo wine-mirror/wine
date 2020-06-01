@@ -74,6 +74,104 @@ static pthread_key_t teb_key;
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
 
 
+/***********************************************************************
+ *           context_to_server
+ *
+ * Convert a register context to the server format.
+ */
+NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
+{
+    DWORD i, flags = from->ContextFlags & ~CONTEXT_ARM64;  /* get rid of CPU id */
+
+    memset( to, 0, sizeof(*to) );
+    to->cpu = CPU_ARM64;
+
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->flags |= SERVER_CTX_CONTROL;
+        to->integer.arm64_regs.x[29] = from->u.s.Fp;
+        to->integer.arm64_regs.x[30] = from->u.s.Lr;
+        to->ctl.arm64_regs.sp     = from->Sp;
+        to->ctl.arm64_regs.pc     = from->Pc;
+        to->ctl.arm64_regs.pstate = from->Cpsr;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->flags |= SERVER_CTX_INTEGER;
+        for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->u.X[i];
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->flags |= SERVER_CTX_FLOATING_POINT;
+        for (i = 0; i < 32; i++)
+        {
+            to->fp.arm64_regs.q[i].low = from->V[i].s.Low;
+            to->fp.arm64_regs.q[i].high = from->V[i].s.High;
+        }
+        to->fp.arm64_regs.fpcr = from->Fpcr;
+        to->fp.arm64_regs.fpsr = from->Fpsr;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bcr[i] = from->Bcr[i];
+        for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bvr[i] = from->Bvr[i];
+        for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wcr[i] = from->Wcr[i];
+        for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wvr[i] = from->Wvr[i];
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           context_from_server
+ *
+ * Convert a register context from the server format.
+ */
+NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
+{
+    DWORD i;
+
+    if (from->cpu != CPU_ARM64) return STATUS_INVALID_PARAMETER;
+
+    to->ContextFlags = CONTEXT_ARM64;
+    if (from->flags & SERVER_CTX_CONTROL)
+    {
+        to->ContextFlags |= CONTEXT_CONTROL;
+        to->u.s.Fp = from->integer.arm64_regs.x[29];
+        to->u.s.Lr = from->integer.arm64_regs.x[30];
+        to->Sp     = from->ctl.arm64_regs.sp;
+        to->Pc     = from->ctl.arm64_regs.pc;
+        to->Cpsr   = from->ctl.arm64_regs.pstate;
+    }
+    if (from->flags & SERVER_CTX_INTEGER)
+    {
+        to->ContextFlags |= CONTEXT_INTEGER;
+        for (i = 0; i <= 28; i++) to->u.X[i] = from->integer.arm64_regs.x[i];
+    }
+    if (from->flags & SERVER_CTX_FLOATING_POINT)
+    {
+        to->ContextFlags |= CONTEXT_FLOATING_POINT;
+        for (i = 0; i < 32; i++)
+        {
+            to->V[i].s.Low = from->fp.arm64_regs.q[i].low;
+            to->V[i].s.High = from->fp.arm64_regs.q[i].high;
+        }
+        to->Fpcr = from->fp.arm64_regs.fpcr;
+        to->Fpsr = from->fp.arm64_regs.fpsr;
+    }
+    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+    {
+        to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+        for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm64_regs.bcr[i];
+        for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->Bvr[i] = from->debug.arm64_regs.bvr[i];
+        for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm64_regs.wcr[i];
+        for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm64_regs.wvr[i];
+    }
+    return STATUS_SUCCESS;
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */

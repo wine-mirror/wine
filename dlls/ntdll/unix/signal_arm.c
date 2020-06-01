@@ -69,6 +69,116 @@
 static pthread_key_t teb_key;
 
 
+/***********************************************************************
+ *           context_to_server
+ *
+ * Convert a register context to the server format.
+ */
+NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
+{
+    DWORD i, flags = from->ContextFlags & ~CONTEXT_ARM;  /* get rid of CPU id */
+
+    memset( to, 0, sizeof(*to) );
+    to->cpu = CPU_ARM;
+
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->flags |= SERVER_CTX_CONTROL;
+        to->ctl.arm_regs.sp   = from->Sp;
+        to->ctl.arm_regs.lr   = from->Lr;
+        to->ctl.arm_regs.pc   = from->Pc;
+        to->ctl.arm_regs.cpsr = from->Cpsr;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->flags |= SERVER_CTX_INTEGER;
+        to->integer.arm_regs.r[0]  = from->R0;
+        to->integer.arm_regs.r[1]  = from->R1;
+        to->integer.arm_regs.r[2]  = from->R2;
+        to->integer.arm_regs.r[3]  = from->R3;
+        to->integer.arm_regs.r[4]  = from->R4;
+        to->integer.arm_regs.r[5]  = from->R5;
+        to->integer.arm_regs.r[6]  = from->R6;
+        to->integer.arm_regs.r[7]  = from->R7;
+        to->integer.arm_regs.r[8]  = from->R8;
+        to->integer.arm_regs.r[9]  = from->R9;
+        to->integer.arm_regs.r[10] = from->R10;
+        to->integer.arm_regs.r[11] = from->R11;
+        to->integer.arm_regs.r[12] = from->R12;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->flags |= SERVER_CTX_FLOATING_POINT;
+        for (i = 0; i < 32; i++) to->fp.arm_regs.d[i] = from->u.D[i];
+        to->fp.arm_regs.fpscr = from->Fpscr;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bvr[i] = from->Bvr[i];
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bcr[i] = from->Bcr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wvr[i] = from->Wvr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wcr[i] = from->Wcr[i];
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           context_from_server
+ *
+ * Convert a register context from the server format.
+ */
+NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
+{
+    DWORD i;
+
+    if (from->cpu != CPU_ARM) return STATUS_INVALID_PARAMETER;
+
+    to->ContextFlags = CONTEXT_ARM;
+    if (from->flags & SERVER_CTX_CONTROL)
+    {
+        to->ContextFlags |= CONTEXT_CONTROL;
+        to->Sp   = from->ctl.arm_regs.sp;
+        to->Lr   = from->ctl.arm_regs.lr;
+        to->Pc   = from->ctl.arm_regs.pc;
+        to->Cpsr = from->ctl.arm_regs.cpsr;
+    }
+    if (from->flags & SERVER_CTX_INTEGER)
+    {
+        to->ContextFlags |= CONTEXT_INTEGER;
+        to->R0  = from->integer.arm_regs.r[0];
+        to->R1  = from->integer.arm_regs.r[1];
+        to->R2  = from->integer.arm_regs.r[2];
+        to->R3  = from->integer.arm_regs.r[3];
+        to->R4  = from->integer.arm_regs.r[4];
+        to->R5  = from->integer.arm_regs.r[5];
+        to->R6  = from->integer.arm_regs.r[6];
+        to->R7  = from->integer.arm_regs.r[7];
+        to->R8  = from->integer.arm_regs.r[8];
+        to->R9  = from->integer.arm_regs.r[9];
+        to->R10 = from->integer.arm_regs.r[10];
+        to->R11 = from->integer.arm_regs.r[11];
+        to->R12 = from->integer.arm_regs.r[12];
+    }
+    if (from->flags & SERVER_CTX_FLOATING_POINT)
+    {
+        to->ContextFlags |= CONTEXT_FLOATING_POINT;
+        for (i = 0; i < 32; i++) to->u.D[i] = from->fp.arm_regs.d[i];
+        to->Fpscr = from->fp.arm_regs.fpscr;
+    }
+    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+    {
+        to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bvr[i] = from->debug.arm_regs.bvr[i];
+        for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm_regs.bcr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm_regs.wvr[i];
+        for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm_regs.wcr[i];
+    }
+    return STATUS_SUCCESS;
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */

@@ -113,6 +113,140 @@ enum i386_trap_code
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
 
 
+/***********************************************************************
+ *           context_to_server
+ *
+ * Convert a register context to the server format.
+ */
+NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
+{
+    DWORD flags = from->ContextFlags & ~CONTEXT_AMD64;  /* get rid of CPU id */
+
+    memset( to, 0, sizeof(*to) );
+    to->cpu = CPU_x86_64;
+
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->flags |= SERVER_CTX_CONTROL;
+        to->ctl.x86_64_regs.rbp   = from->Rbp;
+        to->ctl.x86_64_regs.rip   = from->Rip;
+        to->ctl.x86_64_regs.rsp   = from->Rsp;
+        to->ctl.x86_64_regs.cs    = from->SegCs;
+        to->ctl.x86_64_regs.ss    = from->SegSs;
+        to->ctl.x86_64_regs.flags = from->EFlags;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->flags |= SERVER_CTX_INTEGER;
+        to->integer.x86_64_regs.rax = from->Rax;
+        to->integer.x86_64_regs.rcx = from->Rcx;
+        to->integer.x86_64_regs.rdx = from->Rdx;
+        to->integer.x86_64_regs.rbx = from->Rbx;
+        to->integer.x86_64_regs.rsi = from->Rsi;
+        to->integer.x86_64_regs.rdi = from->Rdi;
+        to->integer.x86_64_regs.r8  = from->R8;
+        to->integer.x86_64_regs.r9  = from->R9;
+        to->integer.x86_64_regs.r10 = from->R10;
+        to->integer.x86_64_regs.r11 = from->R11;
+        to->integer.x86_64_regs.r12 = from->R12;
+        to->integer.x86_64_regs.r13 = from->R13;
+        to->integer.x86_64_regs.r14 = from->R14;
+        to->integer.x86_64_regs.r15 = from->R15;
+    }
+    if (flags & CONTEXT_SEGMENTS)
+    {
+        to->flags |= SERVER_CTX_SEGMENTS;
+        to->seg.x86_64_regs.ds = from->SegDs;
+        to->seg.x86_64_regs.es = from->SegEs;
+        to->seg.x86_64_regs.fs = from->SegFs;
+        to->seg.x86_64_regs.gs = from->SegGs;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->flags |= SERVER_CTX_FLOATING_POINT;
+        memcpy( to->fp.x86_64_regs.fpregs, &from->u.FltSave, sizeof(to->fp.x86_64_regs.fpregs) );
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        to->debug.x86_64_regs.dr0 = from->Dr0;
+        to->debug.x86_64_regs.dr1 = from->Dr1;
+        to->debug.x86_64_regs.dr2 = from->Dr2;
+        to->debug.x86_64_regs.dr3 = from->Dr3;
+        to->debug.x86_64_regs.dr6 = from->Dr6;
+        to->debug.x86_64_regs.dr7 = from->Dr7;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           context_from_server
+ *
+ * Convert a register context from the server format.
+ */
+NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
+{
+    if (from->cpu != CPU_x86_64) return STATUS_INVALID_PARAMETER;
+
+    to->ContextFlags = CONTEXT_AMD64;
+    if (from->flags & SERVER_CTX_CONTROL)
+    {
+        to->ContextFlags |= CONTEXT_CONTROL;
+        to->Rbp    = from->ctl.x86_64_regs.rbp;
+        to->Rip    = from->ctl.x86_64_regs.rip;
+        to->Rsp    = from->ctl.x86_64_regs.rsp;
+        to->SegCs  = from->ctl.x86_64_regs.cs;
+        to->SegSs  = from->ctl.x86_64_regs.ss;
+        to->EFlags = from->ctl.x86_64_regs.flags;
+    }
+
+    if (from->flags & SERVER_CTX_INTEGER)
+    {
+        to->ContextFlags |= CONTEXT_INTEGER;
+        to->Rax = from->integer.x86_64_regs.rax;
+        to->Rcx = from->integer.x86_64_regs.rcx;
+        to->Rdx = from->integer.x86_64_regs.rdx;
+        to->Rbx = from->integer.x86_64_regs.rbx;
+        to->Rsi = from->integer.x86_64_regs.rsi;
+        to->Rdi = from->integer.x86_64_regs.rdi;
+        to->R8  = from->integer.x86_64_regs.r8;
+        to->R9  = from->integer.x86_64_regs.r9;
+        to->R10 = from->integer.x86_64_regs.r10;
+        to->R11 = from->integer.x86_64_regs.r11;
+        to->R12 = from->integer.x86_64_regs.r12;
+        to->R13 = from->integer.x86_64_regs.r13;
+        to->R14 = from->integer.x86_64_regs.r14;
+        to->R15 = from->integer.x86_64_regs.r15;
+    }
+    if (from->flags & SERVER_CTX_SEGMENTS)
+    {
+        to->ContextFlags |= CONTEXT_SEGMENTS;
+        to->SegDs = from->seg.x86_64_regs.ds;
+        to->SegEs = from->seg.x86_64_regs.es;
+        to->SegFs = from->seg.x86_64_regs.fs;
+        to->SegGs = from->seg.x86_64_regs.gs;
+    }
+    if (from->flags & SERVER_CTX_FLOATING_POINT)
+    {
+        to->ContextFlags |= CONTEXT_FLOATING_POINT;
+        memcpy( &to->u.FltSave, from->fp.x86_64_regs.fpregs, sizeof(from->fp.x86_64_regs.fpregs) );
+        to->MxCsr = to->u.FltSave.MxCsr;
+    }
+    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+    {
+        to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+        to->Dr0 = from->debug.x86_64_regs.dr0;
+        to->Dr1 = from->debug.x86_64_regs.dr1;
+        to->Dr2 = from->debug.x86_64_regs.dr2;
+        to->Dr3 = from->debug.x86_64_regs.dr3;
+        to->Dr6 = from->debug.x86_64_regs.dr6;
+        to->Dr7 = from->debug.x86_64_regs.dr7;
+    }
+    return STATUS_SUCCESS;
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */
