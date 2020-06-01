@@ -127,7 +127,7 @@ static DECLSPEC_NORETURN void server_protocol_error( const char *err, ... )
     fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     vfprintf( stderr, err, args );
     va_end( args );
-    abort_thread(1);
+    for (;;) unix_funcs->abort_thread(1);
 }
 
 
@@ -138,7 +138,7 @@ static DECLSPEC_NORETURN void server_protocol_perror( const char *err )
 {
     fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     perror( err );
-    abort_thread(1);
+    for (;;) unix_funcs->abort_thread(1);
 }
 
 
@@ -205,7 +205,7 @@ static int wait_select_reply( void *cookie )
         ret = read( ntdll_get_thread_data()->wait_fd[0], &reply, sizeof(reply) );
         if (ret == sizeof(reply))
         {
-            if (!reply.cookie) abort_thread( reply.signaled );  /* thread got killed */
+            if (!reply.cookie) unix_funcs->abort_thread( reply.signaled );  /* thread got killed */
             if (wine_server_get_ptr(reply.cookie) == cookie) return reply.signaled;
             /* we stole another reply, wait for the real one */
             signaled = wait_select_reply( cookie );
@@ -714,7 +714,7 @@ void server_init_process(void)
 void server_init_process_done(void)
 {
 #ifdef __i386__
-    extern struct ldt_copy __wine_ldt_copy;
+    extern struct ldt_copy *__wine_ldt_copy;
 #endif
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
@@ -737,7 +737,7 @@ void server_init_process_done(void)
     {
         req->module   = wine_server_client_ptr( peb->ImageBaseAddress );
 #ifdef __i386__
-        req->ldt_copy = wine_server_client_ptr( &__wine_ldt_copy );
+        req->ldt_copy = wine_server_client_ptr( __wine_ldt_copy );
 #endif
         req->entry    = wine_server_client_ptr( entry );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);

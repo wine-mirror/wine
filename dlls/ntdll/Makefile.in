@@ -53,6 +53,12 @@ C_SRCS = \
 	unix/debug.c \
 	unix/loader.c \
 	unix/server.c \
+	unix/signal_arm.c \
+	unix/signal_arm64.c \
+	unix/signal_i386.c \
+	unix/signal_powerpc.c \
+	unix/signal_x86_64.c \
+	unix/thread.c \
 	unix/virtual.c \
 	version.c \
 	virtual.c \

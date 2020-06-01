@@ -58,7 +58,6 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
@@ -66,8 +65,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-static pthread_key_t teb_key;
 
 /* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
 struct MSVCRT_JUMP_BUFFER
@@ -1261,7 +1258,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    abort_thread(0);
+    unix_funcs->abort_thread(0);
 }
 
 
@@ -1304,51 +1301,6 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     if (handlers[sig] != NULL) return -2;
     handlers[sig] = wsh;
     return 0;
-}
-
-
-/**********************************************************************
- *             signal_init_threading
- */
-void signal_init_threading(void)
-{
-    pthread_key_create( &teb_key, NULL );
-}
-
-
-/**********************************************************************
- *             signal_alloc_thread
- */
-NTSTATUS signal_alloc_thread( TEB *teb )
-{
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *             signal_free_thread
- */
-void signal_free_thread( TEB *teb )
-{
-}
-
-
-/**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-    stack_t ss;
-
-    ss.ss_sp    = (char *)teb + teb_size;
-    ss.ss_size  = signal_stack_size;
-    ss.ss_flags = 0;
-    if (sigaltstack( &ss, NULL ) == -1) perror( "sigaltstack" );
-
-    /* Win64/ARM applications expect the TEB pointer to be in the x18 platform register. */
-    __asm__ __volatile__( "mov x18, %0" : : "r" (teb) );
-
-    pthread_setspecific( teb_key, teb );
 }
 
 
@@ -2208,14 +2160,6 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "ldr x0, [x0, #0x8]\n\t"            /* context->X0 */
                    "br x17" )
 
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
-__ASM_GLOBAL_FUNC( call_thread_exit_func,
-                   "ldr x3, [x2, #0x300]\n\t"  /* arm64_thread_data()->exit_frame */
-                   "str xzr, [x2, #0x300]\n\t"
-                   "cbz x3, 1f\n\t"
-                   "mov sp, x3\n"
-                   "1:\tblr x1" )
-
 /***********************************************************************
  *           init_thread_context
  */
@@ -2281,39 +2225,6 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
     start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process, NtCurrentTeb() );
 }
 
-/***********************************************************************
- *           signal_exit_thread
- */
-void signal_exit_thread( int status )
-{
-    call_thread_exit_func( status, exit_thread, NtCurrentTeb() );
-}
-
-/***********************************************************************
- *           signal_exit_process
- */
-void signal_exit_process( int status )
-{
-    call_thread_exit_func( status, exit, NtCurrentTeb() );
-}
-
-/**********************************************************************
- *           get_thread_ldt_entry
- */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *           NtSetLdtEntries   (NTDLL.@)
- *           ZwSetLdtEntries   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
@@ -2329,7 +2240,7 @@ __ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "brk #0; ret")
  */
 TEB * WINAPI NtCurrentTeb(void)
 {
-    return pthread_getspecific( teb_key );
+    return unix_funcs->NtCurrentTeb();
 }
 
 #endif  /* __aarch64__ */

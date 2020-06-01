@@ -65,7 +65,6 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "wine/list.h"
 #include "ntdll_misc.h"
@@ -122,9 +121,6 @@ struct MSVCRT_JUMP_BUFFER
  * signal context platform-specific definitions
  */
 #ifdef linux
-
-#include <asm/prctl.h>
-static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
 
 #define RAX_sig(context)     ((context)->uc_mcontext.gregs[REG_RAX])
 #define RBX_sig(context)     ((context)->uc_mcontext.gregs[REG_RBX])
@@ -2646,7 +2642,7 @@ static struct stack_layout *setup_exception( ucontext_t *sigcontext )
         ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
              GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext), (ULONG_PTR)RSP_sig(sigcontext),
              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
+        unix_funcs->abort_thread(1);
     }
 
     if (stack - 1 > stack || /* check for overflow in subtraction */
@@ -2665,7 +2661,7 @@ static struct stack_layout *setup_exception( ucontext_t *sigcontext )
              diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
              (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-        abort_thread(1);
+        unix_funcs->abort_thread(1);
     }
     else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
     {
@@ -2679,7 +2675,7 @@ static struct stack_layout *setup_exception( ucontext_t *sigcontext )
                  diff, GetCurrentThreadId(), (ULONG_PTR)RIP_sig(sigcontext),
                  (ULONG_PTR)RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
                  NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
-            abort_thread(1);
+            unix_funcs->abort_thread(1);
         }
         case -1:  /* overflow */
             exception_code = EXCEPTION_STACK_OVERFLOW;
@@ -3075,7 +3071,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *ucontext )
 {
-    abort_thread(0);
+    unix_funcs->abort_thread(0);
 }
 
 
@@ -3105,145 +3101,6 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     return 0;
 }
 
-
-/**********************************************************************
- *             signal_init_threading
- */
-void signal_init_threading(void)
-{
-}
-
-
-/**********************************************************************
- *		signal_alloc_thread
- */
-NTSTATUS signal_alloc_thread( TEB *teb )
-{
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *		signal_free_thread
- */
-void signal_free_thread( TEB *teb )
-{
-}
-
-#ifdef __APPLE__
-/**********************************************************************
- *		mac_thread_gsbase
- */
-static void *mac_thread_gsbase(void)
-{
-    struct thread_identifier_info tiinfo;
-    unsigned int info_count = THREAD_IDENTIFIER_INFO_COUNT;
-    static int gsbase_offset = -1;
-    void *ret;
-
-    kern_return_t kr = thread_info(mach_thread_self(), THREAD_IDENTIFIER_INFO, (thread_info_t) &tiinfo, &info_count);
-    if (kr == KERN_SUCCESS)
-    {
-        TRACE("pthread_self() %p thread ID %llx gsbase %llx\n", pthread_self(), tiinfo.thread_id, tiinfo.thread_handle);
-        return (void*)tiinfo.thread_handle;
-    }
-
-    if (gsbase_offset < 0)
-    {
-        /* Search for the array of TLS slots within the pthread data structure.
-           That's what the macOS pthread implementation uses for gsbase. */
-        const void* const sentinel1 = (const void*)0x2bffb6b4f11228ae;
-        const void* const sentinel2 = (const void*)0x0845a7ff6ab76707;
-        int rc;
-        pthread_key_t key;
-        const void** p = (const void**)pthread_self();
-        int i;
-
-        gsbase_offset = 0;
-        if ((rc = pthread_key_create(&key, NULL)))
-        {
-            ERR("failed to create sentinel key for gsbase search: %d\n", rc);
-            return NULL;
-        }
-
-        pthread_setspecific(key, sentinel1);
-
-        for (i = key + 1; i < 2000; i++) /* arbitrary limit */
-        {
-            if (p[i] == sentinel1)
-            {
-                pthread_setspecific(key, sentinel2);
-
-                if (p[i] == sentinel2)
-                {
-                    gsbase_offset = (i - key) * sizeof(*p);
-                    break;
-                }
-
-                pthread_setspecific(key, sentinel1);
-            }
-        }
-
-        pthread_key_delete(key);
-    }
-
-    if (gsbase_offset)
-    {
-        ret = (char*)pthread_self() + gsbase_offset;
-        TRACE("pthread_self() %p + offset 0x%08x -> gsbase %p\n", pthread_self(), gsbase_offset, ret);
-    }
-    else
-    {
-        ret = NULL;
-        ERR("failed to locate gsbase; won't be able to poke ThreadLocalStoragePointer into pthread TLS; expect crashes\n");
-    }
-
-    return ret;
-}
-#endif
-
-
-/**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-    const WORD fpu_cw = 0x27f;
-    stack_t ss;
-
-#if defined __linux__
-    arch_prctl( ARCH_SET_GS, teb );
-#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
-    amd64_set_gsbase( teb );
-#elif defined(__NetBSD__)
-    sysarch( X86_64_SET_GSBASE, &teb );
-#elif defined (__APPLE__)
-    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
-                      :
-                      : "r" (teb->Tib.Self), "n" (FIELD_OFFSET(TEB, Tib.Self)));
-    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
-                      :
-                      : "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
-
-    /* alloc_tls_slot() needs to poke a value to an address relative to each
-       thread's gsbase.  Have each thread record its gsbase pointer into its
-       TEB so alloc_tls_slot() can find it. */
-    teb->Reserved5[0] = mac_thread_gsbase();
-#else
-# error Please define setting %gs for your architecture
-#endif
-
-    ss.ss_sp    = (char *)teb + teb_size;
-    ss.ss_size  = signal_stack_size;
-    ss.ss_flags = 0;
-    if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
-
-#ifdef __GNUC__
-    __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
-#else
-    FIXME("FPU setup not implemented for this platform.\n");
-#endif
-}
 
 /**********************************************************************
  *		signal_init_process
@@ -4150,27 +4007,6 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "movq %rsp,%rdi\n\t"
                    "call " __ASM_NAME("set_cpu_context") )
 
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int) );
-__ASM_GLOBAL_FUNC( call_thread_exit_func,
-                   /* fetch exit frame */
-                   "movq %gs:0x30,%rax\n\t"
-                   "movq 0x330(%rax),%rdx\n\t"      /* amd64_thread_data()->exit_frame */
-                   "testq %rdx,%rdx\n\t"
-                   "jnz 1f\n\t"
-                   "jmp *%rsi\n"
-                   /* switch to exit frame stack */
-                   "1:\tmovq $0,0x330(%rax)\n\t"
-                   "movq %rdx,%rsp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbx,40\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r12,32\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r13,24\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r14,16\n\t")
-                   __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
-                   "call *%rsi" )
-
-
 /***********************************************************************
  *           init_thread_context
  */
@@ -4244,39 +4080,6 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
     start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process );
 }
 
-
-/***********************************************************************
- *           signal_exit_thread
- */
-void signal_exit_thread( int status )
-{
-    call_thread_exit_func( status, exit_thread );
-}
-
-/***********************************************************************
- *           signal_exit_process
- */
-void signal_exit_process( int status )
-{
-    call_thread_exit_func( status, exit );
-}
-
-/**********************************************************************
- *           get_thread_ldt_entry
- */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *           NtSetLdtEntries   (NTDLL.@)
- *           ZwSetLdtEntries   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
 
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)

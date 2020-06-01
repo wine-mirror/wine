@@ -53,15 +53,12 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-static pthread_key_t teb_key;
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -982,7 +979,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    abort_thread(0);
+    unix_funcs->abort_thread(0);
 }
 
 
@@ -1010,41 +1007,6 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     if (handlers[sig] != NULL) return -2;
     handlers[sig] = wsh;
     return 0;
-}
-
-
-/**********************************************************************
- *             signal_init_threading
- */
-void signal_init_threading(void)
-{
-    pthread_key_create( &teb_key, NULL );
-}
-
-
-/**********************************************************************
- *		signal_alloc_thread
- */
-NTSTATUS signal_alloc_thread( TEB *teb )
-{
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *		signal_free_thread
- */
-void signal_free_thread( TEB *teb )
-{
-}
-
-
-/**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-    pthread_setspecific( teb_key, teb );
 }
 
 
@@ -1218,39 +1180,6 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
     switch_to_stack( thread_startup, &info, NtCurrentTeb()->Tib.StackBase );
 }
 
-/***********************************************************************
- *           signal_exit_thread
- */
-void signal_exit_thread( int status )
-{
-    exit_thread( status );
-}
-
-/***********************************************************************
- *           signal_exit_process
- */
-void signal_exit_process( int status )
-{
-    exit( status );
-}
-
-/**********************************************************************
- *           get_thread_ldt_entry
- */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *           NtSetLdtEntries   (NTDLL.@)
- *           ZwSetLdtEntries   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
@@ -1272,7 +1201,7 @@ void WINAPI DbgUserBreakPoint(void)
  */
 TEB * WINAPI NtCurrentTeb(void)
 {
-    return pthread_getspecific( teb_key );
+    return unix_funcs->NtCurrentTeb();
 }
 
 #endif  /* __powerpc__ */

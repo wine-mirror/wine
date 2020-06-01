@@ -2284,9 +2284,6 @@ TEB *virtual_alloc_first_teb(void)
     teb->Tib.StackBase = (void *)~0ul;
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
-    signal_init_threading();
-    signal_alloc_thread( teb );
-    signal_init_thread( teb );
     use_locks = TRUE;
     return teb;
 }
@@ -2337,7 +2334,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
     teb->Tib.ExceptionList = (void *)~0UL;
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
-    if ((status = signal_alloc_thread( teb )))
+    if ((status = unix_funcs->alloc_thread( teb )))
     {
         server_enter_uninterrupted_section( &csVirtual, &sigset );
         *(TEB **)teb = next_free_teb;
@@ -2357,7 +2354,7 @@ void virtual_free_teb( TEB *teb )
     SIZE_T size;
     sigset_t sigset;
 
-    signal_free_thread( teb );
+    unix_funcs->free_thread( teb );
     if (teb->DeallocationStack)
     {
         size = 0;

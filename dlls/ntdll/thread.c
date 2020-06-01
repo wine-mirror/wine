@@ -71,6 +71,8 @@ static RTL_BITMAP tls_expansion_bitmap;
 static RTL_BITMAP fls_bitmap;
 static int nb_threads = 1;
 
+struct ldt_copy *__wine_ldt_copy = NULL;
+
 static RTL_CRITICAL_SECTION peb_lock;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -243,6 +245,10 @@ TEB *thread_init(void)
     /* allocate and initialize the PEB and initial TEB */
 
     teb = virtual_alloc_first_teb();
+    unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy );
+    unix_funcs->alloc_thread( teb );
+    unix_funcs->init_thread( teb );
+
     peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
     peb->TlsBitmap          = &tls_bitmap;
@@ -287,30 +293,6 @@ TEB *thread_init(void)
 
 
 /***********************************************************************
- *           abort_thread
- */
-void abort_thread( int status )
-{
-    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (InterlockedDecrement( &nb_threads ) <= 0) _exit( get_unix_exit_code( status ));
-    signal_exit_thread( status );
-}
-
-
-/***********************************************************************
- *           exit_thread
- */
-void exit_thread( int status )
-{
-    close( ntdll_get_thread_data()->wait_fd[0] );
-    close( ntdll_get_thread_data()->wait_fd[1] );
-    close( ntdll_get_thread_data()->reply_fd );
-    close( ntdll_get_thread_data()->request_fd );
-    pthread_exit( UIntToPtr(status) );
-}
-
-
-/***********************************************************************
  *           RtlExitUserThread  (NTDLL.@)
  */
 void WINAPI RtlExitUserThread( ULONG status )
@@ -332,8 +314,7 @@ void WINAPI RtlExitUserThread( ULONG status )
     if (InterlockedDecrement( &nb_threads ) <= 0)
     {
         LdrShutdownProcess();
-        pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-        signal_exit_process( get_unix_exit_code( status ));
+        unix_funcs->exit_process( status );
     }
 
     LdrShutdownThread();
@@ -352,7 +333,7 @@ void WINAPI RtlExitUserThread( ULONG status )
         }
     }
 
-    signal_exit_thread( status );
+    for (;;) unix_funcs->exit_thread( status );
 }
 
 
@@ -372,7 +353,7 @@ static void start_thread( struct startup_info *info )
     thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
 
-    signal_init_thread( teb );
+    unix_funcs->init_thread( teb );
     unix_funcs->server_init_thread( info->entry_point, &suspend, NULL, NULL, NULL );
     signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg, suspend );
 }
@@ -667,7 +648,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
         }
         SERVER_END_REQ;
     }
-    if (self) abort_thread( exit_code );
+    if (self) unix_funcs->abort_thread( exit_code );
     return ret;
 }
 
@@ -787,6 +768,16 @@ NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int fla
 
 
 /******************************************************************************
+ *           NtSetLdtEntries   (NTDLL.@)
+ *           ZwSetLdtEntries   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
+{
+    return unix_funcs->NtSetLdtEntries( sel1, entry1, sel2, entry2 );
+}
+
+
+/******************************************************************************
  *              NtQueryInformationThread  (NTDLL.@)
  *              ZwQueryInformationThread  (NTDLL.@)
  */
@@ -894,7 +885,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
 
     case ThreadDescriptorTableEntry:
-        return get_thread_ldt_entry( handle, data, length, ret_len );
+        return unix_funcs->get_thread_ldt_entry( handle, data, length, ret_len );
 
     case ThreadAmILastThread:
         {

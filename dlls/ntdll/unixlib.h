@@ -24,16 +24,20 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
+struct ldt_copy;
+
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 11
+#define NTDLL_UNIXLIB_VERSION 12
 
 struct unix_funcs
 {
     /* Nt* functions */
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
+    TEB *         (WINAPI *NtCurrentTeb)(void);
     NTSTATUS      (WINAPI *NtDuplicateObject)( HANDLE source_process, HANDLE source,
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
+    NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
 
     /* environment functions */
     void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );
@@ -55,6 +59,16 @@ struct unix_funcs
     int           (CDECL *mmap_is_in_reserved_area)( void *addr, SIZE_T size );
     int           (CDECL *mmap_enum_reserved_areas)( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg),
                                                      void *arg, int top_down );
+
+    /* thread/process functions */
+    void          (CDECL *init_threading)( int *nb_threads, struct ldt_copy **ldt_copy );
+    NTSTATUS      (CDECL *alloc_thread)( TEB *teb );
+    void          (CDECL *free_thread)( TEB *teb );
+    void          (CDECL *init_thread)( TEB *teb );
+    void          (CDECL *abort_thread)( int status );
+    void          (CDECL *exit_thread)( int status );
+    void          (CDECL *exit_process)( int status );
+    NTSTATUS      (CDECL *get_thread_ldt_entry)( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
 
     /* server functions */
     unsigned int  (CDECL *server_call_unlocked)( void *req_ptr );

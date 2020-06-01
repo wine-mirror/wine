@@ -55,7 +55,6 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
@@ -63,8 +62,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-static pthread_key_t teb_key;
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -921,7 +918,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    abort_thread(0);
+    unix_funcs->abort_thread(0);
 }
 
 
@@ -949,46 +946,6 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
     if (handlers[sig] != NULL) return -2;
     handlers[sig] = wsh;
     return 0;
-}
-
-
-/**********************************************************************
- *             signal_init_threading
- */
-void signal_init_threading(void)
-{
-    pthread_key_create( &teb_key, NULL );
-}
-
-
-/**********************************************************************
- *             signal_alloc_thread
- */
-NTSTATUS signal_alloc_thread( TEB *teb )
-{
-    return STATUS_SUCCESS;
-}
-
-
-/**********************************************************************
- *             signal_free_thread
- */
-void signal_free_thread( TEB *teb )
-{
-}
-
-
-/**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-#if defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_8A__)
-    /* Win32/ARM applications expect the TEB pointer to be in the TPIDRURW register. */
-    __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
-#endif
-
-    pthread_setspecific( teb_key, teb );
 }
 
 
@@ -1163,16 +1120,6 @@ __ASM_GLOBAL_FUNC( start_thread,
                    "mov r0, sp\n\t"
                    "b " __ASM_NAME("set_cpu_context") )
 
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
-__ASM_GLOBAL_FUNC( call_thread_exit_func,
-                   ".arm\n\t"
-                   "ldr r3, [r2, #0x1d4]\n\t"  /* teb->SystemReserved2 */
-                   "mov ip, #0\n\t"
-                   "str ip, [r2, #0x1d4]\n\t"
-                   "cmp r3, ip\n\t"
-                   "movne sp, r3\n\t"
-                   "blx r1" )
-
 /***********************************************************************
  *           init_thread_context
  */
@@ -1239,39 +1186,6 @@ void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
     start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process, NtCurrentTeb() );
 }
 
-/***********************************************************************
- *           signal_exit_thread
- */
-void signal_exit_thread( int status )
-{
-    call_thread_exit_func( status, exit_thread, NtCurrentTeb() );
-}
-
-/***********************************************************************
- *           signal_exit_process
- */
-void signal_exit_process( int status )
-{
-    call_thread_exit_func( status, exit, NtCurrentTeb() );
-}
-
-/**********************************************************************
- *           get_thread_ldt_entry
- */
-NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- *           NtSetLdtEntries   (NTDLL.@)
- *           ZwSetLdtEntries   (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
@@ -1293,7 +1207,7 @@ void WINAPI DbgUserBreakPoint(void)
  */
 TEB * WINAPI NtCurrentTeb(void)
 {
-    return pthread_getspecific( teb_key );
+    return unix_funcs->NtCurrentTeb();
 }
 
 #endif  /* __arm__ */

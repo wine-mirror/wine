@@ -75,11 +75,30 @@ extern void CDECL server_init_process(void) DECLSPEC_HIDDEN;
 extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
 extern size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int *cpus,
                                         BOOL *wow64, timeout_t *start_time ) DECLSPEC_HIDDEN;
+extern void CDECL init_threading( int *nb_threads, struct ldt_copy **ldt_copy ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void CDECL free_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void CDECL init_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void CDECL DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
+extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
+extern void CDECL DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len ) DECLSPEC_HIDDEN;
 
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
+extern sigset_t server_block_set DECLSPEC_HIDDEN;
+extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
+extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
 
+extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
+extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
+
+extern void signal_init_threading(void) DECLSPEC_HIDDEN;
+extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void signal_free_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void signal_init_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int) ) DECLSPEC_HIDDEN;
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */
