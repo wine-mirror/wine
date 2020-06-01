@@ -549,20 +549,28 @@ static struct hlsl_ir_var *new_synthetic_var(const char *name, struct hlsl_type 
     return var;
 }
 
-static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs, struct hlsl_ir_node *rhs)
+static struct hlsl_ir_assignment *new_assignment(struct hlsl_ir_var *var, struct hlsl_ir_node *offset,
+        struct hlsl_ir_node *rhs, unsigned int writemask, struct source_location loc)
 {
     struct hlsl_ir_assignment *assign;
+
+    if (!writemask && type_is_single_reg(rhs->data_type))
+        writemask = (1 << rhs->data_type->dimx) - 1;
 
     if (!(assign = d3dcompiler_alloc(sizeof(*assign))))
         return NULL;
 
-    init_node(&assign->node, HLSL_IR_ASSIGNMENT, rhs->data_type, rhs->loc);
-    assign->lhs.var = lhs;
+    init_node(&assign->node, HLSL_IR_ASSIGNMENT, NULL, loc);
+    assign->lhs.var = var;
+    assign->lhs.offset = offset;
     assign->rhs = rhs;
-    if (type_is_single_reg(lhs->data_type))
-        assign->writemask = (1 << lhs->data_type->dimx) - 1;
-
+    assign->writemask = writemask;
     return assign;
+}
+
+static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs, struct hlsl_ir_node *rhs)
+{
+    return new_assignment(lhs, NULL, rhs, 0, rhs->loc);
 }
 
 static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct source_location loc)
@@ -693,8 +701,6 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
 {
     struct hlsl_type *type = var->data_type;
     struct hlsl_struct_field *field;
-    struct hlsl_ir_node *assignment;
-    struct hlsl_ir_load *load;
     unsigned int i = 0;
 
     if (initializer_size(initializer) != components_count_type(type))
@@ -710,22 +716,21 @@ static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
     LIST_FOR_EACH_ENTRY(field, type->e.elements, struct hlsl_struct_field, entry)
     {
         struct hlsl_ir_node *node = initializer->args[i];
+        struct hlsl_ir_assignment *assign;
+        struct hlsl_ir_constant *c;
 
         if (i++ >= initializer->args_count)
-        {
-            d3dcompiler_free(initializer->args);
-            return;
-        }
+            break;
+
         if (components_count_type(field->type) == components_count_type(node->data_type))
         {
-            if (!(load = new_record_load(&new_var_load(var, var->loc)->node, field, node->loc)))
-            {
-                ERR("Out of memory.\n");
+            if (!(c = new_uint_constant(field->reg_offset * 4, node->loc)))
                 break;
-            }
-            list_add_tail(list, &load->node.entry);
-            assignment = make_assignment(&load->node, ASSIGN_OP_ASSIGN, node);
-            list_add_tail(list, &assignment->entry);
+            list_add_tail(list, &c->node.entry);
+
+            if (!(assign = new_assignment(var, &c->node, node, 0, node->loc)))
+                break;
+            list_add_tail(list, &assign->node.entry);
         }
         else
             FIXME("Initializing with \"mismatched\" fields is not supported yet.\n");
