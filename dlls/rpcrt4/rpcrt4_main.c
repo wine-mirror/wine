@@ -95,6 +95,12 @@ struct threaddata
     struct context_handle_list *context_handle_list;
 };
 
+struct interface_header
+{
+    unsigned int length;
+    RPC_SYNTAX_IDENTIFIER id;
+};
+
 /***********************************************************************
  * DllMain
  *
@@ -175,6 +181,25 @@ RPC_STATUS WINAPI RpcStringFreeW(RPC_WSTR* String)
 {
   HeapFree( GetProcessHeap(), 0, *String);
 
+  return RPC_S_OK;
+}
+
+/*************************************************************************
+ *           RpcIfInqId   [RPCRT4.@]
+ *
+ * Get interface UUID and version.
+ */
+RPC_STATUS WINAPI RpcIfInqId(RPC_IF_HANDLE if_handle, RPC_IF_ID *if_id)
+{
+  struct interface_header *header = (struct interface_header *)if_handle;
+
+  TRACE("(%p,%p)\n", if_handle, if_id);
+
+  if_id->Uuid = header->id.SyntaxGUID;
+  if_id->VersMajor = header->id.SyntaxVersion.MajorVersion;
+  if_id->VersMinor = header->id.SyntaxVersion.MinorVersion;
+  TRACE("UUID:%s VersMajor:%hu VersMinor:%hu.\n", debugstr_guid(&if_id->Uuid), if_id->VersMajor,
+        if_id->VersMinor);
   return RPC_S_OK;
 }
 
