@@ -91,6 +91,63 @@ __ASM_GLOBAL_FUNC( set_cpu_context,
 
 
 /***********************************************************************
+ *           get_server_context_flags
+ *
+ * Convert CPU-specific flags to generic server flags
+ */
+static unsigned int get_server_context_flags( DWORD flags )
+{
+    unsigned int ret = 0;
+
+    flags &= ~CONTEXT_ARM;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
+    if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
+    if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+    if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           copy_context
+ *
+ * Copy a register context according to the flags.
+ */
+static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+{
+    flags &= ~CONTEXT_ARM;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->Sp      = from->Sp;
+        to->Lr      = from->Lr;
+        to->Pc      = from->Pc;
+        to->Cpsr    = from->Cpsr;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->R0  = from->R0;
+        to->R1  = from->R1;
+        to->R2  = from->R2;
+        to->R3  = from->R3;
+        to->R4  = from->R4;
+        to->R5  = from->R5;
+        to->R6  = from->R6;
+        to->R7  = from->R7;
+        to->R8  = from->R8;
+        to->R9  = from->R9;
+        to->R10 = from->R10;
+        to->R11 = from->R11;
+        to->R12 = from->R12;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->Fpscr = from->Fpscr;
+        memcpy( to->u.D, from->u.D, sizeof(to->u.D) );
+    }
+}
+
+
+/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -214,6 +271,37 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     ret = set_thread_context( handle, &server_context, &self );
     if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
     return ret;
+}
+
+
+/***********************************************************************
+ *              NtGetContextThread  (NTDLL.@)
+ *              ZwGetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+{
+    NTSTATUS ret;
+    DWORD needed_flags = context->ContextFlags;
+    BOOL self = (handle == GetCurrentThread());
+
+    if (!self)
+    {
+        context_t server_context;
+        unsigned int server_flags = get_server_context_flags( context->ContextFlags );
+
+        if ((ret = get_thread_context( handle, &server_context, server_flags, &self ))) return ret;
+        if ((ret = context_from_server( context, &server_context ))) return ret;
+        needed_flags &= ~context->ContextFlags;
+    }
+
+    if (self && needed_flags)
+    {
+        CONTEXT ctx;
+        RtlCaptureContext( &ctx );
+        copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
+        context->ContextFlags |= ctx.ContextFlags & needed_flags;
+    }
+    return STATUS_SUCCESS;
 }
 
 

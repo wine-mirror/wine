@@ -220,6 +220,83 @@ void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
 
 
 /***********************************************************************
+ *           get_server_context_flags
+ *
+ * Convert CPU-specific flags to generic server flags
+ */
+static unsigned int get_server_context_flags( DWORD flags )
+{
+    unsigned int ret = 0;
+
+    flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
+    if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
+    if (flags & CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
+    if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+    if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           copy_context
+ *
+ * Copy a register context according to the flags.
+ */
+static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+{
+    flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->Rbp    = from->Rbp;
+        to->Rip    = from->Rip;
+        to->Rsp    = from->Rsp;
+        to->SegCs  = from->SegCs;
+        to->SegSs  = from->SegSs;
+        to->EFlags = from->EFlags;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->Rax = from->Rax;
+        to->Rcx = from->Rcx;
+        to->Rdx = from->Rdx;
+        to->Rbx = from->Rbx;
+        to->Rsi = from->Rsi;
+        to->Rdi = from->Rdi;
+        to->R8  = from->R8;
+        to->R9  = from->R9;
+        to->R10 = from->R10;
+        to->R11 = from->R11;
+        to->R12 = from->R12;
+        to->R13 = from->R13;
+        to->R14 = from->R14;
+        to->R15 = from->R15;
+    }
+    if (flags & CONTEXT_SEGMENTS)
+    {
+        to->SegDs = from->SegDs;
+        to->SegEs = from->SegEs;
+        to->SegFs = from->SegFs;
+        to->SegGs = from->SegGs;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->MxCsr = from->MxCsr;
+        to->u.FltSave = from->u.FltSave;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->Dr0 = from->Dr0;
+        to->Dr1 = from->Dr1;
+        to->Dr2 = from->Dr2;
+        to->Dr3 = from->Dr3;
+        to->Dr6 = from->Dr6;
+        to->Dr7 = from->Dr7;
+    }
+}
+
+
+/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -379,6 +456,57 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
     return ret;
+}
+
+
+/***********************************************************************
+ *              NtGetContextThread  (NTDLL.@)
+ *              ZwGetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+{
+    NTSTATUS ret;
+    DWORD needed_flags;
+    BOOL self = (handle == GetCurrentThread());
+
+    if (!context) return STATUS_INVALID_PARAMETER;
+
+    needed_flags = context->ContextFlags;
+
+    /* debug registers require a server call */
+    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)) self = FALSE;
+
+    if (!self)
+    {
+        context_t server_context;
+        unsigned int server_flags = get_server_context_flags( context->ContextFlags );
+
+        if ((ret = get_thread_context( handle, &server_context, server_flags, &self ))) return ret;
+        if ((ret = context_from_server( context, &server_context ))) return ret;
+        needed_flags &= ~context->ContextFlags;
+    }
+
+    if (self)
+    {
+        if (needed_flags)
+        {
+            CONTEXT ctx;
+            RtlCaptureContext( &ctx );
+            copy_context( context, &ctx, ctx.ContextFlags & needed_flags );
+            context->ContextFlags |= ctx.ContextFlags & needed_flags;
+        }
+        /* update the cached version of the debug registers */
+        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64))
+        {
+            amd64_thread_data()->dr0 = context->Dr0;
+            amd64_thread_data()->dr1 = context->Dr1;
+            amd64_thread_data()->dr2 = context->Dr2;
+            amd64_thread_data()->dr3 = context->Dr3;
+            amd64_thread_data()->dr6 = context->Dr6;
+            amd64_thread_data()->dr7 = context->Dr7;
+        }
+    }
+    return STATUS_SUCCESS;
 }
 
 

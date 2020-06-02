@@ -104,6 +104,7 @@ extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
 
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
 extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;

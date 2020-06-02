@@ -202,6 +202,53 @@ static inline int is_gdt_sel( WORD sel )
 
 
 /***********************************************************************
+ *           save_fpu
+ *
+ * Save the thread FPU context.
+ */
+static inline void save_fpu( CONTEXT *context )
+{
+    struct
+    {
+        DWORD ControlWord;
+        DWORD StatusWord;
+        DWORD TagWord;
+        DWORD ErrorOffset;
+        DWORD ErrorSelector;
+        DWORD DataOffset;
+        DWORD DataSelector;
+    }
+    float_status;
+
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    __asm__ __volatile__( "fnsave %0; fwait" : "=m" (context->FloatSave) );
+
+    /* Reset unmasked exceptions status to avoid firing an exception. */
+    memcpy(&float_status, &context->FloatSave, sizeof(float_status));
+    float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
+
+    __asm__ __volatile__( "fldenv %0" : : "m" (float_status) );
+}
+
+
+/***********************************************************************
+ *           save_fpux
+ *
+ * Save the thread FPU extended context.
+ */
+static inline void save_fpux( CONTEXT *context )
+{
+    /* we have to enforce alignment by hand */
+    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
+    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+
+    context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
+    __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
+    memcpy( context->ExtendedRegisters, state, sizeof(*state) );
+}
+
+
+/***********************************************************************
  *           restore_fpu
  *
  * Restore the FPU context to a sigcontext.
@@ -326,6 +373,26 @@ void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
             set_full_cpu_context( &newcontext );
         }
     }
+}
+
+
+/***********************************************************************
+ *           get_server_context_flags
+ *
+ * Convert CPU-specific flags to generic server flags
+ */
+static unsigned int get_server_context_flags( DWORD flags )
+{
+    unsigned int ret = 0;
+
+    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
+    if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
+    if (flags & CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
+    if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+    if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+    if (flags & CONTEXT_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
+    return ret;
 }
 
 
@@ -498,6 +565,89 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
     return ret;
+}
+
+
+/***********************************************************************
+ *              NtGetContextThread  (NTDLL.@)
+ *              ZwGetContextThread  (NTDLL.@)
+ *
+ * Note: we use a small assembly wrapper to save the necessary registers
+ *       in case we are fetching the context of the current thread.
+ */
+NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+{
+    NTSTATUS ret;
+    DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
+    BOOL self = (handle == GetCurrentThread());
+
+    /* debug registers require a server call */
+    if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
+
+    if (!self)
+    {
+        context_t server_context;
+        unsigned int server_flags = get_server_context_flags( context->ContextFlags );
+
+        if ((ret = get_thread_context( handle, &server_context, server_flags, &self ))) return ret;
+        if ((ret = context_from_server( context, &server_context ))) return ret;
+        needed_flags &= ~context->ContextFlags;
+    }
+
+    if (self)
+    {
+        if (needed_flags & CONTEXT_INTEGER)
+        {
+            context->Eax = 0;
+            context->Ecx = 0;
+            context->Edx = 0;
+            /* other registers already set from asm wrapper */
+            context->ContextFlags |= CONTEXT_INTEGER;
+        }
+        if (needed_flags & CONTEXT_CONTROL)
+        {
+            context->SegCs  = get_cs();
+            context->SegSs  = get_ds();
+            /* other registers already set from asm wrapper */
+            context->ContextFlags |= CONTEXT_CONTROL;
+        }
+        if (needed_flags & CONTEXT_SEGMENTS)
+        {
+            context->SegDs = get_ds();
+            context->SegEs = get_ds();
+            context->SegFs = get_fs();
+            context->SegGs = get_gs();
+            context->ContextFlags |= CONTEXT_SEGMENTS;
+        }
+        if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
+        if (needed_flags & CONTEXT_EXTENDED_REGISTERS) save_fpux( context );
+        /* FIXME: xstate */
+        /* update the cached version of the debug registers */
+        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
+        {
+            x86_thread_data()->dr0 = context->Dr0;
+            x86_thread_data()->dr1 = context->Dr1;
+            x86_thread_data()->dr2 = context->Dr2;
+            x86_thread_data()->dr3 = context->Dr3;
+            x86_thread_data()->dr6 = context->Dr6;
+            x86_thread_data()->dr7 = context->Dr7;
+        }
+    }
+
+    if (context->ContextFlags & (CONTEXT_INTEGER & ~CONTEXT_i386))
+        TRACE( "%p: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n", handle,
+               context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
+    if (context->ContextFlags & (CONTEXT_CONTROL & ~CONTEXT_i386))
+        TRACE( "%p: ebp=%08x esp=%08x eip=%08x cs=%04x ss=%04x flags=%08x\n", handle,
+               context->Ebp, context->Esp, context->Eip, context->SegCs, context->SegSs, context->EFlags );
+    if (context->ContextFlags & (CONTEXT_SEGMENTS & ~CONTEXT_i386))
+        TRACE( "%p: ds=%04x es=%04x fs=%04x gs=%04x\n", handle,
+               context->SegDs, context->SegEs, context->SegFs, context->SegGs );
+    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
+        TRACE( "%p: dr0=%08x dr1=%08x dr2=%08x dr3=%08x dr6=%08x dr7=%08x\n", handle,
+               context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
+
+    return STATUS_SUCCESS;
 }
 
 

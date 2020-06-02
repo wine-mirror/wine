@@ -777,6 +777,18 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *              NtGetContextThread  (NTDLL.@)
+ *              ZwGetContextThread  (NTDLL.@)
+ */
+#ifndef __i386__
+NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
+{
+    return unix_funcs->NtGetContextThread( handle, context );
+}
+#endif
+
+
 /******************************************************************************
  *           NtSetLdtEntries   (NTDLL.@)
  *           ZwSetLdtEntries   (NTDLL.@)

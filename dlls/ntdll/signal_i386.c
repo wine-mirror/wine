@@ -1252,96 +1252,6 @@ void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
 
 
 /***********************************************************************
- *           get_server_context_flags
- *
- * Convert CPU-specific flags to generic server flags
- */
-static unsigned int get_server_context_flags( DWORD flags )
-{
-    unsigned int ret = 0;
-
-    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
-    if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
-    if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
-    if (flags & CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
-    if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
-    if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
-    if (flags & CONTEXT_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
-    return ret;
-}
-
-
-/***********************************************************************
- *           context_from_server
- *
- * Convert a register context from the server format.
- */
-NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
-{
-    if (from->cpu != CPU_x86) return STATUS_INVALID_PARAMETER;
-
-    to->ContextFlags = CONTEXT_i386;
-    if (from->flags & SERVER_CTX_CONTROL)
-    {
-        to->ContextFlags |= CONTEXT_CONTROL;
-        to->Ebp    = from->ctl.i386_regs.ebp;
-        to->Esp    = from->ctl.i386_regs.esp;
-        to->Eip    = from->ctl.i386_regs.eip;
-        to->SegCs  = from->ctl.i386_regs.cs;
-        to->SegSs  = from->ctl.i386_regs.ss;
-        to->EFlags = from->ctl.i386_regs.eflags;
-    }
-    if (from->flags & SERVER_CTX_INTEGER)
-    {
-        to->ContextFlags |= CONTEXT_INTEGER;
-        to->Eax = from->integer.i386_regs.eax;
-        to->Ebx = from->integer.i386_regs.ebx;
-        to->Ecx = from->integer.i386_regs.ecx;
-        to->Edx = from->integer.i386_regs.edx;
-        to->Esi = from->integer.i386_regs.esi;
-        to->Edi = from->integer.i386_regs.edi;
-    }
-    if (from->flags & SERVER_CTX_SEGMENTS)
-    {
-        to->ContextFlags |= CONTEXT_SEGMENTS;
-        to->SegDs = from->seg.i386_regs.ds;
-        to->SegEs = from->seg.i386_regs.es;
-        to->SegFs = from->seg.i386_regs.fs;
-        to->SegGs = from->seg.i386_regs.gs;
-    }
-    if (from->flags & SERVER_CTX_FLOATING_POINT)
-    {
-        to->ContextFlags |= CONTEXT_FLOATING_POINT;
-        to->FloatSave.ControlWord   = from->fp.i386_regs.ctrl;
-        to->FloatSave.StatusWord    = from->fp.i386_regs.status;
-        to->FloatSave.TagWord       = from->fp.i386_regs.tag;
-        to->FloatSave.ErrorOffset   = from->fp.i386_regs.err_off;
-        to->FloatSave.ErrorSelector = from->fp.i386_regs.err_sel;
-        to->FloatSave.DataOffset    = from->fp.i386_regs.data_off;
-        to->FloatSave.DataSelector  = from->fp.i386_regs.data_sel;
-        to->FloatSave.Cr0NpxState   = from->fp.i386_regs.cr0npx;
-        memcpy( to->FloatSave.RegisterArea, from->fp.i386_regs.regs, sizeof(to->FloatSave.RegisterArea) );
-    }
-    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
-    {
-        to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-        to->Dr0 = from->debug.i386_regs.dr0;
-        to->Dr1 = from->debug.i386_regs.dr1;
-        to->Dr2 = from->debug.i386_regs.dr2;
-        to->Dr3 = from->debug.i386_regs.dr3;
-        to->Dr6 = from->debug.i386_regs.dr6;
-        to->Dr7 = from->debug.i386_regs.dr7;
-    }
-    if (from->flags & SERVER_CTX_EXTENDED_REGISTERS)
-    {
-        to->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
-        memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *              NtGetContextThread  (NTDLL.@)
  *              ZwGetContextThread  (NTDLL.@)
  *
@@ -1352,82 +1262,23 @@ NTSTATUS CDECL DECLSPEC_HIDDEN __regs_NtGetContextThread( DWORD edi, DWORD esi, 
                                                           DWORD ebp, DWORD retaddr, HANDLE handle,
                                                           CONTEXT *context )
 {
-    NTSTATUS ret;
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
-    BOOL self = (handle == GetCurrentThread());
 
-    /* debug registers require a server call */
-    if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
-
-    if (!self)
+    /* preset the registers that we got from the asm wrapper */
+    if (needed_flags & CONTEXT_INTEGER)
     {
-        context_t server_context;
-        unsigned int server_flags = get_server_context_flags( context->ContextFlags );
-
-        if ((ret = get_thread_context( handle, &server_context, server_flags, &self ))) return ret;
-        if ((ret = context_from_server( context, &server_context ))) return ret;
-        needed_flags &= ~context->ContextFlags;
+        context->Ebx = ebx;
+        context->Esi = esi;
+        context->Edi = edi;
     }
-
-    if (self)
+    if (needed_flags & CONTEXT_CONTROL)
     {
-        if (needed_flags & CONTEXT_INTEGER)
-        {
-            context->Eax = 0;
-            context->Ebx = ebx;
-            context->Ecx = 0;
-            context->Edx = 0;
-            context->Esi = esi;
-            context->Edi = edi;
-            context->ContextFlags |= CONTEXT_INTEGER;
-        }
-        if (needed_flags & CONTEXT_CONTROL)
-        {
-            context->Ebp    = ebp;
-            context->Esp    = (DWORD)&retaddr;
-            context->Eip    = *(&edi - 1);
-            context->SegCs  = get_cs();
-            context->SegSs  = get_ds();
-            context->EFlags = eflags;
-            context->ContextFlags |= CONTEXT_CONTROL;
-        }
-        if (needed_flags & CONTEXT_SEGMENTS)
-        {
-            context->SegDs = get_ds();
-            context->SegEs = get_ds();
-            context->SegFs = get_fs();
-            context->SegGs = get_gs();
-            context->ContextFlags |= CONTEXT_SEGMENTS;
-        }
-        if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
-        if (needed_flags & CONTEXT_EXTENDED_REGISTERS) save_fpux( context );
-        /* FIXME: xstate */
-        /* update the cached version of the debug registers */
-        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
-        {
-            x86_thread_data()->dr0 = context->Dr0;
-            x86_thread_data()->dr1 = context->Dr1;
-            x86_thread_data()->dr2 = context->Dr2;
-            x86_thread_data()->dr3 = context->Dr3;
-            x86_thread_data()->dr6 = context->Dr6;
-            x86_thread_data()->dr7 = context->Dr7;
-        }
+        context->Ebp    = ebp;
+        context->Esp    = (DWORD)&retaddr;
+        context->Eip    = *(&edi - 1);
+        context->EFlags = eflags;
     }
-
-    if (context->ContextFlags & (CONTEXT_INTEGER & ~CONTEXT_i386))
-        TRACE( "%p: eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n", handle,
-               context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
-    if (context->ContextFlags & (CONTEXT_CONTROL & ~CONTEXT_i386))
-        TRACE( "%p: ebp=%08x esp=%08x eip=%08x cs=%04x ss=%04x flags=%08x\n", handle,
-               context->Ebp, context->Esp, context->Eip, context->SegCs, context->SegSs, context->EFlags );
-    if (context->ContextFlags & (CONTEXT_SEGMENTS & ~CONTEXT_i386))
-        TRACE( "%p: ds=%04x es=%04x fs=%04x gs=%04x\n", handle,
-               context->SegDs, context->SegEs, context->SegFs, context->SegGs );
-    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
-        TRACE( "%p: dr0=%08x dr1=%08x dr2=%08x dr3=%08x dr6=%08x dr7=%08x\n", handle,
-               context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
-
-    return STATUS_SUCCESS;
+    return unix_funcs->NtGetContextThread( handle, context );
 }
 __ASM_STDCALL_FUNC( NtGetContextThread, 8,
                     "pushl %ebp\n\t"

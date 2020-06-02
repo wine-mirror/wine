@@ -986,6 +986,7 @@ static struct unix_funcs unix_funcs =
     NtClose,
     NtCurrentTeb,
     NtDuplicateObject,
+    NtGetContextThread,
     NtSetContextThread,
     NtSetLdtEntries,
     get_main_args,
