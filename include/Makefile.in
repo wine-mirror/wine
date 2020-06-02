@@ -188,6 +188,7 @@ SOURCES = \
 	ddk/wdm.h \
 	ddk/winddiui.h \
 	ddk/winsplp.h \
+	ddk/wsk.h \
 	ddraw.h \
 	ddrawgdi.h \
 	ddrawi.h \
