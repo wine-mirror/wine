@@ -76,6 +76,8 @@ struct media_engine
     IMFDXGIDeviceManager *dxgi_manager;
     enum media_engine_mode mode;
     unsigned int flags;
+    double playback_rate;
+    double default_playback_rate;
     IMFMediaSession *session;
     CRITICAL_SECTION cs;
 };
@@ -344,30 +346,70 @@ static BOOL WINAPI media_engine_IsPaused(IMFMediaEngine *iface)
 
 static double WINAPI media_engine_GetDefaultPlaybackRate(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    double rate;
 
-    return 0.0;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    rate = engine->default_playback_rate;
+    LeaveCriticalSection(&engine->cs);
+
+    return rate;
 }
 
 static HRESULT WINAPI media_engine_SetDefaultPlaybackRate(IMFMediaEngine *iface, double rate)
 {
-    FIXME("(%p, %f): stub.\n", iface, rate);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %f.\n", iface, rate);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (engine->default_playback_rate != rate)
+    {
+        engine->default_playback_rate = rate;
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_RATECHANGE, 0, 0);
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static double WINAPI media_engine_GetPlaybackRate(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    double rate;
 
-    return 0.0;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    rate = engine->playback_rate;
+    LeaveCriticalSection(&engine->cs);
+
+    return rate;
 }
 
 static HRESULT WINAPI media_engine_SetPlaybackRate(IMFMediaEngine *iface, double rate)
 {
-    FIXME("(%p, %f): stub.\n", iface, rate);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %f.\n", iface, rate);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (engine->playback_rate != rate)
+    {
+        engine->playback_rate = rate;
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_RATECHANGE, 0, 0);
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetPlayed(IMFMediaEngine *iface, IMFMediaTimeRange **played)
@@ -672,6 +714,8 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->session_events.lpVtbl = &media_engine_session_events_vtbl;
     engine->refcount = 1;
     engine->flags = (flags & MF_MEDIA_ENGINE_CREATEFLAGS_MASK) | FLAGS_ENGINE_PAUSED;
+    engine->default_playback_rate = 1.0;
+    engine->playback_rate = 1.0;
     InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,

@@ -310,15 +310,12 @@ todo_wine
     ok(!!state, "Unexpected state %d.\n", state);
 
     val = IMFMediaEngine_GetDefaultPlaybackRate(media_engine);
-todo_wine
     ok(val == 1.0, "Unexpected rate %f.\n", val);
 
     hr = IMFMediaEngine_SetDefaultPlaybackRate(media_engine, 2.0);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     val = IMFMediaEngine_GetPlaybackRate(media_engine);
-todo_wine
     ok(val == 1.0, "Unexpected rate %f.\n", val);
 
     hr = IMFMediaEngine_GetPlayed(media_engine, &time_range);
@@ -440,6 +437,34 @@ static void test_Play(void)
     IMFMediaEngine_Release(media_engine);
 }
 
+static void test_playback_rate(void)
+{
+    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    IMFMediaEngine *media_engine;
+    double rate;
+    HRESULT hr;
+
+    media_engine = create_media_engine(callback);
+
+    rate = IMFMediaEngine_GetDefaultPlaybackRate(media_engine);
+    ok(rate == 1.0, "Unexpected default rate.\n");
+
+    rate = IMFMediaEngine_GetPlaybackRate(media_engine);
+    ok(rate == 1.0, "Unexpected default rate.\n");
+
+    hr = IMFMediaEngine_SetPlaybackRate(media_engine, 0.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    rate = IMFMediaEngine_GetPlaybackRate(media_engine);
+    ok(rate == 0.0, "Unexpected default rate.\n");
+
+    hr = IMFMediaEngine_SetDefaultPlaybackRate(media_engine, 0.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaEngine_Release(media_engine);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -464,6 +489,7 @@ START_TEST(mfmediaengine)
     test_CreateInstance();
     test_Shutdown();
     test_Play();
+    test_playback_rate();
 
     IMFMediaEngineClassFactory_Release(factory);
 
