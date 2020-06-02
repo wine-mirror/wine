@@ -4405,6 +4405,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
 {
     unsigned int last_num_lookups = 0, stage, script_feature_count = 0;
     UINT16 total_feature_count, total_lookup_count;
+    struct shaping_feature required_feature = { 0 };
     const struct ot_feature_list *feature_list;
     const struct ot_langsys *langsys = NULL;
     struct shaping_feature *feature;
@@ -4455,6 +4456,12 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     if (!feature_list)
         return;
 
+    /* Required feature. */
+    required_feature.index = langsys ? GET_BE_WORD(langsys->required_feature_index) : 0xffff;
+    if (required_feature.index < total_feature_count)
+        required_feature.tag = feature_list->features[required_feature.index].tag;
+    required_feature.mask = global_bit_mask;
+
     context->global_mask = global_bit_mask;
     next_bit = global_bit_shift + 1;
     for (i = 0; i < features->count; ++i)
@@ -4473,6 +4480,9 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
 
         if (!feature->max_value || next_bit + bits_needed > 8 * sizeof (feature->mask))
             continue;
+
+        if (required_feature.tag == feature->tag)
+            required_feature.stage = feature->stage;
 
         for (j = 0; j < script_feature_count; ++j)
         {
@@ -4517,6 +4527,9 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
 
     for (stage = 0; stage <= features->stage; ++stage)
     {
+        if (required_feature.index != 0xffff && required_feature.stage == stage)
+            opentype_layout_add_lookups(feature_list, total_lookup_count, table, &required_feature, lookups);
+
         for (i = 0; i < features->count; ++i)
         {
             if (features->features[i].stage == stage)
