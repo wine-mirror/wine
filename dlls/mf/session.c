@@ -2867,6 +2867,23 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             LeaveCriticalSection(&session->cs);
 
             break;
+
+        case MEBufferingStarted:
+        case MEBufferingStopped:
+
+            EnterCriticalSection(&session->cs);
+            if (session_get_media_source(session, (IMFMediaSource *)event_source))
+            {
+                if (event_type == MEBufferingStarted)
+                    IMFPresentationClock_Pause(session->clock);
+                else
+                    IMFPresentationClock_Start(session->clock, PRESENTATION_CURRENT_POSITION);
+
+                IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+            }
+            LeaveCriticalSection(&session->cs);
+            break;
+
         case MENewStream:
             stream = (IMFMediaStream *)value.punkVal;
 
