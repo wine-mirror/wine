@@ -1,0 +1,7 @@
+MODULE    = netio.sys
+IMPORTLIB = netio
+IMPORTS   = ntoskrnl
+EXTRADLLFLAGS = -mno-cygwin -Wl,--subsystem,native
+
+C_SRCS = \
+	netio.c

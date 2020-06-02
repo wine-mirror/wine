@@ -2617,6 +2617,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,ksecdd.sys,-
 12,,mountmgr.sys,-
 12,,ndis.sys,-
+12,,netio.sys,-
 12,,scsiport.sys,-
 12,,tdi.sys,-
 12,,usbd.sys,-
@@ -2673,6 +2674,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,ksecdd.sys
 12,,mountmgr.sys
 12,,ndis.sys
+12,,netio.sys
 12,,scsiport.sys
 12,,tdi.sys
 12,,usbd.sys

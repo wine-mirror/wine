@@ -1489,6 +1489,7 @@ enable_nddeapi
 enable_ndis_sys
 enable_netapi32
 enable_netcfgx
+enable_netio_sys
 enable_netprofm
 enable_newdev
 enable_ninput
@@ -20930,6 +20931,7 @@ wine_fn_config_makefile dlls/netapi32 enable_netapi32
 wine_fn_config_makefile dlls/netapi32/tests enable_tests
 wine_fn_config_makefile dlls/netcfgx enable_netcfgx
 wine_fn_config_makefile dlls/netcfgx/tests enable_tests
+wine_fn_config_makefile dlls/netio.sys enable_netio_sys
 wine_fn_config_makefile dlls/netprofm enable_netprofm
 wine_fn_config_makefile dlls/netprofm/tests enable_tests
 wine_fn_config_makefile dlls/newdev enable_newdev
