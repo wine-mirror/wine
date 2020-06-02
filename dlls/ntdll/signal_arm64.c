@@ -361,55 +361,6 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
 }
 
 /***********************************************************************
- *           context_to_server
- *
- * Convert a register context to the server format.
- */
-NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
-{
-    DWORD i, flags = from->ContextFlags & ~CONTEXT_ARM64;  /* get rid of CPU id */
-
-    memset( to, 0, sizeof(*to) );
-    to->cpu = CPU_ARM64;
-
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->flags |= SERVER_CTX_CONTROL;
-        to->integer.arm64_regs.x[29] = from->u.s.Fp;
-        to->integer.arm64_regs.x[30] = from->u.s.Lr;
-        to->ctl.arm64_regs.sp     = from->Sp;
-        to->ctl.arm64_regs.pc     = from->Pc;
-        to->ctl.arm64_regs.pstate = from->Cpsr;
-    }
-    if (flags & CONTEXT_INTEGER)
-    {
-        to->flags |= SERVER_CTX_INTEGER;
-        for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->u.X[i];
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        to->flags |= SERVER_CTX_FLOATING_POINT;
-        for (i = 0; i < 32; i++)
-        {
-            to->fp.arm64_regs.q[i].low = from->V[i].s.Low;
-            to->fp.arm64_regs.q[i].high = from->V[i].s.High;
-        }
-        to->fp.arm64_regs.fpcr = from->Fpcr;
-        to->fp.arm64_regs.fpsr = from->Fpsr;
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
-        for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bcr[i] = from->Bcr[i];
-        for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bvr[i] = from->Bvr[i];
-        for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wcr[i] = from->Wcr[i];
-        for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wvr[i] = from->Wvr[i];
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *           context_from_server
  *
  * Convert a register context from the server format.
@@ -456,29 +407,6 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
     }
     return STATUS_SUCCESS;
 }
-
-/***********************************************************************
- *              NtSetContextThread  (NTDLL.@)
- *              ZwSetContextThread  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
-{
-    NTSTATUS ret = STATUS_SUCCESS;
-    BOOL self = (handle == GetCurrentThread());
-
-    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_ARM64)))
-        self = FALSE;
-
-    if (!self)
-    {
-        context_t server_context;
-        context_to_server( &server_context, context );
-        ret = set_thread_context( handle, &server_context, &self );
-    }
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
-    return ret;
-}
-
 
 /***********************************************************************
  *              NtGetContextThread  (NTDLL.@)

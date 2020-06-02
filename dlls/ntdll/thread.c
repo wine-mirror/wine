@@ -767,6 +767,16 @@ NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int fla
 }
 
 
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    return unix_funcs->NtSetContextThread( handle, context );
+}
+
+
 /******************************************************************************
  *           NtSetLdtEntries   (NTDLL.@)
  *           ZwSetLdtEntries   (NTDLL.@)

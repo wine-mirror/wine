@@ -67,6 +67,17 @@ static pthread_key_t teb_key;
 
 
 /***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context.
+ */
+static void set_cpu_context( const CONTEXT *context )
+{
+    FIXME("not implemented\n");
+}
+
+
+/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -265,6 +276,23 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Fpscr = from->fp.powerpc_regs.fpscr;
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret;
+    BOOL self;
+    context_t server_context;
+
+    context_to_server( &server_context, context );
+    ret = set_thread_context( handle, &server_context, &self );
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 

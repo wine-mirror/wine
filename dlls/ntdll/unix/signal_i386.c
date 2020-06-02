@@ -61,6 +61,34 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(seh);
+
+/* not defined for x86, so copy the x86_64 definition */
+typedef struct DECLSPEC_ALIGN(16) _M128A
+{
+    ULONGLONG Low;
+    LONGLONG High;
+} M128A;
+
+typedef struct
+{
+    WORD ControlWord;
+    WORD StatusWord;
+    BYTE TagWord;
+    BYTE Reserved1;
+    WORD ErrorOpcode;
+    DWORD ErrorOffset;
+    WORD ErrorSelector;
+    WORD Reserved2;
+    DWORD DataOffset;
+    WORD DataSelector;
+    WORD Reserved3;
+    DWORD MxCsr;
+    DWORD MxCsr_Mask;
+    M128A FloatRegisters[8];
+    M128A XmmRegisters[16];
+    BYTE Reserved4[96];
+} XMM_SAVE_AREA32;
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -152,6 +180,11 @@ struct x86_thread_data
 C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
 
+static inline struct x86_thread_data *x86_thread_data(void)
+{
+    return (struct x86_thread_data *)NtCurrentTeb()->SystemReserved2;
+}
+
 static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
 static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }
 static inline WORD get_fs(void) { WORD res; __asm__( "movw %%fs,%0" : "=r" (res) ); return res; }
@@ -165,6 +198,134 @@ static inline void set_fs( WORD val ) { __asm__( "mov %0,%%fs" :: "r" (val)); }
 static inline int is_gdt_sel( WORD sel )
 {
     return !(sel & 4);
+}
+
+
+/***********************************************************************
+ *           restore_fpu
+ *
+ * Restore the FPU context to a sigcontext.
+ */
+static inline void restore_fpu( const CONTEXT *context )
+{
+    FLOATING_SAVE_AREA float_status = context->FloatSave;
+    /* reset the current interrupt status */
+    float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
+    __asm__ __volatile__( "frstor %0; fwait" : : "m" (float_status) );
+}
+
+
+/***********************************************************************
+ *           restore_fpux
+ *
+ * Restore the FPU extended context to a sigcontext.
+ */
+static inline void restore_fpux( const CONTEXT *context )
+{
+    /* we have to enforce alignment by hand */
+    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
+    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
+
+    memcpy( state, context->ExtendedRegisters, sizeof(*state) );
+    /* reset the current interrupt status */
+    state->StatusWord &= state->ControlWord | 0xff80;
+    __asm__ __volatile__( "fxrstor %0" : : "m" (*state) );
+}
+
+
+/***********************************************************************
+ *           set_full_cpu_context
+ *
+ * Set the new CPU context.
+ */
+extern void set_full_cpu_context( const CONTEXT *context );
+__ASM_GLOBAL_FUNC( set_full_cpu_context,
+                   "movl 4(%esp),%ecx\n\t"
+                   "movw 0x8c(%ecx),%gs\n\t"  /* SegGs */
+                   "movw 0x90(%ecx),%fs\n\t"  /* SegFs */
+                   "movw 0x94(%ecx),%es\n\t"  /* SegEs */
+                   "movl 0x9c(%ecx),%edi\n\t" /* Edi */
+                   "movl 0xa0(%ecx),%esi\n\t" /* Esi */
+                   "movl 0xa4(%ecx),%ebx\n\t" /* Ebx */
+                   "movl 0xb4(%ecx),%ebp\n\t" /* Ebp */
+                   "movw %ss,%ax\n\t"
+                   "cmpw 0xc8(%ecx),%ax\n\t"  /* SegSs */
+                   "jne 1f\n\t"
+                   /* As soon as we have switched stacks the context structure could
+                    * be invalid (when signal handlers are executed for example). Copy
+                    * values on the target stack before changing ESP. */
+                   "movl 0xc4(%ecx),%eax\n\t" /* Esp */
+                   "leal -4*4(%eax),%eax\n\t"
+                   "movl 0xc0(%ecx),%edx\n\t" /* EFlags */
+                   "movl %edx,3*4(%eax)\n\t"
+                   "movl 0xbc(%ecx),%edx\n\t" /* SegCs */
+                   "movl %edx,2*4(%eax)\n\t"
+                   "movl 0xb8(%ecx),%edx\n\t" /* Eip */
+                   "movl %edx,1*4(%eax)\n\t"
+                   "movl 0xb0(%ecx),%edx\n\t" /* Eax */
+                   "movl %edx,0*4(%eax)\n\t"
+                   "pushl 0x98(%ecx)\n\t"     /* SegDs */
+                   "movl 0xa8(%ecx),%edx\n\t" /* Edx */
+                   "movl 0xac(%ecx),%ecx\n\t" /* Ecx */
+                   "popl %ds\n\t"
+                   "movl %eax,%esp\n\t"
+                   "popl %eax\n\t"
+                   "iret\n"
+                   /* Restore the context when the stack segment changes. We can't use
+                    * the same code as above because we do not know if the stack segment
+                    * is 16 or 32 bit, and 'movl' will throw an exception when we try to
+                    * access memory above the limit. */
+                   "1:\n\t"
+                   "movl 0xa8(%ecx),%edx\n\t" /* Edx */
+                   "movl 0xb0(%ecx),%eax\n\t" /* Eax */
+                   "movw 0xc8(%ecx),%ss\n\t"  /* SegSs */
+                   "movl 0xc4(%ecx),%esp\n\t" /* Esp */
+                   "pushl 0xc0(%ecx)\n\t"     /* EFlags */
+                   "pushl 0xbc(%ecx)\n\t"     /* SegCs */
+                   "pushl 0xb8(%ecx)\n\t"     /* Eip */
+                   "pushl 0x98(%ecx)\n\t"     /* SegDs */
+                   "movl 0xac(%ecx),%ecx\n\t" /* Ecx */
+                   "popl %ds\n\t"
+                   "iret" )
+
+
+/***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context. Used by NtSetContextThread.
+ */
+void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
+{
+    DWORD flags = context->ContextFlags & ~CONTEXT_i386;
+
+    if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
+    else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
+
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        x86_thread_data()->dr0 = context->Dr0;
+        x86_thread_data()->dr1 = context->Dr1;
+        x86_thread_data()->dr2 = context->Dr2;
+        x86_thread_data()->dr3 = context->Dr3;
+        x86_thread_data()->dr6 = context->Dr6;
+        x86_thread_data()->dr7 = context->Dr7;
+    }
+    if (flags & CONTEXT_FULL)
+    {
+        if (!(flags & CONTEXT_CONTROL))
+            FIXME( "setting partial context (%x) not supported\n", flags );
+        else if (flags & CONTEXT_SEGMENTS)
+            set_full_cpu_context( context );
+        else
+        {
+            CONTEXT newcontext = *context;
+            newcontext.SegDs = get_ds();
+            newcontext.SegEs = get_ds();
+            newcontext.SegFs = get_fs();
+            newcontext.SegGs = get_gs();
+            set_full_cpu_context( &newcontext );
+        }
+    }
 }
 
 
@@ -307,6 +468,36 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+    BOOL self = (handle == GetCurrentThread());
+
+    /* debug registers require a server call */
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
+        self = (x86_thread_data()->dr0 == context->Dr0 &&
+                x86_thread_data()->dr1 == context->Dr1 &&
+                x86_thread_data()->dr2 == context->Dr2 &&
+                x86_thread_data()->dr3 == context->Dr3 &&
+                x86_thread_data()->dr6 == context->Dr6 &&
+                x86_thread_data()->dr7 == context->Dr7);
+
+    if (!self)
+    {
+        context_t server_context;
+        context_to_server( &server_context, context );
+        ret = set_thread_context( handle, &server_context, &self );
+    }
+
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 

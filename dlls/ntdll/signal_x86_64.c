@@ -1967,73 +1967,6 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
 
 
 /***********************************************************************
- *           context_to_server
- *
- * Convert a register context to the server format.
- */
-NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
-{
-    DWORD flags = from->ContextFlags & ~CONTEXT_AMD64;  /* get rid of CPU id */
-
-    memset( to, 0, sizeof(*to) );
-    to->cpu = CPU_x86_64;
-
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->flags |= SERVER_CTX_CONTROL;
-        to->ctl.x86_64_regs.rbp   = from->Rbp;
-        to->ctl.x86_64_regs.rip   = from->Rip;
-        to->ctl.x86_64_regs.rsp   = from->Rsp;
-        to->ctl.x86_64_regs.cs    = from->SegCs;
-        to->ctl.x86_64_regs.ss    = from->SegSs;
-        to->ctl.x86_64_regs.flags = from->EFlags;
-    }
-    if (flags & CONTEXT_INTEGER)
-    {
-        to->flags |= SERVER_CTX_INTEGER;
-        to->integer.x86_64_regs.rax = from->Rax;
-        to->integer.x86_64_regs.rcx = from->Rcx;
-        to->integer.x86_64_regs.rdx = from->Rdx;
-        to->integer.x86_64_regs.rbx = from->Rbx;
-        to->integer.x86_64_regs.rsi = from->Rsi;
-        to->integer.x86_64_regs.rdi = from->Rdi;
-        to->integer.x86_64_regs.r8  = from->R8;
-        to->integer.x86_64_regs.r9  = from->R9;
-        to->integer.x86_64_regs.r10 = from->R10;
-        to->integer.x86_64_regs.r11 = from->R11;
-        to->integer.x86_64_regs.r12 = from->R12;
-        to->integer.x86_64_regs.r13 = from->R13;
-        to->integer.x86_64_regs.r14 = from->R14;
-        to->integer.x86_64_regs.r15 = from->R15;
-    }
-    if (flags & CONTEXT_SEGMENTS)
-    {
-        to->flags |= SERVER_CTX_SEGMENTS;
-        to->seg.x86_64_regs.ds = from->SegDs;
-        to->seg.x86_64_regs.es = from->SegEs;
-        to->seg.x86_64_regs.fs = from->SegFs;
-        to->seg.x86_64_regs.gs = from->SegGs;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        to->flags |= SERVER_CTX_FLOATING_POINT;
-        memcpy( to->fp.x86_64_regs.fpregs, &from->u.FltSave, sizeof(to->fp.x86_64_regs.fpregs) );
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
-        to->debug.x86_64_regs.dr0 = from->Dr0;
-        to->debug.x86_64_regs.dr1 = from->Dr1;
-        to->debug.x86_64_regs.dr2 = from->Dr2;
-        to->debug.x86_64_regs.dr3 = from->Dr3;
-        to->debug.x86_64_regs.dr6 = from->Dr6;
-        to->debug.x86_64_regs.dr7 = from->Dr7;
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *           context_from_server
  *
  * Convert a register context from the server format.
@@ -2097,35 +2030,6 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Dr7 = from->debug.x86_64_regs.dr7;
     }
     return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
- *              NtSetContextThread  (NTDLL.@)
- *              ZwSetContextThread  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
-{
-    NTSTATUS ret = STATUS_SUCCESS;
-    BOOL self = (handle == GetCurrentThread());
-
-    /* debug registers require a server call */
-    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)))
-        self = (amd64_thread_data()->dr0 == context->Dr0 &&
-                amd64_thread_data()->dr1 == context->Dr1 &&
-                amd64_thread_data()->dr2 == context->Dr2 &&
-                amd64_thread_data()->dr3 == context->Dr3 &&
-                amd64_thread_data()->dr6 == context->Dr6 &&
-                amd64_thread_data()->dr7 == context->Dr7);
-
-    if (!self)
-    {
-        context_t server_context;
-        context_to_server( &server_context, context );
-        ret = set_thread_context( handle, &server_context, &self );
-    }
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
-    return ret;
 }
 
 

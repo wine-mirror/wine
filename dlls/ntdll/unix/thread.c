@@ -148,3 +148,23 @@ void CDECL exit_process( int status )
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     signal_exit_thread( get_unix_exit_code( status ), exit );
 }
+
+
+/***********************************************************************
+ *              set_thread_context
+ */
+NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( set_thread_context )
+    {
+        req->handle  = wine_server_obj_handle( handle );
+        wine_server_add_data( req, context, sizeof(*context) );
+        ret = wine_server_call( req );
+        *self = reply->self;
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}

@@ -261,17 +261,6 @@ void WINAPI RtlCaptureContext( CONTEXT *context )
 
 
 /***********************************************************************
- *           set_cpu_context
- *
- * Set the new CPU context.
- */
-static void set_cpu_context( const CONTEXT *context )
-{
-    FIXME("not implemented\n");
-}
-
-
-/***********************************************************************
  *           get_server_context_flags
  *
  * Convert CPU-specific flags to generic server flags
@@ -382,108 +371,6 @@ static void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
 
 
 /***********************************************************************
- *           context_to_server
- *
- * Convert a register context to the server format.
- */
-NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
-{
-    DWORD flags = from->ContextFlags;  /* no CPU id? */
-
-    memset( to, 0, sizeof(*to) );
-    to->cpu = CPU_POWERPC;
-
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->flags |= SERVER_CTX_CONTROL;
-        to->ctl.powerpc_regs.iar   = from->Iar;
-        to->ctl.powerpc_regs.msr   = from->Msr;
-        to->ctl.powerpc_regs.ctr   = from->Ctr;
-        to->ctl.powerpc_regs.lr    = from->Lr;
-        to->ctl.powerpc_regs.dar   = from->Dar;
-        to->ctl.powerpc_regs.dsisr = from->Dsisr;
-        to->ctl.powerpc_regs.trap  = from->Trap;
-    }
-    if (flags & CONTEXT_INTEGER)
-    {
-        to->flags |= SERVER_CTX_INTEGER;
-        to->integer.powerpc_regs.gpr[0]  = from->Gpr0;
-        to->integer.powerpc_regs.gpr[1]  = from->Gpr1;
-        to->integer.powerpc_regs.gpr[2]  = from->Gpr2;
-        to->integer.powerpc_regs.gpr[3]  = from->Gpr3;
-        to->integer.powerpc_regs.gpr[4]  = from->Gpr4;
-        to->integer.powerpc_regs.gpr[5]  = from->Gpr5;
-        to->integer.powerpc_regs.gpr[6]  = from->Gpr6;
-        to->integer.powerpc_regs.gpr[7]  = from->Gpr7;
-        to->integer.powerpc_regs.gpr[8]  = from->Gpr8;
-        to->integer.powerpc_regs.gpr[9]  = from->Gpr9;
-        to->integer.powerpc_regs.gpr[10] = from->Gpr10;
-        to->integer.powerpc_regs.gpr[11] = from->Gpr11;
-        to->integer.powerpc_regs.gpr[12] = from->Gpr12;
-        to->integer.powerpc_regs.gpr[13] = from->Gpr13;
-        to->integer.powerpc_regs.gpr[14] = from->Gpr14;
-        to->integer.powerpc_regs.gpr[15] = from->Gpr15;
-        to->integer.powerpc_regs.gpr[16] = from->Gpr16;
-        to->integer.powerpc_regs.gpr[17] = from->Gpr17;
-        to->integer.powerpc_regs.gpr[18] = from->Gpr18;
-        to->integer.powerpc_regs.gpr[19] = from->Gpr19;
-        to->integer.powerpc_regs.gpr[20] = from->Gpr20;
-        to->integer.powerpc_regs.gpr[21] = from->Gpr21;
-        to->integer.powerpc_regs.gpr[22] = from->Gpr22;
-        to->integer.powerpc_regs.gpr[23] = from->Gpr23;
-        to->integer.powerpc_regs.gpr[24] = from->Gpr24;
-        to->integer.powerpc_regs.gpr[25] = from->Gpr25;
-        to->integer.powerpc_regs.gpr[26] = from->Gpr26;
-        to->integer.powerpc_regs.gpr[27] = from->Gpr27;
-        to->integer.powerpc_regs.gpr[28] = from->Gpr28;
-        to->integer.powerpc_regs.gpr[29] = from->Gpr29;
-        to->integer.powerpc_regs.gpr[30] = from->Gpr30;
-        to->integer.powerpc_regs.gpr[31] = from->Gpr31;
-        to->integer.powerpc_regs.xer     = from->Xer;
-        to->integer.powerpc_regs.cr      = from->Cr;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        to->flags |= SERVER_CTX_FLOATING_POINT;
-        to->fp.powerpc_regs.fpr[0]  = from->Fpr0;
-        to->fp.powerpc_regs.fpr[1]  = from->Fpr1;
-        to->fp.powerpc_regs.fpr[2]  = from->Fpr2;
-        to->fp.powerpc_regs.fpr[3]  = from->Fpr3;
-        to->fp.powerpc_regs.fpr[4]  = from->Fpr4;
-        to->fp.powerpc_regs.fpr[5]  = from->Fpr5;
-        to->fp.powerpc_regs.fpr[6]  = from->Fpr6;
-        to->fp.powerpc_regs.fpr[7]  = from->Fpr7;
-        to->fp.powerpc_regs.fpr[8]  = from->Fpr8;
-        to->fp.powerpc_regs.fpr[9]  = from->Fpr9;
-        to->fp.powerpc_regs.fpr[10] = from->Fpr10;
-        to->fp.powerpc_regs.fpr[11] = from->Fpr11;
-        to->fp.powerpc_regs.fpr[12] = from->Fpr12;
-        to->fp.powerpc_regs.fpr[13] = from->Fpr13;
-        to->fp.powerpc_regs.fpr[14] = from->Fpr14;
-        to->fp.powerpc_regs.fpr[15] = from->Fpr15;
-        to->fp.powerpc_regs.fpr[16] = from->Fpr16;
-        to->fp.powerpc_regs.fpr[17] = from->Fpr17;
-        to->fp.powerpc_regs.fpr[18] = from->Fpr18;
-        to->fp.powerpc_regs.fpr[19] = from->Fpr19;
-        to->fp.powerpc_regs.fpr[20] = from->Fpr20;
-        to->fp.powerpc_regs.fpr[21] = from->Fpr21;
-        to->fp.powerpc_regs.fpr[22] = from->Fpr22;
-        to->fp.powerpc_regs.fpr[23] = from->Fpr23;
-        to->fp.powerpc_regs.fpr[24] = from->Fpr24;
-        to->fp.powerpc_regs.fpr[25] = from->Fpr25;
-        to->fp.powerpc_regs.fpr[26] = from->Fpr26;
-        to->fp.powerpc_regs.fpr[27] = from->Fpr27;
-        to->fp.powerpc_regs.fpr[28] = from->Fpr28;
-        to->fp.powerpc_regs.fpr[29] = from->Fpr29;
-        to->fp.powerpc_regs.fpr[30] = from->Fpr30;
-        to->fp.powerpc_regs.fpr[31] = from->Fpr31;
-        to->fp.powerpc_regs.fpscr   = from->Fpscr;
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *           context_from_server
  *
  * Convert a register context from the server format.
@@ -580,23 +467,6 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         to->Fpscr = from->fp.powerpc_regs.fpscr;
     }
     return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
- *              NtSetContextThread  (NTDLL.@)
- *              ZwSetContextThread  (NTDLL.@)
- */
-NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
-{
-    NTSTATUS ret;
-    BOOL self;
-    context_t server_context;
-
-    context_to_server( &server_context, context );
-    ret = set_thread_context( handle, &server_context, &self );
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
-    return ret;
 }
 
 

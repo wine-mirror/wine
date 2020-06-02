@@ -70,6 +70,27 @@ static pthread_key_t teb_key;
 
 
 /***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context.
+ */
+void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context );
+__ASM_GLOBAL_FUNC( set_cpu_context,
+                   ".arm\n\t"
+                   "ldr r2, [r0, #0x44]\n\t"  /* context->Cpsr */
+                   "tst r2, #0x20\n\t"        /* thumb? */
+                   "ldr r1, [r0, #0x40]\n\t"  /* context->Pc */
+                   "orrne r1, r1, #1\n\t"     /* Adjust PC according to thumb */
+                   "biceq r1, r1, #1\n\t"     /* Adjust PC according to arm */
+                   "msr CPSR_f, r2\n\t"
+                   "ldr lr, [r0, #0x3c]\n\t"  /* context->Lr */
+                   "ldr sp, [r0, #0x38]\n\t"  /* context->Sp */
+                   "push {r1}\n\t"
+                   "ldmib r0, {r0-r12}\n\t"   /* context->R0..R12 */
+                   "pop {pc}" )
+
+
+/***********************************************************************
  *           context_to_server
  *
  * Convert a register context to the server format.
@@ -176,6 +197,23 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm_regs.wcr[i];
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret;
+    BOOL self;
+    context_t server_context;
+
+    context_to_server( &server_context, context );
+    ret = set_thread_context( handle, &server_context, &self );
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 

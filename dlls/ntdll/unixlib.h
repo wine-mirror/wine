@@ -27,7 +27,7 @@
 struct ldt_copy;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 13
+#define NTDLL_UNIXLIB_VERSION 14
 
 struct unix_funcs
 {
@@ -37,6 +37,7 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtDuplicateObject)( HANDLE source_process, HANDLE source,
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
+    NTSTATUS      (WINAPI *NtSetContextThread)( HANDLE handle, const CONTEXT *context );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
 
     /* environment functions */

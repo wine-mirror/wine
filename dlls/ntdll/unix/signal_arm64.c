@@ -73,6 +73,31 @@ static pthread_key_t teb_key;
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
 
+struct arm64_thread_data
+{
+    void     *exit_frame;    /* exit frame pointer */
+    CONTEXT  *context;       /* context to set with SIGUSR2 */
+};
+
+C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
+C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x300 );
+
+static inline struct arm64_thread_data *arm64_thread_data(void)
+{
+    return (struct arm64_thread_data *)NtCurrentTeb()->SystemReserved2;
+}
+
+
+/***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context.
+ */
+static void set_cpu_context( const CONTEXT *context )
+{
+    InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
+    raise( SIGUSR2 );
+}
 
 /***********************************************************************
  *           context_to_server
@@ -169,6 +194,29 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm64_regs.wvr[i];
     }
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetContextThread  (NTDLL.@)
+ *              ZwSetContextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+    BOOL self = (handle == GetCurrentThread());
+
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_ARM64)))
+        self = FALSE;
+
+    if (!self)
+    {
+        context_t server_context;
+        context_to_server( &server_context, context );
+        ret = set_thread_context( handle, &server_context, &self );
+    }
+    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    return ret;
 }
 
 
