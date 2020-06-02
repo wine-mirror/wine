@@ -55,12 +55,34 @@ void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg), void *arg,
                                      int top_down ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
+                                           const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
+                                           ULONG protect, pe_image_info_t *image_info ) DECLSPEC_HIDDEN;
+extern void CDECL virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL virtual_create_builtin_view( void *module ) DECLSPEC_HIDDEN;
+extern TEB * CDECL virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
+extern void CDECL virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack ) DECLSPEC_HIDDEN;
+extern unsigned int CDECL virtual_locked_server_call( void *req_ptr ) DECLSPEC_HIDDEN;
+extern ssize_t CDECL virtual_locked_read( int fd, void *addr, size_t size ) DECLSPEC_HIDDEN;
+extern ssize_t CDECL virtual_locked_pread( int fd, void *addr, size_t size, off_t offset ) DECLSPEC_HIDDEN;
+extern ssize_t CDECL virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags ) DECLSPEC_HIDDEN;
+extern BOOL CDECL virtual_is_valid_code_address( const void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
+extern int CDECL virtual_handle_stack_fault( void *addr ) DECLSPEC_HIDDEN;
+extern BOOL CDECL virtual_check_buffer_for_read( const void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL virtual_check_buffer_for_write( void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
+extern SIZE_T CDECL virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;
+extern void CDECL virtual_set_force_exec( BOOL enable ) DECLSPEC_HIDDEN;
+extern void CDECL virtual_release_address_space(void) DECLSPEC_HIDDEN;
+extern void CDECL virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
 
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 
 extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
 
-extern unsigned int CDECL server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern unsigned int CDECL server_select( const select_op_t *select_op, data_size_t size, UINT flags,
                                          timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
                                          user_apc_t *user_apc ) DECLSPEC_HIDDEN;
@@ -82,8 +104,6 @@ extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
 extern size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int *cpus,
                                         BOOL *wow64, timeout_t *start_time ) DECLSPEC_HIDDEN;
 extern void CDECL init_threading( int *nb_threads, struct ldt_copy **ldt_copy ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;
-extern void CDECL free_thread( TEB *teb ) DECLSPEC_HIDDEN;
 extern void CDECL init_thread( TEB *teb ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
@@ -93,10 +113,12 @@ extern NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
+extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
 
+extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;

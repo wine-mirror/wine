@@ -466,7 +466,7 @@ static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status
         {
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
-            status = virtual_locked_server_call( req );
+            status = unix_funcs->virtual_locked_server_call( req );
             information = reply->size;
         }
         SERVER_END_REQ;
@@ -546,7 +546,7 @@ static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb, NTSTAT
                                                       &needs_close, NULL, NULL )))
             break;
 
-        result = virtual_locked_read(fd, &fileio->buffer[fileio->already], fileio->count-fileio->already);
+        result = unix_funcs->virtual_locked_read(fd, &fileio->buffer[fileio->already], fileio->count-fileio->already);
         if (needs_close) close( fd );
 
         if (result < 0)
@@ -605,7 +605,7 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
         req->async = server_async( handle, &async->io, event, apc, apc_context, io );
         req->pos   = offset ? offset->QuadPart : 0;
         wine_server_set_reply( req, buffer, size );
-        status = virtual_locked_server_call( req );
+        status = unix_funcs->virtual_locked_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
         if (wait_handle && status != STATUS_PENDING)
@@ -866,7 +866,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                                              &needs_close, &type, &options );
     if (status && status != STATUS_BAD_DEVICE_TYPE) return status;
 
-    if (!virtual_check_buffer_for_write( buffer, length )) return STATUS_ACCESS_VIOLATION;
+    if (!unix_funcs->virtual_check_buffer_for_write( buffer, length )) return STATUS_ACCESS_VIOLATION;
 
     if (status == STATUS_BAD_DEVICE_TYPE)
         return server_read_file( hFile, hEvent, apc, apc_user, io_status, buffer, length, offset, key );
@@ -884,7 +884,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         if (offset && offset->QuadPart != FILE_USE_FILE_POINTER_POSITION)
         {
             /* async I/O doesn't make sense on regular files */
-            while ((result = virtual_locked_pread( unix_handle, buffer, length, offset->QuadPart )) == -1)
+            while ((result = unix_funcs->virtual_locked_pread( unix_handle, buffer, length, offset->QuadPart )) == -1)
             {
                 if (errno != EINTR)
                 {
@@ -926,7 +926,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
     for (;;)
     {
-        if ((result = virtual_locked_read( unix_handle, (char *)buffer + total, length - total )) >= 0)
+        if ((result = unix_funcs->virtual_locked_read( unix_handle, (char *)buffer + total, length - total )) >= 0)
         {
             total += result;
             if (!result || total == length)
@@ -1243,7 +1243,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     async_write = !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
 
-    if (!virtual_check_buffer_for_read( buffer, length ))
+    if (!unix_funcs->virtual_check_buffer_for_read( buffer, length ))
     {
         status = STATUS_INVALID_USER_BUFFER;
         goto done;
@@ -1553,7 +1553,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         if ((code & 3) != METHOD_BUFFERED)
             wine_server_add_data( req, out_buffer, out_size );
         wine_server_set_reply( req, out_buffer, out_size );
-        status = virtual_locked_server_call( req );
+        status = unix_funcs->virtual_locked_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
         if (wait_handle && status != STATUS_PENDING)
@@ -3575,7 +3575,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
     enum server_fd_type type;
     int fd, needs_close;
 
-    if (!io || !virtual_check_buffer_for_write( io, sizeof(*io) )) return STATUS_ACCESS_VIOLATION;
+    if (!io || !unix_funcs->virtual_check_buffer_for_write( io, sizeof(*io) )) return STATUS_ACCESS_VIOLATION;
 
     ret = unix_funcs->server_get_unix_fd( hFile, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
     if (ret == STATUS_ACCESS_DENIED)

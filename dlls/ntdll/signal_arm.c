@@ -359,7 +359,7 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
         {
-            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
+            if (!(rec->ExceptionCode = unix_funcs->virtual_handle_fault( (void *)rec->ExceptionInformation[1],
                                                              rec->ExceptionInformation[0], FALSE )))
                 goto done;
         }
@@ -506,7 +506,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     /* check for page fault inside the thread stack */
     if (get_trap_code(signal, context) == TRAP_ARM_PAGEFLT)
     {
-        switch (virtual_handle_stack_fault( info->si_addr ))
+        switch (unix_funcs->virtual_handle_stack_fault( info->si_addr ))
         {
         case 1:  /* handled */
             return;

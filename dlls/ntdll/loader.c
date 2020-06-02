@@ -1874,7 +1874,7 @@ static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRIN
 
     if (!(wm = alloc_module( module, nt_name, TRUE ))) return STATUS_NO_MEMORY;
 
-    virtual_create_builtin_view( module );
+    unix_funcs->virtual_create_builtin_view( module );
 
     if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
         ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
@@ -2368,8 +2368,8 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm,
             NtUnmapViewOfSection( NtCurrentProcess(), *module );
             *module = NULL;
         }
-        status = virtual_map_section( mapping, module, 0, 0, NULL, &len,
-                                      0, PAGE_EXECUTE_READ, image_info );
+        status = unix_funcs->virtual_map_section( mapping, module, 0, 0, NULL, &len,
+                                                  0, PAGE_EXECUTE_READ, image_info );
         if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
         NtClose( mapping );
     }
@@ -3885,7 +3885,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
             }
         }
         attach_implicitly_loaded_dlls( context );
-        virtual_release_address_space();
+        unix_funcs->virtual_release_address_space();
         if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
         if (wm->so_handle) call_constructors( wm );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
@@ -4464,7 +4464,7 @@ void __wine_process_init(void)
         NtTerminateProcess( GetCurrentProcess(), status );
     }
 
-    virtual_set_large_address_space();
+    unix_funcs->virtual_set_large_address_space();
 
     /* the main exe needs to be the first in the load order list */
     RemoveEntryList( &wm->ldr.InLoadOrderLinks );
@@ -4472,7 +4472,7 @@ void __wine_process_init(void)
     RemoveEntryList( &wm->ldr.InMemoryOrderLinks );
     InsertHeadList( &peb->LdrData->InMemoryOrderModuleList, &wm->ldr.InMemoryOrderLinks );
 
-    virtual_alloc_thread_stack( &stack, 0, 0, NULL );
+    unix_funcs->virtual_alloc_thread_stack( &stack, 0, 0, NULL );
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;

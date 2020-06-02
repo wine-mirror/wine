@@ -370,7 +370,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             rec.NumberParameters = 2;
             rec.ExceptionInformation[0] = 0; /* FIXME ? */
             rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-            if (!(rec.ExceptionCode = virtual_handle_fault(siginfo->si_addr, rec.ExceptionInformation[0], FALSE)))
+            if (!(rec.ExceptionCode = unix_funcs->virtual_handle_fault(siginfo->si_addr, rec.ExceptionInformation[0], FALSE)))
                 goto done;
             break;
 	default:
@@ -393,7 +393,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             rec.NumberParameters = 2;
             rec.ExceptionInformation[0] = 0; /* FIXME ? */
             rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-            if (!(rec.ExceptionCode = virtual_handle_fault(siginfo->si_addr, rec.ExceptionInformation[0], FALSE)))
+            if (!(rec.ExceptionCode = unix_funcs->virtual_handle_fault(siginfo->si_addr, rec.ExceptionInformation[0], FALSE)))
                 goto done;
             break;
 #endif

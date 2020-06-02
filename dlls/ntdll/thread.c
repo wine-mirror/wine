@@ -244,10 +244,8 @@ TEB *thread_init(void)
 
     /* allocate and initialize the PEB and initial TEB */
 
-    teb = virtual_alloc_first_teb();
+    teb = unix_funcs->virtual_alloc_first_teb();
     unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy );
-    unix_funcs->alloc_thread( teb );
-    unix_funcs->init_thread( teb );
 
     peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
@@ -329,7 +327,7 @@ void WINAPI RtlExitUserThread( ULONG status )
         if (thread_data->pthread_id)
         {
             pthread_join( thread_data->pthread_id, NULL );
-            virtual_free_teb( teb );
+            unix_funcs->virtual_free_teb( teb );
         }
     }
 
@@ -464,7 +462,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
 
-    if ((status = virtual_alloc_teb( &teb ))) goto error;
+    if ((status = unix_funcs->virtual_alloc_teb( &teb ))) goto error;
 
     teb->ClientId.UniqueProcess = ULongToHandle(GetCurrentProcessId());
     teb->ClientId.UniqueThread  = ULongToHandle(tid);
@@ -487,7 +485,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     info->entry_point = start;
     info->entry_arg   = param;
 
-    if ((status = virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
+    if ((status = unix_funcs->virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
         goto error;
 
     teb->Tib.StackBase = stack.StackBase;
@@ -524,7 +522,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     return STATUS_SUCCESS;
 
 error:
-    if (teb) virtual_free_teb( teb );
+    if (teb) unix_funcs->virtual_free_teb( teb );
     if (handle) NtClose( handle );
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );

@@ -2566,7 +2566,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         {
             SYSTEM_BASIC_INFORMATION sbi;
 
-            virtual_get_system_info( &sbi );
+            unix_funcs->virtual_get_system_info( &sbi );
             len = sizeof(sbi);
 
             if ( Length == len)

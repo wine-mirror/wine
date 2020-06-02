@@ -1312,7 +1312,7 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     unsigned int i, len, prefix_count = 0;
 
     if (!ldt_is_system( context->SegCs )) return 0;
-    len = virtual_uninterrupted_read_memory( (BYTE *)context->Eip, instr, sizeof(instr) );
+    len = unix_funcs->virtual_uninterrupted_read_memory( (BYTE *)context->Eip, instr, sizeof(instr) );
 
     for (i = 0; i < len; i++) switch (instr[i])
     {
@@ -1380,7 +1380,7 @@ static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
     if (context->SegGs == system_gs) return FALSE;
     if (!ldt_is_system( context->SegCs )) return FALSE;
     /* only handle faults in system libraries */
-    if (virtual_is_valid_code_address( instr, 1 )) return FALSE;
+    if (unix_funcs->virtual_is_valid_code_address( instr, 1 )) return FALSE;
 
     for (;;) switch(*instr)
     {
@@ -1465,13 +1465,13 @@ static BOOL check_atl_thunk( ucontext_t *sigcontext, struct stack_layout *stack 
     union atl_thunk thunk_copy;
     SIZE_T thunk_len;
 
-    thunk_len = virtual_uninterrupted_read_memory( thunk, &thunk_copy, sizeof(*thunk) );
+    thunk_len = unix_funcs->virtual_uninterrupted_read_memory( thunk, &thunk_copy, sizeof(*thunk) );
     if (!thunk_len) return FALSE;
 
     if (thunk_len >= sizeof(thunk_copy.t1) && thunk_copy.t1.movl == 0x042444c7 &&
                                               thunk_copy.t1.jmp == 0xe9)
     {
-        if (!virtual_uninterrupted_write_memory( (DWORD *)stack->context.Esp + 1,
+        if (!unix_funcs->virtual_uninterrupted_write_memory( (DWORD *)stack->context.Esp + 1,
                                                  &thunk_copy.t1.this, sizeof(DWORD) ))
         {
             EIP_sig(sigcontext) = (DWORD_PTR)(&thunk->t1.func + 1) + thunk_copy.t1.func;
@@ -1515,9 +1515,9 @@ static BOOL check_atl_thunk( ucontext_t *sigcontext, struct stack_layout *stack 
                                                    thunk_copy.t5.inst2 == 0x0460)
     {
         DWORD func, sp[2];
-        if (virtual_uninterrupted_read_memory( (DWORD *)stack->context.Esp, sp, sizeof(sp) ) == sizeof(sp) &&
-            virtual_uninterrupted_read_memory( (DWORD *)sp[1] + 1, &func, sizeof(DWORD) ) == sizeof(DWORD) &&
-            !virtual_uninterrupted_write_memory( (DWORD *)stack->context.Esp + 1, &sp[0], sizeof(sp[0]) ))
+        if (unix_funcs->virtual_uninterrupted_read_memory( (DWORD *)stack->context.Esp, sp, sizeof(sp) ) == sizeof(sp) &&
+            unix_funcs->virtual_uninterrupted_read_memory( (DWORD *)sp[1] + 1, &func, sizeof(DWORD) ) == sizeof(DWORD) &&
+            !unix_funcs->virtual_uninterrupted_write_memory( (DWORD *)stack->context.Esp + 1, &sp[0], sizeof(sp[0]) ))
         {
             ECX_sig(sigcontext) = sp[0];
             EAX_sig(sigcontext) = sp[1];
@@ -1579,7 +1579,7 @@ static struct stack_layout *setup_exception_record( ucontext_t *sigcontext, void
     else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
     {
         /* stack access below stack limit, may be recoverable */
-        switch (virtual_handle_stack_fault( stack - 1 ))
+        switch (unix_funcs->virtual_handle_stack_fault( stack - 1 ))
         {
         case 0:  /* not handled */
         {
@@ -1753,7 +1753,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if (get_trap_code(context) == TRAP_x86_PAGEFLT &&
         (char *)stack_ptr >= (char *)get_signal_stack() &&
         (char *)stack_ptr < (char *)get_signal_stack() + signal_stack_size &&
-        !virtual_handle_fault( siginfo->si_addr, (get_error_code(context) >> 1) & 0x09, TRUE ))
+        !unix_funcs->virtual_handle_fault( siginfo->si_addr, (get_error_code(context) >> 1) & 0x09, TRUE ))
     {
         return;
     }
@@ -1761,7 +1761,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     /* check for page fault inside the thread stack */
     if (get_trap_code(context) == TRAP_x86_PAGEFLT)
     {
-        switch (virtual_handle_stack_fault( siginfo->si_addr ))
+        switch (unix_funcs->virtual_handle_stack_fault( siginfo->si_addr ))
         {
         case 1:  /* handled */
             return;
@@ -1813,7 +1813,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (get_error_code(context) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
+        stack->rec.ExceptionCode = unix_funcs->virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
                                                          stack->rec.ExceptionInformation[0], FALSE );
         if (!stack->rec.ExceptionCode) return;
         if (stack->rec.ExceptionCode == EXCEPTION_ACCESS_VIOLATION &&

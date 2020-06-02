@@ -88,25 +88,6 @@ void CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy )
     *ldt_copy = &__wine_ldt_copy;
 #endif
     nb_threads = nb_threads_ptr;
-    signal_init_threading();
-}
-
-
-/***********************************************************************
- *           alloc_thread
- */
-NTSTATUS CDECL alloc_thread( TEB *teb )
-{
-    return signal_alloc_thread( teb );
-}
-
-
-/***********************************************************************
- *           free_thread
- */
-void CDECL free_thread( TEB *teb )
-{
-    signal_free_thread( teb );
 }
 
 

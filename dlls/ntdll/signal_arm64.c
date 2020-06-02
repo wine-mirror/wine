@@ -898,7 +898,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
     /* check for page fault inside the thread stack */
     if (signal == SIGSEGV)
     {
-        switch (virtual_handle_stack_fault( info->si_addr ))
+        switch (unix_funcs->virtual_handle_stack_fault( info->si_addr ))
         {
         case 1:  /* handled */
             return;
@@ -921,7 +921,7 @@ static void segv_handler( int signal, siginfo_t *info, void *ucontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
-        if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
+        if (!(stack->rec.ExceptionCode = unix_funcs->virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
                                                          stack->rec.ExceptionInformation[0], FALSE )))
             return;
         break;

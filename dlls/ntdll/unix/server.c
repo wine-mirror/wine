@@ -287,7 +287,7 @@ static inline unsigned int wait_reply( struct __server_request_info *req )
 /***********************************************************************
  *           server_call_unlocked
  */
-unsigned int CDECL server_call_unlocked( void *req_ptr )
+unsigned int server_call_unlocked( void *req_ptr )
 {
     struct __server_request_info * const req = req_ptr;
     unsigned int ret;

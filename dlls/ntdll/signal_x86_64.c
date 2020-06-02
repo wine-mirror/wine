@@ -2375,7 +2375,7 @@ static struct stack_layout *setup_exception( ucontext_t *sigcontext )
     else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
     {
         /* stack access below stack limit, may be recoverable */
-        switch (virtual_handle_stack_fault( stack - 1 ))
+        switch (unix_funcs->virtual_handle_stack_fault( stack - 1 ))
         {
         case 0:  /* not handled */
         {
@@ -2466,7 +2466,7 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
 {
     BYTE instr[16];
     unsigned int i, prefix_count = 0;
-    unsigned int len = virtual_uninterrupted_read_memory( (BYTE *)context->Rip, instr, sizeof(instr) );
+    unsigned int len = unix_funcs->virtual_uninterrupted_read_memory( (BYTE *)context->Rip, instr, sizeof(instr) );
 
     for (i = 0; i < len; i++) switch (instr[i])
     {
@@ -2589,7 +2589,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
     /* check for exceptions on the signal stack caused by write watches */
     if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT && is_inside_signal_stack( stack ) &&
-        !virtual_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09, TRUE ))
+        !unix_funcs->virtual_handle_fault( siginfo->si_addr, (ERROR_sig(ucontext) >> 1) & 0x09, TRUE ))
     {
         return;
     }
@@ -2597,7 +2597,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     /* check for page fault inside the thread stack */
     if (TRAP_sig(ucontext) == TRAP_x86_PAGEFLT)
     {
-        switch (virtual_handle_stack_fault( siginfo->si_addr ))
+        switch (unix_funcs->virtual_handle_stack_fault( siginfo->si_addr ))
         {
         case 1:  /* handled */
             return;
@@ -2642,7 +2642,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         stack->rec.NumberParameters = 2;
         stack->rec.ExceptionInformation[0] = (ERROR_sig(ucontext) >> 1) & 0x09;
         stack->rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        if (!(stack->rec.ExceptionCode = virtual_handle_fault((void *)stack->rec.ExceptionInformation[1],
+        if (!(stack->rec.ExceptionCode = unix_funcs->virtual_handle_fault((void *)stack->rec.ExceptionInformation[1],
                                                               stack->rec.ExceptionInformation[0], FALSE )))
             return;
         break;
