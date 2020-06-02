@@ -114,6 +114,7 @@ NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *ws
 void WINAPI WskDeregister(WSK_REGISTRATION *wsk_registration);
 NTSTATUS WINAPI WskCaptureProviderNPI(WSK_REGISTRATION *wsk_registration, ULONG wait_timeout,
         WSK_PROVIDER_NPI *wsk_provider_npi);
+void WINAPI WskReleaseProviderNPI(WSK_REGISTRATION *wsk_registration);
 
 #ifdef __cplusplus
 }

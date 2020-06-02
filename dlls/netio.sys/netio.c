@@ -43,6 +43,11 @@ NTSTATUS WINAPI WskCaptureProviderNPI(WSK_REGISTRATION *wsk_registration, ULONG 
     return STATUS_NOT_IMPLEMENTED;
 }
 
+void WINAPI WskReleaseProviderNPI(WSK_REGISTRATION *wsk_registration)
+{
+    FIXME("wsk_registration %p stub.\n", wsk_registration);
+}
+
 NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration)
 {
     FIXME("wsk_client_npi %p, wsk_registration %p stub.\n", wsk_client_npi, wsk_registration);

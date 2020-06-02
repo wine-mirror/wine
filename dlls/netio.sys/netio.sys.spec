@@ -388,4 +388,4 @@
 @ stdcall WskDeregister(ptr)
 @ stub WskQueryProviderCharacteristics
 @ stdcall WskRegister(ptr ptr)
-@ stub WskReleaseProviderNPI
+@ stdcall WskReleaseProviderNPI(ptr)
