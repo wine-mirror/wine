@@ -63,6 +63,7 @@ enum media_engine_flags
     FLAGS_ENGINE_LOOP = 0x80,
     FLAGS_ENGINE_PAUSED = 0x100,
     FLAGS_ENGINE_WAITING = 0x200,
+    FLAGS_ENGINE_MUTED = 0x400,
 };
 
 struct media_engine
@@ -542,16 +543,36 @@ static HRESULT WINAPI media_engine_Pause(IMFMediaEngine *iface)
 
 static BOOL WINAPI media_engine_GetMuted(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    BOOL ret;
 
-    return FALSE;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    ret = !!(engine->flags & FLAGS_ENGINE_MUTED);
+    LeaveCriticalSection(&engine->cs);
+
+    return ret;
 }
 
 static HRESULT WINAPI media_engine_SetMuted(IMFMediaEngine *iface, BOOL muted)
 {
-    FIXME("(%p, %d): stub.\n", iface, muted);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, muted);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!!(engine->flags & FLAGS_ENGINE_MUTED) ^ !!muted)
+    {
+        media_engine_set_flag(engine, FLAGS_ENGINE_MUTED, muted);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_VOLUMECHANGE, 0, 0);
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static double WINAPI media_engine_GetVolume(IMFMediaEngine *iface)

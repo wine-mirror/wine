@@ -361,14 +361,13 @@ todo_wine
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_SetMuted(media_engine, TRUE);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     val = IMFMediaEngine_GetVolume(media_engine);
 todo_wine
     ok(val == 1.0, "Unexpected value %f.\n", val);
 
-    val = IMFMediaEngine_SetVolume(media_engine, 2.0);
+    hr = IMFMediaEngine_SetVolume(media_engine, 2.0);
 todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
@@ -465,6 +464,34 @@ static void test_playback_rate(void)
     IMFMediaEngine_Release(media_engine);
 }
 
+static void test_mute(void)
+{
+    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    IMFMediaEngine *media_engine;
+    HRESULT hr;
+    BOOL ret;
+
+    media_engine = create_media_engine(callback);
+
+    ret = IMFMediaEngine_GetMuted(media_engine);
+    ok(!ret, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_SetMuted(media_engine, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaEngine_GetMuted(media_engine);
+    ok(ret, "Unexpected state.\n");
+
+    hr = IMFMediaEngine_Shutdown(media_engine);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaEngine_GetMuted(media_engine);
+    ok(ret, "Unexpected state.\n");
+
+    IMFMediaEngine_Release(media_engine);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -490,6 +517,7 @@ START_TEST(mfmediaengine)
     test_Shutdown();
     test_Play();
     test_playback_rate();
+    test_mute();
 
     IMFMediaEngineClassFactory_Release(factory);
 
