@@ -1053,7 +1053,7 @@ NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned int at
     NTSTATUS ret;
 
     *handle = 0;
-    wine_server_send_fd( fd );
+    server_send_fd( fd );
 
     SERVER_START_REQ( alloc_file_handle )
     {
@@ -1494,8 +1494,8 @@ size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int 
     /* create the server->client communication pipes */
     if (server_pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
     if (server_pipe( ntdll_get_thread_data()->wait_fd ) == -1) server_protocol_perror( "pipe" );
-    wine_server_send_fd( reply_pipe[1] );
-    wine_server_send_fd( ntdll_get_thread_data()->wait_fd[1] );
+    server_send_fd( reply_pipe[1] );
+    server_send_fd( ntdll_get_thread_data()->wait_fd[1] );
     ntdll_get_thread_data()->reply_fd = reply_pipe[0];
     close( reply_pipe[1] );
 
