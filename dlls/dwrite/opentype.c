@@ -4369,10 +4369,6 @@ static void opentype_layout_add_lookups(const struct ot_feature_list *feature_li
     if (feature->index == 0xffff)
         return;
 
-    /* FIXME: skip non-global ones for now. */
-    if (!(feature->flags & FEATURE_GLOBAL))
-        return;
-
     feature_offset = GET_BE_WORD(feature_list->features[feature->index].offset);
 
     lookup_count = table_read_be_word(&table->table, table->feature_list + feature_offset +
