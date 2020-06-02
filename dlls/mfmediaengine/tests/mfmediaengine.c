@@ -364,11 +364,9 @@ todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     val = IMFMediaEngine_GetVolume(media_engine);
-todo_wine
     ok(val == 1.0, "Unexpected value %f.\n", val);
 
     hr = IMFMediaEngine_SetVolume(media_engine, 2.0);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     state = IMFMediaEngine_HasVideo(media_engine);

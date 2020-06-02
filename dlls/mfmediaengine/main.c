@@ -79,6 +79,7 @@ struct media_engine
     unsigned int flags;
     double playback_rate;
     double default_playback_rate;
+    double volume;
     IMFMediaSession *session;
     CRITICAL_SECTION cs;
 };
@@ -577,16 +578,36 @@ static HRESULT WINAPI media_engine_SetMuted(IMFMediaEngine *iface, BOOL muted)
 
 static double WINAPI media_engine_GetVolume(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    double volume;
 
-    return 0.0;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    volume = engine->volume;
+    LeaveCriticalSection(&engine->cs);
+
+    return volume;
 }
 
 static HRESULT WINAPI media_engine_SetVolume(IMFMediaEngine *iface, double volume)
 {
-    FIXME("(%p, %f): stub.\n", iface, volume);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %f.\n", iface, volume);
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (volume != engine->volume)
+    {
+        engine->volume = volume;
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_VOLUMECHANGE, 0, 0);
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static BOOL WINAPI media_engine_HasVideo(IMFMediaEngine *iface)
@@ -737,6 +758,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->flags = (flags & MF_MEDIA_ENGINE_CREATEFLAGS_MASK) | FLAGS_ENGINE_PAUSED;
     engine->default_playback_rate = 1.0;
     engine->playback_rate = 1.0;
+    engine->volume = 1.0;
     InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
