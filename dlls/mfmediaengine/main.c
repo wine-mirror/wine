@@ -137,10 +137,32 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
 {
     struct media_engine *engine = impl_from_session_events_IMFAsyncCallback(iface);
     IMFMediaEvent *event = NULL;
+    MediaEventType event_type;
     HRESULT hr;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(engine->session, result, &event)))
+    {
         WARN("Failed to get session event, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    if (FAILED(hr = IMFMediaEvent_GetType(event, &event_type)))
+    {
+        WARN("Failed to get event type, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    switch (event_type)
+    {
+        case MEBufferingStarted:
+        case MEBufferingStopped:
+
+            IMFMediaEngineNotify_EventNotify(engine->callback, event_type == MEBufferingStarted ?
+                    MF_MEDIA_ENGINE_EVENT_BUFFERINGSTARTED : MF_MEDIA_ENGINE_EVENT_BUFFERINGENDED, 0, 0);
+            break;
+    }
+
+failed:
 
     if (event)
         IMFMediaEvent_Release(event);
