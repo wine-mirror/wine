@@ -111,6 +111,7 @@ typedef struct _WSK_PROVIDER_NPI
 } WSK_PROVIDER_NPI, *PWSK_PROVIDER_NPI;
 
 NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration);
+void WINAPI WskDeregister(WSK_REGISTRATION *wsk_registration);
 
 #ifdef __cplusplus
 }

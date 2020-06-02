@@ -41,6 +41,11 @@ NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *ws
     return STATUS_NOT_IMPLEMENTED;
 }
 
+void WINAPI WskDeregister(WSK_REGISTRATION *wsk_registration)
+{
+    FIXME("wsk_registration %p stub.\n", wsk_registration);
+}
+
 static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 {
     TRACE("driver %p.\n", driver);

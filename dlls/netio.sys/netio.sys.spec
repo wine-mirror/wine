@@ -385,7 +385,7 @@
 @ stub WfpStreamIsFilterPresent
 @ stub WfpUninitializeLeastRecentlyUsedList
 @ stub WskCaptureProviderNPI
-@ stub WskDeregister
+@ stdcall WskDeregister(ptr)
 @ stub WskQueryProviderCharacteristics
 @ stdcall WskRegister(ptr ptr)
 @ stub WskReleaseProviderNPI
