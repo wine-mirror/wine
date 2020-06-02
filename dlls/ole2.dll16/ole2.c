@@ -272,6 +272,15 @@ HRESULT WINAPI OleFlushClipboard16(void)
   return OleFlushClipboard();
 }
 
+/***********************************************************************
+ *           OleIsCurrentClipboard                    [OLE2.77]
+ */
+HRESULT WINAPI OleIsCurrentClipboard16(IDataObject* pDataObj)
+{
+  FIXME("(%p): stub\n", pDataObj);
+  return S_OK;
+}
+
 #define GET_SEGPTR_METHOD_ADDR(ifacename,segptr,methodname) \
     ((SEGPTR)((const ifacename##Vtbl*)MapSL((SEGPTR)((ifacename*)MapSL(segptr))->lpVtbl))->methodname)
 
