@@ -1539,13 +1539,63 @@ static HRESULT WINAPI dwritetextanalyzer1_ApplyCharacterSpacing(IDWriteTextAnaly
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextanalyzer1_GetBaseline(IDWriteTextAnalyzer2 *iface, IDWriteFontFace *face,
+static HRESULT WINAPI dwritetextanalyzer1_GetBaseline(IDWriteTextAnalyzer2 *iface, IDWriteFontFace *fontface,
     DWRITE_BASELINE baseline, BOOL vertical, BOOL is_simulation_allowed, DWRITE_SCRIPT_ANALYSIS sa,
     const WCHAR *localeName, INT32 *baseline_coord, BOOL *exists)
 {
-    FIXME("(%p %d %d %u %s %p %p): stub\n", face, vertical, is_simulation_allowed, sa.script, debugstr_w(localeName),
-        baseline_coord, exists);
-    return E_NOTIMPL;
+    struct dwrite_fontface *font_obj;
+    const DWRITE_FONT_METRICS1 *metrics;
+
+    TRACE("%p, %d, %d, %u, %s, %p, %p.\n", fontface, vertical, is_simulation_allowed, sa.script, debugstr_w(localeName),
+            baseline_coord, exists);
+
+    *exists = FALSE;
+    *baseline_coord = 0;
+
+    if (baseline == DWRITE_BASELINE_DEFAULT)
+        baseline = vertical ? DWRITE_BASELINE_CENTRAL : DWRITE_BASELINE_ROMAN;
+
+    if ((unsigned int)baseline > DWRITE_BASELINE_MAXIMUM)
+        return E_INVALIDARG;
+
+    /* TODO: fetch BASE table data if available. */
+
+    if (!*exists && is_simulation_allowed)
+    {
+        font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
+        metrics = &font_obj->metrics;
+
+        switch (baseline)
+        {
+            case DWRITE_BASELINE_ROMAN:
+                *baseline_coord = vertical ? metrics->descent : 0;
+                break;
+            case DWRITE_BASELINE_CENTRAL:
+                *baseline_coord = vertical ? (metrics->ascent + metrics->descent) / 2 :
+                        -(metrics->ascent - metrics->descent) / 2;
+                break;
+            case DWRITE_BASELINE_MATH:
+                *baseline_coord = vertical ? (metrics->ascent + metrics->descent) / 2 :
+                        -(metrics->ascent + metrics->descent) / 2;
+                break;
+            case DWRITE_BASELINE_HANGING:
+                /* FIXME: this one isn't accurate, but close. */
+                *baseline_coord = vertical ? metrics->capHeight * 6 / 7 + metrics->descent : metrics->capHeight * 6 / 7;
+                break;
+            case DWRITE_BASELINE_IDEOGRAPHIC_BOTTOM:
+            case DWRITE_BASELINE_MINIMUM:
+                *baseline_coord = vertical ? 0 : metrics->descent;
+                break;
+            case DWRITE_BASELINE_IDEOGRAPHIC_TOP:
+            case DWRITE_BASELINE_MAXIMUM:
+                *baseline_coord = vertical ? metrics->ascent + metrics->descent : -metrics->ascent;
+                break;
+            default:
+                ;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextanalyzer1_AnalyzeVerticalGlyphOrientation(IDWriteTextAnalyzer2 *iface,

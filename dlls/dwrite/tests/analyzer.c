@@ -2484,39 +2484,48 @@ static void test_GetBaseline(void)
 
     fontface = create_fontface();
 
-    /* Tahoma doesn't have BASE table, it doesn't work even with simulation enabled */
+    /* Tahoma does not have a BASE table. */
+
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1,
-       fontface,
-       DWRITE_BASELINE_DEFAULT,
-       FALSE,
-       TRUE,
-       sa,
-       NULL,
-       &baseline,
-       &exists);
-todo_wine {
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(baseline == 0, "got %d\n", baseline);
-    ok(exists == FALSE, "got %d\n", exists);
-}
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
+           TRUE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
     exists = TRUE;
     baseline = 456;
-    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1,
-       fontface,
-       DWRITE_BASELINE_ROMAN,
-       FALSE,
-       TRUE,
-       sa,
-       NULL,
-       &baseline,
-       &exists);
-todo_wine {
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(baseline == 0, "got %d\n", baseline);
-    ok(exists == FALSE, "got %d\n", exists);
-}
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT, FALSE,
+           FALSE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
+    exists = TRUE;
+    baseline = 0;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
+           TRUE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(baseline != 0, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
+    exists = TRUE;
+    baseline = 0;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_CENTRAL, FALSE,
+           FALSE, sa, NULL, &baseline, &exists);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
+    exists = TRUE;
+    baseline = 456;
+    hr = IDWriteTextAnalyzer1_GetBaseline(analyzer1, fontface, DWRITE_BASELINE_DEFAULT + 100, FALSE,
+           TRUE, sa, NULL, &baseline, &exists);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!baseline, "Unexpected baseline %d.\n", baseline);
+    ok(!exists, "Unexpected flag %d.\n", exists);
+
     IDWriteFontFace_Release(fontface);
     IDWriteTextAnalyzer1_Release(analyzer1);
 }
