@@ -34,6 +34,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netio);
 
+NTSTATUS WINAPI WskCaptureProviderNPI(WSK_REGISTRATION *wsk_registration, ULONG wait_timeout,
+        WSK_PROVIDER_NPI *wsk_provider_npi)
+{
+    FIXME("wsk_registration %p, wait_timeout %u, wsk_provider_npi %p stub.\n",
+            wsk_registration, wait_timeout, wsk_provider_npi);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration)
 {
     FIXME("wsk_client_npi %p, wsk_registration %p stub.\n", wsk_client_npi, wsk_registration);
