@@ -4661,7 +4661,6 @@ static void opentype_layout_replace_glyph(struct scriptshaping_context *context,
         context->u.subst.glyphs[context->cur] = glyph;
         opentype_set_subst_glyph_props(context, context->cur);
     }
-    context->cur++;
 }
 
 static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
@@ -4707,6 +4706,7 @@ static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_
     }
 
     opentype_layout_replace_glyph(context, glyph);
+    context->cur++;
 
     return TRUE;
 }
@@ -4801,6 +4801,7 @@ static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_co
         {
             /* Equivalent of single substitution. */
             opentype_layout_replace_glyph(context, GET_BE_WORD(glyphs[0]));
+            context->cur++;
         }
         else if (glyph_count == 0)
         {
@@ -4915,6 +4916,7 @@ static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_con
     }
 
     opentype_layout_replace_glyph(context, glyph);
+    context->cur++;
 
     return TRUE;
 }
@@ -4937,6 +4939,7 @@ static BOOL opentype_layout_apply_ligature(struct scriptshaping_context *context
     if (comp_count == 1)
     {
         opentype_layout_replace_glyph(context, GET_BE_WORD(lig->lig_glyph));
+        context->cur++;
         return TRUE;
     }
 
@@ -5476,6 +5479,68 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
     return ret;
 }
 
+static BOOL opentype_layout_apply_gsub_reverse_chain_context_substitution(struct scriptshaping_context *context,
+        const struct lookup *lookup, unsigned int subtable_offset)
+{
+    const struct dwrite_fonttable *table = &context->table->table;
+    unsigned int offset = subtable_offset;
+    UINT16 glyph, format;
+
+    glyph = context->u.subst.glyphs[context->cur];
+
+    format = table_read_be_word(table, offset);
+    offset += 2;
+
+    if (format == 1)
+    {
+        struct match_context mc = { .context = context, .mask = lookup->mask };
+        unsigned int start_index = 0, end_index = 0, backtrack_count, lookahead_count;
+        unsigned int coverage, coverage_index;
+        const UINT16 *backtrack, *lookahead;
+
+        coverage = table_read_be_word(table, offset);
+        offset += 2;
+
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED)
+            return FALSE;
+
+        backtrack_count = table_read_be_word(table, offset);
+        offset += 2;
+
+        backtrack = table_read_ensure(table, offset, sizeof(*backtrack) * backtrack_count);
+        offset += sizeof(*backtrack) * backtrack_count;
+
+        lookahead_count = table_read_be_word(table, offset);
+        offset += 2;
+
+        lookahead = table_read_ensure(table, offset, sizeof(*lookahead) * lookahead_count);
+        offset += sizeof(*lookahead) * lookahead_count;
+
+        mc.match_func = opentype_match_coverage_func;
+        mc.backtrack_offset = subtable_offset;
+        mc.lookahead_offset = subtable_offset;
+
+        if (opentype_layout_context_match_backtrack(&mc, backtrack_count, backtrack, &start_index) &&
+                opentype_layout_context_match_lookahead(&mc, lookahead_count, lookahead, 1, &end_index))
+        {
+            unsigned int glyph_count = table_read_be_word(table, offset);
+            if (coverage_index >= glyph_count)
+                return FALSE;
+            offset += 2;
+
+            glyph = table_read_be_word(table, offset + coverage_index * sizeof(glyph));
+            opentype_layout_replace_glyph(context, glyph);
+
+            return TRUE;
+        }
+    }
+    else
+        WARN("Unknown reverse chaining contextual substitution format %u.\n", format);
+
+    return FALSE;
+}
+
 static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, const struct lookup *lookup)
 {
     unsigned int i, lookup_type;
@@ -5515,7 +5580,7 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
                 ret = opentype_layout_apply_gsub_chain_context_substitution(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
-                WARN("Unimplemented lookup %d.\n", lookup->type);
+                ret = opentype_layout_apply_gsub_reverse_chain_context_substitution(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_EXTENSION_SUBST:
                 WARN("Invalid lookup type for extension substitution %#x.\n", lookup_type);
