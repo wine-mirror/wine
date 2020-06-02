@@ -762,9 +762,9 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
-                                  (void **)&engine->callback);
+            (void **)&engine->callback);
     if (FAILED(hr))
-        return MF_E_ATTRIBUTENOTFOUND;
+        return hr;
 
     if (FAILED(hr = MFCreateMediaSession(NULL, &engine->session)))
         return hr;
