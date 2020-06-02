@@ -110,6 +110,8 @@ typedef struct _WSK_PROVIDER_NPI
     const WSK_PROVIDER_DISPATCH *Dispatch;
 } WSK_PROVIDER_NPI, *PWSK_PROVIDER_NPI;
 
+NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration);
+
 #ifdef __cplusplus
 }
 #endif

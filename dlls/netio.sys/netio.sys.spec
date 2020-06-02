@@ -387,5 +387,5 @@
 @ stub WskCaptureProviderNPI
 @ stub WskDeregister
 @ stub WskQueryProviderCharacteristics
-@ stub WskRegister
+@ stdcall WskRegister(ptr ptr)
 @ stub WskReleaseProviderNPI

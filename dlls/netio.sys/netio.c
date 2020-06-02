@@ -29,9 +29,17 @@
 #include "winioctl.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
+#include "ddk/wsk.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netio);
+
+NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration)
+{
+    FIXME("wsk_client_npi %p, wsk_registration %p stub.\n", wsk_client_npi, wsk_registration);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 {
