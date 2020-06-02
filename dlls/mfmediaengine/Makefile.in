@@ -1,6 +1,6 @@
 MODULE    = mfmediaengine.dll
 IMPORTLIB = mfmediaengine
-IMPORTS = mf mfuuid uuid
+IMPORTS = mfplat mf mfuuid uuid
 
 EXTRADLLFLAGS = -mno-cygwin
 

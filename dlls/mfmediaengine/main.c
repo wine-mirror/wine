@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "mfapi.h"
 #include "mfmediaengine.h"
 #include "mferror.h"
 #include "dxgi.h"
@@ -72,9 +73,7 @@ struct media_engine
     IMFAsyncCallback session_events;
     LONG refcount;
     IMFMediaEngineNotify *callback;
-    UINT64 playback_hwnd;
-    DXGI_FORMAT output_format;
-    IMFDXGIDeviceManager *dxgi_manager;
+    IMFAttributes *attributes;
     enum media_engine_mode mode;
     unsigned int flags;
     double playback_rate;
@@ -192,10 +191,10 @@ static void free_media_engine(struct media_engine *engine)
 {
     if (engine->callback)
         IMFMediaEngineNotify_Release(engine->callback);
-    if (engine->dxgi_manager)
-        IMFDXGIDeviceManager_Release(engine->dxgi_manager);
     if (engine->session)
         IMFMediaSession_Release(engine->session);
+    if (engine->attributes)
+        IMFAttributes_Release(engine->attributes);
     DeleteCriticalSection(&engine->cs);
     heap_free(engine);
 }
@@ -750,6 +749,8 @@ static ULONG WINAPI media_engine_factory_Release(IMFMediaEngineClassFactory *ifa
 
 static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct media_engine *engine)
 {
+    DXGI_FORMAT output_format;
+    UINT64 playback_hwnd;
     HRESULT hr;
 
     engine->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
@@ -772,11 +773,15 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     if (FAILED(hr = IMFMediaSession_BeginGetEvent(engine->session, &engine->session_events, NULL)))
         return hr;
 
-    IMFAttributes_GetUINT64(attributes, &MF_MEDIA_ENGINE_PLAYBACK_HWND, &engine->playback_hwnd);
-    IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_DXGI_MANAGER, &IID_IMFDXGIDeviceManager,
-                             (void **)&engine->dxgi_manager);
-    hr = IMFAttributes_GetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, &engine->output_format);
-    if (engine->playback_hwnd) /* FIXME: handle MF_MEDIA_ENGINE_PLAYBACK_VISUAL */
+    if (FAILED(hr = MFCreateAttributes(&engine->attributes, 0)))
+        return hr;
+
+    if (FAILED(hr = IMFAttributes_CopyAllItems(attributes, engine->attributes)))
+        return hr;
+
+    IMFAttributes_GetUINT64(attributes, &MF_MEDIA_ENGINE_PLAYBACK_HWND, &playback_hwnd);
+    hr = IMFAttributes_GetUINT32(attributes, &MF_MEDIA_ENGINE_VIDEO_OUTPUT_FORMAT, &output_format);
+    if (playback_hwnd) /* FIXME: handle MF_MEDIA_ENGINE_PLAYBACK_VISUAL */
         engine->mode = MEDIA_ENGINE_RENDERING_MODE;
     else
     {
