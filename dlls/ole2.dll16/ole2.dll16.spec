@@ -72,7 +72,7 @@
 74 stub READFMTUSERTYPESTG
 75 stub WRITEFMTUSERTYPESTG
 76 pascal -ret16 OleFlushClipboard() OleFlushClipboard16
-77 stub OLEISCURRENTCLIPBOARD
+77 pascal OleIsCurrentClipboard(ptr) OleIsCurrentClipboard16
 78 stub OLETRANSLATEACCELERATOR
 79 pascal OleDoAutoConvert(ptr ptr) OleDoAutoConvert16
 80 stub OLEGETAUTOCONVERT
