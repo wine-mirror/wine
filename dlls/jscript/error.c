@@ -487,6 +487,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_INVALID_DELETE:
         case JS_E_JSCRIPT_EXPECTED:
         case JS_E_ENUMERATOR_EXPECTED:
+        case JS_E_REGEXP_EXPECTED:
         case JS_E_ARRAY_EXPECTED:
         case JS_E_NONCONFIGURABLE_REDEFINED:
         case JS_E_NONWRITABLE_MODIFIED:

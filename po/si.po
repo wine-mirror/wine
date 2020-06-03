@@ -3647,15 +3647,15 @@ msgstr ""
 msgid "Expected '@'"
 msgstr "අපේක්ෂා කරේ '='"
 
-#: jscript.rc:75
+#: jscript.rc:77
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:78
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:79
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -3702,52 +3702,64 @@ msgid "JScript object expected"
 msgstr "JScript වස්තුවක් අපේක්ෂා කරේ"
 
 #: jscript.rc:62
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "ආරාව වස්තුවක් අපේක්ෂා කරේ"
+
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "බූලීය වස්තුවක් අපේක්ෂා කරේ"
+
+#: jscript.rc:64
 msgid "Syntax error in regular expression"
 msgstr ""
 
-#: jscript.rc:63
+#: jscript.rc:65
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:67
 msgid "URI to be encoded contains invalid characters"
 msgstr ""
 
-#: jscript.rc:64
+#: jscript.rc:66
 msgid "URI to be decoded is incorrect"
 msgstr ""
 
-#: jscript.rc:66
+#: jscript.rc:68
 msgid "Number of fraction digits is out of range"
 msgstr ""
 
-#: jscript.rc:67
+#: jscript.rc:69
 msgid "Precision is out of range"
 msgstr ""
 
-#: jscript.rc:68
+#: jscript.rc:70
 msgid "Array length must be a finite positive integer"
 msgstr ""
 
-#: jscript.rc:69
+#: jscript.rc:71
 msgid "Array object expected"
 msgstr "ආරාව වස්තුවක් අපේක්ෂා කරේ"
 
-#: jscript.rc:70
+#: jscript.rc:72
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:73
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:74
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:73
+#: jscript.rc:75
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

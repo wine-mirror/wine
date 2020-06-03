@@ -3696,15 +3696,15 @@ msgstr "조건부 컴파일이 해제되어 있음"
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
-#: jscript.rc:75
+#: jscript.rc:77
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:78
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:79
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -3751,53 +3751,65 @@ msgid "JScript object expected"
 msgstr "JScript 객체가 필요함"
 
 #: jscript.rc:62
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "배열 객체가 필요합니다"
+
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "볼린 객제가 필요함"
+
+#: jscript.rc:64
 msgid "Syntax error in regular expression"
 msgstr "정규 표현식에 문법오류가 있음"
 
-#: jscript.rc:63
+#: jscript.rc:65
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:67
 msgid "URI to be encoded contains invalid characters"
 msgstr "인코딩할 URI에 올바르지 않은 문자가 들어 있습니다"
 
-#: jscript.rc:64
+#: jscript.rc:66
 msgid "URI to be decoded is incorrect"
 msgstr "디코딩할 URI가 올바르지 않습니다"
 
-#: jscript.rc:66
+#: jscript.rc:68
 msgid "Number of fraction digits is out of range"
 msgstr "분수 자리수 값이 범위를 벗어났습니다"
 
-#: jscript.rc:67
+#: jscript.rc:69
 msgid "Precision is out of range"
 msgstr "정밀도가 범위를 벗어났습니다"
 
-#: jscript.rc:68
+#: jscript.rc:70
 msgid "Array length must be a finite positive integer"
 msgstr "배열 길이는 유한한 양의 정수이어야 합니다"
 
-#: jscript.rc:69
+#: jscript.rc:71
 msgid "Array object expected"
 msgstr "배열 객체가 필요합니다"
 
-#: jscript.rc:70
+#: jscript.rc:72
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 "속성 설명자의 'writable' 특성은 이 개체에서 'true'로 설정할 수 없습니다"
 
-#: jscript.rc:71
+#: jscript.rc:73
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "구성되지 않은 요소 '|'를 재처리할 수 없습니다"
 
-#: jscript.rc:72
+#: jscript.rc:74
 msgid "Cannot modify non-writable property '|'"
 msgstr "쓰기 가능하지 않은 요소 '|'를 편집할 수 없습니다"
 
-#: jscript.rc:73
+#: jscript.rc:75
 msgid "Property cannot have both accessors and a value"
 msgstr "속성은 접근자와 값을 모두 가질 수 없습니다"
 

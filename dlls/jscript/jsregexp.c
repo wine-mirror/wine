@@ -329,8 +329,8 @@ static HRESULT RegExp_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     TRACE("\n");
 
     if(!is_vclass(jsthis, JSCLASS_REGEXP)) {
-        FIXME("Not a RegExp\n");
-        return E_NOTIMPL;
+        WARN("Not a RegExp\n");
+        return JS_E_REGEXP_EXPECTED;
     }
 
     regexp = regexp_from_vdisp(jsthis);

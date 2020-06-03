@@ -3762,15 +3762,15 @@ msgstr "La compilation conditionnelle est désactivée"
 msgid "Expected '@'"
 msgstr "« @ » attendu"
 
-#: jscript.rc:75
+#: jscript.rc:77
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:78
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:79
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -3817,52 +3817,64 @@ msgid "JScript object expected"
 msgstr "Objet JScript attendu"
 
 #: jscript.rc:62
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "Objet tableau attendu"
+
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "Objet booléen attendu"
+
+#: jscript.rc:64
 msgid "Syntax error in regular expression"
 msgstr "Erreur de syntaxe dans l'expression rationnelle"
 
-#: jscript.rc:63
+#: jscript.rc:65
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:67
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI à coder contient des caractères invalides"
 
-#: jscript.rc:64
+#: jscript.rc:66
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI à décoder est incorrecte"
 
-#: jscript.rc:66
+#: jscript.rc:68
 msgid "Number of fraction digits is out of range"
 msgstr "Nombre de décimales hors plage"
 
-#: jscript.rc:67
+#: jscript.rc:69
 msgid "Precision is out of range"
 msgstr "Précision hors limites"
 
-#: jscript.rc:68
+#: jscript.rc:70
 msgid "Array length must be a finite positive integer"
 msgstr "La longueur d'un tableau doit être un entier positif"
 
-#: jscript.rc:69
+#: jscript.rc:71
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 
-#: jscript.rc:70
+#: jscript.rc:72
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:73
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:74
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:73
+#: jscript.rc:75
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

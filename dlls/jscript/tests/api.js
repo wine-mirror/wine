@@ -2478,6 +2478,7 @@ var exception_array = {
     E_OBJECT_EXPECTED:     { type: "TypeError", number: -2146823281 },
     E_OBJECT_REQUIRED:     { type: "TypeError", number: -2146827864 },
     E_UNSUPPORTED_ACTION:  { type: "TypeError", number: -2146827843 },
+    E_REGEXP_EXPECTED:     { type: "TypeError", number: -2146823272 },
     E_NOT_ENUMERATOR:      { type: "TypeError", number: -2146823273 },
     E_NOT_VBARRAY:         { type: "TypeError", number: -2146823275 },
     E_INVALID_DELETE:      { type: "TypeError", number: -2146823276 },
@@ -2562,6 +2563,7 @@ testException(function() {delete (new Object());}, "E_INVALID_DELETE");
 testException(function() {delete false;}, "E_INVALID_DELETE");
 testException(function() {undefined.toString();}, "E_OBJECT_EXPECTED");
 testException(function() {null.toString();}, "E_OBJECT_EXPECTED");
+testException(function() {RegExp.prototype.toString.call(new Object());}, "E_REGEXP_EXPECTED");
 
 obj = new Object();
 obj.prop = 1;

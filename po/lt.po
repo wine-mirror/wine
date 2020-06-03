@@ -3715,15 +3715,15 @@ msgstr "Sąlyginis kompiliavimas išjungtas"
 msgid "Expected '@'"
 msgstr "Tikėtasi „@“"
 
-#: jscript.rc:75
+#: jscript.rc:77
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompiliavimo klaida"
 
-#: jscript.rc:76
+#: jscript.rc:78
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: jscript.rc:77
+#: jscript.rc:79
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -3768,38 +3768,50 @@ msgid "JScript object expected"
 msgstr "Tikėtasi JScript objekto"
 
 #: jscript.rc:62
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "Tikėtasi masyvo objekto"
+
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "Tikėtasi loginio objekto"
+
+#: jscript.rc:64
 msgid "Syntax error in regular expression"
 msgstr "Sintaksės klaida reguliariajame reiškinyje"
 
-#: jscript.rc:63
+#: jscript.rc:65
 msgid "Exception thrown and not caught"
 msgstr "Išimtinė situacija sugeneruota ir neapdorota"
 
-#: jscript.rc:65
+#: jscript.rc:67
 msgid "URI to be encoded contains invalid characters"
 msgstr "Koduotiname URI yra netinkamų simbolių"
 
-#: jscript.rc:64
+#: jscript.rc:66
 msgid "URI to be decoded is incorrect"
 msgstr "Dekoduojamas URI neteisingas"
 
-#: jscript.rc:66
+#: jscript.rc:68
 msgid "Number of fraction digits is out of range"
 msgstr "Trupmeninės dalies skaitmenų skaičius nepatenka į rėžius"
 
-#: jscript.rc:67
+#: jscript.rc:69
 msgid "Precision is out of range"
 msgstr "Tikslumas nepatenka į rėžius"
 
-#: jscript.rc:68
+#: jscript.rc:70
 msgid "Array length must be a finite positive integer"
 msgstr "Masyvo dydis turi būti teigiamas sveikasis skaičius"
 
-#: jscript.rc:69
+#: jscript.rc:71
 msgid "Array object expected"
 msgstr "Tikėtasi masyvo objekto"
 
-#: jscript.rc:70
+#: jscript.rc:72
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3807,15 +3819,15 @@ msgstr ""
 "savybės aprašo atributas „writable“ negali būti nustatytas į „tiesa“ šiam "
 "objektui"
 
-#: jscript.rc:71
+#: jscript.rc:73
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Negalima iš naujo apibrėžti nekonfigūruojamos savybės „|“"
 
-#: jscript.rc:72
+#: jscript.rc:74
 msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
-#: jscript.rc:73
+#: jscript.rc:75
 msgid "Property cannot have both accessors and a value"
 msgstr "Savybė negali turėti ir kreipiklių, ir reikšmės"
 

@@ -3729,15 +3729,15 @@ msgstr "La compilació condicional està desactivada"
 msgid "Expected '@'"
 msgstr "S'esperava '@'"
 
-#: jscript.rc:75
+#: jscript.rc:77
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:76
+#: jscript.rc:78
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:79
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -3784,38 +3784,50 @@ msgid "JScript object expected"
 msgstr "S'esperava un objecte JScript"
 
 #: jscript.rc:62
+#, fuzzy
+#| msgid "Array object expected"
+msgid "Enumerator object expected"
+msgstr "S'esperava un objecte Array"
+
+#: jscript.rc:63
+#, fuzzy
+#| msgid "Boolean object expected"
+msgid "Regular Expression object expected"
+msgstr "S'esperava un objecte booleà"
+
+#: jscript.rc:64
 msgid "Syntax error in regular expression"
 msgstr "Error de sintaxi en l'expressió regular"
 
-#: jscript.rc:63
+#: jscript.rc:65
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:67
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI a codificar conté caràcters no vàlids"
 
-#: jscript.rc:64
+#: jscript.rc:66
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI a descodificar és incorrecte"
 
-#: jscript.rc:66
+#: jscript.rc:68
 msgid "Number of fraction digits is out of range"
 msgstr "El nombre de xifres de fracció és fora d'interval"
 
-#: jscript.rc:67
+#: jscript.rc:69
 msgid "Precision is out of range"
 msgstr "La precisió és fora d'interval"
 
-#: jscript.rc:68
+#: jscript.rc:70
 msgid "Array length must be a finite positive integer"
 msgstr "La longitud del vector ha de ser un nombre enter positiu finit"
 
-#: jscript.rc:69
+#: jscript.rc:71
 msgid "Array object expected"
 msgstr "S'esperava un objecte Array"
 
-#: jscript.rc:70
+#: jscript.rc:72
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3823,15 +3835,15 @@ msgstr ""
 "no es pot establir l'atribut 'writable' en el descriptor de propietat com a "
 "'true' en aquest objecte"
 
-#: jscript.rc:71
+#: jscript.rc:73
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "No es pot redefinir la propietat no configurable '|'"
 
-#: jscript.rc:72
+#: jscript.rc:74
 msgid "Cannot modify non-writable property '|'"
 msgstr "No es pot modificar la propietat no escrivible '|'"
 
-#: jscript.rc:73
+#: jscript.rc:75
 msgid "Property cannot have both accessors and a value"
 msgstr "La propietat no pot tenir ambdós mètodes d'accés i un valor"
 
