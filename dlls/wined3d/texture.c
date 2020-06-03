@@ -450,7 +450,7 @@ static void texture2d_depth_blt_fbo(const struct wined3d_device *device, struct 
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    DWORD src_mask, dst_mask;
+    GLbitfield src_mask, dst_mask;
     GLbitfield gl_mask;
 
     TRACE("device %p, src_texture %p, src_sub_resource_idx %u, src_location %s, src_rect %s, "
@@ -458,8 +458,17 @@ static void texture2d_depth_blt_fbo(const struct wined3d_device *device, struct 
             src_texture, src_sub_resource_idx, wined3d_debug_location(src_location), wine_dbgstr_rect(src_rect),
             dst_texture, dst_sub_resource_idx, wined3d_debug_location(dst_location), wine_dbgstr_rect(dst_rect));
 
-    src_mask = src_texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    dst_mask = dst_texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    src_mask = 0;
+    if (src_texture->resource.format->depth_size)
+        src_mask |= GL_DEPTH_BUFFER_BIT;
+    if (src_texture->resource.format->stencil_size)
+        src_mask |= GL_STENCIL_BUFFER_BIT;
+
+    dst_mask = 0;
+    if (dst_texture->resource.format->depth_size)
+        dst_mask |= GL_DEPTH_BUFFER_BIT;
+    if (dst_texture->resource.format->stencil_size)
+        dst_mask |= GL_STENCIL_BUFFER_BIT;
 
     if (src_mask != dst_mask)
     {
@@ -475,12 +484,7 @@ static void texture2d_depth_blt_fbo(const struct wined3d_device *device, struct 
                 debug_d3dformat(src_texture->resource.format->id));
         return;
     }
-
-    gl_mask = 0;
-    if (src_mask & WINED3DFMT_FLAG_DEPTH)
-        gl_mask |= GL_DEPTH_BUFFER_BIT;
-    if (src_mask & WINED3DFMT_FLAG_STENCIL)
-        gl_mask |= GL_STENCIL_BUFFER_BIT;
+    gl_mask = src_mask;
 
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. */
