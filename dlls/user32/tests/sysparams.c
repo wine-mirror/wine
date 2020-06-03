@@ -3319,7 +3319,8 @@ static void test_EnumDisplaySettings(void)
             }
             else
             {
-                todo_wine ok((dm.dmFields & mode_fields) == mode_fields, "Expect dmFields to contain %#x, got %#x\n",
+                todo_wine_if(mode != ENUM_REGISTRY_SETTINGS)
+                ok((dm.dmFields & mode_fields) == mode_fields, "Expect dmFields to contain %#x, got %#x\n",
                         mode_fields, dm.dmFields);
             }
 
