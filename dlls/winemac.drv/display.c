@@ -1545,7 +1545,7 @@ done:
  * Return FALSE on failure and TRUE on success.
  */
 static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *monitor, int monitor_index,
-                                 int video_index, const LUID *gpu_luid)
+                                 int video_index, const LUID *gpu_luid, UINT output_id)
 {
     SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
     WCHAR nameW[MAX_PATH];
@@ -1573,7 +1573,7 @@ static BOOL macdrv_init_monitor(HDEVINFO devinfo, const struct macdrv_monitor *m
 
     /* Write DEVPROPKEY_MONITOR_OUTPUT_ID */
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_OUTPUT_ID,
-                                   DEVPROP_TYPE_UINT32, (const BYTE *)&video_index, sizeof(video_index), 0))
+                                   DEVPROP_TYPE_UINT32, (const BYTE *)&output_id, sizeof(output_id), 0))
         goto done;
 
     /* Create driver key */
@@ -1685,6 +1685,7 @@ void macdrv_init_display_devices(BOOL force)
     WCHAR guidW[40];
     WCHAR driverW[1024];
     LUID gpu_luid;
+    UINT output_id = 0;
 
     mutex = CreateMutexW(NULL, FALSE, init_mutexW);
     WaitForSingleObject(mutex, INFINITE);
@@ -1736,7 +1737,7 @@ void macdrv_init_display_devices(BOOL force)
             for (monitor = 0; monitor < monitor_count; monitor++)
             {
                 TRACE("monitor: %#x %s\n", monitor, monitors[monitor].name);
-                if (!macdrv_init_monitor(monitor_devinfo, &monitors[monitor], monitor, video_index, &gpu_luid))
+                if (!macdrv_init_monitor(monitor_devinfo, &monitors[monitor], monitor, video_index, &gpu_luid, output_id++))
                     goto done;
             }
 
