@@ -36,9 +36,6 @@ void context_resource_released(const struct wined3d_device *device, struct wined
 {
     unsigned int i;
 
-    if (!device->d3d_initialized)
-        return;
-
     for (i = 0; i < device->context_count; ++i)
     {
         struct wined3d_context *context = device->contexts[i];
