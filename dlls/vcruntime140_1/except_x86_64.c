@@ -53,7 +53,7 @@ typedef struct
 
 typedef struct
 {
-    UINT flags;
+    UINT type;
     BYTE *prev;
     UINT handler;
     UINT object;
@@ -76,6 +76,10 @@ typedef struct
 #define TYPE_FLAG_CONST      1
 #define TYPE_FLAG_VOLATILE   2
 #define TYPE_FLAG_REFERENCE  8
+
+#define UNWIND_TYPE_NO_HANDLER 0
+#define UNWIND_TYPE_DTOR_OBJ   1
+#define UNWIND_TYPE_FRAME      3
 
 typedef struct
 {
@@ -161,22 +165,25 @@ static BOOL read_unwind_info(BYTE **b, unwind_info *ui)
     BYTE *p = *b;
 
     memset(ui, 0, sizeof(*ui));
-    ui->flags = decode_uint(b);
-    ui->prev = p - (ui->flags >> 2);
-    ui->flags &= 0x3;
+    ui->type = decode_uint(b);
+    ui->prev = p - (ui->type >> 2);
+    ui->type &= 0x3;
 
-    if (ui->flags & 0x1)
+    switch (ui->type)
     {
+    case UNWIND_TYPE_NO_HANDLER:
+        return TRUE;
+    case UNWIND_TYPE_DTOR_OBJ:
         ui->handler = read_rva(b);
         ui->object = decode_uint(b); /* frame offset */
-    }
-
-    if (ui->flags & 0x2)
-    {
-        FIXME("unknown flag: %x\n", ui->flags);
+        return TRUE;
+    case UNWIND_TYPE_FRAME:
+        ui->handler = read_rva(b);
+        return TRUE;
+    default:
+        FIXME("unknown type: %d\n", ui->type);
         return FALSE;
     }
-    return TRUE;
 }
 
 static void read_tryblock_info(BYTE **b, tryblock_info *ti, ULONG64 image_base)
@@ -270,8 +277,8 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPAT
 
         if (!read_unwind_info(&unwind_map, &ui)) return FALSE;
         if (ui.prev < (BYTE*)rva_to_ptr(descr->unwind_map, image_base)) ui.prev = NULL;
-        TRACE("    %d (%p): flags 0x%x prev %p func 0x%x(%p) object 0x%x\n",
-                i, entry, ui.flags, ui.prev, ui.handler,
+        TRACE("    %d (%p): type 0x%x prev %p func 0x%x(%p) object 0x%x\n",
+                i, entry, ui.type, ui.prev, ui.handler,
                 rva_to_ptr(ui.handler, image_base), ui.object);
     }
 
@@ -403,7 +410,7 @@ static inline void copy_exception(void *object, ULONG64 frame, DISPATCHER_CONTEX
 static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
         const cxx_function_descr *descr, int trylevel, int last_level)
 {
-    void (__cdecl *handler_dtor)(void *obj);
+    void (__cdecl *handler_dtor)(void *obj, ULONG64 frame);
     BYTE *unwind_data, *last;
     unwind_info ui;
     void *obj;
@@ -442,7 +449,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
             handler_dtor = rva_to_ptr(ui.handler, dispatch->ImageBase);
             obj = rva_to_ptr(ui.object, frame);
             TRACE("handler: %p object: %p\n", handler_dtor, obj);
-            handler_dtor(obj);
+            handler_dtor(obj, frame);
         }
     }
 }
