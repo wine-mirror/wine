@@ -56,6 +56,7 @@ struct audio_stream
     WAVEFORMATEX format;
     FILTER_STATE state;
     BOOL eos;
+    BOOL flushing;
     struct list receive_queue;
     struct list update_queue;
 };
@@ -1084,7 +1085,7 @@ static HRESULT WINAPI audio_sink_EndOfStream(IPin *iface)
 
     EnterCriticalSection(&stream->cs);
 
-    if (stream->eos)
+    if (stream->eos || stream->flushing)
     {
         LeaveCriticalSection(&stream->cs);
         return E_FAIL;
@@ -1101,14 +1102,34 @@ static HRESULT WINAPI audio_sink_EndOfStream(IPin *iface)
 
 static HRESULT WINAPI audio_sink_BeginFlush(IPin *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->flushing = TRUE;
+    stream->eos = FALSE;
+    flush_receive_queue(stream);
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_sink_EndFlush(IPin *iface)
 {
-    FIXME("iface %p, stub!\n", iface);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p.\n", stream);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->flushing = FALSE;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_sink_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
@@ -1218,6 +1239,11 @@ static HRESULT WINAPI audio_meminput_Receive(IMemInputPin *iface, IMediaSample *
     {
         LeaveCriticalSection(&stream->cs);
         return VFW_E_WRONG_STATE;
+    }
+    if (stream->flushing)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return S_FALSE;
     }
 
     hr = IMediaSample_GetPointer(sample, &pointer);
