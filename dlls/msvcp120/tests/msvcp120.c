@@ -1774,7 +1774,7 @@ static void test_tr2_sys__dir_operation(void)
 
     memset(first_file_name, 0xff, MAX_PATH);
     memset(dest, 0, MAX_PATH);
-    err = type = 0xdeadbeef;
+    type = err = 0xdeadbeef;
     result_handle = NULL;
     result_handle = p_tr2_sys__Open_dir(first_file_name, "tr2_test_dir", &err, &type);
     ok(result_handle != NULL, "tr2_sys__Open_dir(): expect: not NULL, got %p\n", result_handle);
@@ -1804,7 +1804,7 @@ static void test_tr2_sys__dir_operation(void)
     ok(num_of_other_files == 0, "found %d other files\n", num_of_other_files);
 
     memset(first_file_name, 0xff, MAX_PATH);
-    err = type = 0xdeadbeef;
+    type = err = 0xdeadbeef;
     result_handle = file;
     result_handle = p_tr2_sys__Open_dir(first_file_name, "not_exist", &err, &type);
     ok(result_handle == NULL, "tr2_sys__Open_dir(): expect: NULL, got %p\n", result_handle);
@@ -1814,7 +1814,7 @@ static void test_tr2_sys__dir_operation(void)
 
     CreateDirectoryA("empty_dir", NULL);
     memset(first_file_name, 0xff, MAX_PATH);
-    err = type = 0xdeadbeef;
+    type = err = 0xdeadbeef;
     result_handle = file;
     result_handle = p_tr2_sys__Open_dir(first_file_name, "empty_dir", &err, &type);
     ok(result_handle == NULL, "tr2_sys__Open_dir(): expect: NULL, got %p\n", result_handle);
