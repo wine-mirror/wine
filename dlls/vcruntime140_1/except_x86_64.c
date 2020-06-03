@@ -435,7 +435,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
     if (trylevel <= last_level) return;
 
     unwind_data = rva_to_ptr(descr->unwind_map, dispatch->ImageBase);
-    last = unwind_data;
+    last = unwind_data - 1;
     for (i = 0; i < trylevel; i++)
     {
         BYTE *addr = unwind_data;
