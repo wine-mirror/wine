@@ -1103,7 +1103,7 @@ static void test_check_interface_support(void)
 
     hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D11Device, NULL);
     ok(hr == DXGI_ERROR_UNSUPPORTED, "Got unexpected hr %#x.\n", hr);
-    driver_version.HighPart = driver_version.LowPart = 0xdeadbeef;
+    driver_version.LowPart = driver_version.HighPart = 0xdeadbeef;
     hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D11Device, &driver_version);
     ok(hr == DXGI_ERROR_UNSUPPORTED, "Got unexpected hr %#x.\n", hr);
     ok(driver_version.HighPart == 0xdeadbeef, "Got unexpected driver version %#x.\n", driver_version.HighPart);
