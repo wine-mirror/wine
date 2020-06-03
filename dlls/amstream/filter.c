@@ -775,11 +775,31 @@ static HRESULT WINAPI filter_seeking_ConvertTimeFormat(IMediaSeeking *iface, LON
 static HRESULT WINAPI filter_seeking_SetPositions(IMediaSeeking *iface, LONGLONG *current_ptr, DWORD current_flags,
         LONGLONG *stop_ptr, DWORD stop_flags)
 {
-    FIXME("iface %p, current %s, current_flags %#x, stop %s, stop_flags %#x, stub!\n", iface,
+    struct filter *filter = impl_from_IMediaSeeking(iface);
+    IMediaSeeking *seeking;
+    HRESULT hr;
+
+    TRACE("iface %p, current %s, current_flags %#x, stop %s, stop_flags %#x.\n", iface,
             current_ptr ? wine_dbgstr_longlong(*current_ptr) : "<null>", current_flags,
             stop_ptr ? wine_dbgstr_longlong(*stop_ptr): "<null>", stop_flags);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&filter->cs);
+
+    seeking = get_seeking(filter->seekable_stream);
+
+    if (!seeking)
+    {
+        LeaveCriticalSection(&filter->cs);
+        return E_NOTIMPL;
+    }
+
+    hr = IMediaSeeking_SetPositions(seeking, current_ptr, current_flags, stop_ptr, stop_flags);
+
+    IMediaSeeking_Release(seeking);
+
+    LeaveCriticalSection(&filter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI filter_seeking_GetPositions(IMediaSeeking *iface, LONGLONG *current, LONGLONG *stop)
