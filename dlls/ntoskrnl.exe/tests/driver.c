@@ -2194,7 +2194,9 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     main_test_work_item = IoAllocateWorkItem(lower_device);
     ok(main_test_work_item != NULL, "main_test_work_item = NULL\n");
 
+    IoMarkIrpPending(irp);
     IoQueueWorkItem(main_test_work_item, main_test_task, DelayedWorkQueue, irp);
+
     return STATUS_PENDING;
 }
 
@@ -2380,7 +2382,6 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = status;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
-    else IoMarkIrpPending(irp);
     return status;
 }
 
