@@ -135,7 +135,6 @@ static HRESULT WINAPI name_GetDisplayName(
 {
     static const WCHAR fmtW[] = {',','%','s','=','\"','%','s','\"',0};
     struct name *name = impl_from_IAssemblyName( iface );
-    WCHAR version[30];
     unsigned int len;
 
     TRACE("%p, %p, %p, 0x%08x\n", iface, buffer, buflen, flags);
@@ -146,7 +145,7 @@ static HRESULT WINAPI name_GetDisplayName(
     if (name->arch)    len += lstrlenW( archW ) + lstrlenW( name->arch ) + 4;
     if (name->token)   len += lstrlenW( tokenW ) + lstrlenW( name->token ) + 4;
     if (name->type)    len += lstrlenW( typeW ) + lstrlenW( name->type ) + 4;
-    if (name->version) len += lstrlenW( versionW ) + lstrlenW( version ) + 4;
+    if (name->version) len += lstrlenW( versionW ) + lstrlenW( name->version ) + 4;
     if (len > *buflen)
     {
         *buflen = len;
