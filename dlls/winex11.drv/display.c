@@ -484,7 +484,7 @@ done:
 }
 
 static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *monitor, int monitor_index,
-                               int video_index, const LUID *gpu_luid)
+                               int video_index, const LUID *gpu_luid, UINT output_id)
 {
     SP_DEVINFO_DATA device_data = {sizeof(SP_DEVINFO_DATA)};
     WCHAR bufferW[MAX_PATH];
@@ -509,7 +509,7 @@ static BOOL X11DRV_InitMonitor(HDEVINFO devinfo, const struct x11drv_monitor *mo
 
     /* Write DEVPROPKEY_MONITOR_OUTPUT_ID */
     if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_OUTPUT_ID,
-                                   DEVPROP_TYPE_UINT32, (const BYTE *)&video_index, sizeof(video_index), 0))
+                                   DEVPROP_TYPE_UINT32, (const BYTE *)&output_id, sizeof(output_id), 0))
         goto done;
 
     /* Create driver key */
@@ -614,6 +614,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
     WCHAR guidW[40];
     WCHAR driverW[1024];
     LUID gpu_luid;
+    UINT output_id = 0;
 
     mutex = get_display_device_init_mutex();
 
@@ -664,7 +665,7 @@ void X11DRV_DisplayDevices_Init(BOOL force)
             for (monitor = 0; monitor < monitor_count; monitor++)
             {
                 TRACE("monitor: %#x %s\n", monitor, wine_dbgstr_w(monitors[monitor].name));
-                if (!X11DRV_InitMonitor(monitor_devinfo, &monitors[monitor], monitor, video_index, &gpu_luid))
+                if (!X11DRV_InitMonitor(monitor_devinfo, &monitors[monitor], monitor, video_index, &gpu_luid, output_id++))
                     goto done;
             }
 
