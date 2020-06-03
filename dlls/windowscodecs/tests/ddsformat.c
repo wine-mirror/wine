@@ -121,7 +121,7 @@ static BYTE test_dds_array[] = {
 };
 
 static struct test_data {
-    void *data;
+    BYTE *data;
     UINT size;
     UINT expected_frame_count;
     WICDdsParameters expected_parameters;
@@ -210,6 +210,11 @@ static UINT get_bytes_per_block(DXGI_FORMAT format)
     default:
         return 0;
     }
+}
+
+static BOOL has_extended_header(const BYTE *data)
+{
+    return data[84] == 'D' && data[85] == 'X' && data[86] == '1' && data[87] == '0';
 }
 
 static void test_dds_decoder_initialize(void)
@@ -387,26 +392,13 @@ static void test_dds_decoder_image_parameters(void)
     }
 }
 
-static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBitmapFrameDecode *frame_decode,
-                                              UINT frame_count, int i, int frame_index)
+static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decode, IWICDdsFrameDecode *dds_frame,
+                                              UINT frame_count, WICDdsParameters *params, int i, int frame_index)
 {
     HRESULT hr;
-    WICDdsParameters params;
-    IWICDdsDecoder *dds_decoder = NULL;
-    IWICDdsFrameDecode *dds_frame = NULL;
     UINT width, height ,expected_width, expected_height, slice_index, depth;
     UINT width_in_blocks, height_in_blocks, expected_width_in_blocks, expected_height_in_blocks;
     WICDdsFormatInfo format_info;
-
-    hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICDdsDecoder, (void **)&dds_decoder);
-    ok(hr == S_OK, "%d: QueryInterface failed, hr=%x\n", i, hr);
-    if (hr != S_OK) goto end;
-    hr = IWICBitmapFrameDecode_QueryInterface(frame_decode, &IID_IWICDdsFrameDecode, (void **)&dds_frame);
-    ok(hr == S_OK, "%d: [frame %d] QueryInterface failed, hr=%x\n", i, frame_index, hr);
-    if (hr != S_OK) goto end;
-    hr = IWICDdsDecoder_GetParameters(dds_decoder, &params);
-    ok (hr == S_OK, "%d: GetParameters failed, hr=%x\n", i, hr);
-    if (hr != S_OK) goto end;
 
     /* frame size tests */
 
@@ -418,12 +410,12 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICBitmapFrameDecode_GetSize(frame_decode, &width, &height);
     ok (hr == S_OK, "%d: GetSize failed for frame %d, hr=%x\n", i, frame_index, hr);
-    if (hr != S_OK) goto end;
+    if (hr != S_OK) return;
 
-    depth = params.Depth;
-    expected_width = params.Width;
-    expected_height = params.Height;
-    slice_index = frame_index % (frame_count / params.ArraySize);
+    depth = params->Depth;
+    expected_width = params->Width;
+    expected_height = params->Height;
+    slice_index = frame_index % (frame_count / params->ArraySize);
     while (slice_index >= depth)
     {
         if (expected_width > 1) expected_width /= 2;
@@ -440,7 +432,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, &format_info);
     ok (hr == S_OK, "%d: [frame %d] GetFormatInfo failed, hr=%x\n", i, frame_index, hr);
-    if (hr != S_OK) goto end;
+    if (hr != S_OK) return;
 
     ok (format_info.DxgiFormat == test_data[i].expected_parameters.DxgiFormat,
         "%d: [frame %d] Expected DXGI format 0x%x, got 0x%x\n",
@@ -463,7 +455,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, &height_in_blocks);
     ok (hr == S_OK, "%d: [frame %d] GetSizeInBlocks failed, hr=%x\n", i, frame_index, hr);
-    if (hr != S_OK) goto end;
+    if (hr != S_OK) return;
 
     expected_width_in_blocks = (expected_width + format_info.BlockWidth - 1) / format_info.BlockWidth;
     expected_height_in_blocks = (expected_height + format_info.BlockHeight - 1) / format_info.BlockHeight;
@@ -472,33 +464,103 @@ static void test_dds_decoder_frame_properties(IWICBitmapDecoder *decoder, IWICBi
     ok (height_in_blocks == expected_height_in_blocks,
         "%d: [frame %d] Expected height in blocks %d, got %d\n", i, frame_index, expected_height_in_blocks, height_in_blocks);
 
-end:
-    if (dds_decoder) IWICDdsDecoder_Release(dds_decoder);
-    if (dds_frame) IWICDdsFrameDecode_Release(dds_frame);
+}
+
+static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT frame_count, WICDdsParameters *params,
+                                        int i, int frame_index)
+{
+    HRESULT hr;
+    WICDdsFormatInfo format_info;
+    WICRect rect = { 0, 0, 1, 1 };
+    BYTE buffer[32];
+    UINT stride, width_in_blocks, height_in_blocks;
+    UINT width, height, depth, array_index;
+    UINT block_offset;
+    int slice_index;
+
+    hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, &height_in_blocks);
+    ok (hr == S_OK, "%d: [frame %d] GetSizeInBlocks failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) return;
+    hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, &format_info);
+    ok (hr == S_OK, "%d: [frame %d] GetFormatInfo failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) return;
+    stride = width_in_blocks * format_info.BytesPerBlock;
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 0, NULL);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 0, buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 32, buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, 32, buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 32, buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] CopyBlocks failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) return;
+
+    block_offset = 128; /* DDS magic and header */
+    if (has_extended_header(test_data[i].data)) block_offset += 20; /* DDS extended header */
+    width = params->Width;
+    height = params->Height;
+    depth = params->Depth;
+    slice_index = frame_index % (frame_count / params->ArraySize);
+    array_index = frame_index / (frame_count / params->ArraySize);
+    block_offset += (test_data[i].size - block_offset) / params->ArraySize * array_index;
+    while (slice_index >= 0)
+    {
+        width_in_blocks = (width + format_info.BlockWidth - 1) / format_info.BlockWidth;
+        height_in_blocks = (width + format_info.BlockWidth - 1) / format_info.BlockWidth;
+        block_offset += (slice_index >= depth) ?
+                        (width_in_blocks * height_in_blocks * format_info.BytesPerBlock * depth) :
+                        (width_in_blocks * height_in_blocks * format_info.BytesPerBlock * slice_index);
+        if (width > 1) width /= 2;
+        if (height > 1) height /= 2;
+        slice_index -= depth;
+        if (depth > 1) depth /= 2;
+    }
+    ok (!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, format_info.BytesPerBlock),
+        "%d: [frame %d] Block data mismatch\n", i, frame_index);
 }
 
 static void test_dds_decoder_frame(IWICBitmapDecoder *decoder, int i)
 {
     HRESULT hr;
+    IWICDdsDecoder *dds_decoder = NULL;
     UINT frame_count, j;
+    WICDdsParameters params;
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &frame_count);
     ok (hr == S_OK, "%d: GetFrameCount failed, hr=%x\n", i, hr);
     if (hr != S_OK) return;
+    hr = IWICBitmapDecoder_QueryInterface(decoder, &IID_IWICDdsDecoder, (void **)&dds_decoder);
+    ok(hr == S_OK, "%d: QueryInterface failed, hr=%x\n", i, hr);
+    if (hr != S_OK) goto end;
+    hr = IWICDdsDecoder_GetParameters(dds_decoder, &params);
+    ok (hr == S_OK, "%d: GetParameters failed, hr=%x\n", i, hr);
+    if (hr != S_OK) goto end;
 
     for (j = 0; j < frame_count; j++)
     {
         IWICBitmapFrameDecode *frame_decode = NULL;
+        IWICDdsFrameDecode *dds_frame = NULL;
 
         hr = IWICBitmapDecoder_GetFrame(decoder, j, &frame_decode);
         ok (hr == S_OK, "%d: GetFrame failed for frame %d, hr=%x\n", i, j, hr);
-        if (hr != S_OK) {
-            IWICBitmapFrameDecode_Release(frame_decode);
-            continue;
-        }
+        if (hr != S_OK) goto next;
+        hr = IWICBitmapFrameDecode_QueryInterface(frame_decode, &IID_IWICDdsFrameDecode, (void **)&dds_frame);
+        ok(hr == S_OK, "%d: [frame %d] QueryInterface failed, hr=%x\n", i, j, hr);
+        if (hr != S_OK) goto next;
 
-        test_dds_decoder_frame_properties(decoder, frame_decode, frame_count, i, j);
+        test_dds_decoder_frame_properties(frame_decode, dds_frame, frame_count, &params, i, j);
+        test_dds_decoder_frame_data(dds_frame, frame_count, &params, i, j);
+
+    next:
+        if (frame_decode) IWICBitmapFrameDecode_Release(frame_decode);
+        if (dds_frame) IWICDdsFrameDecode_Release(dds_frame);
     }
+
+end:
+    if (dds_decoder) IWICDdsDecoder_Release(dds_decoder);
 }
 
 static void test_dds_decoder(void)
