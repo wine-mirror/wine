@@ -284,9 +284,6 @@ TEB *thread_init(void)
  */
 void WINAPI RtlExitUserThread( ULONG status )
 {
-    static void *prev_teb;
-    TEB *teb;
-
     if (status)  /* send the exit code to the server (0 is already the default) */
     {
         SERVER_START_REQ( terminate_thread )
@@ -306,20 +303,6 @@ void WINAPI RtlExitUserThread( ULONG status )
 
     LdrShutdownThread();
     RtlFreeThreadActivationContextStack();
-
-    pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-
-    if ((teb = InterlockedExchangePointer( &prev_teb, NtCurrentTeb() )))
-    {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-
-        if (thread_data->pthread_id)
-        {
-            pthread_join( thread_data->pthread_id, NULL );
-            unix_funcs->virtual_free_teb( teb );
-        }
-    }
-
     for (;;) unix_funcs->exit_thread( status );
 }
 

@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 18
+#define NTDLL_UNIXLIB_VERSION 19
 
 struct unix_funcs
 {
@@ -92,7 +92,6 @@ struct unix_funcs
     void          (CDECL *virtual_get_system_info)( SYSTEM_BASIC_INFORMATION *info );
     NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
     TEB *         (CDECL *virtual_alloc_first_teb)(void);
-    void          (CDECL *virtual_free_teb)( TEB *teb );
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
     NTSTATUS      (CDECL *virtual_handle_fault)( LPCVOID addr, DWORD err, BOOL on_signal_stack );
     unsigned int  (CDECL *virtual_locked_server_call)( void *req_ptr );

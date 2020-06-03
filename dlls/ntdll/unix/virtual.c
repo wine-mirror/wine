@@ -2628,7 +2628,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
 /***********************************************************************
  *           virtual_free_teb
  */
-void CDECL virtual_free_teb( TEB *teb )
+void virtual_free_teb( TEB *teb )
 {
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     SIZE_T size;

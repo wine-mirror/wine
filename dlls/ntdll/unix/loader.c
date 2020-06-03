@@ -1017,7 +1017,6 @@ static struct unix_funcs unix_funcs =
     virtual_get_system_info,
     virtual_create_builtin_view,
     virtual_alloc_first_teb,
-    virtual_free_teb,
     virtual_alloc_thread_stack,
     virtual_handle_fault,
     virtual_locked_server_call,

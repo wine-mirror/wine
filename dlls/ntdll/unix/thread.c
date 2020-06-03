@@ -218,7 +218,21 @@ void CDECL abort_thread( int status )
  */
 void CDECL exit_thread( int status )
 {
+    static void *prev_teb;
+    TEB *teb;
+
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
+
+    if ((teb = InterlockedExchangePointer( &prev_teb, NtCurrentTeb() )))
+    {
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+
+        if (thread_data->pthread_id)
+        {
+            pthread_join( thread_data->pthread_id, NULL );
+            virtual_free_teb( teb );
+        }
+    }
     signal_exit_thread( status, pthread_exit_wrapper );
 }
 
