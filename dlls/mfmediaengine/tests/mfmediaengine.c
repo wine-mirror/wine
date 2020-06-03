@@ -490,6 +490,60 @@ static void test_mute(void)
     IMFMediaEngine_Release(media_engine);
 }
 
+static void test_error(void)
+{
+    struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
+    IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
+    IMFMediaEngine *media_engine;
+    IMFMediaError *eo, *eo2;
+    HRESULT hr;
+
+    media_engine = create_media_engine(callback);
+
+    eo = (void *)0xdeadbeef;
+    hr = IMFMediaEngine_GetError(media_engine, &eo);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!eo, "Unexpected instance.\n");
+}
+    hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_ENCRYPTED + 1);
+todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_ABORTED);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    eo = NULL;
+    hr = IMFMediaEngine_GetError(media_engine, &eo);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!eo, "Unexpected instance.\n");
+}
+    eo2 = NULL;
+    hr = IMFMediaEngine_GetError(media_engine, &eo2);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(eo2 != eo, "Unexpected instance.\n");
+}
+    if (eo2)
+        IMFMediaError_Release(eo2);
+    if (eo)
+        IMFMediaError_Release(eo);
+
+    hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_NOERROR);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    eo = (void *)0xdeadbeef;
+    hr = IMFMediaEngine_GetError(media_engine, &eo);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!eo, "Unexpected instance.\n");
+}
+    IMFMediaEngine_Release(media_engine);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -516,6 +570,7 @@ START_TEST(mfmediaengine)
     test_Play();
     test_playback_rate();
     test_mute();
+    test_error();
 
     IMFMediaEngineClassFactory_Release(factory);
 
