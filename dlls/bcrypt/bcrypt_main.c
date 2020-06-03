@@ -31,6 +31,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntsecapi.h"
+#include "wincrypt.h"
 #include "bcrypt.h"
 
 #include "bcrypt_internal.h"
@@ -948,6 +949,10 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
     {
         return key_export_ecc( key, output, output_len, size );
     }
+    else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
+    {
+        return key_export_dsa_capi( key, output, output_len, size );
+    }
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
     return STATUS_NOT_IMPLEMENTED;
@@ -1259,6 +1264,48 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
         if ((status = key_asymmetric_init( key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size )))
+        {
+            heap_free( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
+    else if (!strcmpW( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
+    {
+        BLOBHEADER *hdr = (BLOBHEADER *)input;
+        DSSPUBKEY *pubkey;
+
+        if (input_len < sizeof(*hdr)) return STATUS_INVALID_PARAMETER;
+
+        if (hdr->bType != PRIVATEKEYBLOB && hdr->bVersion != 2 && hdr->aiKeyAlg != CALG_DSS_SIGN)
+        {
+            FIXME( "blob type %u version %u alg id %u not supported\n", hdr->bType, hdr->bVersion, hdr->aiKeyAlg );
+            return STATUS_NOT_SUPPORTED;
+        }
+        if (alg->id != ALG_ID_DSA)
+        {
+            FIXME( "algorithm %u does not support importing blob of type %s\n", alg->id, debugstr_w(type) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        if (input_len < sizeof(*hdr) + sizeof(*pubkey)) return STATUS_INVALID_PARAMETER;
+        pubkey = (DSSPUBKEY *)(hdr + 1);
+        if (pubkey->magic != MAGIC_DSS2) return STATUS_NOT_SUPPORTED;
+
+        if (input_len < sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 2 + 40 + sizeof(DSSSEED))
+            return STATUS_INVALID_PARAMETER;
+
+        if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+        key->hdr.magic = MAGIC_KEY;
+
+        if ((status = key_asymmetric_init( key, alg, pubkey->bitlen, NULL, 0 )))
+        {
+            heap_free( key );
+            return status;
+        }
+        if ((status = key_import_dsa_capi( key, input, input_len )))
         {
             heap_free( key );
             return status;

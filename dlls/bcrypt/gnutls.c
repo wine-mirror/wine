@@ -33,6 +33,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ntsecapi.h"
+#include "wincrypt.h"
 #include "bcrypt.h"
 
 #include "bcrypt_internal.h"
@@ -106,6 +107,7 @@ MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_privkey_deinit);
+MAKE_FUNCPTR(gnutls_privkey_import_dsa_raw);
 MAKE_FUNCPTR(gnutls_privkey_init);
 MAKE_FUNCPTR(gnutls_privkey_sign_hash);
 MAKE_FUNCPTR(gnutls_pubkey_deinit);
@@ -220,6 +222,7 @@ BOOL gnutls_initialize(void)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_privkey_deinit);
+    LOAD_FUNCPTR(gnutls_privkey_import_dsa_raw);
     LOAD_FUNCPTR(gnutls_privkey_init);
     LOAD_FUNCPTR(gnutls_privkey_sign_hash);
     LOAD_FUNCPTR(gnutls_pubkey_deinit);
@@ -983,6 +986,115 @@ NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
         pgnutls_privkey_deinit( handle );
         return status;
     }
+
+    key->u.a.handle = handle;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BLOBHEADER *hdr;
+    DSSPUBKEY *pubkey;
+    gnutls_datum_t p, q, g, y, x;
+    UCHAR *src, *dst;
+    int ret, size;
+
+    if ((ret = pgnutls_privkey_export_dsa_raw( key->u.a.handle, &p, &q, &g, &y, &x )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if ((q.size != 20 && q.size != 21) || (x.size != 20 && x.size != 21))
+    {
+        ERR( "can't export key in this format\n" );
+        free( p.data ); free( q.data ); free( g.data ); free( y.data ); free( x.data );
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    size = key->u.a.bitlen / 8;
+    *ret_len = sizeof(*hdr) + sizeof(*pubkey) + size * 2 + 40 + sizeof(key->u.a.dss_seed);
+    if (len >= *ret_len && buf)
+    {
+        hdr = (BLOBHEADER *)buf;
+        hdr->bType    = PRIVATEKEYBLOB;
+        hdr->bVersion = 2;
+        hdr->reserved = 0;
+        hdr->aiKeyAlg = CALG_DSS_SIGN;
+
+        pubkey = (DSSPUBKEY *)(hdr + 1);
+        pubkey->magic  = MAGIC_DSS2;
+        pubkey->bitlen = key->u.a.bitlen;
+
+        dst = (UCHAR *)(pubkey + 1);
+        if (p.size == size + 1) src = p.data + 1;
+        else src = p.data;
+        memcpy( dst, src, size );
+
+        dst += size;
+        if (q.size == 21) src = q.data + 1;
+        else src = q.data;
+        memcpy( dst, src, 20 );
+
+        dst += 20;
+        if (g.size == size + 1) src = g.data + 1;
+        else src = g.data;
+        memcpy( dst, src, size );
+
+        dst += size;
+        if (x.size == 21) src = x.data + 1;
+        else src = x.data;
+        memcpy( dst, src, 20 );
+
+        dst += 20;
+        memcpy( dst, &key->u.a.dss_seed, sizeof(key->u.a.dss_seed) );
+    }
+
+    free( p.data ); free( q.data ); free( g.data ); free( y.data ); free( x.data );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
+{
+    BLOBHEADER *hdr = (BLOBHEADER *)buf;
+    DSSPUBKEY *pubkey;
+    gnutls_privkey_t handle;
+    gnutls_datum_t p, q, g, y, x;
+    unsigned char dummy[128];
+    int ret, size;
+
+    if ((ret = pgnutls_privkey_init( &handle )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    hdr = (BLOBHEADER *)buf;
+    pubkey = (DSSPUBKEY *)(hdr + 1);
+    size = pubkey->bitlen / 8;
+
+    p.data = (unsigned char *)(pubkey + 1);
+    p.size = size;
+    q.data = p.data + size;
+    q.size = 20;
+    g.data = q.data + 20;
+    g.size = size;
+    x.data = g.data + size;
+    x.size = 20;
+
+    WARN( "using dummy public key\n" );
+    memset( dummy, 1, sizeof(dummy) );
+    y.data = dummy;
+    y.size = min( p.size, sizeof(dummy) );
+
+    if ((ret = pgnutls_privkey_import_dsa_raw( handle, &p, &q, &g, &y, &x )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_privkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    memcpy( &key->u.a.dss_seed, x.data + x.size, sizeof(key->u.a.dss_seed) );
 
     key->u.a.handle = handle;
     return STATUS_SUCCESS;
