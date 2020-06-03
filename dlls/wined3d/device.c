@@ -5385,8 +5385,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_cs_emit_unload_resource(device->cs, resource);
         }
 
-        if (device->d3d_initialized)
-            device->adapter->adapter_ops->adapter_uninit_3d(device);
+        device->adapter->adapter_ops->adapter_uninit_3d(device);
 
         memset(&device->state, 0, sizeof(device->state));
         state_init(&device->state, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
@@ -5403,7 +5402,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_device_set_depth_stencil_view(device, view);
     }
 
-    if (device->d3d_initialized && reset_state)
+    if (reset_state)
         hr = device->adapter->adapter_ops->adapter_init_3d(device);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
