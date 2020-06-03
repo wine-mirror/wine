@@ -345,7 +345,7 @@
 @ stdcall CreateWaitableTimerExA(ptr str long long)
 @ stdcall -import CreateWaitableTimerExW(ptr wstr long long)
 @ stdcall -import CreateWaitableTimerW(ptr long wstr)
-# @ stub CtrlRoutine
+@ stdcall CtrlRoutine(ptr) kernelbase.CtrlRoutine
 @ stdcall -import DeactivateActCtx(long long)
 @ stdcall -import DebugActiveProcess(long)
 @ stdcall -import DebugActiveProcessStop(long)
@@ -1349,7 +1349,7 @@
 @ stdcall -import SetConsoleCP(long)
 # @ stub SetConsoleHistoryInfo
 @ stub SetConsoleCommandHistoryMode
-@ stdcall SetConsoleCtrlHandler(ptr long)
+@ stdcall -import SetConsoleCtrlHandler(ptr long)
 @ stub SetConsoleCursor
 @ stdcall -import SetConsoleCursorInfo(long ptr)
 @ stub SetConsoleCursorMode

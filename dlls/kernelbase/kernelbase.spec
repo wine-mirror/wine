@@ -234,7 +234,7 @@
 @ stdcall CreateWaitableTimerExW(ptr wstr long long)
 @ stdcall CreateWaitableTimerW(ptr long wstr)
 @ stdcall CreateWellKnownSid(long ptr ptr ptr)
-# @ stub CtrlRoutine
+@ stdcall CtrlRoutine(ptr)
 # @ stub CveEventWrite
 @ stdcall DeactivateActCtx(long long)
 @ stdcall DebugActiveProcess(long)
@@ -1404,7 +1404,7 @@
 @ stdcall SetComputerNameW(wstr)
 @ stdcall SetConsoleActiveScreenBuffer(long)
 @ stdcall SetConsoleCP(long)
-@ stdcall SetConsoleCtrlHandler(ptr long) kernel32.SetConsoleCtrlHandler
+@ stdcall SetConsoleCtrlHandler(ptr long)
 @ stdcall SetConsoleCursorInfo(long ptr)
 @ stdcall SetConsoleCursorPosition(long long)
 @ stdcall SetConsoleInputExeNameA(str)
