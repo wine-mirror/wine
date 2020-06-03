@@ -5403,9 +5403,25 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR pName, DWORD level, LPBYTE pDriverInfo)
 BOOL WINAPI AddPrintProcessorA(LPSTR pName, LPSTR pEnvironment, LPSTR pPathName,
                                LPSTR pPrintProcessorName)
 {
-    FIXME("(%s,%s,%s,%s): stub\n", debugstr_a(pName), debugstr_a(pEnvironment),
+    UNICODE_STRING NameW, EnvW, PathW, ProcessorW;
+    BOOL ret;
+
+    TRACE("(%s,%s,%s,%s)\n", debugstr_a(pName), debugstr_a(pEnvironment),
           debugstr_a(pPathName), debugstr_a(pPrintProcessorName));
-    return FALSE;
+
+    asciitounicode(&NameW, pName);
+    asciitounicode(&EnvW, pEnvironment);
+    asciitounicode(&PathW, pPathName);
+    asciitounicode(&ProcessorW, pPrintProcessorName);
+
+    ret = AddPrintProcessorW(NameW.Buffer, EnvW.Buffer, PathW.Buffer, ProcessorW.Buffer);
+
+    RtlFreeUnicodeString(&ProcessorW);
+    RtlFreeUnicodeString(&PathW);
+    RtlFreeUnicodeString(&EnvW);
+    RtlFreeUnicodeString(&NameW);
+
+    return ret;
 }
 
 /*****************************************************************************
