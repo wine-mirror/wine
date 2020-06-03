@@ -5493,17 +5493,14 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
 
-    if (device->d3d_initialized)
+    for (i = 0; i < ARRAY_SIZE(device->state.fb.render_targets); ++i)
     {
-        for (i = 0; i < ARRAY_SIZE(device->state.fb.render_targets); ++i)
-        {
-            if ((rtv = device->state.fb.render_targets[i]) && rtv->resource == resource)
-                ERR("Resource %p is still in use as render target %u.\n", resource, i);
-        }
-
-        if ((rtv = device->state.fb.depth_stencil) && rtv->resource == resource)
-            ERR("Resource %p is still in use as depth/stencil buffer.\n", resource);
+        if ((rtv = device->state.fb.render_targets[i]) && rtv->resource == resource)
+            ERR("Resource %p is still in use as render target %u.\n", resource, i);
     }
+
+    if ((rtv = device->state.fb.depth_stencil) && rtv->resource == resource)
+        ERR("Resource %p is still in use as depth/stencil buffer.\n", resource);
 
     switch (type)
     {
