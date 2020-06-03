@@ -7373,16 +7373,20 @@ static void test_std_streams(void)
     ok(*p_ios_sunk_with_stdio == 0, "expected 0 got %d\n", *p_ios_sunk_with_stdio);
     p_cin->extract_delim = p_cin->count = 0xabababab;
     p_cin->base_ios.state = 0xabababab;
-    p_cin->base_ios.precision = p_cin->base_ios.fill = p_cin->base_ios.width = 0xabababab;
+    p_cin->base_ios.fill = 0xab;
+    p_cin->base_ios.precision = p_cin->base_ios.width = 0xabababab;
     p_cout->unknown = 0xabababab;
     p_cout->base_ios.state = 0xabababab;
-    p_cout->base_ios.precision = p_cout->base_ios.fill = p_cout->base_ios.width = 0xabababab;
+    p_cout->base_ios.fill = 0xab;
+    p_cout->base_ios.precision = p_cout->base_ios.width = 0xabababab;
     p_cerr->unknown = 0xabababab;
     p_cerr->base_ios.state = 0xabababab;
-    p_cerr->base_ios.precision = p_cerr->base_ios.fill = p_cerr->base_ios.width = 0xabababab;
+    p_cerr->base_ios.fill = 0xab;
+    p_cerr->base_ios.precision = p_cerr->base_ios.width = 0xabababab;
     p_clog->unknown = 0xabababab;
     p_clog->base_ios.state = 0xabababab;
-    p_clog->base_ios.precision = p_clog->base_ios.fill = p_clog->base_ios.width = 0xabababab;
+    p_clog->base_ios.fill = 0xab;
+    p_clog->base_ios.precision = p_clog->base_ios.width = 0xabababab;
     p_ios_sync_with_stdio();
     ok(*p_ios_sunk_with_stdio == 1, "expected 1 got %d\n", *p_ios_sunk_with_stdio);
 
