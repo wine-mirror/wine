@@ -685,23 +685,22 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigne
     if(FAILED(hres))
         return hres;
 
-    if(argc > 1) {
-        WARN("invalid arg_cnt %d\n", argc);
-        return E_FAIL;
-    }
-
-    if(argc == 1) {
-        if(!is_object_instance(argv[0])) {
-            WARN("arg is not dispatch\n");
-            return E_FAIL;
-        }
-
-        cmp_func = iface_to_jsdisp(get_object(argv[0]));
-        if(!cmp_func || !is_class(cmp_func, JSCLASS_FUNCTION)) {
-            WARN("cmp_func is not a function\n");
-            if(cmp_func)
-                jsdisp_release(cmp_func);
-            return E_FAIL;
+    if(argc >= 1) {
+        if(is_object_instance(argv[0])) {
+            if(argc > 1 && ctx->version < SCRIPTLANGUAGEVERSION_ES5) {
+                WARN("invalid arg_cnt %d\n", argc);
+                return JS_E_JSCRIPT_EXPECTED;
+            }
+            cmp_func = iface_to_jsdisp(get_object(argv[0]));
+            if(!cmp_func || !is_class(cmp_func, JSCLASS_FUNCTION)) {
+                WARN("cmp_func is not a function\n");
+                if(cmp_func)
+                    jsdisp_release(cmp_func);
+                return JS_E_JSCRIPT_EXPECTED;
+            }
+        }else if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5 ? !is_undefined(argv[0]) : !is_null(argv[0])) {
+            WARN("invalid arg %s\n", debugstr_jsval(argv[0]));
+            return JS_E_JSCRIPT_EXPECTED;
         }
     }
 

@@ -1039,6 +1039,19 @@ tmp = [5,3,"2.5",2,true,false,-1];
 for(var i=0; i < arr.length; i++)
     ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
 
+tmp = [3,1,2].sort(function(x,y) { return y-x; }).join();
+ok(tmp === "3,2,1", "reverse sorted [3,1,2] = " + tmp);
+
+tmp = [3,1,2].sort(null).join();
+ok(tmp === "1,2,3", "null sorted [3,1,2] = " + tmp);
+
+try {
+    tmp = [3,1,2].sort(function(x,y) { return y-x; }, 1, 2, 3);
+    ok(false, "expected sort(undefined) exception");
+} catch(e) {
+    ok(e.name === "TypeError", "got exception " + e.name);
+}
+
 arr = [5,false,2,0,"abc",3,"a",-1];
 tmp = arr.sort();
 ok(tmp === arr, "tmp !== arr");

@@ -188,6 +188,25 @@ function test_array_map() {
     next_test();
 }
 
+function test_array_sort() {
+    var r;
+
+    r = [3,1,2].sort(function(x,y) { return y-x; }, 1, 2, 3, true, undefined ).join();
+    ok(r === "3,2,1", "reverse sorted [3,1,2] = " + r);
+
+    r = [3,1,2].sort(undefined).join();
+    ok(r === "1,2,3", "null sorted [3,1,2] = " + r);
+
+    try {
+        r = [3,1,2].sort(null);
+        ok(false, "expected sort(null) exception");
+    }catch(e) {
+        ok(e.name === "TypeError", "got exception " + e.name);
+    }
+
+    next_test();
+}
+
 function test_identifier_keywords() {
     var o = {
         if: 1,
@@ -883,6 +902,7 @@ var tests = [
     test_array_forEach,
     test_isArray,
     test_array_map,
+    test_array_sort,
     test_identifier_keywords,
     test_getOwnPropertyDescriptor,
     test_defineProperty,
