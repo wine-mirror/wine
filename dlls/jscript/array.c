@@ -949,6 +949,7 @@ static HRESULT Array_toLocaleString(script_ctx_t *ctx, vdisp_t *vthis, WORD flag
 static HRESULT Array_forEach(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
+    IDispatch *context_obj = NULL, *callback;
     jsval_t value, args[3], res;
     jsdisp_t *jsthis;
     unsigned length, i;
@@ -965,10 +966,14 @@ static HRESULT Array_forEach(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
         FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
         return E_INVALIDARG;
     }
+    callback = get_object(argv[0]);
 
     if(argc > 1 && !is_undefined(argv[1])) {
-        FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
-        return E_NOTIMPL;
+        if(!is_object_instance(argv[1]) || !get_object(argv[1])) {
+            FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
+            return E_NOTIMPL;
+        }
+        context_obj = get_object(argv[1]);
     }
 
     for(i = 0; i < length; i++) {
@@ -981,7 +986,7 @@ static HRESULT Array_forEach(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsi
         args[0] = value;
         args[1] = jsval_number(i);
         args[2] = jsval_obj(jsthis);
-        hres = disp_call_value(ctx, get_object(argv[0]), NULL, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
         jsval_release(value);
         if(FAILED(hres))
             return hres;

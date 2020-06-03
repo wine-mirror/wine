@@ -116,6 +116,12 @@ function test_array_forEach() {
         ok(this === window, "this != window");
     }, undefined);
 
+    var o = new Object(), a = [1,2];
+    a.forEach(function(value, index, array) {
+        ok(array === a, "array != a");
+        ok(this === o, "this != o");
+    }, o);
+
     next_test();
 }
 
