@@ -163,6 +163,7 @@ static const IEnumPinsVtbl enum_pins_vtbl =
 struct filter
 {
     IMediaStreamFilter IMediaStreamFilter_iface;
+    IMediaSeeking IMediaSeeking_iface;
     LONG refcount;
     CRITICAL_SECTION cs;
 
@@ -171,6 +172,7 @@ struct filter
     IFilterGraph *graph;
     ULONG nb_streams;
     IAMMediaStream **streams;
+    IAMMediaStream *seekable_stream;
     FILTER_STATE state;
 };
 
@@ -179,26 +181,27 @@ static inline struct filter *impl_from_IMediaStreamFilter(IMediaStreamFilter *if
     return CONTAINING_RECORD(iface, struct filter, IMediaStreamFilter_iface);
 }
 
-static HRESULT WINAPI filter_QueryInterface(IMediaStreamFilter *iface, REFIID riid, void **ret_iface)
+static HRESULT WINAPI filter_QueryInterface(IMediaStreamFilter *iface, REFIID iid, void **out)
 {
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ret_iface);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    *ret_iface = NULL;
+    TRACE("filter %p, iid %s, out %p.\n", filter, debugstr_guid(iid), out);
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IPersist) ||
-        IsEqualIID(riid, &IID_IMediaFilter) ||
-        IsEqualIID(riid, &IID_IBaseFilter) ||
-        IsEqualIID(riid, &IID_IMediaStreamFilter))
-        *ret_iface = iface;
+    *out = NULL;
 
-    if (*ret_iface)
-    {
-        IMediaStreamFilter_AddRef(*ret_iface);
-        return S_OK;
-    }
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IPersist)
+            || IsEqualGUID(iid, &IID_IMediaFilter)
+            || IsEqualGUID(iid, &IID_IBaseFilter)
+            || IsEqualGUID(iid, &IID_IMediaStreamFilter))
+        *out = iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking) && filter->seekable_stream)
+        *out = &filter->IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
 
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI filter_AddRef(IMediaStreamFilter *iface)
@@ -538,11 +541,70 @@ static HRESULT WINAPI filter_EnumMediaStreams(IMediaStreamFilter *iface, LONG in
     return S_OK;
 }
 
-static HRESULT WINAPI filter_SupportSeeking(IMediaStreamFilter *iface, BOOL bRenderer)
+static IMediaSeeking *get_seeking(IAMMediaStream *stream)
 {
-    FIXME("(%p)->(%d): Stub!\n", iface, bRenderer);
+    IMediaSeeking *seeking;
+    IPin *pin, *peer;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    if (FAILED(IAMMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin)))
+    {
+        WARN("Stream %p does not support IPin.\n", stream);
+        return NULL;
+    }
+
+    hr = IPin_ConnectedTo(pin, &peer);
+    IPin_Release(pin);
+    if (FAILED(hr))
+        return NULL;
+
+    hr = IPin_QueryInterface(peer, &IID_IMediaSeeking, (void **)&seeking);
+    IPin_Release(peer);
+    if (FAILED(hr))
+        return NULL;
+
+    return seeking;
+}
+
+static HRESULT WINAPI filter_SupportSeeking(IMediaStreamFilter *iface, BOOL renderer)
+{
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
+    unsigned int i;
+
+    TRACE("filter %p, renderer %d\n", iface, renderer);
+
+    if (!renderer)
+        FIXME("Non-renderer filter support is not yet implemented.\n");
+
+    EnterCriticalSection(&filter->cs);
+
+    if (filter->seekable_stream)
+    {
+        LeaveCriticalSection(&filter->cs);
+        return HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
+    }
+
+    for (i = 0; i < filter->nb_streams; ++i)
+    {
+        IMediaSeeking *seeking = get_seeking(filter->streams[i]);
+        LONGLONG duration;
+
+        if (!seeking)
+            continue;
+
+        if (SUCCEEDED(IMediaSeeking_GetDuration(seeking, &duration)))
+        {
+            filter->seekable_stream = filter->streams[i];
+            IMediaSeeking_Release(seeking);
+            LeaveCriticalSection(&filter->cs);
+            return S_OK;
+        }
+
+        IMediaSeeking_Release(seeking);
+    }
+
+    LeaveCriticalSection(&filter->cs);
+    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI filter_ReferenceTimeToStreamTime(IMediaStreamFilter *iface, REFERENCE_TIME *pTime)
@@ -608,6 +670,177 @@ static const IMediaStreamFilterVtbl filter_vtbl =
     filter_EndOfStream
 };
 
+static inline struct filter *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, struct filter, IMediaSeeking_iface);
+}
+
+static HRESULT WINAPI filter_seeking_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
+{
+    struct filter *filter = impl_from_IMediaSeeking(iface);
+    return IMediaStreamFilter_QueryInterface(&filter->IMediaStreamFilter_iface, iid, out);
+}
+
+static ULONG WINAPI filter_seeking_AddRef(IMediaSeeking *iface)
+{
+    struct filter *filter = impl_from_IMediaSeeking(iface);
+    return IMediaStreamFilter_AddRef(&filter->IMediaStreamFilter_iface);
+}
+
+static ULONG WINAPI filter_seeking_Release(IMediaSeeking *iface)
+{
+    struct filter *filter = impl_from_IMediaSeeking(iface);
+    return IMediaStreamFilter_Release(&filter->IMediaStreamFilter_iface);
+}
+
+static HRESULT WINAPI filter_seeking_GetCapabilities(IMediaSeeking *iface, DWORD *capabilities)
+{
+    FIXME("iface %p, capabilities %p, stub!\n", iface, capabilities);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_CheckCapabilities(IMediaSeeking *iface, DWORD *capabilities)
+{
+    FIXME("iface %p, capabilities %p, stub!\n", iface, capabilities);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_IsFormatSupported(IMediaSeeking *iface, const GUID *format)
+{
+    FIXME("iface %p, format %s, stub!\n", iface, debugstr_guid(format));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_QueryPreferredFormat(IMediaSeeking *iface, GUID *format)
+{
+    FIXME("iface %p, format %p, stub!\n", iface, format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetTimeFormat(IMediaSeeking *iface, GUID *format)
+{
+    FIXME("iface %p, format %p, stub!\n", iface, format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_IsUsingTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    FIXME("iface %p, format %s, stub!\n", iface, debugstr_guid(format));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_SetTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    FIXME("iface %p, format %s, stub!\n", iface, debugstr_guid(format));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetDuration(IMediaSeeking *iface, LONGLONG *duration)
+{
+    FIXME("iface %p, duration %p, stub!\n", iface, duration);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
+{
+    FIXME("iface %p, stop %p, stub!\n", iface, stop);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetCurrentPosition(IMediaSeeking *iface, LONGLONG *current)
+{
+    FIXME("iface %p, current %p, stub!\n", iface, current);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *target,
+        const GUID *target_format, LONGLONG source, const GUID *source_format)
+{
+    FIXME("iface %p, target %p, target_format %s, source 0x%s, source_format %s, stub!\n", iface, target, debugstr_guid(target_format),
+            wine_dbgstr_longlong(source), debugstr_guid(source_format));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_SetPositions(IMediaSeeking *iface, LONGLONG *current_ptr, DWORD current_flags,
+        LONGLONG *stop_ptr, DWORD stop_flags)
+{
+    FIXME("iface %p, current %s, current_flags %#x, stop %s, stop_flags %#x, stub!\n", iface,
+            current_ptr ? wine_dbgstr_longlong(*current_ptr) : "<null>", current_flags,
+            stop_ptr ? wine_dbgstr_longlong(*stop_ptr): "<null>", stop_flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetPositions(IMediaSeeking *iface, LONGLONG *current, LONGLONG *stop)
+{
+    FIXME("iface %p, current %p, stop %p, stub!\n", iface, current, stop);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetAvailable(IMediaSeeking *iface, LONGLONG *earliest, LONGLONG *latest)
+{
+    FIXME("iface %p, earliest %p, latest %p, stub!\n", iface, earliest, latest);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_SetRate(IMediaSeeking *iface, double rate)
+{
+    FIXME("iface %p, rate %f, stub!\n", iface, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetRate(IMediaSeeking *iface, double *rate)
+{
+    FIXME("iface %p, rate %p, stub!\n", iface, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filter_seeking_GetPreroll(IMediaSeeking *iface, LONGLONG *preroll)
+{
+    FIXME("iface %p, preroll %p, stub!\n", iface, preroll);
+
+    return E_NOTIMPL;
+}
+
+static const IMediaSeekingVtbl filter_seeking_vtbl =
+{
+    filter_seeking_QueryInterface,
+    filter_seeking_AddRef,
+    filter_seeking_Release,
+    filter_seeking_GetCapabilities,
+    filter_seeking_CheckCapabilities,
+    filter_seeking_IsFormatSupported,
+    filter_seeking_QueryPreferredFormat,
+    filter_seeking_GetTimeFormat,
+    filter_seeking_IsUsingTimeFormat,
+    filter_seeking_SetTimeFormat,
+    filter_seeking_GetDuration,
+    filter_seeking_GetStopPosition,
+    filter_seeking_GetCurrentPosition,
+    filter_seeking_ConvertTimeFormat,
+    filter_seeking_SetPositions,
+    filter_seeking_GetPositions,
+    filter_seeking_GetAvailable,
+    filter_seeking_SetRate,
+    filter_seeking_GetRate,
+    filter_seeking_GetPreroll,
+};
+
 HRESULT filter_create(IUnknown *outer, void **out)
 {
     struct filter *object;
@@ -621,6 +854,7 @@ HRESULT filter_create(IUnknown *outer, void **out)
         return E_OUTOFMEMORY;
 
     object->IMediaStreamFilter_iface.lpVtbl = &filter_vtbl;
+    object->IMediaSeeking_iface.lpVtbl = &filter_seeking_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MediaStreamFilter.cs");
