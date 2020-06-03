@@ -442,6 +442,8 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
     if (SUCCEEDED(ret) && !(flags & AMMSF_NORENDER))
         ret = IGraphBuilder_Render(This->graph, This->ipin);
 
+    IMediaStreamFilter_SupportSeeking(This->filter, This->type == STREAMTYPE_READ);
+
     if (EnumPins)
         IEnumPins_Release(EnumPins);
     if (BaseFilter)

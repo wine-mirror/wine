@@ -224,8 +224,12 @@ static void test_openfile(void)
     if (pgraph)
         IGraphBuilder_Release(pgraph);
 
+    check_interface(pams, &IID_IMediaSeeking, FALSE);
+
     hr = IAMMultiMediaStream_OpenFile(pams, L"test.avi", 0);
     ok(hr==S_OK, "IAMMultiMediaStream_OpenFile returned: %x\n", hr);
+
+    check_interface(pams, &IID_IMediaSeeking, TRUE);
 
     hr = IAMMultiMediaStream_GetFilterGraph(pams, &pgraph);
     ok(hr==S_OK, "IAMMultiMediaStream_GetFilterGraph returned: %x\n", hr);
