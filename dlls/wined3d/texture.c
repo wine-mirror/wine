@@ -3829,7 +3829,6 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
 {
     struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
     struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
-    unsigned int dst_format_flags, src_format_flags = 0;
     HRESULT hr;
 
     TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_rect %s, src_texture %p, "
@@ -3849,12 +3848,10 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
             && filter != WINED3D_TEXF_LINEAR)
         return WINED3DERR_INVALIDCALL;
 
-    dst_format_flags = dst_texture->resource.format_flags;
     if (FAILED(hr = wined3d_texture_check_box_dimensions(dst_texture,
             dst_sub_resource_idx % dst_texture->level_count, &dst_box)))
         return hr;
 
-    src_format_flags = src_texture->resource.format_flags;
     if (FAILED(hr = wined3d_texture_check_box_dimensions(src_texture,
             src_sub_resource_idx % src_texture->level_count, &src_box)))
         return hr;
@@ -3866,8 +3863,8 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if ((src_format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-            != (dst_format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+    if (!src_texture->resource.format->depth_size != !dst_texture->resource.format->depth_size
+            || !src_texture->resource.format->stencil_size != !dst_texture->resource.format->stencil_size)
     {
         WARN("Rejecting depth/stencil blit between incompatible formats.\n");
         return WINED3DERR_INVALIDCALL;
