@@ -1483,11 +1483,11 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     const struct wined3d_color_key *colour_key = NULL;
     DWORD src_location, dst_location, valid_locations;
-    DWORD src_ds_flags, dst_ds_flags;
     struct wined3d_context *context;
     enum wined3d_blit_op blit_op;
     BOOL scale, convert, resolve;
     RECT src_rect, dst_rect;
+    bool src_ds, dst_ds;
 
     static const DWORD simple_blit = WINED3D_BLT_SRC_CKEY
             | WINED3D_BLT_SRC_CKEY_OVERRIDE
@@ -1561,12 +1561,10 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     convert = src_texture->resource.format->id != dst_texture->resource.format->id;
     resolve = src_texture->resource.multisample_type != dst_texture->resource.multisample_type;
 
-    dst_ds_flags = dst_texture->resource.format_flags
-            & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
-    src_ds_flags = src_texture->resource.format_flags
-            & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    dst_ds = dst_texture->resource.format->depth_size || dst_texture->resource.format->stencil_size;
+    src_ds = src_texture->resource.format->depth_size || src_texture->resource.format->stencil_size;
 
-    if (src_ds_flags || dst_ds_flags)
+    if (src_ds || dst_ds)
     {
         TRACE("Depth/stencil blit.\n");
 
