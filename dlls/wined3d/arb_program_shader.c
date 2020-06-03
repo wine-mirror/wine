@@ -7722,7 +7722,7 @@ static BOOL arbfp_blit_supported(enum wined3d_blit_op blit_op, const struct wine
 
     if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && dst_format->id == src_format->id)
     {
-        if (dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        if (dst_format->depth_size || dst_format->stencil_size)
             blit_op = WINED3D_BLIT_OP_DEPTH_BLIT;
         else
             blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
