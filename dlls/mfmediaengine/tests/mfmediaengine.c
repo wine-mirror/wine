@@ -496,6 +496,7 @@ static void test_error(void)
     IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
     IMFMediaEngine *media_engine;
     IMFMediaError *eo, *eo2;
+    unsigned int code;
     HRESULT hr;
 
     media_engine = create_media_engine(callback);
@@ -542,6 +543,33 @@ todo_wine {
     ok(!eo, "Unexpected instance.\n");
 }
     IMFMediaEngine_Release(media_engine);
+
+    /* Error object. */
+    hr = IMFMediaEngineClassFactory_CreateError(factory, &eo);
+    ok(hr == S_OK, "Failed to create error object, hr %#x.\n", hr);
+
+    code = IMFMediaError_GetErrorCode(eo);
+    ok(code == MF_MEDIA_ENGINE_ERR_NOERROR, "Unexpected code %u.\n", code);
+
+    hr = IMFMediaError_GetExtendedErrorCode(eo);
+    ok(hr == S_OK, "Unexpected code %#x.\n", hr);
+
+    hr = IMFMediaError_SetErrorCode(eo, MF_MEDIA_ENGINE_ERR_ENCRYPTED + 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaError_SetErrorCode(eo, MF_MEDIA_ENGINE_ERR_ABORTED);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    code = IMFMediaError_GetErrorCode(eo);
+    ok(code == MF_MEDIA_ENGINE_ERR_ABORTED, "Unexpected code %u.\n", code);
+
+    hr = IMFMediaError_SetExtendedErrorCode(eo, E_FAIL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaError_GetExtendedErrorCode(eo);
+    ok(hr == E_FAIL, "Unexpected code %#x.\n", hr);
+
+    IMFMediaError_Release(eo);
 }
 
 START_TEST(mfmediaengine)

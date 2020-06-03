@@ -89,6 +89,126 @@ struct media_engine
     CRITICAL_SECTION cs;
 };
 
+struct media_error
+{
+    IMFMediaError IMFMediaError_iface;
+    LONG refcount;
+    unsigned int code;
+    HRESULT extended_code;
+};
+
+static struct media_error *impl_from_IMFMediaError(IMFMediaError *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_error, IMFMediaError_iface);
+}
+
+static HRESULT WINAPI media_error_QueryInterface(IMFMediaError *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFMediaError) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFMediaError_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_error_AddRef(IMFMediaError *iface)
+{
+    struct media_error *me = impl_from_IMFMediaError(iface);
+    ULONG refcount = InterlockedIncrement(&me->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI media_error_Release(IMFMediaError *iface)
+{
+    struct media_error *me = impl_from_IMFMediaError(iface);
+    ULONG refcount = InterlockedDecrement(&me->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(me);
+
+    return refcount;
+}
+
+static USHORT WINAPI media_error_GetErrorCode(IMFMediaError *iface)
+{
+    struct media_error *me = impl_from_IMFMediaError(iface);
+    TRACE("%p.\n", iface);
+    return me->code;
+}
+
+static HRESULT WINAPI media_error_GetExtendedErrorCode(IMFMediaError *iface)
+{
+    struct media_error *me = impl_from_IMFMediaError(iface);
+    TRACE("%p.\n", iface);
+    return me->extended_code;
+}
+
+static HRESULT WINAPI media_error_SetErrorCode(IMFMediaError *iface, MF_MEDIA_ENGINE_ERR code)
+{
+    struct media_error *me = impl_from_IMFMediaError(iface);
+
+    TRACE("%p, %u.\n", iface, code);
+
+    if ((unsigned int)code > MF_MEDIA_ENGINE_ERR_ENCRYPTED)
+        return E_INVALIDARG;
+
+    me->code = code;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_error_SetExtendedErrorCode(IMFMediaError *iface, HRESULT code)
+{
+    struct media_error *me = impl_from_IMFMediaError(iface);
+
+    TRACE("%p, %#x.\n", iface, code);
+
+    me->extended_code = code;
+
+    return S_OK;
+}
+
+static const IMFMediaErrorVtbl media_error_vtbl =
+{
+    media_error_QueryInterface,
+    media_error_AddRef,
+    media_error_Release,
+    media_error_GetErrorCode,
+    media_error_GetExtendedErrorCode,
+    media_error_SetErrorCode,
+    media_error_SetExtendedErrorCode,
+};
+
+static HRESULT create_media_error(IMFMediaError **ret)
+{
+    struct media_error *object;
+
+    *ret = NULL;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IMFMediaError_iface.lpVtbl = &media_error_vtbl;
+    object->refcount = 1;
+
+    *ret = &object->IMFMediaError_iface;
+
+    return S_OK;
+}
+
 static void media_engine_set_flag(struct media_engine *engine, unsigned int mask, BOOL value)
 {
     if (value)
@@ -1060,9 +1180,9 @@ static HRESULT WINAPI media_engine_factory_CreateTimeRange(IMFMediaEngineClassFa
 
 static HRESULT WINAPI media_engine_factory_CreateError(IMFMediaEngineClassFactory *iface, IMFMediaError **error)
 {
-    FIXME("(%p, %p): stub.\n", iface, error);
+    TRACE("%p, %p.\n", iface, error);
 
-    return E_NOTIMPL;
+    return create_media_error(error);
 }
 
 static const IMFMediaEngineClassFactoryVtbl media_engine_factory_vtbl =
