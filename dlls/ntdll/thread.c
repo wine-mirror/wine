@@ -47,6 +47,7 @@
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 16384
@@ -336,13 +337,79 @@ void WINAPI RtlExitUserThread( ULONG status )
 
 
 /***********************************************************************
+ *           call_thread_entry_point
+ */
+#ifdef __i386__
+
+extern void call_thread_entry_point(void) DECLSPEC_HIDDEN;
+__ASM_GLOBAL_FUNC( call_thread_entry_point,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"  /* arg */
+                   "pushl %eax\n\t"  /* entry */
+                   "call " __ASM_NAME("call_thread_func") )
+
+/* wrapper for apps that don't declare the thread function correctly */
+extern DWORD call_thread_func_wrapper( LPTHREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC(call_thread_func_wrapper,
+                  "pushl %ebp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                  "movl %esp,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                  "subl $4,%esp\n\t"
+                  "pushl 12(%ebp)\n\t"
+                  "call *8(%ebp)\n\t"
+                  "leave\n\t"
+                  __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                  __ASM_CFI(".cfi_same_value %ebp\n\t")
+                  "ret" )
+
+void DECLSPEC_HIDDEN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
+        RtlExitUserThread( call_thread_func_wrapper( entry, arg ));
+    }
+    __EXCEPT(call_unhandled_exception_filter)
+    {
+        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
+}
+
+#else  /* __i386__ */
+
+static void WINAPI call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
+        RtlExitUserThread( entry( arg ));
+    }
+    __EXCEPT(call_unhandled_exception_filter)
+    {
+        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
+}
+
+#endif  /* __i386__ */
+
+
+/***********************************************************************
  *           start_thread
  *
  * Startup routine for a newly created thread.
  */
 static void start_thread( struct startup_info *info )
 {
-    BOOL suspend;
     TEB *teb = info->teb;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     struct debug_info debug_info;
@@ -350,10 +417,7 @@ static void start_thread( struct startup_info *info )
     debug_info.str_pos = debug_info.out_pos = 0;
     thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
-
-    unix_funcs->init_thread( teb );
-    unix_funcs->server_init_thread( info->entry_point, &suspend, NULL, NULL, NULL );
-    signal_start_thread( (LPTHREAD_START_ROUTINE)info->entry_point, info->entry_arg, suspend );
+    unix_funcs->start_thread( info->entry_point, info->entry_arg, call_thread_entry_point, teb );
 }
 
 

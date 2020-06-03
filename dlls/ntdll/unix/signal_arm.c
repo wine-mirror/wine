@@ -363,6 +363,69 @@ void signal_init_thread( TEB *teb )
 }
 
 
+/***********************************************************************
+ *           init_thread_context
+ */
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
+{
+    context->R0 = (DWORD)entry;
+    context->R1 = (DWORD)arg;
+    context->Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
+    context->Pc = (DWORD)relay;
+}
+
+
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
+
+    if (suspend)
+    {
+        CONTEXT context = { CONTEXT_ALL };
+
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)NtCurrentTeb()->Tib.StackBase - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL;
+    LdrInitializeThunk( ctx, (void **)&ctx->R0, 0, 0 );
+    return ctx;
+}
+
+
+/***********************************************************************
+ *           signal_start_thread
+ */
+__ASM_GLOBAL_FUNC( signal_start_thread,
+                   ".arm\n\t"
+                   "push {r4-r12,lr}\n\t"
+                   /* store exit frame */
+                   "ldr r4, [sp, #40]\n\t"    /* teb */
+                   "str sp, [r4, #0x1d4]\n\t" /* teb->SystemReserved2 */
+                   /* switch to thread stack */
+                   "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
+                   "sub sp, r4, #0x1000\n\t"
+                   /* attach dlls */
+                   "bl " __ASM_NAME("attach_thread") "\n\t"
+                   "mov sp, r0\n\t"
+                   /* clear the stack */
+                   "and r0, #~0xff0\n\t"  /* round down to page size */
+                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   /* switch to the initial context */
+                   "mov r0, sp\n\t"
+                   "b " __ASM_NAME("set_cpu_context") )
+
+
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    ".arm\n\t"

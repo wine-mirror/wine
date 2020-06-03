@@ -299,5 +299,5 @@ void server_init_process_done(void)
     SERVER_END_REQ;
 
     assert( !status );
-    signal_start_process( entry, suspend );
+    unix_funcs->start_process( entry, suspend, kernel32_start_process );
 }

@@ -370,6 +370,109 @@ void signal_init_thread( TEB *teb )
 }
 
 
+/***********************************************************************
+ *           init_thread_context
+ */
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
+{
+    context->u.s.X0  = (DWORD64)entry;
+    context->u.s.X1  = (DWORD64)arg;
+    context->u.s.X18 = (DWORD64)NtCurrentTeb();
+    context->Sp      = (DWORD64)NtCurrentTeb()->Tib.StackBase;
+    context->Pc      = (DWORD64)relay;
+}
+
+
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
+
+    if (suspend)
+    {
+        CONTEXT context = { CONTEXT_ALL };
+
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)NtCurrentTeb()->Tib.StackBase - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL;
+    LdrInitializeThunk( ctx, (void **)&ctx->u.s.X0, 0, 0 );
+    return ctx;
+}
+
+
+/***********************************************************************
+ *           signal_start_thread
+ */
+__ASM_GLOBAL_FUNC( signal_start_thread,
+                   "stp x29, x30, [sp,#-16]!\n\t"
+                   "mov x18, x4\n\t"             /* teb */
+                   /* store exit frame */
+                   "mov x29, sp\n\t"
+                   "str x29, [x4, #0x300]\n\t"  /* arm64_thread_data()->exit_frame */
+                   /* switch to thread stack */
+                   "ldr x5, [x4, #8]\n\t"       /* teb->Tib.StackBase */
+                   "sub sp, x5, #0x1000\n\t"
+                   /* attach dlls */
+                   "bl " __ASM_NAME("attach_thread") "\n\t"
+                   "mov sp, x0\n\t"
+                   /* clear the stack */
+                   "and x0, x0, #~0xfff\n\t"  /* round down to page size */
+                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   /* switch to the initial context */
+                   "mov x0, sp\n\t"
+                   "ldp q0, q1, [x0, #0x110]\n\t"      /* context->V[0,1] */
+                   "ldp q2, q3, [x0, #0x130]\n\t"      /* context->V[2,3] */
+                   "ldp q4, q5, [x0, #0x150]\n\t"      /* context->V[4,5] */
+                   "ldp q6, q7, [x0, #0x170]\n\t"      /* context->V[6,7] */
+                   "ldp q8, q9, [x0, #0x190]\n\t"      /* context->V[8,9] */
+                   "ldp q10, q11, [x0, #0x1b0]\n\t"    /* context->V[10,11] */
+                   "ldp q12, q13, [x0, #0x1d0]\n\t"    /* context->V[12,13] */
+                   "ldp q14, q15, [x0, #0x1f0]\n\t"    /* context->V[14,15] */
+                   "ldp q16, q17, [x0, #0x210]\n\t"    /* context->V[16,17] */
+                   "ldp q18, q19, [x0, #0x230]\n\t"    /* context->V[18,19] */
+                   "ldp q20, q21, [x0, #0x250]\n\t"    /* context->V[20,21] */
+                   "ldp q22, q23, [x0, #0x270]\n\t"    /* context->V[22,23] */
+                   "ldp q24, q25, [x0, #0x290]\n\t"    /* context->V[24,25] */
+                   "ldp q26, q27, [x0, #0x2b0]\n\t"    /* context->V[26,27] */
+                   "ldp q28, q29, [x0, #0x2d0]\n\t"    /* context->V[28,29] */
+                   "ldp q30, q31, [x0, #0x2f0]\n\t"    /* context->V[30,31] */
+                   "ldr w1, [x0, #0x310]\n\t"          /* context->Fpcr */
+                   "msr fpcr, x1\n\t"
+                   "ldr w1, [x0, #0x314]\n\t"          /* context->Fpsr */
+                   "msr fpsr, x1\n\t"
+                   "ldp x1, x2, [x0, #0x10]\n\t"       /* context->X1,2 */
+                   "ldp x3, x4, [x0, #0x20]\n\t"       /* context->X3,4 */
+                   "ldp x5, x6, [x0, #0x30]\n\t"       /* context->X5,6 */
+                   "ldp x7, x8, [x0, #0x40]\n\t"       /* context->X7,8 */
+                   "ldp x9, x10, [x0, #0x50]\n\t"      /* context->X9,10 */
+                   "ldp x11, x12, [x0, #0x60]\n\t"     /* context->X11,12 */
+                   "ldp x13, x14, [x0, #0x70]\n\t"     /* context->X13,14 */
+                   "ldp x15, x16, [x0, #0x80]\n\t"     /* context->X15,16 */
+                   "ldp x17, x18, [x0, #0x90]\n\t"     /* context->X17,18 */
+                   "ldp x19, x20, [x0, #0xa0]\n\t"     /* context->X19,20 */
+                   "ldp x21, x22, [x0, #0xb0]\n\t"     /* context->X21,22 */
+                   "ldp x23, x24, [x0, #0xc0]\n\t"     /* context->X23,24 */
+                   "ldp x25, x26, [x0, #0xd0]\n\t"     /* context->X25,26 */
+                   "ldp x27, x28, [x0, #0xe0]\n\t"     /* context->X27,28 */
+                   "ldp x29, x30, [x0, #0xf0]\n\t"     /* context->Fp,Lr */
+                   "ldr x17, [x0, #0x100]\n\t"         /* context->Sp */
+                   "mov sp, x17\n\t"
+                   "ldr x17, [x0, #0x108]\n\t"         /* context->Pc */
+                   "ldr x0, [x0, #0x8]\n\t"            /* context->X0 */
+                   "br x17" )
+
+
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "stp x29, x30, [sp,#-16]!\n\t"

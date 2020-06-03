@@ -84,8 +84,6 @@ static SIZE_T signal_stack_align;
 #define ROUND_SIZE(addr,size) \
    (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
-static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
-
 /***********************************************************************
  *           get_vprot_flags
  *
@@ -138,31 +136,6 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image 
     return STATUS_SUCCESS;
 }
 
-
-/***********************************************************************
- *           virtual_clear_thread_stack
- *
- * Clear the stack contents before calling the main entry point, some broken apps need that.
- */
-void virtual_clear_thread_stack( void *stack_end )
-{
-    void *stack = NtCurrentTeb()->Tib.StackLimit;
-    size_t size = (char *)stack_end - (char *)stack;
-
-    wine_anon_mmap( stack, size, PROT_READ | PROT_WRITE, MAP_FIXED );
-    if (force_exec_prot) mprotect( stack, size, PROT_READ | PROT_WRITE | PROT_EXEC );
-}
-
-/***********************************************************************
- *           VIRTUAL_SetForceExec
- *
- * Whether to force exec prot on all views.
- */
-void VIRTUAL_SetForceExec( BOOL enable )
-{
-    force_exec_prot = enable;
-    unix_funcs->virtual_set_force_exec( enable );
-}
 
 /**********************************************************************
  *           RtlCreateUserStack (NTDLL.@)

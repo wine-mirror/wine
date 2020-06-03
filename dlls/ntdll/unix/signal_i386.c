@@ -961,6 +961,94 @@ void signal_init_thread( TEB *teb )
 
 
 /***********************************************************************
+ *           init_thread_context
+ */
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
+{
+    context->SegCs  = get_cs();
+    context->SegDs  = get_ds();
+    context->SegEs  = get_ds();
+    context->SegFs  = get_fs();
+    context->SegGs  = get_gs();
+    context->SegSs  = get_ds();
+    context->EFlags = 0x202;
+    context->Eax    = (DWORD)entry;
+    context->Ebx    = (DWORD)arg;
+    context->Esp    = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
+    context->Eip    = (DWORD)relay;
+    context->FloatSave.ControlWord = 0x27f;
+    ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->ControlWord = 0x27f;
+    ((XMM_SAVE_AREA32 *)context->ExtendedRegisters)->MxCsr = 0x1f80;
+}
+
+
+/***********************************************************************
+ *           attach_thread
+ */
+PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
+                                        BOOL suspend, void *relay )
+{
+    CONTEXT *ctx;
+
+    if (suspend)
+    {
+        CONTEXT context = { CONTEXT_ALL };
+
+        init_thread_context( &context, entry, arg, relay );
+        wait_suspend( &context );
+        ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~15) - 1;
+        *ctx = context;
+    }
+    else
+    {
+        ctx = (CONTEXT *)((char *)NtCurrentTeb()->Tib.StackBase - 16) - 1;
+        init_thread_context( ctx, entry, arg, relay );
+    }
+    ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
+    LdrInitializeThunk( ctx, (void **)&ctx->Eax, 0, 0 );
+    return ctx;
+}
+
+
+/***********************************************************************
+ *           signal_start_thread
+ */
+__ASM_GLOBAL_FUNC( signal_start_thread,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"
+                   __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
+                   "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   "pushl %edi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
+                   /* store exit frame */
+                   "movl %ebp,%fs:0x1f4\n\t"    /* x86_thread_data()->exit_frame */
+                   /* switch to thread stack */
+                   "movl %fs:4,%eax\n\t"        /* NtCurrentTeb()->StackBase */
+                   "leal -0x1000(%eax),%esp\n\t"
+                   /* attach dlls */
+                   "pushl 20(%ebp)\n\t"         /* relay */
+                   "pushl 16(%ebp)\n\t"         /* suspend */
+                   "pushl 12(%ebp)\n\t"         /* arg */
+                   "pushl 8(%ebp)\n\t"          /* entry */
+                   "xorl %ebp,%ebp\n\t"
+                   "call " __ASM_NAME("attach_thread") "\n\t"
+                   "movl %eax,%esi\n\t"
+                   "leal -12(%eax),%esp\n\t"
+                   /* clear the stack */
+                   "andl $~0xfff,%eax\n\t"  /* round down to page size */
+                   "movl %eax,(%esp)\n\t"
+                   "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
+                   /* switch to the initial context */
+                   "movl %esi,(%esp)\n\t"
+                   "call " __ASM_NAME("set_cpu_context") )
+
+
+/***********************************************************************
  *           signal_exit_thread
  */
 __ASM_GLOBAL_FUNC( signal_exit_thread,

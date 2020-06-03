@@ -61,7 +61,6 @@
 #include "winnt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
-WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -865,111 +864,6 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 {
     FIXME( "(%d, %d, %p, %p) stub!\n", skip, count, buffer, hash );
     return 0;
-}
-
-/***********************************************************************
- *           call_thread_entry_point
- */
-static void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
-{
-    __TRY
-    {
-        TRACE_(relay)( "\1Starting thread proc %p (arg=%p)\n", entry, arg );
-        RtlExitUserThread( entry( arg ));
-    }
-    __EXCEPT(call_unhandled_exception_filter)
-    {
-        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
-    abort();  /* should not be reached */
-}
-
-extern void DECLSPEC_NORETURN start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend,
-                                            void *relay, TEB *teb );
-__ASM_GLOBAL_FUNC( start_thread,
-                   ".arm\n\t"
-                   "push {r4-r12,lr}\n\t"
-                   /* store exit frame */
-                   "ldr r4, [sp, #40]\n\t"    /* teb */
-                   "str sp, [r4, #0x1d4]\n\t" /* teb->SystemReserved2 */
-                   /* switch to thread stack */
-                   "ldr r4, [r4, #4]\n\t"     /* teb->Tib.StackBase */
-                   "sub sp, r4, #0x1000\n\t"
-                   /* attach dlls */
-                   "bl " __ASM_NAME("attach_thread") "\n\t"
-                   "mov sp, r0\n\t"
-                   /* clear the stack */
-                   "and r0, #~0xff0\n\t"  /* round down to page size */
-                   "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
-                   /* switch to the initial context */
-                   "mov r0, sp\n\t"
-                   "b " __ASM_NAME("set_cpu_context") )
-
-/***********************************************************************
- *           init_thread_context
- */
-static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, void *relay )
-{
-    context->R0 = (DWORD)entry;
-    context->R1 = (DWORD)arg;
-    context->Sp = (DWORD)NtCurrentTeb()->Tib.StackBase;
-    context->Pc = (DWORD)relay;
-}
-
-
-/***********************************************************************
- *           attach_thread
- */
-PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
-                                        BOOL suspend, void *relay )
-{
-    CONTEXT *ctx;
-
-    if (suspend)
-    {
-        CONTEXT context = { CONTEXT_ALL };
-
-        init_thread_context( &context, entry, arg, relay );
-        wait_suspend( &context );
-        ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
-        *ctx = context;
-    }
-    else
-    {
-        ctx = (CONTEXT *)NtCurrentTeb()->Tib.StackBase - 1;
-        init_thread_context( ctx, entry, arg, relay );
-    }
-    ctx->ContextFlags = CONTEXT_FULL;
-    LdrInitializeThunk( ctx, (void **)&ctx->R0, 0, 0 );
-    return ctx;
-}
-
-
-/***********************************************************************
- *           signal_start_thread
- *
- * Thread startup sequence:
- * signal_start_thread()
- *   -> thread_startup()
- *     -> call_thread_entry_point()
- */
-void signal_start_thread( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
-{
-    start_thread( entry, arg, suspend, call_thread_entry_point, NtCurrentTeb() );
-}
-
-/**********************************************************************
- *		signal_start_process
- *
- * Process startup sequence:
- * signal_start_process()
- *   -> thread_startup()
- *     -> kernel32_start_process()
- */
-void signal_start_process( LPTHREAD_START_ROUTINE entry, BOOL suspend )
-{
-    start_thread( entry, NtCurrentTeb()->Peb, suspend, kernel32_start_process, NtCurrentTeb() );
 }
 
 /**********************************************************************

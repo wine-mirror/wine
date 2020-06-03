@@ -734,7 +734,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
                 return STATUS_INVALID_PARAMETER;
             }
             execute_flags = *(ULONG *)ProcessInformation;
-            VIRTUAL_SetForceExec( enable );
+            unix_funcs->virtual_set_force_exec( enable );
         }
         break;
 

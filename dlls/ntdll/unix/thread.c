@@ -26,6 +26,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <pthread.h>
@@ -92,11 +93,24 @@ void CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy )
 
 
 /***********************************************************************
- *           init_thread
+ *           start_thread
  */
-void CDECL init_thread( TEB *teb )
+void CDECL start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg, void *relay, TEB *teb )
 {
+    BOOL suspend;
+
     signal_init_thread( teb );
+    server_init_thread( entry, &suspend, NULL, NULL, NULL );
+    signal_start_thread( entry, arg, suspend, relay, teb );
+}
+
+
+/***********************************************************************
+ *           start_process
+ */
+void CDECL start_process( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay )
+{
+    signal_start_thread( entry, NtCurrentTeb()->Peb, suspend, relay, NtCurrentTeb() );
 }
 
 
@@ -128,6 +142,21 @@ void CDECL exit_process( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
     signal_exit_thread( get_unix_exit_code( status ), exit );
+}
+
+
+/**********************************************************************
+ *           wait_suspend
+ *
+ * Wait until the thread is no longer suspended.
+ */
+void wait_suspend( CONTEXT *context )
+{
+    int saved_errno = errno;
+
+    /* wait with 0 timeout, will only return once the thread is no longer suspended */
+    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL, NULL );
+    errno = saved_errno;
 }
 
 

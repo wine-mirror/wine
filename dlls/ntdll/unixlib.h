@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 16
+#define NTDLL_UNIXLIB_VERSION 17
 
 struct unix_funcs
 {
@@ -112,7 +112,8 @@ struct unix_funcs
 
     /* thread/process functions */
     void          (CDECL *init_threading)( int *nb_threads, struct ldt_copy **ldt_copy );
-    void          (CDECL *init_thread)( TEB *teb );
+    void          (CDECL *start_thread)( PRTL_THREAD_START_ROUTINE entry, void *arg, void *relay, TEB *teb );
+    void          (CDECL *start_process)( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay );
     void          (CDECL *abort_thread)( int status );
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
