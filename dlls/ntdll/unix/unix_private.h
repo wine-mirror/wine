@@ -63,7 +63,6 @@ extern NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsig
 extern void CDECL virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_create_builtin_view( void *module ) DECLSPEC_HIDDEN;
 extern TEB * CDECL virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack ) DECLSPEC_HIDDEN;
@@ -106,7 +105,9 @@ extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
 extern size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int *cpus,
                                         BOOL *wow64, timeout_t *start_time ) DECLSPEC_HIDDEN;
 extern void CDECL init_threading( int *nb_threads, struct ldt_copy **ldt_copy ) DECLSPEC_HIDDEN;
-extern void CDECL DECLSPEC_NORETURN start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg, void *relay, TEB *teb ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx, DWORD tid,
+                                     int request_fd, PRTL_THREAD_START_ROUTINE start,
+                                     void *param, void *relay ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN start_process( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
@@ -131,6 +132,8 @@ extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSP
 extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
+
+extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
 extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;

@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 17
+#define NTDLL_UNIXLIB_VERSION 18
 
 struct unix_funcs
 {
@@ -92,7 +92,6 @@ struct unix_funcs
     void          (CDECL *virtual_get_system_info)( SYSTEM_BASIC_INFORMATION *info );
     NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
     TEB *         (CDECL *virtual_alloc_first_teb)(void);
-    NTSTATUS      (CDECL *virtual_alloc_teb)( TEB **ret_teb );
     void          (CDECL *virtual_free_teb)( TEB *teb );
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
     NTSTATUS      (CDECL *virtual_handle_fault)( LPCVOID addr, DWORD err, BOOL on_signal_stack );
@@ -112,7 +111,9 @@ struct unix_funcs
 
     /* thread/process functions */
     void          (CDECL *init_threading)( int *nb_threads, struct ldt_copy **ldt_copy );
-    void          (CDECL *start_thread)( PRTL_THREAD_START_ROUTINE entry, void *arg, void *relay, TEB *teb );
+    NTSTATUS      (CDECL *create_thread)( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx,
+                                          DWORD tid, int request_fd, PRTL_THREAD_START_ROUTINE start,
+                                          void *param, void *relay );
     void          (CDECL *start_process)( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay );
     void          (CDECL *abort_thread)( int status );
     void          (CDECL *exit_thread)( int status );

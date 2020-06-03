@@ -49,21 +49,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-#ifndef PTHREAD_STACK_MIN
-#define PTHREAD_STACK_MIN 16384
-#endif
-
 struct _KUSER_SHARED_DATA *user_shared_data = NULL;
 
 void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
-
-/* info passed to a starting thread */
-struct startup_info
-{
-    TEB                            *teb;
-    PRTL_THREAD_START_ROUTINE       entry_point;
-    void                           *entry_arg;
-};
 
 static PEB *peb;
 static PEB_LDR_DATA ldr;
@@ -404,24 +392,6 @@ static void WINAPI call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *
 
 
 /***********************************************************************
- *           start_thread
- *
- * Startup routine for a newly created thread.
- */
-static void start_thread( struct startup_info *info )
-{
-    TEB *teb = info->teb;
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    struct debug_info debug_info;
-
-    debug_info.str_pos = debug_info.out_pos = 0;
-    thread_data->debug_info = &debug_info;
-    thread_data->pthread_id = pthread_self();
-    unix_funcs->start_thread( info->entry_point, info->entry_arg, call_thread_entry_point, teb );
-}
-
-
-/***********************************************************************
  *              NtCreateThreadEx   (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle_ptr, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
@@ -447,20 +417,12 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
-    sigset_t sigset;
-    pthread_t pthread_id;
-    pthread_attr_t attr;
-    struct ntdll_thread_data *thread_data;
-    struct startup_info *info;
     HANDLE handle = 0, actctx = 0;
-    TEB *teb = NULL;
     DWORD tid = 0;
     int request_pipe[2];
     NTSTATUS status;
-    SIZE_T extra_stack = PTHREAD_STACK_MIN;
     data_size_t len = 0;
     struct object_attributes *objattr = NULL;
-    INITIAL_TEB stack;
 
     if (process != NtCurrentProcess())
     {
@@ -524,73 +486,21 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
         return status;
     }
 
-    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
+    RtlGetActiveActivationContext( &actctx );
 
-    if ((status = unix_funcs->virtual_alloc_teb( &teb ))) goto error;
-
-    teb->ClientId.UniqueProcess = ULongToHandle(GetCurrentProcessId());
-    teb->ClientId.UniqueThread  = ULongToHandle(tid);
-
-    /* create default activation context frame for new thread */
-    RtlGetActiveActivationContext(&actctx);
-    if (actctx)
+    status = unix_funcs->create_thread( stack_reserve, stack_commit, actctx, tid, request_pipe[1],
+                                        start, param, call_thread_entry_point );
+    if (status)
     {
-        RTL_ACTIVATION_CONTEXT_STACK_FRAME *frame;
-
-        frame = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*frame));
-        frame->Previous = NULL;
-        frame->ActivationContext = actctx;
-        frame->Flags = 0;
-        teb->ActivationContextStack.ActiveFrame = frame;
+        if (actctx) RtlReleaseActivationContext( actctx );
+        NtClose( handle );
+        close( request_pipe[1] );
+        return status;
     }
-
-    info = (struct startup_info *)(teb + 1);
-    info->teb         = teb;
-    info->entry_point = start;
-    info->entry_arg   = param;
-
-    if ((status = unix_funcs->virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
-        goto error;
-
-    teb->Tib.StackBase = stack.StackBase;
-    teb->Tib.StackLimit = stack.StackLimit;
-    teb->DeallocationStack = stack.DeallocationStack;
-
-    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    thread_data->request_fd  = request_pipe[1];
-    thread_data->reply_fd    = -1;
-    thread_data->wait_fd[0]  = -1;
-    thread_data->wait_fd[1]  = -1;
-    thread_data->start_stack = (char *)teb->Tib.StackBase;
-
-    pthread_attr_init( &attr );
-    pthread_attr_setstack( &attr, teb->DeallocationStack,
-                         (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
-    pthread_attr_setguardsize( &attr, 0 );
-    pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
-    InterlockedIncrement( &nb_threads );
-    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, info ))
-    {
-        InterlockedDecrement( &nb_threads );
-        pthread_attr_destroy( &attr );
-        status = STATUS_NO_MEMORY;
-        goto error;
-    }
-    pthread_attr_destroy( &attr );
-    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
-
     if (id) id->UniqueThread = ULongToHandle(tid);
     if (handle_ptr) *handle_ptr = handle;
     else NtClose( handle );
-
     return STATUS_SUCCESS;
-
-error:
-    if (teb) unix_funcs->virtual_free_teb( teb );
-    if (handle) NtClose( handle );
-    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
-    close( request_pipe[1] );
-    return status;
 }
 
 

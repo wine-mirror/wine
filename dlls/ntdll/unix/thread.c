@@ -92,16 +92,104 @@ void CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy )
 }
 
 
+/* info passed to a starting thread */
+struct startup_info
+{
+    PRTL_THREAD_START_ROUTINE entry;
+    void                     *arg;
+    void                     *relay;
+    HANDLE                    actctx;
+};
+
 /***********************************************************************
  *           start_thread
+ *
+ * Startup routine for a newly created thread.
  */
-void CDECL start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg, void *relay, TEB *teb )
+static void start_thread( TEB *teb )
 {
+    struct startup_info *info = (struct startup_info *)(teb + 1);
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+    struct debug_info debug_info;
     BOOL suspend;
+    ULONG_PTR cookie;
 
+    debug_info.str_pos = debug_info.out_pos = 0;
+    thread_data->debug_info = &debug_info;
+    thread_data->pthread_id = pthread_self();
     signal_init_thread( teb );
-    server_init_thread( entry, &suspend, NULL, NULL, NULL );
-    signal_start_thread( entry, arg, suspend, relay, teb );
+    server_init_thread( info->entry, &suspend, NULL, NULL, NULL );
+    if (info->actctx)
+    {
+        RtlActivateActivationContext( 0, info->actctx, &cookie );
+        RtlReleaseActivationContext( info->actctx );
+    }
+    signal_start_thread( info->entry, info->arg, suspend, info->relay, teb );
+}
+
+
+/***********************************************************************
+ *           create_thread
+ */
+NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx, DWORD tid,
+                              int request_fd, PRTL_THREAD_START_ROUTINE start, void *param, void *relay )
+{
+    sigset_t sigset;
+    pthread_t pthread_id;
+    pthread_attr_t attr;
+    struct ntdll_thread_data *thread_data;
+    struct startup_info *info;
+    SIZE_T extra_stack = PTHREAD_STACK_MIN;
+    TEB *teb;
+    INITIAL_TEB stack;
+    NTSTATUS status;
+
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
+
+    if ((status = virtual_alloc_teb( &teb ))) goto done;
+
+    if ((status = virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
+    {
+        virtual_free_teb( teb );
+        goto done;
+    }
+
+    teb->ClientId.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
+    teb->ClientId.UniqueThread  = ULongToHandle( tid );
+
+    info = (struct startup_info *)(teb + 1);
+    info->entry  = start;
+    info->arg    = param;
+    info->relay  = relay;
+    info->actctx = actctx;
+
+    teb->Tib.StackBase = stack.StackBase;
+    teb->Tib.StackLimit = stack.StackLimit;
+    teb->DeallocationStack = stack.DeallocationStack;
+
+    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+    thread_data->request_fd  = request_fd;
+    thread_data->reply_fd    = -1;
+    thread_data->wait_fd[0]  = -1;
+    thread_data->wait_fd[1]  = -1;
+    thread_data->start_stack = (char *)teb->Tib.StackBase;
+
+    pthread_attr_init( &attr );
+    pthread_attr_setstack( &attr, teb->DeallocationStack,
+                           (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
+    pthread_attr_setguardsize( &attr, 0 );
+    pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
+    InterlockedIncrement( nb_threads );
+    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, teb ))
+    {
+        InterlockedDecrement( nb_threads );
+        virtual_free_teb( teb );
+        status = STATUS_NO_MEMORY;
+    }
+    pthread_attr_destroy( &attr );
+done:
+    pthread_sigmask( SIG_SETMASK, &sigset, NULL );
+    return status;
 }
 
 

@@ -2572,7 +2572,7 @@ TEB * CDECL virtual_alloc_first_teb(void)
 /***********************************************************************
  *           virtual_alloc_teb
  */
-NTSTATUS CDECL virtual_alloc_teb( TEB **ret_teb )
+NTSTATUS virtual_alloc_teb( TEB **ret_teb )
 {
     sigset_t sigset;
     TEB *teb = NULL;
