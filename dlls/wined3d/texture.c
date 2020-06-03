@@ -769,11 +769,10 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
     unsigned int sub_count = texture->level_count * texture->layer_count;
     struct wined3d_device *device = texture->resource.device;
     DWORD map_binding = texture->update_map_binding;
-    struct wined3d_context *context = NULL;
+    struct wined3d_context *context;
     unsigned int i;
 
-    if (device->d3d_initialized)
-        context = context_acquire(device, NULL, 0);
+    context = context_acquire(device, NULL, 0);
 
     for (i = 0; i < sub_count; ++i)
     {
@@ -784,8 +783,7 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
             wined3d_texture_remove_buffer_object(texture, i, wined3d_context_gl(context)->gl_info);
     }
 
-    if (context)
-        context_release(context);
+    context_release(context);
 
     texture->resource.map_binding = map_binding;
     texture->update_map_binding = 0;
