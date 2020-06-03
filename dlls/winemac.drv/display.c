@@ -193,7 +193,9 @@ static BOOL read_registry_settings(DEVMODEW *dm)
     dm->dmFields |= DM_DISPLAYFLAGS;
     query_value("DefaultSettings.XPanning", &dm->dmPosition.x);
     query_value("DefaultSettings.YPanning", &dm->dmPosition.y);
+    dm->dmFields |= DM_POSITION;
     query_value("DefaultSettings.Orientation", &dm->dmDisplayOrientation);
+    dm->dmFields |= DM_DISPLAYORIENTATION;
     query_value("DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
 
 #undef query_value
