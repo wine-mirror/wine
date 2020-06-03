@@ -70,8 +70,22 @@ function todo_wine_if(expr) {
 var file_prefix = document.location.pathname;
 if(document.location.search)
     file_prefix += document.location.search;
-file_prefix += ": ";
+file_prefix += ":";
+
+var test_name;
 
 function format_message(msg) {
-    return file_prefix + msg;
+    var p = file_prefix;
+    if(test_name) p += test_name + ":";
+    return p + " " + msg;
+}
+
+function sync_test(name, f)
+{
+    tests.push(function() {
+        test_name = name;
+        f();
+        test_name = undefined;
+        next_test();
+    });
 }

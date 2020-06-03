@@ -21,18 +21,18 @@ var JS_E_INVALID_WRITABLE_PROP_DESC = 0x800a13ac;
 var JS_E_NONCONFIGURABLE_REDEFINED = 0x800a13d6;
 var JS_E_NONWRITABLE_MODIFIED = 0x800a13d7;
 
-function test_date_now() {
+var tests = [];
+
+sync_test("date_now", function() {
     var now = Date.now();
     var time = (new Date()).getTime();
 
     ok(time >= now && time-now < 50, "unexpected Date.now() result " + now + " expected " + time);
 
     Date.now(1, 2, 3);
+});
 
-    next_test();
-}
-
-function test_toISOString() {
+sync_test("toISOString", function() {
     function expect(date, expected) {
         var s = date.toISOString();
         ok(s === expected, "toISOString returned " + s + " expected " + expected);
@@ -58,11 +58,9 @@ function test_toISOString() {
 
     expect_exception(function() { new Date(NaN).toISOString(); });
     expect_exception(function() { new Date(31494784780800001).toISOString(); });
+});
 
-    next_test();
-}
-
-function test_indexOf() {
+sync_test("indexOf", function() {
     function expect(array, args, exr) {
         var r = Array.prototype.indexOf.apply(array, args);
         ok(r == exr, "indexOf returned " + r + " expected " + exr);
@@ -86,11 +84,9 @@ function test_indexOf() {
     expect({"4": 4, length: 3}, [4], -1);
     expect({"test": true}, [true], -1);
     expect([1,2,3], [2, 1.9], 1);
+});
 
-    next_test();
-}
-
-function test_array_forEach() {
+sync_test("forEach", function() {
     ok(Array.prototype.forEach.length === 1, "forEach.length = " + Array.prototype.forEach.length);
 
     function test(array, expect) {
@@ -121,11 +117,9 @@ function test_array_forEach() {
         ok(array === a, "array != a");
         ok(this === o, "this != o");
     }, o);
+});
 
-    next_test();
-}
-
-function test_isArray() {
+sync_test("isArray", function() {
     function expect_array(a, exr) {
         var r = Array.isArray(a);
         ok(r === exr, "isArray returned " + r + " expected " + exr);
@@ -139,11 +133,9 @@ function test_isArray() {
     function C() {}
     C.prototype = Array.prototype;
     expect_array(new C(), false);
+});
 
-    next_test();
-}
-
-function test_array_map() {
+sync_test("array_map", function() {
     var calls, m, arr, ctx;
 
     /* basic map call with context */
@@ -190,11 +182,9 @@ function test_array_map() {
     [1,2].map(function() {
         ok(this === window, "this != window");
     }, undefined);
+});
 
-    next_test();
-}
-
-function test_array_sort() {
+sync_test("array_sort", function() {
     var r;
 
     r = [3,1,2].sort(function(x,y) { return y-x; }, 1, 2, 3, true, undefined ).join();
@@ -209,11 +199,9 @@ function test_array_sort() {
     }catch(e) {
         ok(e.name === "TypeError", "got exception " + e.name);
     }
+});
 
-    next_test();
-}
-
-function test_identifier_keywords() {
+sync_test("identifier_keywords", function() {
     var o = {
         if: 1,
         default: 2,
@@ -249,9 +237,7 @@ function test_identifier_keywords() {
     ok(o.if === 1, "o.if = " + o.if);
     ok(ro().default === 2, "ro().default = " + ro().default);
     ok(o.false === true, "o.false = " + o.false);
-
-    next_test();
-}
+});
 
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,
                                  expected_configurable) {
@@ -266,7 +252,7 @@ function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerab
        + " expected " + expected_configurable);
 }
 
-function test_getOwnPropertyDescriptor() {
+sync_test("getOwnPropertyDescriptor", function() {
     var obj;
 
     obj = { test: 1 };
@@ -304,11 +290,9 @@ function test_getOwnPropertyDescriptor() {
     test_own_data_prop_desc(function(){}, "prototype", true, false, false);
     test_own_data_prop_desc(Function, "prototype", false, false, false);
     test_own_data_prop_desc(String.prototype, "constructor", true, false, true);
+});
 
-    next_test();
-}
-
-function test_defineProperty() {
+sync_test("defineProperty", function() {
     function test_accessor_prop_desc(obj, prop, orig_desc) {
         var expected_enumerable = "enumerable" in orig_desc && !!orig_desc.enumerable;
         var expected_configurable = "configurable" in orig_desc && !!orig_desc.configurable;
@@ -529,11 +513,9 @@ function test_defineProperty() {
     test_accessor_prop_desc(obj, "no_setter", desc);
     obj.no_setter = false;
     ok(obj.no_setter === true, "no_setter = " + obj.no_setter);
+});
 
-    next_test();
-}
-
-function test_defineProperties() {
+sync_test("defineProperties", function() {
     var o, defined, descs;
 
     descs = {
@@ -571,11 +553,9 @@ function test_defineProperties() {
     descs = Object.create(desc_proto);
     o = Object.create(null, descs);
     ok(!("proto_prop" in o), "proto_prop is in o");
+});
 
-    next_test();
-}
-
-function test_property_definitions() {
+sync_test("property_definitions", function() {
     var obj, val, i, arr;
 
     function test_accessor_prop_desc(obj, prop, have_getter, have_setter) {
@@ -636,11 +616,9 @@ function test_property_definitions() {
     ok(obj.prop === 6, "obj.prop = " + obj.prop);
     test_accessor_prop_desc(obj, "0", true, false);
     ok(obj[0] === 7, "obj.prop = " + obj[0]);
+});
 
-    next_test();
-}
-
-function test_string_trim() {
+sync_test("string_trim", function() {
     function test_trim(value, expected) {
         var r = String.prototype.trim.call(value);
         ok(r === expected, "trim(" + value + ") = " + r);
@@ -652,11 +630,9 @@ function test_string_trim() {
     test_trim({ toString: function() { return " test "; } }, "test");
     test_trim("", "");
     test_trim(" \t\n", "");
+});
 
-    next_test();
-}
-
-function test_global_properties() {
+sync_test("global_properties", function() {
     var o;
 
     /* Make sure that global properties are not writable. */
@@ -669,17 +645,14 @@ function test_global_properties() {
     o = Infinity;
     Infinity = 1;
     ok(Infinity === o, "Infinity = " + NaN);
+});
 
-    next_test();
-}
-
-function test_string_split() {
+sync_test("string_split", function() {
     var r;
 
     /* IE9 got this wrong*/
     if("1undefined2".split(undefined).length != 1) {
         win_skip("detected broken String.prototype.split implementation");
-        next_test();
         return;
     }
 
@@ -749,11 +722,9 @@ function test_string_split() {
     ok(typeof(r) === "object", "typeof(r) = " + typeof(r));
     ok(r.length === 1, "r.length = " + r.length);
     ok(r[0] === "", "r[0] = " + r[0]);
+});
 
-    next_test();
-}
-
-function test_getPrototypeOf() {
+sync_test("getPrototypeOf", function() {
     ok(Object.create.length === 2, "Object.create.length = " + Object.create.length);
     ok(Object.getPrototypeOf.length === 1, "Object.getPrototypeOf.length = " + Object.getPrototypeOf.length);
 
@@ -788,11 +759,9 @@ function test_getPrototypeOf() {
     obj = Object.create(null);
     ok(!("toString" in obj), "toString is in obj");
     ok(Object.getPrototypeOf(obj) === null, "Object.getPrototypeOf(obj) = " + Object.getPrototypeOf(obj));
+});
 
-    next_test();
-}
-
-function test_toString() {
+sync_test("toString", function() {
     var tmp, obj;
 
     (function () { tmp = Object.prototype.toString.call(arguments); })();
@@ -817,11 +786,9 @@ function test_toString() {
     obj = Object.create(Number.prototype);
     tmp = Object.prototype.toString.call(obj);
     ok(tmp === "[object Object]", "toString.call(Object.create(Number.prototype)) = " + tmp);
+});
 
-    next_test();
-}
-
-function test_bind() {
+sync_test("bind", function() {
     var f, r;
     var o = new Object(), o2 = new Object();
 
@@ -897,27 +864,4 @@ function test_bind() {
     ok(t != a, "t == a");
 
     ok(Function.prototype.bind.length === 1, "Function.prototype.bind.length = " + Function.prototype.bind.length);
-
-    next_test();
-}
-
-var tests = [
-    test_date_now,
-    test_toISOString,
-    test_indexOf,
-    test_array_forEach,
-    test_isArray,
-    test_array_map,
-    test_array_sort,
-    test_identifier_keywords,
-    test_getOwnPropertyDescriptor,
-    test_defineProperty,
-    test_defineProperties,
-    test_property_definitions,
-    test_string_trim,
-    test_global_properties,
-    test_string_split,
-    test_getPrototypeOf,
-    test_toString,
-    test_bind
-];
+});
