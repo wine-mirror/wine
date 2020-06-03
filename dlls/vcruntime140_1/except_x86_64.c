@@ -117,34 +117,36 @@ typedef struct
 static UINT decode_uint(BYTE **b)
 {
     UINT ret;
+    BYTE *p = *b;
 
-    if ((**b & 1) == 0)
+    if ((*p & 1) == 0)
     {
-        ret = *b[0] >> 1;
-        *b += 1;
+        ret = p[0] >> 1;
+        p += 1;
     }
-    else if ((**b & 3) == 1)
+    else if ((*p & 3) == 1)
     {
-        ret = (*b[0] >> 2) + (*b[1] << 6);
-        *b += 2;
+        ret = (p[0] >> 2) + (p[1] << 6);
+        p += 2;
     }
-    else if ((**b & 7) == 3)
+    else if ((*p & 7) == 3)
     {
-        ret = (*b[0] >> 3) + (*b[1] << 5) + (*b[2] << 13);
-        *b += 3;
+        ret = (p[0] >> 3) + (p[1] << 5) + (p[2] << 13);
+        p += 3;
     }
-    else if ((**b & 15) == 7)
+    else if ((*p & 15) == 7)
     {
-        ret = (*b[0] >> 4) + (*b[1] << 4) + (*b[2] << 12) + (*b[3] << 20);
-        *b += 4;
+        ret = (p[0] >> 4) + (p[1] << 4) + (p[2] << 12) + (p[3] << 20);
+        p += 4;
     }
     else
     {
         FIXME("not implemented - expect crash\n");
         ret = 0;
-        *b += 5;
+        p += 5;
     }
 
+    *b = p;
     return ret;
 }
 
