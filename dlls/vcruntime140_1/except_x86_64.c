@@ -432,6 +432,8 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
         terminate();
     }
 
+    if (trylevel <= last_level) return;
+
     unwind_data = rva_to_ptr(descr->unwind_map, dispatch->ImageBase);
     last = unwind_data;
     for (i = 0; i < trylevel; i++)
