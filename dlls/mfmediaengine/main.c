@@ -18,6 +18,7 @@
 
 #define COBJMACROS
 
+#include <math.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -82,6 +83,7 @@ struct media_engine
     double playback_rate;
     double default_playback_rate;
     double volume;
+    double duration;
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
     CRITICAL_SECTION cs;
@@ -208,6 +210,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     IMFStreamDescriptor *sd_audio = NULL, *sd_video = NULL;
     unsigned int stream_count = 0, i;
     IMFPresentationDescriptor *pd;
+    UINT64 duration;
     HRESULT hr;
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
@@ -265,7 +268,20 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     if (sd_audio)
         engine->flags |= FLAGS_ENGINE_HAS_AUDIO;
 
-    /* TODO: set duration */
+    /* Assume live source if duration was not provided. */
+    if (SUCCEEDED(IMFPresentationDescriptor_GetUINT64(pd, &MF_PD_DURATION, &duration)))
+    {
+        /* Convert 100ns to seconds. */
+        engine->duration = duration / 10000000;
+    }
+    else
+        engine->duration = INFINITY;
+
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE, 0, 0);
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA, 0, 0);
+    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDDATA, 0, 0);
+
+    /* TODO: set up topology nodes */
 
     if (sd_video)
         IMFStreamDescriptor_Release(sd_video);
@@ -513,9 +529,16 @@ static double WINAPI media_engine_GetStartTime(IMFMediaEngine *iface)
 
 static double WINAPI media_engine_GetDuration(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    double value;
 
-    return 0.0;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    value = engine->duration;
+    LeaveCriticalSection(&engine->cs);
+
+    return value;
 }
 
 static BOOL WINAPI media_engine_IsPaused(IMFMediaEngine *iface)
@@ -962,6 +985,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->default_playback_rate = 1.0;
     engine->playback_rate = 1.0;
     engine->volume = 1.0;
+    engine->duration = NAN;
     InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,
