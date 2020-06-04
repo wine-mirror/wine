@@ -246,34 +246,10 @@ NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
 /******************************************************************************
  *  NtCreateSemaphore (NTDLL.@)
  */
-NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
-                                   IN ACCESS_MASK access,
-                                   IN const OBJECT_ATTRIBUTES *attr OPTIONAL,
-                                   IN LONG InitialCount,
-                                   IN LONG MaximumCount )
+NTSTATUS WINAPI NtCreateSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                   LONG initial, LONG max )
 {
-    NTSTATUS ret;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    if (MaximumCount <= 0 || InitialCount < 0 || InitialCount > MaximumCount)
-        return STATUS_INVALID_PARAMETER;
-
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
-
-    SERVER_START_REQ( create_semaphore )
-    {
-        req->access  = access;
-        req->initial = InitialCount;
-        req->max     = MaximumCount;
-        wine_server_add_data( req, objattr, len );
-        ret = wine_server_call( req );
-        *SemaphoreHandle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return ret;
+    return unix_funcs->NtCreateSemaphore( handle, access, attr, initial, max );
 }
 
 /******************************************************************************
@@ -281,22 +257,7 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
  */
 NTSTATUS WINAPI NtOpenSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS ret;
-
-    if ((ret = validate_open_object_attributes( attr ))) return ret;
-
-    SERVER_START_REQ( open_semaphore )
-    {
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        if (attr->ObjectName)
-            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        ret = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return unix_funcs->NtOpenSemaphore( handle, access, attr );
 }
 
 /******************************************************************************
@@ -305,32 +266,7 @@ NTSTATUS WINAPI NtOpenSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJEC
 NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS class,
                                   void *info, ULONG len, ULONG *ret_len )
 {
-    NTSTATUS ret;
-    SEMAPHORE_BASIC_INFORMATION *out = info;
-
-    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
-
-    if (class != SemaphoreBasicInformation)
-    {
-        FIXME("(%p,%d,%u) Unknown class\n", handle, class, len);
-        return STATUS_INVALID_INFO_CLASS;
-    }
-
-    if (len != sizeof(SEMAPHORE_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
-
-    SERVER_START_REQ( query_semaphore )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        if (!(ret = wine_server_call( req )))
-        {
-            out->CurrentCount = reply->current;
-            out->MaximumCount = reply->max;
-            if (ret_len) *ret_len = sizeof(SEMAPHORE_BASIC_INFORMATION);
-        }
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    return unix_funcs->NtQuerySemaphore( handle, class, info, len, ret_len );
 }
 
 /******************************************************************************
@@ -338,18 +274,7 @@ NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS cla
  */
 NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous )
 {
-    NTSTATUS ret;
-    SERVER_START_REQ( release_semaphore )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->count  = count;
-        if (!(ret = wine_server_call( req )))
-        {
-            if (previous) *previous = reply->prev_count;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    return unix_funcs->NtReleaseSemaphore( handle, count, previous );
 }
 
 /*
