@@ -1443,8 +1443,17 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         struct hlsl_ir_node *rhs)
 {
     struct hlsl_ir_assignment *assign = d3dcompiler_alloc(sizeof(*assign));
-    DWORD writemask = (1 << lhs->data_type->dimx) - 1;
-    struct hlsl_type *type;
+    struct hlsl_type *lhs_type;
+    DWORD writemask = 0;
+
+    lhs_type = lhs->data_type;
+    if (lhs_type->type <= HLSL_CLASS_LAST_NUMERIC)
+    {
+        writemask = (1 << lhs_type->dimx) - 1;
+
+        if (!(rhs = implicit_conversion(rhs, lhs_type, &rhs->loc)))
+            return NULL;
+    }
 
     if (!assign)
     {
@@ -1505,36 +1514,8 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         lhs = lhs_inner;
     }
 
-    TRACE("Creating proper assignment expression.\n");
-    if (writemask == BWRITERSP_WRITEMASK_ALL)
-        type = lhs->data_type;
-    else
-    {
-        unsigned int dimx = 0;
-        DWORD bitmask;
-        enum hlsl_type_class type_class;
-
-        bitmask = writemask & ((1 << lhs->data_type->dimx) - 1);
-        while (bitmask)
-        {
-            if (bitmask & 1)
-                dimx++;
-            bitmask >>= 1;
-        }
-        if (lhs->data_type->type == HLSL_CLASS_MATRIX)
-            FIXME("Assignments with writemasks and matrices on lhs are not supported yet.\n");
-        if (dimx == 1)
-            type_class = HLSL_CLASS_SCALAR;
-        else
-            type_class = lhs->data_type->type;
-        type = new_hlsl_type(NULL, type_class, lhs->data_type->base_type, dimx, 1);
-    }
-
-    init_node(&assign->node, HLSL_IR_ASSIGNMENT, type, lhs->loc);
+    init_node(&assign->node, HLSL_IR_ASSIGNMENT, lhs_type, lhs->loc);
     assign->writemask = writemask;
-
-    rhs = implicit_conversion(rhs, type, &rhs->loc);
-
     assign->lhs = load_from_node(lhs)->src;
     if (assign_op != ASSIGN_OP_ASSIGN)
     {
