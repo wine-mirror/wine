@@ -2539,7 +2539,7 @@ NTSTATUS CDECL virtual_create_builtin_view( void *module )
 /***********************************************************************
  *           virtual_alloc_first_teb
  */
-TEB * CDECL virtual_alloc_first_teb(void)
+TEB *virtual_alloc_first_teb(void)
 {
     TEB *teb;
     PEB *peb;
@@ -2561,9 +2561,6 @@ TEB * CDECL virtual_alloc_first_teb(void)
     teb->Tib.StackBase = (void *)~0ul;
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
-    signal_init_threading();
-    signal_alloc_thread( teb );
-    signal_init_thread( teb );
     use_locks = TRUE;
     return teb;
 }

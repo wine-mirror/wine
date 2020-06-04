@@ -62,7 +62,6 @@ extern NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsig
                                            ULONG protect, pe_image_info_t *image_info ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_create_builtin_view( void *module ) DECLSPEC_HIDDEN;
-extern TEB * CDECL virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack ) DECLSPEC_HIDDEN;
 extern unsigned int CDECL virtual_locked_server_call( void *req_ptr ) DECLSPEC_HIDDEN;
@@ -78,10 +77,6 @@ extern NTSTATUS CDECL virtual_uninterrupted_write_memory( void *addr, const void
 extern void CDECL virtual_set_force_exec( BOOL enable ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_release_address_space(void) DECLSPEC_HIDDEN;
 extern void CDECL virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
-
-extern void virtual_init(void) DECLSPEC_HIDDEN;
-
-extern void CDECL dbg_init(void) DECLSPEC_HIDDEN;
 
 extern unsigned int CDECL server_select( const select_op_t *select_op, data_size_t size, UINT flags,
                                          timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
@@ -99,11 +94,10 @@ extern NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, i
                                            unsigned int *options ) DECLSPEC_HIDDEN;
 extern void CDECL server_release_fd( HANDLE handle, int unix_fd ) DECLSPEC_HIDDEN;
 extern int CDECL server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
-extern void CDECL server_init_process(void) DECLSPEC_HIDDEN;
 extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
-extern size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int *cpus,
-                                        BOOL *wow64, timeout_t *start_time ) DECLSPEC_HIDDEN;
-extern void CDECL init_threading( int *nb_threads, struct ldt_copy **ldt_copy ) DECLSPEC_HIDDEN;
+extern TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
+                                   BOOL *suspend, unsigned int *cpus, BOOL *wow64,
+                                   timeout_t *start_time ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx, DWORD tid,
                                      int request_fd, PRTL_THREAD_START_ROUTINE start,
                                      void *param, void *relay ) DECLSPEC_HIDDEN;
@@ -116,7 +110,9 @@ extern NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
+extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
+extern timeout_t server_start_time DECLSPEC_HIDDEN;
 extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
@@ -125,6 +121,8 @@ extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
+extern void server_init_process(void) DECLSPEC_HIDDEN;
+extern size_t server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
@@ -132,6 +130,8 @@ extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
 
+extern void virtual_init(void) DECLSPEC_HIDDEN;
+extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
 
@@ -142,5 +142,7 @@ extern void signal_init_thread( TEB *teb ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE entry, void *arg,
                                                    BOOL suspend, void *relay, TEB *teb ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int) ) DECLSPEC_HIDDEN;
+
+extern void dbg_init(void) DECLSPEC_HIDDEN;
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */

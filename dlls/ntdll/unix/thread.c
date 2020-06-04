@@ -82,13 +82,36 @@ static void pthread_exit_wrapper( int status )
 /***********************************************************************
  *           init_threading
  */
-void CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy )
+TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size, BOOL *suspend,
+                            unsigned int *cpus, BOOL *wow64, timeout_t *start_time )
 {
+    TEB *teb;
+    SIZE_T info_size;
+    struct ntdll_thread_data *thread_data;
 #ifdef __i386__
     extern struct ldt_copy __wine_ldt_copy;
     *ldt_copy = &__wine_ldt_copy;
 #endif
     nb_threads = nb_threads_ptr;
+
+    teb = virtual_alloc_first_teb();
+    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+    thread_data->request_fd = -1;
+    thread_data->reply_fd   = -1;
+    thread_data->wait_fd[0] = -1;
+    thread_data->wait_fd[1] = -1;
+
+    signal_init_threading();
+    signal_alloc_thread( teb );
+    signal_init_thread( teb );
+    dbg_init();
+    server_init_process();
+    info_size = server_init_thread( teb->Peb, suspend );
+    if (size) *size = info_size;
+    if (cpus) *cpus = server_cpus;
+    if (wow64) *wow64 = is_wow64;
+    if (start_time) *start_time = server_start_time;
+    return teb;
 }
 
 
@@ -118,7 +141,7 @@ static void start_thread( TEB *teb )
     thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
     signal_init_thread( teb );
-    server_init_thread( info->entry, &suspend, NULL, NULL, NULL );
+    server_init_thread( info->entry, &suspend );
     if (info->actctx)
     {
         RtlActivateActivationContext( 0, info->actctx, &cookie );

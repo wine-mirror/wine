@@ -1399,7 +1399,7 @@ static int get_unix_tid(void)
  *
  * Start the server and create the initial socket pair.
  */
-void CDECL server_init_process(void)
+void server_init_process(void)
 {
     obj_handle_t version;
     const char *env_socket = getenv( "WINESERVERSOCKET" );
@@ -1474,8 +1474,7 @@ void CDECL server_init_process_done(void)
  *
  * Send an init thread request.
  */
-size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int *cpus,
-                                 BOOL *wow64, timeout_t *start_time )
+size_t server_init_thread( void *entry_point, BOOL *suspend )
 {
     static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
     const char *arch = getenv( "WINEARCH" );
@@ -1532,9 +1531,6 @@ size_t CDECL server_init_thread( void *entry_point, BOOL *suspend, unsigned int 
             if (!strcmp( arch, "win64" ) && !is_win64 && !is_wow64)
                 fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
         }
-        if (cpus) *cpus = server_cpus;
-        if (wow64) *wow64 = is_wow64;
-        if (start_time) *start_time = server_start_time;
         return info_size;
     case STATUS_INVALID_IMAGE_WIN_64:
         fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );

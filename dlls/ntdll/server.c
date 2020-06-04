@@ -256,7 +256,6 @@ void server_init_process(void)
     sigaddset( &server_block_set, SIGUSR1 );
     sigaddset( &server_block_set, SIGUSR2 );
     sigaddset( &server_block_set, SIGCHLD );
-    unix_funcs->server_init_process();
 }
 
 

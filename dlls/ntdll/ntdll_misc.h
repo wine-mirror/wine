@@ -80,7 +80,7 @@ extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
 extern void signal_init_process(void) DECLSPEC_HIDDEN;
 extern void version_init(void) DECLSPEC_HIDDEN;
 extern void debug_init(void) DECLSPEC_HIDDEN;
-extern TEB *thread_init(void) DECLSPEC_HIDDEN;
+extern TEB *thread_init( SIZE_T *info_size, BOOL *suspend ) DECLSPEC_HIDDEN;
 extern void actctx_init(void) DECLSPEC_HIDDEN;
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern void fill_cpu_info(void) DECLSPEC_HIDDEN;

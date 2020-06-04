@@ -4376,14 +4376,8 @@ void __wine_process_init(void)
 
     if (!unix_funcs) load_ntdll_so( ntdll_module, &__wine_spec_nt_header );
 
-    teb = thread_init();
+    teb = thread_init( &info_size, &suspend );
     peb = teb->Peb;
-
-    /* setup the server connection */
-    server_init_process();
-    info_size = unix_funcs->server_init_thread( peb, &suspend, &server_cpus,
-                                                &is_wow64, &server_start_time );
-
     peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
     peb->LoaderLock = &loader_section;
 

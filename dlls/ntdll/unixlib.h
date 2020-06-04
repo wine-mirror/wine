@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 19
+#define NTDLL_UNIXLIB_VERSION 20
 
 struct unix_funcs
 {
@@ -91,7 +91,6 @@ struct unix_funcs
                                                 ULONG protect, pe_image_info_t *image_info );
     void          (CDECL *virtual_get_system_info)( SYSTEM_BASIC_INFORMATION *info );
     NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
-    TEB *         (CDECL *virtual_alloc_first_teb)(void);
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
     NTSTATUS      (CDECL *virtual_handle_fault)( LPCVOID addr, DWORD err, BOOL on_signal_stack );
     unsigned int  (CDECL *virtual_locked_server_call)( void *req_ptr );
@@ -109,7 +108,8 @@ struct unix_funcs
     void          (CDECL *virtual_set_large_address_space)(void);
 
     /* thread/process functions */
-    void          (CDECL *init_threading)( int *nb_threads, struct ldt_copy **ldt_copy );
+    TEB *         (CDECL *init_threading)( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
+                                           BOOL *suspend, unsigned int *cpus, BOOL *wow64, timeout_t *start_time );
     NTSTATUS      (CDECL *create_thread)( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx,
                                           DWORD tid, int request_fd, PRTL_THREAD_START_ROUTINE start,
                                           void *param, void *relay );
@@ -136,13 +136,9 @@ struct unix_funcs
                                                 unsigned int *options );
     void          (CDECL *server_release_fd)( HANDLE handle, int unix_fd );
     int           (CDECL *server_pipe)( int fd[2] );
-    void          (CDECL *server_init_process)(void);
     void          (CDECL *server_init_process_done)(void);
-    size_t        (CDECL *server_init_thread)( void *entry_point, BOOL *suspend, unsigned int *cpus,
-                                               BOOL *wow64, timeout_t *start_time );
 
     /* debugging functions */
-    void          (CDECL *dbg_init)(void);
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );
     const char *  (CDECL *dbg_strdup)( const char *str );
     int           (CDECL *dbg_output)( const char *str );

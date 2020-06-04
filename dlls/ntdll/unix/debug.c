@@ -290,7 +290,7 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
 /***********************************************************************
  *		dbg_init
  */
-void CDECL dbg_init(void)
+void dbg_init(void)
 {
     setbuf( stdout, NULL );
     setbuf( stderr, NULL );
