@@ -1866,7 +1866,7 @@ type:                     base_type
                                     YYABORT;
                                 }
 
-                                $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $5, $7);
+                                $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $7, $5);
                             }
 
 base_type:

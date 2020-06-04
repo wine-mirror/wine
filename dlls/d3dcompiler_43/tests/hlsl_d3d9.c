@@ -897,9 +897,10 @@ static void test_constant_table(void)
         "uniform float2 g[5];\n"
         "uniform matrix_t i;\n"
         "uniform struct matrix_record j;\n"
+        "uniform matrix<float,3,1> k;\n"
         "float4 main(uniform float4 h) : COLOR\n"
         "{\n"
-        "    return a + b + c._31 + d._31 + f.d._22 + g[e].x + h + i._33 + j.a._33;\n"
+        "    return a + b + c._31 + d._31 + f.d._22 + g[e].x + h + i._33 + j.a._33 + k._31;\n"
         "}";
 
     D3DXCONSTANTTABLE_DESC table_desc;
@@ -923,6 +924,7 @@ static void test_constant_table(void)
         {"g", D3DXRS_FLOAT4, 0, 5, D3DXPC_VECTOR, D3DXPT_FLOAT, 1, 2, 5, 0, 40},
         {"i", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 3, 1, 0, 36},
         {"j", D3DXRS_FLOAT4, 0, 3, D3DXPC_STRUCT, D3DXPT_VOID, 1, 9, 1, 1, 36},
+        {"k", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 1, 1, 0, 12},
     };
 
     static const D3DXCONSTANT_DESC expect_fields_f[] =
