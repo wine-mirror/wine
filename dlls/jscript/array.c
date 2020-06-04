@@ -1048,7 +1048,7 @@ static HRESULT Array_map(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
         return hres;
     }
 
-    /* Fixme check IsCallable */
+    /* FIXME: check IsCallable */
     if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
         FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
         return E_INVALIDARG;
@@ -1091,6 +1091,74 @@ static HRESULT Array_map(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned
         *r = jsval_obj(array);
     else
         jsdisp_release(array);
+    return hres;
+}
+
+static HRESULT Array_reduce(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    IDispatch *context_this = NULL, *callback;
+    jsval_t callback_args[4], acc, new_acc;
+    BOOL have_value = FALSE;
+    jsdisp_t *jsthis;
+    DWORD length, k;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_length(ctx, vthis, &jsthis, &length);
+    if(FAILED(hres)) {
+        FIXME("Could not get length\n");
+        return hres;
+    }
+
+    /* Fixme check IsCallable */
+    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+        FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
+        return E_INVALIDARG;
+    }
+    callback = get_object(argv[0]);
+
+    if(argc > 1) {
+        have_value = TRUE;
+        hres = jsval_copy(argv[1], &acc);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    for(k = 0; k < length; k++) {
+        hres = jsdisp_get_idx(jsthis, k, &callback_args[1]);
+        if(hres == DISP_E_UNKNOWNNAME)
+            continue;
+        if(FAILED(hres))
+            break;
+
+        if(!have_value) {
+            have_value = TRUE;
+            acc = callback_args[1];
+            continue;
+        }
+
+        callback_args[0] = acc;
+        callback_args[2] = jsval_number(k);
+        callback_args[3] = jsval_obj(jsthis);
+        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, ARRAY_SIZE(callback_args), callback_args, &new_acc);
+        jsval_release(callback_args[1]);
+        if(FAILED(hres))
+            break;
+
+        jsval_release(acc);
+        acc = new_acc;
+    }
+
+    if(SUCCEEDED(hres) && !have_value) {
+        WARN("No array element\n");
+        hres = JS_E_INVALID_ACTION;
+    }
+
+    if(SUCCEEDED(hres) && r)
+        *r = acc;
+    else if(have_value)
+        jsval_release(acc);
     return hres;
 }
 
@@ -1198,6 +1266,7 @@ static const builtin_prop_t Array_props[] = {
     {L"map",                   Array_map,                  PROPF_METHOD|PROPF_ES5|1},
     {L"pop",                   Array_pop,                  PROPF_METHOD},
     {L"push",                  Array_push,                 PROPF_METHOD|1},
+    {L"reduce",                Array_reduce,               PROPF_METHOD|PROPF_ES5|1},
     {L"reverse",               Array_reverse,              PROPF_METHOD},
     {L"shift",                 Array_shift,                PROPF_METHOD},
     {L"slice",                 Array_slice,                PROPF_METHOD|2},

@@ -881,3 +881,50 @@ sync_test("keys", function() {
 
     ok(Object.keys.length === 1, "Object.keys.length = " + Object.keys.length);
 });
+
+sync_test("reduce", function() {
+    var r, array;
+
+    r = [1,2,3].reduce(function(a, value) { return a + value + 10; });
+    ok(r === 26, "reduce() returned " + r);
+
+    r = [1,2,3].reduce(function(a, value) { return a + value + 10; }, 1);
+    ok(r === 37, "reduce() returned " + r);
+
+    r = [1,2,3].reduce(function(a, value) { return a + value; }, "str");
+    ok(r === "str123", "reduce() returned " + r);
+
+    array = [1,2,3];
+    r = array.reduce(function(a, value, index, src) {
+        ok(src === array, "src != array");
+        return a + "(" + index + "," + value + ")";
+    }, "str");
+    ok(r === "str(0,1)(1,2)(2,3)", "reduce() returned " + r);
+
+    r = [1,2,3].reduce(function(a, value, index, src) {
+        src[0] = false;
+        delete src[1];
+        src[2] = "test";
+        return a + value;
+    }, "");
+    ok(r === "1test", "reduce() returned " + r);
+
+    r = [1].reduce(function(a) { return 0; });
+    ok(r === 1, "[1].reduce() returned " + r);
+
+    r = [1].reduce(function(a) { return 0; }, 2);
+    ok(r === 0, "[1].reduce(2) returned " + r);
+
+    r = [].reduce(function(a) { return 0; }, 2);
+    ok(r === 2, "[].reduce(2) returned " + r);
+
+    r = [].reduce(function(a) { return 0; }, undefined);
+    ok(r === undefined, "[].reduce(undefined) returned " + r);
+
+    try {
+        [].reduce(function(a) { return 0; });
+        ok(false, "expected exception");
+    }catch(e) {trace(e.message);}
+
+    ok(Array.prototype.reduce.length === 1, "Array.prototype.reduce.length = " + Array.prototype.reduce.length);
+});
