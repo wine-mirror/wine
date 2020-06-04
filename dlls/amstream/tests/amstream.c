@@ -29,6 +29,26 @@
 #include "ksmedia.h"
 #include "wine/strmbase.h"
 
+static const WAVEFORMATEX audio_format =
+{
+    .wFormatTag = WAVE_FORMAT_PCM,
+    .nChannels = 1,
+    .nSamplesPerSec = 11025,
+    .wBitsPerSample = 16,
+    .nBlockAlign = 2,
+    .nAvgBytesPerSec = 2 * 11025,
+};
+
+static const AM_MEDIA_TYPE audio_mt =
+{
+    /* MEDIATYPE_Audio, MEDIASUBTYPE_PCM, FORMAT_WaveFormatEx */
+    .majortype = {0x73647561, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0x00000001, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .formattype = {0x05589f81, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
+    .cbFormat = sizeof(WAVEFORMATEX),
+    .pbFormat = (BYTE *)&audio_format,
+};
+
 static const WCHAR primary_video_sink_id[] = L"I{A35FF56A-9FDA-11D0-8FDF-00C04FD9189D}";
 static const WCHAR primary_audio_sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 
@@ -2888,25 +2908,6 @@ static void test_audiostream_set_format(void)
 
 static void test_audiostream_receive_connection(void)
 {
-    static const WAVEFORMATEX valid_format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 2,
-        .nSamplesPerSec = 44100,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 4,
-        .nAvgBytesPerSec = 4 * 44100,
-    };
-
-    const AM_MEDIA_TYPE valid_mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&valid_format,
-    };
-
     WAVEFORMATEXTENSIBLE extensible_format;
     IAudioMediaStream *audio_stream;
     IAMMultiMediaStream *mmstream;
@@ -2933,56 +2934,56 @@ static void test_audiostream_receive_connection(void)
     hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &valid_mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     IGraphBuilder_Disconnect(graph, pin);
     IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
 
-    mt = valid_mt;
+    mt = audio_mt;
     mt.majortype = GUID_NULL;
     hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
 
-    mt = valid_mt;
+    mt = audio_mt;
     mt.subtype = MEDIASUBTYPE_RGB24;
     hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     IGraphBuilder_Disconnect(graph, pin);
     IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
 
-    mt = valid_mt;
+    mt = audio_mt;
     mt.formattype = GUID_NULL;
     hr = IPin_ReceiveConnection(pin, &source.source.pin.IPin_iface, &mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
 
-    mt = valid_mt;
+    mt = audio_mt;
     mt.cbFormat = sizeof(WAVEFORMATEX) - 1;
     hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
 
-    extensible_format.Format = valid_format;
+    extensible_format.Format = audio_format;
     extensible_format.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
     extensible_format.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-    extensible_format.Samples.wValidBitsPerSample = valid_format.wBitsPerSample;
+    extensible_format.Samples.wValidBitsPerSample = audio_format.wBitsPerSample;
     extensible_format.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
     extensible_format.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    mt = valid_mt;
+    mt = audio_mt;
     mt.cbFormat = sizeof(extensible_format);
     mt.pbFormat = (BYTE *)&extensible_format;
     hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-    hr = IAudioMediaStream_SetFormat(audio_stream, &valid_format);
+    hr = IAudioMediaStream_SetFormat(audio_stream, &audio_format);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    format = valid_format;
-    format.nChannels = 1;
-    mt = valid_mt;
+    format = audio_format;
+    format.nChannels = 2;
+    mt = audio_mt;
     mt.pbFormat = (BYTE *)&format;
     hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &valid_mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     IGraphBuilder_Disconnect(graph, pin);
     IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
@@ -3035,25 +3036,6 @@ static void test_audiostream_set_state(void)
 
 void test_audiostream_end_of_stream(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     struct testfilter source;
     IGraphBuilder *graph;
@@ -3075,7 +3057,7 @@ void test_audiostream_end_of_stream(void)
     hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_EndOfStream(pin);
@@ -3113,25 +3095,6 @@ void test_audiostream_end_of_stream(void)
 
 static void test_audiostream_receive(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     ALLOCATOR_PROPERTIES properties =
     {
         .cBuffers = 3,
@@ -3171,7 +3134,7 @@ static void test_audiostream_receive(void)
     hr = IMemAllocator_Commit(allocator);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemAllocator_GetBuffer(allocator, &sample1, NULL, NULL, 0);
@@ -3282,25 +3245,6 @@ static void test_audiostream_initialize(void)
 
 static void test_audiostream_begin_flush_end_flush(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     IAudioStreamSample *stream_sample;
     IAudioMediaStream *audio_stream;
@@ -3334,7 +3278,7 @@ static void test_audiostream_begin_flush_end_flush(void)
     hr = IAudioMediaStream_CreateSample(audio_stream, audio_data, 0, &stream_sample);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
@@ -3455,25 +3399,6 @@ static DWORD CALLBACK audiostream_receive(void *param)
 
 static void test_audiostreamsample_update(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     static const BYTE test_data[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     IAudioStreamSample *stream_sample;
@@ -3542,7 +3467,7 @@ static void test_audiostreamsample_update(void)
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3697,25 +3622,6 @@ static void test_audiostreamsample_update(void)
 
 void test_audiostreamsample_completion_status(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     static const BYTE test_data[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     IAudioStreamSample *stream_sample1;
@@ -3762,7 +3668,7 @@ void test_audiostreamsample_completion_status(void)
     hr = IAudioMediaStream_CreateSample(audio_stream, audio_data2, 0, &stream_sample2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4101,25 +4007,6 @@ void test_mediastreamfilter_stop_pause_run(void)
 
 static void test_mediastreamfilter_support_seeking(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     static const MSPID mspid1 = {0x88888888, 1};
     static const MSPID mspid2 = {0x88888888, 2};
@@ -4178,7 +4065,7 @@ static void test_mediastreamfilter_support_seeking(void)
     hr = IMediaStreamFilter_SupportSeeking(filter, TRUE);
     ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source1.source.pin.IPin_iface, pin1, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source1.source.pin.IPin_iface, pin1, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     source2.get_duration_hr = E_FAIL;
@@ -4186,13 +4073,13 @@ static void test_mediastreamfilter_support_seeking(void)
     hr = IMediaStreamFilter_SupportSeeking(filter, TRUE);
     ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source2.source.pin.IPin_iface, pin2, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source2.source.pin.IPin_iface, pin2, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaStreamFilter_SupportSeeking(filter, TRUE);
     ok(hr == E_NOINTERFACE, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source3.source.pin.IPin_iface, pin3, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source3.source.pin.IPin_iface, pin3, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_interface(filter, &IID_IMediaSeeking, FALSE);
@@ -4238,25 +4125,6 @@ static void test_mediastreamfilter_support_seeking(void)
 
 static void test_mediastreamfilter_set_positions(void)
 {
-    static const WAVEFORMATEX format =
-    {
-        .wFormatTag = WAVE_FORMAT_PCM,
-        .nChannels = 1,
-        .nSamplesPerSec = 11025,
-        .wBitsPerSample = 16,
-        .nBlockAlign = 2,
-        .nAvgBytesPerSec = 2 * 11025,
-    };
-
-    const AM_MEDIA_TYPE mt =
-    {
-        .majortype = MEDIATYPE_Audio,
-        .subtype = MEDIASUBTYPE_PCM,
-        .formattype = FORMAT_WaveFormatEx,
-        .cbFormat = sizeof(WAVEFORMATEX),
-        .pbFormat = (BYTE *)&format,
-    };
-
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     static const MSPID mspid1 = {0x88888888, 1};
     static const MSPID mspid2 = {0x88888888, 2};
@@ -4322,15 +4190,15 @@ static void test_mediastreamfilter_set_positions(void)
     hr = IGraphBuilder_AddFilter(graph, &source3.filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source2.source.pin.IPin_iface, pin2, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source2.source.pin.IPin_iface, pin2, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IGraphBuilder_ConnectDirect(graph, &source3.source.pin.IPin_iface, pin3, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source3.source.pin.IPin_iface, pin3, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaStreamFilter_SupportSeeking(filter, TRUE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IGraphBuilder_ConnectDirect(graph, &source1.source.pin.IPin_iface, pin1, &mt);
+    hr = IGraphBuilder_ConnectDirect(graph, &source1.source.pin.IPin_iface, pin1, &audio_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaStreamFilter_QueryInterface(filter, &IID_IMediaSeeking, (void **)&seeking);
