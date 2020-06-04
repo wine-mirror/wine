@@ -1826,48 +1826,52 @@ input_mod:                KW_IN
                                 $$ = HLSL_STORAGE_IN | HLSL_STORAGE_OUT;
                             }
 
-type:                     base_type
-                            {
-                                $$ = $1;
-                            }
-                        | KW_VECTOR '<' base_type ',' C_INTEGER '>'
-                            {
-                                if ($3->type != HLSL_CLASS_SCALAR)
-                                {
-                                    hlsl_message("Line %u: vectors of non-scalar types are not allowed.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    YYABORT;
-                                }
-                                if ($5 < 1 || $5 > 4)
-                                {
-                                    hlsl_message("Line %u: vector size must be between 1 and 4.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    YYABORT;
-                                }
+type:
 
-                                $$ = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, $3->base_type, $5, 1);
-                            }
-                        | KW_MATRIX '<' base_type ',' C_INTEGER ',' C_INTEGER '>'
-                            {
-                                if ($3->type != HLSL_CLASS_SCALAR)
-                                {
-                                    hlsl_message("Line %u: matrices of non-scalar types are not allowed.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    YYABORT;
-                                }
-                                if ($5 < 1 || $5 > 4 || $7 < 1 || $7 > 4)
-                                {
-                                    hlsl_message("Line %u: matrix dimensions must be between 1 and 4.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-                                    YYABORT;
-                                }
+      base_type
+        {
+            $$ = $1;
+        }
+    | KW_VECTOR '<' base_type ',' C_INTEGER '>'
+        {
+            if ($3->type != HLSL_CLASS_SCALAR)
+            {
+                hlsl_report_message(get_location(&@3), HLSL_LEVEL_ERROR,
+                        "vectors of non-scalar types are not allowed\n");
+                YYABORT;
+            }
+            if ($5 < 1 || $5 > 4)
+            {
+                hlsl_report_message(get_location(&@5), HLSL_LEVEL_ERROR,
+                        "vector size must be between 1 and 4\n");
+                YYABORT;
+            }
 
-                                $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $7, $5);
-                            }
+            $$ = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, $3->base_type, $5, 1);
+        }
+    | KW_MATRIX '<' base_type ',' C_INTEGER ',' C_INTEGER '>'
+        {
+            if ($3->type != HLSL_CLASS_SCALAR)
+            {
+                hlsl_report_message(get_location(&@3), HLSL_LEVEL_ERROR,
+                        "matrices of non-scalar types are not allowed\n");
+                YYABORT;
+            }
+            if ($5 < 1 || $5 > 4)
+            {
+                hlsl_report_message(get_location(&@5), HLSL_LEVEL_ERROR,
+                        "matrix row count must be between 1 and 4\n");
+                YYABORT;
+            }
+            if ($7 < 1 || $7 > 4)
+            {
+                hlsl_report_message(get_location(&@7), HLSL_LEVEL_ERROR,
+                        "matrix column count must be between 1 and 4\n");
+                YYABORT;
+            }
+
+            $$ = new_hlsl_type(NULL, HLSL_CLASS_MATRIX, $3->base_type, $7, $5);
+        }
 
 base_type:
 
@@ -1904,11 +1908,7 @@ base_type:
         {
             $$ = get_type(hlsl_ctx.cur_scope, $2, TRUE);
             if ($$->type != HLSL_CLASS_STRUCT)
-            {
-                hlsl_message("Line %u: redefining %s as a structure.\n",
-                        hlsl_ctx.line_no, $2);
-                set_parse_status(&hlsl_ctx.status, PARSE_ERR);
-            }
+                hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR, "'%s' redefined as a structure\n", $2);
             d3dcompiler_free($2);
         }
 
@@ -2291,9 +2291,8 @@ primary_expr:             C_FLOAT
 
                                 if (!(var = get_variable(hlsl_ctx.cur_scope, $1)))
                                 {
-                                    hlsl_message("Line %d: variable '%s' not declared\n",
-                                            hlsl_ctx.line_no, $1);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
+                                            "variable '%s' is not declared\n", $1);
                                     YYABORT;
                                 }
                                 if ((load = new_var_load(var, get_location(&@1))))
@@ -2425,23 +2424,21 @@ postfix_expr:             primary_expr
                                 TRACE("%s constructor.\n", debug_hlsl_type($2));
                                 if ($1)
                                 {
-                                    hlsl_message("Line %u: unexpected modifier in a constructor.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
+                                            "unexpected modifier on a constructor\n");
                                     YYABORT;
                                 }
                                 if ($2->type > HLSL_CLASS_LAST_NUMERIC)
                                 {
-                                    hlsl_message("Line %u: constructors are allowed only for numeric data types.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR,
+                                            "constructors may only be used with numeric data types\n");
                                     YYABORT;
                                 }
                                 if ($2->dimx * $2->dimy != initializer_size(&$4))
                                 {
-                                    hlsl_message("Line %u: wrong number of components in constructor.\n",
-                                            hlsl_ctx.line_no);
-                                    set_parse_status(&hlsl_ctx.status, PARSE_ERR);
+                                    hlsl_report_message(get_location(&@4), HLSL_LEVEL_ERROR,
+                                            "expected %u components in constructor, but got %u\n",
+                                            $2->dimx * $2->dimy, initializer_size(&$4));
                                     YYABORT;
                                 }
                                 assert($4.args_count <= ARRAY_SIZE(constructor->args));
