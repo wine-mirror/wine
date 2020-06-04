@@ -2236,13 +2236,15 @@ static void delete_fbo_attachment(const struct wined3d_gl_info *gl_info,
     }
 }
 
-/* Context activation is done by the caller. */
-static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info, unsigned int flags,
-        enum wined3d_gl_resource_type d3d_type, GLuint *object, GLenum internal, GLenum format, GLenum type)
+static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_format_gl *format_gl,
+        enum wined3d_gl_resource_type d3d_type, GLuint *object, GLenum internal)
 {
-    GLenum attach_type = flags & WINED3DFMT_FLAG_DEPTH ?
-            GL_DEPTH_ATTACHMENT : GL_COLOR_ATTACHMENT0;
+    GLenum format = format_gl->format;
+    GLenum type = format_gl->type;
+    GLenum attach_type;
 
+    attach_type = format_gl->f.depth_size ? GL_DEPTH_ATTACHMENT : GL_COLOR_ATTACHMENT0;
     switch (d3d_type)
     {
         case WINED3D_GL_RES_TYPE_TEX_1D:
@@ -2252,11 +2254,10 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            gl_info->fbo_ops.glFramebufferTexture1D(GL_FRAMEBUFFER, attach_type, GL_TEXTURE_1D,
-                    *object, 0);
-            if (flags & WINED3DFMT_FLAG_STENCIL)
-                gl_info->fbo_ops.glFramebufferTexture1D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_1D,
-                        *object, 0);
+            gl_info->fbo_ops.glFramebufferTexture1D(GL_FRAMEBUFFER, attach_type, GL_TEXTURE_1D, *object, 0);
+            if (format_gl->f.stencil_size)
+                gl_info->fbo_ops.glFramebufferTexture1D(GL_FRAMEBUFFER,
+                        GL_STENCIL_ATTACHMENT, GL_TEXTURE_1D, *object, 0);
             break;
 
         case WINED3D_GL_RES_TYPE_TEX_2D:
@@ -2270,7 +2271,7 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
 
             gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, attach_type,
                     wined3d_gl_type_to_enum(d3d_type), *object, 0);
-            if (flags & WINED3DFMT_FLAG_STENCIL)
+            if (format_gl->f.stencil_size)
                 gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
                         wined3d_gl_type_to_enum(d3d_type), *object, 0);
             break;
@@ -2282,11 +2283,10 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            gl_info->fbo_ops.glFramebufferTexture3D(GL_FRAMEBUFFER, attach_type,
-                    GL_TEXTURE_3D, *object, 0, 0);
-            if (flags & WINED3DFMT_FLAG_STENCIL)
-                gl_info->fbo_ops.glFramebufferTexture3D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
-                        GL_TEXTURE_3D, *object, 0, 0);
+            gl_info->fbo_ops.glFramebufferTexture3D(GL_FRAMEBUFFER, attach_type, GL_TEXTURE_3D, *object, 0, 0);
+            if (format_gl->f.stencil_size)
+                gl_info->fbo_ops.glFramebufferTexture3D(GL_FRAMEBUFFER,
+                        GL_STENCIL_ATTACHMENT, GL_TEXTURE_3D, *object, 0, 0);
             break;
 
         case WINED3D_GL_RES_TYPE_TEX_CUBE:
@@ -2309,7 +2309,7 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
 
             gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, attach_type,
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, *object, 0);
-            if (flags & WINED3DFMT_FLAG_STENCIL)
+            if (format_gl->f.stencil_size)
                 gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
                         GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, *object, 0);
             break;
@@ -2318,11 +2318,10 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
             gl_info->fbo_ops.glGenRenderbuffers(1, object);
             gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, *object);
             gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, internal, 16, 16);
-            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, attach_type, GL_RENDERBUFFER,
-                    *object);
-            if (flags & WINED3DFMT_FLAG_STENCIL)
-                gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER,
-                        *object);
+            gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, attach_type, GL_RENDERBUFFER, *object);
+            if (format_gl->f.stencil_size)
+                gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+                        GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, *object);
             break;
 
         case WINED3D_GL_RES_TYPE_BUFFER:
@@ -2484,8 +2483,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
         if (type == WINED3D_GL_RES_TYPE_BUFFER)
             continue;
 
-        create_and_bind_fbo_attachment(gl_info, format->f.flags[type], type,
-                &object, format->internal, format->format, format->type);
+        create_and_bind_fbo_attachment(gl_info, format, type, &object, format->internal);
 
         if (format->f.flags[type] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         {
@@ -2539,8 +2537,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
                 while (gl_info->gl_ops.gl.p_glGetError());
 
                 delete_fbo_attachment(gl_info, type, object);
-                create_and_bind_fbo_attachment(gl_info, format->f.flags[type], type,
-                        &object, format->rt_internal, format->format, format->type);
+                create_and_bind_fbo_attachment(gl_info, format, type, &object, format->rt_internal);
 
                 status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
                 checkGLcall("Framebuffer format check");
@@ -2691,8 +2688,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
         if (format->internal != format->srgb_internal)
         {
             delete_fbo_attachment(gl_info, type, object);
-            create_and_bind_fbo_attachment(gl_info, format->f.flags[type], type, &object, format->srgb_internal,
-                    format->format, format->type);
+            create_and_bind_fbo_attachment(gl_info, format, type, &object, format->srgb_internal);
 
             status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
             checkGLcall("Framebuffer format check");
