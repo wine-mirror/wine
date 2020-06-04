@@ -107,6 +107,8 @@ TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZ
     dbg_init();
     server_init_process();
     info_size = server_init_thread( teb->Peb, suspend );
+    virtual_map_user_shared_data();
+
     if (size) *size = info_size;
     if (cpus) *cpus = server_cpus;
     if (wow64) *wow64 = is_wow64;

@@ -161,6 +161,8 @@ static void *user_space_limit    = (void *)0x7fff0000;
 static void *working_set_limit   = (void *)0x7fff0000;
 #endif
 
+static struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
+
 SIZE_T signal_stack_size = 0;
 SIZE_T signal_stack_mask = 0;
 static SIZE_T signal_stack_align;
@@ -2543,9 +2545,20 @@ TEB *virtual_alloc_first_teb(void)
 {
     TEB *teb;
     PEB *peb;
+    NTSTATUS status;
+    SIZE_T data_size = page_size;
     SIZE_T peb_size = page_size;
     SIZE_T teb_size = signal_stack_mask + 1;
     SIZE_T total = 32 * teb_size;
+
+    /* reserve space for shared user data */
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&user_shared_data, 0, &data_size,
+                                      MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
+    if (status)
+    {
+        ERR( "wine: failed to map the shared user data: %08x\n", status );
+        exit(1);
+    }
 
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb_block, 0, &total,
                              MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
@@ -2730,6 +2743,37 @@ void virtual_clear_thread_stack( void *stack_end )
 
     wine_anon_mmap( stack, size, PROT_READ | PROT_WRITE, MAP_FIXED );
     if (force_exec_prot) mprotect( stack, size, PROT_READ | PROT_WRITE | PROT_EXEC );
+}
+
+
+/***********************************************************************
+ *           virtual_map_user_shared_data
+ */
+void virtual_map_user_shared_data(void)
+{
+    static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+                                      '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING wine_usd_str;
+    NTSTATUS status;
+    HANDLE section;
+    int res, fd, needs_close;
+
+    RtlInitUnicodeString( &wine_usd_str, wine_usdW );
+    InitializeObjectAttributes( &attr, &wine_usd_str, OBJ_OPENIF, NULL, NULL );
+    if ((status = NtOpenSection( &section, SECTION_ALL_ACCESS, &attr )))
+    {
+        ERR( "failed to open the USD section: %08x\n", status );
+        exit(1);
+    }
+    if ((res = server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
+        (user_shared_data != mmap( user_shared_data, page_size, PROT_READ, MAP_SHARED|MAP_FIXED, fd, 0 )))
+    {
+        ERR( "failed to remap the process USD: %d\n", res );
+        exit(1);
+    }
+    if (needs_close) close( fd );
+    NtClose( section );
 }
 
 

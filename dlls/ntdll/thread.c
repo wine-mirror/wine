@@ -49,7 +49,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-struct _KUSER_SHARED_DATA *user_shared_data = NULL;
+struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
 void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
 
@@ -173,33 +173,6 @@ int __cdecl __wine_dbg_output( const char *str )
     return unix_funcs->dbg_output( str );
 }
 
-void map_user_shared_data(void)
-{
-    static const WCHAR wine_usdW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
-                                      '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
-    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
-    UNICODE_STRING wine_usd_str;
-    NTSTATUS status;
-    HANDLE section;
-    int res, fd, needs_close;
-
-    RtlInitUnicodeString( &wine_usd_str, wine_usdW );
-    InitializeObjectAttributes( &attr, &wine_usd_str, OBJ_OPENIF, NULL, NULL );
-    if ((status = NtOpenSection( &section, SECTION_ALL_ACCESS, &attr )))
-    {
-        MESSAGE( "wine: failed to open the USD section: %08x\n", status );
-        exit(1);
-    }
-    if ((res = unix_funcs->server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
-        (user_shared_data != mmap( user_shared_data, sizeof(*user_shared_data),
-                                   PROT_READ, MAP_SHARED | MAP_FIXED, fd, 0 )))
-    {
-        MESSAGE( "wine: failed to remap the process USD: %d\n", res );
-        exit(1);
-    }
-    if (needs_close) close( fd );
-    NtClose( section );
-}
 
 /***********************************************************************
  *           thread_init
@@ -211,26 +184,8 @@ void map_user_shared_data(void)
 TEB *thread_init( SIZE_T *info_size, BOOL *suspend )
 {
     TEB *teb;
-    void *addr;
-    SIZE_T size;
-    NTSTATUS status;
 
     virtual_init();
-
-    /* reserve space for shared user data */
-
-    addr = (void *)0x7ffe0000;
-    size = 0x1000;
-    status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size,
-                                      MEM_RESERVE|MEM_COMMIT, PAGE_READONLY );
-    if (status)
-    {
-        MESSAGE( "wine: failed to map the shared user data: %08x\n", status );
-        exit(1);
-    }
-    user_shared_data = addr;
-
-    /* allocate and initialize the PEB and initial TEB */
 
     teb = unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy, info_size, suspend, &server_cpus,
                                       &is_wow64, &server_start_time );

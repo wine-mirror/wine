@@ -134,6 +134,7 @@ extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
+extern void virtual_map_user_shared_data(void) DECLSPEC_HIDDEN;
 
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
 extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;
