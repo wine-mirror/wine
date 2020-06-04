@@ -357,29 +357,10 @@ NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
  *              NtCreateMutant                          [NTDLL.@]
  *              ZwCreateMutant                          [NTDLL.@]
  */
-NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
-                               IN ACCESS_MASK access,
-                               IN const OBJECT_ATTRIBUTES* attr OPTIONAL,
-                               IN BOOLEAN InitialOwner)
+NTSTATUS WINAPI NtCreateMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                BOOLEAN owned )
 {
-    NTSTATUS status;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
-
-    SERVER_START_REQ( create_mutex )
-    {
-        req->access  = access;
-        req->owned   = InitialOwner;
-        wine_server_add_data( req, objattr, len );
-        status = wine_server_call( req );
-        *MutantHandle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return status;
+    return unix_funcs->NtCreateMutant( handle, access, attr, owned );
 }
 
 /**************************************************************************
@@ -388,40 +369,16 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
  */
 NTSTATUS WINAPI NtOpenMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS    status;
-
-    if ((status = validate_open_object_attributes( attr ))) return status;
-
-    SERVER_START_REQ( open_mutex )
-    {
-        req->access  = access;
-        req->attributes = attr->Attributes;
-        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
-        if (attr->ObjectName)
-            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        status = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return status;
+    return unix_funcs->NtOpenMutant( handle, access, attr );
 }
 
 /**************************************************************************
  *		NtReleaseMutant				[NTDLL.@]
  *		ZwReleaseMutant				[NTDLL.@]
  */
-NTSTATUS WINAPI NtReleaseMutant( IN HANDLE handle, OUT PLONG prev_count OPTIONAL)
+NTSTATUS WINAPI NtReleaseMutant( HANDLE handle, LONG *prev_count )
 {
-    NTSTATUS    status;
-
-    SERVER_START_REQ( release_mutex )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        status = wine_server_call( req );
-        if (prev_count) *prev_count = 1 - reply->prev_count;
-    }
-    SERVER_END_REQ;
-    return status;
+    return unix_funcs->NtReleaseMutant( handle, prev_count );
 }
 
 /******************************************************************
@@ -431,34 +388,7 @@ NTSTATUS WINAPI NtReleaseMutant( IN HANDLE handle, OUT PLONG prev_count OPTIONAL
 NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
                                void *info, ULONG len, ULONG *ret_len )
 {
-    NTSTATUS ret;
-    MUTANT_BASIC_INFORMATION *out = info;
-
-    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
-
-    if (class != MutantBasicInformation)
-    {
-        FIXME("(%p, %d, %d) Unknown class\n",
-              handle, class, len);
-        return STATUS_INVALID_INFO_CLASS;
-    }
-
-    if (len != sizeof(MUTANT_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
-
-    SERVER_START_REQ( query_mutex )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        if (!(ret = wine_server_call( req )))
-        {
-            out->CurrentCount   = 1 - reply->count;
-            out->OwnedByCaller  = reply->owned;
-            out->AbandonedState = reply->abandoned;
-            if (ret_len) *ret_len = sizeof(MUTANT_BASIC_INFORMATION);
-        }
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    return unix_funcs->NtQueryMutant( handle, class, info, len, ret_len );
 }
 
 /*

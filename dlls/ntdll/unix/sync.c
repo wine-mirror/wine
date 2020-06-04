@@ -428,6 +428,110 @@ NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
 }
 
 
+/******************************************************************************
+ *              NtCreateMutant (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                BOOLEAN owned )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_mutex )
+    {
+        req->access  = access;
+        req->owned   = owned;
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return ret;
+}
+
+
+/**************************************************************************
+ *              NtOpenMutant (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_mutex )
+    {
+        req->access  = access;
+        req->attributes = attr->Attributes;
+        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *              NtReleaseMutant (NTDLL.@)
+ */
+NTSTATUS WINAPI NtReleaseMutant( HANDLE handle, LONG *prev_count )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( release_mutex )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+        if (prev_count) *prev_count = 1 - reply->prev_count;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/******************************************************************
+ *              NtQueryMutant (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
+                               void *info, ULONG len, ULONG *ret_len )
+{
+    NTSTATUS ret;
+    MUTANT_BASIC_INFORMATION *out = info;
+
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
+
+    if (class != MutantBasicInformation)
+    {
+        FIXME( "(%p, %d, %d) Unknown class\n", handle, class, len );
+        return STATUS_INVALID_INFO_CLASS;
+    }
+
+    if (len != sizeof(MUTANT_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    SERVER_START_REQ( query_mutex )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        if (!(ret = wine_server_call( req )))
+        {
+            out->CurrentCount   = 1 - reply->count;
+            out->OwnedByCaller  = reply->owned;
+            out->AbandonedState = reply->abandoned;
+            if (ret_len) *ret_len = sizeof(MUTANT_BASIC_INFORMATION);
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /******************************************************************
  *		NtWaitForMultipleObjects (NTDLL.@)
  */
