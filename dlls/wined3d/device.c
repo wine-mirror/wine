@@ -1695,7 +1695,7 @@ static void resolve_depth_buffer(struct wined3d_device *device)
     if (!(dst_texture = state->textures[0]))
         return;
     dst_resource = &dst_texture->resource;
-    if (!(dst_resource->format_flags & WINED3DFMT_FLAG_DEPTH))
+    if (!dst_resource->format->depth_size)
         return;
     if (!(src_view = state->fb.depth_stencil))
         return;
