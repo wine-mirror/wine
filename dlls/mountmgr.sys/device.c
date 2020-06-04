@@ -1780,7 +1780,7 @@ static void query_property( struct disk_device *device, IRP *irp )
         if (!irp->UserBuffer
             || irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DESCRIPTOR_HEADER))
             irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        else if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DEVICE_DESCRIPTOR))
+        else if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < len)
         {
             descriptor = irp->UserBuffer;
             descriptor->Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
