@@ -274,6 +274,160 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, ULONG *previous 
 }
 
 
+/**************************************************************************
+ *              NtCreateEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                               EVENT_TYPE type, BOOLEAN state )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_event )
+    {
+        req->access = access;
+        req->manual_reset = (type == NotificationEvent);
+        req->initial_state = state;
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return ret;
+}
+
+
+/******************************************************************************
+ *              NtOpenEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_event )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/******************************************************************************
+ *              NtSetEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetEvent( HANDLE handle, LONG *prev_state )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( event_op )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->op     = SET_EVENT;
+        ret = wine_server_call( req );
+        if (!ret && prev_state) *prev_state = reply->state;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/******************************************************************************
+ *              NtResetEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtResetEvent( HANDLE handle, LONG *prev_state )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( event_op )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->op     = RESET_EVENT;
+        ret = wine_server_call( req );
+        if (!ret && prev_state) *prev_state = reply->state;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/******************************************************************************
+ *              NtClearEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtClearEvent( HANDLE handle )
+{
+    /* FIXME: same as NtResetEvent ??? */
+    return NtResetEvent( handle, NULL );
+}
+
+
+/******************************************************************************
+ *              NtPulseEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtPulseEvent( HANDLE handle, LONG *prev_state )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( event_op )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->op     = PULSE_EVENT;
+        ret = wine_server_call( req );
+        if (!ret && prev_state) *prev_state = reply->state;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/******************************************************************************
+ *              NtQueryEvent (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
+                              void *info, ULONG len, ULONG *ret_len )
+{
+    NTSTATUS ret;
+    EVENT_BASIC_INFORMATION *out = info;
+
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
+
+    if (class != EventBasicInformation)
+    {
+        FIXME("(%p, %d, %d) Unknown class\n",
+              handle, class, len);
+        return STATUS_INVALID_INFO_CLASS;
+    }
+
+    if (len != sizeof(EVENT_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    SERVER_START_REQ( query_event )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        if (!(ret = wine_server_call( req )))
+        {
+            out->EventType  = reply->manual_reset ? NotificationEvent : SynchronizationEvent;
+            out->EventState = reply->state;
+            if (ret_len) *ret_len = sizeof(EVENT_BASIC_INFORMATION);
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /******************************************************************
  *		NtWaitForMultipleObjects (NTDLL.@)
  */

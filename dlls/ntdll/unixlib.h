@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 22
+#define NTDLL_UNIXLIB_VERSION 23
 
 struct unix_funcs
 {
@@ -36,7 +36,10 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtAllocateVirtualMemory)( HANDLE process, PVOID *ret, ULONG_PTR zero_bits,
                                                      SIZE_T *size_ptr, ULONG type, ULONG protect );
     NTSTATUS      (WINAPI *NtAreMappedFilesTheSame)(PVOID addr1, PVOID addr2);
+    NTSTATUS      (WINAPI *NtClearEvent)( HANDLE handle );
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
+    NTSTATUS      (WINAPI *NtCreateEvent)( HANDLE *handle, ACCESS_MASK access,
+                                           const OBJECT_ATTRIBUTES *attr, EVENT_TYPE type, BOOLEAN state );
     NTSTATUS      (WINAPI *NtCreateSemaphore)( HANDLE *handle, ACCESS_MASK access,
                                                const OBJECT_ATTRIBUTES *attr, LONG initial, LONG max );
     TEB *         (WINAPI *NtCurrentTeb)(void);
@@ -56,10 +59,15 @@ struct unix_funcs
                                                 ULONG_PTR zero_bits, SIZE_T commit_size,
                                                 const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                                 SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect );
+    NTSTATUS      (WINAPI *NtOpenEvent)( HANDLE *handle, ACCESS_MASK access,
+                                         const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenSemaphore)( HANDLE *handle, ACCESS_MASK access,
                                              const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtProtectVirtualMemory)( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                                     ULONG new_prot, ULONG *old_prot );
+    NTSTATUS      (WINAPI *NtPulseEvent)( HANDLE handle, LONG *prev_state );
+    NTSTATUS      (WINAPI *NtQueryEvent)( HANDLE handle, EVENT_INFORMATION_CLASS class,
+                                          void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQuerySection)( HANDLE handle, SECTION_INFORMATION_CLASS class,
                                             void *ptr, SIZE_T size, SIZE_T *ret_size );
     NTSTATUS      (WINAPI *NtQuerySemaphore)( HANDLE handle, SEMAPHORE_INFORMATION_CLASS class,
@@ -70,8 +78,10 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtReadVirtualMemory)( HANDLE process, const void *addr, void *buffer,
                                                  SIZE_T size, SIZE_T *bytes_read );
     NTSTATUS      (WINAPI *NtReleaseSemaphore)( HANDLE handle, ULONG count, ULONG *previous );
+    NTSTATUS      (WINAPI *NtResetEvent)( HANDLE handle, LONG *prev_state );
     NTSTATUS      (WINAPI *NtResetWriteWatch)( HANDLE process, PVOID base, SIZE_T size );
     NTSTATUS      (WINAPI *NtSetContextThread)( HANDLE handle, const CONTEXT *context );
+    NTSTATUS      (WINAPI *NtSetEvent)( HANDLE handle, LONG *prev_state );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
     NTSTATUS      (WINAPI *NtSignalAndWaitForSingleObject)( HANDLE signal, HANDLE wait,
                                                             BOOLEAN alertable, const LARGE_INTEGER *timeout );
