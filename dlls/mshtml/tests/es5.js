@@ -865,3 +865,19 @@ sync_test("bind", function() {
 
     ok(Function.prototype.bind.length === 1, "Function.prototype.bind.length = " + Function.prototype.bind.length);
 });
+
+sync_test("keys", function() {
+    var o = { a: 1, b: 2, c: 3 };
+    var keys = Object.keys(o).sort().join();
+    ok(keys === "a,b,c", "keys = " + keys);
+
+    o = Object.create(o);
+    keys = Object.keys(o).sort().join();
+    ok(keys === "", "keys = " + keys);
+
+    o.test = 1;
+    keys = Object.keys(o).sort().join();
+    ok(keys === "test", "keys = " + keys);
+
+    ok(Object.keys.length === 1, "Object.keys.length = " + Object.keys.length);
+});

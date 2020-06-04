@@ -2572,3 +2572,14 @@ HRESULT jsdisp_define_data_property(jsdisp_t *obj, const WCHAR *name, unsigned f
     prop_desc.value = value;
     return jsdisp_define_property(obj, name, &prop_desc);
 }
+
+HRESULT jsdisp_get_prop_name(jsdisp_t *obj, DISPID id, jsstr_t **r)
+{
+    dispex_prop_t *prop = get_prop(obj, id);
+
+    if(!prop || !prop->name || prop->type == PROP_DELETED)
+        return DISP_E_MEMBERNOTFOUND;
+
+    *r = jsstr_alloc(prop->name);
+    return *r ? S_OK : E_OUTOFMEMORY;
+}

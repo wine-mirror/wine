@@ -610,7 +610,7 @@ static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
         return E_NOTIMPL;
     }
 
-    TRACE("(%s)\n", debugstr_jsval(argv[1]));
+    TRACE("(%s)\n", debugstr_jsval(argv[0]));
 
     obj = to_jsdisp(get_object(argv[0]));
     if(!obj) {
@@ -625,12 +625,59 @@ static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     return S_OK;
 }
 
+static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+                           unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    DISPID id = DISPID_STARTENUM;
+    jsdisp_t *obj, *array;
+    unsigned i = 0;
+    jsstr_t *key;
+    HRESULT hres;
+
+    if(!argc || !is_object_instance(argv[0])) {
+        FIXME("invalid arguments %s\n", debugstr_jsval(argv[0]));
+        return E_NOTIMPL;
+    }
+
+    TRACE("(%s)\n", debugstr_jsval(argv[0]));
+
+    obj = to_jsdisp(get_object(argv[0]));
+    if(!obj) {
+        FIXME("Non-JS object\n");
+        return E_NOTIMPL;
+    }
+
+    hres = create_array(ctx, 0, &array);
+    if(FAILED(hres))
+        return hres;
+
+    do {
+        hres = jsdisp_next_prop(obj, id, TRUE, &id);
+        if(hres != S_OK)
+            break;
+
+        hres = jsdisp_get_prop_name(obj, id, &key);
+        if(FAILED(hres))
+            break;
+
+        hres = jsdisp_propput_idx(array, i++, jsval_string(key));
+        jsstr_release(key);
+    } while(hres == S_OK);
+
+    if(SUCCEEDED(hres) && r)
+        *r = jsval_obj(array);
+    else
+        jsdisp_release(array);
+    return hres;
+}
+
 static const builtin_prop_t ObjectConstr_props[] = {
     {L"create",                   Object_create,                      PROPF_ES5|PROPF_METHOD|2},
     {L"defineProperties",         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
     {L"defineProperty",           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
     {L"getOwnPropertyDescriptor", Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
-    {L"getPrototypeOf",           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1}
+    {L"getPrototypeOf",           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1},
+    {L"keys",                     Object_keys,                        PROPF_ES5|PROPF_METHOD|1}
 };
 
 static const builtin_info_t ObjectConstr_info = {

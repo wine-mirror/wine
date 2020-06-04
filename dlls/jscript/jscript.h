@@ -314,6 +314,7 @@ HRESULT jsdisp_get_own_property(jsdisp_t*,const WCHAR*,BOOL,property_desc_t*) DE
 HRESULT jsdisp_define_property(jsdisp_t*,const WCHAR*,property_desc_t*) DECLSPEC_HIDDEN;
 HRESULT jsdisp_define_data_property(jsdisp_t*,const WCHAR*,unsigned,jsval_t) DECLSPEC_HIDDEN;
 HRESULT jsdisp_next_prop(jsdisp_t*,DISPID,BOOL,DISPID*) DECLSPEC_HIDDEN;
+HRESULT jsdisp_get_prop_name(jsdisp_t*,DISPID,jsstr_t**);
 
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;
