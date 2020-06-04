@@ -1403,29 +1403,29 @@ static enum hlsl_ir_expr_op op_from_assignment(enum parse_assign_op op)
     return ops[op];
 }
 
-static unsigned int invert_swizzle(unsigned int *swizzle, unsigned int writemask)
+static BOOL invert_swizzle(unsigned int *swizzle, unsigned int *writemask, unsigned int *ret_width)
 {
-    unsigned int i, j, bit = 0, inverted = 0, components, new_writemask = 0, new_swizzle = 0;
+    unsigned int i, j, bit = 0, inverted = 0, width, new_writemask = 0, new_swizzle = 0;
 
     /* Apply the writemask to the swizzle to get a new writemask and swizzle. */
     for (i = 0; i < 4; ++i)
     {
-        if (writemask & (1 << i))
+        if (*writemask & (1 << i))
         {
             unsigned int s = (*swizzle >> (i * 2)) & 3;
             new_swizzle |= s << (bit++ * 2);
             if (new_writemask & (1 << s))
-                return 0;
+                return FALSE;
             new_writemask |= 1 << s;
         }
     }
-    components = bit;
+    width = bit;
 
     /* Invert the swizzle. */
     bit = 0;
     for (i = 0; i < 4; ++i)
     {
-        for (j = 0; j < components; ++j)
+        for (j = 0; j < width; ++j)
         {
             unsigned int s = (new_swizzle >> (j * 2)) & 3;
             if (s == i)
@@ -1434,7 +1434,9 @@ static unsigned int invert_swizzle(unsigned int *swizzle, unsigned int writemask
     }
 
     *swizzle = inverted;
-    return new_writemask;
+    *writemask = new_writemask;
+    *ret_width = width;
+    return TRUE;
 }
 
 struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign_op assign_op,
@@ -1463,6 +1465,8 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         else if (lhs->type == HLSL_IR_SWIZZLE)
         {
             struct hlsl_ir_swizzle *swizzle = swizzle_from_node(lhs);
+            const struct hlsl_type *swizzle_type = swizzle->node.data_type;
+            unsigned int width;
 
             if (lhs->data_type->type == HLSL_CLASS_MATRIX)
                 FIXME("Assignments with writemasks and matrices on lhs are not supported yet.\n");
@@ -1472,11 +1476,22 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
 
             list_add_after(&rhs->entry, &lhs->entry);
             swizzle->val = rhs;
-            if (!(writemask = invert_swizzle(&swizzle->swizzle, writemask)))
+            if (!invert_swizzle(&swizzle->swizzle, &writemask, &width))
             {
                 hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR, "invalid writemask");
                 d3dcompiler_free(assign);
                 return NULL;
+            }
+            assert(swizzle_type->type == HLSL_CLASS_VECTOR);
+            if (swizzle_type->dimx != width)
+            {
+                struct hlsl_type *type;
+                if (!(type = new_hlsl_type(NULL, HLSL_CLASS_VECTOR, swizzle_type->base_type, width, 1)))
+                {
+                    d3dcompiler_free(assign);
+                    return NULL;
+                }
+                swizzle->node.data_type = type;
             }
             rhs = &swizzle->node;
         }
