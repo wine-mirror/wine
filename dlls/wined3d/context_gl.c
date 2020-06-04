@@ -566,9 +566,9 @@ static struct fbo_entry *wined3d_context_gl_create_fbo_entry(const struct wined3
     entry->flags = 0;
     if (depth_stencil->resource)
     {
-        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_DEPTH)
+        if (depth_stencil->resource->format->depth_size)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_DEPTH;
-        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_STENCIL)
+        if (depth_stencil->resource->format->stencil_size)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_STENCIL;
     }
     entry->rt_mask = context_generate_rt_mask(GL_COLOR_ATTACHMENT0);
@@ -594,9 +594,9 @@ static void wined3d_context_gl_reuse_fbo_entry(struct wined3d_context_gl *contex
     entry->flags = 0;
     if (depth_stencil->resource)
     {
-        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_DEPTH)
+        if (depth_stencil->resource->format->depth_size)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_DEPTH;
-        if (depth_stencil->resource->format_flags & WINED3DFMT_FLAG_STENCIL)
+        if (depth_stencil->resource->format->stencil_size)
             entry->flags |= WINED3D_FBO_ENTRY_FLAG_STENCIL;
     }
 }
