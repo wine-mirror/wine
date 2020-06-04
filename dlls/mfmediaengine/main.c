@@ -86,6 +86,7 @@ struct media_engine
     double duration;
     MF_MEDIA_ENGINE_ERR error_code;
     HRESULT extended_code;
+    MF_MEDIA_ENGINE_READY ready_state;
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
     BSTR current_source;
@@ -400,8 +401,13 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     else
         engine->duration = INFINITY;
 
+    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_METADATA;
+
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE, 0, 0);
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA, 0, 0);
+
+    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_ENOUGH_DATA;
+
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDDATA, 0, 0);
 
     /* TODO: set up topology nodes */
@@ -584,6 +590,8 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngine *iface, BSTR url)
     if (url)
         engine->current_source = SysAllocString(url);
 
+    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_NOTHING;
+
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
 
     if (url)
@@ -671,9 +679,16 @@ static HRESULT WINAPI media_engine_CanPlayType(IMFMediaEngine *iface, BSTR type,
 
 static USHORT WINAPI media_engine_GetReadyState(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    unsigned short state;
 
-    return 0;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    state = engine->ready_state;
+    LeaveCriticalSection(&engine->cs);
+
+    return state;
 }
 
 static BOOL WINAPI media_engine_IsSeeking(IMFMediaEngine *iface)
