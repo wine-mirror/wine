@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 25
+#define NTDLL_UNIXLIB_VERSION 26
 
 struct unix_funcs
 {
@@ -41,6 +41,8 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
     NTSTATUS      (WINAPI *NtCreateEvent)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, EVENT_TYPE type, BOOLEAN state );
+    NTSTATUS      (WINAPI *NtCreateKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
+                                                const OBJECT_ATTRIBUTES *attr, ULONG flags );
     NTSTATUS      (WINAPI *NtCreateMutant)( HANDLE *handle, ACCESS_MASK access,
                                             const OBJECT_ATTRIBUTES *attr, BOOLEAN owned );
     NTSTATUS      (WINAPI *NtCreateSemaphore)( HANDLE *handle, ACCESS_MASK access,
@@ -66,6 +68,8 @@ struct unix_funcs
                                                 SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect );
     NTSTATUS      (WINAPI *NtOpenEvent)( HANDLE *handle, ACCESS_MASK access,
                                          const OBJECT_ATTRIBUTES *attr );
+    NTSTATUS      (WINAPI *NtOpenKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
+                                              const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenMutant)( HANDLE *handle, ACCESS_MASK access,
                                           const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenSemaphore)( HANDLE *handle, ACCESS_MASK access,
@@ -90,6 +94,8 @@ struct unix_funcs
                                                   PVOID buffer, SIZE_T len, SIZE_T *res_len );
     NTSTATUS      (WINAPI *NtReadVirtualMemory)( HANDLE process, const void *addr, void *buffer,
                                                  SIZE_T size, SIZE_T *bytes_read );
+    NTSTATUS      (WINAPI *NtReleaseKeyedEvent)( HANDLE handle, const void *key,
+                                                 BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtReleaseMutant)( HANDLE handle, LONG *prev_count );
     NTSTATUS      (WINAPI *NtReleaseSemaphore)( HANDLE handle, ULONG count, ULONG *previous );
     NTSTATUS      (WINAPI *NtResetEvent)( HANDLE handle, LONG *prev_state );
@@ -105,6 +111,8 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtUnlockVirtualMemory)( HANDLE process, PVOID *addr,
                                                    SIZE_T *size, ULONG unknown );
     NTSTATUS      (WINAPI *NtUnmapViewOfSection)( HANDLE process, PVOID addr );
+    NTSTATUS      (WINAPI *NtWaitForKeyedEvent)( HANDLE handle, const void *key, BOOLEAN alertable,
+                                                 const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtWaitForMultipleObjects)( DWORD count, const HANDLE *handles,
                                                       BOOLEAN wait_any, BOOLEAN alertable,
                                                       const LARGE_INTEGER *timeout );
