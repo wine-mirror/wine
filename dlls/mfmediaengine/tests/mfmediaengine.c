@@ -503,45 +503,47 @@ static void test_error(void)
 
     eo = (void *)0xdeadbeef;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!eo, "Unexpected instance.\n");
-}
+
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_ENCRYPTED + 1);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_ABORTED);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     eo = NULL;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!eo, "Unexpected instance.\n");
-}
+
     eo2 = NULL;
     hr = IMFMediaEngine_GetError(media_engine, &eo2);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(eo2 != eo, "Unexpected instance.\n");
-}
-    if (eo2)
-        IMFMediaError_Release(eo2);
-    if (eo)
-        IMFMediaError_Release(eo);
+
+    IMFMediaError_Release(eo2);
+    IMFMediaError_Release(eo);
 
     hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_NOERROR);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     eo = (void *)0xdeadbeef;
     hr = IMFMediaEngine_GetError(media_engine, &eo);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!eo, "Unexpected instance.\n");
-}
+
+    hr = IMFMediaEngine_Shutdown(media_engine);
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    eo = (void *)0xdeadbeef;
+    hr = IMFMediaEngine_GetError(media_engine, &eo);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+    ok(!eo, "Unexpected instance.\n");
+
+    hr = IMFMediaEngine_SetErrorCode(media_engine, MF_MEDIA_ENGINE_ERR_NOERROR);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
     IMFMediaEngine_Release(media_engine);
 
     /* Error object. */

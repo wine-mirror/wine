@@ -84,6 +84,7 @@ struct media_engine
     double default_playback_rate;
     double volume;
     double duration;
+    MF_MEDIA_ENGINE_ERR error_code;
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
     CRITICAL_SECTION cs;
@@ -512,16 +513,44 @@ static ULONG WINAPI media_engine_Release(IMFMediaEngine *iface)
 
 static HRESULT WINAPI media_engine_GetError(IMFMediaEngine *iface, IMFMediaError **error)
 {
-    FIXME("(%p, %p): stub.\n", iface, error);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, error);
+
+    *error = NULL;
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (engine->error_code)
+    {
+        if (SUCCEEDED(hr = create_media_error(error)))
+            IMFMediaError_SetErrorCode(*error, engine->error_code);
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI media_engine_SetErrorCode(IMFMediaEngine *iface, MF_MEDIA_ENGINE_ERR error)
+static HRESULT WINAPI media_engine_SetErrorCode(IMFMediaEngine *iface, MF_MEDIA_ENGINE_ERR code)
 {
-    FIXME("(%p, %d): stub.\n", iface, error);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u.\n", iface, code);
+
+    if ((unsigned int)code > MF_MEDIA_ENGINE_ERR_ENCRYPTED)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        engine->error_code = code;
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_SetSourceElements(IMFMediaEngine *iface, IMFMediaEngineSrcElements *elements)
