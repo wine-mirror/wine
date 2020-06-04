@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 20
+#define NTDLL_UNIXLIB_VERSION 21
 
 struct unix_funcs
 {
@@ -38,6 +38,7 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtAreMappedFilesTheSame)(PVOID addr1, PVOID addr2);
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
     TEB *         (WINAPI *NtCurrentTeb)(void);
+    NTSTATUS      (WINAPI *NtDelayExecution)( BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtDuplicateObject)( HANDLE source_process, HANDLE source,
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
@@ -65,11 +66,19 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtResetWriteWatch)( HANDLE process, PVOID base, SIZE_T size );
     NTSTATUS      (WINAPI *NtSetContextThread)( HANDLE handle, const CONTEXT *context );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
+    NTSTATUS      (WINAPI *NtSignalAndWaitForSingleObject)( HANDLE signal, HANDLE wait,
+                                                            BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtUnlockVirtualMemory)( HANDLE process, PVOID *addr,
                                                    SIZE_T *size, ULONG unknown );
     NTSTATUS      (WINAPI *NtUnmapViewOfSection)( HANDLE process, PVOID addr );
+    NTSTATUS      (WINAPI *NtWaitForMultipleObjects)( DWORD count, const HANDLE *handles,
+                                                      BOOLEAN wait_any, BOOLEAN alertable,
+                                                      const LARGE_INTEGER *timeout );
+    NTSTATUS      (WINAPI *NtWaitForSingleObject)( HANDLE handle, BOOLEAN alertable,
+                                                   const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtWriteVirtualMemory)( HANDLE process, void *addr, const void *buffer,
                                                   SIZE_T size, SIZE_T *bytes_written );
+    NTSTATUS      (WINAPI *NtYieldExecution)(void);
 
     /* environment functions */
     void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );

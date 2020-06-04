@@ -1089,22 +1089,6 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
 
 /* wait operations */
 
-static NTSTATUS wait_objects( DWORD count, const HANDLE *handles,
-                              BOOLEAN wait_any, BOOLEAN alertable,
-                              const LARGE_INTEGER *timeout )
-{
-    select_op_t select_op;
-    UINT i, flags = SELECT_INTERRUPTIBLE;
-
-    if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
-
-    if (alertable) flags |= SELECT_ALERTABLE;
-    select_op.wait.op = wait_any ? SELECT_WAIT : SELECT_WAIT_ALL;
-    for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
-    return unix_funcs->server_wait( &select_op, offsetof( select_op_t, wait.handles[count] ), flags, timeout );
-}
-
-
 /******************************************************************
  *		NtWaitForMultipleObjects (NTDLL.@)
  */
@@ -1112,7 +1096,7 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                           BOOLEAN wait_any, BOOLEAN alertable,
                                           const LARGE_INTEGER *timeout )
 {
-    return wait_objects( count, handles, wait_any, alertable, timeout );
+    return unix_funcs->NtWaitForMultipleObjects( count, handles, wait_any, alertable, timeout );
 }
 
 
@@ -1121,26 +1105,17 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
  */
 NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    return wait_objects( 1, &handle, FALSE, alertable, timeout );
+    return unix_funcs->NtWaitForSingleObject( handle, alertable, timeout );
 }
 
 
 /******************************************************************
  *		NtSignalAndWaitForSingleObject (NTDLL.@)
  */
-NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWaitObject,
+NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
                                                 BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    select_op_t select_op;
-    UINT flags = SELECT_INTERRUPTIBLE;
-
-    if (!hSignalObject) return STATUS_INVALID_HANDLE;
-
-    if (alertable) flags |= SELECT_ALERTABLE;
-    select_op.signal_and_wait.op = SELECT_SIGNAL_AND_WAIT;
-    select_op.signal_and_wait.wait = wine_server_obj_handle( hWaitObject );
-    select_op.signal_and_wait.signal = wine_server_obj_handle( hSignalObject );
-    return unix_funcs->server_wait( &select_op, sizeof(select_op.signal_and_wait), flags, timeout );
+    return unix_funcs->NtSignalAndWaitForSingleObject( signal, wait, alertable, timeout );
 }
 
 
@@ -1149,12 +1124,7 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWa
  */
 NTSTATUS WINAPI NtYieldExecution(void)
 {
-#ifdef HAVE_SCHED_YIELD
-    sched_yield();
-    return STATUS_SUCCESS;
-#else
-    return STATUS_NO_YIELD_PERFORMED;
-#endif
+    return unix_funcs->NtYieldExecution();
 }
 
 
@@ -1163,41 +1133,7 @@ NTSTATUS WINAPI NtYieldExecution(void)
  */
 NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    /* if alertable, we need to query the server */
-    if (alertable)
-        return unix_funcs->server_wait( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, timeout );
-
-    if (!timeout || timeout->QuadPart == TIMEOUT_INFINITE)  /* sleep forever */
-    {
-        for (;;) select( 0, NULL, NULL, NULL, NULL );
-    }
-    else
-    {
-        LARGE_INTEGER now;
-        timeout_t when, diff;
-
-        if ((when = timeout->QuadPart) < 0)
-        {
-            NtQuerySystemTime( &now );
-            when = now.QuadPart - when;
-        }
-
-        /* Note that we yield after establishing the desired timeout */
-        NtYieldExecution();
-        if (!when) return STATUS_SUCCESS;
-
-        for (;;)
-        {
-            struct timeval tv;
-            NtQuerySystemTime( &now );
-            diff = (when - now.QuadPart + 9) / 10;
-            if (diff <= 0) break;
-            tv.tv_sec  = diff / 1000000;
-            tv.tv_usec = diff % 1000000;
-            if (select( 0, NULL, NULL, NULL, &tv ) != -1) break;
-        }
-    }
-    return STATUS_SUCCESS;
+    return unix_funcs->NtDelayExecution( alertable, timeout );
 }
 
 
