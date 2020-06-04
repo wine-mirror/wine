@@ -1514,13 +1514,6 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         DWORD bitmask;
         enum hlsl_type_class type_class;
 
-        if (lhs->data_type->type > HLSL_CLASS_LAST_NUMERIC)
-        {
-            hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR,
-                    "writemask on a non scalar/vector/matrix type");
-            d3dcompiler_free(assign);
-            return NULL;
-        }
         bitmask = writemask & ((1 << lhs->data_type->dimx) - 1);
         while (bitmask)
         {
