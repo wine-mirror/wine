@@ -532,6 +532,155 @@ NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
 }
 
 
+/**************************************************************************
+ *		NtCreateTimer (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                               TIMER_TYPE type )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if (type != NotificationTimer && type != SynchronizationTimer) return STATUS_INVALID_PARAMETER;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_timer )
+    {
+        req->access  = access;
+        req->manual  = (type == NotificationTimer);
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return ret;
+
+}
+
+
+/**************************************************************************
+ *		NtOpenTimer (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_timer )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *		NtSetTimer (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetTimer( HANDLE handle, const LARGE_INTEGER *when, PTIMER_APC_ROUTINE callback,
+                            void *arg, BOOLEAN resume, ULONG period, BOOLEAN *state )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+
+    TRACE( "(%p,%p,%p,%p,%08x,0x%08x,%p)\n", handle, when, callback, arg, resume, period, state );
+
+    SERVER_START_REQ( set_timer )
+    {
+        req->handle   = wine_server_obj_handle( handle );
+        req->period   = period;
+        req->expire   = when->QuadPart;
+        req->callback = wine_server_client_ptr( callback );
+        req->arg      = wine_server_client_ptr( arg );
+        ret = wine_server_call( req );
+        if (state) *state = reply->signaled;
+    }
+    SERVER_END_REQ;
+
+    /* set error but can still succeed */
+    if (resume && ret == STATUS_SUCCESS) return STATUS_TIMER_RESUME_IGNORED;
+    return ret;
+}
+
+
+/**************************************************************************
+ *		NtCancelTimer (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCancelTimer( HANDLE handle, BOOLEAN *state )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( cancel_timer )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+        if (state) *state = reply->signaled;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/******************************************************************************
+ *		NtQueryTimer (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryTimer( HANDLE handle, TIMER_INFORMATION_CLASS class,
+                              void *info, ULONG len, ULONG *ret_len )
+{
+    TIMER_BASIC_INFORMATION *basic_info = info;
+    NTSTATUS ret;
+    LARGE_INTEGER now;
+
+    TRACE( "(%p,%d,%p,0x%08x,%p)\n", handle, class, info, len, ret_len );
+
+    switch (class)
+    {
+    case TimerBasicInformation:
+        if (len < sizeof(TIMER_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+        SERVER_START_REQ( get_timer_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            ret = wine_server_call(req);
+            /* convert server time to absolute NTDLL time */
+            basic_info->RemainingTime.QuadPart = reply->when;
+            basic_info->TimerState = reply->signaled;
+        }
+        SERVER_END_REQ;
+
+        /* convert into relative time */
+        if (basic_info->RemainingTime.QuadPart > 0) NtQuerySystemTime( &now );
+        else
+        {
+            RtlQueryPerformanceCounter( &now );
+            basic_info->RemainingTime.QuadPart = -basic_info->RemainingTime.QuadPart;
+        }
+
+        if (now.QuadPart > basic_info->RemainingTime.QuadPart)
+            basic_info->RemainingTime.QuadPart = 0;
+        else
+            basic_info->RemainingTime.QuadPart -= now.QuadPart;
+
+        if (ret_len) *ret_len = sizeof(TIMER_BASIC_INFORMATION);
+        return ret;
+    }
+
+    FIXME( "Unhandled class %d\n", class );
+    return STATUS_INVALID_INFO_CLASS;
+}
+
+
 /******************************************************************
  *		NtWaitForMultipleObjects (NTDLL.@)
  */

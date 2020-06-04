@@ -647,33 +647,10 @@ NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
  *		NtCreateTimer				[NTDLL.@]
  *		ZwCreateTimer				[NTDLL.@]
  */
-NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
-                              IN ACCESS_MASK access,
-                              IN const OBJECT_ATTRIBUTES *attr OPTIONAL,
-                              IN TIMER_TYPE timer_type)
+NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                               TIMER_TYPE type )
 {
-    NTSTATUS status;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    if (timer_type != NotificationTimer && timer_type != SynchronizationTimer)
-        return STATUS_INVALID_PARAMETER;
-
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
-
-    SERVER_START_REQ( create_timer )
-    {
-        req->access  = access;
-        req->manual  = (timer_type == NotificationTimer);
-        wine_server_add_data( req, objattr, len );
-        status = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return status;
-
+    return unix_funcs->NtCreateTimer( handle, access, attr, type );
 }
 
 /**************************************************************************
@@ -682,148 +659,35 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
  */
 NTSTATUS WINAPI NtOpenTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS status;
-
-    if ((status = validate_open_object_attributes( attr ))) return status;
-
-    SERVER_START_REQ( open_timer )
-    {
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        if (attr->ObjectName)
-            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        status = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return status;
+    return unix_funcs->NtOpenTimer( handle, access, attr );
 }
 
 /**************************************************************************
  *		NtSetTimer				[NTDLL.@]
  *		ZwSetTimer				[NTDLL.@]
  */
-NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
-                           IN const LARGE_INTEGER* when,
-                           IN PTIMER_APC_ROUTINE callback,
-                           IN PVOID callback_arg,
-                           IN BOOLEAN resume,
-                           IN ULONG period OPTIONAL,
-                           OUT PBOOLEAN state OPTIONAL)
+NTSTATUS WINAPI NtSetTimer( HANDLE handle, const LARGE_INTEGER *when, PTIMER_APC_ROUTINE callback,
+                            void *arg, BOOLEAN resume, ULONG period, BOOLEAN *state )
 {
-    NTSTATUS    status = STATUS_SUCCESS;
-
-    TRACE("(%p,%p,%p,%p,%08x,0x%08x,%p)\n",
-          handle, when, callback, callback_arg, resume, period, state);
-
-    SERVER_START_REQ( set_timer )
-    {
-        req->handle   = wine_server_obj_handle( handle );
-        req->period   = period;
-        req->expire   = when->QuadPart;
-        req->callback = wine_server_client_ptr( callback );
-        req->arg      = wine_server_client_ptr( callback_arg );
-        status = wine_server_call( req );
-        if (state) *state = reply->signaled;
-    }
-    SERVER_END_REQ;
-
-    /* set error but can still succeed */
-    if (resume && status == STATUS_SUCCESS) return STATUS_TIMER_RESUME_IGNORED;
-    return status;
+    return unix_funcs->NtSetTimer( handle, when, callback, arg, resume, period, state );
 }
 
 /**************************************************************************
  *		NtCancelTimer				[NTDLL.@]
  *		ZwCancelTimer				[NTDLL.@]
  */
-NTSTATUS WINAPI NtCancelTimer(IN HANDLE handle, OUT BOOLEAN* state)
+NTSTATUS WINAPI NtCancelTimer( HANDLE handle, BOOLEAN *state )
 {
-    NTSTATUS    status;
-
-    SERVER_START_REQ( cancel_timer )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        status = wine_server_call( req );
-        if (state) *state = reply->signaled;
-    }
-    SERVER_END_REQ;
-    return status;
+    return unix_funcs->NtCancelTimer( handle, state );
 }
 
 /******************************************************************************
  *  NtQueryTimer (NTDLL.@)
- *
- * Retrieves information about a timer.
- *
- * PARAMS
- *  TimerHandle           [I] The timer to retrieve information about.
- *  TimerInformationClass [I] The type of information to retrieve.
- *  TimerInformation      [O] Pointer to buffer to store information in.
- *  Length                [I] The length of the buffer pointed to by TimerInformation.
- *  ReturnLength          [O] Optional. The size of buffer actually used.
- *
- * RETURNS
- *  Success: STATUS_SUCCESS
- *  Failure: STATUS_INFO_LENGTH_MISMATCH, if Length doesn't match the required data
- *           size for the class specified.
- *           STATUS_INVALID_INFO_CLASS, if an invalid TimerInformationClass was specified.
- *           STATUS_ACCESS_DENIED, if TimerHandle does not have TIMER_QUERY_STATE access
- *           to the timer.
  */
-NTSTATUS WINAPI NtQueryTimer(
-    HANDLE TimerHandle,
-    TIMER_INFORMATION_CLASS TimerInformationClass,
-    PVOID TimerInformation,
-    ULONG Length,
-    PULONG ReturnLength)
+NTSTATUS WINAPI NtQueryTimer( HANDLE handle, TIMER_INFORMATION_CLASS class,
+                              void *info, ULONG len, ULONG *ret_len )
 {
-    TIMER_BASIC_INFORMATION * basic_info = TimerInformation;
-    NTSTATUS status;
-    LARGE_INTEGER now;
-
-    TRACE("(%p,%d,%p,0x%08x,%p)\n", TimerHandle, TimerInformationClass,
-       TimerInformation, Length, ReturnLength);
-
-    switch (TimerInformationClass)
-    {
-    case TimerBasicInformation:
-        if (Length < sizeof(TIMER_BASIC_INFORMATION))
-            return STATUS_INFO_LENGTH_MISMATCH;
-
-        SERVER_START_REQ(get_timer_info)
-        {
-            req->handle = wine_server_obj_handle( TimerHandle );
-            status = wine_server_call(req);
-
-            /* convert server time to absolute NTDLL time */
-            basic_info->RemainingTime.QuadPart = reply->when;
-            basic_info->TimerState = reply->signaled;
-        }
-        SERVER_END_REQ;
-
-        /* convert into relative time */
-        if (basic_info->RemainingTime.QuadPart > 0)
-            NtQuerySystemTime(&now);
-        else
-        {
-            RtlQueryPerformanceCounter(&now);
-            basic_info->RemainingTime.QuadPart = -basic_info->RemainingTime.QuadPart;
-        }
-
-        if (now.QuadPart > basic_info->RemainingTime.QuadPart)
-            basic_info->RemainingTime.QuadPart = 0;
-        else
-            basic_info->RemainingTime.QuadPart -= now.QuadPart;
-
-        if (ReturnLength) *ReturnLength = sizeof(TIMER_BASIC_INFORMATION);
-
-        return status;
-    }
-
-    FIXME("Unhandled class %d\n", TimerInformationClass);
-    return STATUS_INVALID_INFO_CLASS;
+    return unix_funcs->NtQueryTimer( handle, class, info, len, ret_len );
 }
 
 
