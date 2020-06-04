@@ -183,7 +183,7 @@ static void test_get_time(void)
     if (pGetTickCount64)
         time2 = pGetTickCount64() * 10000;
     else
-        time2 = GetTickCount() * 10000;
+        time2 = (REFERENCE_TIME)GetTickCount() * 10000;
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time1 % 10000 == 0, "Expected no less than 1ms coarseness, but got time %s.\n",
             wine_dbgstr_longlong(time1));
