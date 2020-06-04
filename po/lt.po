@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-06-04 01:06+0300\n"
+"PO-Revision-Date: 2020-06-05 00:17+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3632,10 +3632,8 @@ msgid "Subscript out of range"
 msgstr "Indeksas nepatenka į rėžius"
 
 #: jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Pasibaigęs popierius; "
+msgstr "Trūksta vietos dėkle"
 
 #: jscript.rc:32
 msgid "Object required"
