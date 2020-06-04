@@ -426,7 +426,7 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
 
     TRACE("current level: %d, last level: %d\n", trylevel, last_level);
 
-    if (trylevel<-1 || trylevel>=descr->unwind_count)
+    if (trylevel<-1 || trylevel>=(int)descr->unwind_count)
     {
         ERR("invalid trylevel %d\n", trylevel);
         terminate();
