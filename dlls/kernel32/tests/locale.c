@@ -6743,7 +6743,9 @@ static void test_NLSVersion(void)
     info.dwNLSVersionInfoSize = sizeof(info);
     ret = pGetNLSVersion( 2, LOCALE_USER_DEFAULT, (NLSVERSIONINFO *)&info );
     ok( !ret, "GetNLSVersion succeeded\n" );
-    ok( GetLastError() == ERROR_INVALID_FLAGS, "wrong error %u\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_FLAGS ||
+        broken( GetLastError() == ERROR_INSUFFICIENT_BUFFER ), /* win2003 */
+        "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
     info.dwNLSVersionInfoSize = sizeof(info);
