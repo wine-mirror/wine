@@ -3646,188 +3646,194 @@ msgid "Subscript out of range"
 msgstr "El subíndex és fora d'interval"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "No queda paper; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "Es requereix un objecte"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "El servidor d'automatització no pot crear l'objecte"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "L'objecte no accepta aquesta propietat o mètode"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "L'objecte no accepta aquesta acció"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "Argument no opcional"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "Error de sintaxi"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "S'esperava ';'"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "S'esperava '('"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "S'esperava ')'"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "S'esperava un identificador"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "S'esperava '='"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "Caràcter no vàlid"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "Cadena constant no terminat"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "declaració 'return' fora d'una funció"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "No es pot tenir 'break' fora d'un bucle"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "No es pot tenir 'continue' fora d'un bucle"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "S'ha redefinit l'etiqueta"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "No s'ha trobat l'etiqueta"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "S'esperava '@end'"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "La compilació condicional està desactivada"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "S'esperava '@'"
 
-#: jscript.rc:77
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:78
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:79
+#: jscript.rc:80
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
 msgstr "Error desconegut"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "S'esperava un nombre"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "S'esperava una funció"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[objecte]' no és un objecte de data"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "S'esperava un objecte"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "Assignació il·legal"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' no està definit"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "S'esperava un objecte booleà"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "No es pot suprimir '|'"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "S'esperava un objecte VBArray"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "S'esperava un objecte JScript"
 
-#: jscript.rc:62
+#: jscript.rc:63
 #, fuzzy
 #| msgid "Array object expected"
 msgid "Enumerator object expected"
 msgstr "S'esperava un objecte Array"
 
-#: jscript.rc:63
+#: jscript.rc:64
 #, fuzzy
 #| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
 msgstr "S'esperava un objecte booleà"
 
-#: jscript.rc:64
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "Error de sintaxi en l'expressió regular"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI a codificar conté caràcters no vàlids"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI a descodificar és incorrecte"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "El nombre de xifres de fracció és fora d'interval"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "La precisió és fora d'interval"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "La longitud del vector ha de ser un nombre enter positiu finit"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "S'esperava un objecte Array"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3835,15 +3841,15 @@ msgstr ""
 "no es pot establir l'atribut 'writable' en el descriptor de propietat com a "
 "'true' en aquest objecte"
 
-#: jscript.rc:73
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "No es pot redefinir la propietat no configurable '|'"
 
-#: jscript.rc:74
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "No es pot modificar la propietat no escrivible '|'"
 
-#: jscript.rc:75
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "La propietat no pot tenir ambdós mètodes d'accés i un valor"
 

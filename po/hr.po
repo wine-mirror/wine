@@ -3651,210 +3651,216 @@ msgid "Subscript out of range"
 msgstr "Potpis je van dometa"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "Nema papira; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "Potreban objekt"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "Poslužitelj automatizacije ne može stvoriti objekt"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "Objekt ne podržava ovo svojstvo ili metodu"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "Objekt ne podržava ovu radnju"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "Argument nije opcionalan"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "Greška u sintaksi"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "Očekivano ';'"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "Očekivano '('"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "Očekivano ')'"
 
-#: jscript.rc:40
+#: jscript.rc:41
 #, fuzzy
 #| msgid "Expected an operand.\n"
 msgid "Expected identifier"
 msgstr "Očekivan operand.\n"
 
-#: jscript.rc:41
+#: jscript.rc:42
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '='"
 msgstr "Očekivano ';'"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "Neispravan znak"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "Nezavršen niz znakova"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "'return' naredba izvan funkcije"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "'break' ne može biti izvan petlje"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "'continue' ne može biti izvan petlje"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "Oznaka redefinirana"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "Oznaka nije pronađena"
 
-#: jscript.rc:49
+#: jscript.rc:50
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '@end'"
 msgstr "Očekivano ';'"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "Kondicionalna kompilacija je isključena"
 
-#: jscript.rc:51
+#: jscript.rc:52
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '@'"
 msgstr "Očekivano ';'"
 
-#: jscript.rc:77
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:78
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:79
+#: jscript.rc:80
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
 msgstr "Nepoznata greška"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "Očekivan broj"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "Očekivana funkcija"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[object]' nije vremenski objekt"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "Očekivan objekt"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "Nedozvoljeno pridruživanje"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' nije definiran"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "Očekivani objekt istinitosne vrijednosti"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "Ne mogu izbrisati '|'"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "Očekivan VBArray objekt"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "Očekivan JScript objekt"
 
-#: jscript.rc:62
+#: jscript.rc:63
 #, fuzzy
 #| msgid "Array object expected"
 msgid "Enumerator object expected"
 msgstr "Očekivan niz objekata"
 
-#: jscript.rc:63
+#: jscript.rc:64
 #, fuzzy
 #| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
 msgstr "Očekivani objekt istinitosne vrijednosti"
 
-#: jscript.rc:64
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "Sintaksna greška u regularnom izrazu"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI za kodiranje sadrži neispravne znakove"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "URI za dekodiranje je neispravan"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "Broj decimalnih znamenki je izvan dosega"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "Preciznost je izvan dosega"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "Duljina niza treba biti konačan prirodan broj"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "Očekivan niz objekata"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:73
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:74
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:75
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

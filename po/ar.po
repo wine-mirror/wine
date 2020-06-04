@@ -3646,210 +3646,216 @@ msgid "Subscript out of range"
 msgstr "الأمر خارج المدى"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "لا يوجد أوراق; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "العنصر ضروري"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "لم يستطع الخادم إنشاء العنصر"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "العنصر لا يدعم هذه الآلية"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "العنصر لا يدعم هذه الحركة"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "المتغير ليس اختياريًا"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "خطأ بنيوي"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "متوقع ';'"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "متوقع '('"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "متوقع ')'"
 
-#: jscript.rc:40
+#: jscript.rc:41
 #, fuzzy
 #| msgid "Subject Key Identifier"
 msgid "Expected identifier"
 msgstr "معرف مفتاح الموضوع"
 
-#: jscript.rc:41
+#: jscript.rc:42
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '='"
 msgstr "متوقع ';'"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "محرف غير سليم"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "قيمة غير منتهية"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "جملة 'return' خارج العملية"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "لا يمكن استخدام 'break' خارج الدوامة"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "لا يمكن استخدام 'continue' خارج الدوامة"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "وسم معاد تعريفه"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "الوسم غير معروف"
 
-#: jscript.rc:49
+#: jscript.rc:50
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '@end'"
 msgstr "متوقع ';'"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "البناء الشرطي معطل"
 
-#: jscript.rc:51
+#: jscript.rc:52
 #, fuzzy
 #| msgid "Expected ';'"
 msgid "Expected '@'"
 msgstr "متوقع ';'"
 
-#: jscript.rc:77
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:78
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:79
+#: jscript.rc:80
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
 msgstr "خطأ غير معلوم"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "رقم متوقع"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "وظيفة متوقعة"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[object]' ليس عنصر تاريخ"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "عنصر متوقع"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "مهمة غير مسموحة"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' غير معرف"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "عنصر منطقي متوقع"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "لا يمكن حذف '|'"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "عنصر متغير VB متوقع"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "عنصر جافا سكربت متوقع"
 
-#: jscript.rc:62
+#: jscript.rc:63
 #, fuzzy
 #| msgid "Array object expected"
 msgid "Enumerator object expected"
 msgstr "عنصر مصفوفة متوقع"
 
-#: jscript.rc:63
+#: jscript.rc:64
 #, fuzzy
 #| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
 msgstr "عنصر منطقي متوقع"
 
-#: jscript.rc:64
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "خطأ بنيوي في تفسير نظامي"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "الرابط المراد تشفيره يحوي محارف غير سليمة"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "الرابط المراد تشفيره غير صحيح"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "عدد الأرقام المجزأة خارج المدى"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "الدقة خارج المدى"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "يجب أن يكون طول المصفوفة عدد صحيح موجب محدود"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "عنصر مصفوفة متوقع"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:73
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:74
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:75
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

@@ -2507,7 +2507,9 @@ var exception_array = {
     E_REGEXP_SYNTAX_ERROR:  { type: "RegExpError", number: -2146823271 },
 
     E_URI_INVALID_CHAR:     { type: "URIError", number: -2146823264 },
-    E_URI_INVALID_CODING:   { type: "URIError", number: -2146823263 }
+    E_URI_INVALID_CODING:   { type: "URIError", number: -2146823263 },
+
+    E_STACK_OVERFLOW:       { type: "Error", number: -2146828260 }
 };
 
 function testException(func, id) {
@@ -2519,10 +2521,12 @@ function testException(func, id) {
     } catch(e) {
         ret = e.name;
         num = e.number;
+        trace(e.message);
     }
 
     ok(ret === ex.type, "Exception test, ret = " + ret + ", expected " + ex.type +". Executed function: " + func.toString());
-    ok(num === ex.number, "Exception test, num = " + num + ", expected " + ex.number + ". Executed function: " + func.toString());
+    ok(num === ex.number, "Exception test, num = " + num + " (" + (num + 0x80000000).toString(16) + "), expected " + ex.number
+       + ". Executed function: " + func.toString());
 }
 
 // RangeError tests
@@ -2564,6 +2568,8 @@ testException(function() {delete false;}, "E_INVALID_DELETE");
 testException(function() {undefined.toString();}, "E_OBJECT_EXPECTED");
 testException(function() {null.toString();}, "E_OBJECT_EXPECTED");
 testException(function() {RegExp.prototype.toString.call(new Object());}, "E_REGEXP_EXPECTED");
+
+testException(function() { return arguments.callee(); }, "E_STACK_OVERFLOW");
 
 obj = new Object();
 obj.prop = 1;

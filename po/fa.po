@@ -3607,199 +3607,203 @@ msgid "Subscript out of range"
 msgstr ""
 
 #: jscript.rc:31
-msgid "Object required"
+msgid "Out of stack space"
 msgstr ""
 
 #: jscript.rc:32
-msgid "Automation server can't create object"
+msgid "Object required"
 msgstr ""
 
 #: jscript.rc:33
-msgid "Object doesn't support this property or method"
+msgid "Automation server can't create object"
 msgstr ""
 
 #: jscript.rc:34
-msgid "Object doesn't support this action"
+msgid "Object doesn't support this property or method"
 msgstr ""
 
 #: jscript.rc:35
-msgid "Argument not optional"
+msgid "Object doesn't support this action"
 msgstr ""
 
 #: jscript.rc:36
-msgid "Syntax error"
+msgid "Argument not optional"
 msgstr ""
 
 #: jscript.rc:37
-msgid "Expected ';'"
+msgid "Syntax error"
 msgstr ""
 
 #: jscript.rc:38
-msgid "Expected '('"
+msgid "Expected ';'"
 msgstr ""
 
 #: jscript.rc:39
-msgid "Expected ')'"
+msgid "Expected '('"
 msgstr ""
 
 #: jscript.rc:40
-msgid "Expected identifier"
+msgid "Expected ')'"
 msgstr ""
 
 #: jscript.rc:41
-msgid "Expected '='"
+msgid "Expected identifier"
 msgstr ""
 
 #: jscript.rc:42
-msgid "Invalid character"
+msgid "Expected '='"
 msgstr ""
 
 #: jscript.rc:43
-msgid "Unterminated string constant"
+msgid "Invalid character"
 msgstr ""
 
 #: jscript.rc:44
-msgid "'return' statement outside of function"
+msgid "Unterminated string constant"
 msgstr ""
 
 #: jscript.rc:45
-msgid "Can't have 'break' outside of loop"
+msgid "'return' statement outside of function"
 msgstr ""
 
 #: jscript.rc:46
-msgid "Can't have 'continue' outside of loop"
+msgid "Can't have 'break' outside of loop"
 msgstr ""
 
 #: jscript.rc:47
-msgid "Label redefined"
+msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
 #: jscript.rc:48
+msgid "Label redefined"
+msgstr ""
+
+#: jscript.rc:49
 #, fuzzy
 msgid "Label not found"
 msgstr "'%s' پیدا نشد."
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr ""
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr ""
 
-#: jscript.rc:77
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: jscript.rc:78
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: jscript.rc:79
+#: jscript.rc:80
 msgid "Unknown runtime error"
 msgstr ""
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr ""
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr ""
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr ""
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr ""
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr ""
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr ""
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr ""
 
-#: jscript.rc:59
+#: jscript.rc:60
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "&حذف\tDel"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr ""
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr ""
 
-#: jscript.rc:62
+#: jscript.rc:63
 msgid "Enumerator object expected"
 msgstr ""
 
-#: jscript.rc:63
+#: jscript.rc:64
 msgid "Regular Expression object expected"
 msgstr ""
 
-#: jscript.rc:64
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr ""
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr ""
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr ""
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr ""
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr ""
 
-#: jscript.rc:69
+#: jscript.rc:70
 #, fuzzy
 msgid "Precision is out of range"
 msgstr "&حذف\tDel"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr ""
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr ""
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr ""
 
-#: jscript.rc:73
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 
-#: jscript.rc:74
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
-#: jscript.rc:75
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

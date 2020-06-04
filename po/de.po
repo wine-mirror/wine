@@ -3637,186 +3637,192 @@ msgid "Subscript out of range"
 msgstr "Index außerhalb des Bereichs"
 
 #: jscript.rc:31
+#, fuzzy
+#| msgid "Out of paper; "
+msgid "Out of stack space"
+msgstr "Papierfach leer; "
+
+#: jscript.rc:32
 msgid "Object required"
 msgstr "Objekt benötigt"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Automation server can't create object"
 msgstr "Automatisierungsserver konnte das Objekt nicht erstellen"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Object doesn't support this property or method"
 msgstr "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Object doesn't support this action"
 msgstr "Das Objekt unterstützt diese Aktion nicht"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Argument not optional"
 msgstr "Argument nicht optional"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Syntax error"
 msgstr "Syntaxfehler"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Expected ';'"
 msgstr "';' erwartet"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Expected '('"
 msgstr "'(' erwartet"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "Expected ')'"
 msgstr "')' erwartet"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Expected identifier"
 msgstr "Bezeichner erwartet"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Expected '='"
 msgstr "'=' erwartet"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Invalid character"
 msgstr "Ungültiges Zeichen"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Unterminated string constant"
 msgstr "konstante Zeichenkette nicht terminiert"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "'return' statement outside of function"
 msgstr "'return'-Anweisung außerhalb einer Funktion"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "Can't have 'break' outside of loop"
 msgstr "Unerwartetes 'break' außerhalb einer Schleife"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Can't have 'continue' outside of loop"
 msgstr "Unerwartetes 'continue' außerhalb einer Schleife"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Label redefined"
 msgstr "Label neu definiert"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "Label not found"
 msgstr "Label nicht gefunden"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "Expected '@end'"
 msgstr "'@end' erwartet"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Conditional compilation is turned off"
 msgstr "Bedingte Kompilierung ist ausgeschaltet"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Expected '@'"
 msgstr "'@' erwartet"
 
-#: jscript.rc:77
+#: jscript.rc:78
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript Übersetzungsfehler"
 
-#: jscript.rc:78
+#: jscript.rc:79
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript Laufzeitfehler"
 
-#: jscript.rc:79
+#: jscript.rc:80
 msgid "Unknown runtime error"
 msgstr "Unbekannter Laufzeitfehler"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Number expected"
 msgstr "Zahl erwartet"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "Function expected"
 msgstr "Funktion erwartet"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "'[object]' is not a date object"
 msgstr "'[Objekt]' ist kein Datums-Objekt"
 
-#: jscript.rc:55
+#: jscript.rc:56
 msgid "Object expected"
 msgstr "Objekt erwartet"
 
-#: jscript.rc:56
+#: jscript.rc:57
 msgid "Illegal assignment"
 msgstr "Unzulässige Zuweisung"
 
-#: jscript.rc:57
+#: jscript.rc:58
 msgid "'|' is undefined"
 msgstr "'|' nicht definiert"
 
-#: jscript.rc:58
+#: jscript.rc:59
 msgid "Boolean object expected"
 msgstr "Boolesches Objekt erwartet"
 
-#: jscript.rc:59
+#: jscript.rc:60
 msgid "Cannot delete '|'"
 msgstr "Kann '|' nicht löschen"
 
-#: jscript.rc:60
+#: jscript.rc:61
 msgid "VBArray object expected"
 msgstr "VBArray-Objekt erwartet"
 
-#: jscript.rc:61
+#: jscript.rc:62
 msgid "JScript object expected"
 msgstr "JScript-Objekt erwartet"
 
-#: jscript.rc:62
+#: jscript.rc:63
 #, fuzzy
 #| msgid "Array object expected"
 msgid "Enumerator object expected"
 msgstr "Array-Objekt erwartet"
 
-#: jscript.rc:63
+#: jscript.rc:64
 #, fuzzy
 #| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
 msgstr "Boolesches Objekt erwartet"
 
-#: jscript.rc:64
+#: jscript.rc:65
 msgid "Syntax error in regular expression"
 msgstr "Syntaxfehler in regulärem Ausdruck"
 
-#: jscript.rc:65
+#: jscript.rc:66
 msgid "Exception thrown and not caught"
 msgstr "Exception ausgelöst und nicht abgefangen"
 
-#: jscript.rc:67
+#: jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
 msgstr "Zu verschlüsselnde URI enthält ungültige Zeichen"
 
-#: jscript.rc:66
+#: jscript.rc:67
 msgid "URI to be decoded is incorrect"
 msgstr "Zu entschlüsselnde URI ist ungültig"
 
-#: jscript.rc:68
+#: jscript.rc:69
 msgid "Number of fraction digits is out of range"
 msgstr "Anzahl der Nachkommastellen außerhalb des zulässigen Bereichs"
 
-#: jscript.rc:69
+#: jscript.rc:70
 msgid "Precision is out of range"
 msgstr "Genauigkeit außerhalb des zulässigen Bereichs"
 
-#: jscript.rc:70
+#: jscript.rc:71
 msgid "Array length must be a finite positive integer"
 msgstr "Array-Größe muss eine natürliche Zahl sein"
 
-#: jscript.rc:71
+#: jscript.rc:72
 msgid "Array object expected"
 msgstr "Array-Objekt erwartet"
 
-#: jscript.rc:72
+#: jscript.rc:73
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
@@ -3824,16 +3830,16 @@ msgstr ""
 "'writable'-Attribut des Eigenschaftendeskriptors kann bei diesem Objekt "
 "nicht auf 'true' gesetzt werden"
 
-#: jscript.rc:73
+#: jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
 msgstr ""
 "Nicht-konfigurierbare Eigenschaft '|' kann nicht erneut definiert werden"
 
-#: jscript.rc:74
+#: jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
 msgstr "Nicht-schreibbare Eigenschaft '|' kann nicht geändert werden"
 
-#: jscript.rc:75
+#: jscript.rc:76
 msgid "Property cannot have both accessors and a value"
 msgstr "Eigenschaft kann nicht sowohl Accessoren als auch einen Wert haben"
 

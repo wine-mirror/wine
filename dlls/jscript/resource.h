@@ -25,6 +25,7 @@
 #define IDS_TO_PRIMITIVE                    0x0001
 #define IDS_INVALID_CALL_ARG                0x0005
 #define IDS_SUBSCRIPT_OUT_OF_RANGE          0x0009
+#define IDS_STACK_OVERFLOW                  0x001C
 #define IDS_OBJECT_REQUIRED                 0x01A8
 #define IDS_CREATE_OBJ_ERROR                0x01AD
 #define IDS_NO_PROPERTY                     0x01B6

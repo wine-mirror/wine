@@ -67,7 +67,7 @@ static const size_t stack_size = 0x4000;
 static HRESULT stack_push(script_ctx_t *ctx, jsval_t v)
 {
     if(ctx->stack_top == stack_size)
-        return E_OUTOFMEMORY;
+        return JS_E_STACK_OVERFLOW;
 
     ctx->stack[ctx->stack_top++] = v;
     return S_OK;
