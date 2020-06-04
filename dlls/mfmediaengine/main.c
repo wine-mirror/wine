@@ -85,6 +85,7 @@ struct media_engine
     double volume;
     double duration;
     MF_MEDIA_ENGINE_ERR error_code;
+    HRESULT extended_code;
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
     CRITICAL_SECTION cs;
@@ -440,8 +441,12 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
     }
 
     if (FAILED(hr))
-        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ERROR,
-            MF_MEDIA_ENGINE_ERR_SRC_NOT_SUPPORTED, hr);
+    {
+        engine->error_code = MF_MEDIA_ENGINE_ERR_SRC_NOT_SUPPORTED;
+        engine->extended_code = hr;
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ERROR, engine->error_code,
+                engine->extended_code);
+    }
 
     LeaveCriticalSection(&engine->cs);
 
@@ -526,7 +531,10 @@ static HRESULT WINAPI media_engine_GetError(IMFMediaEngine *iface, IMFMediaError
     else if (engine->error_code)
     {
         if (SUCCEEDED(hr = create_media_error(error)))
+        {
             IMFMediaError_SetErrorCode(*error, engine->error_code);
+            IMFMediaError_SetExtendedErrorCode(*error, engine->extended_code);
+        }
     }
     LeaveCriticalSection(&engine->cs);
 
