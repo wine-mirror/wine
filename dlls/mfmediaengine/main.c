@@ -329,11 +329,55 @@ static ULONG WINAPI media_engine_load_handler_Release(IMFAsyncCallback *iface)
     return IMFMediaEngine_Release(&engine->IMFMediaEngine_iface);
 }
 
+static HRESULT media_engine_create_source_node(IMFMediaSource *source, IMFPresentationDescriptor *pd, IMFStreamDescriptor *sd,
+        IMFTopologyNode **node)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, node)))
+        return hr;
+
+    IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
+    IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)pd);
+    IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+
+    return S_OK;
+}
+
+static HRESULT media_engine_create_audio_renderer(struct media_engine *engine, IMFTopologyNode **node)
+{
+    unsigned int category, role;
+    IMFActivate *sar_activate;
+    HRESULT hr;
+
+    *node = NULL;
+
+    if (FAILED(hr = MFCreateAudioRendererActivate(&sar_activate)))
+        return hr;
+
+    /* Configuration attributes keys differ between Engine and SAR. */
+    if (SUCCEEDED(IMFAttributes_GetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_CATEGORY, &category)))
+        IMFActivate_SetUINT32(sar_activate, &MF_AUDIO_RENDERER_ATTRIBUTE_STREAM_CATEGORY, category);
+    if (SUCCEEDED(IMFAttributes_GetUINT32(engine->attributes, &MF_MEDIA_ENGINE_AUDIO_ENDPOINT_ROLE, &role)))
+        IMFActivate_SetUINT32(sar_activate, &MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE, role);
+
+    if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, node)))
+    {
+        IMFTopologyNode_SetObject(*node, (IUnknown *)sar_activate);
+        IMFTopologyNode_SetUINT32(*node, &MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE);
+    }
+
+    IMFActivate_Release(sar_activate);
+
+    return hr;
+}
+
 static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMediaSource *source)
 {
     IMFStreamDescriptor *sd_audio = NULL, *sd_video = NULL;
     unsigned int stream_count = 0, i;
     IMFPresentationDescriptor *pd;
+    IMFTopology *topology;
     UINT64 duration;
     HRESULT hr;
 
@@ -410,7 +454,36 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
 
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDDATA, 0, 0);
 
-    /* TODO: set up topology nodes */
+    /* TODO: set up video stream nodes */
+
+    if (SUCCEEDED(hr = MFCreateTopology(&topology)))
+    {
+        IMFTopologyNode *sar_node = NULL, *audio_src = NULL;
+
+        if (sd_audio)
+        {
+            if (FAILED(hr = media_engine_create_source_node(source, pd, sd_audio, &audio_src)))
+                WARN("Failed to create audio source node, hr %#x.\n", hr);
+
+            if (FAILED(hr = media_engine_create_audio_renderer(engine, &sar_node)))
+                WARN("Failed to create audio renderer node, hr %#x.\n", hr);
+
+            if (sar_node && audio_src)
+            {
+                IMFTopology_AddNode(topology, audio_src);
+                IMFTopology_AddNode(topology, sar_node);
+                IMFTopologyNode_ConnectOutput(audio_src, 0, sar_node, 0);
+            }
+
+            if (sar_node)
+                IMFTopologyNode_Release(sar_node);
+            if (audio_src)
+                IMFTopologyNode_Release(audio_src);
+        }
+    }
+
+    if (topology)
+        IMFTopology_Release(topology);
 
     if (sd_video)
         IMFStreamDescriptor_Release(sd_video);
@@ -419,7 +492,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
 
     IMFPresentationDescriptor_Release(pd);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
