@@ -288,6 +288,8 @@ typedef struct tagFace {
     struct enum_data *cached_enum_data;
 } Face;
 
+#define FS_DBCS_MASK (FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB)
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_ALLOW_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -618,6 +620,7 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
 static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 static BOOL use_default_fallback = FALSE;
 
+static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl);
 static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph, BOOL *vert);
 static BOOL get_outline_text_metrics(GdiFont *font);
 static BOOL get_bitmap_text_metrics(GdiFont *font);
@@ -2270,7 +2273,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 #endif /* HAVE_CARBON_CARBON_H */
 
     do {
-        const DWORD FS_DBCS_MASK = FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB;
         FONTSIGNATURE fs;
 
         ft_face = new_ft_face( file, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
@@ -2360,6 +2362,30 @@ static void DumpFontList(void)
     }
 }
 
+static BOOL map_vertical_font_family(const WCHAR *orig, const WCHAR *repl, const Family *family)
+{
+    Face *face;
+    BOOL ret = FALSE;
+    WCHAR *at_orig, *at_repl = NULL;
+
+    face = LIST_ENTRY(list_head(&family->faces), Face, entry);
+    if (!face || !(face->fs.fsCsb[0] & FS_DBCS_MASK))
+        return FALSE;
+
+    at_orig = prepend_at(strdupW(orig));
+    if (at_orig && !find_family_from_any_name(at_orig))
+    {
+        at_repl = prepend_at(strdupW(repl));
+        if (at_repl)
+            ret = map_font_family(at_orig, at_repl);
+    }
+
+    HeapFree(GetProcessHeap(), 0, at_orig);
+    HeapFree(GetProcessHeap(), 0, at_repl);
+
+    return ret;
+}
+
 static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl)
 {
     Family *family = find_family_from_any_name(repl);
@@ -2374,6 +2400,10 @@ static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl)
             list_init(&new_family->faces);
             new_family->replacement = &family->faces;
             list_add_tail(&font_list, &new_family->entry);
+
+            if (repl[0] != '@')
+                map_vertical_font_family(orig, repl, family);
+
             return TRUE;
         }
     }
