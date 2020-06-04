@@ -871,3 +871,80 @@ NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
     select_op.keyed_event.key    = wine_server_client_ptr( key );
     return server_wait( &select_op, sizeof(select_op.keyed_event), flags, timeout );
 }
+
+
+/***********************************************************************
+ *             NtCreateSection (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                 const LARGE_INTEGER *size, ULONG protect,
+                                 ULONG sec_flags, HANDLE file )
+{
+    NTSTATUS ret;
+    unsigned int file_access;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    switch (protect & 0xff)
+    {
+    case PAGE_READONLY:
+    case PAGE_EXECUTE_READ:
+    case PAGE_WRITECOPY:
+    case PAGE_EXECUTE_WRITECOPY:
+        file_access = FILE_READ_DATA;
+        break;
+    case PAGE_READWRITE:
+    case PAGE_EXECUTE_READWRITE:
+        if (sec_flags & SEC_IMAGE) file_access = FILE_READ_DATA;
+        else file_access = FILE_READ_DATA | FILE_WRITE_DATA;
+        break;
+    case PAGE_EXECUTE:
+    case PAGE_NOACCESS:
+        file_access = 0;
+        break;
+    default:
+        return STATUS_INVALID_PAGE_PROTECTION;
+    }
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_mapping )
+    {
+        req->access      = access;
+        req->flags       = sec_flags;
+        req->file_handle = wine_server_obj_handle( file );
+        req->file_access = file_access;
+        req->size        = size ? size->QuadPart : 0;
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return ret;
+}
+
+
+/***********************************************************************
+ *             NtOpenSection (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_mapping )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}

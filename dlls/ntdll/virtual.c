@@ -63,17 +63,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 
-/* per-page protection flags */
-#define VPROT_READ       0x01
-#define VPROT_WRITE      0x02
-#define VPROT_EXEC       0x04
-#define VPROT_WRITECOPY  0x08
-#define VPROT_GUARD      0x10
-#define VPROT_COMMITTED  0x20
-#define VPROT_WRITEWATCH 0x40
-/* per-mapping protection flags */
-#define VPROT_SYSTEM     0x0200  /* system view (underlying mmap not under our control) */
-
 static const UINT page_shift = 12;
 static const UINT_PTR page_mask = 0xfff;
 
@@ -83,59 +72,6 @@ static SIZE_T signal_stack_align;
 
 #define ROUND_SIZE(addr,size) \
    (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
-
-/***********************************************************************
- *           get_vprot_flags
- *
- * Build page protections from Win32 flags.
- *
- * PARAMS
- *      protect [I] Win32 protection flags
- *
- * RETURNS
- *	Value of page protection flags
- */
-static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image )
-{
-    switch(protect & 0xff)
-    {
-    case PAGE_READONLY:
-        *vprot = VPROT_READ;
-        break;
-    case PAGE_READWRITE:
-        if (image)
-            *vprot = VPROT_READ | VPROT_WRITECOPY;
-        else
-            *vprot = VPROT_READ | VPROT_WRITE;
-        break;
-    case PAGE_WRITECOPY:
-        *vprot = VPROT_READ | VPROT_WRITECOPY;
-        break;
-    case PAGE_EXECUTE:
-        *vprot = VPROT_EXEC;
-        break;
-    case PAGE_EXECUTE_READ:
-        *vprot = VPROT_EXEC | VPROT_READ;
-        break;
-    case PAGE_EXECUTE_READWRITE:
-        if (image)
-            *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
-        else
-            *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
-        break;
-    case PAGE_EXECUTE_WRITECOPY:
-        *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
-        break;
-    case PAGE_NOACCESS:
-        *vprot = 0;
-        break;
-    default:
-        return STATUS_INVALID_PAGE_PROTECTION;
-    }
-    if (protect & PAGE_GUARD) *vprot |= VPROT_GUARD;
-    return STATUS_SUCCESS;
-}
-
 
 /**********************************************************************
  *           RtlCreateUserStack (NTDLL.@)
@@ -270,32 +206,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
                                  const LARGE_INTEGER *size, ULONG protect,
                                  ULONG sec_flags, HANDLE file )
 {
-    NTSTATUS ret;
-    unsigned int vprot, file_access = 0;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    if ((ret = get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE ))) return ret;
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
-
-    if (vprot & VPROT_READ)  file_access |= FILE_READ_DATA;
-    if (vprot & VPROT_WRITE) file_access |= FILE_WRITE_DATA;
-
-    SERVER_START_REQ( create_mapping )
-    {
-        req->access      = access;
-        req->flags       = sec_flags;
-        req->file_handle = wine_server_obj_handle( file );
-        req->file_access = file_access;
-        req->size        = size ? size->QuadPart : 0;
-        wine_server_add_data( req, objattr, len );
-        ret = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return ret;
+    return unix_funcs->NtCreateSection( handle, access, attr, size, protect, sec_flags, file );
 }
 
 
@@ -305,22 +216,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
  */
 NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS ret;
-
-    if ((ret = validate_open_object_attributes( attr ))) return ret;
-
-    SERVER_START_REQ( open_mapping )
-    {
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        if (attr->ObjectName)
-            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        ret = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return unix_funcs->NtOpenSection( handle, access, attr );
 }
 
 
