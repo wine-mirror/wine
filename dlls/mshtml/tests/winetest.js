@@ -23,10 +23,11 @@ function guard(f) {
         }catch(e) {
             var msg = "Got exception ";
             if(e && typeof(e) == "object" && "message")
-                msg += e.msg;
+                msg += e.message;
             else
                 msg += e;
             ok(false, msg);
+            if("tests" in window) next_test();
         }
     };
 }
