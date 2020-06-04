@@ -5261,7 +5261,7 @@ done:
 }
 
 #ifdef SONAME_LIBFONTCONFIG
-static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *csi)
+static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *csi, BOOL want_vertical)
 {
     const char *name;
     WCHAR nameW[LF_FACESIZE];
@@ -5305,8 +5305,17 @@ static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *
         const SYSTEM_LINKS *font_link;
         const struct list *face_list;
 
-        ret = MultiByteToWideChar(CP_UTF8, 0, (const char*)str, -1,
-                                  nameW, ARRAY_SIZE(nameW));
+        if (!want_vertical)
+        {
+            ret = MultiByteToWideChar(CP_UTF8, 0, (const char*)str, -1,
+                                      nameW, ARRAY_SIZE(nameW));
+        }
+        else
+        {
+            nameW[0] = '@';
+            ret = MultiByteToWideChar(CP_UTF8, 0, (const char*)str, -1,
+                                      nameW + 1, ARRAY_SIZE(nameW) - 1);
+        }
         if (!ret) continue;
         family = find_family_from_any_name(nameW);
         if (!family) continue;
@@ -5726,7 +5735,7 @@ static HFONT CDECL freetype_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags
 
 #ifdef SONAME_LIBFONTCONFIG
     /* Try FontConfig substitutions if the face isn't found */
-    family = get_fontconfig_family(lf.lfPitchAndFamily, &csi);
+    family = get_fontconfig_family(lf.lfPitchAndFamily, &csi, want_vertical);
     if (family) goto found;
 #endif
 
