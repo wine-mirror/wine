@@ -88,6 +88,7 @@ struct media_engine
     HRESULT extended_code;
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
+    BSTR current_source;
     CRITICAL_SECTION cs;
 };
 
@@ -499,6 +500,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFAttributes_Release(engine->attributes);
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
+    SysFreeString(engine->current_source);
     DeleteCriticalSection(&engine->cs);
     heap_free(engine);
 }
@@ -577,6 +579,11 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngine *iface, BSTR url)
 
     EnterCriticalSection(&engine->cs);
 
+    SysFreeString(engine->current_source);
+    engine->current_source = NULL;
+    if (url)
+        engine->current_source = SysAllocString(url);
+
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
 
     if (url)
@@ -602,9 +609,22 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngine *iface, BSTR url)
 
 static HRESULT WINAPI media_engine_GetCurrentSource(IMFMediaEngine *iface, BSTR *url)
 {
-    FIXME("(%p, %p): stub.\n", iface, url);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, url);
+
+    *url = NULL;
+
+    EnterCriticalSection(&engine->cs);
+    if (engine->current_source)
+    {
+        if (!(*url = SysAllocString(engine->current_source)))
+            hr = E_OUTOFMEMORY;
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static USHORT WINAPI media_engine_GetNetworkState(IMFMediaEngine *iface)
