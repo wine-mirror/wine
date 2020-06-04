@@ -5859,7 +5859,7 @@ static DWORD fbo_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
 
     if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && dst_resource->format->id == src_resource->format->id)
     {
-        if (dst_resource->format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        if (dst_resource->format->depth_size || dst_resource->format->stencil_size)
             blit_op = WINED3D_BLIT_OP_DEPTH_BLIT;
         else
             blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
