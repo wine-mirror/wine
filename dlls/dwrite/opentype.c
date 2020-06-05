@@ -4407,7 +4407,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     struct shaping_feature *feature;
     unsigned int i, j, next_bit;
     unsigned int global_bit_shift = 1;
-    unsigned int global_bit_mask = 1;
+    unsigned int global_bit_mask = 2;
     UINT16 feature_index;
 
     if (!table->table.data)
