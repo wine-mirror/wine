@@ -4916,7 +4916,7 @@ static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_con
         if (alt_index > count || !alt_index)
             return FALSE;
 
-        glyph = table_read_be_word(gsub, subtable_offset + offset + sizeof(count) + (alt_index - 1) * sizeof(glyph));
+        glyph = table_read_be_word(gsub, subtable_offset + offset + 2 + (alt_index - 1) * sizeof(glyph));
     }
     else
     {
