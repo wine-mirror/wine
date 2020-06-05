@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 29
+#define NTDLL_UNIXLIB_VERSION 30
 
 struct unix_funcs
 {
@@ -131,6 +131,9 @@ struct unix_funcs
                                                   SIZE_T size, SIZE_T *bytes_written );
     NTSTATUS      (WINAPI *NtYieldExecution)(void);
 
+    /* other Win32 API functions */
+    NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );
+
     /* environment functions */
     void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );
     void          (CDECL *get_paths)( const char **builddir, const char **datadir, const char **configdir );
@@ -183,7 +186,6 @@ struct unix_funcs
                                           user_apc_t *user_apc );
     unsigned int  (CDECL *server_wait)( const select_op_t *select_op, data_size_t size, UINT flags,
                                         const LARGE_INTEGER *timeout );
-    unsigned int  (CDECL *server_queue_process_apc)( HANDLE process, const apc_call_t *call, apc_result_t *result );
     void          (CDECL *server_send_fd)( int fd );
     int           (CDECL *server_get_unix_fd)( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                                int *needs_close, enum server_fd_type *type, unsigned int *options );

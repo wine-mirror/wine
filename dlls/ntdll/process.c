@@ -1788,16 +1788,5 @@ void WINAPI DbgUiRemoteBreakin( void *arg )
  */
 NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
 {
-    apc_call_t call;
-    apc_result_t result;
-    NTSTATUS status;
-
-    TRACE( "(%p)\n", process );
-
-    memset( &call, 0, sizeof(call) );
-
-    call.type = APC_BREAK_PROCESS;
-    status = unix_funcs->server_queue_process_apc( process, &call, &result );
-    if (status) return status;
-    return result.break_process.status;
+    return unix_funcs->DbgUiIssueRemoteBreakin( process );
 }

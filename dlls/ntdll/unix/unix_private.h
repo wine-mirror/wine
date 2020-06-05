@@ -83,7 +83,6 @@ extern unsigned int CDECL server_select( const select_op_t *select_op, data_size
                                          user_apc_t *user_apc ) DECLSPEC_HIDDEN;
 extern unsigned int CDECL server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
                                        const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
-extern unsigned int CDECL server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
 extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
 extern int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                      int *needs_close, enum server_fd_type *type,
@@ -127,6 +126,8 @@ extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSP
 extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
+extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call,
+                                              apc_result_t *result ) DECLSPEC_HIDDEN;
 extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
 

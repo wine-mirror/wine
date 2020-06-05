@@ -727,7 +727,7 @@ unsigned int CDECL server_wait( const select_op_t *select_op, data_size_t size, 
 /***********************************************************************
  *           server_queue_process_apc
  */
-unsigned int CDECL server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
+unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
 {
     for (;;)
     {
@@ -1553,6 +1553,23 @@ size_t server_init_thread( void *entry_point, BOOL *suspend )
     default:
         server_protocol_error( "init_thread failed with status %x\n", ret );
     }
+}
+
+
+/***********************************************************************
+ *           DbgUiIssueRemoteBreakin
+ */
+NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
+{
+    apc_call_t call;
+    apc_result_t result;
+    NTSTATUS status;
+
+    memset( &call, 0, sizeof(call) );
+    call.type = APC_BREAK_PROCESS;
+    status = server_queue_process_apc( process, &call, &result );
+    if (status) return status;
+    return result.break_process.status;
 }
 
 
