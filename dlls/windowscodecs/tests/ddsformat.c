@@ -471,30 +471,52 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
 {
     HRESULT hr;
     WICDdsFormatInfo format_info;
-    WICRect rect = { 0, 0, 1, 1 };
+    WICRect rect = { 0, 0, 1, 1 }, rect_test_a = { 0, 0, 0, 0 }, rect_test_b = { 0, 0, 0xdeadbeaf, 0xdeadbeaf };
+    WICRect rect_test_c = { -0xdeadbeaf, -0xdeadbeaf, 1, 1 }, rect_test_d = { 1, 1, 1, 1 };
     BYTE buffer[32];
     UINT stride, width_in_blocks, height_in_blocks;
     UINT width, height, depth, array_index;
     UINT block_offset;
     int slice_index;
 
-    hr = IWICDdsFrameDecode_GetSizeInBlocks(dds_frame, &width_in_blocks, &height_in_blocks);
-    ok (hr == S_OK, "%d: [frame %d] GetSizeInBlocks failed, hr=%x\n", i, frame_index, hr);
-    if (hr != S_OK) return;
     hr = IWICDdsFrameDecode_GetFormatInfo(dds_frame, &format_info);
     ok (hr == S_OK, "%d: [frame %d] GetFormatInfo failed, hr=%x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    stride = width_in_blocks * format_info.BytesPerBlock;
+    stride = rect.Width * format_info.BytesPerBlock;
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect_test_a, stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect_test_b, stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect_test_c, stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect_test_d, stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, 0, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride - 1, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride * 2, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 0, buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 1, buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, stride * rect.Height - 1, buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, stride * rect.Height, buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, sizeof(buffer), NULL);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 0, NULL);
     todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
-    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 0, buffer);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
-    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 32, buffer);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
-    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride, 32, buffer);
-    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
-    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, 32, buffer);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, sizeof(buffer), buffer);
     todo_wine ok (hr == S_OK, "%d: [frame %d] CopyBlocks failed, hr=%x\n", i, frame_index, hr);
     if (hr != S_OK) return;
 
