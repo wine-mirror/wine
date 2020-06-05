@@ -872,6 +872,23 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     ok(hres == S_OK, "get_animationName failed: %08x\n", hres);
     ok(!lstrcmpW(str, L"none"), "animationName = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_transition(css_style, &str);
+    ok(hres == S_OK, "get_transition failed: %08x\n", hres);
+    ok(!str, "transition = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"marigin-right 1s ease-out");
+    hres = IHTMLCSSStyleDeclaration2_put_transition(css_style, str);
+    ok(hres == S_OK, "put_transition failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_transition(css_style, &str);
+    ok(hres == S_OK, "get_transition failed: %08x\n", hres);
+    ok(!wcsncmp(str, L"marigin-right 1s", wcslen(L"marigin-right 1s")), "transition = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)
