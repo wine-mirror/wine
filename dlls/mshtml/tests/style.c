@@ -855,6 +855,23 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     ok(hres == S_OK, "get_transform failed: %08x\n", hres);
     ok(!lstrcmpW(str, L"none"), "transform = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_animationName(css_style, &str);
+    ok(hres == S_OK, "get_animationName failed: %08x\n", hres);
+    ok(!str, "animationName = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"none");
+    hres = IHTMLCSSStyleDeclaration2_put_animationName(css_style, str);
+    ok(hres == S_OK, "put_animationName failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_animationName(css_style, &str);
+    ok(hres == S_OK, "get_animationName failed: %08x\n", hres);
+    ok(!lstrcmpW(str, L"none"), "animationName = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)

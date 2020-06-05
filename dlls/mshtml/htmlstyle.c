@@ -341,6 +341,10 @@ typedef struct {
 
 static const style_tbl_entry_t style_tbl[] = {
     {
+        L"animation-name",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONNAME
+    },
+    {
         backgroundW,
         DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUND,
         DISPID_A_BACKGROUND
@@ -9749,15 +9753,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_fontFeatureSettings(IHTMLCSSS
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationName(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_ANIMATION_NAME, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_animationName(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_ANIMATION_NAME, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_animationDuration(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
