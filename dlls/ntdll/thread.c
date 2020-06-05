@@ -326,16 +326,33 @@ static void WINAPI call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *
  *              NtCreateThreadEx   (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle_ptr, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                  HANDLE process, LPTHREAD_START_ROUTINE start, void *param,
-                                  ULONG flags, ULONG zero_bits, ULONG stack_commit,
-                                  ULONG stack_reserve, void *attribute_list )
+                                  HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param,
+                                  ULONG flags, SIZE_T zero_bits, SIZE_T stack_commit,
+                                  SIZE_T stack_reserve, PS_ATTRIBUTE_LIST *attr_list )
 {
-    FIXME( "%p, %x, %p, %p, %p, %p, %x, %x, %x, %x, %p semi-stub!\n", handle_ptr, access, attr,
-           process, start, param, flags, zero_bits, stack_commit, stack_reserve, attribute_list );
+    NTSTATUS status;
+    CLIENT_ID client_id;
 
-    return RtlCreateUserThread( process, NULL, flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED,
-                                NULL, stack_reserve, stack_commit, (PRTL_THREAD_START_ROUTINE)start,
-                                param, handle_ptr, NULL );
+    if (!access) access = THREAD_ALL_ACCESS;
+
+    status = unix_funcs->create_thread( handle_ptr, access, attr, process,
+                                        start, param, call_thread_entry_point, flags,
+                                        stack_commit, stack_reserve, &client_id );
+    if (!status && attr_list)
+    {
+        SIZE_T i, count = (attr_list->TotalLength - sizeof(attr_list->TotalLength)) / sizeof(PS_ATTRIBUTE);
+        for (i = 0; i < count; i++)
+        {
+            if (attr_list->Attributes[i].Attribute == PS_ATTRIBUTE_CLIENT_ID)
+            {
+                SIZE_T size = min( attr_list->Attributes[i].Size, sizeof(client_id) );
+                memcpy( attr_list->Attributes[i].ValuePtr, &client_id, size );
+                if (attr_list->Attributes[i].ReturnLength) *attr_list->Attributes[i].ReturnLength = size;
+            }
+            else FIXME( "Unsupported attribute %08lx\n", attr_list->Attributes[i].Attribute );
+        }
+    }
+    return status;
 }
 
 
@@ -353,12 +370,16 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     NTSTATUS status;
     CLIENT_ID client_id;
     OBJECT_ATTRIBUTES attr;
+    PS_ATTRIBUTE_LIST attr_list = { sizeof(attr_list) };
+
+    attr_list.Attributes[0].Attribute = PS_ATTRIBUTE_CLIENT_ID;
+    attr_list.Attributes[0].Size      = sizeof(client_id);
+    attr_list.Attributes[0].ValuePtr  = &client_id;
 
     InitializeObjectAttributes( &attr, NULL, 0, NULL, descr );
 
-    status = unix_funcs->create_thread( &handle, THREAD_ALL_ACCESS, &attr, process,
-                                        start, param, call_thread_entry_point, flags,
-                                        stack_commit, stack_reserve, &client_id );
+    status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, &attr, process, start, param,
+                               flags, 0, stack_commit, stack_reserve, &attr_list );
     if (!status)
     {
         if (id) *id = client_id;

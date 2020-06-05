@@ -2453,6 +2453,55 @@ typedef LONG (CALLBACK *PRTL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
 
 typedef void (CALLBACK *PTP_IO_CALLBACK)(PTP_CALLBACK_INSTANCE,void*,void*,IO_STATUS_BLOCK*,PTP_IO);
 
+#define PS_ATTRIBUTE_THREAD  0x00010000
+#define PS_ATTRIBUTE_INPUT   0x00020000
+#define PS_ATTRIBUTE_UNKNOWN 0x00040000
+
+typedef enum _PS_ATTRIBUTE_NUM
+{
+    PsAttributeParentProcess,
+    PsAttributeDebugPort,
+    PsAttributeToken,
+    PsAttributeClientId,
+    PsAttributeTebAddress,
+    PsAttributeImageName,
+    PsAttributeImageInfo,
+    PsAttributeMemoryReserve,
+    PsAttributePriorityClass,
+    PsAttributeErrorMode,
+    PsAttributeStdHandleInfo,
+    PsAttributeHandleList,
+    PsAttributeGroupAffinity,
+    PsAttributePreferredNode,
+    PsAttributeIdealProcessor,
+    PsAttributeUmsThread,
+    PsAttributeMitigationOptions,
+    PsAttributeProtectionLevel,
+    PsAttributeSecureProcess,
+    PsAttributeJobList,
+    PsAttributeMax
+} PS_ATTRIBUTE_NUM;
+
+#define PS_ATTRIBUTE_CLIENT_ID (PsAttributeClientId | PS_ATTRIBUTE_THREAD)
+
+typedef struct _PS_ATTRIBUTE
+{
+    ULONG_PTR Attribute;
+    SIZE_T    Size;
+    union
+    {
+        ULONG_PTR Value;
+        void     *ValuePtr;
+    };
+    SIZE_T *ReturnLength;
+} PS_ATTRIBUTE;
+
+typedef struct _PS_ATTRIBUTE_LIST
+{
+    SIZE_T       TotalLength;
+    PS_ATTRIBUTE Attributes[1];
+} PS_ATTRIBUTE_LIST, *PPS_ATTRIBUTE_LIST;
+
 /***********************************************************************
  * Function declarations
  */
