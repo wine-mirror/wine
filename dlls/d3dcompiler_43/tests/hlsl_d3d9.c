@@ -859,6 +859,47 @@ static void test_majority(void)
     release_test_context(&test_context);
 }
 
+static void test_struct_assignment(void)
+{
+    struct test_context test_context;
+    ID3D10Blob *ps_code = NULL;
+    struct vec4 v;
+
+    static const char ps_source[] =
+        "struct apple\n"
+        "{\n"
+        "    struct\n"
+        "    {\n"
+        "        float4 a;\n"
+        "    } m;\n"
+        "    float4 b;\n"
+        "};\n"
+        "float4 main() : COLOR\n"
+        "{\n"
+        "    struct apple q, r, s;\n"
+        "    q.m.a = float4(0.1, 0.2, 0.3, 0.4);\n"
+        "    q.b = float4(0.5, 0.1, 0.4, 0.5);\n"
+        "    s = r = q;\n"
+        "    return s.m.a + s.b;\n"
+        "}";
+
+    if (!init_test_context(&test_context))
+        return;
+
+    todo_wine ps_code = compile_shader(ps_source, "ps_2_0");
+    if (ps_code)
+    {
+        draw_quad(test_context.device, ps_code);
+
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 0.6f, 0.3f, 0.7f, 0.9f, 1),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+
+        ID3D10Blob_Release(ps_code);
+    }
+    release_test_context(&test_context);
+}
+
 static void check_constant_desc(const char *prefix, const D3DXCONSTANT_DESC *desc,
         const D3DXCONSTANT_DESC *expect, BOOL nonzero_defaultvalue)
 {
@@ -1154,6 +1195,7 @@ START_TEST(hlsl_d3d9)
     test_return();
     test_array_dimensions();
     test_majority();
+    test_struct_assignment();
 
     test_constant_table();
     test_fail();
