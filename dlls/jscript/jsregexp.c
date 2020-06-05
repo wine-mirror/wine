@@ -671,7 +671,7 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
 
 HRESULT create_regexp_var(script_ctx_t *ctx, jsval_t src_arg, jsval_t *flags_arg, jsdisp_t **ret)
 {
-    unsigned flags, opt_len = 0;
+    unsigned flags = 0;
     const WCHAR *opt = NULL;
     jsstr_t *src;
     HRESULT hres = S_OK;
@@ -700,24 +700,20 @@ HRESULT create_regexp_var(script_ctx_t *ctx, jsval_t src_arg, jsval_t *flags_arg
     if(FAILED(hres))
         return hres;
 
-    if(flags_arg) {
+    if(flags_arg && !is_undefined(*flags_arg)) {
         jsstr_t *opt_str;
 
-        if(!is_string(*flags_arg)) {
-            FIXME("unimplemented for %s\n", debugstr_jsval(*flags_arg));
-            return E_NOTIMPL;
+        hres = to_string(ctx, *flags_arg, &opt_str);
+        if(SUCCEEDED(hres)) {
+            opt = jsstr_flatten(opt_str);
+            if(opt)
+                hres = parse_regexp_flags(opt, jsstr_length(opt_str), &flags);
+            else
+                hres = E_OUTOFMEMORY;
+            jsstr_release(opt_str);
         }
-
-        opt_str = get_string(*flags_arg);
-        opt = jsstr_flatten(opt_str);
-        if(!opt) {
-            jsstr_release(src);
-            return E_OUTOFMEMORY;
-        }
-        opt_len = jsstr_length(opt_str);
     }
 
-    hres = parse_regexp_flags(opt, opt_len, &flags);
     if(SUCCEEDED(hres))
         hres = create_regexp(ctx, src, flags, ret);
     jsstr_release(src);

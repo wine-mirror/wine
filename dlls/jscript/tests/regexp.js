@@ -701,4 +701,16 @@ ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
 ok(re.multiline === false, "re.multiline = " + re.multiline);
 ok(re.global === false, "re.global = " + re.global);
 
+re = new RegExp("test", undefined);
+ok(re.source === "test", "re.source = " + re.source);
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
+ok(re.global === false, "re.global = " + re.global);
+
+re = new RegExp("test", { toString: function() { return "mg"; } });
+ok(re.source === "test", "re.source = " + re.source);
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === true, "re.multiline = " + re.multiline);
+ok(re.global === true, "re.global = " + re.global);
+
 reportSuccess();
