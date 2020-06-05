@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef _D2DBASETYPES_INCLUDED
+#define _D2DBASETYPES_INCLUDED
+
 #ifndef D3DCOLORVALUE_DEFINED
 typedef struct D3DCOLORVALUE
 {
@@ -56,3 +59,5 @@ typedef struct D2D_RECT_U
     UINT32 right;
     UINT32 bottom;
 } D2D_RECT_U;
+
+#endif /* _D2DBASETYPES_INCLUDED */
