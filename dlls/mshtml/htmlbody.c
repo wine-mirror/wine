@@ -407,27 +407,14 @@ static HRESULT WINAPI HTMLBodyElement_put_bgColor(IHTMLBodyElement *iface, VARIA
 static HRESULT WINAPI HTMLBodyElement_get_bgColor(IHTMLBodyElement *iface, VARIANT *p)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    nsAString strColor;
+    nsAString nsstr;
     nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsAString_Init(&strColor, NULL);
-    nsres = nsIDOMHTMLBodyElement_GetBgColor(This->nsbody, &strColor);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *color;
-
-        nsAString_GetData(&strColor, &color);
-        V_VT(p) = VT_BSTR;
-        hres = nscolor_to_str(color, &V_BSTR(p));
-    }else {
-        ERR("SetBgColor failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsAString_Finish(&strColor);
-    return hres;
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLBodyElement_GetBgColor(This->nsbody, &nsstr);
+    return return_nsstr_variant(nsres, &nsstr, NSSTR_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_text(IHTMLBodyElement *iface, VARIANT v)

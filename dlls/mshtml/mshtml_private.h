@@ -982,6 +982,7 @@ UINT32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
 void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
 
 #define NSSTR_IMPLICIT_PX    0x01
+#define NSSTR_COLOR          0x02
 
 HRESULT map_nsresult(nsresult) DECLSPEC_HIDDEN;
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;

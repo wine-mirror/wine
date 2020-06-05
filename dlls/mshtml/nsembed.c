@@ -964,14 +964,15 @@ HRESULT return_nsstr(nsresult nsres, nsAString *nsstr, BSTR *p)
 
 HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, unsigned flags, VARIANT *p)
 {
+    HRESULT hres = S_OK;
+
     if(NS_FAILED(nsres)) {
         ERR("failed: %08x\n", nsres);
         nsAString_Finish(nsstr);
-        return E_FAIL;
+        return map_nsresult(nsres);
     }
 
     if(NS_StringGetIsVoid(nsstr)) {
-        TRACE("ret null\n");
         V_VT(p) = VT_NULL;
     }else {
         const WCHAR *str;
@@ -989,20 +990,23 @@ HRESULT return_nsstr_variant(nsresult nsres, nsAString *nsstr, unsigned flags, V
                 if(iter == str + len && dot) len = dot - str;
             }
         }
-        TRACE("ret %s\n", debugstr_wn(str, len));
-        if(*str) {
+        if(flags & NSSTR_COLOR) {
+            hres = nscolor_to_str(str, &V_BSTR(p));
+        }else if(*str) {
             V_BSTR(p) = SysAllocStringLen(str, len);
-            if(!V_BSTR(p)) {
-                nsAString_Finish(nsstr);
-                return E_OUTOFMEMORY;
-            }
+            if(!V_BSTR(p))
+                hres = E_OUTOFMEMORY;
         }else {
             V_BSTR(p) = NULL;
         }
-        V_VT(p) = VT_BSTR;
+        if(SUCCEEDED(hres))
+            V_VT(p) = VT_BSTR;
     }
 
     nsAString_Finish(nsstr);
+    if(FAILED(hres))
+        return hres;
+    TRACE("ret %s\n", debugstr_variant(p));
     return S_OK;
 }
 
