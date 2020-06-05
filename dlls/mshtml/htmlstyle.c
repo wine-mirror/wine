@@ -794,6 +794,10 @@ static const style_tbl_entry_t style_tbl[] = {
         STDPROPID_XOBJ_TOP
     },
     {
+        L"transform",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM
+    },
+    {
         vertical_alignW,
         DISPID_IHTMLCSSSTYLEDECLARATION_VERTICALALIGN,
         DISPID_A_VERTICALALIGN,
@@ -9577,15 +9581,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_msTouchSelect(IHTMLCSSStyleDe
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transform(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_TRANSFORM, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_transform(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_TRANSFORM, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_transformOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
