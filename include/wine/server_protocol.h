@@ -557,7 +557,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        int              suspend;
+        unsigned int     flags;
         client_ptr_t     func;
         client_ptr_t     arg;
         mem_size_t       reserve;
@@ -645,6 +645,7 @@ typedef union
     {
         enum apc_type    type;
         unsigned int     status;
+        process_id_t     pid;
         thread_id_t      tid;
         obj_handle_t     handle;
     } create_thread;
@@ -6683,7 +6684,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 607
+#define SERVER_PROTOCOL_VERSION 608
 
 /* ### protocol_version end ### */
 

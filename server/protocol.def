@@ -573,7 +573,7 @@ typedef union
     struct
     {
         enum apc_type    type;      /* APC_CREATE_THREAD */
-        int              suspend;   /* suspended thread? */
+        unsigned int     flags;     /* creation flags */
         client_ptr_t     func;      /* void (__stdcall *func)(void*);  start function */
         client_ptr_t     arg;       /* argument for start function */
         mem_size_t       reserve;   /* reserve size for thread stack */
@@ -661,6 +661,7 @@ typedef union
     {
         enum apc_type    type;      /* APC_CREATE_THREAD */
         unsigned int     status;    /* status returned by call */
+        process_id_t     pid;       /* process id */
         thread_id_t      tid;       /* thread id */
         obj_handle_t     handle;    /* handle to new thread */
     } create_thread;

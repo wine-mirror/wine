@@ -555,6 +555,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         break;
     case APC_CREATE_THREAD:
     {
+        PS_ATTRIBUTE_LIST attr = { sizeof(attr) };
         CLIENT_ID id;
         HANDLE handle;
         SIZE_T reserve = call->create_thread.reserve;
@@ -566,20 +567,31 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         if (reserve == call->create_thread.reserve && commit == call->create_thread.commit &&
             (ULONG_PTR)func == call->create_thread.func && (ULONG_PTR)arg == call->create_thread.arg)
         {
-            result->create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
-                                                                call->create_thread.suspend, NULL,
-                                                                reserve, commit, func, arg, &handle, &id );
+            attr.Attributes[0].Attribute = PS_ATTRIBUTE_CLIENT_ID;
+            attr.Attributes[0].Size      = sizeof(id);
+            attr.Attributes[0].ValuePtr  = &id;
+            result->create_thread.status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL,
+                                                             NtCurrentProcess(), func, arg,
+                                                             call->create_thread.flags, 0,
+                                                             commit, reserve, &attr );
             result->create_thread.handle = wine_server_obj_handle( handle );
+            result->create_thread.pid = HandleToULong(id.UniqueProcess);
             result->create_thread.tid = HandleToULong(id.UniqueThread);
         }
         else result->create_thread.status = STATUS_INVALID_PARAMETER;
         break;
     }
     case APC_BREAK_PROCESS:
+    {
+        HANDLE handle;
+
         result->type = APC_BREAK_PROCESS;
-        result->break_process.status = RtlCreateUserThread( NtCurrentProcess(), NULL, FALSE, NULL, 0, 0,
-                                                            DbgUiRemoteBreakin, NULL, NULL, NULL );
+        result->break_process.status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL,
+                                                         NtCurrentProcess(), DbgUiRemoteBreakin, NULL,
+                                                         0, 0, 0, 0, NULL );
+        if (!result->break_process.status) NtClose( handle );
         break;
+    }
     default:
         server_protocol_error( "get_apc_request: bad type %d\n", call->type );
         break;

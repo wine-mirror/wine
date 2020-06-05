@@ -185,18 +185,22 @@ NTSTATUS CDECL create_thread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
         memset( &call, 0, sizeof(call) );
 
         call.create_thread.type    = APC_CREATE_THREAD;
+        call.create_thread.flags   = flags;
         call.create_thread.func    = wine_server_client_ptr( start );
         call.create_thread.arg     = wine_server_client_ptr( param );
         call.create_thread.reserve = stack_reserve;
         call.create_thread.commit  = stack_commit;
-        call.create_thread.suspend = flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED;
         status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 
         if (result.create_thread.status == STATUS_SUCCESS)
         {
-            if (id) id->UniqueThread = ULongToHandle( result.create_thread.tid );
             *handle = wine_server_ptr_handle( result.create_thread.handle );
+            if (id)
+            {
+                id->UniqueProcess = ULongToHandle( result.create_thread.pid );
+                id->UniqueThread  = ULongToHandle( result.create_thread.tid );
+            }
         }
         return result.create_thread.status;
     }
