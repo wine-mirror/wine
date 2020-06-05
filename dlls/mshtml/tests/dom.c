@@ -6695,6 +6695,10 @@ static void test_body_funs(IHTMLBodyElement *body, IHTMLDocument2 *doc)
     ok(V_VT(&vDefaultbg) == VT_BSTR, "bstr != NULL\n");
     ok(!V_BSTR(&vDefaultbg), "V_BSTR(bgColor) = %s\n", wine_dbgstr_w(V_BSTR(&vDefaultbg)));
 
+    hres = IHTMLDocument2_get_bgColor(doc, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR && V_BSTR(&vbg) && !wcscmp(V_BSTR(&vbg), L"#ffffff"), "bgColor = %s\n", wine_dbgstr_variant(&vbg));
+
     V_VT(&vbg) = VT_BSTR;
     V_BSTR(&vbg) = SysAllocString(L"red");
     hres = IHTMLBodyElement_put_bgColor(body, vbg);
@@ -6706,6 +6710,10 @@ static void test_body_funs(IHTMLBodyElement *body, IHTMLDocument2 *doc)
     ok(V_VT(&vbg) == VT_BSTR, "V_VT(&vbg) != VT_BSTR\n");
     ok(!lstrcmpW(V_BSTR(&vbg), L"#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
     VariantClear(&vbg);
+
+    hres = IHTMLDocument2_get_bgColor(doc, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vbg) == VT_BSTR && V_BSTR(&vbg) && !wcscmp(V_BSTR(&vbg), L"#ff0000"), "bgColor = %s\n", wine_dbgstr_variant(&vbg));
 
     hres = IHTMLDocument2_get_bgColor(doc, &vbg);
     ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);

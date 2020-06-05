@@ -711,34 +711,26 @@ static HRESULT WINAPI HTMLDocument_put_bgColor(IHTMLDocument2 *iface, VARIANT v)
 static HRESULT WINAPI HTMLDocument_get_bgColor(IHTMLDocument2 *iface, VARIANT *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    IHTMLElement *element = NULL;
-    IHTMLBodyElement *body;
-    HRESULT hr;
+    nsAString nsstr;
+    nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hr = IHTMLDocument2_get_body(iface, &element);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get body (0x%08x)\n", hr);
-        return hr;
+    if(!This->doc_node->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
     }
 
-    if(!element)
-    {
-        FIXME("Empty body element.\n");
-        return hr;
+    nsAString_Init(&nsstr, NULL);
+    nsres = nsIDOMHTMLDocument_GetBgColor(This->doc_node->nsdoc, &nsstr);
+    hres = return_nsstr_variant(nsres, &nsstr, NSSTR_COLOR, p);
+    if(hres == S_OK && V_VT(p) == VT_BSTR && !V_BSTR(p)) {
+        TRACE("default #ffffff");
+        if(!(V_BSTR(p) = SysAllocString(L"#ffffff")))
+            hres = E_OUTOFMEMORY;
     }
-
-    hr = IHTMLElement_QueryInterface(element, &IID_IHTMLBodyElement, (void**)&body);
-    if (SUCCEEDED(hr))
-    {
-        hr = IHTMLBodyElement_get_bgColor(body, p);
-        IHTMLBodyElement_Release(body);
-    }
-    IHTMLElement_Release(element);
-
-    return hr;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument_put_fgColor(IHTMLDocument2 *iface, VARIANT v)
