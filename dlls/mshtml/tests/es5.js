@@ -924,7 +924,28 @@ sync_test("reduce", function() {
     try {
         [].reduce(function(a) { return 0; });
         ok(false, "expected exception");
-    }catch(e) {trace(e.message);}
+    }catch(e) {}
 
     ok(Array.prototype.reduce.length === 1, "Array.prototype.reduce.length = " + Array.prototype.reduce.length);
+});
+
+sync_test("preventExtensions", function() {
+    var o = {};
+    var r = Object.preventExtensions(o);
+    ok(r === o, "r != o");
+    o.x = 1;
+    todo_wine.
+    ok(!("x" in o), "x property added to o");
+    try {
+        Object.defineProperty(o, "y", { value: true });
+        todo_wine.
+        ok(false, "expected exception");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
+
+    r = Object.preventExtensions(o);
+    ok(r === o, "r != o");
+
+    ok(Object.preventExtensions.length === 1, "Object.preventExtensions.length = " + Object.preventExtensions.length);
 });

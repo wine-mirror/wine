@@ -671,13 +671,35 @@ static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     return hres;
 }
 
+static HRESULT Object_preventExtensions(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *obj;
+
+    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+        FIXME("invalid arguments\n");
+        return E_NOTIMPL;
+    }
+
+    FIXME("(%s) semi-stub\n", debugstr_jsval(argv[0]));
+
+    obj = to_jsdisp(get_object(argv[0]));
+    if(!obj) {
+        FIXME("Non-JS object\n");
+        return E_NOTIMPL;
+    }
+
+    if(r) *r = jsval_obj(jsdisp_addref(obj));
+    return S_OK;
+}
+
 static const builtin_prop_t ObjectConstr_props[] = {
     {L"create",                   Object_create,                      PROPF_ES5|PROPF_METHOD|2},
     {L"defineProperties",         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
     {L"defineProperty",           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
     {L"getOwnPropertyDescriptor", Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
     {L"getPrototypeOf",           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1},
-    {L"keys",                     Object_keys,                        PROPF_ES5|PROPF_METHOD|1}
+    {L"keys",                     Object_keys,                        PROPF_ES5|PROPF_METHOD|1},
+    {L"preventExtensions",        Object_preventExtensions,           PROPF_ES5|PROPF_METHOD|1},
 };
 
 static const builtin_info_t ObjectConstr_info = {
