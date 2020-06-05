@@ -2515,11 +2515,11 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
         {
             if (!rt_internal)
             {
-                if (format->f.flags[type] & WINED3DFMT_FLAG_RENDERTARGET)
+                if (format->f.flags[type] & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH_STENCIL))
                 {
                     WARN("Format %s with rendertarget flag is not supported as FBO color attachment (type %u),"
                             " and no fallback specified.\n", debug_d3dformat(format->f.id), type);
-                    format->f.flags[type] &= ~WINED3DFMT_FLAG_RENDERTARGET;
+                    format->f.flags[type] &= ~(WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH_STENCIL);
                 }
                 else
                 {
@@ -2552,7 +2552,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
                 {
                     WARN("Format %s rtInternal format is not supported as FBO %s attachment, type %u.\n",
                             debug_d3dformat(format->f.id), type_string, type);
-                    format->f.flags[type] &= ~WINED3DFMT_FLAG_RENDERTARGET;
+                    format->f.flags[type] &= ~(WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH_STENCIL);
                 }
             }
         }
@@ -2725,8 +2725,9 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
     {
         FIXME("Format %s needs different render target formats for different resource types.\n",
                 debug_d3dformat(format->f.id));
-        format_clear_flag(&format->f, WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FBO_ATTACHABLE
-                | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING);
+        format_clear_flag(&format->f, WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH_STENCIL
+                | WINED3DFMT_FLAG_FBO_ATTACHABLE | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB
+                | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING);
     }
 }
 
