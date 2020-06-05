@@ -130,7 +130,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
                 continue;
             }
             if ((bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-                    && !(format->flags[gl_type] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+                    && !(format->flags[gl_type] & WINED3DFMT_FLAG_DEPTH_STENCIL))
             {
                 WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
                 continue;

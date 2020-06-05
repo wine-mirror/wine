@@ -297,9 +297,9 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
             break;
 
         case WINED3D_BLIT_OP_DEPTH_BLIT:
-            if (!(src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            if (!(src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_DEPTH_STENCIL))
                 return false;
-            if (!(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+            if (!(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_DEPTH_STENCIL))
                 return false;
             /* Accept pure swizzle fixups for depth formats. In general we
              * ignore the stencil component (if present) at the moment and the

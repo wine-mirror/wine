@@ -5506,8 +5506,7 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 /* WineD3D pixel format flags */
 #define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING    0x00000001
 #define WINED3DFMT_FLAG_FILTERING                   0x00000002
-#define WINED3DFMT_FLAG_DEPTH                       0x00000004
-#define WINED3DFMT_FLAG_STENCIL                     0x00000008
+#define WINED3DFMT_FLAG_DEPTH_STENCIL               0x00000008
 #define WINED3DFMT_FLAG_RENDERTARGET                0x00000010
 #define WINED3DFMT_FLAG_EXTENSION                   0x00000020
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE              0x00000040

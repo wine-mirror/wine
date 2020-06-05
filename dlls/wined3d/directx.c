@@ -1437,7 +1437,7 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d_adapter *ad
         WARN("Format %s is not render target format.\n", debug_d3dformat(rt_format->id));
         return WINED3DERR_NOTAVAILABLE;
     }
-    if (!(ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+    if (!(ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_DEPTH_STENCIL))
     {
         WARN("Format %s is not depth/stencil format.\n", debug_d3dformat(ds_format->id));
         return WINED3DERR_NOTAVAILABLE;
@@ -1504,8 +1504,6 @@ static BOOL wined3d_check_depth_stencil_format(const struct wined3d_adapter *ada
         enum wined3d_gl_resource_type gl_type)
 {
     if (!ds_format->depth_size && !ds_format->stencil_size)
-        return FALSE;
-    if (!(ds_format->flags[gl_type] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
         return FALSE;
 
     /* Blacklist formats not supported on Windows */
@@ -1658,6 +1656,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         format_flags |= WINED3DFMT_FLAG_TEXTURE;
     if (bind_flags & WINED3D_BIND_RENDER_TARGET)
         format_flags |= WINED3DFMT_FLAG_RENDERTARGET;
+    if (bind_flags & WINED3D_BIND_DEPTH_STENCIL)
+        format_flags |= WINED3DFMT_FLAG_DEPTH_STENCIL;
     if (usage & WINED3DUSAGE_QUERY_FILTER)
         format_flags |= WINED3DFMT_FLAG_FILTERING;
     if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
