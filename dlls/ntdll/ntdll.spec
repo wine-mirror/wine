@@ -1028,6 +1028,7 @@
 @ stdcall RtlUpperChar(long)
 @ stdcall RtlUpperString(ptr ptr)
 @ stub RtlUsageHeap
+@ stdcall -norelay RtlUserThreadStart(ptr ptr)
 @ cdecl -i386 -norelay RtlUshortByteSwap() NTDLL_RtlUshortByteSwap
 @ stdcall RtlValidAcl(ptr)
 @ stdcall RtlValidRelativeSecurityDescriptor(ptr long long)

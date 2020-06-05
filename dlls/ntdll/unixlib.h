@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 28
+#define NTDLL_UNIXLIB_VERSION 29
 
 struct unix_funcs
 {
@@ -50,6 +50,10 @@ struct unix_funcs
                                              ULONG protect, ULONG sec_flags, HANDLE file );
     NTSTATUS      (WINAPI *NtCreateSemaphore)( HANDLE *handle, ACCESS_MASK access,
                                                const OBJECT_ATTRIBUTES *attr, LONG initial, LONG max );
+    NTSTATUS      (WINAPI *NtCreateThreadEx)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                              HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param,
+                                              ULONG flags, SIZE_T zero_bits, SIZE_T stack_commit,
+                                              SIZE_T stack_reserve, PS_ATTRIBUTE_LIST *attr_list );
     NTSTATUS      (WINAPI *NtCreateTimer)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, TIMER_TYPE type );
     TEB *         (WINAPI *NtCurrentTeb)(void);
@@ -166,10 +170,6 @@ struct unix_funcs
     /* thread/process functions */
     TEB *         (CDECL *init_threading)( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
                                            BOOL *suspend, unsigned int *cpus, BOOL *wow64, timeout_t *start_time );
-    NTSTATUS      (CDECL *create_thread)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                          HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param, void *relay,
-                                          ULONG flags, SIZE_T stack_commit, SIZE_T stack_reserve,
-                                          CLIENT_ID *id );
     void          (CDECL *start_process)( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay );
     void          (CDECL *abort_thread)( int status );
     void          (CDECL *exit_thread)( int status );

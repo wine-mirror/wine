@@ -97,10 +97,6 @@ extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
 extern TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
                                    BOOL *suspend, unsigned int *cpus, BOOL *wow64,
                                    timeout_t *start_time ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL create_thread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                     HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param, void *relay,
-                                     ULONG flags, SIZE_T stack_commit, SIZE_T stack_reserve,
-                                     CLIENT_ID *id ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN start_process( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
