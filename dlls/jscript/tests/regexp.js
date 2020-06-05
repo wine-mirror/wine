@@ -677,4 +677,28 @@ ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
 ok(re.multiline === true, "re.multiline = " + re.multiline);
 ok(re.global === true, "re.global = " + re.global);
 
+re = new RegExp(undefined);
+ok(re.source === "", "re.source = " + re.source);
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
+ok(re.global === false, "re.global = " + re.global);
+
+re = new RegExp();
+ok(re.source === "", "re.source = " + re.source);
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
+ok(re.global === false, "re.global = " + re.global);
+
+re = new RegExp(true);
+ok(re.source === "true", "re.source = " + re.source);
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
+ok(re.global === false, "re.global = " + re.global);
+
+re = new RegExp({ toString: function() { return "test"; } });
+ok(re.source === "test", "re.source = " + re.source);
+ok(re.ignoreCase === false, "re.ignoreCase = " + re.ignoreCase);
+ok(re.multiline === false, "re.multiline = " + re.multiline);
+ok(re.global === false, "re.global = " + re.global);
+
 reportSuccess();
