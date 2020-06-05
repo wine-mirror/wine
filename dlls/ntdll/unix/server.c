@@ -1100,7 +1100,7 @@ void CDECL server_release_fd( HANDLE handle, int unix_fd )
  *
  * Create a pipe for communicating with the server.
  */
-int CDECL server_pipe( int fd[2] )
+int server_pipe( int fd[2] )
 {
     int ret;
 #ifdef HAVE_PIPE2

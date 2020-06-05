@@ -157,18 +157,83 @@ static void start_thread( TEB *teb )
 /***********************************************************************
  *           create_thread
  */
-NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx, DWORD tid,
-                              int request_fd, PRTL_THREAD_START_ROUTINE start, void *param, void *relay )
+NTSTATUS CDECL create_thread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                              HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param, void *relay,
+                              ULONG flags, SIZE_T stack_commit, SIZE_T stack_reserve,
+                              CLIENT_ID *id )
 {
     sigset_t sigset;
     pthread_t pthread_id;
-    pthread_attr_t attr;
+    pthread_attr_t pthread_attr;
+    data_size_t len;
+    struct object_attributes *objattr;
     struct ntdll_thread_data *thread_data;
     struct startup_info *info;
+    DWORD tid = 0;
+    int request_pipe[2];
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
+    HANDLE actctx;
     TEB *teb;
     INITIAL_TEB stack;
     NTSTATUS status;
+
+    if (process != NtCurrentProcess())
+    {
+        apc_call_t call;
+        apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
+
+        call.create_thread.type    = APC_CREATE_THREAD;
+        call.create_thread.func    = wine_server_client_ptr( start );
+        call.create_thread.arg     = wine_server_client_ptr( param );
+        call.create_thread.reserve = stack_reserve;
+        call.create_thread.commit  = stack_commit;
+        call.create_thread.suspend = flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED;
+        status = server_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.create_thread.status == STATUS_SUCCESS)
+        {
+            if (id) id->UniqueThread = ULongToHandle( result.create_thread.tid );
+            *handle = wine_server_ptr_handle( result.create_thread.handle );
+        }
+        return result.create_thread.status;
+    }
+
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
+    if (server_pipe( request_pipe ) == -1)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, objattr );
+        return STATUS_TOO_MANY_OPENED_FILES;
+    }
+    server_send_fd( request_pipe[0] );
+
+    SERVER_START_REQ( new_thread )
+    {
+        req->process    = wine_server_obj_handle( process );
+        req->access     = access;
+        req->suspend    = flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED;
+        req->request_fd = request_pipe[0];
+        wine_server_add_data( req, objattr, len );
+        if (!(status = wine_server_call( req )))
+        {
+            *handle = wine_server_ptr_handle( reply->handle );
+            tid = reply->tid;
+        }
+        close( request_pipe[0] );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    if (status)
+    {
+        close( request_pipe[1] );
+        return status;
+    }
+
+    RtlGetActiveActivationContext( &actctx );
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, &sigset );
 
@@ -182,6 +247,7 @@ NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE 
 
     teb->ClientId.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
     teb->ClientId.UniqueThread  = ULongToHandle( tid );
+    if (id) *id = teb->ClientId;
 
     info = (struct startup_info *)(teb + 1);
     info->entry  = start;
@@ -194,27 +260,32 @@ NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE 
     teb->DeallocationStack = stack.DeallocationStack;
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    thread_data->request_fd  = request_fd;
+    thread_data->request_fd  = request_pipe[1];
     thread_data->reply_fd    = -1;
     thread_data->wait_fd[0]  = -1;
     thread_data->wait_fd[1]  = -1;
     thread_data->start_stack = (char *)teb->Tib.StackBase;
 
-    pthread_attr_init( &attr );
-    pthread_attr_setstack( &attr, teb->DeallocationStack,
+    pthread_attr_init( &pthread_attr );
+    pthread_attr_setstack( &pthread_attr, teb->DeallocationStack,
                            (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
-    pthread_attr_setguardsize( &attr, 0 );
-    pthread_attr_setscope( &attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
+    pthread_attr_setguardsize( &pthread_attr, 0 );
+    pthread_attr_setscope( &pthread_attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     InterlockedIncrement( nb_threads );
-    if (pthread_create( &pthread_id, &attr, (void * (*)(void *))start_thread, teb ))
+    if (pthread_create( &pthread_id, &pthread_attr, (void * (*)(void *))start_thread, teb ))
     {
         InterlockedDecrement( nb_threads );
         virtual_free_teb( teb );
         status = STATUS_NO_MEMORY;
     }
-    pthread_attr_destroy( &attr );
+    pthread_attr_destroy( &pthread_attr );
+
 done:
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
+    if (!status) return STATUS_SUCCESS;
+    NtClose( *handle );
+    RtlReleaseActivationContext( actctx );
+    close( request_pipe[1] );
     return status;
 }
 

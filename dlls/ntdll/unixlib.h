@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 27
+#define NTDLL_UNIXLIB_VERSION 28
 
 struct unix_funcs
 {
@@ -166,9 +166,10 @@ struct unix_funcs
     /* thread/process functions */
     TEB *         (CDECL *init_threading)( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
                                            BOOL *suspend, unsigned int *cpus, BOOL *wow64, timeout_t *start_time );
-    NTSTATUS      (CDECL *create_thread)( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx,
-                                          DWORD tid, int request_fd, PRTL_THREAD_START_ROUTINE start,
-                                          void *param, void *relay );
+    NTSTATUS      (CDECL *create_thread)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                          HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param, void *relay,
+                                          ULONG flags, SIZE_T stack_commit, SIZE_T stack_reserve,
+                                          CLIENT_ID *id );
     void          (CDECL *start_process)( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay );
     void          (CDECL *abort_thread)( int status );
     void          (CDECL *exit_thread)( int status );
@@ -191,7 +192,6 @@ struct unix_funcs
     NTSTATUS      (CDECL *server_handle_to_fd)( HANDLE handle, unsigned int access, int *unix_fd,
                                                 unsigned int *options );
     void          (CDECL *server_release_fd)( HANDLE handle, int unix_fd );
-    int           (CDECL *server_pipe)( int fd[2] );
     void          (CDECL *server_init_process_done)(void);
 
     /* debugging functions */

@@ -93,14 +93,14 @@ extern NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned
 extern NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
                                            unsigned int *options ) DECLSPEC_HIDDEN;
 extern void CDECL server_release_fd( HANDLE handle, int unix_fd ) DECLSPEC_HIDDEN;
-extern int CDECL server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 extern void CDECL server_init_process_done(void) DECLSPEC_HIDDEN;
 extern TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
                                    BOOL *suspend, unsigned int *cpus, BOOL *wow64,
                                    timeout_t *start_time ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL create_thread( SIZE_T stack_reserve, SIZE_T stack_commit, HANDLE actctx, DWORD tid,
-                                     int request_fd, PRTL_THREAD_START_ROUTINE start,
-                                     void *param, void *relay ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL create_thread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                     HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param, void *relay,
+                                     ULONG flags, SIZE_T stack_commit, SIZE_T stack_reserve,
+                                     CLIENT_ID *id ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN start_process( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
@@ -124,12 +124,15 @@ extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
 extern size_t server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
+extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
 extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
+extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
+                                         data_size_t *ret_len ) DECLSPEC_HIDDEN;
 
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;

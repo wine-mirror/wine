@@ -72,8 +72,8 @@ HANDLE keyed_event = 0;
 
 
 /* create a struct security_descriptor and contained information in one contiguous piece of memory */
-static NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
-                                         data_size_t *ret_len )
+NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
+                                  data_size_t *ret_len )
 {
     unsigned int len = sizeof(**ret);
     PSID owner = NULL, group = NULL;

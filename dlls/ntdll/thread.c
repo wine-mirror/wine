@@ -348,90 +348,24 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
-    HANDLE handle = 0, actctx = 0;
-    DWORD tid = 0;
-    int request_pipe[2];
+    ULONG flags = suspended ? THREAD_CREATE_FLAGS_CREATE_SUSPENDED : 0;
+    HANDLE handle;
     NTSTATUS status;
-    data_size_t len = 0;
-    struct object_attributes *objattr = NULL;
+    CLIENT_ID client_id;
+    OBJECT_ATTRIBUTES attr;
 
-    if (process != NtCurrentProcess())
+    InitializeObjectAttributes( &attr, NULL, 0, NULL, descr );
+
+    status = unix_funcs->create_thread( &handle, THREAD_ALL_ACCESS, &attr, process,
+                                        start, param, call_thread_entry_point, flags,
+                                        stack_commit, stack_reserve, &client_id );
+    if (!status)
     {
-        apc_call_t call;
-        apc_result_t result;
-
-        memset( &call, 0, sizeof(call) );
-
-        call.create_thread.type    = APC_CREATE_THREAD;
-        call.create_thread.func    = wine_server_client_ptr( start );
-        call.create_thread.arg     = wine_server_client_ptr( param );
-        call.create_thread.reserve = stack_reserve;
-        call.create_thread.commit  = stack_commit;
-        call.create_thread.suspend = suspended;
-        status = unix_funcs->server_queue_process_apc( process, &call, &result );
-        if (status != STATUS_SUCCESS) return status;
-
-        if (result.create_thread.status == STATUS_SUCCESS)
-        {
-            if (id) id->UniqueThread = ULongToHandle(result.create_thread.tid);
-            if (handle_ptr) *handle_ptr = wine_server_ptr_handle( result.create_thread.handle );
-            else NtClose( wine_server_ptr_handle( result.create_thread.handle ));
-        }
-        return result.create_thread.status;
+        if (id) *id = client_id;
+        if (handle_ptr) *handle_ptr = handle;
+        else NtClose( handle );
     }
-
-    if (descr)
-    {
-        OBJECT_ATTRIBUTES thread_attr;
-        InitializeObjectAttributes( &thread_attr, NULL, 0, NULL, descr );
-        if ((status = alloc_object_attributes( &thread_attr, &objattr, &len ))) return status;
-    }
-
-    if (unix_funcs->server_pipe( request_pipe ) == -1)
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, objattr );
-        return STATUS_TOO_MANY_OPENED_FILES;
-    }
-    wine_server_send_fd( request_pipe[0] );
-
-    SERVER_START_REQ( new_thread )
-    {
-        req->process    = wine_server_obj_handle( process );
-        req->access     = THREAD_ALL_ACCESS;
-        req->suspend    = suspended;
-        req->request_fd = request_pipe[0];
-        wine_server_add_data( req, objattr, len );
-        if (!(status = wine_server_call( req )))
-        {
-            handle = wine_server_ptr_handle( reply->handle );
-            tid = reply->tid;
-        }
-        close( request_pipe[0] );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    if (status)
-    {
-        close( request_pipe[1] );
-        return status;
-    }
-
-    RtlGetActiveActivationContext( &actctx );
-
-    status = unix_funcs->create_thread( stack_reserve, stack_commit, actctx, tid, request_pipe[1],
-                                        start, param, call_thread_entry_point );
-    if (status)
-    {
-        if (actctx) RtlReleaseActivationContext( actctx );
-        NtClose( handle );
-        close( request_pipe[1] );
-        return status;
-    }
-    if (id) id->UniqueThread = ULongToHandle(tid);
-    if (handle_ptr) *handle_ptr = handle;
-    else NtClose( handle );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 

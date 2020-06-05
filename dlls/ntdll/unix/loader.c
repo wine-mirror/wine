@@ -1078,7 +1078,6 @@ static struct unix_funcs unix_funcs =
     server_fd_to_handle,
     server_handle_to_fd,
     server_release_fd,
-    server_pipe,
     server_init_process_done,
     __wine_dbg_get_channel_flags,
     __wine_dbg_strdup,
