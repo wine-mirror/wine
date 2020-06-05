@@ -1478,6 +1478,69 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
     return hr;
 }
 
+void wined3d_unordered_access_view_vk_clear_uint(struct wined3d_unordered_access_view_vk *view_vk,
+        const struct wined3d_uvec4 *clear_value, struct wined3d_context_vk *context_vk)
+{
+    const struct wined3d_vk_info *vk_info;
+    const struct wined3d_format *format;
+    struct wined3d_buffer_vk *buffer_vk;
+    struct wined3d_resource *resource;
+    VkCommandBuffer vk_command_buffer;
+    VkBufferMemoryBarrier vk_barrier;
+    VkAccessFlags access_mask;
+    unsigned int offset, size;
+
+    TRACE("view_vk %p, clear_value %s, context_vk %p.\n", view_vk, debug_uvec4(clear_value), context_vk);
+
+    resource = view_vk->v.resource;
+    if (resource->type != WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
+        return;
+    }
+
+    format = view_vk->v.format;
+    if (format->id != WINED3DFMT_R32_UINT && format->id != WINED3DFMT_R32_SINT)
+    {
+        FIXME("Not implemented for format %s.\n", debug_d3dformat(format->id));
+        return;
+    }
+
+    vk_info = context_vk->vk_info;
+    buffer_vk = wined3d_buffer_vk(buffer_from_resource(resource));
+    wined3d_buffer_load_location(&buffer_vk->b, &context_vk->c, WINED3D_LOCATION_BUFFER);
+    wined3d_buffer_invalidate_location(&buffer_vk->b, ~WINED3D_LOCATION_BUFFER);
+
+    get_buffer_view_range(&buffer_vk->b, &view_vk->v.desc, format, &offset, &size);
+
+    if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+        return;
+    wined3d_context_vk_end_current_render_pass(context_vk);
+
+    access_mask = vk_access_mask_from_bind_flags(buffer_vk->b.resource.bind_flags);
+    vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    vk_barrier.pNext = NULL;
+    vk_barrier.srcAccessMask = access_mask;
+    vk_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    vk_barrier.buffer = buffer_vk->bo.vk_buffer;
+    vk_barrier.offset = buffer_vk->bo.buffer_offset + offset;
+    vk_barrier.size = size;
+    VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+
+    VK_CALL(vkCmdFillBuffer(vk_command_buffer, buffer_vk->bo.vk_buffer,
+            buffer_vk->bo.buffer_offset + offset, size, clear_value->x));
+
+    vk_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    vk_barrier.dstAccessMask = access_mask;
+    VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+
+    wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+}
+
 void wined3d_unordered_access_view_vk_update(struct wined3d_unordered_access_view_vk *uav_vk,
         struct wined3d_context_vk *context_vk)
 {

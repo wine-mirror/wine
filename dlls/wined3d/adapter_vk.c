@@ -1765,7 +1765,10 @@ static void adapter_vk_dispatch_compute(struct wined3d_device *device,
 void adapter_vk_clear_uav(struct wined3d_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
-    FIXME("context %p, view %p, clear_value %s.\n", context, view, debug_uvec4(clear_value));
+    TRACE("context %p, view %p, clear_value %s.\n", context, view, debug_uvec4(clear_value));
+
+    wined3d_unordered_access_view_vk_clear_uint(wined3d_unordered_access_view_vk(view),
+            clear_value, wined3d_context_vk(context));
 }
 
 static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
