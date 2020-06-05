@@ -445,10 +445,16 @@ static void send_parent_notify( HWND hwnd, UINT msg )
  *
  * Trigger an update of the window's driver state and surface.
  */
-static void update_window_state( HWND hwnd )
+void update_window_state( HWND hwnd )
 {
     DPI_AWARENESS_CONTEXT context;
     RECT window_rect, client_rect, valid_rects[2];
+
+    if (!WIN_IsCurrentThread( hwnd ))
+    {
+        PostMessageW( hwnd, WM_WINE_UPDATEWINDOWSTATE, 0, 0 );
+        return;
+    }
 
     context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
     WIN_GetRectangles( hwnd, COORDS_PARENT, &window_rect, &client_rect );
