@@ -1018,6 +1018,7 @@ static struct unix_funcs unix_funcs =
     NtQuerySemaphore,
     NtQueryTimer,
     NtQueryVirtualMemory,
+    NtRaiseException,
     NtReadVirtualMemory,
     NtReleaseKeyedEvent,
     NtReleaseMutant,

@@ -52,6 +52,8 @@
 #include "wine/exception.h"
 #include "unix_private.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(seh);
+
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 16384
 #endif
@@ -384,6 +386,87 @@ void wait_suspend( CONTEXT *context )
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL, NULL );
     errno = saved_errno;
+}
+
+
+/**********************************************************************
+ *           send_debug_event
+ *
+ * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
+ */
+static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS ret;
+    DWORD i;
+    obj_handle_t handle = 0;
+    client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
+    CONTEXT exception_context = *context;
+    select_op_t select_op;
+    sigset_t old_set;
+
+    if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
+
+    pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
+
+    for (i = 0; i < min( rec->NumberParameters, EXCEPTION_MAXIMUM_PARAMETERS ); i++)
+        params[i] = rec->ExceptionInformation[i];
+
+    SERVER_START_REQ( queue_exception_event )
+    {
+        req->first   = first_chance;
+        req->code    = rec->ExceptionCode;
+        req->flags   = rec->ExceptionFlags;
+        req->record  = wine_server_client_ptr( rec->ExceptionRecord );
+        req->address = wine_server_client_ptr( rec->ExceptionAddress );
+        req->len     = i * sizeof(params[0]);
+        wine_server_add_data( req, params, req->len );
+        if (!(ret = wine_server_call( req ))) handle = reply->handle;
+    }
+    SERVER_END_REQ;
+
+    if (handle)
+    {
+        select_op.wait.op = SELECT_WAIT;
+        select_op.wait.handles[0] = handle;
+        server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE,
+                       TIMEOUT_INFINITE, &exception_context, NULL, NULL );
+
+        SERVER_START_REQ( get_exception_status )
+        {
+            req->handle = handle;
+            ret = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        if (ret >= 0) *context = exception_context;
+    }
+
+    pthread_sigmask( SIG_SETMASK, &old_set, NULL );
+    return ret;
+}
+
+
+/*******************************************************************
+ *		NtRaiseException (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS status = send_debug_event( rec, context, first_chance );
+
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+        NtSetContextThread( GetCurrentThread(), context );
+
+    if (first_chance) KiUserExceptionDispatcher( rec, context );
+
+    if (rec->ExceptionFlags & EH_STACK_INVALID)
+        ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
+    else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
+        ERR("Process attempted to continue execution after noncontinuable exception.\n");
+    else
+        ERR("Unhandled exception code %x flags %x addr %p\n",
+            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+
+    NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
+    return STATUS_SUCCESS;
 }
 
 

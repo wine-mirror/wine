@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 30
+#define NTDLL_UNIXLIB_VERSION 31
 
 struct unix_funcs
 {
@@ -101,6 +101,7 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtQueryVirtualMemory)( HANDLE process, LPCVOID addr,
                                                   MEMORY_INFORMATION_CLASS info_class,
                                                   PVOID buffer, SIZE_T len, SIZE_T *res_len );
+    NTSTATUS      (WINAPI *NtRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
     NTSTATUS      (WINAPI *NtReadVirtualMemory)( HANDLE process, const void *addr, void *buffer,
                                                  SIZE_T size, SIZE_T *bytes_read );
     NTSTATUS      (WINAPI *NtReleaseKeyedEvent)( HANDLE handle, const void *key,

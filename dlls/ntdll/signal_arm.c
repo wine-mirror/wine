@@ -492,6 +492,52 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
 }
 
 
+/*******************************************************************
+ *		KiUserExceptionDispatcher (NTDLL.@)
+ */
+NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+    DWORD c;
+
+    TRACE( "code=%x flags=%x addr=%p pc=%08x tid=%04x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           context->Pc, GetCurrentThreadId() );
+    for (c = 0; c < rec->NumberParameters; c++)
+        TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
+
+    if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
+    {
+        if (rec->ExceptionInformation[1] >> 16)
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
+                     rec->ExceptionAddress,
+                     (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+        else
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
+                     rec->ExceptionAddress,
+                     (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
+    }
+    else
+    {
+        TRACE( " r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x\n",
+               context->R0, context->R1, context->R2, context->R3, context->R4, context->R5 );
+        TRACE( " r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
+               context->R6, context->R7, context->R8, context->R9, context->R10, context->R11 );
+        TRACE( " r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+               context->R12, context->Sp, context->Lr, context->Pc, context->Cpsr );
+    }
+
+    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
+        NtSetContextThread( GetCurrentThread(), context );
+
+    if ((status = call_stack_handlers( rec, context )) == STATUS_SUCCESS)
+        NtSetContextThread( GetCurrentThread(), context );
+
+    if (status != STATUS_UNHANDLED_EXCEPTION) RtlRaiseStatus( status );
+    return NtRaiseException( rec, context, FALSE );
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -833,15 +879,6 @@ void WINAPI RtlUnwind( void *endframe, void *target_ip, EXCEPTION_RECORD *rec, v
     }
 }
 
-/*******************************************************************
- *		NtRaiseException (NTDLL.@)
- */
-NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
-{
-    NTSTATUS status = raise_exception( rec, context, first_chance );
-    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
-    return status;
-}
 
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
@@ -849,12 +886,10 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 {
     CONTEXT context;
-    NTSTATUS status;
 
     RtlCaptureContext( &context );
     rec->ExceptionAddress = (LPVOID)context.Pc;
-    status = raise_exception( rec, &context, TRUE );
-    if (status) raise_status( status, rec );
+    RtlRaiseStatus( NtRaiseException( rec, &context, TRUE ));
 }
 
 /*************************************************************************

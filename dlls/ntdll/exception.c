@@ -239,6 +239,15 @@ void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
 }
 
 
+/*******************************************************************
+ *		NtRaiseException (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    return unix_funcs->NtRaiseException( rec, context, first_chance );
+}
+
+
 /***********************************************************************
  *            RtlRaiseStatus  (NTDLL.@)
  *

@@ -50,6 +50,7 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
+NTSTATUS WINAPI KiUserExceptionDispatcher(EXCEPTION_RECORD*,CONTEXT*);
 void WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 
 void CDECL mmap_add_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;

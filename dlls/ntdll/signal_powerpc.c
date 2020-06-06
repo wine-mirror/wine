@@ -341,6 +341,47 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
 }
 
 
+/*******************************************************************
+ *		KiUserExceptionDispatcher (NTDLL.@)
+ */
+NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+    DWORD c;
+
+    TRACE( "code=%x flags=%x addr=%p ip=%x tid=%04x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+           context->Iar, GetCurrentThreadId() );
+    for (c = 0; c < rec->NumberParameters; c++)
+        TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
+
+    if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
+    {
+        if (rec->ExceptionInformation[1] >> 16)
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
+                     rec->ExceptionAddress,
+                     (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+        else
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
+                     rec->ExceptionAddress,
+                     (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
+    }
+    else
+    {
+        /* FIXME: dump context */
+    }
+
+    if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
+        NtSetContextThread( GetCurrentThread(), context );
+
+    if ((status = call_stack_handlers( rec, context )) == STATUS_SUCCESS)
+        NtSetContextThread( GetCurrentThread(), context );
+
+    if (status != STATUS_UNHANDLED_EXCEPTION) RtlRaiseStatus( status );
+    return NtRaiseException( rec, context, FALSE );
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -684,16 +725,6 @@ void signal_init_process(void)
 void WINAPI RtlUnwind( PVOID pEndFrame, PVOID targetIp, PEXCEPTION_RECORD pRecord, PVOID retval )
 {
     FIXME( "Not implemented on PowerPC\n" );
-}
-
-/*******************************************************************
- *		NtRaiseException (NTDLL.@)
- */
-NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
-{
-    NTSTATUS status = raise_exception( rec, context, first_chance );
-    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
-    return status;
 }
 
 /***********************************************************************
