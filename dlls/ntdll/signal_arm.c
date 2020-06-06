@@ -119,9 +119,6 @@ enum arm_trap_code
 };
 
 typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
-typedef int (*wine_signal_handler)(unsigned int sig);
-
-static wine_signal_handler handlers[256];
 
 
 /***********************************************************************
@@ -162,15 +159,6 @@ static inline WORD get_error_code( const ucontext_t *sigcontext )
 #else
     return 0;
 #endif
-}
-
-/***********************************************************************
- *           dispatch_signal
- */
-static inline int dispatch_signal(unsigned int sig)
-{
-    if (handlers[sig] == NULL) return 0;
-    return handlers[sig](sig);
 }
 
 /*******************************************************************
@@ -700,22 +688,19 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    if (!dispatch_signal(SIGINT))
-    {
-        EXCEPTION_RECORD rec;
-        CONTEXT context;
-        NTSTATUS status;
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    NTSTATUS status;
 
-        save_context( &context, sigcontext );
-        rec.ExceptionCode    = CONTROL_C_EXIT;
-        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = (LPVOID)context.Pc;
-        rec.NumberParameters = 0;
-        status = raise_exception( &rec, &context, TRUE );
-        if (status) raise_status( status, &rec );
-        restore_context( &context, sigcontext );
-    }
+    save_context( &context, sigcontext );
+    rec.ExceptionCode    = CONTROL_C_EXIT;
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Pc;
+    rec.NumberParameters = 0;
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
+    restore_context( &context, sigcontext );
 }
 
 
@@ -765,18 +750,6 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     save_context( &context, sigcontext );
     wait_suspend( &context );
     restore_context( &context, sigcontext );
-}
-
-
-/***********************************************************************
- *           __wine_set_signal_handler   (NTDLL.@)
- */
-int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
-{
-    if (sig >= ARRAY_SIZE(handlers)) return -1;
-    if (handlers[sig] != NULL) return -2;
-    handlers[sig] = wsh;
-    return 0;
 }
 
 

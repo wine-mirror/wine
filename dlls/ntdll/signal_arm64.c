@@ -141,10 +141,6 @@ struct stack_layout
     void             *redzone[2];
 };
 
-typedef int (*wine_signal_handler)(unsigned int sig);
-
-static wine_signal_handler handlers[256];
-
 struct arm64_thread_data
 {
     void     *exit_frame;    /* exit frame pointer */
@@ -157,15 +153,6 @@ C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct arm64_thread_data,
 static inline struct arm64_thread_data *arm64_thread_data(void)
 {
     return (struct arm64_thread_data *)NtCurrentTeb()->SystemReserved2;
-}
-
-/***********************************************************************
- *           dispatch_signal
- */
-static inline int dispatch_signal(unsigned int sig)
-{
-    if (handlers[sig] == NULL) return 0;
-    return handlers[sig](sig);
 }
 
 /***********************************************************************
@@ -998,13 +985,10 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    if (!dispatch_signal(SIGINT))
-    {
-        struct stack_layout *stack = setup_exception( sigcontext );
+    struct stack_layout *stack = setup_exception( sigcontext );
 
-        stack->rec.ExceptionCode = CONTROL_C_EXIT;
-        setup_raise_exception( sigcontext, stack );
-    }
+    stack->rec.ExceptionCode = CONTROL_C_EXIT;
+    setup_raise_exception( sigcontext, stack );
 }
 
 
@@ -1061,18 +1045,6 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if ((context->ContextFlags & ~CONTEXT_ARM64) & CONTEXT_FLOATING_POINT)
         restore_fpu( context, sigcontext );
     restore_context( context, sigcontext );
-}
-
-
-/***********************************************************************
- *           __wine_set_signal_handler   (NTDLL.@)
- */
-int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
-{
-    if (sig >= ARRAY_SIZE(handlers)) return -1;
-    if (handlers[sig] != NULL) return -2;
-    handlers[sig] = wsh;
-    return 0;
 }
 
 

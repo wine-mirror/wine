@@ -442,11 +442,7 @@ struct stack_layout
     DWORD             eip;
 };
 
-typedef int (*wine_signal_handler)(unsigned int sig);
-
 static ULONG first_ldt_entry = 32;
-
-static wine_signal_handler handlers[256];
 
 enum i386_trap_code
 {
@@ -550,16 +546,6 @@ static inline int ldt_is_system( WORD sel )
 {
     return is_gdt_sel( sel ) || ((sel >> 3) < first_ldt_entry);
 }
-
-/***********************************************************************
- *           dispatch_signal
- */
-static inline int dispatch_signal(unsigned int sig)
-{
-    if (handlers[sig] == NULL) return 0;
-    return handlers[sig](sig);
-}
-
 
 /***********************************************************************
  *           get_trap_code
@@ -1800,19 +1786,12 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  *		int_handler
  *
  * Handler for SIGINT.
- *
- * FIXME: should not be calling external functions on the signal stack.
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    WORD fs, gs;
-    void *stack_ptr = init_handler( sigcontext, &fs, &gs );
-    if (!dispatch_signal(SIGINT))
-    {
-        struct stack_layout *stack = setup_exception_record( sigcontext, stack_ptr, fs, gs );
-        stack->rec.ExceptionCode = CONTROL_C_EXIT;
-        setup_raise_exception( sigcontext, stack );
-    }
+    struct stack_layout *stack = setup_exception( sigcontext );
+    stack->rec.ExceptionCode = CONTROL_C_EXIT;
+    setup_raise_exception( sigcontext, stack );
 }
 
 /**********************************************************************
@@ -1856,18 +1835,6 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     save_context( &context, sigcontext, fs, gs );
     wait_suspend( &context );
     restore_context( &context, sigcontext );
-}
-
-
-/***********************************************************************
- *           __wine_set_signal_handler   (NTDLL.@)
- */
-int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
-{
-    if (sig >= ARRAY_SIZE(handlers)) return -1;
-    if (handlers[sig] != NULL) return -2;
-    handlers[sig] = wsh;
-    return 0;
 }
 
 

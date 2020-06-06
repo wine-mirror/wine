@@ -292,10 +292,6 @@ struct stack_layout
     ULONG64           red_zone[16];
 };
 
-typedef int (*wine_signal_handler)(unsigned int sig);
-
-static wine_signal_handler handlers[256];
-
 struct amd64_thread_data
 {
     DWORD_PTR dr0;           /* debug registers */
@@ -1635,15 +1631,6 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
 }
 
 /***********************************************************************
- *           dispatch_signal
- */
-static inline int dispatch_signal(unsigned int sig)
-{
-    if (handlers[sig] == NULL) return 0;
-    return handlers[sig](sig);
-}
-
-/***********************************************************************
  *           get_signal_stack
  *
  * Get the base of the signal stack for the current thread.
@@ -2705,12 +2692,9 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    if (!dispatch_signal(SIGINT))
-    {
-        struct stack_layout *stack = setup_exception( sigcontext );
-        stack->rec.ExceptionCode = CONTROL_C_EXIT;
-        setup_raise_exception( sigcontext, stack );
-    }
+    struct stack_layout *stack = setup_exception( sigcontext );
+    stack->rec.ExceptionCode = CONTROL_C_EXIT;
+    setup_raise_exception( sigcontext, stack );
 }
 
 
@@ -2751,18 +2735,6 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
     save_context( &context, ucontext );
     wait_suspend( &context );
     restore_context( &context, ucontext );
-}
-
-
-/***********************************************************************
- *           __wine_set_signal_handler   (NTDLL.@)
- */
-int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
-{
-    if (sig >= ARRAY_SIZE(handlers)) return -1;
-    if (handlers[sig] != NULL) return -2;
-    handlers[sig] = wsh;
-    return 0;
 }
 
 
