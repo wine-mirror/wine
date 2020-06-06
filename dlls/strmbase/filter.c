@@ -532,11 +532,13 @@ void strmbase_filter_init(struct strmbase_filter *filter, IUnknown *outer,
     filter->ops = ops;
 }
 
-void strmbase_filter_cleanup(struct strmbase_filter *This)
+void strmbase_filter_cleanup(struct strmbase_filter *filter)
 {
-    if (This->clock)
-        IReferenceClock_Release(This->clock);
+    if (filter->clock)
+        IReferenceClock_Release(filter->clock);
 
-    This->IBaseFilter_iface.lpVtbl = NULL;
-    DeleteCriticalSection(&This->csFilter);
+    filter->IBaseFilter_iface.lpVtbl = NULL;
+    if (filter->csFilter.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
+        filter->csFilter.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->csFilter);
 }
