@@ -119,6 +119,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
         AM_MEDIA_TYPE **mts, ULONG *ret_count)
 {
     struct enum_media_types *enummt = impl_from_IEnumMediaTypes(iface);
+    AM_MEDIA_TYPE mt;
     unsigned int i;
     HRESULT hr;
 
@@ -133,10 +134,14 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
 
     for (i = 0; i < count; ++i)
     {
-        if ((mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
-            hr = enummt->pin->ops->pin_get_media_type(enummt->pin, enummt->index + i, mts[i]);
-        else
-            hr = E_OUTOFMEMORY;
+        hr = enummt->pin->ops->pin_get_media_type(enummt->pin, enummt->index + i, &mt);
+        if (hr == S_OK)
+        {
+            if ((mts[i] = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
+                *mts[i] = mt;
+            else
+                hr = E_OUTOFMEMORY;
+        }
         if (FAILED(hr))
         {
             while (i--)
