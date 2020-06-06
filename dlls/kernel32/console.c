@@ -894,14 +894,15 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
  *
  * Check whether the shall manipulate CtrlC events
  */
-int     CONSOLE_HandleCtrlC(unsigned sig)
+LONG CALLBACK CONSOLE_HandleCtrlC( EXCEPTION_POINTERS *eptr )
 {
     extern DWORD WINAPI CtrlRoutine( void *arg );
     HANDLE thread;
 
+    if (eptr->ExceptionRecord->ExceptionCode != CONTROL_C_EXIT) return EXCEPTION_CONTINUE_SEARCH;
+
     /* FIXME: better test whether a console is attached to this process ??? */
-    extern    unsigned CONSOLE_GetNumHistoryEntries(void);
-    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
+    if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return EXCEPTION_CONTINUE_SEARCH;
 
     /* check if we have to ignore ctrl-C events */
     if (!(NtCurrentTeb()->Peb->ProcessParameters->ConsoleFlags & 1))
@@ -916,12 +917,9 @@ int     CONSOLE_HandleCtrlC(unsigned sig)
          *    we can wait on this critical section 
          */
         thread = CreateThread(NULL, 0, CtrlRoutine, (void*)CTRL_C_EVENT, 0, NULL);
-        if (thread == NULL)
-            return 0;
-
-        CloseHandle(thread);
+        if (thread) CloseHandle(thread);
     }
-    return 1;
+    return EXCEPTION_CONTINUE_EXECUTION;
 }
 
 /******************************************************************

@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
-extern int CDECL __wine_set_signal_handler(unsigned, int (*)(unsigned));
-
 static STARTUPINFOA startup_infoA;
 
 /***********************************************************************
@@ -150,7 +148,7 @@ static BOOL process_attach( HMODULE module )
     }
 
     /* finish the process initialisation for console bits, if needed */
-    __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
+    RtlAddVectoredExceptionHandler( FALSE, CONSOLE_HandleCtrlC );
 
     if (params->ConsoleHandle == KERNEL32_CONSOLE_ALLOC)
     {
