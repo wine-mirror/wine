@@ -2328,7 +2328,10 @@ static struct mountmgr_unix_drive *get_mountmgr_fs_info( HANDLE handle, int fd )
     InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
     if (NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                     FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT ))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, drive );
         return NULL;
+    }
 
     status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
                                     drive, sizeof(*drive), drive, 1024 );
