@@ -157,7 +157,7 @@
 @ stdcall NtCompleteConnectPort(ptr)
 # @ stub NtCompressKey
 @ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr)
-@ stub NtContinue
+@ stdcall NtContinue(ptr long)
 # @ stub NtCreateDebugObject
 @ stdcall NtCreateDirectoryObject(ptr long ptr)
 @ stdcall NtCreateEvent(ptr long ptr long long)
@@ -1145,7 +1145,7 @@
 @ stdcall -private ZwCompleteConnectPort(ptr) NtCompleteConnectPort
 # @ stub ZwCompressKey
 @ stdcall -private ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
-@ stub ZwContinue
+@ stdcall -private ZwContinue(ptr long) NtContinue
 # @ stub ZwCreateDebugObject
 @ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
 @ stdcall -private ZwCreateEvent(ptr long ptr long long) NtCreateEvent

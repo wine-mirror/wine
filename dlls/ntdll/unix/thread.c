@@ -471,6 +471,18 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 
 
 /***********************************************************************
+ *              NtContinue  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
+{
+    static const LARGE_INTEGER zero_timeout;
+
+    if (alertable) server_wait( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, &zero_timeout );
+    return NtSetContextThread( GetCurrentThread(), context );
+}
+
+
+/***********************************************************************
  *              set_thread_context
  */
 NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self )

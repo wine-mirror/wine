@@ -603,6 +603,15 @@ NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int fla
 
 
 /***********************************************************************
+ *              NtContinue  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
+{
+    return unix_funcs->NtContinue( context, alertable );
+}
+
+
+/***********************************************************************
  *              NtSetContextThread  (NTDLL.@)
  *              ZwSetContextThread  (NTDLL.@)
  */

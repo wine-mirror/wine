@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 31
+#define NTDLL_UNIXLIB_VERSION 32
 
 struct unix_funcs
 {
@@ -39,6 +39,7 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtCancelTimer)( HANDLE handle, BOOLEAN *state );
     NTSTATUS      (WINAPI *NtClearEvent)( HANDLE handle );
     NTSTATUS      (WINAPI *NtClose)( HANDLE handle );
+    NTSTATUS      (WINAPI *NtContinue)( CONTEXT *context, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtCreateEvent)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, EVENT_TYPE type, BOOLEAN state );
     NTSTATUS      (WINAPI *NtCreateKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
