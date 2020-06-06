@@ -89,18 +89,6 @@ static inline struct arm64_thread_data *arm64_thread_data(void)
 
 
 /***********************************************************************
- *           set_cpu_context
- *
- * Set the new CPU context.
- */
-static void set_cpu_context( const CONTEXT *context )
-{
-    InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
-    raise( SIGUSR2 );
-}
-
-
-/***********************************************************************
  *           get_server_context_flags
  *
  * Convert CPU-specific flags to generic server flags
@@ -261,8 +249,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     NTSTATUS ret = STATUS_SUCCESS;
     BOOL self = (handle == GetCurrentThread());
 
-    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_ARM64)))
-        self = FALSE;
+    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_ARM64))) self = FALSE;
 
     if (!self)
     {
@@ -270,7 +257,11 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         context_to_server( &server_context, context );
         ret = set_thread_context( handle, &server_context, &self );
     }
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    if (self && ret == STATUS_SUCCESS)
+    {
+        InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
+        raise( SIGUSR2 );
+    }
     return ret;
 }
 
@@ -451,26 +442,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "msr fpcr, x1\n\t"
                    "ldr w1, [x0, #0x314]\n\t"          /* context->Fpsr */
                    "msr fpsr, x1\n\t"
-                   "ldp x1, x2, [x0, #0x10]\n\t"       /* context->X1,2 */
-                   "ldp x3, x4, [x0, #0x20]\n\t"       /* context->X3,4 */
-                   "ldp x5, x6, [x0, #0x30]\n\t"       /* context->X5,6 */
-                   "ldp x7, x8, [x0, #0x40]\n\t"       /* context->X7,8 */
-                   "ldp x9, x10, [x0, #0x50]\n\t"      /* context->X9,10 */
-                   "ldp x11, x12, [x0, #0x60]\n\t"     /* context->X11,12 */
-                   "ldp x13, x14, [x0, #0x70]\n\t"     /* context->X13,14 */
-                   "ldp x15, x16, [x0, #0x80]\n\t"     /* context->X15,16 */
-                   "ldp x17, x18, [x0, #0x90]\n\t"     /* context->X17,18 */
-                   "ldp x19, x20, [x0, #0xa0]\n\t"     /* context->X19,20 */
-                   "ldp x21, x22, [x0, #0xb0]\n\t"     /* context->X21,22 */
-                   "ldp x23, x24, [x0, #0xc0]\n\t"     /* context->X23,24 */
-                   "ldp x25, x26, [x0, #0xd0]\n\t"     /* context->X25,26 */
-                   "ldp x27, x28, [x0, #0xe0]\n\t"     /* context->X27,28 */
-                   "ldp x29, x30, [x0, #0xf0]\n\t"     /* context->Fp,Lr */
-                   "ldr x17, [x0, #0x100]\n\t"         /* context->Sp */
-                   "mov sp, x17\n\t"
-                   "ldr x17, [x0, #0x108]\n\t"         /* context->Pc */
-                   "ldr x0, [x0, #0x8]\n\t"            /* context->X0 */
-                   "br x17" )
+                   "mov x1, #1\n\t"
+                   "b " __ASM_NAME("NtContinue") )
 
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );

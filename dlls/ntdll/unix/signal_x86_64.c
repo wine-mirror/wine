@@ -192,34 +192,6 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
 
 
 /***********************************************************************
- *           set_cpu_context
- *
- * Set the new CPU context. Used by NtSetContextThread.
- */
-void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
-{
-    DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
-
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        amd64_thread_data()->dr0 = context->Dr0;
-        amd64_thread_data()->dr1 = context->Dr1;
-        amd64_thread_data()->dr2 = context->Dr2;
-        amd64_thread_data()->dr3 = context->Dr3;
-        amd64_thread_data()->dr6 = context->Dr6;
-        amd64_thread_data()->dr7 = context->Dr7;
-    }
-    if (flags & CONTEXT_FULL)
-    {
-        if (!(flags & CONTEXT_CONTROL))
-            FIXME( "setting partial context (%x) not supported\n", flags );
-        else
-            set_full_cpu_context( context );
-    }
-}
-
-
-/***********************************************************************
  *           get_server_context_flags
  *
  * Convert CPU-specific flags to generic server flags
@@ -437,10 +409,11 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     NTSTATUS ret = STATUS_SUCCESS;
+    DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
     BOOL self = (handle == GetCurrentThread());
 
     /* debug registers require a server call */
-    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)))
+    if (self && (flags & CONTEXT_DEBUG_REGISTERS))
         self = (amd64_thread_data()->dr0 == context->Dr0 &&
                 amd64_thread_data()->dr1 == context->Dr1 &&
                 amd64_thread_data()->dr2 == context->Dr2 &&
@@ -451,10 +424,28 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if (!self)
     {
         context_t server_context;
+
         context_to_server( &server_context, context );
         ret = set_thread_context( handle, &server_context, &self );
+        if (ret || !self) return ret;
+        if (flags & CONTEXT_DEBUG_REGISTERS)
+        {
+            amd64_thread_data()->dr0 = context->Dr0;
+            amd64_thread_data()->dr1 = context->Dr1;
+            amd64_thread_data()->dr2 = context->Dr2;
+            amd64_thread_data()->dr3 = context->Dr3;
+            amd64_thread_data()->dr6 = context->Dr6;
+            amd64_thread_data()->dr7 = context->Dr7;
+        }
     }
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+
+    if (flags & CONTEXT_FULL)
+    {
+        if (!(flags & CONTEXT_CONTROL))
+            FIXME( "setting partial context (%x) not supported\n", flags );
+        else
+            set_full_cpu_context( context );
+    }
     return ret;
 }
 
@@ -724,14 +715,16 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "leaq -0x1000(%rax),%rsp\n\t"
                    /* attach dlls */
                    "call " __ASM_NAME("attach_thread") "\n\t"
-                   "movq %rax,%rsp\n\t"
+                   "movq %rax,%rbx\n\t"
+                   "leaq -32(%rax),%rsp\n\t"
                    /* clear the stack */
                    "andq $~0xfff,%rax\n\t"  /* round down to page size */
                    "movq %rax,%rdi\n\t"
                    "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
-                   "movq %rsp,%rdi\n\t"
-                   "call " __ASM_NAME("set_cpu_context") )
+                   "movl $1,%edx\n\t"
+                   "movq %rbx,%rcx\n\t"
+                   "call " __ASM_NAME("NtContinue") )
 
 
 /***********************************************************************

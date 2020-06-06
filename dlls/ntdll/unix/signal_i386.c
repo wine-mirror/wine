@@ -337,46 +337,6 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
 
 
 /***********************************************************************
- *           set_cpu_context
- *
- * Set the new CPU context. Used by NtSetContextThread.
- */
-void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
-{
-    DWORD flags = context->ContextFlags & ~CONTEXT_i386;
-
-    if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
-    else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
-
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        x86_thread_data()->dr0 = context->Dr0;
-        x86_thread_data()->dr1 = context->Dr1;
-        x86_thread_data()->dr2 = context->Dr2;
-        x86_thread_data()->dr3 = context->Dr3;
-        x86_thread_data()->dr6 = context->Dr6;
-        x86_thread_data()->dr7 = context->Dr7;
-    }
-    if (flags & CONTEXT_FULL)
-    {
-        if (!(flags & CONTEXT_CONTROL))
-            FIXME( "setting partial context (%x) not supported\n", flags );
-        else if (flags & CONTEXT_SEGMENTS)
-            set_full_cpu_context( context );
-        else
-        {
-            CONTEXT newcontext = *context;
-            newcontext.SegDs = get_ds();
-            newcontext.SegEs = get_ds();
-            newcontext.SegFs = get_fs();
-            newcontext.SegGs = get_gs();
-            set_full_cpu_context( &newcontext );
-        }
-    }
-}
-
-
-/***********************************************************************
  *           get_server_context_flags
  *
  * Convert CPU-specific flags to generic server flags
@@ -545,10 +505,11 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     NTSTATUS ret = STATUS_SUCCESS;
+    DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
     /* debug registers require a server call */
-    if (self && (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386)))
+    if (self && (flags & CONTEXT_DEBUG_REGISTERS))
         self = (x86_thread_data()->dr0 == context->Dr0 &&
                 x86_thread_data()->dr1 == context->Dr1 &&
                 x86_thread_data()->dr2 == context->Dr2 &&
@@ -561,9 +522,37 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         context_t server_context;
         context_to_server( &server_context, context );
         ret = set_thread_context( handle, &server_context, &self );
+        if (ret || !self) return ret;
+        if (flags & CONTEXT_DEBUG_REGISTERS)
+        {
+            x86_thread_data()->dr0 = context->Dr0;
+            x86_thread_data()->dr1 = context->Dr1;
+            x86_thread_data()->dr2 = context->Dr2;
+            x86_thread_data()->dr3 = context->Dr3;
+            x86_thread_data()->dr6 = context->Dr6;
+            x86_thread_data()->dr7 = context->Dr7;
+        }
     }
 
-    if (self && ret == STATUS_SUCCESS) set_cpu_context( context );
+    if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
+    else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
+
+    if (flags & CONTEXT_FULL)
+    {
+        if (!(flags & CONTEXT_CONTROL))
+            FIXME( "setting partial context (%x) not supported\n", flags );
+        else if (flags & CONTEXT_SEGMENTS)
+            set_full_cpu_context( context );
+        else
+        {
+            CONTEXT newcontext = *context;
+            newcontext.SegDs = get_ds();
+            newcontext.SegEs = get_ds();
+            newcontext.SegFs = get_fs();
+            newcontext.SegGs = get_gs();
+            set_full_cpu_context( &newcontext );
+        }
+    }
     return ret;
 }
 
@@ -1044,8 +1033,9 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movl %eax,(%esp)\n\t"
                    "call " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
+                   "movl $1,4(%esp)\n\t"
                    "movl %esi,(%esp)\n\t"
-                   "call " __ASM_NAME("set_cpu_context") )
+                   "call " __ASM_NAME("NtContinue") )
 
 
 /***********************************************************************

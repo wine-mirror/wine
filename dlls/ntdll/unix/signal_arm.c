@@ -422,8 +422,9 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "and r0, #~0xff0\n\t"  /* round down to page size */
                    "bl " __ASM_NAME("virtual_clear_thread_stack") "\n\t"
                    /* switch to the initial context */
+                   "mov r1, #1\n\t"
                    "mov r0, sp\n\t"
-                   "b " __ASM_NAME("set_cpu_context") )
+                   "b " __ASM_NAME("NtContinue") )
 
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
