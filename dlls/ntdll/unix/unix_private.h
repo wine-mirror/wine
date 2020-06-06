@@ -23,6 +23,10 @@
 
 #include "unixlib.h"
 
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8
+#define InterlockedCompareExchange64(dest,xchg,cmp) RtlInterlockedCompareExchange64(dest,xchg,cmp)
+#endif
+
 struct debug_info
 {
     unsigned int str_pos;       /* current position in strings buffer */
