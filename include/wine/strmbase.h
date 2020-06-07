@@ -252,6 +252,7 @@ enum strmbase_type_id
 };
 
 HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **typeinfo);
+void strmbase_release_typelibs(void);
 
 struct strmbase_passthrough
 {

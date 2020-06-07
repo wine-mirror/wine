@@ -68,3 +68,16 @@ HRESULT strmbase_get_typeinfo(enum strmbase_type_id tid, ITypeInfo **ret)
     ITypeInfo_AddRef(*ret = control_typeinfo[tid]);
     return S_OK;
 }
+
+void strmbase_release_typelibs(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(control_typeinfo); ++i)
+    {
+        if (control_typeinfo[i])
+            ITypeInfo_Release(control_typeinfo[i]);
+    }
+    if (control_typelib)
+        ITypeLib_Release(control_typelib);
+}

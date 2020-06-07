@@ -31,8 +31,11 @@ LONG object_locks = 0;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
-    if (reason == DLL_PROCESS_DETACH)
+    if (reason == DLL_PROCESS_DETACH && !reserved)
+    {
         video_window_unregister_class();
+        strmbase_release_typelibs();
+    }
     return QUARTZ_DllMain(instance, reason, reserved);
 }
 
