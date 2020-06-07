@@ -784,6 +784,8 @@ static HRESULT WINAPI recordset_QueryInterface( _Recordset *iface, REFIID riid, 
     struct recordset *recordset = impl_from_Recordset( iface );
     TRACE( "%p, %s, %p\n", iface, debugstr_guid(riid), obj );
 
+    *obj = NULL;
+
     if (IsEqualIID(riid, &IID_IUnknown)    || IsEqualIID(riid, &IID_IDispatch)   ||
         IsEqualIID(riid, &IID__ADO)        || IsEqualIID(riid, &IID_Recordset15) ||
         IsEqualIID(riid, &IID_Recordset20) || IsEqualIID(riid, &IID_Recordset21) ||
@@ -794,6 +796,11 @@ static HRESULT WINAPI recordset_QueryInterface( _Recordset *iface, REFIID riid, 
     else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
         *obj = &recordset->ISupportErrorInfo_iface;
+    }
+    else if (IsEqualGUID( riid, &IID_IRunnableObject ))
+    {
+        TRACE("IID_IRunnableObject not supported returning NULL\n");
+        return E_NOINTERFACE;
     }
     else
     {

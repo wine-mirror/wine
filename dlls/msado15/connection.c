@@ -98,6 +98,8 @@ static HRESULT WINAPI connection_QueryInterface( _Connection *iface, REFIID riid
     struct connection *connection = impl_from_Connection( iface );
     TRACE( "%p, %s, %p\n", connection, debugstr_guid(riid), obj );
 
+    *obj = NULL;
+
     if (IsEqualGUID( riid, &IID__Connection ) || IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
@@ -110,6 +112,11 @@ static HRESULT WINAPI connection_QueryInterface( _Connection *iface, REFIID riid
     else if (IsEqualGUID( riid, &IID_IConnectionPointContainer ))
     {
         *obj = &connection->IConnectionPointContainer_iface;
+    }
+    else if (IsEqualGUID( riid, &IID_IRunnableObject ))
+    {
+        TRACE("IID_IRunnableObject not supported returning NULL\n");
+        return E_NOINTERFACE;
     }
     else
     {

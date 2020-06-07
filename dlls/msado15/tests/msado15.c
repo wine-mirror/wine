@@ -61,6 +61,7 @@ static LONG get_refs_recordset( _Recordset *recordset )
 static void test_Recordset(void)
 {
     _Recordset *recordset;
+    IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
     Fields *fields, *fields2;
     Field *field;
@@ -72,6 +73,10 @@ static void test_Recordset(void)
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Recordset_QueryInterface( recordset, &IID_IRunnableObject, (void**)&runtime);
+    ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");
+    ok(runtime == NULL, "expected NULL\n");
 
     /* _Recordset object supports ISupportErrorInfo */
     errorinfo = NULL;
@@ -676,6 +681,7 @@ static void test_Connection(void)
 
     hr = _Connection_QueryInterface(connection, &IID_IRunnableObject, (void**)&runtime);
     ok(hr == E_NOINTERFACE, "Unexpected IRunnableObject interface\n");
+    ok(runtime == NULL, "expected NULL\n");
 
     hr = _Connection_QueryInterface(connection, &IID_ISupportErrorInfo, (void**)&errorinfo);
     ok(hr == S_OK, "Failed to get ISupportErrorInfo interface\n");
