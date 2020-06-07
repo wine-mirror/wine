@@ -32,6 +32,7 @@
 #include "winuser.h"
 #include "dshow.h"
 #include "qedit.h"
+#include "wine/strmbase.h"
 
 HRESULT timeline_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT media_detector_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;

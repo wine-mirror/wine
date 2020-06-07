@@ -23,15 +23,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
-static HINSTANCE instance;
+static HINSTANCE qedit_instance;
 
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
-    switch(fdwReason) {
-        case DLL_PROCESS_ATTACH:
-            instance = hInstDLL;
-            DisableThreadLibraryCalls(hInstDLL);
-            break;
+    if (reason == DLL_PROCESS_ATTACH)
+    {
+        qedit_instance = instance;
+        DisableThreadLibraryCalls(instance);
+    }
+    else if (reason == DLL_PROCESS_DETACH && !reserved)
+    {
+        strmbase_release_typelibs();
     }
     return TRUE;
 }
@@ -243,7 +246,7 @@ HRESULT WINAPI DllRegisterServer(void)
     IFilterMapper2 *mapper;
     HRESULT hr;
 
-    if (FAILED(hr = __wine_register_resources( instance )))
+    if (FAILED(hr = __wine_register_resources(qedit_instance)))
         return hr;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
@@ -267,7 +270,7 @@ HRESULT WINAPI DllUnregisterServer(void)
     IFilterMapper2 *mapper;
     HRESULT hr;
 
-    if (FAILED(hr = __wine_unregister_resources( instance )))
+    if (FAILED(hr = __wine_unregister_resources(qedit_instance)))
         return hr;
 
     if (FAILED(hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,

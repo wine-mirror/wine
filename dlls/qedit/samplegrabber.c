@@ -29,7 +29,6 @@
 
 #include "qedit_private.h"
 #include "wine/debug.h"
-#include "wine/strmbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
