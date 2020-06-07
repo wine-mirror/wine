@@ -108,6 +108,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         DisableThreadLibraryCalls(instance);
         qasf_instance = instance;
     }
+    else if (reason == DLL_PROCESS_DETACH && !reserved)
+    {
+        strmbase_release_typelibs();
+    }
     return TRUE;
 }
 
