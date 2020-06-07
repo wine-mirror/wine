@@ -781,6 +781,7 @@ SOURCES = \
 	wmsdk.h \
 	wmsdkidl.idl \
 	wnaspi32.h \
+	wownt16.h \
 	wownt32.h \
 	wpcapi.idl \
 	ws2def.h \

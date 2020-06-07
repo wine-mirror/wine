@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winternl.h"
+#include "wownt16.h"
 #include "wownt32.h"
 #include "wine/winbase16.h"
 
@@ -2401,10 +2402,6 @@ DWORD WINAPI FreeLibrary32W16( DWORD hLibModule )
     RestoreThunkLock( mutex_count );
     return (DWORD)retv;
 }
-
-
-#define CPEX_DEST_STDCALL   0x00000000
-#define CPEX_DEST_CDECL     0x80000000
 
 /**********************************************************************
  *           WOW_CallProc32W
