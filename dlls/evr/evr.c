@@ -24,7 +24,6 @@
 
 #include "evr_private.h"
 #include "d3d9.h"
-#include "wine/strmbase.h"
 
 #include "initguid.h"
 #include "dxva2api.h"

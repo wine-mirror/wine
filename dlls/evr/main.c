@@ -36,18 +36,17 @@ static HINSTANCE instance_evr;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
-    TRACE("(%p, %d, %p)\n", instance, reason, reserved);
-
-    switch (reason)
+    if (reason == DLL_WINE_PREATTACH)
+        return FALSE; /* prefer native version */
+    else if (reason == DLL_PROCESS_ATTACH)
     {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            instance_evr = instance;
-            DisableThreadLibraryCalls(instance);
-            break;
+        instance_evr = instance;
+        DisableThreadLibraryCalls(instance);
     }
-
+    else if (reason == DLL_PROCESS_DETACH && !reserved)
+    {
+        strmbase_release_typelibs();
+    }
     return TRUE;
 }
 
