@@ -419,6 +419,9 @@ interface IDisplayServices;
 interface ILineInfo;
 interface IMarkupPointer;
 interface IMarkupContainer;
+interface ISegmentList;
+interface IHTMLChangeLog;
+interface IHTMLChangeSink;
 interface ISVGSVGElement;
 interface IHTMLDOMRange;
 
@@ -28133,25 +28136,118 @@ interface IDisplayServices : IUnknown
 interface IMarkupServices : IUnknown
 {
     HRESULT CreateMarkupPointer([out] IMarkupPointer **ppPointer);
+
     HRESULT CreateMarkupContainer([out] IMarkupContainer **ppMarkupContainer);
-    HRESULT CreateElement([in] ELEMENT_TAG_ID tagID,[in] OLECHAR *pchAttributes,[out] IHTMLElement **ppElement);
-    HRESULT CloneElement([in] IHTMLElement *pElemCloneThis,[out] IHTMLElement **ppElementTheClone);
-    HRESULT InsertElement([in] IHTMLElement *pElementInsert,[in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
+
+    HRESULT CreateElement(
+        [in] ELEMENT_TAG_ID tagID,
+        [in] OLECHAR *pchAttributes,
+        [out] IHTMLElement **ppElement);
+
+    HRESULT CloneElement(
+        [in] IHTMLElement *pElemCloneThis,
+        [out] IHTMLElement **ppElementTheClone);
+
+    HRESULT InsertElement(
+        [in] IHTMLElement *pElementInsert,
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish);
+
     HRESULT RemoveElement([in] IHTMLElement *pElementRemove);
-    HRESULT Remove([in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
-    HRESULT Copy([in] IMarkupPointer *pPointerSourceStart,[in] IMarkupPointer *pPointerSourceFinish,[in] IMarkupPointer *pPointerTarget);
-    HRESULT Move([in] IMarkupPointer *pPointerSourceStart,[in] IMarkupPointer *pPointerSourceFinish,[in] IMarkupPointer *pPointerTarget);
-    HRESULT InsertText([in] OLECHAR *pchText,[in] long cch,[in] IMarkupPointer *pPointerTarget);
-    HRESULT ParseString([in] OLECHAR *pchHTML,[in] DWORD dwFlags,[out] IMarkupContainer **ppContainerResult,[in] IMarkupPointer *ppPointerStart,[in] IMarkupPointer *ppPointerFinish);
-    HRESULT ParseGlobal([in] HGLOBAL hglobalHTML,[in] DWORD dwFlags,[out] IMarkupContainer **ppContainerResult,[in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
-    HRESULT IsScopedElement([in] IHTMLElement *pElement,[out] BOOL *pfScoped);
-    HRESULT GetElementTagId([in] IHTMLElement *pElement,[out] ELEMENT_TAG_ID *ptagId);
-    HRESULT GetTagIDForName([in] BSTR bstrName,[out] ELEMENT_TAG_ID *ptagId);
-    HRESULT GetNameForTagID([in] ELEMENT_TAG_ID tagId,[out] BSTR *pbstrName);
-    HRESULT MovePointersToRange([in] IHTMLTxtRange *pIRange,[in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish);
-    HRESULT MoveRangeToPointers([in] IMarkupPointer *pPointerStart,[in] IMarkupPointer *pPointerFinish,[in] IHTMLTxtRange *pIRange);
+
+    HRESULT Remove(
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish);
+
+    HRESULT Copy(
+        [in] IMarkupPointer *pPointerSourceStart,
+        [in] IMarkupPointer *pPointerSourceFinish,
+        [in] IMarkupPointer *pPointerTarget);
+
+    HRESULT Move(
+        [in] IMarkupPointer *pPointerSourceStart,
+        [in] IMarkupPointer *pPointerSourceFinish,
+        [in] IMarkupPointer *pPointerTarget);
+
+    HRESULT InsertText(
+        [in] OLECHAR *pchText,
+        [in] long cch,
+        [in] IMarkupPointer *pPointerTarget);
+
+    HRESULT ParseString(
+        [in] OLECHAR *pchHTML,
+        [in] DWORD dwFlags,
+        [out] IMarkupContainer **ppContainerResult,
+        [in] IMarkupPointer *ppPointerStart,
+        [in] IMarkupPointer *ppPointerFinish);
+
+    HRESULT ParseGlobal(
+        [in] HGLOBAL hglobalHTML,
+        [in] DWORD dwFlags,
+        [out] IMarkupContainer **ppContainerResult,
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish);
+
+    HRESULT IsScopedElement(
+        [in] IHTMLElement *pElement,
+        [out] BOOL *pfScoped);
+
+    HRESULT GetElementTagId(
+        [in] IHTMLElement *pElement,
+        [out] ELEMENT_TAG_ID *ptagId);
+
+    HRESULT GetTagIDForName(
+        [in] BSTR bstrName,
+        [out] ELEMENT_TAG_ID *ptagId);
+
+    HRESULT GetNameForTagID(
+        [in] ELEMENT_TAG_ID tagId,
+        [out] BSTR *pbstrName);
+
+    HRESULT MovePointersToRange(
+        [in] IHTMLTxtRange *pIRange,
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish);
+
+    HRESULT MoveRangeToPointers(
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish,
+        [in] IHTMLTxtRange *pIRange);
+
     HRESULT BeginUndoUnit([in] OLECHAR *pchTitle);
+
     HRESULT EndUndoUnit();
+};
+
+/*****************************************************************************
+ *    IMarkupServices2 interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f682-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IMarkupServices2 : IMarkupServices
+{
+    HRESULT ParseGlobalEx(
+        [in] HGLOBAL hglobalHTML,
+        [in] DWORD dwFlags,
+        [in] IMarkupContainer *pContext,
+        [out] IMarkupContainer **ppContainerResult,
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish);
+
+    HRESULT ValidateElements(
+        [in] IMarkupPointer *pPointerStart,
+        [in] IMarkupPointer *pPointerFinish,
+        [in] IMarkupPointer *pPointerTarget,
+        [in, out] IMarkupPointer *pPointerStatus,
+        [out] IHTMLElement **ppElemFailBotton,
+        [out] IHTMLElement **ppElemFailTop);
+
+    HRESULT SaveSegmentsToClipboard(
+        [in] ISegmentList *pSegmentList,
+        [in] DWORD dwFlags);
 };
 
 /*****************************************************************************
@@ -28160,11 +28256,43 @@ interface IMarkupServices : IUnknown
 [
     object,
     pointer_default(unique),
-    uuid(3050f5f9-98b5-11cf-bb82-00aa00bdce0B)
+    uuid(3050f5f9-98b5-11cf-bb82-00aa00bdce0b)
 ]
 interface IMarkupContainer : IUnknown
 {
     HRESULT OwningDoc([out] IHTMLDocument2 **ppDoc);
+}
+
+/*****************************************************************************
+ *    IMarkupContainer2 interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f648-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IMarkupContainer2 : IMarkupContainer
+{
+    HRESULT CreateChangeLog(
+        [in] IHTMLChangeSink *pChangeSink,
+        [out] IHTMLChangeLog **ppChangeLog,
+        [in] BOOL fforward,
+        [in] BOOL fBackward);
+
+    HRESULT RegisterForDirtyRange(
+        [in] IHTMLChangeSink *pChangeSink,
+        [out] DWORD *pdwCookie);
+
+    HRESULT UnRegisterForDirtyRange([in] DWORD dwCookie);
+
+    HRESULT GetAndClearDirtyRange(
+        [in] DWORD dwCookie,
+        [in] IMarkupPointer *pIPointerBegin,
+        [in] IMarkupPointer *pIPointerEnd);
+
+    long GetVersionNumber();
+
+    HRESULT GetMasterElement([out] IHTMLElement **ppElementMaster);
 }
 
 /*****************************************************************************
@@ -28246,6 +28374,92 @@ interface IMarkupPointer : IUnknown
         [in] DWORD dwFlags,
         [in] IMarkupPointer *pIEndMatch,
         [in] IMarkupPointer *pIEndSearch);
+}
+
+/*****************************************************************************
+ *    IMarkupPointer2 interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f675-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IMarkupPointer2 : IMarkupPointer
+{
+    HRESULT IsAtWordBreak([out] BOOL *pfAtBreak);
+
+    HRESULT GetMarkupPosition([out] long *plMP);
+
+    HRESULT MoveToMarkupPosition(
+        [in] IMarkupContainer *pContainer,
+        [in] long lMP);
+
+    HRESULT IsInsideURL(
+        [in] IMarkupPointer *pRight,
+        [out] BOOL *pfResult);
+
+    HRESULT MoveToContent(
+        [in] IHTMLElement *pIElement,
+        [out] BOOL fAtStart);
+}
+
+/*****************************************************************************
+ *    IMarkupPointer2 interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f5fa-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IMarkupTextFrags : IUnknown
+{
+    HRESULT GetTextFragCount([out] long *pcFrags);
+
+    HRESULT GetTextFrag(
+        [in] long iFrag,
+        [out] BSTR *pbstrFrag,
+        [in] IMarkupPointer *pPointerTag);
+
+    HRESULT RemoveTextFrag([in] long iFrag);
+
+    HRESULT InsertTextFrag(
+        [in] long iFrag,
+        [in] BSTR bstrInsert,
+        [in] IMarkupPointer *pPointerInsert);
+
+    HRESULT FindTextFragFromMarkupPointer(
+        [in] IMarkupPointer *pPointerFind,
+        [out] long *piFrag,
+        [out] BOOL *pfFragFound);
+}
+
+/*****************************************************************************
+ *    IHTMLChangeLog interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f649-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLChangeLog : IUnknown
+{
+    HRESULT GetNextChange(
+        [in] BYTE *pbBuffer,
+        [in] long nBufferSize,
+        [out] long *pnRecordLength);
+}
+
+/*****************************************************************************
+ *    IHTMLChangeSink interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f64a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLChangeSink : IUnknown
+{
+    HRESULT Notify();
 }
 
 /*****************************************************************************
@@ -28605,6 +28819,42 @@ interface ISegment : IUnknown
     HRESULT GetPointers(
         [in] IMarkupPointer *pIStart,
         [in] IMarkupPointer *pIEnd);
+}
+
+/*****************************************************************************
+ *    ISegmentListIterator interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f692-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISegmentListIterator : IUnknown
+{
+    HRESULT Current([out] ISegment **ppISegment);
+
+    HRESULT First();
+
+    HRESULT IsDone();
+
+    HRESULT Advance();
+}
+
+/*****************************************************************************
+ *    ISegmentList interface
+ */
+[
+    object,
+    pointer_default(unique),
+    uuid(3050f605-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface ISegmentList : IUnknown
+{
+    HRESULT CreateIterator([out] ISegmentListIterator **ppIIter);
+
+    HRESULT GetType([out] SELECTION_TYPE *peType);
+
+    HRESULT IsEmpty([out] BOOL *peType);
 }
 
 /*****************************************************************************
