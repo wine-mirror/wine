@@ -512,6 +512,12 @@ typedef [uuid(00000531-0000-0010-8000-00aa006d2ea4)] enum EventReasonEnum
     adRsnMoveLast = 15
 } EventReasonEnum;
 
+typedef [uuid(00000541-0000-0010-8000-00aa006d2ea4)] enum ConnectOptionEnum
+{
+    adConnectUnspecified = -1,
+    adAsyncConnect = 0x10
+} ConnectOptionEnum;
+
 [
     uuid(00000503-0000-0010-8000-00aa006d2ea4),
     odl,

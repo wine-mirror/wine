@@ -221,8 +221,14 @@ static HRESULT WINAPI connection_get_Version( _Connection *iface, BSTR *str )
 
 static HRESULT WINAPI connection_Close( _Connection *iface )
 {
-    FIXME( "%p\n", iface );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+
+    TRACE( "%p\n", connection );
+
+    if (connection->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    connection->state = adStateClosed;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_Execute( _Connection *iface, BSTR command, VARIANT *records_affected,
@@ -253,9 +259,14 @@ static HRESULT WINAPI connection_RollbackTrans( _Connection *iface )
 static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BSTR userid, BSTR password,
                                        LONG options )
 {
+    struct connection *connection = impl_from_Connection( iface );
     FIXME( "%p, %s, %s, %p, %08x\n", iface, debugstr_w(connect_str), debugstr_w(userid),
            password, options );
-    return E_NOTIMPL;
+
+    if (connection->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+
+    connection->state = adStateOpen;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_Errors( _Connection *iface, Errors **obj )

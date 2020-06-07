@@ -674,7 +674,7 @@ static void test_Connection(void)
     ISupportErrorInfo *errorinfo;
     IConnectionPointContainer *pointcontainer;
     LONG state, timeout;
-    BSTR str, str2;
+    BSTR str, str2, str3;
 
     hr = CoCreateInstance(&CLSID_Connection, NULL, CLSCTX_INPROC_SERVER, &IID__Connection, (void**)&connection);
     ok( hr == S_OK, "got %08x\n", hr );
@@ -701,6 +701,9 @@ if (0)   /* Crashes on windows */
     hr = _Connection_get_State(connection, &state);
     ok(hr == S_OK, "Failed to get state, hr 0x%08x\n", hr);
     ok(state == adStateClosed, "Unexpected state value 0x%08x\n", state);
+
+    hr = _Connection_Close(connection);
+    ok(hr == MAKE_ADO_HRESULT(adErrObjectClosed), "got %08x\n", hr);
 
     timeout = 0;
     hr = _Connection_get_CommandTimeout(connection, &timeout);
@@ -734,8 +737,30 @@ if (0) /* Crashes on windows */
     hr = _Connection_get_ConnectionString(connection, &str2);
     ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
     ok(!wcscmp(str, str2), "wrong string %s\n", wine_dbgstr_w(str2));
+
+    hr = _Connection_Open(connection, NULL, NULL, NULL, 0);
+    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+
+    /* Open adds trailing ; if it's missing */
+    str3 = SysAllocString(L"Provider=MSDASQL.1;Persist Security Info=False;Data Source=wine_test;");
+    hr = _Connection_Open(connection, NULL, NULL, NULL, adConnectUnspecified);
+    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+
+    str2 = NULL;
+    hr = _Connection_get_ConnectionString(connection, &str2);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
+
+    hr = _Connection_Open(connection, str, NULL, NULL, adConnectUnspecified);
+    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
     SysFreeString(str);
+
+    str2 = NULL;
+    hr = _Connection_get_ConnectionString(connection, &str2);
+    ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
+    todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
+    SysFreeString(str3);
 
     hr = _Connection_put_ConnectionString(connection, NULL);
     ok(hr == S_OK, "Failed, hr 0x%08x\n", hr);
