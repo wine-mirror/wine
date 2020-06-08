@@ -79,6 +79,7 @@ typedef struct
 
 #define UNWIND_TYPE_NO_HANDLER 0
 #define UNWIND_TYPE_DTOR_OBJ   1
+#define UNWIND_TYPE_DTOR_PTR   2
 #define UNWIND_TYPE_FRAME      3
 
 typedef struct
@@ -162,7 +163,7 @@ static inline void* rva_to_ptr(UINT rva, ULONG64 base)
     return rva ? (void*)(base+rva) : NULL;
 }
 
-static BOOL read_unwind_info(BYTE **b, unwind_info *ui)
+static void read_unwind_info(BYTE **b, unwind_info *ui)
 {
     BYTE *p = *b;
 
@@ -174,17 +175,18 @@ static BOOL read_unwind_info(BYTE **b, unwind_info *ui)
     switch (ui->type)
     {
     case UNWIND_TYPE_NO_HANDLER:
-        return TRUE;
+        break;
     case UNWIND_TYPE_DTOR_OBJ:
         ui->handler = read_rva(b);
-        ui->object = decode_uint(b); /* frame offset */
-        return TRUE;
+        ui->object = decode_uint(b); /* frame offset to object */
+        break;
+    case UNWIND_TYPE_DTOR_PTR:
+        ui->handler = read_rva(b);
+        ui->object = decode_uint(b); /* frame offset to pointer to object */
+        break;
     case UNWIND_TYPE_FRAME:
         ui->handler = read_rva(b);
-        return TRUE;
-    default:
-        FIXME("unknown type: %d\n", ui->type);
-        return FALSE;
+        break;
     }
 }
 
@@ -277,7 +279,7 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPAT
         BYTE *entry = unwind_map;
         unwind_info ui;
 
-        if (!read_unwind_info(&unwind_map, &ui)) return FALSE;
+        read_unwind_info(&unwind_map, &ui);
         if (ui.prev < (BYTE*)rva_to_ptr(descr->unwind_map, image_base)) ui.prev = NULL;
         TRACE("    %d (%p): type 0x%x prev %p func 0x%x(%p) object 0x%x\n",
                 i, entry, ui.type, ui.prev, ui.handler,
@@ -452,6 +454,8 @@ static void cxx_local_unwind4(ULONG64 frame, DISPATCHER_CONTEXT *dispatch,
         {
             handler_dtor = rva_to_ptr(ui.handler, dispatch->ImageBase);
             obj = rva_to_ptr(ui.object, frame);
+            if(ui.type == UNWIND_TYPE_DTOR_PTR)
+                obj = *(void**)obj;
             TRACE("handler: %p object: %p\n", handler_dtor, obj);
             handler_dtor(obj, frame);
         }
