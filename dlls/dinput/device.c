@@ -1001,8 +1001,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     res = This->acquired ? S_FALSE : DI_OK;
     This->acquired = 1;
     LeaveCriticalSection(&This->crit);
-    if (res == DI_OK)
-        check_dinput_hooks(iface, TRUE);
+    if (res != DI_OK) return res;
+
+    dinput_hooks_acquire_device(iface);
+    check_dinput_hooks(iface, TRUE);
 
     return res;
 }
@@ -1029,8 +1031,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     res = !This->acquired ? DI_NOEFFECT : DI_OK;
     This->acquired = 0;
     LeaveCriticalSection(&This->crit);
-    if (res == DI_OK)
-        check_dinput_hooks(iface, FALSE);
+    if (res != DI_OK) return res;
+
+    dinput_hooks_unacquire_device(iface);
+    check_dinput_hooks(iface, FALSE);
 
     return res;
 }
@@ -1163,10 +1167,6 @@ ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
 
     /* Free action mapping */
     HeapFree(GetProcessHeap(), 0, This->action_map);
-
-    EnterCriticalSection( &This->dinput->crit );
-    list_remove( &This->entry );
-    LeaveCriticalSection( &This->dinput->crit );
 
     IDirectInput_Release(&This->dinput->IDirectInput7A_iface);
     This->crit.DebugInfo->Spare[0] = 0;

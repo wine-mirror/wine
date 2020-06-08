@@ -63,7 +63,7 @@ struct IDirectInputDeviceImpl
     GUID                        guid;
     CRITICAL_SECTION            crit;
     IDirectInputImpl           *dinput;
-    struct list                 entry;       /* entry into IDirectInput devices list */
+    struct list                 entry;       /* entry into acquired device list */
     HANDLE                      hEvent;
     DWORD                       dwCoopLevel;
     HWND                        win;

@@ -42,12 +42,10 @@ struct IDirectInputImpl
     LONG                        ref;
 
     BOOL                        initialized;
-    CRITICAL_SECTION            crit;
     struct list                 entry;          /* entry into list of all IDirectInputs */
 
     DWORD                       evsequence;     /* unique sequence number for events */
     DWORD                       dwVersion;      /* direct input version number */
-    struct list                 devices_list;   /* list of all created dinput devices */
     struct list                 device_players; /* device instance guid to player name */
 };
 
@@ -70,6 +68,9 @@ extern const struct dinput_device keyboard_device DECLSPEC_HIDDEN;
 extern const struct dinput_device joystick_linux_device DECLSPEC_HIDDEN;
 extern const struct dinput_device joystick_linuxinput_device DECLSPEC_HIDDEN;
 extern const struct dinput_device joystick_osx_device DECLSPEC_HIDDEN;
+
+extern void dinput_hooks_acquire_device(LPDIRECTINPUTDEVICE8W iface);
+extern void dinput_hooks_unacquire_device(LPDIRECTINPUTDEVICE8W iface);
 
 extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W, BOOL) DECLSPEC_HIDDEN;
 extern void check_dinput_events(void) DECLSPEC_HIDDEN;

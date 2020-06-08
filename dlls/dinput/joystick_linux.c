@@ -554,10 +554,6 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
 
     IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
 
-    EnterCriticalSection(&dinput->crit);
-    list_add_tail(&dinput->devices_list, &newDevice->generic.base.entry);
-    LeaveCriticalSection(&dinput->crit);
-
     newDevice->generic.devcaps.dwSize = sizeof(newDevice->generic.devcaps);
     newDevice->generic.devcaps.dwFlags = DIDC_ATTACHED;
 
