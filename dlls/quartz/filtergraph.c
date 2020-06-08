@@ -181,7 +181,7 @@ typedef struct _IFilterGraphImpl {
     /* IRegisterServiceProvider */
     /* IResourceManager */
     /* IServiceProvider */
-    /* IVideoFrameStep */
+    IVideoFrameStep IVideoFrameStep_iface;
 
     IUnknown *outer_unk;
     LONG ref;
@@ -454,6 +454,9 @@ static HRESULT WINAPI FilterGraphInner_QueryInterface(IUnknown *iface, REFIID ri
     } else if (IsEqualGUID(&IID_IGraphVersion, riid)) {
         *ppvObj = &This->IGraphVersion_iface;
         TRACE("   returning IGraphVersion interface (%p)\n", *ppvObj);
+    } else if (IsEqualGUID(&IID_IVideoFrameStep, riid)) {
+        *ppvObj = &This->IVideoFrameStep_iface;
+        TRACE("   returning IVideoFrameStep interface (%p)\n", *ppvObj);
     } else {
         *ppvObj = NULL;
 	FIXME("unknown interface %s\n", debugstr_guid(riid));
@@ -5638,6 +5641,57 @@ static const IGraphVersionVtbl IGraphVersion_VTable =
     GraphVersion_QueryVersion,
 };
 
+static IFilterGraphImpl *impl_from_IVideoFrameStep(IVideoFrameStep *iface)
+{
+    return CONTAINING_RECORD(iface, IFilterGraphImpl, IVideoFrameStep_iface);
+}
+
+static HRESULT WINAPI VideoFrameStep_QueryInterface(IVideoFrameStep *iface, REFIID iid, void **out)
+{
+    IFilterGraphImpl *graph = impl_from_IVideoFrameStep(iface);
+    return IUnknown_QueryInterface(graph->outer_unk, iid, out);
+}
+
+static ULONG WINAPI VideoFrameStep_AddRef(IVideoFrameStep *iface)
+{
+    IFilterGraphImpl *graph = impl_from_IVideoFrameStep(iface);
+    return IUnknown_AddRef(graph->outer_unk);
+}
+
+static ULONG WINAPI VideoFrameStep_Release(IVideoFrameStep *iface)
+{
+    IFilterGraphImpl *graph = impl_from_IVideoFrameStep(iface);
+    return IUnknown_Release(graph->outer_unk);
+}
+
+static HRESULT WINAPI VideoFrameStep_Step(IVideoFrameStep *iface, DWORD frame_count, IUnknown *filter)
+{
+    FIXME("iface %p, frame_count %u, filter %p, stub!\n", iface, frame_count, filter);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VideoFrameStep_CanStep(IVideoFrameStep *iface, LONG multiple, IUnknown *filter)
+{
+    FIXME("iface %p, multiple %d, filter %p, stub!\n", iface, multiple, filter);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VideoFrameStep_CancelStep(IVideoFrameStep *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static const IVideoFrameStepVtbl VideoFrameStep_vtbl =
+{
+    VideoFrameStep_QueryInterface,
+    VideoFrameStep_AddRef,
+    VideoFrameStep_Release,
+    VideoFrameStep_Step,
+    VideoFrameStep_CanStep,
+    VideoFrameStep_CancelStep
+};
+
 static const IUnknownVtbl IInner_VTable =
 {
     FilterGraphInner_QueryInterface,
@@ -5668,6 +5722,7 @@ static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL 
     fimpl->IMediaPosition_iface.lpVtbl = &IMediaPosition_VTable;
     fimpl->IObjectWithSite_iface.lpVtbl = &IObjectWithSite_VTable;
     fimpl->IGraphVersion_iface.lpVtbl = &IGraphVersion_VTable;
+    fimpl->IVideoFrameStep_iface.lpVtbl = &VideoFrameStep_vtbl;
     fimpl->ref = 1;
     list_init(&fimpl->filters);
     list_init(&fimpl->sorted_filters);

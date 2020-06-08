@@ -1471,3 +1471,16 @@ interface IAMTVTuner : IAMTuner
     HRESULT get_VideoFrequency([out] long *freq);
     HRESULT get_AudioFrequency([out] long *freq);
 }
+
+[
+    local,
+    object,
+    uuid(e46a9787-2b71-444d-a4b5-1fab7b708d6a),
+    pointer_default(unique),
+]
+interface IVideoFrameStep : IUnknown
+{
+    HRESULT Step(DWORD frame_count, [in] IUnknown *filter);
+    HRESULT CanStep(long multiple, [in] IUnknown *filter);
+    HRESULT CancelStep();
+}

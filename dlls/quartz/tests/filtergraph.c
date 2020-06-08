@@ -125,6 +125,7 @@ static void test_interfaces(void)
     check_interface(graph, &IID_IMediaPosition, TRUE);
     check_interface(graph, &IID_IMediaSeeking, TRUE);
     check_interface(graph, &IID_IObjectWithSite, TRUE);
+    check_interface(graph, &IID_IVideoFrameStep, TRUE);
     check_interface(graph, &IID_IVideoWindow, TRUE);
 
     check_interface(graph, &IID_IBaseFilter, FALSE);
