@@ -878,7 +878,9 @@ __ASM_STDCALL_FUNC( _alldvrm, 16,
  */
 ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b )
 {
-    return a % b;
+    ULONGLONG r;
+    udivmod(a, b, &r);
+    return r;
 }
 
 /******************************************************************************
