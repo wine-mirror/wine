@@ -94,6 +94,9 @@ static int (__cdecl *sum_cps)(cps_t *cps);
 static int (__cdecl *sum_cpsc)(cpsc_t *cpsc);
 static int (__cdecl *get_cpsc)(int n, cpsc_t *cpsc);
 static int (__cdecl *sum_complex_array)(int n, refpint_t pi[]);
+static int (__cdecl *sum_blob)(cs_blob_t *blob);
+static int (__cdecl *sum_data)(cs_data_t *data);
+static int (__cdecl *sum_container)(cs_container_t *container);
 static int (__cdecl *square_puint)(puint_t p);
 static int (__cdecl *sum_puints)(puints_t *p);
 static int (__cdecl *sum_cpuints)(cpuints_t *p);
@@ -185,6 +188,9 @@ static void (__cdecl *test_handle)(ctx_handle_t ctx_handle);
     X(sum_cpsc) \
     X(get_cpsc) \
     X(sum_complex_array) \
+    X(sum_blob) \
+    X(sum_data) \
+    X(sum_container) \
     X(square_puint) \
     X(sum_puints) \
     X(sum_cpuints) \
@@ -504,6 +510,36 @@ int __cdecl s_sum_complex_array(int n, refpint_t pi[])
   int total = 0;
   for (; n > 0; n--)
     total += *pi[n - 1];
+  return total;
+}
+
+int __cdecl s_sum_blob(cs_blob_t *blob)
+{
+  int i, total = 0;
+
+  for (i = 0; i < blob->n; i++)
+    total += blob->ca[i];
+
+  return total;
+}
+
+int __cdecl s_sum_data(cs_data_t *data)
+{
+  int i, total = 0;
+
+  for (i = 0; i < data->blob.n; i++)
+    total += data->blob.ca[i];
+
+  return total;
+}
+
+int __cdecl s_sum_container(cs_container_t *container)
+{
+  int i, total = 0;
+
+  for (i = 0; i < container->data.blob.n; i++)
+    total += container->data.blob.ca[i];
+
   return total;
 }
 
@@ -1618,6 +1654,9 @@ array_tests(void)
   vector_t vs[2] = {{1, -2, 3}, {4, -5, -6}};
   cps_t cps;
   cpsc_t cpsc;
+  cs_blob_t blob;
+  cs_data_t data;
+  cs_container_t container;
   cs_t *cs;
   int n;
   int ca[5] = {1, -2, 3, -4, 5};
@@ -1761,6 +1800,21 @@ array_tests(void)
 
   ok(sum_ptr_array(ptr_array) == 3, "RPC sum_ptr_array\n");
   ok(sum_array_ptr(&array) == 7, "RPC sum_array_ptr\n");
+
+  blob.n = ARRAY_SIZE(c);
+  blob.ca = c;
+  n = sum_blob(&blob);
+  ok(n == 45, "RPC sum_blob = %d\n", n);
+
+  data.blob.n = ARRAY_SIZE(c);
+  data.blob.ca = c;
+  n = sum_data(&data);
+  ok(n == 45, "RPC sum_data = %d\n", n);
+
+  container.data.blob.n = ARRAY_SIZE(c);
+  container.data.blob.ca = c;
+  n = sum_container(&container);
+  ok(n == 45, "RPC sum_container = %d\n", n);
 }
 
 void __cdecl s_authinfo_test(unsigned int protseq, int secure)

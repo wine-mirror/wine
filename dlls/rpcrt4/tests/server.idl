@@ -171,6 +171,30 @@ cpp_quote("#ifndef SKIP_TYPE_DECLS")
 
   typedef struct
   {
+    int n;
+    [size_is(n)] int *ca;
+  } cs_blob_t;
+
+  typedef struct
+  {
+/* FIXME: widl generates incorrect correlation descriptor and the tests crash */
+#if 0
+    int dummy[1]; /* to make offset to conformant array unique */
+#endif
+    cs_blob_t blob;
+  } cs_data_t;
+
+  typedef struct
+  {
+/* FIXME: widl generates incorrect correlation descriptor and the tests crash */
+#if 0
+    int dummy[2]; /* to make offset to conformant array unique */
+#endif
+    cs_data_t data;
+  } cs_container_t;
+
+  typedef struct
+  {
     int *pn;
     [size_is(*pn)] int *ca1;
     [size_is(n * 2)] int *ca2;
@@ -191,6 +215,9 @@ cpp_quote("#endif")
   int sum_cpsc(cpsc_t *cpsc);
   int get_cpsc(int n, [out] cpsc_t *cpsc );
   int sum_complex_array(int n, [size_is(n)] refpint_t pi[]);
+  int sum_blob([in] cs_blob_t *blob);
+  int sum_data([in] cs_data_t *data);
+  int sum_container([in] cs_container_t *container);
 
 cpp_quote("#ifndef SKIP_TYPE_DECLS")
   typedef [wire_marshal(int)] void *puint_t;
