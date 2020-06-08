@@ -2942,13 +2942,14 @@ static void compute_liveness(struct hlsl_ir_function_decl *entry_func)
     compute_liveness_recurse(entry_func->body, 0, 0);
 }
 
-struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
-        const char *entrypoint, char **messages)
+HRESULT parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
+        const char *entrypoint, ID3D10Blob **shader_blob, char **messages)
 {
     struct hlsl_ir_function_decl *entry_func;
     struct hlsl_scope *scope, *next_scope;
     struct hlsl_type *hlsl_type, *next_type;
     struct hlsl_ir_var *var, *next_var;
+    HRESULT hr = E_FAIL;
     unsigned int i;
 
     hlsl_ctx.status = PARSE_SUCCESS;
@@ -2998,6 +2999,9 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
 
     compute_liveness(entry_func);
 
+    if (hlsl_ctx.status != PARSE_ERR)
+        hr = E_NOTIMPL;
+
 out:
     if (messages)
     {
@@ -3036,5 +3040,5 @@ out:
         free_hlsl_type(hlsl_type);
     }
 
-    return NULL;
+    return hr;
 }

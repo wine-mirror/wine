@@ -752,12 +752,11 @@ static const struct target_info * get_target_info(const char *target)
 }
 
 static HRESULT compile_shader(const char *preproc_shader, const char *target, const char *entrypoint,
-        ID3DBlob **shader_blob, ID3DBlob **error_messages)
+        ID3DBlob **shader, ID3DBlob **error_messages)
 {
-    struct bwriter_shader *shader;
+    DWORD size, major, minor;
     char *messages = NULL;
     HRESULT hr;
-    DWORD *res, size, major, minor;
     ID3DBlob *buffer;
     char *pos;
     enum shader_type shader_type;
@@ -787,7 +786,7 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
         }
     }
 
-    shader = parse_hlsl_shader(preproc_shader, shader_type, major, minor, entrypoint, &messages);
+    hr = parse_hlsl_shader(preproc_shader, shader_type, major, minor, entrypoint, shader, &messages);
 
     if (messages)
     {
@@ -800,14 +799,18 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
         if (error_messages)
         {
             const char *preproc_messages = *error_messages ? ID3D10Blob_GetBufferPointer(*error_messages) : NULL;
+            HRESULT blob_hr;
 
             size = strlen(messages) + (preproc_messages ? strlen(preproc_messages) : 0) + 1;
-            hr = D3DCreateBlob(size, &buffer);
-            if (FAILED(hr))
+            if (FAILED(blob_hr = D3DCreateBlob(size, &buffer)))
             {
                 HeapFree(GetProcessHeap(), 0, messages);
-                if (shader) SlDeleteShader(shader);
-                return hr;
+                if (*shader)
+                {
+                    ID3D10Blob_Release(*shader);
+                    *shader = NULL;
+                }
+                return blob_hr;
             }
             pos = ID3D10Blob_GetBufferPointer(buffer);
             if (preproc_messages)
@@ -823,35 +826,7 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
         HeapFree(GetProcessHeap(), 0, messages);
     }
 
-    if (!shader)
-    {
-        ERR("HLSL shader parsing failed.\n");
-        return D3DXERR_INVALIDDATA;
-    }
-
-    hr = shader_write_bytecode(shader, &res, &size);
-    SlDeleteShader(shader);
-    if (FAILED(hr))
-    {
-        ERR("Failed to write bytecode, hr %#x.\n", hr);
-        return D3DXERR_INVALIDDATA;
-    }
-
-    if (shader_blob)
-    {
-        hr = D3DCreateBlob(size, &buffer);
-        if (FAILED(hr))
-        {
-            HeapFree(GetProcessHeap(), 0, res);
-            return hr;
-        }
-        memcpy(ID3D10Blob_GetBufferPointer(buffer), res, size);
-        *shader_blob = buffer;
-    }
-
-    HeapFree(GetProcessHeap(), 0, res);
-
-    return S_OK;
+    return hr;
 }
 
 HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filename,

@@ -1081,8 +1081,8 @@ BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 void init_functions_tree(struct wine_rb_tree *funcs) DECLSPEC_HIDDEN;
 void add_function_decl(struct wine_rb_tree *funcs, char *name, struct hlsl_ir_function_decl *decl,
         BOOL intrinsic) DECLSPEC_HIDDEN;
-struct bwriter_shader *parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
-        const char *entrypoint, char **messages) DECLSPEC_HIDDEN;
+HRESULT parse_hlsl_shader(const char *text, enum shader_type type, DWORD major, DWORD minor,
+        const char *entrypoint, ID3D10Blob **shader, char **messages) DECLSPEC_HIDDEN;
 
 const char *debug_base_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
 const char *debug_hlsl_type(const struct hlsl_type *type) DECLSPEC_HIDDEN;
