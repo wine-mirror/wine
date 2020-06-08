@@ -405,6 +405,120 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
     return len;
 }
 
+static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
+        double v, FUNC_NAME(pf_flags) *flags, MSVCRT__locale_t locale)
+{
+#define EXP_BITS 11
+#define MANT_BITS 53
+    const APICHAR digits[2][16] = {
+        { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' },
+        { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' }
+    };
+
+    APICHAR pfx[16], sfx[8], *p;
+    ULONGLONG mant;
+    int len = 0, sfx_len = 0, r, exp;
+
+    mant = (*(ULONGLONG*)&v) << 1;
+    exp = (mant >> MANT_BITS);
+    exp -= (1 << (EXP_BITS - 1)) - 1;
+    mant = (mant << EXP_BITS) >> (EXP_BITS+1);
+
+    p = pfx;
+    if(flags->PadZero) {
+        if(flags->Sign) *p++ = flags->Sign;
+        *p++ = '0';
+        *p++ = (flags->Format=='a' ? 'x' : 'X');
+        r = pf_puts(puts_ctx, p-pfx, pfx);
+        if(r < 0) return r;
+        len += r;
+
+        flags->FieldLength -= p-pfx;
+        flags->Sign = 0;
+        p = pfx;
+    }else {
+        *p++ = '0';
+        *p++ = (flags->Format=='a' ? 'x' : 'X');
+    }
+    if(exp == -(1 << (EXP_BITS-1))+1) {
+        if(!mant) exp = 0;
+        else exp++;
+        *p++ = '0';
+    }else {
+        *p++ = '1';
+    }
+    *p++ = *(locale ? locale->locinfo : get_locinfo())->lconv->decimal_point;
+    for(r=MANT_BITS/4-1; r>=0; r--) {
+        p[r] = digits[flags->Format == 'A'][mant & 15];
+        mant >>= 4;
+    }
+    if(!flags->Precision) {
+        if(p[0] > '8') p[-2]++;
+        if(!flags->Alternate) p--;
+    }else if(flags->Precision>0 && flags->Precision<MANT_BITS/4) {
+        BOOL round_up = (p[flags->Precision] > '8');
+        for(r=flags->Precision-1; r>=0 && round_up; r--) {
+            round_up = FALSE;
+            if(p[r]=='f' || p[r]=='F') {
+                p[r] = '0';
+                round_up = TRUE;
+            }else if(p[r] == '9') {
+                p[r] = (flags->Format == 'a' ? 'a' : 'A');
+            }else {
+                p[r]++;
+            }
+        }
+        if(round_up) p[-2]++;
+        p += flags->Precision;
+    }else {
+        p += MANT_BITS/4;
+        if(flags->Precision > MANT_BITS/4) sfx_len += flags->Precision - MANT_BITS/4;
+    }
+    *p = 0;
+
+    p = sfx;
+    *p++ = (flags->Format == 'a' ? 'p' : 'P');
+    if(exp < 0) {
+        *p++ = '-';
+        exp = -exp;
+    }else {
+        *p++ = '+';
+    }
+    for(r=3; r>=0; r--) {
+        p[r] = exp%10 + '0';
+        exp /= 10;
+        if(!exp) break;
+    }
+    for(exp=0; exp<4-r; exp++)
+        p[exp] = p[exp+r];
+    p += exp;
+    *p = 0;
+    sfx_len += p - sfx;
+
+    flags->FieldLength -= sfx_len;
+    flags->Precision = -1;
+#ifdef PRINTF_WIDE
+    r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, pfx, -1, flags, locale);
+#else
+    r = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, pfx, -1, flags, locale);
+#endif
+    if(r < 0) return r;
+    len += r;
+
+    flags->FieldLength = sfx_len;
+    flags->PadZero = '0';
+    flags->Sign = 0;
+#ifdef PRINTF_WIDE
+    r = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, sfx, -1, flags, locale);
+#else
+    r = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, sfx, -1, flags, locale);
+#endif
+    if(r < 0) return r;
+    len += r;
+
+    return len;
+}
+
 static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_flags) *flags)
 {
     *p++ = '%';
@@ -749,6 +863,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(isinf(val) || isnan(val))
                 i = FUNC_NAME(pf_output_special_fp)(pf_puts, puts_ctx, val, &flags,
                         locale, legacy_msvcrt_compat, three_digit_exp);
+            else if(flags.Format=='a' || flags.Format=='A')
+                i = FUNC_NAME(pf_output_hex_fp)(pf_puts, puts_ctx, val, &flags, locale);
             else {
                 if(flags.Format=='f' || flags.Format=='F') {
                     if(val<10.0)
