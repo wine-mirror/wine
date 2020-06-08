@@ -350,3 +350,28 @@ HRESULT shape_get_typographic_features(struct scriptshaping_context *context, co
 
     return t.count <= max_tagcount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
+
+HRESULT shape_check_typographic_feature(struct scriptshaping_context *context, const unsigned int *scripts,
+        unsigned int tag, unsigned int glyph_count, const UINT16 *glyphs, UINT8 *feature_applies)
+{
+    static const unsigned int tables[] = { MS_GSUB_TAG, MS_GPOS_TAG };
+    struct shaping_feature feature = { .tag = tag };
+    unsigned int script_index, language_index;
+    unsigned int i;
+
+    memset(feature_applies, 0, glyph_count * sizeof(*feature_applies));
+
+    for (i = 0; i < ARRAY_SIZE(tables); ++i)
+    {
+        shape_get_script_lang_index(context, scripts, tables[i], &script_index, &language_index);
+        context->table = tables[i] == MS_GSUB_TAG ? &context->cache->gsub : &context->cache->gpos;
+        /* Skip second table if feature applies to all. */
+        if (opentype_layout_check_feature(context, script_index, language_index, &feature, glyph_count,
+                glyphs, feature_applies))
+        {
+            break;
+        }
+    }
+
+    return S_OK;
+}

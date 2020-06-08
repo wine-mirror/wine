@@ -591,8 +591,13 @@ extern void opentype_layout_apply_gsub_features(struct scriptshaping_context *co
         unsigned int language_index, const struct shaping_features *features) DECLSPEC_HIDDEN;
 extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features) DECLSPEC_HIDDEN;
+extern BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsigned int script_index,
+        unsigned int language_index, struct shaping_feature *feature, unsigned int glyph_count,
+        const UINT16 *glyphs, UINT8 *feature_applies) DECLSPEC_HIDDEN;
 
 extern HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
 extern HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
 extern HRESULT shape_get_typographic_features(struct scriptshaping_context *context, const unsigned int *scripts,
         unsigned int max_tagcount, unsigned int *actual_tagcount, unsigned int *tags) DECLSPEC_HIDDEN;
+extern HRESULT shape_check_typographic_feature(struct scriptshaping_context *context, const unsigned int *scripts,
+        unsigned int tag, unsigned int glyph_count, const UINT16 *glyphs, UINT8 *feature_applies) DECLSPEC_HIDDEN;

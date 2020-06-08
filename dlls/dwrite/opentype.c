@@ -5732,3 +5732,252 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
 
     heap_free(lookups.lookups);
 }
+
+static BOOL opentype_layout_contextual_lookup_is_glyph_covered(struct scriptshaping_context *context, UINT16 glyph,
+        unsigned int subtable_offset, unsigned int coverage, unsigned int format)
+{
+    const struct dwrite_fonttable *table = &context->table->table;
+    const UINT16 *offsets;
+    unsigned int count;
+
+    if (format == 1 || format == 2)
+    {
+        if (opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph) != GLYPH_NOT_COVERED)
+            return TRUE;
+    }
+    else if (format == 3)
+    {
+        count = table_read_be_word(table, subtable_offset + 2);
+        if (!count || !(offsets = table_read_ensure(table, subtable_offset + 6, count * sizeof(*offsets))))
+            return FALSE;
+
+        if (opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(offsets[0]), glyph) != GLYPH_NOT_COVERED)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL opentype_layout_chain_contextual_lookup_is_glyph_covered(struct scriptshaping_context *context, UINT16 glyph,
+        unsigned int subtable_offset, unsigned int coverage, unsigned int format)
+{
+    const struct dwrite_fonttable *table = &context->table->table;
+    unsigned int count, backtrack_count;
+    const UINT16 *offsets;
+
+    if (format == 1 || format == 2)
+    {
+        if (opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph) != GLYPH_NOT_COVERED)
+            return TRUE;
+    }
+    else if (format == 3)
+    {
+        backtrack_count = table_read_be_word(table, subtable_offset + 2);
+
+        count = table_read_be_word(table, subtable_offset + 4 + backtrack_count * sizeof(*offsets));
+
+        if (!count || !(offsets = table_read_ensure(table, subtable_offset + 6 + backtrack_count * sizeof(*offsets),
+                count * sizeof(*offsets))))
+            return FALSE;
+
+        if (opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(offsets[0]), glyph) != GLYPH_NOT_COVERED)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL opentype_layout_gsub_lookup_is_glyph_covered(struct scriptshaping_context *context, UINT16 glyph,
+        const struct lookup *lookup)
+{
+    const struct dwrite_fonttable *gsub = &context->table->table;
+    static const unsigned short gsub_formats[] =
+    {
+        0, /* Unused  */
+        1, /* SingleSubst */
+        1, /* MultipleSubst */
+        1, /* AlternateSubst */
+        1, /* LigatureSubst */
+        3, /* ContextSubst */
+        3, /* ChainContextSubst */
+        0, /* Extension, unused */
+        1, /* ReverseChainSubst */
+    };
+    unsigned int i, coverage, lookup_type, format;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
+
+        if (lookup->type == GSUB_LOOKUP_EXTENSION_SUBST)
+        {
+            lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset);
+            if (!lookup_type)
+                continue;
+        }
+        else
+            lookup_type = lookup->type;
+
+        format = table_read_be_word(gsub, subtable_offset);
+
+        if (!format || format > ARRAY_SIZE(gsub_formats) || format > gsub_formats[lookup_type])
+            break;
+
+        coverage = table_read_be_word(gsub, subtable_offset + 2);
+
+        switch (lookup_type)
+        {
+            case GSUB_LOOKUP_SINGLE_SUBST:
+            case GSUB_LOOKUP_MULTIPLE_SUBST:
+            case GSUB_LOOKUP_ALTERNATE_SUBST:
+            case GSUB_LOOKUP_LIGATURE_SUBST:
+            case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
+
+                if (opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph) != GLYPH_NOT_COVERED)
+                    return TRUE;
+
+                break;
+
+            case GSUB_LOOKUP_CONTEXTUAL_SUBST:
+
+                if (opentype_layout_contextual_lookup_is_glyph_covered(context, glyph, subtable_offset, coverage, format))
+                    return TRUE;
+
+                break;
+
+            case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
+
+                if (opentype_layout_chain_contextual_lookup_is_glyph_covered(context, glyph, subtable_offset, coverage, format))
+                    return TRUE;
+
+                break;
+
+            default:
+                WARN("Unknown lookup type %u.\n", lookup_type);
+        }
+    }
+
+    return FALSE;
+}
+
+static BOOL opentype_layout_gpos_lookup_is_glyph_covered(struct scriptshaping_context *context, UINT16 glyph,
+        const struct lookup *lookup)
+{
+    const struct dwrite_fonttable *gpos = &context->table->table;
+    static const unsigned short gpos_formats[] =
+    {
+        0, /* Unused  */
+        2, /* SinglePos */
+        2, /* PairPos */
+        1, /* CursivePos */
+        1, /* MarkBasePos */
+        1, /* MarkLigPos */
+        1, /* MarkMarkPos */
+        3, /* ContextPos */
+        3, /* ChainContextPos */
+        0, /* Extension, unused */
+    };
+    unsigned int i, coverage, lookup_type, format;
+
+    for (i = 0; i < lookup->subtable_count; ++i)
+    {
+        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
+
+        if (lookup->type == GPOS_LOOKUP_EXTENSION_POSITION)
+        {
+            lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset);
+            if (!lookup_type)
+                continue;
+        }
+        else
+            lookup_type = lookup->type;
+
+        format = table_read_be_word(gpos, subtable_offset);
+
+        if (!format || format > ARRAY_SIZE(gpos_formats) || format > gpos_formats[lookup_type])
+            break;
+
+        coverage = table_read_be_word(gpos, subtable_offset + 2);
+
+        switch (lookup_type)
+        {
+            case GPOS_LOOKUP_SINGLE_ADJUSTMENT:
+            case GPOS_LOOKUP_PAIR_ADJUSTMENT:
+            case GPOS_LOOKUP_CURSIVE_ATTACHMENT:
+            case GPOS_LOOKUP_MARK_TO_BASE_ATTACHMENT:
+            case GPOS_LOOKUP_MARK_TO_LIGATURE_ATTACHMENT:
+            case GPOS_LOOKUP_MARK_TO_MARK_ATTACHMENT:
+
+                if (opentype_layout_is_glyph_covered(gpos, subtable_offset + coverage, glyph) != GLYPH_NOT_COVERED)
+                    return TRUE;
+
+                break;
+
+            case GPOS_LOOKUP_CONTEXTUAL_POSITION:
+
+                if (opentype_layout_contextual_lookup_is_glyph_covered(context, glyph, subtable_offset, coverage, format))
+                    return TRUE;
+
+                break;
+
+            case GPOS_LOOKUP_CONTEXTUAL_CHAINING_POSITION:
+
+                if (opentype_layout_chain_contextual_lookup_is_glyph_covered(context, glyph, subtable_offset, coverage, format))
+                    return TRUE;
+
+                break;
+
+            default:
+                WARN("Unknown lookup type %u.\n", lookup_type);
+        }
+    }
+
+    return FALSE;
+}
+
+typedef BOOL (*p_lookup_is_glyph_covered_func)(struct scriptshaping_context *context, UINT16 glyph, const struct lookup *lookup);
+
+BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsigned int script_index,
+        unsigned int language_index, struct shaping_feature *feature, unsigned int glyph_count,
+        const UINT16 *glyphs, UINT8 *feature_applies)
+{
+    p_lookup_is_glyph_covered_func func_is_covered;
+    struct shaping_features features = { 0 };
+    struct lookups lookups = { 0 };
+    BOOL ret = FALSE, is_covered;
+    unsigned int i, j, applies;
+
+    features.features = feature;
+    features.count = 1;
+
+    for (i = 0; i < context->glyph_count; ++i)
+        opentype_set_glyph_props(context, i);
+
+    opentype_layout_collect_lookups(context, script_index, language_index, &features, context->table, &lookups);
+
+    func_is_covered = context->table == &context->cache->gsub ? opentype_layout_gsub_lookup_is_glyph_covered :
+            opentype_layout_gpos_lookup_is_glyph_covered;
+
+    for (i = 0; i < lookups.count; ++i)
+    {
+        struct lookup *lookup = &lookups.lookups[i];
+
+        applies = 0;
+        for (j = 0; j < context->glyph_count; ++j)
+        {
+            if (lookup_is_glyph_match(context, j, lookup->flags))
+            {
+                if ((is_covered = func_is_covered(context, glyphs[i], lookup)))
+                    ++applies;
+                feature_applies[j] |= is_covered;
+            }
+        }
+
+        if ((ret = (applies == context->glyph_count)))
+            break;
+    }
+
+    heap_free(lookups.lookups);
+
+    return ret;
+}

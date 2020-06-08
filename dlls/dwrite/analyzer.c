@@ -1787,12 +1787,33 @@ static HRESULT WINAPI dwritetextanalyzer2_GetTypographicFeatures(IDWriteTextAnal
 };
 
 static HRESULT WINAPI dwritetextanalyzer2_CheckTypographicFeature(IDWriteTextAnalyzer2 *iface,
-        IDWriteFontFace *face, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *locale, DWRITE_FONT_FEATURE_TAG feature,
+        IDWriteFontFace *fontface, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *locale, DWRITE_FONT_FEATURE_TAG feature,
         UINT32 glyph_count, const UINT16 *glyphs, UINT8 *feature_applies)
 {
-    FIXME("(%p %u %s %s %u %p %p): stub\n", face, sa.script, debugstr_w(locale), debugstr_tag(feature), glyph_count,
-            glyphs, feature_applies);
-    return E_NOTIMPL;
+    struct scriptshaping_context context = { 0 };
+    const struct dwritescript_properties *props;
+    struct dwrite_fontface *font_obj;
+    HRESULT hr;
+
+    TRACE("%p, %p, %u, %s, %s, %u, %p, %p.\n", iface, fontface, sa.script, debugstr_w(locale), debugstr_tag(feature),
+            glyph_count, glyphs, feature_applies);
+
+    if (sa.script > Script_LastId)
+        return E_INVALIDARG;
+
+    font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
+
+    context.cache = fontface_get_shaping_cache(font_obj);
+    context.language_tag = get_opentype_language(locale);
+    context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos));
+
+    props = &dwritescripts_properties[sa.script];
+
+    hr = shape_check_typographic_feature(&context, props->scripttags, feature, glyph_count, glyphs, feature_applies);
+
+    heap_free(context.glyph_infos);
+
+    return hr;
 }
 
 static const struct IDWriteTextAnalyzer2Vtbl textanalyzervtbl = {
