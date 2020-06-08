@@ -777,7 +777,13 @@ LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b )
  */
 LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b )
 {
-    return a % b;
+    LONGLONG s = b >> 63;          /* s = b < 0 ? -1 : 0 */
+    ULONGLONG r;
+    b = (b ^ s) - s;               /* negate if s == -1 */
+    s = a >> 63;                   /* s = a < 0 ? -1 : 0 */
+    a = (a ^ s) - s;               /* negate if s == -1 */
+    udivmod(a, b, &r);
+    return ((LONGLONG)r ^ s) - s;  /* negate if s == -1 */
 }
 
 
