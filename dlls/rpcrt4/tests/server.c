@@ -141,7 +141,7 @@ static void (__cdecl *stop_autolisten)(void);
 static void (__cdecl *ip_test)(ipu_t *a);
 static int (__cdecl *sum_ptr_array)(int *a[2]);
 static int (__cdecl *sum_array_ptr)(int (*a)[2]);
-static ctx_handle_t __cdecl (*get_handle)(void);
+static ctx_handle_t (__cdecl *get_handle)(void);
 static void (__cdecl *get_handle_by_ptr)(ctx_handle_t *r);
 static void (__cdecl *test_handle)(ctx_handle_t ctx_handle);
 
