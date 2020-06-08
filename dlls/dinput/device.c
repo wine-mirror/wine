@@ -931,13 +931,19 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
 
 void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD time, DWORD seq)
 {
+    static ULONGLONG notify_ms = 0;
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
     int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
+    ULONGLONG time_ms = GetTickCount64();
 
     /* Event is being set regardless of the queue state */
     if (This->hEvent) SetEvent(This->hEvent);
 
-    PostMessageW(GetDesktopWindow(), WM_WINE_NOTIFY_ACTIVITY, 0, 0);
+    if (time_ms - notify_ms > 1000)
+    {
+        PostMessageW(GetDesktopWindow(), WM_WINE_NOTIFY_ACTIVITY, 0, 0);
+        notify_ms = time_ms;
+    }
 
     if (!This->queue_len || This->overflow || ofs < 0) return;
 
