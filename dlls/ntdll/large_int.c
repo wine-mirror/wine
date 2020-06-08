@@ -545,6 +545,15 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
 
 #ifdef __i386__
 
+/* those builtin functions use stdcall calling convention, but compilers reference them without stdcall declarations */
+#if defined(__MINGW32__) || defined(_MSC_VER)
+LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b ) asm("_alldiv");
+LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b ) asm("_allmul");
+LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b ) asm("_allrem");
+ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b ) asm("_aulldiv");
+ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b ) asm("_aullrem");
+#endif
+
 static ULONGLONG udivmod(ULONGLONG a, ULONGLONG b, ULONGLONG *rem)
 {
     const ULARGE_INTEGER n = { .QuadPart = a };
@@ -873,29 +882,29 @@ LONGLONG WINAPI _allshr( LONGLONG a, LONG b )
  *  Returns the quotient of a and b in edx:eax.
  *  Returns the remainder of a and b in ebx:ecx.
  */
-__ASM_STDCALL_FUNC( _alldvrm, 16,
-                    "pushl %ebp\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                    "movl %esp,%ebp\n\t"
-                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                    "pushl 20(%ebp)\n\t"
-                    "pushl 16(%ebp)\n\t"
-                    "pushl 12(%ebp)\n\t"
-                    "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("_allrem") "\n\t"
-                    "movl %edx,%ebx\n\t"
-                    "pushl %eax\n\t"
-                    "pushl 20(%ebp)\n\t"
-                    "pushl 16(%ebp)\n\t"
-                    "pushl 12(%ebp)\n\t"
-                    "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("_alldiv") "\n\t"
-                    "popl %ecx\n\t"
-                    "leave\n\t"
-                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-                    __ASM_CFI(".cfi_same_value %ebp\n\t")
-                    "ret $16" )
+__ASM_GLOBAL_FUNC( _alldvrm,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("_allrem") "\n\t"
+                   "movl %edx,%ebx\n\t"
+                   "pushl %eax\n\t"
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("_alldiv") "\n\t"
+                   "popl %ecx\n\t"
+                   "leave\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret $16" )
 
 /******************************************************************************
  *        _aullrem   (NTDLL.@)
@@ -946,28 +955,28 @@ ULONGLONG WINAPI _aullshr( ULONGLONG a, LONG b )
  *  Returns the quotient of a and b in edx:eax.
  *  Returns the remainder of a and b in ebx:ecx.
  */
-__ASM_STDCALL_FUNC( _aulldvrm, 16,
-                    "pushl %ebp\n\t"
-                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
-                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
-                    "movl %esp,%ebp\n\t"
-                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
-                    "pushl 20(%ebp)\n\t"
-                    "pushl 16(%ebp)\n\t"
-                    "pushl 12(%ebp)\n\t"
-                    "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("_aullrem") "\n\t"
-                    "movl %edx,%ebx\n\t"
-                    "pushl %eax\n\t"
-                    "pushl 20(%ebp)\n\t"
-                    "pushl 16(%ebp)\n\t"
-                    "pushl 12(%ebp)\n\t"
-                    "pushl 8(%ebp)\n\t"
-                    "call " __ASM_NAME("_aulldiv") "\n\t"
-                    "popl %ecx\n\t"
-                    "leave\n\t"
-                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
-                    __ASM_CFI(".cfi_same_value %ebp\n\t")
-                    "ret $16" )
+__ASM_GLOBAL_FUNC( _aulldvrm,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("_aullrem") "\n\t"
+                   "movl %edx,%ebx\n\t"
+                   "pushl %eax\n\t"
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("_aulldiv") "\n\t"
+                   "popl %ecx\n\t"
+                   "leave\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret $16" )
 
 #endif  /* __i386__ */
