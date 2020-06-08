@@ -590,7 +590,7 @@ static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct s
     if (!(c = d3dcompiler_alloc(sizeof(*c))))
         return NULL;
     init_node(&c->node, HLSL_IR_CONSTANT, hlsl_ctx.builtin_types.scalar[HLSL_TYPE_UINT], loc);
-    c->v.value.u[0] = n;
+    c->value.u[0] = n;
     return c;
 }
 
@@ -1231,15 +1231,15 @@ static unsigned int evaluate_array_dimension(struct hlsl_ir_node *node)
         switch (constant->node.data_type->base_type)
         {
         case HLSL_TYPE_UINT:
-            return constant->v.value.u[0];
+            return constant->value.u[0];
         case HLSL_TYPE_INT:
-            return constant->v.value.i[0];
+            return constant->value.i[0];
         case HLSL_TYPE_FLOAT:
-            return constant->v.value.f[0];
+            return constant->value.f[0];
         case HLSL_TYPE_DOUBLE:
-            return constant->v.value.d[0];
+            return constant->value.d[0];
         case HLSL_TYPE_BOOL:
-            return constant->v.value.b[0];
+            return constant->value.b[0];
         default:
             WARN("Invalid type %s.\n", debug_base_type(constant->node.data_type));
             return 0;
@@ -2252,7 +2252,7 @@ primary_expr:             C_FLOAT
                                 }
                                 init_node(&c->node, HLSL_IR_CONSTANT,
                                         hlsl_ctx.builtin_types.scalar[HLSL_TYPE_FLOAT], get_location(&@1));
-                                c->v.value.f[0] = $1;
+                                c->value.f[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
                             }
@@ -2266,7 +2266,7 @@ primary_expr:             C_FLOAT
                                 }
                                 init_node(&c->node, HLSL_IR_CONSTANT,
                                         hlsl_ctx.builtin_types.scalar[HLSL_TYPE_INT], get_location(&@1));
-                                c->v.value.i[0] = $1;
+                                c->value.i[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
                             }
@@ -2280,7 +2280,7 @@ primary_expr:             C_FLOAT
                                 }
                                 init_node(&c->node, HLSL_IR_CONSTANT,
                                         hlsl_ctx.builtin_types.scalar[HLSL_TYPE_BOOL], get_location(&@1));
-                                c->v.value.b[0] = $1;
+                                c->value.b[0] = $1;
                                 if (!($$ = make_list(&c->node)))
                                     YYABORT;
                             }

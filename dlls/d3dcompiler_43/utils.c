@@ -1831,19 +1831,19 @@ static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
             switch (type->base_type)
             {
                 case HLSL_TYPE_FLOAT:
-                    wine_dbg_printf("%g ", (double)constant->v.value.f[y * type->dimx + x]);
+                    wine_dbg_printf("%g ", (double)constant->value.f[y * type->dimx + x]);
                     break;
                 case HLSL_TYPE_DOUBLE:
-                    wine_dbg_printf("%g ", constant->v.value.d[y * type->dimx + x]);
+                    wine_dbg_printf("%g ", constant->value.d[y * type->dimx + x]);
                     break;
                 case HLSL_TYPE_INT:
-                    wine_dbg_printf("%d ", constant->v.value.i[y * type->dimx + x]);
+                    wine_dbg_printf("%d ", constant->value.i[y * type->dimx + x]);
                     break;
                 case HLSL_TYPE_UINT:
-                    wine_dbg_printf("%u ", constant->v.value.u[y * type->dimx + x]);
+                    wine_dbg_printf("%u ", constant->value.u[y * type->dimx + x]);
                     break;
                 case HLSL_TYPE_BOOL:
-                    wine_dbg_printf("%s ", constant->v.value.b[y * type->dimx + x] == FALSE ? "false" : "true");
+                    wine_dbg_printf("%s ", constant->value.b[y * type->dimx + x] == FALSE ? "false" : "true");
                     break;
                 default:
                     wine_dbg_printf("Constants of type %s not supported\n", debug_base_type(type));
@@ -2123,24 +2123,6 @@ void free_instr_list(struct list *list)
 
 static void free_ir_constant(struct hlsl_ir_constant *constant)
 {
-    struct hlsl_type *type = constant->node.data_type;
-    unsigned int i;
-    struct hlsl_ir_constant *field, *next_field;
-
-    switch (type->type)
-    {
-        case HLSL_CLASS_ARRAY:
-            for (i = 0; i < type->e.array.elements_count; ++i)
-                free_ir_constant(&constant->v.array_elements[i]);
-            d3dcompiler_free(constant->v.array_elements);
-            break;
-        case HLSL_CLASS_STRUCT:
-            LIST_FOR_EACH_ENTRY_SAFE(field, next_field, constant->v.struct_elements, struct hlsl_ir_constant, node.entry)
-                free_ir_constant(field);
-            break;
-        default:
-            break;
-    }
     d3dcompiler_free(constant);
 }
 

@@ -866,17 +866,12 @@ struct hlsl_ir_constant
     struct hlsl_ir_node node;
     union
     {
-        union
-        {
-            unsigned u[16];
-            int i[16];
-            float f[16];
-            double d[16];
-            BOOL b[16];
-        } value;
-        struct hlsl_ir_constant *array_elements;
-        struct list *struct_elements;
-    } v;
+        unsigned u[16];
+        int i[16];
+        float f[16];
+        double d[16];
+        BOOL b[16];
+    } value;
 };
 
 struct hlsl_scope
