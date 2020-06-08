@@ -2454,87 +2454,69 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
     return hr;
 }
 
-static inline const struct ot_script *opentype_get_script(const struct ot_script_list *scriptlist, UINT32 scripttag)
+static const struct ot_langsys *opentype_get_langsys(const struct ot_gsubgpos_table *table, unsigned int script_index,
+        unsigned int language_index, unsigned int *feature_count)
 {
-    UINT16 j;
+    unsigned int table_offset, langsys_offset;
+    const struct ot_langsys *langsys = NULL;
 
-    for (j = 0; j < GET_BE_WORD(scriptlist->script_count); j++) {
-        const char *tag = scriptlist->scripts[j].tag;
-        if (scripttag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
-            return (struct ot_script*)((BYTE*)scriptlist + GET_BE_WORD(scriptlist->scripts[j].script));
-    }
+    *feature_count = 0;
 
-    return NULL;
+    if (!table->table.data || script_index == ~0u)
+        return NULL;
+
+    /* ScriptTable offset. */
+    table_offset = table_read_be_word(&table->table, table->script_list + FIELD_OFFSET(struct ot_script_list, scripts) +
+            script_index * sizeof(struct ot_script_record) + FIELD_OFFSET(struct ot_script_record, script));
+    if (!table_offset)
+        return NULL;
+
+    if (language_index == ~0u)
+        langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset);
+    else
+        langsys_offset = table_read_be_word(&table->table, table->script_list + table_offset +
+                FIELD_OFFSET(struct ot_script, langsys) + language_index * sizeof(struct ot_langsys_record) +
+                FIELD_OFFSET(struct ot_langsys_record, langsys));
+    langsys_offset += table->script_list + table_offset;
+
+    *feature_count = table_read_be_word(&table->table, langsys_offset + FIELD_OFFSET(struct ot_langsys, feature_count));
+    if (*feature_count)
+        langsys = table_read_ensure(&table->table, langsys_offset, FIELD_OFFSET(struct ot_langsys, feature_index[*feature_count]));
+    if (!langsys)
+        *feature_count = 0;
+
+    return langsys;
 }
 
-static inline const struct ot_langsys *opentype_get_langsys(const struct ot_script *script, UINT32 languagetag)
+void opentype_get_typographic_features(struct ot_gsubgpos_table *table, unsigned int script_index,
+        unsigned int language_index, struct tag_array *t)
 {
-    UINT16 j;
+    unsigned int i, total_feature_count, script_feature_count;
+    const struct ot_feature_list *feature_list;
+    const struct ot_langsys *langsys = NULL;
 
-    for (j = 0; j < GET_BE_WORD(script->langsys_count); j++) {
-        const char *tag = script->langsys[j].tag;
-        if (languagetag == DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]))
-            return (struct ot_langsys *)((BYTE*)script + GET_BE_WORD(script->langsys[j].langsys));
-    }
+    langsys = opentype_get_langsys(table, script_index, language_index, &script_feature_count);
 
-    return NULL;
-}
+    total_feature_count = table_read_be_word(&table->table, table->feature_list);
+    if (!total_feature_count)
+        return;
 
-static void opentype_add_font_features(const struct gpos_gsub_header *header, const struct ot_langsys *langsys,
-    UINT32 max_tagcount, UINT32 *count, DWRITE_FONT_FEATURE_TAG *tags)
-{
-    const struct ot_feature_list *features = (const struct ot_feature_list *)((const BYTE*)header + GET_BE_WORD(header->feature_list));
-    UINT16 j;
+    feature_list = table_read_ensure(&table->table, table->feature_list,
+            FIELD_OFFSET(struct ot_feature_list, features[total_feature_count]));
+    if (!feature_list)
+        return;
 
-    for (j = 0; j < GET_BE_WORD(langsys->feature_count); j++) {
-        const struct ot_feature_record *feature = &features->features[langsys->feature_index[j]];
-
-        if (*count < max_tagcount)
-            tags[*count] = GET_BE_DWORD(feature->tag);
-
-        (*count)++;
-    }
-}
-
-HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scripttag, UINT32 languagetag, UINT32 max_tagcount,
-    UINT32 *count, DWRITE_FONT_FEATURE_TAG *tags)
-{
-    UINT32 tables[2] = { MS_GSUB_TAG, MS_GPOS_TAG };
-    HRESULT hr;
-    UINT8 i;
-
-    *count = 0;
-    for (i = 0; i < ARRAY_SIZE(tables); i++) {
-        const struct ot_script_list *scriptlist;
-        const struct gpos_gsub_header *header;
-        const struct ot_script *script;
-        const void *ptr;
-        void *context;
-        UINT32 size;
-        BOOL exists;
-
-        exists = FALSE;
-        hr = IDWriteFontFace_TryGetFontTable(fontface, tables[i], &ptr, &size, &context, &exists);
-        if (FAILED(hr))
-            return hr;
-
-        if (!exists)
+    for (i = 0; i < script_feature_count; ++i)
+    {
+        unsigned int feature_index = GET_BE_WORD(langsys->feature_index[i]);
+        if (feature_index >= total_feature_count)
             continue;
 
-        header = (const struct gpos_gsub_header *)ptr;
-        scriptlist = (const struct ot_script_list *)((const BYTE*)header + GET_BE_WORD(header->script_list));
+        if (!dwrite_array_reserve((void **)&t->tags, &t->capacity, t->count + 1, sizeof(*t->tags)))
+            return;
 
-        script = opentype_get_script(scriptlist, scripttag);
-        if (script) {
-            const struct ot_langsys *langsys = opentype_get_langsys(script, languagetag);
-            if (langsys)
-                opentype_add_font_features(header, langsys, max_tagcount, count, tags);
-        }
-
-        IDWriteFontFace_ReleaseFontTable(fontface, context);
+        t->tags[t->count++] = feature_list->features[feature_index].tag;
     }
-
-    return *count > max_tagcount ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }
 
 static unsigned int find_vdmx_group(const struct vdmx_header *hdr)

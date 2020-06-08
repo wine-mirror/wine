@@ -1767,29 +1767,23 @@ static HRESULT WINAPI dwritetextanalyzer2_GetTypographicFeatures(IDWriteTextAnal
     IDWriteFontFace *fontface, DWRITE_SCRIPT_ANALYSIS sa, const WCHAR *locale,
     UINT32 max_tagcount, UINT32 *actual_tagcount, DWRITE_FONT_FEATURE_TAG *tags)
 {
+    struct scriptshaping_context context = { 0 };
     const struct dwritescript_properties *props;
-    const DWORD *scripts;
-    HRESULT hr = S_OK;
-    UINT32 language;
+    struct dwrite_fontface *font_obj;
 
-    TRACE("(%p %u %s %u %p %p)\n", fontface, sa.script, debugstr_w(locale), max_tagcount, actual_tagcount,
-        tags);
+    TRACE("%p, %p, %u, %s, %u, %p, %p.\n", iface, fontface, sa.script, debugstr_w(locale), max_tagcount,
+            actual_tagcount, tags);
 
     if (sa.script > Script_LastId)
         return E_INVALIDARG;
 
-    language = get_opentype_language(locale);
+    font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
+
+    context.cache = fontface_get_shaping_cache(font_obj);
+    context.language_tag = get_opentype_language(locale);
     props = &dwritescripts_properties[sa.script];
-    *actual_tagcount = 0;
 
-    scripts = props->scripttags;
-    while (*scripts && !*actual_tagcount)
-    {
-        hr = opentype_get_typographic_features(fontface, *scripts, language, max_tagcount, actual_tagcount, tags);
-        scripts++;
-    }
-
-    return hr;
+    return shape_get_typographic_features(&context, props->scripttags, max_tagcount, actual_tagcount, tags);
 };
 
 static HRESULT WINAPI dwritetextanalyzer2_CheckTypographicFeature(IDWriteTextAnalyzer2 *iface,

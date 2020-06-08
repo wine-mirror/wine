@@ -22,10 +22,17 @@
 #define COBJMACROS
 
 #include "dwrite_private.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
+
+#ifdef WORDS_BIGENDIAN
+#define GET_BE_DWORD(x) (x)
+#else
+#define GET_BE_DWORD(x) RtlUlongByteSwap(x)
+#endif
 
 struct scriptshaping_cache *create_scriptshaping_cache(void *context, const struct shaping_font_ops *font_ops)
 {
@@ -302,4 +309,44 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
     heap_free(features.features);
 
     return (context->glyph_count <= context->u.subst.max_glyph_count) ? S_OK : E_NOT_SUFFICIENT_BUFFER;
+}
+
+static int tag_array_sorting_compare(const void *a, const void *b)
+{
+    unsigned int left = GET_BE_DWORD(*(unsigned int *)a), right = GET_BE_DWORD(*(unsigned int *)b);
+    return left != right ? (left < right ? -1 : 1) : 0;
+};
+
+HRESULT shape_get_typographic_features(struct scriptshaping_context *context, const unsigned int *scripts,
+        unsigned int max_tagcount, unsigned int *actual_tagcount, unsigned int *tags)
+{
+    unsigned int i, j, script_index, language_index;
+    struct tag_array t = { 0 };
+
+    /* Collect from both tables, sort and remove duplicates. */
+
+    shape_get_script_lang_index(context, scripts, MS_GSUB_TAG, &script_index, &language_index);
+    opentype_get_typographic_features(&context->cache->gsub, script_index, language_index, &t);
+
+    shape_get_script_lang_index(context, scripts, MS_GPOS_TAG, &script_index, &language_index);
+    opentype_get_typographic_features(&context->cache->gpos, script_index, language_index, &t);
+
+    /* Sort and remove duplicates. */
+    qsort(t.tags, t.count, sizeof(*t.tags), tag_array_sorting_compare);
+
+    for (i = 1, j = 0; i < t.count; ++i)
+    {
+        if (t.tags[i] != t.tags[j])
+            t.tags[++j] = t.tags[i];
+    }
+    t.count = j + 1;
+
+    if (t.count <= max_tagcount)
+        memcpy(tags, t.tags, t.count * sizeof(*t.tags));
+
+    *actual_tagcount = t.count;
+
+    heap_free(t.tags);
+
+    return t.count <= max_tagcount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }

@@ -330,6 +330,21 @@ struct file_stream_desc {
 extern const void* get_fontface_table(IDWriteFontFace5 *fontface, UINT32 tag,
         struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
 
+struct tag_array
+{
+    unsigned int *tags;
+    size_t capacity;
+    size_t count;
+};
+
+struct ot_gsubgpos_table
+{
+    struct dwrite_fonttable table;
+    unsigned int script_list;
+    unsigned int feature_list;
+    unsigned int lookup_list;
+};
+
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,BOOL*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **data,
         void **context, UINT32 *size, BOOL *exists) DECLSPEC_HIDDEN;
@@ -343,7 +358,8 @@ extern HRESULT opentype_get_font_info_strings(const struct file_stream_desc *str
         DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_familyname(struct file_stream_desc*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_facename(struct file_stream_desc*,WCHAR*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
-extern HRESULT opentype_get_typographic_features(IDWriteFontFace*,UINT32,UINT32,UINT32,UINT32*,DWRITE_FONT_FEATURE_TAG*) DECLSPEC_HIDDEN;
+extern void opentype_get_typographic_features(struct ot_gsubgpos_table *table, unsigned int script_index,
+        unsigned int language_index, struct tag_array *tags) DECLSPEC_HIDDEN;
 extern BOOL opentype_get_vdmx_size(const struct dwrite_fonttable *table, INT ppem, UINT16 *ascent,
         UINT16 *descent) DECLSPEC_HIDDEN;
 extern unsigned int opentype_get_cpal_palettecount(const struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
@@ -436,14 +452,6 @@ enum SCRIPT_JUSTIFY
     SCRIPT_JUSTIFY_ARABIC_BARA,
     SCRIPT_JUSTIFY_ARABIC_SEEN,
     SCRIPT_JUSTIFY_ARABIC_SEEN_M
-};
-
-struct ot_gsubgpos_table
-{
-    struct dwrite_fonttable table;
-    unsigned int script_list;
-    unsigned int feature_list;
-    unsigned int lookup_list;
 };
 
 struct scriptshaping_cache
@@ -586,3 +594,5 @@ extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *co
 
 extern HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
 extern HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts) DECLSPEC_HIDDEN;
+extern HRESULT shape_get_typographic_features(struct scriptshaping_context *context, const unsigned int *scripts,
+        unsigned int max_tagcount, unsigned int *actual_tagcount, unsigned int *tags) DECLSPEC_HIDDEN;
