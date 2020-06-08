@@ -545,6 +545,183 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
 
 #ifdef __i386__
 
+static ULONGLONG udivmod(ULONGLONG a, ULONGLONG b, ULONGLONG *rem)
+{
+    const ULARGE_INTEGER n = { .QuadPart = a };
+    const ULARGE_INTEGER d = { .QuadPart = b };
+    DWORD sr, carry, index;
+    ULARGE_INTEGER q, r;
+
+    const unsigned n_uword_bits  = 32;
+    const unsigned n_udword_bits = 64;
+
+    /* special cases, X is unknown, K != 0 */
+    if (n.u.HighPart == 0)
+    {
+        if (d.u.HighPart == 0)
+        {
+            /* 0 X / 0 X */
+            if (rem) *rem = n.u.LowPart % d.u.LowPart;
+            return n.u.LowPart / d.u.LowPart;
+        }
+        /* 0 X / K X */
+        if (rem) *rem = n.u.LowPart;
+        return 0;
+    }
+
+    /* n.u.HighPart != 0 */
+    if (d.u.LowPart == 0)
+    {
+        if (d.u.HighPart == 0)
+        {
+            /* K X / 0 0 */
+            if (rem) *rem = n.u.HighPart % d.u.LowPart;
+            return n.u.HighPart / d.u.LowPart;
+        }
+        /* d.u.HighPart != 0 */
+        if (n.u.LowPart == 0) {
+            /* K 0 / K 0 */
+            if (rem)
+            {
+                r.u.HighPart = n.u.HighPart % d.u.HighPart;
+                r.u.LowPart = 0;
+                *rem = r.QuadPart;
+            }
+            return n.u.HighPart / d.u.HighPart;
+        }
+        /* K K / K 0 */
+        if ((d.u.HighPart & (d.u.HighPart - 1)) == 0) /* if d is a power of 2 */
+        {
+            if (rem)
+            {
+                r.u.LowPart = n.u.LowPart;
+                r.u.HighPart = n.u.HighPart & (d.u.HighPart - 1);
+                *rem = r.QuadPart;
+            }
+            BitScanForward(&index, d.u.HighPart);
+            return n.u.HighPart >> index;
+        }
+        /* K K / K 0 */
+        BitScanReverse(&index, d.u.HighPart);
+        BitScanReverse(&sr, n.u.HighPart);
+        sr -= index;
+        /* 0 <= sr <= n_uword_bits - 2 or sr large */
+        if (sr > n_uword_bits - 2)
+        {
+            if (rem) *rem = n.QuadPart;
+            return 0;
+        }
+        ++sr;
+        /* 1 <= sr <= n_uword_bits - 1 */
+        /* q.QuadPart = n.QuadPart << (n_udword_bits - sr); */
+        q.u.LowPart = 0;
+        q.u.HighPart = n.u.LowPart << (n_uword_bits - sr);
+        /* r.QuadPart = n.QuadPart >> sr; */
+        r.u.HighPart = n.u.HighPart >> sr;
+        r.u.LowPart = (n.u.HighPart << (n_uword_bits - sr)) | (n.u.LowPart >> sr);
+    }
+    else /* d.u.LowPart != 0 */
+    {
+        if (d.u.HighPart == 0)
+        {
+            /* K X / 0 K */
+            if ((d.u.LowPart & (d.u.LowPart - 1)) == 0) /* if d is a power of 2 */
+            {
+                if (rem) *rem = n.u.LowPart & (d.u.LowPart - 1);
+                if (d.u.LowPart == 1) return n.QuadPart;
+                BitScanForward(&sr, d.u.LowPart);
+                q.u.HighPart = n.u.HighPart >> sr;
+                q.u.LowPart = (n.u.HighPart << (n_uword_bits - sr)) | (n.u.LowPart >> sr);
+                return q.QuadPart;
+            }
+            BitScanReverse(&index, d.u.LowPart);
+            BitScanReverse(&sr, n.u.HighPart);
+            sr = 1 + n_uword_bits + sr - index;
+            /* 2 <= sr <= n_udword_bits - 1
+             * q.QuadPart = n.QuadPart << (n_udword_bits - sr);
+             * r.QuadPart = n.QuadPart >> sr; */
+            if (sr == n_uword_bits)
+            {
+                q.u.LowPart = 0;
+                q.u.HighPart = n.u.LowPart;
+                r.u.HighPart = 0;
+                r.u.LowPart = n.u.HighPart;
+            }
+            else if (sr < n_uword_bits) /* 2 <= sr <= n_uword_bits - 1 */
+            {
+                q.u.LowPart = 0;
+                q.u.HighPart = n.u.LowPart << (n_uword_bits - sr);
+                r.u.HighPart = n.u.HighPart >> sr;
+                r.u.LowPart = (n.u.HighPart << (n_uword_bits - sr)) | (n.u.LowPart >> sr);
+            }
+            else /* n_uword_bits + 1 <= sr <= n_udword_bits - 1 */
+            {
+                q.u.LowPart = n.u.LowPart << (n_udword_bits - sr);
+                q.u.HighPart = (n.u.HighPart << (n_udword_bits - sr)) |
+                    (n.u.LowPart >> (sr - n_uword_bits));
+                r.u.HighPart = 0;
+                r.u.LowPart = n.u.HighPart >> (sr - n_uword_bits);
+            }
+        }
+        else
+        {
+            /* K X / K K */
+            BitScanReverse(&index, d.u.HighPart);
+            BitScanReverse(&sr, n.u.HighPart);
+            sr -= index;
+            /* 0 <= sr <= n_uword_bits - 1 or sr large */
+            if (sr > n_uword_bits - 1)
+            {
+                if (rem) *rem = n.QuadPart;
+                return 0;
+            }
+            ++sr;
+            /* 1 <= sr <= n_uword_bits
+             * q.QuadPart = n.QuadPart << (n_udword_bits - sr); */
+            q.u.LowPart = 0;
+            if (sr == n_uword_bits)
+            {
+                q.u.HighPart = n.u.LowPart;
+                r.u.HighPart = 0;
+                r.u.LowPart = n.u.HighPart;
+            }
+            else
+            {
+                q.u.HighPart = n.u.LowPart << (n_uword_bits - sr);
+                r.u.HighPart = n.u.HighPart >> sr;
+                r.u.LowPart = (n.u.HighPart << (n_uword_bits - sr)) | (n.u.LowPart >> sr);
+            }
+        }
+    }
+    /* Not a special case
+     * q and r are initialized with:
+     * q.QuadPart = n.QuadPart << (n_udword_bits - sr);
+     * r.QuadPart = n.QuadPart >> sr;
+     * 1 <= sr <= n_udword_bits - 1 */
+    carry = 0;
+    for (; sr > 0; --sr)
+    {
+        LONGLONG s;
+        /* r:q = ((r:q)  << 1) | carry */
+        r.u.HighPart = (r.u.HighPart << 1) | (r.u.LowPart >> (n_uword_bits - 1));
+        r.u.LowPart = (r.u.LowPart << 1) | (q.u.HighPart >> (n_uword_bits - 1));
+        q.u.HighPart = (q.u.HighPart << 1) | (q.u.LowPart >> (n_uword_bits - 1));
+        q.u.LowPart = (q.u.LowPart << 1) | carry;
+        /* if (r.QuadPart >= d.QuadPart)
+         * {
+         *      r.QuadPart -= d.QuadPart;
+         *      carry = 1;
+         * }
+         */
+        s = (LONGLONG)(d.QuadPart - r.QuadPart - 1) >> (n_udword_bits - 1);
+        carry = s & 1;
+        r.QuadPart -= d.QuadPart & s;
+    }
+    q.QuadPart = (q.QuadPart << 1) | carry;
+    if (rem) *rem = r.QuadPart;
+    return q.QuadPart;
+}
+
 /******************************************************************************
  *        _alldiv   (NTDLL.@)
  *
@@ -613,7 +790,7 @@ LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b )
  */
 ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
 {
-    return a / b;
+    return udivmod(a, b, NULL);
 }
 
 /******************************************************************************
