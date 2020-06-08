@@ -1133,6 +1133,18 @@ static void test_fail(void)
         "{\n"
         "    return float4(0, 0, 0, 0);\n"
         "}",
+
+        /* 15 */
+        "float4 test()\n"
+        "{\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
+
+        "float4 test(out float4 o : SV_TARGET)\n"
+        "{\n"
+        "    o = float4(1, 1, 1, 1);\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
     };
 
     static const char *targets[] = {"ps_2_0", "ps_3_0", "ps_4_0"};

@@ -2971,7 +2971,34 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
 
     hlsl_parse();
 
-    TRACE("Compilation status = %d\n", hlsl_ctx.status);
+    if (hlsl_ctx.status == PARSE_ERR)
+        goto out;
+
+    if (!(entry_func = get_func_entry(entrypoint)))
+    {
+        hlsl_message("error: entry point %s is not defined\n", debugstr_a(entrypoint));
+        goto out;
+    }
+
+    if (!type_is_void(entry_func->return_type)
+            && entry_func->return_type->type != HLSL_CLASS_STRUCT && !entry_func->semantic)
+    {
+        hlsl_report_message(entry_func->loc, HLSL_LEVEL_ERROR,
+                "entry point \"%s\" is missing a return value semantic", entry_func->func->name);
+    }
+
+    /* Index 0 means unused; index 1 means function entry, so start at 2. */
+    index_instructions(entry_func->body, 2);
+
+    if (TRACE_ON(hlsl_parser))
+    {
+        TRACE("IR dump.\n");
+        wine_rb_for_each_entry(&hlsl_ctx.functions, dump_function, NULL);
+    }
+
+    compute_liveness(entry_func);
+
+out:
     if (messages)
     {
         if (hlsl_ctx.messages.size)
@@ -2989,27 +3016,6 @@ struct bwriter_shader *parse_hlsl(enum shader_type type, DWORD major, DWORD mino
         d3dcompiler_free((void *)hlsl_ctx.source_files[i]);
     d3dcompiler_free(hlsl_ctx.source_files);
 
-    if (hlsl_ctx.status == PARSE_ERR)
-        goto out;
-
-    if (!(entry_func = get_func_entry(entrypoint)))
-    {
-        hlsl_message("error: entry point %s is not defined\n", debugstr_a(entrypoint));
-        goto out;
-    }
-
-    /* Index 0 means unused; index 1 means function entry, so start at 2. */
-    index_instructions(entry_func->body, 2);
-
-    if (TRACE_ON(hlsl_parser))
-    {
-        TRACE("IR dump.\n");
-        wine_rb_for_each_entry(&hlsl_ctx.functions, dump_function, NULL);
-    }
-
-    compute_liveness(entry_func);
-
-out:
     TRACE("Freeing functions IR.\n");
     wine_rb_destroy(&hlsl_ctx.functions, free_function_rb, NULL);
 
