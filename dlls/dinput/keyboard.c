@@ -103,7 +103,7 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD vers
     return scanCode;
 }
 
-static int KeyboardCallback( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+int dinput_keyboard_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
     int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
@@ -264,7 +264,6 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     newDevice->base.ref = 1;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     newDevice->base.dinput = dinput;
-    newDevice->base.event_proc = KeyboardCallback;
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
     newDevice->subtype = get_keyboard_subtype();

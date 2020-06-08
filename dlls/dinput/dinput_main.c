@@ -100,6 +100,8 @@ HINSTANCE DINPUT_instance;
 static BOOL check_hook_thread(void);
 static CRITICAL_SECTION dinput_hook_crit;
 static struct list direct_input_list = LIST_INIT( direct_input_list );
+static struct list acquired_mouse_list = LIST_INIT( acquired_mouse_list );
+static struct list acquired_keyboard_list = LIST_INIT( acquired_keyboard_list );
 static struct list acquired_device_list = LIST_INIT( acquired_device_list );
 
 static HRESULT initialize_directinput_instance(IDirectInputImpl *This, DWORD dwVersion);
@@ -110,7 +112,12 @@ void dinput_hooks_acquire_device(LPDIRECTINPUTDEVICE8W iface)
     IDirectInputDeviceImpl *dev = impl_from_IDirectInputDevice8W(iface);
 
     EnterCriticalSection( &dinput_hook_crit );
-    list_add_tail( &acquired_device_list, &dev->entry );
+    if (IsEqualGUID( &dev->guid, &GUID_SysMouse ))
+        list_add_tail( &acquired_mouse_list, &dev->entry );
+    else if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ))
+        list_add_tail( &acquired_keyboard_list, &dev->entry );
+    else
+        list_add_tail( &acquired_device_list, &dev->entry );
     LeaveCriticalSection( &dinput_hook_crit );
 }
 
@@ -1659,13 +1666,15 @@ static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
     if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
     EnterCriticalSection( &dinput_hook_crit );
-    LIST_FOR_EACH_ENTRY( dev, &acquired_device_list, IDirectInputDeviceImpl, entry )
+    LIST_FOR_EACH_ENTRY( dev, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
     {
-        if (dev->event_proc)
-        {
-            TRACE("calling %p->%p (%lx %lx)\n", dev, dev->event_proc, wparam, lparam);
-            skip |= dev->event_proc( &dev->IDirectInputDevice8A_iface, wparam, lparam );
-        }
+        TRACE("calling dinput_mouse_hook (%p %lx %lx)\n", dev, wparam, lparam);
+        skip |= dinput_mouse_hook( &dev->IDirectInputDevice8A_iface, wparam, lparam );
+    }
+    LIST_FOR_EACH_ENTRY( dev, &acquired_keyboard_list, IDirectInputDeviceImpl, entry )
+    {
+        TRACE("calling dinput_keyboard_hook (%p %lx %lx)\n", dev, wparam, lparam);
+        skip |= dinput_keyboard_hook( &dev->IDirectInputDevice8A_iface, wparam, lparam );
     }
     LeaveCriticalSection( &dinput_hook_crit );
 
@@ -1693,6 +1702,22 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
             IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8A_iface );
         }
     }
+    LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_mouse_list, IDirectInputDeviceImpl, entry )
+    {
+        if (msg->hwnd == dev->win && msg->hwnd != foreground)
+        {
+            TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
+            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8A_iface );
+        }
+    }
+    LIST_FOR_EACH_ENTRY_SAFE( dev, next, &acquired_keyboard_list, IDirectInputDeviceImpl, entry )
+    {
+        if (msg->hwnd == dev->win && msg->hwnd != foreground)
+        {
+            TRACE( "%p window is not foreground - unacquiring %p\n", dev->win, dev );
+            IDirectInputDevice_Unacquire( &dev->IDirectInputDevice8A_iface );
+        }
+    }
     LeaveCriticalSection( &dinput_hook_crit );
 
     return CallNextHookEx( 0, code, wparam, lparam );
@@ -1713,7 +1738,6 @@ static DWORD WINAPI hook_thread_proc(void *param)
 
         if (msg.message == WM_USER+0x10)
         {
-            IDirectInputDeviceImpl *dev;
             HANDLE finished_event = (HANDLE)msg.lParam;
 
             TRACE( "Processing hook change notification wp:%ld lp:%#lx\n", msg.wParam, msg.lParam );
@@ -1727,18 +1751,8 @@ static DWORD WINAPI hook_thread_proc(void *param)
             }
 
             EnterCriticalSection( &dinput_hook_crit );
-
-            /* Count acquired keyboards and mice*/
-            LIST_FOR_EACH_ENTRY( dev, &acquired_device_list, IDirectInputDeviceImpl, entry )
-            {
-                if (!dev->event_proc) continue;
-
-                if (IsEqualGUID( &dev->guid, &GUID_SysKeyboard ))
-                    kbd_cnt++;
-                else
-                    if (IsEqualGUID( &dev->guid, &GUID_SysMouse ))
-                        mice_cnt++;
-            }
+            kbd_cnt = list_count( &acquired_keyboard_list );
+            mice_cnt = list_count( &acquired_mouse_list );
             LeaveCriticalSection( &dinput_hook_crit );
 
             if (kbd_cnt && !kbd_hook)

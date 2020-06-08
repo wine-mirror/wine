@@ -71,10 +71,11 @@ extern const struct dinput_device joystick_osx_device DECLSPEC_HIDDEN;
 
 extern void dinput_hooks_acquire_device(LPDIRECTINPUTDEVICE8W iface);
 extern void dinput_hooks_unacquire_device(LPDIRECTINPUTDEVICE8W iface);
+extern int dinput_mouse_hook(LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam);
+extern int dinput_keyboard_hook(LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam);
 
 extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W, BOOL) DECLSPEC_HIDDEN;
 extern void check_dinput_events(void) DECLSPEC_HIDDEN;
-typedef int (*DI_EVENT_PROC)(LPDIRECTINPUTDEVICE8A, WPARAM, LPARAM);
 
 extern void _copy_diactionformatAtoW(LPDIACTIONFORMATW, LPDIACTIONFORMATA) DECLSPEC_HIDDEN;
 extern void _copy_diactionformatWtoA(LPDIACTIONFORMATA, LPDIACTIONFORMATW) DECLSPEC_HIDDEN;
