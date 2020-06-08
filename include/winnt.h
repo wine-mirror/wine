@@ -6717,6 +6717,58 @@ typedef enum _PROCESS_MITIGATION_POLICY
     MaxProcessMitigationPolicy
 } PROCESS_MITIGATION_POLICY, *PPROCESS_MITIGATION_POLICY;
 
+#ifdef _MSC_VER
+
+BOOLEAN _BitScanForward(unsigned long*,unsigned long);
+BOOLEAN _BitScanReverse(unsigned long*,unsigned long);
+
+#pragma intrinsic(_BitScanForward)
+#pragma intrinsic(_BitScanReverse)
+
+static inline BOOLEAN BitScanForward(DWORD *index, DWORD mask)
+{
+    return _BitScanForward((unsigned long*)index, mask);
+}
+
+static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
+{
+    return _BitScanReverse((unsigned long*)index, mask);
+}
+
+#elif defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
+
+static inline BOOLEAN BitScanForward(DWORD *index, DWORD mask)
+{
+    *index = __builtin_ctz(mask);
+    return mask != 0;
+}
+
+static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
+{
+    *index = 31 - __builtin_clz(mask);
+    return mask != 0;
+}
+
+#else
+
+static inline BOOLEAN BitScanForward(DWORD *index, DWORD mask)
+{
+    unsigned int r = 0;
+    while (r < 31 && !(mask & (1 << r))) r++;
+    *index = r;
+    return mask != 0;
+}
+
+static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
+{
+    unsigned int r = 31;
+    while (r > 0 && !(mask & (1 << r))) r--;
+    *index = r;
+    return mask != 0;
+}
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
