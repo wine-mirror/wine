@@ -489,6 +489,10 @@ struct shaping_glyph_properties
     UINT16 reserved2 : 4;
 };
 
+struct scriptshaping_context;
+
+typedef void (*p_apply_context_lookup)(struct scriptshaping_context *context, unsigned int lookup_index);
+
 struct scriptshaping_context
 {
     struct scriptshaping_cache *cache;
@@ -506,12 +510,14 @@ struct scriptshaping_context
             const UINT16 *glyphs;
             const DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
             const UINT16 *clustermap;
+            p_apply_context_lookup apply_context_lookup;
         } pos;
         struct
         {
             UINT16 *glyphs;
             DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
             UINT16 *clustermap;
+            p_apply_context_lookup apply_context_lookup;
             unsigned int max_glyph_count;
             unsigned int capacity;
             const WCHAR *digits;
@@ -521,6 +527,7 @@ struct scriptshaping_context
             UINT16 *glyphs;
             struct shaping_glyph_properties *glyph_props;
             UINT16 *clustermap;
+            p_apply_context_lookup apply_context_lookup;
         } buffer;
     } u;
 

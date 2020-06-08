@@ -4608,6 +4608,14 @@ static void opentype_layout_set_glyph_masks(struct scriptshaping_context *contex
    }
 }
 
+static void opentype_layout_apply_gpos_context_lookup(struct scriptshaping_context *context, unsigned int lookup_index)
+{
+    struct lookup lookup = { 0 };
+    /* Feature mask is intentionally zero, it's not used outside of main loop. */
+    if (opentype_layout_init_lookup(context->table, lookup_index, 0, &lookup))
+        opentype_layout_apply_gpos_lookup(context, &lookup);
+}
+
 void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features)
 {
@@ -4615,6 +4623,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     unsigned int i;
     BOOL ret;
 
+    context->u.buffer.apply_context_lookup = opentype_layout_apply_gpos_context_lookup;
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
 
     for (i = 0; i < context->glyph_count; ++i)
@@ -5073,12 +5082,9 @@ static BOOL opentype_layout_context_match_lookahead(const struct match_context *
     return TRUE;
 }
 
-static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *context, const struct lookup *lookup);
-
-static BOOL opentype_layout_context_gsub_apply_lookup(struct scriptshaping_context *context, unsigned int count,
+static BOOL opentype_layout_context_apply_lookup(struct scriptshaping_context *context, unsigned int count,
         unsigned int *match_positions, unsigned int lookup_count, const UINT16 *lookup_records, unsigned int match_length)
 {
-    struct lookup lookup = { 0 };
     unsigned int i, j;
     int end, delta;
 
@@ -5097,8 +5103,8 @@ static BOOL opentype_layout_context_gsub_apply_lookup(struct scriptshaping_conte
         orig_len = context->glyph_count;
 
         lookup_index = GET_BE_WORD(lookup_records[i+1]);
-        if (opentype_layout_init_lookup(context->table, lookup_index, 0, &lookup))
-            opentype_layout_apply_gsub_lookup(context, &lookup);
+
+        context->u.buffer.apply_context_lookup(context, lookup_index);
 
         delta = context->glyph_count - orig_len;
         if (!delta)
@@ -5141,7 +5147,7 @@ static BOOL opentype_layout_context_gsub_apply_lookup(struct scriptshaping_conte
     return TRUE;
 }
 
-static BOOL opentype_layout_apply_gsub_chain_context_lookup(unsigned int backtrack_count, const UINT16 *backtrack,
+static BOOL opentype_layout_apply_chain_context_match(unsigned int backtrack_count, const UINT16 *backtrack,
         unsigned int input_count, const UINT16 *input, unsigned int lookahead_count, const UINT16 *lookahead,
         unsigned int lookup_count, const UINT16 *lookup_records, const struct match_context *mc)
 {
@@ -5151,7 +5157,7 @@ static BOOL opentype_layout_apply_gsub_chain_context_lookup(unsigned int backtra
     return opentype_layout_context_match_input(mc, input_count, input, &match_length, match_positions) &&
             opentype_layout_context_match_backtrack(mc, backtrack_count, backtrack, &start_index) &&
             opentype_layout_context_match_lookahead(mc, lookahead_count, lookahead, input_count, &end_index) &&
-            opentype_layout_context_gsub_apply_lookup(mc->context, input_count, match_positions, lookup_count, lookup_records, match_length);
+            opentype_layout_context_apply_lookup(mc->context, input_count, match_positions, lookup_count, lookup_records, match_length);
 }
 
 static BOOL opentype_layout_apply_chain_rule_set(const struct match_context *mc, unsigned int offset)
@@ -5191,7 +5197,7 @@ static BOOL opentype_layout_apply_chain_rule_set(const struct match_context *mc,
         lookup_records = table_read_ensure(table, rule_offset, lookup_count * 2 * sizeof(*lookup_records));
 
         /* First applicable rule is used. */
-        if (opentype_layout_apply_gsub_chain_context_lookup(backtrack_count, backtrack, input_count, input, lookahead_count,
+        if (opentype_layout_apply_chain_context_match(backtrack_count, backtrack, input_count, input, lookahead_count,
                 lookahead, lookup_count, lookup_records, mc))
         {
             return TRUE;
@@ -5201,14 +5207,14 @@ static BOOL opentype_layout_apply_chain_rule_set(const struct match_context *mc,
     return FALSE;
 }
 
-static BOOL opentype_layout_apply_gsub_context_lookup(unsigned int input_count, const UINT16 *input, unsigned int lookup_count,
+static BOOL opentype_layout_apply_context_match(unsigned int input_count, const UINT16 *input, unsigned int lookup_count,
         const UINT16 *lookup_records, const struct match_context *mc)
 {
     unsigned int match_positions[GLYPH_CONTEXT_MAX_LENGTH];
     unsigned int match_length = 0;
 
     return opentype_layout_context_match_input(mc, input_count, input, &match_length, match_positions) &&
-            opentype_layout_context_gsub_apply_lookup(mc->context, input_count, match_positions, lookup_count,
+            opentype_layout_context_apply_lookup(mc->context, input_count, match_positions, lookup_count,
                     lookup_records, match_length);
 }
 
@@ -5243,7 +5249,7 @@ static BOOL opentype_layout_apply_rule_set(const struct match_context *mc, unsig
             continue;
 
         /* First applicable rule is used. */
-        if (opentype_layout_apply_gsub_context_lookup(input_count, input, lookup_count, lookup_records, mc))
+        if (opentype_layout_apply_context_match(input_count, input, lookup_count, lookup_records, mc))
             return TRUE;
     }
 
@@ -5344,7 +5350,7 @@ static BOOL opentype_layout_apply_gsub_context_substitution(struct scriptshaping
         mc.input_offset = subtable_offset;
         mc.match_func = opentype_match_coverage_func;
 
-        ret = opentype_layout_apply_gsub_context_lookup(input_count, input + 1, lookup_count, lookup_records, &mc);
+        ret = opentype_layout_apply_context_match(input_count, input + 1, lookup_count, lookup_records, &mc);
     }
     else
         WARN("Unknown contextual substitution format %u.\n", format);
@@ -5461,8 +5467,8 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
         mc.lookahead_offset = subtable_offset;
         mc.match_func = opentype_match_coverage_func;
 
-        ret = opentype_layout_apply_gsub_chain_context_lookup(backtrack_count, backtrack, input_count, input + 1,
-                lookahead_count, lookahead, lookup_count, lookup_records, &mc);
+        ret = opentype_layout_apply_chain_context_match(backtrack_count, backtrack, input_count, input + 1, lookahead_count,
+                lookahead, lookup_count, lookup_records, &mc);
     }
     else
         WARN("Unknown chaining contextual substitution format %u.\n", format);
@@ -5679,6 +5685,14 @@ static BOOL opentype_is_gsub_lookup_reversed(const struct scriptshaping_context 
     return lookup_type == GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST;
 }
 
+static void opentype_layout_apply_gsub_context_lookup(struct scriptshaping_context *context, unsigned int lookup_index)
+{
+    struct lookup lookup = { 0 };
+    /* Feature mask is intentionally zero, it's not used outside of main loop. */
+    if (opentype_layout_init_lookup(context->table, lookup_index, 0, &lookup))
+        opentype_layout_apply_gsub_lookup(context, &lookup);
+}
+
 void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, const struct shaping_features *features)
 {
@@ -5686,6 +5700,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     unsigned int i;
     BOOL ret;
 
+    context->u.buffer.apply_context_lookup = opentype_layout_apply_gsub_context_lookup;
     opentype_layout_collect_lookups(context, script_index, language_index, features, context->table, &lookups);
 
     opentype_get_nominal_glyphs(context, features);
