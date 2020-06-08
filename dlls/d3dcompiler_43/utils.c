@@ -1759,7 +1759,6 @@ const char *debug_node_type(enum hlsl_ir_node_type type)
     {
         "HLSL_IR_ASSIGNMENT",
         "HLSL_IR_CONSTANT",
-        "HLSL_IR_CONSTRUCTOR",
         "HLSL_IR_EXPR",
         "HLSL_IR_IF",
         "HLSL_IR_LOAD",
@@ -1947,19 +1946,6 @@ static void debug_dump_ir_expr(const struct hlsl_ir_expr *expr)
     wine_dbg_printf(")");
 }
 
-static void debug_dump_ir_constructor(const struct hlsl_ir_constructor *constructor)
-{
-    unsigned int i;
-
-    wine_dbg_printf("%s (", debug_hlsl_type(constructor->node.data_type));
-    for (i = 0; i < constructor->args_count; ++i)
-    {
-        debug_dump_src(constructor->args[i]);
-        wine_dbg_printf(" ");
-    }
-    wine_dbg_printf(")");
-}
-
 static const char *debug_writemask(DWORD writemask)
 {
     static const char components[] = {'x', 'y', 'z', 'w'};
@@ -2074,9 +2060,6 @@ static void debug_dump_instr(const struct hlsl_ir_node *instr)
         case HLSL_IR_SWIZZLE:
             debug_dump_ir_swizzle(swizzle_from_node(instr));
             break;
-        case HLSL_IR_CONSTRUCTOR:
-            debug_dump_ir_constructor(constructor_from_node(instr));
-            break;
         case HLSL_IR_JUMP:
             debug_dump_ir_jump(jump_from_node(instr));
             break;
@@ -2171,11 +2154,6 @@ static void free_ir_swizzle(struct hlsl_ir_swizzle *swizzle)
     d3dcompiler_free(swizzle);
 }
 
-static void free_ir_constructor(struct hlsl_ir_constructor *constructor)
-{
-    d3dcompiler_free(constructor);
-}
-
 static void free_ir_expr(struct hlsl_ir_expr *expr)
 {
     d3dcompiler_free(expr);
@@ -2216,9 +2194,6 @@ void free_instr(struct hlsl_ir_node *node)
             break;
         case HLSL_IR_SWIZZLE:
             free_ir_swizzle(swizzle_from_node(node));
-            break;
-        case HLSL_IR_CONSTRUCTOR:
-            free_ir_constructor(constructor_from_node(node));
             break;
         case HLSL_IR_EXPR:
             free_ir_expr(expr_from_node(node));

@@ -1245,7 +1245,6 @@ static unsigned int evaluate_array_dimension(struct hlsl_ir_node *node)
             return 0;
         }
     }
-    case HLSL_IR_CONSTRUCTOR:
     case HLSL_IR_EXPR:
     case HLSL_IR_LOAD:
     case HLSL_IR_SWIZZLE:
@@ -2416,41 +2415,78 @@ postfix_expr:             primary_expr
                                 }
                                 $$ = append_binop($1, $3, &load->node);
                             }
-                          /* "var_modifiers" doesn't make sense in this case, but it's needed
-                             in the grammar to avoid shift/reduce conflicts. */
-                        | var_modifiers type '(' initializer_expr_list ')'
-                            {
-                                struct hlsl_ir_constructor *constructor;
 
-                                TRACE("%s constructor.\n", debug_hlsl_type($2));
-                                if ($1)
-                                {
-                                    hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
-                                            "unexpected modifier on a constructor\n");
-                                    YYABORT;
-                                }
-                                if ($2->type > HLSL_CLASS_LAST_NUMERIC)
-                                {
-                                    hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR,
-                                            "constructors may only be used with numeric data types\n");
-                                    YYABORT;
-                                }
-                                if ($2->dimx * $2->dimy != initializer_size(&$4))
-                                {
-                                    hlsl_report_message(get_location(&@4), HLSL_LEVEL_ERROR,
-                                            "expected %u components in constructor, but got %u\n",
-                                            $2->dimx * $2->dimy, initializer_size(&$4));
-                                    YYABORT;
-                                }
-                                assert($4.args_count <= ARRAY_SIZE(constructor->args));
+      /* "var_modifiers" doesn't make sense in this case, but it's needed
+         in the grammar to avoid shift/reduce conflicts. */
+    | var_modifiers type '(' initializer_expr_list ')'
+        {
+            struct hlsl_ir_assignment *assignment;
+            unsigned int i, writemask_offset = 0;
+            static unsigned int counter;
+            struct hlsl_ir_load *load;
+            struct hlsl_ir_var *var;
+            char name[23];
 
-                                constructor = d3dcompiler_alloc(sizeof(*constructor));
-                                init_node(&constructor->node, HLSL_IR_CONSTRUCTOR, $2, get_location(&@3));
-                                constructor->args_count = $4.args_count;
-                                memcpy(constructor->args, $4.args, $4.args_count * sizeof(*$4.args));
-                                d3dcompiler_free($4.args);
-                                $$ = append_unop($4.instrs, &constructor->node);
-                            }
+            if ($1)
+            {
+                hlsl_report_message(get_location(&@1), HLSL_LEVEL_ERROR,
+                        "unexpected modifier on a constructor\n");
+                YYABORT;
+            }
+            if ($2->type > HLSL_CLASS_LAST_NUMERIC)
+            {
+                hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR,
+                        "constructors may only be used with numeric data types\n");
+                YYABORT;
+            }
+            if ($2->dimx * $2->dimy != initializer_size(&$4))
+            {
+                hlsl_report_message(get_location(&@4), HLSL_LEVEL_ERROR,
+                        "expected %u components in constructor, but got %u\n",
+                        $2->dimx * $2->dimy, initializer_size(&$4));
+                YYABORT;
+            }
+
+            if ($2->type == HLSL_CLASS_MATRIX)
+                FIXME("Matrix constructors are not supported yet.\n");
+
+            sprintf(name, "<constructor-%x>", counter++);
+            if (!(var = new_synthetic_var(name, $2, get_location(&@2))))
+                YYABORT;
+            for (i = 0; i < $4.args_count; ++i)
+            {
+                struct hlsl_ir_node *arg = $4.args[i];
+                unsigned int width;
+
+                if (arg->data_type->type == HLSL_CLASS_OBJECT)
+                {
+                    hlsl_report_message(arg->loc, HLSL_LEVEL_ERROR,
+                            "invalid constructor argument");
+                    continue;
+                }
+                width = components_count_type(arg->data_type);
+
+                if (width > 4)
+                {
+                    FIXME("Constructor argument with %u components.\n", width);
+                    continue;
+                }
+
+                if (!(arg = implicit_conversion(arg,
+                        hlsl_ctx.builtin_types.vector[$2->base_type][width - 1], &arg->loc)))
+                    continue;
+
+                if (!(assignment = new_assignment(var, NULL, arg,
+                        ((1 << width) - 1) << writemask_offset, arg->loc)))
+                    YYABORT;
+                writemask_offset += width;
+                list_add_tail($4.instrs, &assignment->node.entry);
+            }
+            d3dcompiler_free($4.args);
+            if (!(load = new_var_load(var, get_location(&@2))))
+                YYABORT;
+            $$ = append_unop($4.instrs, &load->node);
+        }
 
 unary_expr:               postfix_expr
                             {
@@ -2833,14 +2869,6 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             assignment->rhs->last_read = instr->index;
             if (assignment->lhs.offset)
                 assignment->lhs.offset->last_read = instr->index;
-            break;
-        }
-        case HLSL_IR_CONSTRUCTOR:
-        {
-            struct hlsl_ir_constructor *constructor = constructor_from_node(instr);
-            unsigned int i;
-            for (i = 0; i < constructor->args_count; ++i)
-                constructor->args[i]->last_read = instr->index;
             break;
         }
         case HLSL_IR_EXPR:

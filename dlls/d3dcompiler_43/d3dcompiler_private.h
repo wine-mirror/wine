@@ -648,7 +648,6 @@ enum hlsl_ir_node_type
 {
     HLSL_IR_ASSIGNMENT = 0,
     HLSL_IR_CONSTANT,
-    HLSL_IR_CONSTRUCTOR,
     HLSL_IR_EXPR,
     HLSL_IR_IF,
     HLSL_IR_LOAD,
@@ -880,13 +879,6 @@ struct hlsl_ir_constant
     } v;
 };
 
-struct hlsl_ir_constructor
-{
-    struct hlsl_ir_node node;
-    struct hlsl_ir_node *args[16];
-    unsigned int args_count;
-};
-
 struct hlsl_scope
 {
     struct list entry;
@@ -1041,12 +1033,6 @@ static inline struct hlsl_ir_swizzle *swizzle_from_node(const struct hlsl_ir_nod
 {
     assert(node->type == HLSL_IR_SWIZZLE);
     return CONTAINING_RECORD(node, struct hlsl_ir_swizzle, node);
-}
-
-static inline struct hlsl_ir_constructor *constructor_from_node(const struct hlsl_ir_node *node)
-{
-    assert(node->type == HLSL_IR_CONSTRUCTOR);
-    return CONTAINING_RECORD(node, struct hlsl_ir_constructor, node);
 }
 
 static inline struct hlsl_ir_if *if_from_node(const struct hlsl_ir_node *node)
