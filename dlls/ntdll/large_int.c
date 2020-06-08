@@ -759,7 +759,29 @@ LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b )
  */
 LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b )
 {
-    return a * b;
+    LARGE_INTEGER x = { .QuadPart = a };
+    LARGE_INTEGER y = { .QuadPart = b };
+    LARGE_INTEGER r;
+    unsigned int t;
+
+    const int bits_in_word_2 = 16;
+    const unsigned int lower_mask = ~0u >> bits_in_word_2;
+
+    r.u.LowPart = (x.u.LowPart & lower_mask) * (y.u.LowPart & lower_mask);
+    t = r.u.LowPart >> bits_in_word_2;
+    r.u.LowPart &= lower_mask;
+    t += (x.u.LowPart >> bits_in_word_2) * (y.u.LowPart & lower_mask);
+    r.u.LowPart += (t & lower_mask) << bits_in_word_2;
+    r.u.HighPart = t >> bits_in_word_2;
+    t = r.u.LowPart >> bits_in_word_2;
+    r.u.LowPart &= lower_mask;
+    t += (y.u.LowPart >> bits_in_word_2) * (x.u.LowPart & lower_mask);
+    r.u.LowPart += (t & lower_mask) << bits_in_word_2;
+    r.u.HighPart += t >> bits_in_word_2;
+    r.u.HighPart += (x.u.LowPart >> bits_in_word_2) * (y.u.LowPart >> bits_in_word_2);
+
+    r.u.HighPart += x.u.HighPart * y.u.LowPart + x.u.LowPart * y.u.HighPart;
+    return r.QuadPart;
 }
 
 
