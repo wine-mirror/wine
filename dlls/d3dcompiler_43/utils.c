@@ -1294,6 +1294,8 @@ static struct hlsl_type *expr_common_type(struct hlsl_type *t1, struct hlsl_type
         }
     }
 
+    if (type == HLSL_CLASS_SCALAR)
+        return hlsl_ctx.builtin_types.scalar[base];
     return new_hlsl_type(NULL, type, base, dimx, dimy);
 }
 
