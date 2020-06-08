@@ -2301,8 +2301,8 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
         prec = 0;
     }
 
-    sprintf(format, "%%.%dle", prec);
-    sprintf(buf, format, d);
+    MSVCRT_sprintf(format, "%%.%dle", prec);
+    MSVCRT_sprintf(buf, format, d);
 
     buf[1] = buf[0];
     data->pos = atoi(buf+prec+3);

@@ -454,7 +454,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
         len += GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY
                 |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
         buf[len-1] = '.';
-        sprintf(buf+len, "%d", cp);
+        MSVCRT_sprintf(buf+len, "%d", cp);
         len += strlen(buf+len);
 
         return init_category_name(buf, len, locinfo, category);
@@ -507,7 +507,7 @@ static inline char* construct_lc_all(MSVCRT_pthreadlocinfo locinfo) {
     if(i==MSVCRT_LC_MAX)
         return locinfo->lc_category[MSVCRT_LC_COLLATE].locale;
 
-    sprintf(current_lc_all,
+    MSVCRT_sprintf(current_lc_all,
             "LC_COLLATE=%s;LC_CTYPE=%s;LC_MONETARY=%s;LC_NUMERIC=%s;LC_TIME=%s",
             locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
             locinfo->lc_category[MSVCRT_LC_CTYPE].locale,

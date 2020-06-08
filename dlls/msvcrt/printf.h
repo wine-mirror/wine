@@ -282,7 +282,9 @@ static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_fla
     if(flags->Alternate)
         *p++ = flags->Alternate;
     if(flags->Precision >= 0) {
-        p += sprintf(p, ".%d", flags->Precision);
+        *p++ = '.';
+        MSVCRT__itoa(flags->Precision, p, 10);
+        p += strlen(p);
     }
     *p++ = flags->Format;
     *p++ = 0;
@@ -663,11 +665,11 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 static const char ind_str[] = "nan(ind)";
                 static const char nan_str[] = "nan";
                 if(inf)
-                    sprintf(tmp, inf_str);
+                    memcpy(tmp, inf_str, ARRAY_SIZE(inf_str));
                 else if(ind)
-                    sprintf(tmp, ind_str);
+                    memcpy(tmp, ind_str, ARRAY_SIZE(ind_str));
                 else
-                    sprintf(tmp, nan_str);
+                    memcpy(tmp, nan_str, ARRAY_SIZE(nan_str));
                 if (strchr("EFG", flags.Format))
                     for(i=0; tmp[i]; i++)
                         tmp[i] = MSVCRT__toupper_l(tmp[i], NULL);
