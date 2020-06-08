@@ -2357,7 +2357,7 @@ static HRESULT WINAPI fontfallbackbuilder_CreateFontFallback(IDWriteFontFallback
     struct dwrite_fontfallback_builder *fallbackbuilder = impl_from_IDWriteFontFallbackBuilder(iface);
     struct dwrite_fontfallback *fallback;
 
-    FIXME("%p, %p stub.\n", iface, ret);
+    TRACE("%p, %p.\n", iface, ret);
 
     *ret = NULL;
 
