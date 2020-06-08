@@ -3689,7 +3689,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageA( DWORD flags, const void *source, 
     WCHAR *result, *message = NULL;
     NTSTATUS status;
 
-    TRACE( "(0x%x,%p,%d,0x%x,%p,%d,%p)\n", flags, source, msgid, langid, buffer, size, args );
+    TRACE( "(0x%x,%p,%#x,0x%x,%p,%u,%p)\n", flags, source, msgid, langid, buffer, size, args );
 
     if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
     {
@@ -3771,7 +3771,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, 
     WCHAR *message = NULL;
     NTSTATUS status;
 
-    TRACE( "(0x%x,%p,%d,0x%x,%p,%d,%p)\n", flags, source, msgid, langid, buffer, size, args );
+    TRACE( "(0x%x,%p,%#x,0x%x,%p,%u,%p)\n", flags, source, msgid, langid, buffer, size, args );
 
     if (!buffer)
     {
