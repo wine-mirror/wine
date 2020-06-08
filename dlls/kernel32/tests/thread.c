@@ -1389,6 +1389,9 @@ static void test_RegisterWaitForSingleObject(void)
     ok(!ret, "Expected UnregisterWait to fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE,
        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    CloseHandle(complete_event);
+    CloseHandle(handle);
 }
 
 static DWORD LS_main;
