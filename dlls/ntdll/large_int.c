@@ -736,7 +736,12 @@ static ULONGLONG udivmod(ULONGLONG a, ULONGLONG b, ULONGLONG *rem)
  */
 LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b )
 {
-    return a / b;
+    LONGLONG s_a = a >> 63;                    /* s_a = a < 0 ? -1 : 0 */
+    LONGLONG s_b = b >> 63;                    /* s_b = b < 0 ? -1 : 0 */
+    a = (a ^ s_a) - s_a;                       /* negate if s_a == -1 */
+    b = (b ^ s_b) - s_b;                       /* negate if s_b == -1 */
+    s_a ^= s_b;                                /* sign of quotient */
+    return (udivmod(a, b, NULL) ^ s_a) - s_a;  /* negate if s_a == -1 */
 }
 
 
