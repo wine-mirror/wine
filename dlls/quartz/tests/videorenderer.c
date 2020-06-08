@@ -1443,7 +1443,7 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     ref = IMemAllocator_Release(allocator);
-    todo_wine ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
     IMemInputPin_Release(input);
     IPin_Release(pin);
     ref = IFilterGraph2_Release(graph);

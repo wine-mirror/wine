@@ -3072,7 +3072,7 @@ static void test_renderless_formats(void)
         ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
 
         hr = IMemInputPin_GetAllocator(input, &allocator);
-        todo_wine_if (i == 0) ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
+        todo_wine ok(hr == S_OK, "Test %u: Got hr %#x.\n", i, hr);
         if (hr != S_OK)
         {
             test_allocator(input);

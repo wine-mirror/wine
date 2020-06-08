@@ -594,6 +594,13 @@ static HRESULT WINAPI source_Disconnect(IPin *iface)
             IMemInputPin_Release(This->pMemInputPin);
             This->pMemInputPin = NULL;
         }
+
+        if (This->pAllocator)
+        {
+            IMemAllocator_Release(This->pAllocator);
+            This->pAllocator = NULL;
+        }
+
         if (This->pin.peer)
         {
             IPin_Release(This->pin.peer);
@@ -929,6 +936,12 @@ static HRESULT WINAPI sink_Disconnect(IPin *iface)
     {
         if (pin->pFuncsTable->sink_disconnect)
             pin->pFuncsTable->sink_disconnect(pin);
+
+        if (pin->pAllocator)
+        {
+            IMemAllocator_Release(pin->pAllocator);
+            pin->pAllocator = NULL;
+        }
 
         IPin_Release(pin->pin.peer);
         pin->pin.peer = NULL;
