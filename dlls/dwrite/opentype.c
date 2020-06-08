@@ -610,7 +610,7 @@ struct ot_gsub_lig
     UINT16 components[1];
 };
 
-struct ot_gsub_context_subst_format1
+struct ot_gsubgpos_context_format1
 {
     UINT16 format;
     UINT16 coverage;
@@ -618,7 +618,7 @@ struct ot_gsub_context_subst_format1
     UINT16 rulesets[1];
 };
 
-struct ot_gsub_ruleset
+struct ot_gsubgpos_ruleset
 {
     UINT16 count;
     UINT16 offsets[1];
@@ -4197,18 +4197,6 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
     return TRUE;
 }
 
-static BOOL opentype_layout_apply_gpos_contextual_positioning(const struct scriptshaping_context *context,
-        const struct lookup *lookup, unsigned int subtable_offset)
-{
-    return FALSE;
-}
-
-static BOOL opentype_layout_apply_gpos_chaining_contextual_positioning(const struct scriptshaping_context *context,
-        const struct lookup *lookup, unsigned int subtable_offset)
-{
-    return FALSE;
-}
-
 static unsigned int opentype_layout_adjust_extension_subtable(struct scriptshaping_context *context,
         unsigned int *subtable_offset)
 {
@@ -4227,6 +4215,11 @@ static unsigned int opentype_layout_adjust_extension_subtable(struct scriptshapi
 
     return GET_BE_WORD(format1->lookup_type);
 }
+
+static BOOL opentype_layout_apply_context(struct scriptshaping_context *context, const struct lookup *lookup,
+        unsigned int subtable_offset);
+static BOOL opentype_layout_apply_chain_context(struct scriptshaping_context *context, const struct lookup *lookup,
+        unsigned int subtable_offset);
 
 static BOOL opentype_layout_apply_gpos_lookup(struct scriptshaping_context *context, const struct lookup *lookup)
 {
@@ -4267,10 +4260,10 @@ static BOOL opentype_layout_apply_gpos_lookup(struct scriptshaping_context *cont
                 ret = opentype_layout_apply_gpos_mark_to_mark_attachment(context, lookup, subtable_offset);
                 break;
             case GPOS_LOOKUP_CONTEXTUAL_POSITION:
-                ret = opentype_layout_apply_gpos_contextual_positioning(context, lookup, subtable_offset);
+                ret = opentype_layout_apply_context(context, lookup, subtable_offset);
                 break;
             case GPOS_LOOKUP_CONTEXTUAL_CHAINING_POSITION:
-                ret = opentype_layout_apply_gpos_chaining_contextual_positioning(context, lookup, subtable_offset);
+                ret = opentype_layout_apply_chain_context(context, lookup, subtable_offset);
                 break;
             case GPOS_LOOKUP_EXTENSION_POSITION:
                 WARN("Recursive extension lookup.\n");
@@ -5165,7 +5158,7 @@ static BOOL opentype_layout_apply_chain_rule_set(const struct match_context *mc,
     unsigned int backtrack_count, input_count, lookahead_count, lookup_count;
     const struct dwrite_fonttable *table = &mc->context->table->table;
     const UINT16 *backtrack, *lookahead, *input, *lookup_records;
-    const struct ot_gsub_ruleset *ruleset;
+    const struct ot_gsubgpos_ruleset *ruleset;
     unsigned int i, count;
 
     count = table_read_be_word(table, offset);
@@ -5223,7 +5216,7 @@ static BOOL opentype_layout_apply_rule_set(const struct match_context *mc, unsig
     unsigned int input_count, lookup_count;
     const struct dwrite_fonttable *table = &mc->context->table->table;
     const UINT16 *input, *lookup_records;
-    const struct ot_gsub_ruleset *ruleset;
+    const struct ot_gsubgpos_ruleset *ruleset;
     unsigned int i, count;
 
     count = table_read_be_word(table, offset);
@@ -5256,7 +5249,7 @@ static BOOL opentype_layout_apply_rule_set(const struct match_context *mc, unsig
     return FALSE;
 }
 
-static BOOL opentype_layout_apply_gsub_context_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
+static BOOL opentype_layout_apply_context(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
     struct match_context mc = { .context = context, .lookup = lookup };
@@ -5271,18 +5264,17 @@ static BOOL opentype_layout_apply_gsub_context_substitution(struct scriptshaping
 
     if (format == 1)
     {
-        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1, coverage));
+        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsubgpos_context_format1, coverage));
 
         coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
         if (coverage_index == GLYPH_NOT_COVERED)
             return FALSE;
 
-        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1,
-                ruleset_count));
+        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsubgpos_context_format1, ruleset_count));
         if (coverage_index >= count)
             return FALSE;
 
-        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1,
+        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsubgpos_context_format1,
                 rulesets[coverage_index]));
         offset += subtable_offset;
 
@@ -5358,8 +5350,8 @@ static BOOL opentype_layout_apply_gsub_context_substitution(struct scriptshaping
     return ret;
 }
 
-static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scriptshaping_context *context,
-        const struct lookup *lookup, unsigned int subtable_offset)
+static BOOL opentype_layout_apply_chain_context(struct scriptshaping_context *context, const struct lookup *lookup,
+        unsigned int subtable_offset)
 {
     struct match_context mc = { .context = context, .lookup = lookup };
     const struct dwrite_fonttable *table = &context->table->table;
@@ -5373,17 +5365,17 @@ static BOOL opentype_layout_apply_gsub_chain_context_substitution(struct scripts
 
     if (format == 1)
     {
-        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1, coverage));
+        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsubgpos_context_format1, coverage));
 
         coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
         if (coverage_index == GLYPH_NOT_COVERED)
             return FALSE;
 
-        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1, ruleset_count));
+        count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsubgpos_context_format1, ruleset_count));
         if (coverage_index >= count)
             return FALSE;
 
-        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_context_subst_format1,
+        offset = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsubgpos_context_format1,
                 rulesets[coverage_index]));
         offset += subtable_offset;
 
@@ -5571,10 +5563,10 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
                 ret = opentype_layout_apply_gsub_lig_substitution(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_CONTEXTUAL_SUBST:
-                ret = opentype_layout_apply_gsub_context_substitution(context, lookup, subtable_offset);
+                ret = opentype_layout_apply_context(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_CHAINING_CONTEXTUAL_SUBST:
-                ret = opentype_layout_apply_gsub_chain_context_substitution(context, lookup, subtable_offset);
+                ret = opentype_layout_apply_chain_context(context, lookup, subtable_offset);
                 break;
             case GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST:
                 ret = opentype_layout_apply_gsub_reverse_chain_context_substitution(context, lookup, subtable_offset);
