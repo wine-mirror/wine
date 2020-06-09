@@ -67,6 +67,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
+#define TICKSPERSEC 10000000
 
 HANDLE keyed_event = 0;
 
@@ -124,6 +125,23 @@ static int *get_futex(void **ptr)
         return (int *)ptr;
     else
         return NULL;
+}
+
+static void timespec_from_timeout( struct timespec *timespec, const LARGE_INTEGER *timeout )
+{
+    LARGE_INTEGER now;
+    timeout_t diff;
+
+    if (timeout->QuadPart > 0)
+    {
+        NtQuerySystemTime( &now );
+        diff = timeout->QuadPart - now.QuadPart;
+    }
+    else
+        diff = -timeout->QuadPart;
+
+    timespec->tv_sec  = diff / TICKSPERSEC;
+    timespec->tv_nsec = (diff % TICKSPERSEC) * 100;
 }
 
 #endif
@@ -1260,6 +1278,86 @@ NTSTATUS CDECL fast_RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wait_cv( int *futex, int val, const LARGE_INTEGER *timeout )
+{
+    struct timespec timespec;
+    int ret;
+
+    if (timeout && timeout->QuadPart != TIMEOUT_INFINITE)
+    {
+        timespec_from_timeout( &timespec, timeout );
+        ret = futex_wait( futex, val, &timespec );
+    }
+    else
+        ret = futex_wait( futex, val, NULL );
+
+    if (ret == -1 && errno == ETIMEDOUT)
+        return STATUS_TIMEOUT;
+    return STATUS_WAIT_0;
+}
+
+NTSTATUS CDECL fast_RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable,
+                                                 RTL_CRITICAL_SECTION *cs, const LARGE_INTEGER *timeout )
+{
+    NTSTATUS status;
+    int val, *futex;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    if (!(futex = get_futex( &variable->Ptr )))
+        return STATUS_NOT_IMPLEMENTED;
+
+    val = *futex;
+
+    RtlLeaveCriticalSection( cs );
+    status = wait_cv( futex, val, timeout );
+    RtlEnterCriticalSection( cs );
+    return status;
+}
+
+NTSTATUS CDECL fast_RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock,
+                                                  const LARGE_INTEGER *timeout, ULONG flags )
+{
+    NTSTATUS status;
+    int val, *futex;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    if (!(futex = get_futex( &variable->Ptr )) || !get_futex( &lock->Ptr ))
+        return STATUS_NOT_IMPLEMENTED;
+
+    val = *futex;
+
+    if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
+        fast_RtlReleaseSRWLockShared( lock );
+    else
+        fast_RtlReleaseSRWLockExclusive( lock );
+
+    status = wait_cv( futex, val, timeout );
+
+    if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
+        fast_RtlAcquireSRWLockShared( lock );
+    else
+        fast_RtlAcquireSRWLockExclusive( lock );
+    return status;
+}
+
+NTSTATUS CDECL fast_RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable, int count )
+{
+    int *futex;
+
+    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
+
+    if (!(futex = get_futex( &variable->Ptr )))
+        return STATUS_NOT_IMPLEMENTED;
+
+    InterlockedIncrement( futex );
+    futex_wake( futex, count );
+    return STATUS_SUCCESS;
+}
+
 #else
 
 NTSTATUS CDECL fast_RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
@@ -1288,6 +1386,23 @@ NTSTATUS CDECL fast_RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
 }
 
 NTSTATUS CDECL fast_RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS CDECL fast_RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock,
+                                                  const LARGE_INTEGER *timeout, ULONG flags )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS CDECL fast_RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable,
+                                                 RTL_CRITICAL_SECTION *cs, const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS CDECL fast_RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable, int count )
 {
     return STATUS_NOT_IMPLEMENTED;
 }

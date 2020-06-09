@@ -105,16 +105,6 @@ static inline int use_futexes(void)
     return supported;
 }
 
-static int *get_futex(void **ptr)
-{
-    if (sizeof(void *) == 8)
-        return (int *)((((ULONG_PTR)ptr) + 3) & ~3);
-    else if (!(((ULONG_PTR)ptr) & 3))
-        return (int *)ptr;
-    else
-        return NULL;
-}
-
 static void timespec_from_timeout( struct timespec *timespec, const LARGE_INTEGER *timeout )
 {
     LARGE_INTEGER now;
@@ -1437,105 +1427,6 @@ BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock )
     return TRUE;
 }
 
-#ifdef __linux__
-static NTSTATUS fast_wait_cv( int *futex, int val, const LARGE_INTEGER *timeout )
-{
-    struct timespec timespec;
-    int ret;
-
-    if (timeout && timeout->QuadPart != TIMEOUT_INFINITE)
-    {
-        timespec_from_timeout( &timespec, timeout );
-        ret = futex_wait( futex, val, &timespec );
-    }
-    else
-        ret = futex_wait( futex, val, NULL );
-
-    if (ret == -1 && errno == ETIMEDOUT)
-        return STATUS_TIMEOUT;
-    return STATUS_WAIT_0;
-}
-
-static NTSTATUS fast_sleep_cs_cv( RTL_CONDITION_VARIABLE *variable,
-        RTL_CRITICAL_SECTION *cs, const LARGE_INTEGER *timeout )
-{
-    NTSTATUS status;
-    int val, *futex;
-
-    if (!use_futexes())
-        return STATUS_NOT_IMPLEMENTED;
-
-    if (!(futex = get_futex( &variable->Ptr )))
-        return STATUS_NOT_IMPLEMENTED;
-
-    val = *futex;
-
-    RtlLeaveCriticalSection( cs );
-    status = fast_wait_cv( futex, val, timeout );
-    RtlEnterCriticalSection( cs );
-    return status;
-}
-
-static NTSTATUS fast_sleep_srw_cv( RTL_CONDITION_VARIABLE *variable,
-        RTL_SRWLOCK *lock, const LARGE_INTEGER *timeout, ULONG flags )
-{
-    NTSTATUS status;
-    int val, *futex;
-
-    if (!use_futexes())
-        return STATUS_NOT_IMPLEMENTED;
-
-    if (!(futex = get_futex( &variable->Ptr )))
-        return STATUS_NOT_IMPLEMENTED;
-
-    val = *futex;
-
-    if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
-        RtlReleaseSRWLockShared( lock );
-    else
-        RtlReleaseSRWLockExclusive( lock );
-
-    status = fast_wait_cv( futex, val, timeout );
-
-    if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
-        RtlAcquireSRWLockShared( lock );
-    else
-        RtlAcquireSRWLockExclusive( lock );
-    return status;
-}
-
-static NTSTATUS fast_wake_cv( RTL_CONDITION_VARIABLE *variable, int count )
-{
-    int *futex;
-
-    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
-
-    if (!(futex = get_futex( &variable->Ptr )))
-        return STATUS_NOT_IMPLEMENTED;
-
-    InterlockedIncrement( futex );
-    futex_wake( futex, count );
-    return STATUS_SUCCESS;
-}
-#else
-static NTSTATUS fast_sleep_srw_cv( RTL_CONDITION_VARIABLE *variable,
-        RTL_SRWLOCK *lock, const LARGE_INTEGER *timeout, ULONG flags )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS fast_sleep_cs_cv( RTL_CONDITION_VARIABLE *variable,
-        RTL_CRITICAL_SECTION *cs, const LARGE_INTEGER *timeout )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS fast_wake_cv( RTL_CONDITION_VARIABLE *variable, int count )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-#endif
-
 /***********************************************************************
  *           RtlInitializeConditionVariable   (NTDLL.@)
  *
@@ -1569,7 +1460,7 @@ void WINAPI RtlInitializeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
-    if (fast_wake_cv( variable, 1 ) == STATUS_NOT_IMPLEMENTED)
+    if (unix_funcs->fast_RtlWakeConditionVariable( variable, 1 ) == STATUS_NOT_IMPLEMENTED)
     {
         InterlockedIncrement( (int *)&variable->Ptr );
         RtlWakeAddressSingle( variable );
@@ -1583,7 +1474,7 @@ void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeAllConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
-    if (fast_wake_cv( variable, INT_MAX ) == STATUS_NOT_IMPLEMENTED)
+    if (unix_funcs->fast_RtlWakeConditionVariable( variable, INT_MAX ) == STATUS_NOT_IMPLEMENTED)
     {
         InterlockedIncrement( (int *)&variable->Ptr );
         RtlWakeAddressAll( variable );
@@ -1611,7 +1502,8 @@ NTSTATUS WINAPI RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable, R
     NTSTATUS status;
     int val;
 
-    if ((status = fast_sleep_cs_cv( variable, crit, timeout )) != STATUS_NOT_IMPLEMENTED)
+    if ((status = unix_funcs->fast_RtlSleepConditionVariableCS( variable, crit,
+                                                                timeout )) != STATUS_NOT_IMPLEMENTED)
         return status;
 
     val = *(int *)&variable->Ptr;
@@ -1646,7 +1538,8 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     NTSTATUS status;
     int val;
 
-    if ((status = fast_sleep_srw_cv( variable, lock, timeout, flags )) != STATUS_NOT_IMPLEMENTED)
+    if ((status = unix_funcs->fast_RtlSleepConditionVariableSRW( variable, lock, timeout,
+                                                                 flags )) != STATUS_NOT_IMPLEMENTED)
         return status;
 
     val = *(int *)&variable->Ptr;

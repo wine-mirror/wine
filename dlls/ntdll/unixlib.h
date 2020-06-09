@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 35
+#define NTDLL_UNIXLIB_VERSION 36
 
 struct unix_funcs
 {
@@ -151,6 +151,13 @@ struct unix_funcs
     NTSTATUS      (CDECL *fast_RtlAcquireSRWLockShared)( RTL_SRWLOCK *lock );
     NTSTATUS      (CDECL *fast_RtlReleaseSRWLockExclusive)( RTL_SRWLOCK *lock );
     NTSTATUS      (CDECL *fast_RtlReleaseSRWLockShared)( RTL_SRWLOCK *lock );
+    NTSTATUS      (CDECL *fast_RtlSleepConditionVariableSRW)( RTL_CONDITION_VARIABLE *variable,
+                                                              RTL_SRWLOCK *lock,
+                                                              const LARGE_INTEGER *timeout, ULONG flags );
+    NTSTATUS      (CDECL *fast_RtlSleepConditionVariableCS)( RTL_CONDITION_VARIABLE *variable,
+                                                             RTL_CRITICAL_SECTION *cs,
+                                                             const LARGE_INTEGER *timeout );
+    NTSTATUS      (CDECL *fast_RtlWakeConditionVariable)( RTL_CONDITION_VARIABLE *variable, int count );
 
     /* environment functions */
     void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );
