@@ -981,6 +981,24 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     todo_wine
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"20px"), "columnGap = %s\n", wine_dbgstr_variant(&v));
     VariantClear(&v);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnFill(css_style, &str);
+    ok(hres == S_OK, "get_columnFill failed: %08x\n", hres);
+    ok(!str, "columnFill = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"auto");
+    hres = IHTMLCSSStyleDeclaration2_put_columnFill(css_style, str);
+    ok(hres == S_OK, "put_columnFill failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnFill(css_style, &str);
+    ok(hres == S_OK, "get_columnFill failed: %08x\n", hres);
+    todo_wine
+    ok(str && !lstrcmpW(str, L"auto"), "columnFill = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)
