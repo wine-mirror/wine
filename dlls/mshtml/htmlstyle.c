@@ -342,7 +342,8 @@ typedef struct {
 static const style_tbl_entry_t style_tbl[] = {
     {
         L"animation-name",
-        DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONNAME
+        DISPID_IHTMLCSSSTYLEDECLARATION2_ANIMATIONNAME,
+        DISPID_UNKNOWN
     },
     {
         backgroundW,
@@ -799,11 +800,13 @@ static const style_tbl_entry_t style_tbl[] = {
     },
     {
         L"transform",
-        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM
+        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSFORM,
+        DISPID_UNKNOWN
     },
     {
         L"transition",
-        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITION
+        DISPID_IHTMLCSSSTYLEDECLARATION2_TRANSITION,
+        DISPID_UNKNOWN
     },
     {
         vertical_alignW,
