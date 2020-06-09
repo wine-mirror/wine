@@ -4860,14 +4860,26 @@ static void test_flush_buffers_file(void)
     status = pNtFlushBuffersFile(hfile, (IO_STATUS_BLOCK *)0xdeadbeaf);
     ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
 
+    io_status_block.Information = 0xdeadbeef;
+    io_status_block.Status = 0xdeadbeef;
     status = pNtFlushBuffersFile(hfile, &io_status_block);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+    ok(io_status_block.Status == STATUS_SUCCESS, "Got unexpected io_status_block.Status %#x.\n",
+            io_status_block.Status);
+    ok(!io_status_block.Information, "Got unexpected io_status_block.Information %#lx.\n",
+            io_status_block.Information);
 
     status = pNtFlushBuffersFile(hfileread, &io_status_block);
     ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#x.\n", status);
 
+    io_status_block.Information = 0xdeadbeef;
+    io_status_block.Status = 0xdeadbeef;
     status = pNtFlushBuffersFile(NULL, &io_status_block);
     ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+    ok(io_status_block.Status == 0xdeadbeef, "Got unexpected io_status_block.Status %#x.\n",
+            io_status_block.Status);
+    ok(io_status_block.Information == 0xdeadbeef, "Got unexpected io_status_block.Information %#lx.\n",
+            io_status_block.Information);
 
     CloseHandle(hfileread);
     CloseHandle(hfile);
@@ -4877,6 +4889,15 @@ static void test_flush_buffers_file(void)
 
     status = pNtFlushBuffersFile(hfile, &io_status_block);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x.\n", status);
+
+    io_status_block.Information = 0xdeadbeef;
+    io_status_block.Status = 0xdeadbeef;
+    status = pNtFlushBuffersFile((HANDLE)0xdeadbeef, &io_status_block);
+    ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+    ok(io_status_block.Status == 0xdeadbeef, "Got unexpected io_status_block.Status %#x.\n",
+            io_status_block.Status);
+    ok(io_status_block.Information == 0xdeadbeef, "Got unexpected io_status_block.Information %#lx.\n",
+            io_status_block.Information);
 
     CloseHandle(hfile);
     DeleteFileA(buffer);

@@ -3584,7 +3584,15 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE hFile, IO_STATUS_BLOCK *io )
     if (ret == STATUS_ACCESS_DENIED)
         ret = unix_funcs->server_get_unix_fd( hFile, FILE_APPEND_DATA, &fd, &needs_close, &type, NULL );
 
-    if (!ret && type == FD_TYPE_SERIAL)
+    if (!ret && (type == FD_TYPE_FILE || type == FD_TYPE_DIR))
+    {
+        if (fsync(fd))
+            ret = FILE_GetNtStatus();
+
+        io->u.Status    = ret;
+        io->Information = 0;
+    }
+    else if (!ret && type == FD_TYPE_SERIAL)
     {
         ret = COMM_FlushBuffersFile( fd );
     }
