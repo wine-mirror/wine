@@ -195,6 +195,47 @@ enum font_flags
     FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 4
 };
 
+struct dwrite_cmap;
+
+typedef UINT16 (*p_cmap_get_glyph_func)(const struct dwrite_cmap *cmap, unsigned int ch);
+
+struct dwrite_cmap
+{
+    const void *data;
+    union
+    {
+        struct
+        {
+            unsigned int seg_count;
+            unsigned int glyph_id_array_len;
+
+            const UINT16 *ends;
+            const UINT16 *starts;
+            const UINT16 *id_delta;
+            const UINT16 *id_range_offset;
+            const UINT16 *glyph_id_array;
+        } format4;
+        struct
+        {
+            unsigned int first;
+            unsigned int last;
+        } format6_10;
+        struct
+        {
+            unsigned int group_count;
+        } format12_13;
+    } u;
+    p_cmap_get_glyph_func get_glyph;
+    unsigned short symbol : 1;
+    IDWriteFontFileStream *stream;
+    void *table_context;
+};
+
+extern void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned int face_index,
+        DWRITE_FONT_FACE_TYPE face_type) DECLSPEC_HIDDEN;
+extern void dwrite_cmap_release(struct dwrite_cmap *cmap) DECLSPEC_HIDDEN;
+extern UINT16 opentype_cmap_get_glyph(const struct dwrite_cmap *cmap, unsigned int ch) DECLSPEC_HIDDEN;
+
 struct dwrite_fontface
 {
     IDWriteFontFace5 IDWriteFontFace5_iface;
