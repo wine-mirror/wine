@@ -149,7 +149,7 @@ typedef enum {
 } styleid_t;
 
 HRESULT HTMLStyle_Create(HTMLElement*,HTMLStyle**) DECLSPEC_HIDDEN;
-HRESULT create_computed_style(nsIDOMCSSStyleDeclaration*,IHTMLCSSStyleDeclaration**) DECLSPEC_HIDDEN;
+HRESULT create_computed_style(nsIDOMCSSStyleDeclaration*,compat_mode_t,IHTMLCSSStyleDeclaration**) DECLSPEC_HIDDEN;
 void init_css_style(CSSStyle*,nsIDOMCSSStyleDeclaration*,style_qi_t,
                     dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 
