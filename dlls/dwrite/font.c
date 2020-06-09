@@ -585,8 +585,6 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             heap_free(fontface->cached);
         }
         release_scriptshaping_cache(fontface->shaping_cache);
-        if (fontface->cmap.context)
-            IDWriteFontFace5_ReleaseFontTable(iface, fontface->cmap.context);
         if (fontface->vdmx.context)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->vdmx.context);
         if (fontface->gasp.context)
@@ -4906,7 +4904,6 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->refcount = 1;
     fontface->type = desc->face_type;
     fontface->file_count = desc->files_number;
-    fontface->cmap.exists = TRUE;
     fontface->vdmx.exists = TRUE;
     fontface->gasp.exists = TRUE;
     fontface->cpal.exists = TRUE;

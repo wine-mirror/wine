@@ -262,7 +262,6 @@ struct dwrite_fontface
     INT charmap;
     UINT32 flags;
 
-    struct dwrite_fonttable cmap;
     struct dwrite_fonttable vdmx;
     struct dwrite_fonttable gasp;
     struct dwrite_fonttable cpal;
