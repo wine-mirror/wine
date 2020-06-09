@@ -1073,6 +1073,21 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     todo_wine
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"10px"), "columnRuleWidth = %s\n", wine_dbgstr_variant(&v));
     VariantClear(&v);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnRule(css_style, &str);
+    ok(hres == S_OK, "get_columnRule failed: %08x\n", hres);
+    todo_wine
+    ok(str && !lstrcmpW(str, L"10px solid red"), "columnRule = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration2_put_columnRule(css_style, NULL);
+    ok(hres == S_OK, "put_columnRule failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLCSSStyleDeclaration2_get_columnRule(css_style, &str);
+    ok(hres == S_OK, "get_columnRule failed: %08x\n", hres);
+    ok(!str, "columnRule = %s\n", wine_dbgstr_w(str));
 }
 
 static void test_body_style(IHTMLStyle *style)
