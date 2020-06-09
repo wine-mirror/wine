@@ -69,9 +69,62 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(seh);
+
+/***********************************************************************
+ * signal context platform-specific definitions
+ */
+#ifdef linux
+
+/* All Registers access - only for local access */
+# define REG_sig(reg_name, context) ((context)->uc_mcontext.reg_name)
+# define REGn_sig(reg_num, context) ((context)->uc_mcontext.regs[reg_num])
+
+/* Special Registers access  */
+# define SP_sig(context)            REG_sig(sp, context)    /* Stack pointer */
+# define PC_sig(context)            REG_sig(pc, context)    /* Program counter */
+# define PSTATE_sig(context)        REG_sig(pstate, context) /* Current State Register */
+# define FP_sig(context)            REGn_sig(29, context)    /* Frame pointer */
+# define LR_sig(context)            REGn_sig(30, context)    /* Link Register */
+
+static struct _aarch64_ctx *get_extended_sigcontext( ucontext_t *sigcontext, unsigned int magic )
+{
+    struct _aarch64_ctx *ctx = (struct _aarch64_ctx *)sigcontext->uc_mcontext.__reserved;
+    while ((char *)ctx < (char *)(&sigcontext->uc_mcontext + 1) && ctx->magic && ctx->size)
+    {
+        if (ctx->magic == magic) return ctx;
+        ctx = (struct _aarch64_ctx *)((char *)ctx + ctx->size);
+    }
+    return NULL;
+}
+
+static struct fpsimd_context *get_fpsimd_context( ucontext_t *sigcontext )
+{
+    return (struct fpsimd_context *)get_extended_sigcontext( sigcontext, FPSIMD_MAGIC );
+}
+
+static DWORD64 get_fault_esr( ucontext_t *sigcontext )
+{
+    struct esr_context *esr = (struct esr_context *)get_extended_sigcontext( sigcontext, ESR_MAGIC );
+    if (esr) return esr->esr;
+    return 0;
+}
+
+#endif /* linux */
+
 static pthread_key_t teb_key;
 
 static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
+
+typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
+
+/* stack layout when calling an exception raise function */
+struct stack_layout
+{
+    CONTEXT           context;
+    EXCEPTION_RECORD  rec;
+    void             *redzone[2];
+};
 
 struct arm64_thread_data
 {
@@ -85,6 +138,76 @@ C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct arm64_thread_data,
 static inline struct arm64_thread_data *arm64_thread_data(void)
 {
     return (struct arm64_thread_data *)NtCurrentTeb()->SystemReserved2;
+}
+
+
+/***********************************************************************
+ *           save_context
+ *
+ * Set the register values from a sigcontext.
+ */
+static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
+{
+    DWORD i;
+
+    context->ContextFlags = CONTEXT_FULL;
+    context->u.s.Fp = FP_sig(sigcontext);     /* Frame pointer */
+    context->u.s.Lr = LR_sig(sigcontext);     /* Link register */
+    context->Sp     = SP_sig(sigcontext);     /* Stack pointer */
+    context->Pc     = PC_sig(sigcontext);     /* Program Counter */
+    context->Cpsr   = PSTATE_sig(sigcontext); /* Current State Register */
+    for (i = 0; i <= 28; i++) context->u.X[i] = REGn_sig( i, sigcontext );
+}
+
+
+/***********************************************************************
+ *           restore_context
+ *
+ * Build a sigcontext from the register values.
+ */
+static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
+{
+    DWORD i;
+
+    FP_sig(sigcontext)     = context->u.s.Fp; /* Frame pointer */
+    LR_sig(sigcontext)     = context->u.s.Lr; /* Link register */
+    SP_sig(sigcontext)     = context->Sp;     /* Stack pointer */
+    PC_sig(sigcontext)     = context->Pc;     /* Program Counter */
+    PSTATE_sig(sigcontext) = context->Cpsr;   /* Current State Register */
+    for (i = 0; i <= 28; i++) REGn_sig( i, sigcontext ) = context->u.X[i];
+}
+
+
+/***********************************************************************
+ *           save_fpu
+ *
+ * Set the FPU context from a sigcontext.
+ */
+static void save_fpu( CONTEXT *context, ucontext_t *sigcontext )
+{
+    struct fpsimd_context *fp = get_fpsimd_context( sigcontext );
+
+    if (!fp) return;
+    context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    context->Fpcr = fp->fpcr;
+    context->Fpsr = fp->fpsr;
+    memcpy( context->V, fp->vregs, sizeof(context->V) );
+}
+
+
+/***********************************************************************
+ *           restore_fpu
+ *
+ * Restore the FPU context to a sigcontext.
+ */
+static void restore_fpu( CONTEXT *context, ucontext_t *sigcontext )
+{
+    struct fpsimd_context *fp = get_fpsimd_context( sigcontext );
+
+    if (!fp) return;
+    fp->fpcr = context->Fpcr;
+    fp->fpsr = context->Fpsr;
+    memcpy( fp->vregs, context->V, sizeof(fp->vregs) );
 }
 
 
@@ -297,6 +420,278 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *           setup_exception
+ *
+ * Setup the exception record and context on the thread stack.
+ */
+static struct stack_layout *setup_exception( ucontext_t *sigcontext )
+{
+    struct stack_layout *stack;
+    DWORD exception_code = 0;
+
+    /* push the stack_layout structure */
+    stack = (struct stack_layout *)((SP_sig(sigcontext) - sizeof(*stack)) & ~15);
+
+    stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionCode    = exception_code;
+    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    stack->rec.ExceptionAddress = (LPVOID)PC_sig(sigcontext);
+    stack->rec.NumberParameters = 0;
+
+    save_context( &stack->context, sigcontext );
+    save_fpu( &stack->context, sigcontext );
+    return stack;
+}
+
+
+extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func, void *sp );
+__ASM_GLOBAL_FUNC( raise_func_trampoline,
+                   __ASM_CFI(".cfi_signal_frame\n\t")
+                   "stp x29, x30, [sp, #-0x20]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 32\n\t")
+                   __ASM_CFI(".cfi_offset 29, -32\n\t")
+                   __ASM_CFI(".cfi_offset 30, -24\n\t")
+                   "mov x29, sp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register 29\n\t")
+                   "str x3, [sp, 0x10]\n\t"
+                   __ASM_CFI(".cfi_remember_state\n\t")
+                   __ASM_CFI(".cfi_escape 0x0f,0x03,0x8d,0x10,0x06\n\t") /* CFA */
+                   __ASM_CFI(".cfi_escape 0x10,0x1d,0x02,0x8d,0x00\n\t") /* x29 */
+                   __ASM_CFI(".cfi_escape 0x10,0x1e,0x02,0x8d,0x08\n\t") /* x30 */
+                   "blr x2\n\t"
+                   __ASM_CFI(".cfi_restore_state\n\t")
+                   "brk #1")
+
+/***********************************************************************
+ *           setup_raise_exception
+ *
+ * Modify the signal context to call the exception raise function.
+ */
+static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack )
+{
+    NTSTATUS status = send_debug_event( &stack->rec, &stack->context, TRUE );
+
+    if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+    {
+        restore_context( &stack->context, sigcontext );
+        return;
+    }
+    REGn_sig(3, sigcontext) = SP_sig(sigcontext); /* original stack pointer, fourth arg for raise_func_trampoline */
+    SP_sig(sigcontext) = (ULONG_PTR)stack;
+    LR_sig(sigcontext) = PC_sig(sigcontext);
+    PC_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline; /* raise_generic_exception; */
+    REGn_sig(0, sigcontext) = (ULONG_PTR)&stack->rec;  /* first arg for raise_generic_exception */
+    REGn_sig(1, sigcontext) = (ULONG_PTR)&stack->context; /* second arg for raise_generic_exception */
+    REGn_sig(2, sigcontext) = (ULONG_PTR)KiUserExceptionDispatcher; /* third arg for raise_func_trampoline */
+    REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
+}
+
+/**********************************************************************
+ *		segv_handler
+ *
+ * Handler for SIGSEGV and related errors.
+ */
+static void segv_handler( int signal, siginfo_t *info, void *ucontext )
+{
+    struct stack_layout *stack;
+    ucontext_t *context = ucontext;
+
+    /* check for page fault inside the thread stack */
+    if (signal == SIGSEGV)
+    {
+        switch (virtual_handle_stack_fault( info->si_addr ))
+        {
+        case 1:  /* handled */
+            return;
+        case -1:  /* overflow */
+            stack = setup_exception( context );
+            stack->rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+            goto done;
+        }
+    }
+
+    stack = setup_exception( context );
+    if (stack->rec.ExceptionCode == EXCEPTION_STACK_OVERFLOW) goto done;
+
+    switch(signal)
+    {
+    case SIGILL:   /* Invalid opcode exception */
+        stack->rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    case SIGSEGV:  /* Segmentation fault */
+        stack->rec.NumberParameters = 2;
+        stack->rec.ExceptionInformation[0] = (get_fault_esr( context ) & 0x40) != 0;
+        stack->rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
+        if (!(stack->rec.ExceptionCode = virtual_handle_fault( (void *)stack->rec.ExceptionInformation[1],
+                                                         stack->rec.ExceptionInformation[0], FALSE )))
+            return;
+        break;
+    case SIGBUS:  /* Alignment check exception */
+        stack->rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+        break;
+    default:
+        ERR("Got unexpected signal %i\n", signal);
+        stack->rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        break;
+    }
+done:
+    setup_raise_exception( context, stack );
+}
+
+
+/**********************************************************************
+ *		trap_handler
+ *
+ * Handler for SIGTRAP.
+ */
+static void trap_handler( int signal, siginfo_t *info, void *ucontext )
+{
+    ucontext_t *context = ucontext;
+    struct stack_layout *stack = setup_exception( context );
+
+    switch (info->si_code)
+    {
+    case TRAP_TRACE:
+        stack->rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+        break;
+    case TRAP_BRKPT:
+    default:
+        stack->rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        stack->context.Pc += 4;
+        break;
+    }
+    setup_raise_exception( context, stack );
+}
+
+
+/**********************************************************************
+ *		fpe_handler
+ *
+ * Handler for SIGFPE.
+ */
+static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    struct stack_layout *stack = setup_exception( sigcontext );
+
+    switch (siginfo->si_code & 0xffff )
+    {
+#ifdef FPE_FLTSUB
+    case FPE_FLTSUB:
+        stack->rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        break;
+#endif
+#ifdef FPE_INTDIV
+    case FPE_INTDIV:
+        stack->rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        break;
+#endif
+#ifdef FPE_INTOVF
+    case FPE_INTOVF:
+        stack->rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTDIV
+    case FPE_FLTDIV:
+        stack->rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        break;
+#endif
+#ifdef FPE_FLTOVF
+    case FPE_FLTOVF:
+        stack->rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTUND
+    case FPE_FLTUND:
+        stack->rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTRES
+    case FPE_FLTRES:
+        stack->rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
+        break;
+#endif
+#ifdef FPE_FLTINV
+    case FPE_FLTINV:
+#endif
+    default:
+        stack->rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        break;
+    }
+    setup_raise_exception( sigcontext, stack );
+}
+
+
+/**********************************************************************
+ *		int_handler
+ *
+ * Handler for SIGINT.
+ */
+static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    struct stack_layout *stack = setup_exception( sigcontext );
+
+    stack->rec.ExceptionCode = CONTROL_C_EXIT;
+    setup_raise_exception( sigcontext, stack );
+}
+
+
+/**********************************************************************
+ *		abrt_handler
+ *
+ * Handler for SIGABRT.
+ */
+static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    struct stack_layout *stack = setup_exception( sigcontext );
+
+    stack->rec.ExceptionCode  = EXCEPTION_WINE_ASSERTION;
+    stack->rec.ExceptionFlags = EH_NONCONTINUABLE;
+    setup_raise_exception( sigcontext, stack );
+}
+
+
+/**********************************************************************
+ *		quit_handler
+ *
+ * Handler for SIGQUIT.
+ */
+static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    abort_thread(0);
+}
+
+
+/**********************************************************************
+ *		usr1_handler
+ *
+ * Handler for SIGUSR1, used to signal a thread that it got suspended.
+ */
+static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    CONTEXT context;
+
+    save_context( &context, sigcontext );
+    wait_suspend( &context );
+    restore_context( &context, sigcontext );
+}
+
+
+/**********************************************************************
+ *		usr2_handler
+ *
+ * Handler for SIGUSR2, used to set a thread context.
+ */
+static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    CONTEXT *context = InterlockedExchangePointer( (void **)&arm64_thread_data()->context, NULL );
+    if (!context) return;
+    if ((context->ContextFlags & ~CONTEXT_ARM64) & CONTEXT_FLOATING_POINT)
+        restore_fpu( context, sigcontext );
+    restore_context( context, sigcontext );
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */
@@ -361,6 +756,41 @@ void signal_init_thread( TEB *teb )
 }
 
 
+/**********************************************************************
+ *		signal_init_process
+ */
+void signal_init_process(void)
+{
+    struct sigaction sig_act;
+
+    sig_act.sa_mask = server_block_set;
+    sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+
+    sig_act.sa_sigaction = int_handler;
+    if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = fpe_handler;
+    if (sigaction( SIGFPE, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = abrt_handler;
+    if (sigaction( SIGABRT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = quit_handler;
+    if (sigaction( SIGQUIT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = usr1_handler;
+    if (sigaction( SIGUSR1, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = usr2_handler;
+    if (sigaction( SIGUSR2, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = trap_handler;
+    if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = segv_handler;
+    if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
+    if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
+    if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
+    return;
+
+ error:
+    perror("sigaction");
+    exit(1);
+}
+
 /***********************************************************************
  *           init_thread_context
  */
@@ -396,6 +826,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
         ctx = (CONTEXT *)NtCurrentTeb()->Tib.StackBase - 1;
         init_thread_context( ctx, entry, arg, relay );
     }
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
     LdrInitializeThunk( ctx, (void **)&ctx->u.s.X0, 0, 0 );
     return ctx;

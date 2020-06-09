@@ -23,87 +23,18 @@
 
 #include <assert.h>
 #include <ctype.h>
-#ifdef HAVE_DIRENT_H
-# include <dirent.h>
-#endif
-#include <errno.h>
-#include <fcntl.h>
-#ifdef HAVE_LWP_H
-#include <lwp.h>
-#endif
-#ifdef HAVE_PTHREAD_NP_H
-# include <pthread_np.h>
-#endif
-#ifdef HAVE_PWD_H
-# include <pwd.h>
-#endif
-#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-#ifdef HAVE_SYS_PRCTL_H
-# include <sys/prctl.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_SYS_SYSCALL_H
-# include <sys/syscall.h>
-#endif
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
-#ifdef HAVE_SYS_UCONTEXT_H
-# include <sys/ucontext.h>
-#endif
-#ifdef HAVE_SYS_THR_H
-#include <sys/thr.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef __APPLE__
-#include <crt_externs.h>
-#include <spawn.h>
-#ifndef _POSIX_SPAWN_DISABLE_ASLR
-#define _POSIX_SPAWN_DISABLE_ASLR 0x0100
-#endif
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winnt.h"
-#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
-#include "ddk/wdm.h"
-
-/* Some versions of glibc don't define this */
-#ifndef SCM_RIGHTS
-#define SCM_RIGHTS 1
-#endif
-
-#ifndef MSG_CMSG_CLOEXEC
-#define MSG_CMSG_CLOEXEC 0
-#endif
-
-#define SOCKETNAME "socket"        /* name of the socket file */
-#define LOCKNAME   "lock"          /* name of the lock file */
 
 const char *build_dir = NULL;
 const char *data_dir = NULL;
@@ -113,8 +44,6 @@ unsigned int server_cpus = 0;
 BOOL is_wow64 = FALSE;
 
 timeout_t server_start_time = 0;  /* time of server startup */
-
-sigset_t server_block_set;  /* signals to block during server calls */
 
 /***********************************************************************
  *           wine_server_call (NTDLL.@)
@@ -141,26 +70,6 @@ sigset_t server_block_set;  /* signals to block during server calls */
 unsigned int CDECL wine_server_call( void *req_ptr )
 {
     return unix_funcs->server_call( req_ptr );
-}
-
-
-/***********************************************************************
- *           server_enter_uninterrupted_section
- */
-void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
-{
-    pthread_sigmask( SIG_BLOCK, &server_block_set, sigset );
-    RtlEnterCriticalSection( cs );
-}
-
-
-/***********************************************************************
- *           server_leave_uninterrupted_section
- */
-void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
-{
-    RtlLeaveCriticalSection( cs );
-    pthread_sigmask( SIG_SETMASK, sigset, NULL );
 }
 
 
@@ -237,66 +146,4 @@ int CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int *uni
 void CDECL wine_server_release_fd( HANDLE handle, int unix_fd )
 {
     unix_funcs->server_release_fd( handle, unix_fd );
-}
-
-
-/***********************************************************************
- *           server_init_process
- *
- * Start the server and create the initial socket pair.
- */
-void server_init_process(void)
-{
-    /* setup the signal mask */
-    sigemptyset( &server_block_set );
-    sigaddset( &server_block_set, SIGALRM );
-    sigaddset( &server_block_set, SIGIO );
-    sigaddset( &server_block_set, SIGINT );
-    sigaddset( &server_block_set, SIGHUP );
-    sigaddset( &server_block_set, SIGUSR1 );
-    sigaddset( &server_block_set, SIGUSR2 );
-    sigaddset( &server_block_set, SIGCHLD );
-}
-
-
-/***********************************************************************
- *           server_init_process_done
- */
-void server_init_process_done(void)
-{
-#ifdef __i386__
-    extern struct ldt_copy *__wine_ldt_copy;
-#endif
-    PEB *peb = NtCurrentTeb()->Peb;
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
-    void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
-    NTSTATUS status;
-    int suspend;
-
-    unix_funcs->server_init_process_done();
-
-    /* Install signal handlers; this cannot be done earlier, since we cannot
-     * send exceptions to the debugger before the create process event that
-     * is sent by REQ_INIT_PROCESS_DONE.
-     * We do need the handlers in place by the time the request is over, so
-     * we set them up here. If we segfault between here and the server call
-     * something is very wrong... */
-    signal_init_process();
-
-    /* Signal the parent process to continue */
-    SERVER_START_REQ( init_process_done )
-    {
-        req->module   = wine_server_client_ptr( peb->ImageBaseAddress );
-#ifdef __i386__
-        req->ldt_copy = wine_server_client_ptr( __wine_ldt_copy );
-#endif
-        req->entry    = wine_server_client_ptr( entry );
-        req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
-        status = wine_server_call( req );
-        suspend = reply->suspend;
-    }
-    SERVER_END_REQ;
-
-    assert( !status );
-    unix_funcs->start_process( entry, suspend, kernel32_start_process );
 }

@@ -39,7 +39,6 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -50,8 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
-
-void (WINAPI *kernel32_start_process)(LPTHREAD_START_ROUTINE,void*) = NULL;
 
 static PEB *peb;
 static PEB_LDR_DATA ldr;
@@ -183,12 +180,8 @@ int __cdecl __wine_dbg_output( const char *str )
  */
 TEB *thread_init( SIZE_T *info_size, BOOL *suspend )
 {
-    TEB *teb;
-
-    virtual_init();
-
-    teb = unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy, info_size, suspend, &server_cpus,
-                                      &is_wow64, &server_start_time );
+    TEB *teb = unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy, info_size, suspend, &server_cpus,
+                                           &is_wow64, &server_start_time );
 
     peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
@@ -222,7 +215,6 @@ TEB *thread_init( SIZE_T *info_size, BOOL *suspend )
 
     unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
     fill_cpu_info();
-    server_init_process();
     return teb;
 }
 

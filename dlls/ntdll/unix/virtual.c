@@ -2780,7 +2780,7 @@ void virtual_map_user_shared_data(void)
 /***********************************************************************
  *           virtual_handle_fault
  */
-NTSTATUS CDECL virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
+NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err, BOOL on_signal_stack )
 {
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
     void *page = ROUND_ADDR( addr, page_mask );
@@ -2947,7 +2947,7 @@ ssize_t CDECL virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags )
 /***********************************************************************
  *           virtual_is_valid_code_address
  */
-BOOL CDECL virtual_is_valid_code_address( const void *addr, SIZE_T size )
+BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size )
 {
     struct file_view *view;
     BOOL ret = FALSE;
@@ -2968,7 +2968,7 @@ BOOL CDECL virtual_is_valid_code_address( const void *addr, SIZE_T size )
  * Return 1 if safely handled, -1 if handled into the overflow space.
  * Called from inside a signal handler.
  */
-int CDECL virtual_handle_stack_fault( void *addr )
+int virtual_handle_stack_fault( void *addr )
 {
     int ret = 0;
 
@@ -3076,7 +3076,7 @@ BOOL CDECL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
  * permissions are checked before accessing each page, to ensure that no
  * exceptions can happen.
  */
-SIZE_T CDECL virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size )
+SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size )
 {
     struct file_view *view;
     sigset_t sigset;
@@ -3112,7 +3112,7 @@ SIZE_T CDECL virtual_uninterrupted_read_memory( const void *addr, void *buffer, 
  * permissions are checked before accessing each page, to ensure that no
  * exceptions can happen.
  */
-NTSTATUS CDECL virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size )
+NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size )
 {
     BOOL has_write_watch = FALSE;
     sigset_t sigset;

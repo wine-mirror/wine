@@ -63,7 +63,179 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
+/***********************************************************************
+ * signal context platform-specific definitions
+ */
+#ifdef linux
+
+/* All Registers access - only for local access */
+# define REG_sig(reg_name, context)		((context)->uc_mcontext.regs->reg_name)
+
+
+/* Gpr Registers access  */
+# define GPR_sig(reg_num, context)		REG_sig(gpr[reg_num], context)
+
+# define IAR_sig(context)			REG_sig(nip, context)	/* Program counter */
+# define MSR_sig(context)			REG_sig(msr, context)   /* Machine State Register (Supervisor) */
+# define CTR_sig(context)			REG_sig(ctr, context)   /* Count register */
+
+# define XER_sig(context)			REG_sig(xer, context) /* User's integer exception register */
+# define LR_sig(context)			REG_sig(link, context) /* Link register */
+# define CR_sig(context)			REG_sig(ccr, context) /* Condition register */
+
+/* Float Registers access  */
+# define FLOAT_sig(reg_num, context)		(((double*)((char*)((context)->uc_mcontext.regs+48*4)))[reg_num])
+
+# define FPSCR_sig(context)			(*(int*)((char*)((context)->uc_mcontext.regs+(48+32*2)*4)))
+
+/* Exception Registers access */
+# define DAR_sig(context)			REG_sig(dar, context)
+# define DSISR_sig(context)			REG_sig(dsisr, context)
+# define TRAP_sig(context)			REG_sig(trap, context)
+
+#endif /* linux */
+
+#ifdef __APPLE__
+
+/* All Registers access - only for local access */
+# define REG_sig(reg_name, context)		((context)->uc_mcontext->ss.reg_name)
+# define FLOATREG_sig(reg_name, context)	((context)->uc_mcontext->fs.reg_name)
+# define EXCEPREG_sig(reg_name, context)	((context)->uc_mcontext->es.reg_name)
+# define VECREG_sig(reg_name, context)		((context)->uc_mcontext->vs.reg_name)
+
+/* Gpr Registers access */
+# define GPR_sig(reg_num, context)		REG_sig(r##reg_num, context)
+
+# define IAR_sig(context)			REG_sig(srr0, context)	/* Program counter */
+# define MSR_sig(context)			REG_sig(srr1, context)  /* Machine State Register (Supervisor) */
+# define CTR_sig(context)			REG_sig(ctr, context)
+
+# define XER_sig(context)			REG_sig(xer, context) /* Link register */
+# define LR_sig(context)			REG_sig(lr, context)  /* User's integer exception register */
+# define CR_sig(context)			REG_sig(cr, context)  /* Condition register */
+
+/* Float Registers access */
+# define FLOAT_sig(reg_num, context)		FLOATREG_sig(fpregs[reg_num], context)
+
+# define FPSCR_sig(context)			FLOATREG_sig(fpscr, context)
+
+/* Exception Registers access */
+# define DAR_sig(context)			EXCEPREG_sig(dar, context)     /* Fault registers for coredump */
+# define DSISR_sig(context)			EXCEPREG_sig(dsisr, context)
+# define TRAP_sig(context)			EXCEPREG_sig(exception, context) /* number of powerpc exception taken */
+
+/* Signal defs : Those are undefined on darwin
+SIGBUS
+#undef BUS_ADRERR
+#undef BUS_OBJERR
+SIGILL
+#undef ILL_ILLOPN
+#undef ILL_ILLTRP
+#undef ILL_ILLADR
+#undef ILL_COPROC
+#undef ILL_PRVREG
+#undef ILL_BADSTK
+SIGTRAP
+#undef TRAP_BRKPT
+#undef TRAP_TRACE
+SIGFPE
+*/
+
+#endif /* __APPLE__ */
+
+
 static pthread_key_t teb_key;
+
+
+/***********************************************************************
+ *           save_context
+ *
+ * Set the register values from a sigcontext.
+ */
+static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
+{
+
+#define C(x) context->Gpr##x = GPR_sig(x,sigcontext)
+        /* Save Gpr registers */
+	C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31);
+#undef C
+
+	context->Iar = IAR_sig(sigcontext);  /* Program Counter */
+	context->Msr = MSR_sig(sigcontext);  /* Machine State Register (Supervisor) */
+	context->Ctr = CTR_sig(sigcontext);
+        context->Xer = XER_sig(sigcontext);
+	context->Lr  = LR_sig(sigcontext);
+	context->Cr  = CR_sig(sigcontext);
+        /* Saving Exception regs */
+        context->Dar   = DAR_sig(sigcontext);
+        context->Dsisr = DSISR_sig(sigcontext);
+        context->Trap  = TRAP_sig(sigcontext);
+}
+
+
+/***********************************************************************
+ *           restore_context
+ *
+ * Build a sigcontext from the register values.
+ */
+static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
+{
+
+#define C(x)  GPR_sig(x,sigcontext) = context->Gpr##x
+	C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31);
+#undef C
+
+        IAR_sig(sigcontext) = context->Iar;  /* Program Counter */
+        MSR_sig(sigcontext) = context->Msr;  /* Machine State Register (Supervisor) */
+        CTR_sig(sigcontext) = context->Ctr;
+        XER_sig(sigcontext) = context->Xer;
+        LR_sig(sigcontext) = context->Lr;
+	CR_sig(sigcontext) = context->Cr;
+        /* Setting Exception regs */
+        DAR_sig(sigcontext) = context->Dar;
+        DSISR_sig(sigcontext) = context->Dsisr;
+        TRAP_sig(sigcontext) = context->Trap;
+}
+
+
+/***********************************************************************
+ *           save_fpu
+ *
+ * Set the FPU context from a sigcontext.
+ */
+static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+{
+#define C(x)   context->Fpr##x = FLOAT_sig(x,sigcontext)
+        C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31);
+#undef C
+        context->Fpscr = FPSCR_sig(sigcontext);
+}
+
+
+/***********************************************************************
+ *           restore_fpu
+ *
+ * Restore the FPU context to a sigcontext.
+ */
+static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
+{
+#define C(x)  FLOAT_sig(x,sigcontext) = context->Fpr##x
+        C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
+	C(11); C(12); C(13); C(14); C(15); C(16); C(17); C(18); C(19); C(20);
+	C(21); C(22); C(23); C(24); C(25); C(26); C(27); C(28); C(29); C(30);
+	C(31);
+#undef C
+        FPSCR_sig(sigcontext) = context->Fpscr;
+}
 
 
 /***********************************************************************
@@ -438,6 +610,288 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
 
 /**********************************************************************
+ *		segv_handler
+ *
+ * Handler for SIGSEGV and related errors.
+ */
+static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    NTSTATUS status;
+
+    save_context( &context, sigcontext );
+
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionAddress = (LPVOID)context.Iar;
+    rec.NumberParameters = 0;
+
+    switch (signal)
+    {
+    case SIGSEGV:
+    	switch (siginfo->si_code & 0xffff)
+        {
+	case SEGV_MAPERR:
+	case SEGV_ACCERR:
+            rec.NumberParameters = 2;
+            rec.ExceptionInformation[0] = 0; /* FIXME ? */
+            rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
+            if (!(rec.ExceptionCode = unix_funcs->virtual_handle_fault(siginfo->si_addr, rec.ExceptionInformation[0], FALSE)))
+                goto done;
+            break;
+	default:
+            FIXME("Unhandled SIGSEGV/%x\n",siginfo->si_code);
+            break;
+	}
+    	break;
+    case SIGBUS:
+    	switch (siginfo->si_code & 0xffff)
+        {
+	case BUS_ADRALN:
+            rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+            break;
+#ifdef BUS_ADRERR
+	case BUS_ADRERR:
+#endif
+#ifdef BUS_OBJERR
+	case BUS_OBJERR:
+            /* FIXME: correct for all cases ? */
+            rec.NumberParameters = 2;
+            rec.ExceptionInformation[0] = 0; /* FIXME ? */
+            rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
+            if (!(rec.ExceptionCode = unix_funcs->virtual_handle_fault(siginfo->si_addr, rec.ExceptionInformation[0], FALSE)))
+                goto done;
+            break;
+#endif
+	default:
+            FIXME("Unhandled SIGBUS/%x\n",siginfo->si_code);
+            break;
+	}
+    	break;
+    case SIGILL:
+    	switch (siginfo->si_code & 0xffff)
+        {
+	case ILL_ILLOPC: /* illegal opcode */
+#ifdef ILL_ILLOPN
+	case ILL_ILLOPN: /* illegal operand */
+#endif
+#ifdef ILL_ILLADR
+	case ILL_ILLADR: /* illegal addressing mode */
+#endif
+#ifdef ILL_ILLTRP
+	case ILL_ILLTRP: /* illegal trap */
+#endif
+#ifdef ILL_COPROC
+	case ILL_COPROC: /* coprocessor error */
+#endif
+            rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+            break;
+	case ILL_PRVOPC: /* privileged opcode */
+#ifdef ILL_PRVREG
+	case ILL_PRVREG: /* privileged register */
+#endif
+            rec.ExceptionCode = EXCEPTION_PRIV_INSTRUCTION;
+            break;
+#ifdef ILL_BADSTK
+	case ILL_BADSTK: /* internal stack error */
+            rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+            break;
+#endif
+	default:
+            FIXME("Unhandled SIGILL/%x\n", siginfo->si_code);
+            break;
+	}
+    	break;
+    }
+    status = NtRaiseException( &rec, &context, TRUE );
+    if (status) RtlRaiseStatus( status );
+done:
+    restore_context( &context, sigcontext );
+}
+
+/**********************************************************************
+ *		trap_handler
+ *
+ * Handler for SIGTRAP.
+ */
+static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    NTSTATUS status;
+
+    save_context( &context, sigcontext );
+
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Iar;
+    rec.NumberParameters = 0;
+
+    /* FIXME: check if we might need to modify PC */
+    switch (siginfo->si_code & 0xffff)
+    {
+#ifdef TRAP_BRKPT
+    case TRAP_BRKPT:
+        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+    	break;
+#endif
+#ifdef TRAP_TRACE
+    case TRAP_TRACE:
+        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+    	break;
+#endif
+    default:
+        FIXME("Unhandled SIGTRAP/%x\n", siginfo->si_code);
+        break;
+    }
+    status = NtRaiseException( &rec, &context, TRUE );
+    if (status) RtlRaiseStatus( status );
+    restore_context( &context, sigcontext );
+}
+
+/**********************************************************************
+ *		fpe_handler
+ *
+ * Handler for SIGFPE.
+ */
+static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    NTSTATUS status;
+
+    save_fpu( &context, sigcontext );
+    save_context( &context, sigcontext );
+
+    switch (siginfo->si_code & 0xffff )
+    {
+#ifdef FPE_FLTSUB
+    case FPE_FLTSUB:
+        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        break;
+#endif
+#ifdef FPE_INTDIV
+    case FPE_INTDIV:
+        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        break;
+#endif
+#ifdef FPE_INTOVF
+    case FPE_INTOVF:
+        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTDIV
+    case FPE_FLTDIV:
+        rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        break;
+#endif
+#ifdef FPE_FLTOVF
+    case FPE_FLTOVF:
+        rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTUND
+    case FPE_FLTUND:
+        rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
+        break;
+#endif
+#ifdef FPE_FLTRES
+    case FPE_FLTRES:
+        rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
+        break;
+#endif
+#ifdef FPE_FLTINV
+    case FPE_FLTINV:
+#endif
+    default:
+        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        break;
+    }
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Iar;
+    rec.NumberParameters = 0;
+    status = NtRaiseException( &rec, &context, TRUE );
+    if (status) RtlRaiseStatus( status );
+
+    restore_context( &context, sigcontext );
+    restore_fpu( &context, sigcontext );
+}
+
+/**********************************************************************
+ *		int_handler
+ *
+ * Handler for SIGINT.
+ */
+static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    NTSTATUS status;
+
+    save_context( &context, sigcontext );
+    rec.ExceptionCode    = CONTROL_C_EXIT;
+    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Iar;
+    rec.NumberParameters = 0;
+    status = NtRaiseException( &rec, &context, TRUE );
+    if (status) RtlRaiseStatus( status );
+    restore_context( &context, sigcontext );
+}
+
+
+/**********************************************************************
+ *		abrt_handler
+ *
+ * Handler for SIGABRT.
+ */
+static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    EXCEPTION_RECORD rec;
+    CONTEXT context;
+    NTSTATUS status;
+
+    save_context( &context, sigcontext );
+    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
+    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = (LPVOID)context.Iar;
+    rec.NumberParameters = 0;
+    status = NtRaiseException( &rec, &context, TRUE );
+    if (status) RtlRaiseStatus( status );
+    restore_context( &context, sigcontext );
+}
+
+
+/**********************************************************************
+ *		quit_handler
+ *
+ * Handler for SIGQUIT.
+ */
+static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    unix_funcs->abort_thread(0);
+}
+
+
+/**********************************************************************
+ *		usr1_handler
+ *
+ * Handler for SIGUSR1, used to signal a thread that it got suspended.
+ */
+static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
+{
+    CONTEXT context;
+
+    save_context( &context, sigcontext );
+    wait_suspend( &context );
+    restore_context( &context, sigcontext );
+}
+
+
+/**********************************************************************
  *           get_thread_ldt_entry
  */
 NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
@@ -488,6 +942,40 @@ void signal_free_thread( TEB *teb )
 void signal_init_thread( TEB *teb )
 {
     pthread_setspecific( teb_key, teb );
+}
+
+
+/**********************************************************************
+ *		signal_init_process
+ */
+void signal_init_process(void)
+{
+    struct sigaction sig_act;
+
+    sig_act.sa_mask = server_block_set;
+    sig_act.sa_flags = SA_RESTART | SA_SIGINFO;
+
+    sig_act.sa_sigaction = int_handler;
+    if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = fpe_handler;
+    if (sigaction( SIGFPE, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = abrt_handler;
+    if (sigaction( SIGABRT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = quit_handler;
+    if (sigaction( SIGQUIT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = usr1_handler;
+    if (sigaction( SIGUSR1, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = trap_handler;
+    if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = segv_handler;
+    if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
+    if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
+    if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
+    return;
+
+ error:
+    perror("sigaction");
+    exit(1);
 }
 
 

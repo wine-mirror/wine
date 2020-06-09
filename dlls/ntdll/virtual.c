@@ -31,47 +31,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-# include <sys/mman.h>
-#endif
-#ifdef HAVE_SYS_SYSINFO_H
-# include <sys/sysinfo.h>
-#endif
-#ifdef HAVE_VALGRIND_VALGRIND_H
-# include <valgrind/valgrind.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
-#include "wine/library.h"
 #include "wine/server.h"
-#include "wine/exception.h"
-#include "wine/rbtree.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 
-static const UINT page_shift = 12;
-static const UINT_PTR page_mask = 0xfff;
-
-SIZE_T signal_stack_size = 0;
-SIZE_T signal_stack_mask = 0;
-static SIZE_T signal_stack_align;
-
-#define ROUND_SIZE(addr,size) \
-   (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
 
 /**********************************************************************
  *           RtlCreateUserStack (NTDLL.@)
@@ -112,20 +84,6 @@ void WINAPI RtlFreeUserStack( void *stack )
 }
 
 /***********************************************************************
- *           virtual_init
- */
-void virtual_init(void)
-{
-    size_t size = ROUND_SIZE( 0, sizeof(TEB) ) + max( MINSIGSTKSZ, 8192 );
-    /* find the first power of two not smaller than size */
-    signal_stack_align = page_shift;
-    while ((1u << signal_stack_align) < size) signal_stack_align++;
-    signal_stack_mask = (1 << signal_stack_align) - 1;
-    signal_stack_size = (1 << signal_stack_align) - ROUND_SIZE( 0, sizeof(TEB) );
-}
-
-
-/***********************************************************************
  *           __wine_locked_recvmsg
  */
 ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags )
@@ -162,7 +120,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 NTSTATUS WINAPI DECLSPEC_HOTPATCH NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                                           ULONG new_prot, ULONG *old_prot )
 {
-    return unix_funcs-> NtProtectVirtualMemory( process, addr_ptr, size_ptr, new_prot, old_prot );
+    return unix_funcs->NtProtectVirtualMemory( process, addr_ptr, size_ptr, new_prot, old_prot );
 }
 
 

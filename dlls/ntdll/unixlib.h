@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 32
+#define NTDLL_UNIXLIB_VERSION 33
 
 struct unix_funcs
 {
@@ -157,17 +157,12 @@ struct unix_funcs
     void          (CDECL *virtual_get_system_info)( SYSTEM_BASIC_INFORMATION *info );
     NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
-    NTSTATUS      (CDECL *virtual_handle_fault)( LPCVOID addr, DWORD err, BOOL on_signal_stack );
     unsigned int  (CDECL *virtual_locked_server_call)( void *req_ptr );
     ssize_t       (CDECL *virtual_locked_read)( int fd, void *addr, size_t size );
     ssize_t       (CDECL *virtual_locked_pread)( int fd, void *addr, size_t size, off_t offset );
     ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
-    BOOL          (CDECL *virtual_is_valid_code_address)( const void *addr, SIZE_T size );
-    int           (CDECL *virtual_handle_stack_fault)( void *addr );
     BOOL          (CDECL *virtual_check_buffer_for_read)( const void *ptr, SIZE_T size );
     BOOL          (CDECL *virtual_check_buffer_for_write)( void *ptr, SIZE_T size );
-    SIZE_T        (CDECL *virtual_uninterrupted_read_memory)( const void *addr, void *buffer, SIZE_T size );
-    NTSTATUS      (CDECL *virtual_uninterrupted_write_memory)( void *addr, const void *buffer, SIZE_T size );
     void          (CDECL *virtual_set_force_exec)( BOOL enable );
     void          (CDECL *virtual_release_address_space)(void);
     void          (CDECL *virtual_set_large_address_space)(void);
@@ -175,7 +170,6 @@ struct unix_funcs
     /* thread/process functions */
     TEB *         (CDECL *init_threading)( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size,
                                            BOOL *suspend, unsigned int *cpus, BOOL *wow64, timeout_t *start_time );
-    void          (CDECL *start_process)( PRTL_THREAD_START_ROUTINE entry, BOOL suspend, void *relay );
     void          (CDECL *abort_thread)( int status );
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
@@ -196,7 +190,7 @@ struct unix_funcs
     NTSTATUS      (CDECL *server_handle_to_fd)( HANDLE handle, unsigned int access, int *unix_fd,
                                                 unsigned int *options );
     void          (CDECL *server_release_fd)( HANDLE handle, int unix_fd );
-    void          (CDECL *server_init_process_done)(void);
+    void          (CDECL *server_init_process_done)( void *relay );
 
     /* debugging functions */
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );

@@ -1473,11 +1473,42 @@ void server_init_process(void)
 /***********************************************************************
  *           server_init_process_done
  */
-void CDECL server_init_process_done(void)
+void CDECL server_init_process_done( void *relay )
 {
+#ifdef __i386__
+    extern struct ldt_copy __wine_ldt_copy;
+#endif
+    PEB *peb = NtCurrentTeb()->Peb;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
+    void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
+    NTSTATUS status;
+    int suspend;
+
 #ifdef __APPLE__
     send_server_task_port();
 #endif
+
+    /* Install signal handlers; this cannot be done earlier, since we cannot
+     * send exceptions to the debugger before the create process event that
+     * is sent by init_process_done */
+    signal_init_process();
+
+    /* Signal the parent process to continue */
+    SERVER_START_REQ( init_process_done )
+    {
+        req->module   = wine_server_client_ptr( peb->ImageBaseAddress );
+#ifdef __i386__
+        req->ldt_copy = wine_server_client_ptr( &__wine_ldt_copy );
+#endif
+        req->entry    = wine_server_client_ptr( entry );
+        req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
+        status = wine_server_call( req );
+        suspend = reply->suspend;
+    }
+    SERVER_END_REQ;
+
+    assert( !status );
+    signal_start_thread( entry, peb, suspend, relay, NtCurrentTeb() );
 }
 
 
