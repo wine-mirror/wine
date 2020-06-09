@@ -67,6 +67,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
+#define GLYPH_CONTEXT_MAX_LENGTH 64
+#define SHAPE_MAX_NESTING_LEVEL 6
+
 typedef struct {
     CHAR TTCTag[4];
     DWORD Version;
@@ -4616,6 +4619,7 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     unsigned int i;
     BOOL ret;
 
+    context->nesting_level_left = SHAPE_MAX_NESTING_LEVEL;
     context->u.buffer.apply_context_lookup = opentype_layout_apply_gpos_context_lookup;
     opentype_layout_collect_lookups(context, script_index, language_index, features, &context->cache->gpos, &lookups);
 
@@ -4993,8 +4997,6 @@ static BOOL opentype_layout_apply_gsub_lig_substitution(struct scriptshaping_con
     return FALSE;
 }
 
-#define GLYPH_CONTEXT_MAX_LENGTH 64
-
 static BOOL opentype_layout_context_match_input(const struct match_context *mc, unsigned int count, const UINT16 *input,
         unsigned int *end_offset, unsigned int *match_positions)
 {
@@ -5081,6 +5083,9 @@ static BOOL opentype_layout_context_apply_lookup(struct scriptshaping_context *c
     unsigned int i, j;
     int end, delta;
 
+    if (!context->nesting_level_left)
+        return TRUE;
+
     end = context->cur + match_length;
 
     for (i = 0; i < lookup_count; ++i)
@@ -5097,7 +5102,9 @@ static BOOL opentype_layout_context_apply_lookup(struct scriptshaping_context *c
 
         lookup_index = GET_BE_WORD(lookup_records[i+1]);
 
+        --context->nesting_level_left;
         context->u.buffer.apply_context_lookup(context, lookup_index);
+        ++context->nesting_level_left;
 
         delta = context->glyph_count - orig_len;
         if (!delta)
@@ -5692,6 +5699,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     unsigned int i;
     BOOL ret;
 
+    context->nesting_level_left = SHAPE_MAX_NESTING_LEVEL;
     context->u.buffer.apply_context_lookup = opentype_layout_apply_gsub_context_lookup;
     opentype_layout_collect_lookups(context, script_index, language_index, features, context->table, &lookups);
 

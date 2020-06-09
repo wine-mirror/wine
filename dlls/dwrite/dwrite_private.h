@@ -543,6 +543,8 @@ struct scriptshaping_context
 
     unsigned int cur;
     unsigned int glyph_count;
+    unsigned int nesting_level_left;
+
     float emsize;
     DWRITE_MEASURING_MODE measuring_mode;
     float *advances;
