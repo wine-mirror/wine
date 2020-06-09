@@ -475,9 +475,47 @@ static HRESULT WINAPI DdsFrameDecode_Dds_CopyBlocks(IWICDdsFrameDecode *iface,
                                                     const WICRect *boundsInBlocks, UINT stride, UINT bufferSize,
                                                     BYTE *buffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub.\n", iface, boundsInBlocks, stride, bufferSize, buffer);
+    DdsFrameDecode *This = impl_from_IWICDdsFrameDecode(iface);
+    int x, y, width, height;
+    UINT bytes_per_block, frame_stride, frame_size, i;
+    BYTE *data, *dst_buffer;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, boundsInBlocks, stride, bufferSize, buffer);
+
+    if (!buffer) return E_INVALIDARG;
+
+    bytes_per_block = This->info.bytes_per_block;
+    frame_stride = This->info.width_in_blocks * bytes_per_block;
+    frame_size = frame_stride * This->info.height_in_blocks;
+    if (!boundsInBlocks) {
+        if (stride < frame_stride) return E_INVALIDARG;
+        if (bufferSize < frame_size) return E_INVALIDARG;
+        memcpy(buffer, This->data, frame_size);
+        return S_OK;
+    }
+
+    x = boundsInBlocks->X;
+    y = boundsInBlocks->Y;
+    width = boundsInBlocks->Width;
+    height = boundsInBlocks->Height;
+    if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+        x + width > This->info.width_in_blocks ||
+        y + height > This->info.height_in_blocks) {
+        return E_INVALIDARG;
+    }
+    if (stride < width * bytes_per_block) return E_INVALIDARG;
+    if (bufferSize < stride * height) return E_INVALIDARG;
+
+    data = This->data + (x + y * This->info.width_in_blocks) * bytes_per_block;
+    dst_buffer = buffer;
+    for (i = 0; i < height; i++)
+    {
+        memcpy(dst_buffer, data, (size_t)width * bytes_per_block);
+        data += This->info.width_in_blocks * bytes_per_block;
+        dst_buffer += stride;
+    }
+
+    return S_OK;
 }
 
 static const IWICDdsFrameDecodeVtbl DdsFrameDecode_Dds_Vtbl = {
