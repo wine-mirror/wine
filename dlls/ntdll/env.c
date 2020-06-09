@@ -811,8 +811,7 @@ static void build_command_line( WCHAR **argv, UNICODE_STRING *cmdline )
 
     len = 1;
     for (arg = argv; *arg; arg++) len += 3 + 2 * wcslen( *arg );
-    cmdline->MaximumLength = len * sizeof(WCHAR);
-    if (!(cmdline->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, cmdline->MaximumLength ))) return;
+    if (!(cmdline->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
 
     p = cmdline->Buffer;
     for (arg = argv; *arg; arg++)
@@ -858,7 +857,13 @@ static void build_command_line( WCHAR **argv, UNICODE_STRING *cmdline )
     }
     if (p > cmdline->Buffer) p--;  /* remove last space */
     *p = 0;
+    if (p - cmdline->Buffer >= 32767)
+    {
+        ERR( "command line too long (%u)\n", (DWORD)(p - cmdline->Buffer) );
+        NtTerminateProcess( GetCurrentProcess(), 1 );
+    }
     cmdline->Length = (p - cmdline->Buffer) * sizeof(WCHAR);
+    cmdline->MaximumLength = cmdline->Length + sizeof(WCHAR);
 }
 
 
