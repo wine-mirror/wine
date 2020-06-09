@@ -1728,12 +1728,14 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
 
     if (cmap->data) return;
 
-    if (FAILED(hr = get_filestream_from_file(file, &stream_desc.stream)))
+    /* For fontface stream is already available and preset. */
+    if (!cmap->stream && FAILED(hr = get_filestream_from_file(file, &cmap->stream)))
     {
         WARN("Failed to get file stream, hr %#x.\n", hr);
         goto failed;
     }
 
+    stream_desc.stream = cmap->stream;
     stream_desc.face_type = face_type;
     stream_desc.face_index = face_index;
 

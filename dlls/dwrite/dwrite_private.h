@@ -259,8 +259,9 @@ struct dwrite_fontface
         unsigned int ascent;
         unsigned int descent;
     } typo_metrics;
-    INT charmap;
     UINT32 flags;
+
+    struct dwrite_cmap cmap;
 
     struct dwrite_fonttable vdmx;
     struct dwrite_fonttable gasp;
@@ -340,8 +341,6 @@ extern void factory_unlock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
 extern HRESULT create_inmemory_fileloader(IDWriteFontFileLoader**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
         IDWriteFontResource **resource) DECLSPEC_HIDDEN;
-extern HRESULT fontface_get_glyphs(struct dwrite_fontface *fontface, UINT32 const *codepoints,
-        UINT32 count, UINT16 *glyphs);
 
 struct dwrite_fontface;
 
@@ -462,13 +461,10 @@ extern HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float e
         float const *advances, DWRITE_GLYPH_OFFSET const *offsets, unsigned int count, BOOL is_rtl,
         IDWriteGeometrySink *sink) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
-extern void freetype_get_glyphs(IDWriteFontFace5 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
-        UINT16 *glyphs) DECLSPEC_HIDDEN;
 extern BOOL freetype_has_kerning_pairs(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace5 *fontface, UINT16 left, UINT16 right) DECLSPEC_HIDDEN;
 extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap_desc) DECLSPEC_HIDDEN;
 extern BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
-extern INT freetype_get_charmap_index(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emsize, UINT16 index,
         DWRITE_MEASURING_MODE measuring_mode, BOOL *has_contours) DECLSPEC_HIDDEN;
 extern void freetype_get_design_glyph_bbox(IDWriteFontFace4*,UINT16,UINT16,RECT*) DECLSPEC_HIDDEN;
