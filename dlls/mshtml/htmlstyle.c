@@ -549,6 +549,11 @@ static const style_tbl_entry_t style_tbl[] = {
         ATTR_HEX_INT
     },
     {
+        L"column-count",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNCOUNT,
+        DISPID_UNKNOWN
+    },
+    {
         cursorW,
         DISPID_IHTMLCSSSTYLEDECLARATION_CURSOR,
         DISPID_A_CURSOR
@@ -8794,15 +8799,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_colorInterpolationFilters(IHT
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnCount(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_COUNT, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnCount(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_COUNT, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)

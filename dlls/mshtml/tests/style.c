@@ -19,7 +19,6 @@
 #define COBJMACROS
 #define CONST_VTABLE
 
-#include <wine/test.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -29,6 +28,7 @@
 #include "mshtml.h"
 #include "mshtmhst.h"
 #include "docobj.h"
+#include "wine/test.h"
 
 static BOOL is_ie9plus;
 
@@ -831,6 +831,7 @@ static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
 
 static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
 {
+    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -889,6 +890,37 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     ok(hres == S_OK, "get_transition failed: %08x\n", hres);
     ok(!wcsncmp(str, L"marigin-right 1s", wcslen(L"marigin-right 1s")), "transition = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnCount(css_style, &v);
+    ok(hres == S_OK, "get_columnCount failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !V_BSTR(&v), "columnCount = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 2;
+    hres = IHTMLCSSStyleDeclaration2_put_columnCount(css_style, v);
+    ok(hres == S_OK, "put_columnCount failed: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnCount(css_style, &v);
+    ok(hres == S_OK, "get_columnCount failed: %08x\n", hres);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"2"), "columnCount = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"auto");
+    hres = IHTMLCSSStyleDeclaration2_put_columnCount(css_style, v);
+    ok(hres == S_OK, "put_columnCount failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnCount(css_style, &v);
+    ok(hres == S_OK, "get_columnCount failed: %08x\n", hres);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"auto"), "columnCount = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
 }
 
 static void test_body_style(IHTMLStyle *style)
