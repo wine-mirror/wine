@@ -2742,7 +2742,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
     nb_points = REGION_CreateEdgeTable( Count, nbpolygons, Pts, &ET, pETEs, &SLLBlock, clip_rect );
     if ((obj = alloc_region( nb_points / 2 )))
     {
-        scan_convert( obj, &ET, mode, clip_rect );
+        if (nb_points) scan_convert( obj, &ET, mode, clip_rect );
 
         if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
             free_region( obj );
