@@ -1036,6 +1036,24 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     todo_wine
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"red"), "columnRuleColor = %s\n", wine_dbgstr_variant(&v));
     VariantClear(&v);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnRuleStyle(css_style, &str);
+    ok(hres == S_OK, "get_columnRuleStyle failed: %08x\n", hres);
+    ok(!str, "columnRuleStyle = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"solid");
+    hres = IHTMLCSSStyleDeclaration2_put_columnRuleStyle(css_style, str);
+    ok(hres == S_OK, "put_columnRuleStyle failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnRuleStyle(css_style, &str);
+    ok(hres == S_OK, "get_columnRuleStyle failed: %08x\n", hres);
+    todo_wine
+    ok(str && !lstrcmpW(str, L"solid"), "columnRuleStyle = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)
