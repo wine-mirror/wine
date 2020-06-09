@@ -57,6 +57,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 #define DDS_RESOURCE_MISC_TEXTURECUBE 0x00000004
 
+#define DDS_BLOCK_WIDTH  4
+#define DDS_BLOCK_HEIGHT 4
+
 typedef struct {
     DWORD size;
     DWORD flags;
@@ -132,6 +135,7 @@ typedef struct DdsFrameDecode {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     IWICDdsFrameDecode IWICDdsFrameDecode_iface;
     LONG ref;
+    BYTE *data;
     dds_frame_info info;
 } DdsFrameDecode;
 
@@ -322,7 +326,10 @@ static ULONG WINAPI DdsFrameDecode_Release(IWICBitmapFrameDecode *iface)
 
     TRACE("(%p) refcount=%u\n", iface, ref);
 
-    if (ref == 0) HeapFree(GetProcessHeap(), 0, This);
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This->data);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -811,9 +818,11 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
 {
     DdsDecoder *This = impl_from_IWICDdsDecoder(iface);
     HRESULT hr;
-    UINT width = 0, height = 0;
-    int j;
-    DdsFrameDecode *frame_decode;
+    LARGE_INTEGER seek;
+    UINT width, height, depth, width_in_blocks, height_in_blocks, size;
+    UINT frame_width = 0, frame_height = 0, frame_width_in_blocks = 0, frame_height_in_blocks = 0, frame_size = 0;
+    UINT bytes_per_block, bytesread, i;
+    DdsFrameDecode *frame_decode = NULL;
 
     TRACE("(%p,%u,%u,%u,%p)\n", iface, arrayIndex, mipLevel, sliceIndex, bitmapFrame);
 
@@ -825,37 +834,68 @@ static HRESULT WINAPI DdsDecoder_Dds_GetFrame(IWICDdsDecoder *iface,
         hr = WINCODEC_ERR_WRONGSTATE;
         goto end;
     }
-
     if (arrayIndex >= This->info.array_size || mipLevel >= This->info.mip_levels || sliceIndex >= This->info.depth) {
         hr = E_INVALIDARG;
         goto end;
     }
 
+    bytes_per_block = get_bytes_per_block(This->info.format);
+    seek.QuadPart = sizeof(DWORD) + sizeof(DDS_HEADER);
+    if (has_extended_header(&This->header)) seek.QuadPart += sizeof(DDS_HEADER_DXT10);
+
     width = This->info.width;
     height = This->info.height;
-    for (j = 0; j < mipLevel; j++)
+    depth = This->info.depth;
+    for (i = 0; i < This->info.mip_levels; i++)
     {
+        width_in_blocks = (width + DDS_BLOCK_WIDTH - 1) / DDS_BLOCK_WIDTH;
+        height_in_blocks = (height + DDS_BLOCK_HEIGHT - 1) / DDS_BLOCK_HEIGHT;
+        size = width_in_blocks * height_in_blocks * bytes_per_block;
+
+        if (i < mipLevel)  {
+            seek.QuadPart += size * depth;
+        } else if (i == mipLevel){
+            seek.QuadPart += size * sliceIndex;
+            frame_width = width;
+            frame_height = height;
+            frame_width_in_blocks = width_in_blocks;
+            frame_height_in_blocks = height_in_blocks;
+            frame_size = frame_width_in_blocks * frame_height_in_blocks * bytes_per_block;
+            if (arrayIndex == 0) break;
+        }
+        seek.QuadPart += arrayIndex * size * depth;
+
         if (width > 1) width /= 2;
         if (height > 1) height /= 2;
+        if (depth > 1) depth /= 2;
     }
 
     hr = DdsFrameDecode_CreateInstance(&frame_decode);
     if (hr != S_OK) goto end;
-
-    frame_decode->info.width = width;
-    frame_decode->info.height = height;
+    frame_decode->info.width = frame_width;
+    frame_decode->info.height = frame_height;
     frame_decode->info.format = This->info.format;
-    frame_decode->info.bytes_per_block = get_bytes_per_block(This->info.format);
-    frame_decode->info.block_width = 4;
-    frame_decode->info.block_height = 4;
-    frame_decode->info.width_in_blocks = (width + frame_decode->info.block_width - 1) / frame_decode->info.block_width;
-    frame_decode->info.height_in_blocks = (width + frame_decode->info.block_height - 1) / frame_decode->info.block_height;
+    frame_decode->info.bytes_per_block = bytes_per_block;
+    frame_decode->info.block_width = DDS_BLOCK_WIDTH;
+    frame_decode->info.block_height = DDS_BLOCK_HEIGHT;
+    frame_decode->info.width_in_blocks = frame_width_in_blocks;
+    frame_decode->info.height_in_blocks = frame_height_in_blocks;
+    frame_decode->data = HeapAlloc(GetProcessHeap(), 0, frame_size);
+    hr = IStream_Seek(This->stream, seek, SEEK_SET, NULL);
+    if (hr != S_OK) goto end;
+    hr = IStream_Read(This->stream, frame_decode->data, frame_size, &bytesread);
+    if (hr != S_OK || bytesread != frame_size) {
+        hr = WINCODEC_ERR_STREAMREAD;
+        goto end;
+    }
     *bitmapFrame = &frame_decode->IWICBitmapFrameDecode_iface;
 
     hr = S_OK;
 
 end:
     LeaveCriticalSection(&This->lock);
+
+    if (hr != S_OK && frame_decode) DdsFrameDecode_Release(&frame_decode->IWICBitmapFrameDecode_iface);
 
     return hr;
 }
