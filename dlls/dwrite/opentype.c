@@ -5482,6 +5482,9 @@ static BOOL opentype_layout_apply_gsub_reverse_chain_context_substitution(struct
     unsigned int offset = subtable_offset;
     UINT16 glyph, format;
 
+    if (context->nesting_level_left != SHAPE_MAX_NESTING_LEVEL)
+        return FALSE;
+
     glyph = context->u.subst.glyphs[context->cur];
 
     format = table_read_be_word(table, offset);
