@@ -85,6 +85,8 @@ static DWORD client_tid;
 
 static HANDLE ntoskrnl_heap;
 
+static void *ldr_notify_cookie;
+
 static PLOAD_IMAGE_NOTIFY_ROUTINE load_image_notify_routines[8];
 static unsigned int load_image_notify_routine_count;
 
@@ -3194,39 +3196,6 @@ BOOLEAN WINAPI IoSetThreadHardErrorMode(BOOLEAN EnableHardErrors)
 }
 
 /*****************************************************
- *           DllMain
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    static void *handler;
-    LARGE_INTEGER count;
-
-    switch(reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-#if defined(__i386__) || defined(__x86_64__)
-        handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
-#endif
-        KeQueryTickCount( &count );  /* initialize the global KeTickCount */
-        NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
-        ntoskrnl_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
-        dpc_call_tls_index = TlsAlloc();
-        break;
-    case DLL_PROCESS_DETACH:
-        if (reserved) break;
-
-        if (dpc_call_tp)
-            CloseThreadpool(dpc_call_tp);
-
-        HeapDestroy( ntoskrnl_heap );
-        RtlRemoveVectoredExceptionHandler( handler );
-        break;
-    }
-    return TRUE;
-}
-
-/*****************************************************
  *           Ke386IoSetAccessProcess  (NTOSKRNL.EXE.@)
  */
 BOOLEAN WINAPI Ke386IoSetAccessProcess(PEPROCESS *process, ULONG flag)
@@ -3485,118 +3454,71 @@ static inline void *get_rva( HMODULE module, DWORD va )
     return (void *)((char *)module + va);
 }
 
-static NTSTATUS perform_relocations( void *module, SIZE_T len, ULONG page_size )
+static void WINAPI ldr_notify_callback(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
 {
-    IMAGE_NT_HEADERS *nt;
-    char *base;
-    IMAGE_BASE_RELOCATION *rel, *end;
     const IMAGE_DATA_DIRECTORY *relocs;
+    IMAGE_BASE_RELOCATION *rel, *end;
+    SYSTEM_BASIC_INFORMATION info;
+    IMAGE_NT_HEADERS *nt;
     INT_PTR delta;
+    char *base;
+    HMODULE module;
 
+    if (reason != LDR_DLL_NOTIFICATION_REASON_LOADED) return;
+    TRACE( "loading %s\n", debugstr_us(data->Loaded.BaseDllName));
+
+    module = data->Loaded.DllBase;
     nt = RtlImageNtHeader( module );
     base = (char *)nt->OptionalHeader.ImageBase;
+    if (!(delta = (char *)module - base)) return;
 
-    assert( module != base );
+    /* the loader does not apply relocations to non page-aligned binaries or executables,
+     * we have to do it ourselves */
 
-    relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+    NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
+    if (nt->OptionalHeader.SectionAlignment >= info.PageSize && (nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
+        return;
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
     {
-        WARN( "Need to relocate module from %p to %p, but there are no relocation records\n",
-              base, module );
-        return STATUS_CONFLICTING_ADDRESSES;
+        WARN( "Need to relocate module from %p to %p, but there are no relocation records\n", base, module );
+        return;
     }
 
-    if (!relocs->Size) return STATUS_SUCCESS;
-    if (!relocs->VirtualAddress) return STATUS_CONFLICTING_ADDRESSES;
+    relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+    if (!relocs->Size || !relocs->VirtualAddress) return;
 
-    TRACE( "relocating from %p-%p to %p-%p\n",
-           base, base + len, module, (char *)module + len );
+    TRACE( "relocating from %p-%p to %p-%p\n", base, base + nt->OptionalHeader.SizeOfImage,
+           module, (char *)module + nt->OptionalHeader.SizeOfImage );
 
     rel = get_rva( module, relocs->VirtualAddress );
     end = get_rva( module, relocs->VirtualAddress + relocs->Size );
-    delta = (char *)module - base;
 
     while (rel < end - 1 && rel->SizeOfBlock)
     {
         char *page = get_rva( module, rel->VirtualAddress );
         DWORD old_prot1, old_prot2;
 
-        if (rel->VirtualAddress >= len)
+        if (rel->VirtualAddress >= nt->OptionalHeader.SizeOfImage)
         {
             WARN( "invalid address %p in relocation %p\n", get_rva( module, rel->VirtualAddress ), rel );
-            return STATUS_ACCESS_VIOLATION;
+            return;
         }
 
         /* Relocation entries may hang over the end of the page, so we need to
          * protect two pages. */
-        VirtualProtect( page, page_size, PAGE_READWRITE, &old_prot1 );
-        VirtualProtect( page + page_size, page_size, PAGE_READWRITE, &old_prot2 );
+        VirtualProtect( page, info.PageSize, PAGE_READWRITE, &old_prot1 );
+        VirtualProtect( page + info.PageSize, info.PageSize, PAGE_READWRITE, &old_prot2 );
         rel = LdrProcessRelocationBlock( page, (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
                                          (USHORT *)(rel + 1), delta );
-        VirtualProtect( page, page_size, old_prot1, &old_prot1 );
-        VirtualProtect( page + page_size, page_size, old_prot2, &old_prot2 );
-        if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
-    }
-
-    return STATUS_SUCCESS;
-}
-
-/* load the driver module file */
-static HMODULE load_driver_module( const WCHAR *name )
-{
-    IMAGE_NT_HEADERS *nt;
-    const IMAGE_IMPORT_DESCRIPTOR *imports;
-    SYSTEM_BASIC_INFORMATION info;
-    int i;
-    INT_PTR delta;
-    ULONG size;
-    DWORD old;
-    NTSTATUS status;
-    HMODULE module = LoadLibraryW( name );
-
-    if (!module) return NULL;
-    nt = RtlImageNtHeader( module );
-
-    if (!(delta = (char *)module - (char *)nt->OptionalHeader.ImageBase)) return module;
-
-    /* the loader does not apply relocations to non page-aligned binaries or executables,
-     * we have to do it ourselves */
-
-    NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
-    if (nt->OptionalHeader.SectionAlignment < info.PageSize ||
-        !(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
-    {
-        status = perform_relocations( module, nt->OptionalHeader.SizeOfImage, info.PageSize );
-        if (status != STATUS_SUCCESS)
-            goto error;
-
-        /* make sure we don't try again */
-        size = FIELD_OFFSET( IMAGE_NT_HEADERS, OptionalHeader ) + nt->FileHeader.SizeOfOptionalHeader;
-        VirtualProtect( nt, size, PAGE_READWRITE, &old );
-        nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size = 0;
-        VirtualProtect( nt, size, old, &old );
-    }
-
-    /* make sure imports are relocated too */
-
-    if ((imports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
-    {
-        for (i = 0; imports[i].Name && imports[i].FirstThunk; i++)
+        VirtualProtect( page, info.PageSize, old_prot1, &old_prot1 );
+        VirtualProtect( page + info.PageSize, info.PageSize, old_prot2, &old_prot2 );
+        if (!rel)
         {
-            char *name = (char *)module + imports[i].Name;
-            WCHAR buffer[32], *p = buffer;
-
-            while (p < buffer + 32) if (!(*p++ = *name++)) break;
-            if (p <= buffer + 32) FreeLibrary( load_driver_module( buffer ) );
+            WARN( "LdrProcessRelocationBlock failed\n" );
+            return;
         }
     }
-
-    return module;
-
-error:
-    FreeLibrary( module );
-    return NULL;
 }
 
 /* load the .sys module for a device driver */
@@ -3672,7 +3594,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
     TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
-    module = load_driver_module( str );
+    module = LoadLibraryW( str );
 
     if (module && load_image_notify_routine_count)
     {
@@ -4290,4 +4212,40 @@ void WINAPI KeStackAttachProcess(KPROCESS *process, KAPC_STATE *apc_state)
 void WINAPI KeUnstackDetachProcess(KAPC_STATE *apc_state)
 {
     FIXME("apc_state %p stub.\n", apc_state);
+}
+
+/*****************************************************
+ *           DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    static void *handler;
+    LARGE_INTEGER count;
+
+    switch(reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( inst );
+#if defined(__i386__) || defined(__x86_64__)
+        handler = RtlAddVectoredExceptionHandler( TRUE, vectored_handler );
+#endif
+        KeQueryTickCount( &count );  /* initialize the global KeTickCount */
+        NtBuildNumber = NtCurrentTeb()->Peb->OSBuildNumber;
+        ntoskrnl_heap = HeapCreate( HEAP_CREATE_ENABLE_EXECUTE, 0, 0 );
+        dpc_call_tls_index = TlsAlloc();
+        LdrRegisterDllNotification( 0, ldr_notify_callback, NULL, &ldr_notify_cookie );
+        break;
+    case DLL_PROCESS_DETACH:
+        LdrUnregisterDllNotification( ldr_notify_cookie );
+
+        if (reserved) break;
+
+        if (dpc_call_tp)
+            CloseThreadpool(dpc_call_tp);
+
+        HeapDestroy( ntoskrnl_heap );
+        RtlRemoveVectoredExceptionHandler( handler );
+        break;
+    }
+    return TRUE;
 }
