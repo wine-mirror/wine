@@ -4382,8 +4382,6 @@ void __wine_process_init(void)
     init_user_process_params( info_size );
     params = peb->ProcessParameters;
 
-    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
-
     /* retrieve current umask */
     FILE_umask = umask(0777);
     umask( FILE_umask );

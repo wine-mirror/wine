@@ -213,7 +213,6 @@ static inline int get_unix_exit_code( NTSTATUS status )
 }
 
 extern mode_t FILE_umask DECLSPEC_HIDDEN;
-extern HANDLE keyed_event DECLSPEC_HIDDEN;
 extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
 
 #define HASH_STRING_ALGORITHM_DEFAULT  0

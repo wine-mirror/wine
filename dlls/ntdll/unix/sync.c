@@ -71,6 +71,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
 HANDLE keyed_event = 0;
 
+static const LARGE_INTEGER zero_timeout;
+
+static RTL_CRITICAL_SECTION addr_section;
+static RTL_CRITICAL_SECTION_DEBUG addr_section_debug =
+{
+    0, 0, &addr_section,
+    { &addr_section_debug.ProcessLocksList, &addr_section_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": addr_section") }
+};
+static RTL_CRITICAL_SECTION addr_section = { &addr_section_debug, -1, 0, 0, 0, 0 };
+
 #ifdef __linux__
 
 #define FUTEX_WAIT 0
@@ -145,6 +156,24 @@ static void timespec_from_timeout( struct timespec *timespec, const LARGE_INTEGE
 }
 
 #endif
+
+
+static BOOL compare_addr( const void *addr, const void *cmp, SIZE_T size )
+{
+    switch (size)
+    {
+        case 1:
+            return (*(const UCHAR *)addr == *(const UCHAR *)cmp);
+        case 2:
+            return (*(const USHORT *)addr == *(const USHORT *)cmp);
+        case 4:
+            return (*(const ULONG *)addr == *(const ULONG *)cmp);
+        case 8:
+            return (*(const ULONG64 *)addr == *(const ULONG64 *)cmp);
+    }
+
+    return FALSE;
+}
 
 
 /* create a struct security_descriptor and contained information in one contiguous piece of memory */
@@ -1358,6 +1387,71 @@ NTSTATUS CDECL fast_RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable, 
     return STATUS_SUCCESS;
 }
 
+
+/* We can't map addresses to futex directly, because an application can wait on
+ * 8 bytes, and we can't pass all 8 as the compare value to futex(). Instead we
+ * map all addresses to a small fixed table of futexes. This may result in
+ * spurious wakes, but the application is already expected to handle those. */
+
+static int addr_futex_table[256];
+
+static inline int *hash_addr( const void *addr )
+{
+    ULONG_PTR val = (ULONG_PTR)addr;
+
+    return &addr_futex_table[(val >> 2) & 255];
+}
+
+static inline NTSTATUS fast_wait_addr( const void *addr, const void *cmp, SIZE_T size,
+                                       const LARGE_INTEGER *timeout )
+{
+    int *futex;
+    int val;
+    struct timespec timespec;
+    int ret;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    futex = hash_addr( addr );
+
+    /* We must read the previous value of the futex before checking the value
+     * of the address being waited on. That way, if we receive a wake between
+     * now and waiting on the futex, we know that val will have changed.
+     * Use an atomic load so that memory accesses are ordered between this read
+     * and the increment below. */
+    val = InterlockedCompareExchange( futex, 0, 0 );
+    if (!compare_addr( addr, cmp, size ))
+        return STATUS_SUCCESS;
+
+    if (timeout)
+    {
+        timespec_from_timeout( &timespec, timeout );
+        ret = futex_wait( futex, val, &timespec );
+    }
+    else
+        ret = futex_wait( futex, val, NULL );
+
+    if (ret == -1 && errno == ETIMEDOUT)
+        return STATUS_TIMEOUT;
+    return STATUS_SUCCESS;
+}
+
+static inline NTSTATUS fast_wake_addr( const void *addr )
+{
+    int *futex;
+
+    if (!use_futexes())
+        return STATUS_NOT_IMPLEMENTED;
+
+    futex = hash_addr( addr );
+
+    InterlockedIncrement( futex );
+
+    futex_wake( futex, INT_MAX );
+    return STATUS_SUCCESS;
+}
+
 #else
 
 NTSTATUS CDECL fast_RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
@@ -1407,4 +1501,78 @@ NTSTATUS CDECL fast_RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable, 
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static inline NTSTATUS fast_wait_addr( const void *addr, const void *cmp, SIZE_T size,
+                                       const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static inline NTSTATUS fast_wake_addr( const void *addr )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 #endif
+
+
+/***********************************************************************
+ *           RtlWaitOnAddress   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size,
+                                  const LARGE_INTEGER *timeout )
+{
+    select_op_t select_op;
+    NTSTATUS ret;
+    timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
+
+    if (size != 1 && size != 2 && size != 4 && size != 8)
+        return STATUS_INVALID_PARAMETER;
+
+    if ((ret = fast_wait_addr( addr, cmp, size, timeout )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
+
+    RtlEnterCriticalSection( &addr_section );
+    if (!compare_addr( addr, cmp, size ))
+    {
+        RtlLeaveCriticalSection( &addr_section );
+        return STATUS_SUCCESS;
+    }
+
+    if (abs_timeout < 0)
+    {
+        LARGE_INTEGER now;
+
+        RtlQueryPerformanceCounter(&now);
+        abs_timeout -= now.QuadPart;
+    }
+
+    select_op.keyed_event.op     = SELECT_KEYED_EVENT_WAIT;
+    select_op.keyed_event.handle = wine_server_obj_handle( keyed_event );
+    select_op.keyed_event.key    = wine_server_client_ptr( addr );
+
+    return server_select( &select_op, sizeof(select_op.keyed_event), SELECT_INTERRUPTIBLE, abs_timeout, NULL, &addr_section, NULL );
+}
+
+/***********************************************************************
+ *           RtlWakeAddressAll    (NTDLL.@)
+ */
+void WINAPI RtlWakeAddressAll( const void *addr )
+{
+    if (fast_wake_addr( addr ) != STATUS_NOT_IMPLEMENTED) return;
+
+    RtlEnterCriticalSection( &addr_section );
+    while (NtReleaseKeyedEvent( 0, addr, 0, &zero_timeout ) == STATUS_SUCCESS) {}
+    RtlLeaveCriticalSection( &addr_section );
+}
+
+/***********************************************************************
+ *           RtlWakeAddressSingle (NTDLL.@)
+ */
+void WINAPI RtlWakeAddressSingle( const void *addr )
+{
+    if (fast_wake_addr( addr ) != STATUS_NOT_IMPLEMENTED) return;
+
+    RtlEnterCriticalSection( &addr_section );
+    NtReleaseKeyedEvent( 0, addr, 0, &zero_timeout );
+    RtlLeaveCriticalSection( &addr_section );
+}

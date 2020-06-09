@@ -91,9 +91,6 @@ extern void CDECL virtual_set_force_exec( BOOL enable ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_release_address_space(void) DECLSPEC_HIDDEN;
 extern void CDECL virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
 
-extern unsigned int CDECL server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                                         timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
-                                         user_apc_t *user_apc ) DECLSPEC_HIDDEN;
 extern unsigned int CDECL server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
                                        const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
@@ -128,6 +125,11 @@ extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
+extern unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
+                                   timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
+                                   user_apc_t *user_apc ) DECLSPEC_HIDDEN;
+extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call,
+                                              apc_result_t *result ) DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
 extern size_t server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
 extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
@@ -139,8 +141,6 @@ extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
-extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call,
-                                              apc_result_t *result ) DECLSPEC_HIDDEN;
 extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
 

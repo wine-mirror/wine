@@ -143,6 +143,10 @@ struct unix_funcs
 
     /* other Win32 API functions */
     NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );
+    NTSTATUS      (WINAPI *RtlWaitOnAddress)( const void *addr, const void *cmp, SIZE_T size,
+                                              const LARGE_INTEGER *timeout );
+    void          (WINAPI *RtlWakeAddressAll)( const void *addr );
+    void          (WINAPI *RtlWakeAddressSingle)( const void *addr );
 
     /* fast locks */
     NTSTATUS      (CDECL *fast_RtlTryAcquireSRWLockExclusive)( RTL_SRWLOCK *lock );
@@ -199,9 +203,6 @@ struct unix_funcs
 
     /* server functions */
     unsigned int  (CDECL *server_call)( void *req_ptr );
-    unsigned int  (CDECL *server_select)( const select_op_t *select_op, data_size_t size, UINT flags,
-                                          timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
-                                          user_apc_t *user_apc );
     unsigned int  (CDECL *server_wait)( const select_op_t *select_op, data_size_t size, UINT flags,
                                         const LARGE_INTEGER *timeout );
     void          (CDECL *server_send_fd)( int fd );

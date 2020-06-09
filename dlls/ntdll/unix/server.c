@@ -602,9 +602,9 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
 /***********************************************************************
  *              server_select
  */
-unsigned int CDECL server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                                  timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
-                                  user_apc_t *user_apc )
+unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
+                            timeout_t abs_timeout, CONTEXT *context, RTL_CRITICAL_SECTION *cs,
+                            user_apc_t *user_apc )
 {
     unsigned int ret;
     int cookie;
