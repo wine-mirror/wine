@@ -921,6 +921,36 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     todo_wine
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"auto"), "columnCount = %s\n", wine_dbgstr_variant(&v));
     VariantClear(&v);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnWidth(css_style, &v);
+    ok(hres == S_OK, "get_columnWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !V_BSTR(&v), "columnWidth = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 20;
+    hres = IHTMLCSSStyleDeclaration2_put_columnWidth(css_style, v);
+    ok(hres == S_OK, "put_columnWidth failed: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnWidth(css_style, &v);
+    ok(hres == S_OK, "get_columnWidth failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !V_BSTR(&v), "columnWidth = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"20px");
+    hres = IHTMLCSSStyleDeclaration2_put_columnWidth(css_style, v);
+    ok(hres == S_OK, "put_columnWidth failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnWidth(css_style, &v);
+    ok(hres == S_OK, "get_columnWidth failed: %08x\n", hres);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"20px"), "columnWidth = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
 }
 
 static void test_body_style(IHTMLStyle *style)
