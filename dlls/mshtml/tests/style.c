@@ -999,6 +999,24 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     todo_wine
     ok(str && !lstrcmpW(str, L"auto"), "columnFill = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnSpan(css_style, &str);
+    ok(hres == S_OK, "get_columnSpan failed: %08x\n", hres);
+    ok(!str, "columnSpan = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"all");
+    hres = IHTMLCSSStyleDeclaration2_put_columnSpan(css_style, str);
+    ok(hres == S_OK, "put_columnSpan failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLCSSStyleDeclaration2_get_columnSpan(css_style, &str);
+    ok(hres == S_OK, "get_columnSpan failed: %08x\n", hres);
+    todo_wine
+    ok(str && !lstrcmpW(str, L"all"), "columnSpan = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)

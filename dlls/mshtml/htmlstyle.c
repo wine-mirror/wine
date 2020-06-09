@@ -564,6 +564,11 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_UNKNOWN
     },
     {
+        L"column-span",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNSPAN,
+        DISPID_UNKNOWN
+    },
+    {
         L"column-width",
         DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNWIDTH,
         DISPID_UNKNOWN
@@ -8870,15 +8875,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnFill(IHTMLCSSStyleDecla
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnSpan(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_COLUMN_SPAN, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnSpan(IHTMLCSSStyleDeclaration2 *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property(This, STYLEID_COLUMN_SPAN, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columns(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
