@@ -681,8 +681,8 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 /***********************************************************************
  *              server_wait
  */
-unsigned int CDECL server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
-                                const LARGE_INTEGER *timeout )
+unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
+                          const LARGE_INTEGER *timeout )
 {
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
     BOOL user_apc = FALSE;

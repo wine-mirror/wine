@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 36
+#define NTDLL_UNIXLIB_VERSION 37
 
 struct unix_funcs
 {
@@ -149,6 +149,9 @@ struct unix_funcs
     void          (WINAPI *RtlWakeAddressSingle)( const void *addr );
 
     /* fast locks */
+    NTSTATUS      (CDECL *fast_RtlpWaitForCriticalSection)( RTL_CRITICAL_SECTION *crit, int timeout );
+    NTSTATUS      (CDECL *fast_RtlpUnWaitCriticalSection)( RTL_CRITICAL_SECTION *crit );
+    NTSTATUS      (CDECL *fast_RtlDeleteCriticalSection)( RTL_CRITICAL_SECTION *crit );
     NTSTATUS      (CDECL *fast_RtlTryAcquireSRWLockExclusive)( RTL_SRWLOCK *lock );
     NTSTATUS      (CDECL *fast_RtlAcquireSRWLockExclusive)( RTL_SRWLOCK *lock );
     NTSTATUS      (CDECL *fast_RtlTryAcquireSRWLockShared)( RTL_SRWLOCK *lock );
@@ -203,8 +206,6 @@ struct unix_funcs
 
     /* server functions */
     unsigned int  (CDECL *server_call)( void *req_ptr );
-    unsigned int  (CDECL *server_wait)( const select_op_t *select_op, data_size_t size, UINT flags,
-                                        const LARGE_INTEGER *timeout );
     void          (CDECL *server_send_fd)( int fd );
     int           (CDECL *server_get_unix_fd)( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                                int *needs_close, enum server_fd_type *type, unsigned int *options );

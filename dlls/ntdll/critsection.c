@@ -26,9 +26,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SYSCALL_H
-#include <sys/syscall.h>
-#endif
 #include <time.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -54,187 +51,6 @@ static void *no_debug_info_marker = (void *)(ULONG_PTR)-1;
 static BOOL crit_section_has_debuginfo(const RTL_CRITICAL_SECTION *crit)
 {
     return crit->DebugInfo != NULL && crit->DebugInfo != no_debug_info_marker;
-}
-
-#ifdef __linux__
-
-static int wait_op = 128; /*FUTEX_WAIT|FUTEX_PRIVATE_FLAG*/
-static int wake_op = 129; /*FUTEX_WAKE|FUTEX_PRIVATE_FLAG*/
-
-static inline int futex_wait( int *addr, int val, struct timespec *timeout )
-{
-    return syscall( __NR_futex, addr, wait_op, val, timeout, 0, 0 );
-}
-
-static inline int futex_wake( int *addr, int val )
-{
-    return syscall( __NR_futex, addr, wake_op, val, NULL, 0, 0 );
-}
-
-static inline int use_futexes(void)
-{
-    static int supported = -1;
-
-    if (supported == -1)
-    {
-        futex_wait( &supported, 10, NULL );
-        if (errno == ENOSYS)
-        {
-            wait_op = 0; /*FUTEX_WAIT*/
-            wake_op = 1; /*FUTEX_WAKE*/
-            futex_wait( &supported, 10, NULL );
-        }
-        supported = (errno != ENOSYS);
-    }
-    return supported;
-}
-
-static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
-{
-    int val;
-    struct timespec timespec;
-
-    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
-
-    timespec.tv_sec  = timeout;
-    timespec.tv_nsec = 0;
-    while ((val = InterlockedCompareExchange( (int *)&crit->LockSemaphore, 0, 1 )) != 1)
-    {
-        /* note: this may wait longer than specified in case of signals or */
-        /*       multiple wake-ups, but that shouldn't be a problem */
-        if (futex_wait( (int *)&crit->LockSemaphore, val, &timespec ) == -1 && errno == ETIMEDOUT)
-            return STATUS_TIMEOUT;
-    }
-    return STATUS_WAIT_0;
-}
-
-static inline NTSTATUS fast_wake( RTL_CRITICAL_SECTION *crit )
-{
-    if (!use_futexes()) return STATUS_NOT_IMPLEMENTED;
-
-    *(int *)&crit->LockSemaphore = 1;
-    futex_wake( (int *)&crit->LockSemaphore, 1 );
-    return STATUS_SUCCESS;
-}
-
-static inline void close_semaphore( RTL_CRITICAL_SECTION *crit )
-{
-    if (!use_futexes()) NtClose( crit->LockSemaphore );
-}
-
-#elif defined(__APPLE__)
-
-#include <mach/mach.h>
-#include <mach/task.h>
-#include <mach/semaphore.h>
-
-static inline semaphore_t get_mach_semaphore( RTL_CRITICAL_SECTION *crit )
-{
-    semaphore_t ret = *(int *)&crit->LockSemaphore;
-    if (!ret)
-    {
-        semaphore_t sem;
-        if (semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, 0 )) return 0;
-        if (!(ret = InterlockedCompareExchange( (int *)&crit->LockSemaphore, sem, 0 )))
-            ret = sem;
-        else
-            semaphore_destroy( mach_task_self(), sem );  /* somebody beat us to it */
-    }
-    return ret;
-}
-
-static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
-{
-    mach_timespec_t timespec;
-    semaphore_t sem = get_mach_semaphore( crit );
-
-    timespec.tv_sec = timeout;
-    timespec.tv_nsec = 0;
-    for (;;)
-    {
-        switch( semaphore_timedwait( sem, timespec ))
-        {
-        case KERN_SUCCESS:
-            return STATUS_WAIT_0;
-        case KERN_ABORTED:
-            continue;  /* got a signal, restart */
-        case KERN_OPERATION_TIMED_OUT:
-            return STATUS_TIMEOUT;
-        default:
-            return STATUS_INVALID_HANDLE;
-        }
-    }
-}
-
-static inline NTSTATUS fast_wake( RTL_CRITICAL_SECTION *crit )
-{
-    semaphore_t sem = get_mach_semaphore( crit );
-    semaphore_signal( sem );
-    return STATUS_SUCCESS;
-}
-
-static inline void close_semaphore( RTL_CRITICAL_SECTION *crit )
-{
-    semaphore_destroy( mach_task_self(), *(int *)&crit->LockSemaphore );
-}
-
-#else  /* __APPLE__ */
-
-static inline NTSTATUS fast_wait( RTL_CRITICAL_SECTION *crit, int timeout )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static inline NTSTATUS fast_wake( RTL_CRITICAL_SECTION *crit )
-{
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static inline void close_semaphore( RTL_CRITICAL_SECTION *crit )
-{
-    NtClose( crit->LockSemaphore );
-}
-
-#endif
-
-/***********************************************************************
- *           get_semaphore
- */
-static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
-{
-    HANDLE ret = crit->LockSemaphore;
-    if (!ret)
-    {
-        HANDLE sem;
-        if (NtCreateSemaphore( &sem, SEMAPHORE_ALL_ACCESS, NULL, 0, 1 )) return 0;
-        if (!(ret = InterlockedCompareExchangePointer( &crit->LockSemaphore, sem, 0 )))
-            ret = sem;
-        else
-            NtClose(sem);  /* somebody beat us to it */
-    }
-    return ret;
-}
-
-/***********************************************************************
- *           wait_semaphore
- */
-static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
-{
-    NTSTATUS ret;
-
-    /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ) || ((ret = fast_wait( crit, timeout )) == STATUS_NOT_IMPLEMENTED))
-    {
-        HANDLE sem = get_semaphore( crit );
-        LARGE_INTEGER time;
-        select_op_t select_op;
-
-        time.QuadPart = timeout * (LONGLONG)-10000000;
-        select_op.wait.op = SELECT_WAIT;
-        select_op.wait.handles[0] = wine_server_obj_handle( sem );
-        ret = unix_funcs->server_wait( &select_op, offsetof( select_op_t, wait.handles[1] ), 0, &time );
-    }
-    return ret;
 }
 
 /***********************************************************************
@@ -402,7 +218,8 @@ NTSTATUS WINAPI RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit )
             RtlFreeHeap( GetProcessHeap(), 0, crit->DebugInfo );
             crit->DebugInfo = NULL;
         }
-        close_semaphore( crit );
+        if (unix_funcs->fast_RtlDeleteCriticalSection( crit ) == STATUS_NOT_IMPLEMENTED)
+            NtClose( crit->LockSemaphore );
     }
     else NtClose( crit->LockSemaphore );
     crit->LockSemaphore = 0;
@@ -446,7 +263,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
     for (;;)
     {
         EXCEPTION_RECORD rec;
-        NTSTATUS status = wait_semaphore( crit, 5 );
+        NTSTATUS status = unix_funcs->fast_RtlpWaitForCriticalSection( crit, 5 );
         timeout -= 5;
 
         if ( status == STATUS_TIMEOUT )
@@ -456,14 +273,14 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
             if (!name) name = "?";
             ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
-            status = wait_semaphore( crit, 60 );
+            status = unix_funcs->fast_RtlpWaitForCriticalSection( crit, 60 );
             timeout -= 60;
 
             if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
                 ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
-                status = wait_semaphore( crit, 300 );
+                status = unix_funcs->fast_RtlpWaitForCriticalSection( crit, 300 );
                 timeout -= 300;
             }
         }
@@ -513,14 +330,8 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
-    NTSTATUS ret;
+    NTSTATUS ret = unix_funcs->fast_RtlpUnWaitCriticalSection( crit );
 
-    /* debug info is cleared by MakeCriticalSectionGlobal */
-    if (!crit_section_has_debuginfo( crit ) || ((ret = fast_wake( crit )) == STATUS_NOT_IMPLEMENTED))
-    {
-        HANDLE sem = get_semaphore( crit );
-        ret = NtReleaseSemaphore( sem, 1, NULL );
-    }
     if (ret) RtlRaiseStatus( ret );
     return ret;
 }
