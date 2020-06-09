@@ -2066,6 +2066,8 @@ static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, 
         ole_priv_data_entry *entry;
 
         TRACE("(): WM_RENDERFORMAT(cfFormat=%x)\n", cf);
+
+        if (!clipbrd || !clipbrd->cached_enum) break;
         entry = find_format_in_list(clipbrd->cached_enum->entries, clipbrd->cached_enum->count, cf);
 
         if(entry)
