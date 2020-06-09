@@ -574,6 +574,11 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_UNKNOWN
     },
     {
+        L"column-rule-width",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULEWIDTH,
+        DISPID_UNKNOWN
+    },
+    {
         L"column-span",
         DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNSPAN,
         DISPID_UNKNOWN
@@ -8955,15 +8960,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleStyle(IHTMLCSSStyle
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_RULE_WIDTH, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleWidth(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_RULE_WIDTH, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_breakBefore(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
