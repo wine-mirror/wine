@@ -520,38 +520,85 @@ static BOOL CertContext_GetProperty(cert_t *cert, DWORD dwPropId,
     return ret;
 }
 
-void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info)
+/* 64-bit compatible layout, so that 64-bit crypt32 is able to read
+ * the structure saved by 32-bit crypt32.
+ */
+typedef struct
 {
-    DWORD i, containerLen, provNameLen;
-    LPBYTE data = (LPBYTE)info + sizeof(CRYPT_KEY_PROV_INFO);
+    ULONG64 pwszContainerName;
+    ULONG64 pwszProvName;
+    DWORD dwProvType;
+    DWORD dwFlags;
+    DWORD cProvParam;
+    ULONG64 rgProvParam;
+    DWORD dwKeySpec;
+} store_CRYPT_KEY_PROV_INFO;
 
-    if (info->pwszContainerName)
+typedef struct
+{
+    DWORD dwParam;
+    ULONG64 pbData;
+    DWORD cbData;
+    DWORD dwFlags;
+} store_CRYPT_KEY_PROV_PARAM;
+
+void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO buf)
+{
+    CRYPT_KEY_PROV_INFO info;
+    store_CRYPT_KEY_PROV_INFO *store = (store_CRYPT_KEY_PROV_INFO *)buf;
+    BYTE *p = (BYTE *)(store + 1);
+
+    if (store->pwszContainerName)
     {
-        info->pwszContainerName = (LPWSTR)data;
-        containerLen = (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
-        data += containerLen;
+        info.pwszContainerName = (LPWSTR)p;
+        p += (lstrlenW(info.pwszContainerName) + 1) * sizeof(WCHAR);
     }
+    else
+        info.pwszContainerName = NULL;
 
-    if (info->pwszProvName)
+    if (store->pwszProvName)
     {
-        info->pwszProvName = (LPWSTR)data;
-        provNameLen = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
-        data += provNameLen;
+        info.pwszProvName = (LPWSTR)p;
+        p += (lstrlenW(info.pwszProvName) + 1) * sizeof(WCHAR);
     }
+    else
+        info.pwszProvName = NULL;
 
-    if (info->cProvParam)
+    info.dwProvType = store->dwProvType;
+    info.dwFlags = store->dwFlags;
+    info.dwKeySpec = store->dwKeySpec;
+    info.cProvParam = store->cProvParam;
+
+    if (info.cProvParam)
     {
-        info->rgProvParam = (PCRYPT_KEY_PROV_PARAM)data;
-        data += info->cProvParam * sizeof(CRYPT_KEY_PROV_PARAM);
+        DWORD i;
 
-        for (i = 0; i < info->cProvParam; i++)
+        info.rgProvParam = (CRYPT_KEY_PROV_PARAM *)p;
+
+        for (i = 0; i < store->cProvParam; i++)
         {
-            info->rgProvParam[i].pbData = data;
-            data += info->rgProvParam[i].cbData;
+            CRYPT_KEY_PROV_PARAM param;
+            store_CRYPT_KEY_PROV_PARAM *store_param;
+
+            store_param = (store_CRYPT_KEY_PROV_PARAM *)p;
+            p += sizeof(*store_param);
+
+            param.dwParam = store_param[i].dwParam;
+            param.dwFlags = store_param[i].dwFlags;
+            param.cbData = store_param[i].cbData;
+            param.pbData = param.cbData ? p : NULL;
+            p += store_param[i].cbData;
+
+            memcpy(&info.rgProvParam[i], &param, sizeof(param));
         }
     }
     else
-        info->rgProvParam = NULL;
+        info.rgProvParam = NULL;
+
+    TRACE("%s,%s,%u,%08x,%u,%p,%u\n", debugstr_w(info.pwszContainerName), debugstr_w(info.pwszProvName),
+          info.dwProvType, info.dwFlags, info.cProvParam, info.rgProvParam, info.dwKeySpec);
+
+    *buf = info;
 }
 
 BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
@@ -606,72 +653,76 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
  * data, but whose pointers are uninitialized.
  * Upon return, to contains a contiguous copy of from, packed in the following
  * order:
- * - CRYPT_KEY_PROV_INFO
+ * - store_CRYPT_KEY_PROV_INFO
  * - pwszContainerName
  * - pwszProvName
- * - rgProvParam[0]...
+ * - store_CRYPT_KEY_PROV_PARAM[0]
+ * - store_CRYPT_KEY_PROV_PARAM[0].data
+ * - ...
  */
-static void CRYPT_CopyKeyProvInfo(PCRYPT_KEY_PROV_INFO to,
- const CRYPT_KEY_PROV_INFO *from)
+static void CRYPT_CopyKeyProvInfo(store_CRYPT_KEY_PROV_INFO *to, const CRYPT_KEY_PROV_INFO *from)
 {
     DWORD i;
-    LPBYTE nextData = (LPBYTE)to + sizeof(CRYPT_KEY_PROV_INFO);
+    BYTE *p;
+    store_CRYPT_KEY_PROV_PARAM *param;
+
+    p = (BYTE *)(to + 1);
 
     if (from->pwszContainerName)
     {
-        to->pwszContainerName = (LPWSTR)nextData;
-        lstrcpyW(to->pwszContainerName, from->pwszContainerName);
-        nextData += (lstrlenW(from->pwszContainerName) + 1) * sizeof(WCHAR);
+        to->pwszContainerName = p - (BYTE *)to;
+        lstrcpyW((LPWSTR)p, from->pwszContainerName);
+        p += (lstrlenW(from->pwszContainerName) + 1) * sizeof(WCHAR);
     }
     else
-        to->pwszContainerName = NULL;
+        to->pwszContainerName = 0;
+
     if (from->pwszProvName)
     {
-        to->pwszProvName = (LPWSTR)nextData;
-        lstrcpyW(to->pwszProvName, from->pwszProvName);
-        nextData += (lstrlenW(from->pwszProvName) + 1) * sizeof(WCHAR);
+        to->pwszProvName = p - (BYTE *)to;
+        lstrcpyW((LPWSTR)p, from->pwszProvName);
+        p += (lstrlenW(from->pwszProvName) + 1) * sizeof(WCHAR);
     }
     else
-        to->pwszProvName = NULL;
+        to->pwszProvName = 0;
+
     to->dwProvType = from->dwProvType;
     to->dwFlags = from->dwFlags;
     to->cProvParam = from->cProvParam;
-    to->rgProvParam = (PCRYPT_KEY_PROV_PARAM)nextData;
-    nextData += to->cProvParam * sizeof(CRYPT_KEY_PROV_PARAM);
     to->dwKeySpec = from->dwKeySpec;
+
     for (i = 0; i < to->cProvParam; i++)
     {
-        memcpy(&to->rgProvParam[i], &from->rgProvParam[i],
-         sizeof(CRYPT_KEY_PROV_PARAM));
-        to->rgProvParam[i].pbData = nextData;
-        memcpy(to->rgProvParam[i].pbData, from->rgProvParam[i].pbData,
-         from->rgProvParam[i].cbData);
-        nextData += from->rgProvParam[i].cbData;
+        param = (store_CRYPT_KEY_PROV_PARAM *)p;
+        p += sizeof(*param);
+
+        param->dwParam = from->rgProvParam[i].dwParam;
+        param->cbData = from->rgProvParam[i].cbData;
+        param->dwFlags = from->rgProvParam[i].dwFlags;
+        memcpy(p, from->rgProvParam[i].pbData, from->rgProvParam[i].cbData);
+        p += from->rgProvParam[i].cbData;
     }
 }
 
 static BOOL CertContext_SetKeyProvInfoProperty(CONTEXT_PROPERTY_LIST *properties,
  const CRYPT_KEY_PROV_INFO *info)
 {
+    BYTE *buf;
+    DWORD size = sizeof(store_CRYPT_KEY_PROV_INFO), i;
     BOOL ret;
-    LPBYTE buf = NULL;
-    DWORD size = sizeof(CRYPT_KEY_PROV_INFO), i, containerSize, provNameSize;
 
     if (info->pwszContainerName)
-        containerSize = (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
-    else
-        containerSize = 0;
+        size += (lstrlenW(info->pwszContainerName) + 1) * sizeof(WCHAR);
     if (info->pwszProvName)
-        provNameSize = (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
-    else
-        provNameSize = 0;
-    size += containerSize + provNameSize;
+        size += (lstrlenW(info->pwszProvName) + 1) * sizeof(WCHAR);
+
     for (i = 0; i < info->cProvParam; i++)
-        size += sizeof(CRYPT_KEY_PROV_PARAM) + info->rgProvParam[i].cbData;
+        size += sizeof(store_CRYPT_KEY_PROV_PARAM) + info->rgProvParam[i].cbData;
+
     buf = CryptMemAlloc(size);
     if (buf)
     {
-        CRYPT_CopyKeyProvInfo((PCRYPT_KEY_PROV_INFO)buf, info);
+        CRYPT_CopyKeyProvInfo((store_CRYPT_KEY_PROV_INFO *)buf, info);
         ret = ContextPropertyList_SetProperty(properties,
          CERT_KEY_PROV_INFO_PROP_ID, buf, size);
         CryptMemFree(buf);
