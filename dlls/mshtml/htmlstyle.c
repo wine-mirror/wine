@@ -554,6 +554,11 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_UNKNOWN
     },
     {
+        L"column-gap",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNGAP,
+        DISPID_UNKNOWN
+    },
+    {
         L"column-width",
         DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNWIDTH,
         DISPID_UNKNOWN
@@ -8832,15 +8837,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnWidth(IHTMLCSSStyleDecl
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnGap(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_GAP, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnGap(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_GAP, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnFill(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
