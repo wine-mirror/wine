@@ -521,7 +521,7 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     WICRect rect = { 0, 0, 1, 1 }, rect_test_a = { 0, 0, 0, 0 }, rect_test_b = { 0, 0, 0xdeadbeaf, 0xdeadbeaf };
     WICRect rect_test_c = { -0xdeadbeaf, -0xdeadbeaf, 1, 1 }, rect_test_d = { 0xdeadbeaf, 0xdeadbeaf, 1, 1 };
     BYTE buffer[256];
-    UINT stride, frame_stride, width_in_blocks, height_in_blocks;
+    UINT stride, frame_stride, frame_size, width_in_blocks, height_in_blocks;
     UINT width, height, depth, array_index;
     UINT block_offset;
     int slice_index;
@@ -534,6 +534,10 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     if (hr != S_OK) return;
     stride = rect.Width * format_info.BytesPerBlock;
     frame_stride = width_in_blocks * format_info.BytesPerBlock;
+    frame_size = frame_stride * height_in_blocks;
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 0, NULL);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect_test_a, stride, sizeof(buffer), buffer);
     todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
@@ -543,7 +547,16 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect_test_d, stride, sizeof(buffer), buffer);
     todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride - 1, sizeof(buffer), buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride * 2, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, frame_stride * height_in_blocks - 1, buffer);
+    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, frame_stride * height_in_blocks, buffer);
     todo_wine ok (hr == S_OK, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
 
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, 0, sizeof(buffer), buffer);
@@ -565,12 +578,6 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
     hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, sizeof(buffer), NULL);
     todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
 
-    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, 0, 0, NULL);
-    todo_wine ok (hr == E_INVALIDARG, "%d: [frame %d] Got unexpected hr %x\n", i, frame_index, hr);
-    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, sizeof(buffer), buffer);
-    todo_wine ok (hr == S_OK, "%d: [frame %d] CopyBlocks failed, hr=%x\n", i, frame_index, hr);
-    if (hr != S_OK) return;
-
     block_offset = 128; /* DDS magic and header */
     if (has_extended_header(test_data[i].data)) block_offset += 20; /* DDS extended header */
     width = params->Width;
@@ -591,7 +598,23 @@ static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT fram
         slice_index -= depth;
         if (depth > 1) depth /= 2;
     }
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, &rect, stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] CopyBlocks failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) return;
     ok (!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, format_info.BytesPerBlock),
+        "%d: [frame %d] Block data mismatch\n", i, frame_index);
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] CopyBlocks failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) return;
+    ok (!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, frame_size),
+        "%d: [frame %d] Block data mismatch\n", i, frame_index);
+
+    hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, frame_stride * 2, sizeof(buffer), buffer);
+    todo_wine ok (hr == S_OK, "%d: [frame %d] CopyBlocks failed, hr=%x\n", i, frame_index, hr);
+    if (hr != S_OK) return;
+    ok (!strncmp((const char *)test_data[i].data + block_offset, (const char *)buffer, frame_size),
         "%d: [frame %d] Block data mismatch\n", i, frame_index);
 }
 
