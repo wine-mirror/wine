@@ -564,6 +564,11 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_UNKNOWN
     },
     {
+        L"column-rule-color",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNRULECOLOR,
+        DISPID_UNKNOWN
+    },
+    {
         L"column-span",
         DISPID_IHTMLCSSSTYLEDECLARATION2_COLUMNSPAN,
         DISPID_UNKNOWN
@@ -8917,15 +8922,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRule(IHTMLCSSStyleDecla
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    WARN("(%p)->(%s) semi-stub\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_COLUMN_RULE_COLOR, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_columnRuleColor(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WARN("(%p)->(%p) semi-stub\n", This, p);
+    return get_style_property_var(This, STYLEID_COLUMN_RULE_COLOR, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_columnRuleStyle(IHTMLCSSStyleDeclaration2 *iface, BSTR v)

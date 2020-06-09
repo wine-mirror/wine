@@ -1017,6 +1017,25 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     todo_wine
     ok(str && !lstrcmpW(str, L"all"), "columnSpan = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnRuleColor(css_style, &v);
+    ok(hres == S_OK, "get_columnRuleColor failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !V_BSTR(&v), "columnRuleColor = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"red");
+    hres = IHTMLCSSStyleDeclaration2_put_columnRuleColor(css_style, v);
+    ok(hres == S_OK, "put_columnRuleColor failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_columnRuleColor(css_style, &v);
+    ok(hres == S_OK, "get_columnRuleColor failed: %08x\n", hres);
+    todo_wine
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"red"), "columnRuleColor = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
 }
 
 static void test_body_style(IHTMLStyle *style)
