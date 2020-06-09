@@ -1532,6 +1532,7 @@ enable_prntvpt
 enable_propsys
 enable_psapi
 enable_pstorec
+enable_pwrshplugin
 enable_qasf
 enable_qcap
 enable_qdvd
@@ -21037,6 +21038,7 @@ wine_fn_config_makefile dlls/psapi enable_psapi
 wine_fn_config_makefile dlls/psapi/tests enable_tests
 wine_fn_config_makefile dlls/pstorec enable_pstorec
 wine_fn_config_makefile dlls/pstorec/tests enable_tests
+wine_fn_config_makefile dlls/pwrshplugin enable_pwrshplugin
 wine_fn_config_makefile dlls/qasf enable_qasf
 wine_fn_config_makefile dlls/qasf/tests enable_tests
 wine_fn_config_makefile dlls/qcap enable_qcap
