@@ -277,6 +277,17 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION csWSgetXXXbyYYY = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static in_addr_t *if_addr_cache;
+static unsigned int if_addr_cache_size;
+static CRITICAL_SECTION cs_if_addr_cache;
+static CRITICAL_SECTION_DEBUG cs_if_addr_cache_debug =
+{
+    0, 0, &cs_if_addr_cache,
+    { &cs_if_addr_cache_debug.ProcessLocksList, &cs_if_addr_cache_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": cs_if_addr_cache") }
+};
+static CRITICAL_SECTION cs_if_addr_cache = { &cs_if_addr_cache_debug, -1, 0, 0, 0, 0 };
+
 union generic_unix_sockaddr
 {
     struct sockaddr addr;
@@ -3348,6 +3359,33 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
             FIXME("Broadcast packets on interface-bound sockets are not currently supported on this platform, "
                   "receiving broadcast packets will not work on socket %04lx.\n", s);
 #endif
+            if (ret)
+            {
+                EnterCriticalSection(&cs_if_addr_cache);
+                if (if_addr_cache_size <= adapter->Index)
+                {
+                    unsigned int new_size;
+                    in_addr_t *new;
+
+                    new_size = max(if_addr_cache_size * 2, adapter->Index + 1);
+                    if (!(new = heap_realloc(if_addr_cache, sizeof(*if_addr_cache) * new_size)))
+                    {
+                        ERR("No memory.\n");
+                        ret = FALSE;
+                        LeaveCriticalSection(&cs_if_addr_cache);
+                        break;
+                    }
+                    memset(new + if_addr_cache_size, 0, sizeof(*if_addr_cache)
+                            * (new_size - if_addr_cache_size));
+                    if_addr_cache = new;
+                    if_addr_cache_size = new_size;
+                }
+                if (if_addr_cache[adapter->Index] && if_addr_cache[adapter->Index] != adapter_addr)
+                    WARN("Adapter addr for iface index %u has changed.\n", adapter->Index);
+
+                if_addr_cache[adapter->Index] = adapter_addr;
+                LeaveCriticalSection(&cs_if_addr_cache);
+            }
             break;
         }
     }
@@ -3752,27 +3790,12 @@ static void interface_bind_check(int fd, struct sockaddr_in *addr)
 #endif
     if (!ret)
     {
-        PIP_ADAPTER_INFO adapters, adapter;
-        DWORD adap_size;
-
-        if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
-            return;
-        adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
-        if (adapters && GetAdaptersInfo(adapters, &adap_size) == NO_ERROR)
-        {
-            /* Search the IPv4 adapter list for the appropriate bound interface */
-            for (adapter = adapters; adapter != NULL; adapter = adapter->Next)
-            {
-                in_addr_t adapter_addr;
-                if (adapter->Index != ifindex) continue;
-
-                adapter_addr = inet_addr(adapter->IpAddressList.IpAddress.String);
-                addr->sin_addr.s_addr = adapter_addr;
-                TRACE("reporting interface address from adapter %d\n", ifindex);
-                break;
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, adapters);
+        EnterCriticalSection(&cs_if_addr_cache);
+        if (ifindex < if_addr_cache_size)
+            addr->sin_addr.s_addr = if_addr_cache[ifindex];
+        else
+            ERR("No cache entry for ifindex %u.\n", ifindex);
+        LeaveCriticalSection(&cs_if_addr_cache);
     }
 #endif
 }
