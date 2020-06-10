@@ -5834,13 +5834,23 @@ static unsigned int opentype_is_default_ignorable(unsigned int codepoint)
             (codepoint >= 0x180b && codepoint <= 0x180e) || (codepoint >= 0x200b && codepoint <= 0x200f);
 }
 
+static unsigned int opentype_is_diacritic(unsigned int codepoint)
+{
+    WCHAR ch = codepoint;
+    WORD type = 0;
+    /* Ignore higher planes for now. */
+    if (codepoint > 0xffff) return 0;
+    GetStringTypeW(CT_CTYPE3, &ch, 1, &type);
+    return !!(type & C3_DIACRITIC);
+}
+
 static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, const struct shaping_features *features)
 {
     unsigned int rtlm_mask = shaping_features_get_mask(features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','m'), NULL);
     const struct shaping_font_ops *font = context->cache->font;
+    unsigned int i, g, c, codepoint, cluster_start_idx = 0;
     UINT16 *clustermap = context->u.subst.clustermap;
     const WCHAR *text = context->text;
-    unsigned int i, g, c, codepoint;
     BOOL bmp;
 
     memset(context->u.subst.glyph_props, 0, context->u.subst.max_glyph_count * sizeof(*context->u.subst.glyph_props));
@@ -5873,17 +5883,25 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
 
         context->u.buffer.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.buffer.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
-        context->u.buffer.glyph_props[g].isClusterStart = 1;
         opentype_set_subst_glyph_props(context, g);
+
+        /* Group diacritics with preceding base. Glyph class is ignored here. */
+        if (!g || !opentype_is_diacritic(codepoint))
+        {
+            context->u.buffer.glyph_props[g].isClusterStart = 1;
+            cluster_start_idx = g;
+        }
+
         if (opentype_is_default_ignorable(codepoint))
             context->u.buffer.glyph_props[g].isZeroWidthSpace = 1;
         context->u.buffer.glyph_props[g].components = 1;
         context->glyph_count++;
 
-        clustermap[i] = i;
+        /* Set initial cluster map here, it's used for setting user features masks. */
+        clustermap[i] = cluster_start_idx;
         if (!bmp)
         {
-            clustermap[i + 1] = i;
+            clustermap[i + 1] = cluster_start_idx;
             ++i;
         }
     }
