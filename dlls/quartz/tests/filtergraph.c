@@ -3463,10 +3463,6 @@ static void test_ec_complete(void)
     testsource_init(&source_pins[2], NULL, 0);
     testfilter_init(&source, source_pins, 3);
 
-    filter1.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
-    filter2.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
-    filter1.misc_flags = filter2.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
-
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&eventsink);
@@ -3481,7 +3477,14 @@ static void test_ec_complete(void)
 
     /* EC_COMPLETE is only delivered to the user after all renderers deliver it. */
 
+    filter1.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
+    filter2.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
+    filter3.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
+    filter1.misc_flags = filter2.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
+
     IMediaControl_Run(control);
+
+    filter3.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
 
     while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, 0)) == S_OK)
     {

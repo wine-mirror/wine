@@ -691,9 +691,6 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
     entry->seeking = NULL;
     ++graph->version;
 
-    if (is_renderer(entry))
-        ++graph->nRenderers;
-
     return duplicate_name ? VFW_S_DUPLICATE_NAME : hr;
 }
 
@@ -766,9 +763,6 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
             hr = IBaseFilter_JoinFilterGraph(pFilter, NULL, NULL);
             if (SUCCEEDED(hr))
             {
-                if (is_renderer(entry))
-                    --This->nRenderers;
-
                 IBaseFilter_SetSyncSource(pFilter, NULL);
                 IBaseFilter_Release(pFilter);
                 if (entry->seeking)
@@ -5171,6 +5165,19 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
     return hr;
 }
 
+static void update_render_count(IFilterGraphImpl *graph)
+{
+    /* Some filters (e.g. MediaStreamFilter) can become renderers when they are
+     * already in the graph. */
+    struct filter *filter;
+    graph->nRenderers = 0;
+    LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+    {
+        if (is_renderer(filter))
+            ++graph->nRenderers;
+    }
+}
+
 static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 {
     IFilterGraphImpl *graph = impl_from_IMediaFilter(iface);
@@ -5186,6 +5193,8 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
         LeaveCriticalSection(&graph->cs);
         return S_OK;
     }
+
+    update_render_count(graph);
 
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
@@ -5228,6 +5237,8 @@ static HRESULT WINAPI MediaFilter_Run(IMediaFilter *iface, REFERENCE_TIME start)
         return S_OK;
     }
     graph->EcCompleteCount = 0;
+
+    update_render_count(graph);
 
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
