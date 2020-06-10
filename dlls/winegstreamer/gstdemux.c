@@ -1621,13 +1621,13 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    if (!gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration))
-        ERR("Failed to query duration.\n");
     for (i = 0; i < filter->source_count; ++i)
     {
         struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
+        if (!gst_pad_query_duration(filter->sources[i]->their_src, GST_FORMAT_TIME, &duration))
+            ERR("Failed to query duration.\n");
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
         pin->seek.llCurrent = 0;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
@@ -2464,13 +2464,13 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
 
     WaitForSingleObject(filter->no_more_pads_event, INFINITE);
 
-    if (!gst_pad_query_duration(filter->sources[0]->their_src, GST_FORMAT_TIME, &duration))
-        ERR("Failed to query duration.\n");
     for (i = 0; i < filter->source_count; ++i)
     {
         struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
+        if (!gst_pad_query_duration(filter->sources[i]->their_src, GST_FORMAT_TIME, &duration))
+            ERR("Failed to query duration.\n");
         pin->seek.llDuration = pin->seek.llStop = duration / 100;
         pin->seek.llCurrent = 0;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
