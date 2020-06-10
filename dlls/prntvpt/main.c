@@ -59,8 +59,13 @@ HRESULT WINAPI PTQuerySchemaVersionSupport(PCWSTR printer, DWORD *version)
 
 HRESULT WINAPI PTOpenProvider(PCWSTR printer, DWORD version, HPTPROVIDER *provider)
 {
-    FIXME("%s, %d, %p: stub\n", debugstr_w(printer), version, provider);
-    return E_NOTIMPL;
+    DWORD used_version;
+
+    TRACE("%s, %d, %p\n", debugstr_w(printer), version, provider);
+
+    if (version != 1) return E_INVALIDARG;
+
+    return PTOpenProviderEx(printer, 1, 1, provider, &used_version);
 }
 
 HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD pref_version, HPTPROVIDER *provider, DWORD *used_version)
