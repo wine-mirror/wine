@@ -6832,7 +6832,7 @@ static const IDWriteInMemoryFontFileLoaderVtbl inmemoryfontfileloadervtbl =
     inmemoryfontfileloader_GetFileCount,
 };
 
-HRESULT create_inmemory_fileloader(IDWriteFontFileLoader **ret)
+HRESULT create_inmemory_fileloader(IDWriteInMemoryFontFileLoader **ret)
 {
     struct dwrite_inmemory_fileloader *loader;
 
@@ -6845,7 +6845,7 @@ HRESULT create_inmemory_fileloader(IDWriteFontFileLoader **ret)
     loader->IDWriteInMemoryFontFileLoader_iface.lpVtbl = &inmemoryfontfileloadervtbl;
     loader->ref = 1;
 
-    *ret = (IDWriteFontFileLoader *)&loader->IDWriteInMemoryFontFileLoader_iface;
+    *ret = &loader->IDWriteInMemoryFontFileLoader_iface;
 
     return S_OK;
 }

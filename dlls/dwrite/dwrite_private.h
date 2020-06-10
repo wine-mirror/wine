@@ -343,7 +343,7 @@ extern HRESULT create_gdiinterop(IDWriteFactory7 *factory, IDWriteGdiInterop1 **
 extern void fontface_detach_from_cache(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern void factory_lock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
 extern void factory_unlock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
-extern HRESULT create_inmemory_fileloader(IDWriteFontFileLoader**) DECLSPEC_HIDDEN;
+extern HRESULT create_inmemory_fileloader(IDWriteInMemoryFontFileLoader **loader) DECLSPEC_HIDDEN;
 extern HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
         IDWriteFontResource **resource) DECLSPEC_HIDDEN;
 

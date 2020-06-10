@@ -8696,8 +8696,9 @@ static void testowner_init(struct testowner_object *object)
 static void test_inmemory_file_loader(void)
 {
     IDWriteFontFileStream *stream, *stream2, *stream3;
-    IDWriteFontFileLoader *loader, *loader2;
+    IDWriteInMemoryFontFileLoader *loader, *loader2;
     IDWriteInMemoryFontFileLoader *inmemory;
+    IDWriteFontFileLoader *fileloader;
     struct testowner_object ownerobject;
     const void *key, *data, *frag_start;
     UINT64 file_size, size, writetime;
@@ -8727,12 +8728,9 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory, &loader2);
     ok(hr == S_OK, "got %#x\n", hr);
     ok(loader != loader2, "unexpected pointer\n");
-    IDWriteFontFileLoader_Release(loader2);
+    IDWriteInMemoryFontFileLoader_Release(loader2);
 
-    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
-    ok(hr == S_OK, "got %#x\n", hr);
-    IDWriteFontFileLoader_Release(loader);
-    EXPECT_REF(inmemory, 1);
+    inmemory = loader;
 
     count = IDWriteInMemoryFontFileLoader_GetFileCount(inmemory);
     ok(!count, "Unexpected file count %u.\n", count);
@@ -8742,15 +8740,15 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
     ok(hr == S_OK, "got %#x\n", hr);
 
-    hr = IDWriteFontFile_GetLoader(file, &loader);
+    hr = IDWriteFontFile_GetLoader(file, &fileloader);
     ok(hr == S_OK, "got %#x\n", hr);
 
     hr = IDWriteFontFile_GetReferenceKey(file, &key, &key_size);
     ok(hr == S_OK, "got %#x\n", hr);
 
-    hr = IDWriteFontFileLoader_CreateStreamFromKey(loader, key, key_size, &stream);
+    hr = IDWriteFontFileLoader_CreateStreamFromKey(fileloader, key, key_size, &stream);
     ok(hr == S_OK, "got %#x\n", hr);
-    IDWriteFontFileLoader_Release(loader);
+    IDWriteFontFileLoader_Release(fileloader);
     IDWriteFontFile_Release(file);
 
     hr = IDWriteFontFileStream_GetFileSize(stream, &file_size);
@@ -8848,9 +8846,7 @@ static void test_inmemory_file_loader(void)
     hr = IDWriteFactory5_CreateInMemoryFontFileLoader(factory, &loader);
     ok(hr == S_OK, "Failed to create loader, hr %#x.\n", hr);
 
-    hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteInMemoryFontFileLoader, (void **)&inmemory);
-    ok(hr == S_OK, "Failed to get in-memory interface, hr %#x.\n", hr);
-    IDWriteFontFileLoader_Release(loader);
+    inmemory = loader;
 
     hr = IDWriteFactory5_RegisterFontFileLoader(factory, (IDWriteFontFileLoader *)inmemory);
     ok(hr == S_OK, "Failed to register loader, hr %#x.\n", hr);

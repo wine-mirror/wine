@@ -923,7 +923,7 @@ interface IDWriteInMemoryFontFileLoader : IDWriteFontFileLoader
 interface IDWriteFactory5 : IDWriteFactory4
 {
     HRESULT CreateFontSetBuilder(IDWriteFontSetBuilder1 **fontset_builder);
-    HRESULT CreateInMemoryFontFileLoader(IDWriteFontFileLoader **loader);
+    HRESULT CreateInMemoryFontFileLoader(IDWriteInMemoryFontFileLoader **loader);
     HRESULT CreateHttpFontFileLoader(
         WCHAR const *referrer_url,
         WCHAR const *extra_headers,

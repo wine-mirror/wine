@@ -1627,7 +1627,8 @@ static HRESULT WINAPI dwritefactory5_CreateFontSetBuilder(IDWriteFactory7 *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritefactory5_CreateInMemoryFontFileLoader(IDWriteFactory7 *iface, IDWriteFontFileLoader **loader)
+static HRESULT WINAPI dwritefactory5_CreateInMemoryFontFileLoader(IDWriteFactory7 *iface,
+        IDWriteInMemoryFontFileLoader **loader)
 {
     TRACE("%p, %p.\n", iface, loader);
 
