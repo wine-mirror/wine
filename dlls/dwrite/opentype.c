@@ -3518,23 +3518,6 @@ static inline unsigned int dwrite_popcount(unsigned int x)
 #endif
 }
 
-static inline unsigned int dwrite_ctz(unsigned int x)
-{
-#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
-    return __builtin_ctz(x);
-#else
-    unsigned int c = 32;
-    x &= - (int) x;
-    if (x) c--;
-    if (x & 0x0000ffff) c -= 16;
-    if (x & 0x00ff00ff) c -= 8;
-    if (x & 0x0f0f0f0f) c -= 4;
-    if (x & 0x33333333) c -= 2;
-    if (x & 0x55555555) c -= 1;
-    return c;
-#endif
-}
-
 static inline unsigned int dwrite_log2i(unsigned int x)
 {
 #if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))
@@ -5084,7 +5067,7 @@ static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_con
         if (!count)
             return FALSE;
 
-        shift = dwrite_ctz(lookup->mask);
+        BitScanForward(&shift, lookup->mask);
         alt_index = (lookup->mask & context->glyph_infos[idx].mask) >> shift;
 
         if (alt_index > count || !alt_index)
