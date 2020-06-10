@@ -1139,21 +1139,23 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct gstdemux *This = gst_pad_get_element_private(pad);
     GstFormat format;
-    int ret;
-    LONGLONG duration;
 
     TRACE("filter %p, type %s.\n", This, GST_QUERY_TYPE_NAME(query));
 
     switch (GST_QUERY_TYPE(query)) {
         case GST_QUERY_DURATION:
-            gst_query_parse_duration (query, &format, NULL);
-            if (format == GST_FORMAT_PERCENT) {
-                gst_query_set_duration (query, GST_FORMAT_PERCENT, GST_FORMAT_PERCENT_MAX);
+            gst_query_parse_duration(query, &format, NULL);
+            if (format == GST_FORMAT_PERCENT)
+            {
+                gst_query_set_duration(query, GST_FORMAT_PERCENT, GST_FORMAT_PERCENT_MAX);
                 return TRUE;
             }
-            ret = gst_pad_query_convert (pad, GST_FORMAT_BYTES, This->filesize, format, &duration);
-            gst_query_set_duration(query, format, duration);
-            return ret;
+            else if (format == GST_FORMAT_BYTES)
+            {
+                gst_query_set_duration(query, GST_FORMAT_BYTES, This->filesize);
+                return TRUE;
+            }
+            return FALSE;
         case GST_QUERY_SEEKING:
             gst_query_parse_seeking (query, &format, NULL, NULL, NULL);
             if (format != GST_FORMAT_BYTES)
