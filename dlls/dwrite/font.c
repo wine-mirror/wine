@@ -1545,7 +1545,10 @@ static HRESULT WINAPI dwritefontface5_GetFontAxisValues(IDWriteFontFace5 *iface,
 
 static BOOL WINAPI dwritefontface5_HasVariations(IDWriteFontFace5 *iface)
 {
-    FIXME("%p: stub\n", iface);
+    static int once;
+
+    if (!once++)
+        FIXME("%p: stub\n", iface);
 
     return FALSE;
 }
