@@ -1595,36 +1595,62 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
 
 
 /**********************************************************************
- *           RtlCreateUserProcess  (NTDLL.@)
+ *           NtCreateUserProcess  (NTDLL.@)
  */
-NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
-                                      RTL_USER_PROCESS_PARAMETERS *params,
-                                      SECURITY_DESCRIPTOR *process_descr,
-                                      SECURITY_DESCRIPTOR *thread_descr,
-                                      HANDLE parent, BOOLEAN inherit, HANDLE debug, HANDLE exception,
-                                      RTL_USER_PROCESS_INFORMATION *info )
+NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_handle_ptr,
+                                     ACCESS_MASK process_access, ACCESS_MASK thread_access,
+                                     OBJECT_ATTRIBUTES *process_attr, OBJECT_ATTRIBUTES *thread_attr,
+                                     ULONG process_flags, ULONG thread_flags,
+                                     RTL_USER_PROCESS_PARAMETERS *params, PS_CREATE_INFO *info,
+                                     PS_ATTRIBUTE_LIST *attr )
 {
     NTSTATUS status;
     BOOL success = FALSE;
     HANDLE file_handle, process_info = 0, process_handle = 0, thread_handle = 0;
-    ULONG process_id, thread_id;
     struct object_attributes *objattr;
     data_size_t attr_len;
     char *unixdir = NULL, *winedebug = NULL;
     startup_info_t *startup_info = NULL;
     ULONG startup_info_size, env_size;
     int socketfd[2] = { -1, -1 };
-    OBJECT_ATTRIBUTES attr;
     pe_image_info_t pe_info;
+    CLIENT_ID id;
+    HANDLE parent = 0, debug = 0, token = 0;
+    UNICODE_STRING path = {0};
+    SIZE_T i, attr_count = (attr->TotalLength - sizeof(attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
 
-    RtlNormalizeProcessParams( params );
-
-    TRACE( "%s image %s cmdline %s\n", debugstr_us( path ),
-           debugstr_us( &params->ImagePathName ), debugstr_us( &params->CommandLine ));
-
-    if ((status = get_pe_file_info( path, attributes, &file_handle, &pe_info )))
+    for (i = 0; i < attr_count; i++)
     {
-        if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( path, params ))
+        switch (attr->Attributes[i].Attribute)
+        {
+        case PS_ATTRIBUTE_PARENT_PROCESS:
+            parent = attr->Attributes[i].ValuePtr;
+            break;
+        case PS_ATTRIBUTE_DEBUG_PORT:
+            debug = attr->Attributes[i].ValuePtr;
+            break;
+        case PS_ATTRIBUTE_IMAGE_NAME:
+            path.Length = attr->Attributes[i].Size;
+            path.Buffer = attr->Attributes[i].ValuePtr;
+            break;
+        case PS_ATTRIBUTE_TOKEN:
+            token = attr->Attributes[i].ValuePtr;
+            break;
+        default:
+            if (attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT)
+                FIXME( "unhandled input attribute %lx\n", attr->Attributes[i].Attribute );
+            break;
+        }
+    }
+
+    TRACE( "%s image %s cmdline %s parent %p\n", debugstr_us( &path ),
+           debugstr_us( &params->ImagePathName ), debugstr_us( &params->CommandLine ), parent );
+    if (debug) FIXME( "debug port %p not supported yet\n", debug );
+    if (token) FIXME( "token %p not supported yet\n", token );
+
+    if ((status = get_pe_file_info( &path, OBJ_CASE_INSENSITIVE, &file_handle, &pe_info )))
+    {
+        if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &path, params ))
         {
             memset( info, 0, sizeof(*info) );
             return STATUS_SUCCESS;
@@ -1635,8 +1661,7 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
     env_size = get_env_size( params, &winedebug );
     unixdir = get_unix_curdir( params );
 
-    InitializeObjectAttributes( &attr, NULL, 0, NULL, process_descr );
-    if ((status = alloc_object_attributes( &attr, &objattr, &attr_len ))) goto done;
+    if ((status = alloc_object_attributes( process_attr, &objattr, &attr_len ))) goto done;
 
     /* create the socket for the new process */
 
@@ -1661,12 +1686,12 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
 
     SERVER_START_REQ( new_process )
     {
-        req->parent_process = wine_server_obj_handle(parent);
-        req->inherit_all    = inherit;
+        req->parent_process = wine_server_obj_handle( parent );
+        req->inherit_all    = !!(process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES);
         req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */
         req->socket_fd      = socketfd[1];
         req->exe_file       = wine_server_obj_handle( file_handle );
-        req->access         = PROCESS_ALL_ACCESS;
+        req->access         = process_access;
         req->cpu            = pe_info.cpu;
         req->info_size      = startup_info_size;
         wine_server_add_data( req, objattr, attr_len );
@@ -1674,8 +1699,8 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         wine_server_add_data( req, params->Environment, env_size );
         if (!(status = wine_server_call( req )))
         {
-            process_id = reply->pid;
             process_handle = wine_server_ptr_handle( reply->handle );
+            id.UniqueProcess = ULongToHandle( reply->pid );
         }
         process_info = wine_server_ptr_handle( reply->info );
     }
@@ -1687,30 +1712,29 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
         switch (status)
         {
         case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_us(path) );
+            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_us(&path) );
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_us(path), cpu_names[pe_info.cpu] );
+                 debugstr_us(&path), cpu_names[pe_info.cpu] );
             break;
         }
         goto done;
     }
 
-    InitializeObjectAttributes( &attr, NULL, 0, NULL, thread_descr );
-    if ((status = alloc_object_attributes( &attr, &objattr, &attr_len ))) goto done;
+    if ((status = alloc_object_attributes( thread_attr, &objattr, &attr_len ))) goto done;
 
     SERVER_START_REQ( new_thread )
     {
         req->process    = wine_server_obj_handle( process_handle );
-        req->access     = THREAD_ALL_ACCESS;
-        req->suspend    = 1;
+        req->access     = thread_access;
+        req->suspend    = !!(thread_flags & THREAD_CREATE_FLAGS_CREATE_SUSPENDED);
         req->request_fd = -1;
         wine_server_add_data( req, objattr, attr_len );
         if (!(status = wine_server_call( req )))
         {
             thread_handle = wine_server_ptr_handle( reply->handle );
-            thread_id = reply->tid;
+            id.UniqueThread = ULongToHandle( reply->tid );
         }
     }
     SERVER_END_REQ;
@@ -1736,19 +1760,49 @@ NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
     }
     SERVER_END_REQ;
 
-    if (success)
+    if (!success)
     {
-        TRACE( "%s pid %04x tid %04x handles %p/%p\n", debugstr_us( path ),
-               process_id, thread_id, process_handle, thread_handle );
-        info->Process = process_handle;
-        info->Thread = thread_handle;
-        info->ClientId.UniqueProcess = ULongToHandle( process_id );
-        info->ClientId.UniqueThread = ULongToHandle( thread_id );
-        virtual_fill_image_information( &pe_info, &info->ImageInformation );
-        process_handle = thread_handle = 0;
-        status = STATUS_SUCCESS;
+        if (!status) status = STATUS_INTERNAL_ERROR;
+        goto done;
     }
-    else if (!status) status = STATUS_INTERNAL_ERROR;
+
+    TRACE( "%s pid %04x tid %04x handles %p/%p\n", debugstr_us(&path),
+           HandleToULong(id.UniqueProcess), HandleToULong(id.UniqueThread),
+           process_handle, thread_handle );
+
+    /* update output attributes */
+
+    for (i = 0; i < attr_count; i++)
+    {
+        switch (attr->Attributes[i].Attribute)
+        {
+        case PS_ATTRIBUTE_CLIENT_ID:
+        {
+            SIZE_T size = min( attr->Attributes[i].Size, sizeof(id) );
+            memcpy( attr->Attributes[i].ValuePtr, &id, size );
+            if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
+            break;
+        }
+        case PS_ATTRIBUTE_IMAGE_INFO:
+        {
+            SECTION_IMAGE_INFORMATION info;
+            SIZE_T size = min( attr->Attributes[i].Size, sizeof(info) );
+            virtual_fill_image_information( &pe_info, &info );
+            memcpy( attr->Attributes[i].ValuePtr, &info, size );
+            if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
+            break;
+        }
+        case PS_ATTRIBUTE_TEB_ADDRESS:
+        default:
+            if (!(attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT))
+                FIXME( "unhandled output attribute %lx\n", attr->Attributes[i].Attribute );
+            break;
+        }
+    }
+    *process_handle_ptr = process_handle;
+    *thread_handle_ptr = thread_handle;
+    process_handle = thread_handle = 0;
+    status = STATUS_SUCCESS;
 
 done:
     if (file_handle) NtClose( file_handle );
@@ -1760,6 +1814,68 @@ done:
     RtlFreeHeap( GetProcessHeap(), 0, winedebug );
     RtlFreeHeap( GetProcessHeap(), 0, unixdir );
     return status;
+}
+
+
+/**********************************************************************
+ *           RtlCreateUserProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,
+                                      RTL_USER_PROCESS_PARAMETERS *params,
+                                      SECURITY_DESCRIPTOR *process_descr,
+                                      SECURITY_DESCRIPTOR *thread_descr,
+                                      HANDLE parent, BOOLEAN inherit, HANDLE debug, HANDLE exception,
+                                      RTL_USER_PROCESS_INFORMATION *info )
+{
+    OBJECT_ATTRIBUTES process_attr, thread_attr;
+    PS_CREATE_INFO create_info;
+    ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[5] ) / sizeof(ULONG_PTR)];
+    PS_ATTRIBUTE_LIST *attr = (PS_ATTRIBUTE_LIST *)buffer;
+    UINT pos = 0;
+
+    RtlNormalizeProcessParams( params );
+
+    attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
+    attr->Attributes[pos].Size         = path->Length;
+    attr->Attributes[pos].ValuePtr     = path->Buffer;
+    attr->Attributes[pos].ReturnLength = NULL;
+    pos++;
+    attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_CLIENT_ID;
+    attr->Attributes[pos].Size         = sizeof(info->ClientId);
+    attr->Attributes[pos].ValuePtr     = &info->ClientId;
+    attr->Attributes[pos].ReturnLength = NULL;
+    pos++;
+    attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_IMAGE_INFO;
+    attr->Attributes[pos].Size         = sizeof(info->ImageInformation);
+    attr->Attributes[pos].ValuePtr     = &info->ImageInformation;
+    attr->Attributes[pos].ReturnLength = NULL;
+    pos++;
+    if (parent)
+    {
+        attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_PARENT_PROCESS;
+        attr->Attributes[pos].Size         = sizeof(parent);
+        attr->Attributes[pos].ValuePtr     = parent;
+        attr->Attributes[pos].ReturnLength = NULL;
+        pos++;
+    }
+    if (debug)
+    {
+        attr->Attributes[pos].Attribute    = PS_ATTRIBUTE_DEBUG_PORT;
+        attr->Attributes[pos].Size         = sizeof(debug);
+        attr->Attributes[pos].ValuePtr     = debug;
+        attr->Attributes[pos].ReturnLength = NULL;
+        pos++;
+    }
+    attr->TotalLength = offsetof( PS_ATTRIBUTE_LIST, Attributes[pos] );
+
+    InitializeObjectAttributes( &process_attr, NULL, 0, NULL, process_descr );
+    InitializeObjectAttributes( &thread_attr, NULL, 0, NULL, thread_descr );
+
+    return NtCreateUserProcess( &info->Process, &info->Thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
+                                &process_attr, &thread_attr,
+                                inherit ? PROCESS_CREATE_FLAGS_INHERIT_HANDLES : 0,
+                                THREAD_CREATE_FLAGS_CREATE_SUSPENDED, params,
+                                &create_info, attr );
 }
 
 /***********************************************************************
