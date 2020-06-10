@@ -1324,6 +1324,26 @@ static HRESULT GST_Connect(struct gstdemux *This, IPin *pConnectPin)
     return S_OK;
 }
 
+static LONGLONG query_duration(GstPad *pad)
+{
+    gint64 duration, byte_length;
+
+    if (gst_pad_query_duration(pad, GST_FORMAT_TIME, &duration))
+        return duration / 100;
+
+    WARN("Failed to query time duration; trying to convert from byte length.\n");
+
+    /* To accurately get a duration for the stream, we want to only consider the
+     * length of that stream. Hence, query for the pad duration, instead of
+     * using the file duration. */
+    if (gst_pad_query_duration(pad, GST_FORMAT_BYTES, &byte_length)
+            && gst_pad_query_convert(pad, GST_FORMAT_BYTES, byte_length, GST_FORMAT_TIME, &duration))
+        return duration / 100;
+
+    ERR("Failed to query duration.\n");
+    return 0;
+}
+
 static inline struct gstdemux_source *impl_from_IMediaSeeking(IMediaSeeking *iface)
 {
     return CONTAINING_RECORD(iface, struct gstdemux_source, seek.IMediaSeeking_iface);
@@ -1583,7 +1603,6 @@ static const struct strmbase_sink_ops sink_ops =
 static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
-    LONGLONG duration;
     unsigned int i;
     int ret;
 
@@ -1626,9 +1645,7 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
         struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
-        if (!gst_pad_query_duration(filter->sources[i]->their_src, GST_FORMAT_TIME, &duration))
-            ERR("Failed to query duration.\n");
-        pin->seek.llDuration = pin->seek.llStop = duration / 100;
+        pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
         pin->seek.llCurrent = 0;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
             return FALSE;
@@ -2314,7 +2331,6 @@ static BOOL wave_parser_init_gst(struct gstdemux *filter)
     static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
     struct gstdemux_source *pin;
     GstElement *element;
-    LONGLONG duration;
     HANDLE events[2];
     int ret;
 
@@ -2353,9 +2369,7 @@ static BOOL wave_parser_init_gst(struct gstdemux *filter)
         return FALSE;
     }
 
-    if (!gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration))
-        ERR("Failed to query duration.\n");
-    pin->seek.llDuration = pin->seek.llStop = duration / 100;
+    pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
     pin->seek.llCurrent = 0;
 
     events[0] = pin->caps_event;
@@ -2428,7 +2442,6 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 static BOOL avi_splitter_init_gst(struct gstdemux *filter)
 {
     GstElement *element = gst_element_factory_make("avidemux", NULL);
-    LONGLONG duration;
     unsigned int i;
     int ret;
 
@@ -2469,9 +2482,7 @@ static BOOL avi_splitter_init_gst(struct gstdemux *filter)
         struct gstdemux_source *pin = filter->sources[i];
         const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
-        if (!gst_pad_query_duration(filter->sources[i]->their_src, GST_FORMAT_TIME, &duration))
-            ERR("Failed to query duration.\n");
-        pin->seek.llDuration = pin->seek.llStop = duration / 100;
+        pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
         pin->seek.llCurrent = 0;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
             return FALSE;
@@ -2550,7 +2561,6 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
     static const WCHAR source_name[] = {'A','u','d','i','o',0};
     struct gstdemux_source *pin;
     GstElement *element;
-    LONGLONG duration;
     HANDLE events[2];
     int ret;
 
@@ -2593,9 +2603,7 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
     if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
         return FALSE;
 
-    if (!gst_pad_query_duration(pin->their_src, GST_FORMAT_TIME, &duration))
-        ERR("Failed to query duration.\n");
-    pin->seek.llDuration = pin->seek.llStop = duration / 100;
+    pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
     pin->seek.llCurrent = 0;
 
     events[0] = pin->caps_event;
