@@ -1,7 +1,7 @@
 @ stdcall PTQuerySchemaVersionSupport(wstr ptr)
 @ stdcall PTOpenProvider(wstr long ptr)
 @ stdcall PTOpenProviderEx(wstr long long ptr ptr)
-@ stub PTCloseProvider
+@ stdcall PTCloseProvider(ptr)
 @ stub BindPTProviderThunk
 @ stub PTGetPrintCapabilities
 @ stub PTMergeAndValidatePrintTicket

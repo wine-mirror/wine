@@ -57,6 +57,27 @@ HRESULT WINAPI PTQuerySchemaVersionSupport(PCWSTR printer, DWORD *version)
     return E_NOTIMPL;
 }
 
+static BOOL is_valid_provider(struct prn_provider *prov)
+{
+    return prov && prov->owner == GetCurrentThreadId();
+}
+
+HRESULT WINAPI PTCloseProvider(HPTPROVIDER provider)
+{
+    struct prn_provider *prov = (struct prn_provider *)provider;
+
+    TRACE("%p\n", provider);
+
+    if (!is_valid_provider(prov))
+        return E_HANDLE;
+
+    prov->owner = 0;
+    ClosePrinter(prov->hprn);
+    heap_free(prov);
+
+    return S_OK;
+}
+
 HRESULT WINAPI PTOpenProvider(PCWSTR printer, DWORD version, HPTPROVIDER *provider)
 {
     DWORD used_version;
