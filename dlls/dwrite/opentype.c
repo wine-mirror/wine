@@ -6214,3 +6214,63 @@ BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsign
 
     return ret;
 }
+
+HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, unsigned int glyph_count,
+        const UINT16 *nominal_glyphs, UINT16 *glyphs)
+{
+    struct shaping_features features = { 0 };
+    struct shaping_feature vert_feature = { 0 };
+    struct scriptshaping_context context = { 0 };
+    struct lookups lookups = { 0 };
+    unsigned int i;
+
+    memcpy(glyphs, nominal_glyphs, glyph_count * sizeof(*glyphs));
+
+    if (!(fontface->flags & FONTFACE_HAS_VERTICAL_VARIANTS))
+        return S_OK;
+
+    context.cache = fontface_get_shaping_cache(fontface);
+    context.u.subst.glyphs = glyphs;
+    context.u.subst.glyph_props = heap_calloc(glyph_count, sizeof(*context.u.subst.glyph_props));
+    context.u.subst.max_glyph_count = glyph_count;
+    context.u.subst.capacity = glyph_count;
+    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
+    context.table = &context.cache->gsub;
+
+    vert_feature.tag = DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t');
+    vert_feature.flags = FEATURE_GLOBAL | FEATURE_GLOBAL_SEARCH;
+    vert_feature.max_value = 1;
+    vert_feature.default_value = 1;
+
+    features.features = &vert_feature;
+    features.count = features.capacity = 1;
+
+    opentype_layout_collect_lookups(&context, ~0u, ~0u, &features, context.table, &lookups);
+    opentype_layout_set_glyph_masks(&context, &features);
+
+    for (i = 0; i < lookups.count; ++i)
+    {
+        const struct lookup *lookup = &lookups.lookups[i];
+
+        if (lookup->type != GSUB_LOOKUP_SINGLE_SUBST)
+            continue;
+
+        context.cur = 0;
+        while (context.cur < context.glyph_count)
+        {
+            BOOL ret = FALSE;
+
+            if (lookup_is_glyph_match(&context, context.cur, lookup->flags))
+                ret = opentype_layout_apply_gsub_lookup(&context, lookup);
+
+            if (!ret)
+                context.cur++;
+        }
+    }
+
+    heap_free(context.u.subst.glyph_props);
+    heap_free(context.glyph_infos);
+    heap_free(lookups.lookups);
+
+    return S_OK;
+}

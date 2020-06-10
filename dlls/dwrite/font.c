@@ -1166,11 +1166,13 @@ static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFac
 }
 
 static HRESULT WINAPI dwritefontface1_GetVerticalGlyphVariants(IDWriteFontFace5 *iface, UINT32 glyph_count,
-    const UINT16 *nominal_indices, UINT16 *vertical_indices)
+        const UINT16 *nominal_glyphs, UINT16 *glyphs)
 {
-    FIXME("%p, %u, %p, %p: stub\n", iface, glyph_count, nominal_indices, vertical_indices);
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %p.\n", iface, glyph_count, nominal_glyphs, glyphs);
+
+    return opentype_get_vertical_glyph_variants(fontface, glyph_count, nominal_glyphs, glyphs);
 }
 
 static BOOL WINAPI dwritefontface1_HasVerticalGlyphVariants(IDWriteFontFace5 *iface)

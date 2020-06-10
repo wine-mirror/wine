@@ -9736,6 +9736,48 @@ static void test_IsColorFont(void)
     ok(refcount == 0, "Factory not released, refcount %u.\n", refcount);
 }
 
+static void test_GetVerticalGlyphVariants(void)
+{
+    UINT16 glyphs[1], glyph_variants[1];
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    unsigned int ch;
+    ULONG refcount;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+
+    fontface = create_fontface(factory);
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void **)&fontface1);
+    IDWriteFontFace_Release(fontface);
+    if (FAILED(hr))
+    {
+        win_skip("GetVerticalGlyphVariants() is not supported.\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+
+    ch = 'A';
+    *glyphs = 0;
+    hr = IDWriteFontFace1_GetGlyphIndices(fontface1, &ch, 1, glyphs);
+    ok(hr == S_OK, "Failed to get glyph, hr %#x.\n", hr);
+    ok(!!*glyphs, "Unexpected glyph %u.\n", glyphs[0]);
+
+    memset(glyph_variants, 0, sizeof(glyph_variants));
+    hr = IDWriteFontFace1_GetVerticalGlyphVariants(fontface1, 1, glyphs, glyph_variants);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(glyphs[0] == glyph_variants[0], "Unexpected glyph.\n");
+
+    ret = IDWriteFontFace1_HasVerticalGlyphVariants(fontface1);
+    ok(!ret, "Unexpected flag.\n");
+
+    IDWriteFontFace1_Release(fontface1);
+    refcount = IDWriteFactory_Release(factory);
+    ok(!refcount, "Factory not released, refcount %u.\n", refcount);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -9805,6 +9847,7 @@ START_TEST(font)
     test_fontsetbuilder();
     test_font_resource();
     test_IsColorFont();
+    test_GetVerticalGlyphVariants();
 
     IDWriteFactory_Release(factory);
 }
