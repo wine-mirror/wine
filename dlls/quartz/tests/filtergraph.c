@@ -3619,6 +3619,17 @@ static void test_ec_complete(void)
     ok(filter3.ref == 1, "Got outstanding refcount %d.\n", filter3.ref);
 }
 
+/* Remove and re-add the filter, to flush the graph's internal
+ * IMediaSeeking cache. Don't expose IMediaSeeking when adding, to show
+ * that it's only queried when needed. */
+static void flush_cached_seeking(IFilterGraph2 *graph, struct testfilter *filter)
+{
+    IFilterGraph2_RemoveFilter(graph, &filter->IBaseFilter_iface);
+    filter->IMediaSeeking_iface.lpVtbl = NULL;
+    IFilterGraph2_AddFilter(graph, &filter->IBaseFilter_iface, NULL);
+    filter->IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
+}
+
 static void test_graph_seeking(void)
 {
     struct testfilter filter1, filter2;
@@ -3658,9 +3669,6 @@ static void test_graph_seeking(void)
 
     testfilter_init(&filter1, NULL, 0);
     testfilter_init(&filter2, NULL, 0);
-
-    filter1.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
-    filter2.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
@@ -3824,6 +3832,8 @@ static void test_graph_seeking(void)
 
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &filter2.IBaseFilter_iface, NULL);
+    filter1.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
+    filter2.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
 
     filter1.seek_caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     filter2.seek_caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration;
@@ -3832,6 +3842,9 @@ static void test_graph_seeking(void)
     ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
     ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
+
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
 
     caps = AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetCurrentPos;
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
@@ -3847,6 +3860,9 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_CheckCapabilities(seeking, &caps);
     ok(hr == E_FAIL, "Got hr %#x.\n", hr);
     ok(!caps, "Got caps %#x.\n", caps);
+
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
 
     hr = IMediaSeeking_IsFormatSupported(seeking, &testguid);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -3905,6 +3921,9 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &testguid, 0x123456789a, &TIME_FORMAT_NONE);
     todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
+
     filter1.seek_duration = 0x12345;
     filter2.seek_duration = 0x23456;
     hr = IMediaSeeking_GetDuration(seeking, &time);
@@ -3916,6 +3935,9 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_GetDuration(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
 
     filter1.seek_stop = 0x54321;
     filter2.seek_stop = 0x65432;
@@ -3948,15 +3970,24 @@ static void test_graph_seeking(void)
     ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
     filter1.seek_hr = filter2.seek_hr = S_OK;
 
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
+
     hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!time, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
 
     current = stop = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &current, &stop);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!current, "Got time %s.\n", wine_dbgstr_longlong(current));
     ok(stop == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(stop));
+
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
 
     current = 0x123;
     stop = 0x321;
@@ -4025,6 +4056,9 @@ static void test_graph_seeking(void)
     ok(filter2.seek_current == 0x123, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_current));
     ok(filter2.seek_stop == 0x321, "Got time %s.\n", wine_dbgstr_longlong(filter2.seek_stop));
 
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
+
     hr = IMediaSeeking_SetRate(seeking, 2.0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(filter1.seek_rate == 2.0, "Got rate %.16e.\n", filter1.seek_rate);
@@ -4039,6 +4073,9 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     todo_wine ok(filter1.seek_rate == -1.0, "Got rate %.16e.\n", filter1.seek_rate);
     todo_wine ok(filter2.seek_rate == -1.0, "Got rate %.16e.\n", filter2.seek_rate);
+
+    flush_cached_seeking(graph, &filter1);
+    flush_cached_seeking(graph, &filter2);
 
     hr = IMediaSeeking_GetRate(seeking, &rate);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

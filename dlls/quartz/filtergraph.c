@@ -588,6 +588,21 @@ static BOOL has_output_pins(IBaseFilter *filter)
     return FALSE;
 }
 
+static void update_seeking(struct filter *filter)
+{
+    if (!filter->seeking)
+    {
+        /* The Legend of Heroes: Trails of Cold Steel II destroys its filter when
+         * its IMediaSeeking interface is released, so cache the interface instead
+         * of querying for it every time.
+         * Some filters (e.g. MediaStreamFilter) can become seekable when they are
+         * already in the graph, so always try to query IMediaSeeking if it's not
+         * cached yet. */
+        if (FAILED(IBaseFilter_QueryInterface(filter->filter, &IID_IMediaSeeking, (void **)&filter->seeking)))
+            filter->seeking = NULL;
+    }
+}
+
 static BOOL is_renderer(struct filter *filter)
 {
     IAMFilterMiscFlags *flags;
@@ -599,8 +614,12 @@ static BOOL is_renderer(struct filter *filter)
             ret = TRUE;
         IAMFilterMiscFlags_Release(flags);
     }
-    else if (filter->seeking && !has_output_pins(filter->filter))
-        ret = TRUE;
+    else
+    {
+        update_seeking(filter);
+        if (filter->seeking && !has_output_pins(filter->filter))
+            ret = TRUE;
+    }
     return ret;
 }
 
@@ -666,15 +685,10 @@ static HRESULT WINAPI FilterGraph2_AddFilter(IFilterGraph2 *iface,
 
     IBaseFilter_AddRef(entry->filter = filter);
 
-    /* The Legend of Heroes: Trails of Cold Steel II destroys its filter when
-     * its IMediaSeeking interface is released, so cache the interface instead
-     * of querying for it every time. */
-    if (FAILED(IBaseFilter_QueryInterface(filter, &IID_IMediaSeeking, (void **)&entry->seeking)))
-        entry->seeking = NULL;
-
     list_add_head(&graph->filters, &entry->entry);
     list_add_head(&graph->sorted_filters, &entry->sorted_entry);
     entry->sorting = FALSE;
+    entry->seeking = NULL;
     ++graph->version;
 
     if (is_renderer(entry))
@@ -2252,6 +2266,7 @@ static HRESULT all_renderers_seek(IFilterGraphImpl *This, fnFoundSeek FoundSeek,
 
     LIST_FOR_EACH_ENTRY(filter, &This->filters, struct filter, entry)
     {
+        update_seeking(filter);
         if (!filter->seeking)
             continue;
         hr = FoundSeek(This, filter->seeking, arg);
@@ -2457,6 +2472,7 @@ static HRESULT WINAPI MediaSeeking_GetStopPosition(IMediaSeeking *iface, LONGLON
 
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {
+        update_seeking(filter);
         if (!filter->seeking)
             continue;
 
@@ -2565,6 +2581,7 @@ static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *
     {
         LONGLONG current = current_ptr ? *current_ptr : 0, stop = stop_ptr ? *stop_ptr : 0;
 
+        update_seeking(filter);
         if (!filter->seeking)
             continue;
 
