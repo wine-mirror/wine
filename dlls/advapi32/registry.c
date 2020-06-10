@@ -636,6 +636,17 @@ LONG WINAPI RegCopyTreeA( HKEY hsrc, const char *subkey, HKEY hdst )
 
 
 /******************************************************************************
+ * RegEnableReflectionKey [ADVAPI32.@]
+ *
+ */
+LONG WINAPI RegEnableReflectionKey(HKEY base)
+{
+    FIXME("%p: stub\n", base);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
  * RegDisableReflectionKey [ADVAPI32.@]
  *
  */

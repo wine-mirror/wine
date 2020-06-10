@@ -639,7 +639,7 @@
 @ stdcall RegDisablePredefinedCache()
 # @ stub RegDisablePredefinedCacheEx
 @ stdcall RegDisableReflectionKey(ptr)
-# @ stub RegEnableReflectionKey
+@ stdcall RegEnableReflectionKey(ptr)
 @ stdcall RegEnumKeyA(long long ptr long)
 @ stdcall -import RegEnumKeyExA(long long ptr ptr ptr ptr ptr ptr)
 @ stdcall -import RegEnumKeyExW(long long ptr ptr ptr ptr ptr ptr)
