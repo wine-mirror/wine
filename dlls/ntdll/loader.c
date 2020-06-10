@@ -1372,8 +1372,10 @@ static void call_constructors( WINE_MODREF *wm )
     {
         caddr_t relocbase = (caddr_t)map->l_addr;
 
-#ifdef __FreeBSD__  /* FreeBSD doesn't relocate l_addr */
-        if (!get_relocbase(map->l_addr, &relocbase)) return;
+#ifdef __FreeBSD__
+        /* On older FreeBSD versions, l_addr was the absolute load address, now it's the relocation offset. */
+        if (!dlsym(RTLD_DEFAULT, "_rtld_version_laddr_offset"))
+            if (!get_relocbase(map->l_addr, &relocbase)) return;
 #endif
         switch (dyn->d_tag)
         {
