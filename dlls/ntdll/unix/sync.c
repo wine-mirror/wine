@@ -186,11 +186,9 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
                                   data_size_t *ret_len )
 {
     unsigned int len = sizeof(**ret);
-    PSID owner = NULL, group = NULL;
-    ACL *dacl, *sacl;
-    BOOLEAN dacl_present, sacl_present, defaulted;
-    PSECURITY_DESCRIPTOR sd;
-    NTSTATUS status;
+    SID *owner = NULL, *group = NULL;
+    ACL *dacl = NULL, *sacl = NULL;
+    SECURITY_DESCRIPTOR *sd;
 
     *ret = NULL;
     *ret_len = 0;
@@ -202,15 +200,27 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     if ((sd = attr->SecurityDescriptor))
     {
         len += sizeof(struct security_descriptor);
+	if (sd->Revision != SECURITY_DESCRIPTOR_REVISION) return STATUS_UNKNOWN_REVISION;
+        if (sd->Control & SE_SELF_RELATIVE)
+        {
+            SECURITY_DESCRIPTOR_RELATIVE *rel = (SECURITY_DESCRIPTOR_RELATIVE *)sd;
+            if (rel->Owner) owner = (PSID)((BYTE *)rel + rel->Owner);
+            if (rel->Group) group = (PSID)((BYTE *)rel + rel->Group);
+            if ((sd->Control & SE_SACL_PRESENT) && rel->Sacl) sacl = (PSID)((BYTE *)rel + rel->Sacl);
+            if ((sd->Control & SE_DACL_PRESENT) && rel->Dacl) dacl = (PSID)((BYTE *)rel + rel->Dacl);
+        }
+        else
+        {
+            owner = sd->Owner;
+            group = sd->Group;
+            if (sd->Control & SE_SACL_PRESENT) sacl = sd->Sacl;
+            if (sd->Control & SE_SACL_PRESENT) dacl = sd->Dacl;
+        }
 
-        if ((status = RtlGetOwnerSecurityDescriptor( sd, &owner, &defaulted ))) return status;
-        if ((status = RtlGetGroupSecurityDescriptor( sd, &group, &defaulted ))) return status;
-        if ((status = RtlGetSaclSecurityDescriptor( sd, &sacl_present, &sacl, &defaulted ))) return status;
-        if ((status = RtlGetDaclSecurityDescriptor( sd, &dacl_present, &dacl, &defaulted ))) return status;
-        if (owner) len += RtlLengthSid( owner );
-        if (group) len += RtlLengthSid( group );
-        if (sacl_present && sacl) len += sacl->AclSize;
-        if (dacl_present && dacl) len += dacl->AclSize;
+        if (owner) len += offsetof( SID, SubAuthority[owner->SubAuthorityCount] );
+        if (group) len += offsetof( SID, SubAuthority[group->SubAuthorityCount] );
+        if (sacl) len += sacl->AclSize;
+        if (dacl) len += dacl->AclSize;
 
         /* fix alignment for the Unicode name that follows the structure */
         len = (len + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
@@ -236,11 +246,11 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
         struct security_descriptor *descr = (struct security_descriptor *)(*ret + 1);
         unsigned char *ptr = (unsigned char *)(descr + 1);
 
-        descr->control = ((SECURITY_DESCRIPTOR *)sd)->Control & ~SE_SELF_RELATIVE;
-        if (owner) descr->owner_len = RtlLengthSid( owner );
-        if (group) descr->group_len = RtlLengthSid( group );
-        if (sacl_present && sacl) descr->sacl_len = sacl->AclSize;
-        if (dacl_present && dacl) descr->dacl_len = dacl->AclSize;
+        descr->control = sd->Control & ~SE_SELF_RELATIVE;
+        if (owner) descr->owner_len = offsetof( SID, SubAuthority[owner->SubAuthorityCount] );
+        if (group) descr->group_len = offsetof( SID, SubAuthority[group->SubAuthorityCount] );
+        if (sacl) descr->sacl_len = sacl->AclSize;
+        if (dacl) descr->dacl_len = dacl->AclSize;
 
         memcpy( ptr, owner, descr->owner_len );
         ptr += descr->owner_len;
