@@ -1571,6 +1571,18 @@ static UINT16 opentype_cmap_format0_get_glyph(const struct dwrite_cmap *cmap, un
     return (ch < 0xff) ? glyphs[ch] : 0;
 }
 
+static unsigned int opentype_cmap_format0_get_ranges(const struct dwrite_cmap *cmap, unsigned int count,
+        DWRITE_UNICODE_RANGE *ranges)
+{
+    if (count > 0)
+    {
+        ranges->first = 0;
+        ranges->last = 255;
+    }
+
+    return 1;
+}
+
 struct cmap_format4_compare_context
 {
     const struct dwrite_cmap *cmap;
@@ -1627,11 +1639,39 @@ static UINT16 opentype_cmap_format4_get_glyph(const struct dwrite_cmap *cmap, un
     return glyph & 0xffff;
 }
 
+static unsigned int opentype_cmap_format4_get_ranges(const struct dwrite_cmap *cmap, unsigned int count,
+        DWRITE_UNICODE_RANGE *ranges)
+{
+    unsigned int i;
+
+    count = min(count, cmap->u.format4.seg_count);
+
+    for (i = 0; i < count; ++i)
+    {
+        ranges[i].first = GET_BE_WORD(cmap->u.format4.starts[i]);
+        ranges[i].last = GET_BE_WORD(cmap->u.format4.ends[i]);
+    }
+
+    return cmap->u.format4.seg_count;
+}
+
 static UINT16 opentype_cmap_format6_10_get_glyph(const struct dwrite_cmap *cmap, unsigned int ch)
 {
     const UINT16 *glyphs = cmap->data;
     if (ch < cmap->u.format6_10.first || ch > cmap->u.format6_10.last) return 0;
     return glyphs[ch - cmap->u.format6_10.first];
+}
+
+static unsigned int opentype_cmap_format6_10_get_ranges(const struct dwrite_cmap *cmap, unsigned int count,
+        DWRITE_UNICODE_RANGE *ranges)
+{
+    if (count > 0)
+    {
+        ranges->first = cmap->u.format6_10.first;
+        ranges->last = cmap->u.format6_10.last;
+    }
+
+    return 1;
 }
 
 static int cmap_format12_13_compare_group(const void *a, const void *b)
@@ -1661,6 +1701,23 @@ static UINT16 opentype_cmap_format12_get_glyph(const struct dwrite_cmap *cmap, u
             GET_BE_DWORD(group_found[2]) + (ch - GET_BE_DWORD(group_found[0])) : 0;
 }
 
+static unsigned int opentype_cmap_format12_13_get_ranges(const struct dwrite_cmap *cmap, unsigned int count,
+        DWRITE_UNICODE_RANGE *ranges)
+{
+    unsigned int i, group_count = cmap->u.format12_13.group_count;
+    const UINT32 *groups = cmap->data;
+
+    count = min(count, group_count);
+
+    for (i = 0; i < count; ++i)
+    {
+        ranges[i].first = GET_BE_DWORD(groups[3 * i]);
+        ranges[i].last = GET_BE_DWORD(groups[3 * i + 1]);
+    }
+
+    return group_count;
+}
+
 static UINT16 opentype_cmap_format13_get_glyph(const struct dwrite_cmap *cmap, unsigned int ch)
 {
     const UINT32 *groups = cmap->data;
@@ -1674,6 +1731,12 @@ static UINT16 opentype_cmap_format13_get_glyph(const struct dwrite_cmap *cmap, u
 }
 
 static UINT16 opentype_cmap_dummy_get_glyph(const struct dwrite_cmap *cmap, unsigned int ch)
+{
+    return 0;
+}
+
+static unsigned int opentype_cmap_dummy_get_ranges(const struct dwrite_cmap *cmap, unsigned int count,
+        DWRITE_UNICODE_RANGE *ranges)
 {
     return 0;
 }
@@ -1771,6 +1834,7 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
         case 0:
             cmap->data = table_read_ensure(&table, offset + 6, 256);
             cmap->get_glyph = opentype_cmap_format0_get_glyph;
+            cmap->get_ranges = opentype_cmap_format0_get_ranges;
             break;
         case 4:
             length = table_read_be_word(&table, offset + 2);
@@ -1782,6 +1846,7 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
             cmap->u.format4.glyph_id_array = cmap->data = cmap->u.format4.id_range_offset + count;
             cmap->u.format4.glyph_id_array_len = (length - 16 - 8 * count) / 2;
             cmap->get_glyph = opentype_cmap_format4_get_glyph;
+            cmap->get_ranges = opentype_cmap_format4_get_ranges;
             break;
         case 6:
         case 10:
@@ -1792,12 +1857,14 @@ void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, unsigned 
             cmap->u.format6_10.last = cmap->u.format6_10.first + count;
             cmap->data = table_read_ensure(&table, offset + f * 10, count * 2);
             cmap->get_glyph = opentype_cmap_format6_10_get_glyph;
+            cmap->get_ranges = opentype_cmap_format6_10_get_ranges;
             break;
         case 12:
         case 13:
             cmap->u.format12_13.group_count = count = table_read_be_dword(&table, offset + 12);
             cmap->data = table_read_ensure(&table, offset + 16, count * 3 * 4);
             cmap->get_glyph = format == 12 ? opentype_cmap_format12_get_glyph : opentype_cmap_format13_get_glyph;
+            cmap->get_ranges = opentype_cmap_format12_13_get_ranges;
             break;
         default:
             WARN("Unhandled subtable format %u.\n", format);
@@ -1810,6 +1877,7 @@ failed:
         /* Dummy implementation, returns 0 unconditionally. */
         cmap->data = cmap;
         cmap->get_glyph = opentype_cmap_dummy_get_glyph;
+        cmap->get_ranges = opentype_cmap_dummy_get_ranges;
     }
 }
 
@@ -1824,125 +1892,13 @@ void dwrite_cmap_release(struct dwrite_cmap *cmap)
     cmap->stream = NULL;
 }
 
-static unsigned int opentype_cmap_get_unicode_ranges_count(const struct dwrite_fonttable *cmap)
+HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_cmap *cmap, unsigned int max_count, DWRITE_UNICODE_RANGE *ranges,
+        unsigned int *count)
 {
-    unsigned int i, num_tables, count = 0;
-    const struct cmap_header *header;
-
-    num_tables = table_read_be_word(cmap, FIELD_OFFSET(struct cmap_header, num_tables));
-    header = table_read_ensure(cmap, 0, FIELD_OFFSET(struct cmap_header, tables[num_tables]));
-
-    if (!header)
-        return 0;
-
-    for (i = 0; i < num_tables; ++i)
-    {
-        unsigned int format, offset;
-
-        if (GET_BE_WORD(header->tables[i].platformID) != 3)
-            continue;
-
-        offset = GET_BE_DWORD(header->tables[i].offset);
-        format = table_read_be_word(cmap, offset);
-
-        switch (format)
-        {
-            case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
-            {
-                count += table_read_be_word(cmap, offset + FIELD_OFFSET(struct cmap_segment_mapping, seg_count_x2)) / 2;
-                break;
-            }
-            case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
-            {
-                count += table_read_be_dword(cmap, offset + FIELD_OFFSET(struct cmap_segmented_coverage, num_groups));
-                break;
-            }
-            default:
-                FIXME("table format %u is not supported.\n", format);
-        }
-    }
-
-    return count;
-}
-
-HRESULT opentype_cmap_get_unicode_ranges(const struct file_stream_desc *stream_desc, unsigned int max_count,
-        DWRITE_UNICODE_RANGE *ranges, unsigned int *count)
-{
-    unsigned int i, num_tables, k = 0;
-    const struct cmap_header *header;
-    struct dwrite_fonttable cmap;
-
-    opentype_get_font_table(stream_desc, MS_CMAP_TAG, &cmap);
-
-    if (!cmap.exists)
+    if (!cmap->data)
         return E_FAIL;
 
-    *count = opentype_cmap_get_unicode_ranges_count(&cmap);
-
-    num_tables = table_read_be_word(&cmap, FIELD_OFFSET(struct cmap_header, num_tables));
-    header = table_read_ensure(&cmap, 0, FIELD_OFFSET(struct cmap_header, tables[num_tables]));
-
-    if (!header)
-    {
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, cmap.context);
-        return S_OK;
-    }
-
-    for (i = 0; i < num_tables && k < max_count; ++i)
-    {
-        unsigned int j, offset, format;
-
-        if (GET_BE_WORD(header->tables[i].platformID) != 3)
-            continue;
-
-        offset = GET_BE_DWORD(header->tables[i].offset);
-
-        format = table_read_be_word(&cmap, offset);
-        switch (format)
-        {
-            case OPENTYPE_CMAP_TABLE_SEGMENT_MAPPING:
-            {
-                unsigned int segment_count = table_read_be_word(&cmap, offset +
-                        FIELD_OFFSET(struct cmap_segment_mapping, seg_count_x2)) / 2;
-                const UINT16 *start_code = table_read_ensure(&cmap, offset,
-                        FIELD_OFFSET(struct cmap_segment_mapping, end_code[segment_count]) +
-                        2 /* reservedPad */ +
-                        2 * segment_count /* start code array */);
-                const UINT16 *end_code = table_read_ensure(&cmap, offset,
-                        FIELD_OFFSET(struct cmap_segment_mapping, end_code[segment_count]));
-
-                if (!start_code || !end_code)
-                    continue;
-
-                for (j = 0; j < segment_count && GET_BE_WORD(end_code[j]) != 0xffff && k < max_count; ++j, ++k)
-                {
-                    ranges[k].first = GET_BE_WORD(start_code[j]);
-                    ranges[k].last = GET_BE_WORD(end_code[j]);
-                }
-                break;
-            }
-            case OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE:
-            {
-                unsigned int num_groups = table_read_be_dword(&cmap, offset +
-                        FIELD_OFFSET(struct cmap_segmented_coverage, num_groups));
-                const struct cmap_segmented_coverage *coverage;
-
-                coverage = table_read_ensure(&cmap, offset,
-                        FIELD_OFFSET(struct cmap_segmented_coverage, groups[num_groups]));
-
-                for (j = 0; j < num_groups && k < max_count; j++, k++)
-                {
-                    ranges[k].first = GET_BE_DWORD(coverage->groups[j].startCharCode);
-                    ranges[k].last = GET_BE_DWORD(coverage->groups[j].endCharCode);
-                }
-                break;
-            }
-            default:
-                FIXME("table format %u unhandled.\n", format);
-        }
-    }
-
-    IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, cmap.context);
+    *count = cmap->get_ranges(cmap, max_count, ranges);
 
     return *count > max_count ? E_NOT_SUFFICIENT_BUFFER : S_OK;
 }

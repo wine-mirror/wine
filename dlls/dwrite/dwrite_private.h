@@ -198,6 +198,8 @@ enum font_flags
 struct dwrite_cmap;
 
 typedef UINT16 (*p_cmap_get_glyph_func)(const struct dwrite_cmap *cmap, unsigned int ch);
+typedef unsigned int (*p_cmap_get_ranges_func)(const struct dwrite_cmap *cmap, unsigned int max_count,
+    DWRITE_UNICODE_RANGE *ranges);
 
 struct dwrite_cmap
 {
@@ -226,6 +228,7 @@ struct dwrite_cmap
         } format12_13;
     } u;
     p_cmap_get_glyph_func get_glyph;
+    p_cmap_get_ranges_func get_ranges;
     unsigned short symbol : 1;
     IDWriteFontFileStream *stream;
     void *table_context;
@@ -235,6 +238,8 @@ extern void dwrite_cmap_init(struct dwrite_cmap *cmap, IDWriteFontFile *file, un
         DWRITE_FONT_FACE_TYPE face_type) DECLSPEC_HIDDEN;
 extern void dwrite_cmap_release(struct dwrite_cmap *cmap) DECLSPEC_HIDDEN;
 extern UINT16 opentype_cmap_get_glyph(const struct dwrite_cmap *cmap, unsigned int ch) DECLSPEC_HIDDEN;
+extern HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_cmap *cmap, unsigned int max_count,
+        DWRITE_UNICODE_RANGE *ranges, unsigned int *count) DECLSPEC_HIDDEN;
 
 struct dwrite_fontface
 {
@@ -387,8 +392,6 @@ struct ot_gsubgpos_table
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,BOOL*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **data,
         void **context, UINT32 *size, BOOL *exists) DECLSPEC_HIDDEN;
-extern HRESULT opentype_cmap_get_unicode_ranges(const struct file_stream_desc *stream_desc, unsigned int max_count,
-        DWRITE_UNICODE_RANGE *ranges, unsigned int *count) DECLSPEC_HIDDEN;
 extern void opentype_get_font_properties(struct file_stream_desc*,struct dwrite_font_props*) DECLSPEC_HIDDEN;
 extern void opentype_get_font_metrics(struct file_stream_desc*,DWRITE_FONT_METRICS1*,DWRITE_CARET_METRICS*) DECLSPEC_HIDDEN;
 extern void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc, unsigned int *ascent,

@@ -1005,7 +1005,6 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace5 *iface, 
     DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
-    struct file_stream_desc stream_desc;
 
     TRACE("%p, %u, %p, %p.\n", iface, max_count, ranges, count);
 
@@ -1013,10 +1012,8 @@ static HRESULT WINAPI dwritefontface1_GetUnicodeRanges(IDWriteFontFace5 *iface, 
     if (max_count && !ranges)
         return E_INVALIDARG;
 
-    stream_desc.stream = fontface->stream;
-    stream_desc.face_index = fontface->index;
-    stream_desc.face_type = fontface->type;
-    return opentype_cmap_get_unicode_ranges(&stream_desc, max_count, ranges, count);
+    dwrite_cmap_init(&fontface->cmap, NULL, fontface->index, fontface->type);
+    return opentype_cmap_get_unicode_ranges(&fontface->cmap, max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace5 *iface)
@@ -2000,8 +1997,6 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 m
         UINT32 *count)
 {
     struct dwrite_font *font = impl_from_IDWriteFont3(iface);
-    struct file_stream_desc stream_desc;
-    HRESULT hr;
 
     TRACE("%p, %u, %p, %p.\n", iface, max_count, ranges, count);
 
@@ -2009,13 +2004,8 @@ static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont3 *iface, UINT32 m
     if (max_count && !ranges)
         return E_INVALIDARG;
 
-    if (FAILED(hr = get_filestream_from_file(font->data->file, &stream_desc.stream)))
-        return hr;
-    stream_desc.face_index = font->data->face_index;
-    stream_desc.face_type = font->data->face_type;
-    hr = opentype_cmap_get_unicode_ranges(&stream_desc, max_count, ranges, count);
-    IDWriteFontFileStream_Release(stream_desc.stream);
-    return hr;
+    dwrite_cmap_init(&font->data->cmap, font->data->file, font->data->face_index, font->data->face_type);
+    return opentype_cmap_get_unicode_ranges(&font->data->cmap, max_count, ranges, count);
 }
 
 static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont3 *iface)
