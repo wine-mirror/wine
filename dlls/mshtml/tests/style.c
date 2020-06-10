@@ -1088,6 +1088,24 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     hres = IHTMLCSSStyleDeclaration2_get_columnRule(css_style, &str);
     ok(hres == S_OK, "get_columnRule failed: %08x\n", hres);
     ok(!str, "columnRule = %s\n", wine_dbgstr_w(str));
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_perspective(css_style, &v);
+    ok(hres == S_OK, "get_perspective failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && !V_BSTR(&v), "perspective = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(L"100px");
+    hres = IHTMLCSSStyleDeclaration2_put_perspective(css_style, v);
+    ok(hres == S_OK, "put_perspective failed: %08x\n", hres);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLCSSStyleDeclaration2_get_perspective(css_style, &v);
+    ok(hres == S_OK, "get_perspective failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"100px"), "perspective = %s\n", wine_dbgstr_variant(&v));
+    VariantClear(&v);
 }
 
 static void test_body_style(IHTMLStyle *style)

@@ -813,6 +813,11 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_A_PAGEBREAKBEFORE
     },
     {
+        L"perspective",
+        DISPID_IHTMLCSSSTYLEDECLARATION2_PERSPECTIVE,
+        DISPID_UNKNOWN
+    },
+    {
         positionW,
         DISPID_IHTMLCSSSTYLEDECLARATION_POSITION,
         DISPID_A_POSITION
@@ -9709,15 +9714,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_backfaceVisibility(IHTMLCSSSt
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_perspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return set_style_property_var(This, STYLEID_PERSPECTIVE, &v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_get_perspective(IHTMLCSSStyleDeclaration2 *iface, VARIANT *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property_var(This, STYLEID_PERSPECTIVE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration2_put_perspectiveOrigin(IHTMLCSSStyleDeclaration2 *iface, BSTR v)
