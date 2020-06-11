@@ -22,6 +22,8 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #define OEMRESOURCE
 #include <windows.h>
 #include <rpc.h>
@@ -881,16 +883,31 @@ static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
 
 static void initialize_display_settings(void)
 {
+    DISPLAY_DEVICEW ddW;
     DEVMODEW dmW;
+    DWORD i = 0;
 
     /* Store current display mode in the registry */
-    if (EnumDisplaySettingsExW( NULL, ENUM_CURRENT_SETTINGS, &dmW, 0 ))
+    ddW.cb = sizeof(ddW);
+    dmW.dmSize = sizeof(dmW);
+    while (EnumDisplayDevicesW( NULL, i++, &ddW, 0 ))
     {
-        WINE_TRACE( "Current display mode %ux%u %u bpp %u Hz\n", dmW.dmPelsWidth,
-                    dmW.dmPelsHeight, dmW.dmBitsPerPel, dmW.dmDisplayFrequency );
-        ChangeDisplaySettingsExW( NULL, &dmW, 0,
-                                  CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY,
-                                  NULL );
+        if (!EnumDisplaySettingsExW( ddW.DeviceName, ENUM_CURRENT_SETTINGS, &dmW, 0))
+        {
+            WINE_ERR( "Failed to query current display settings for %s.\n",
+                      wine_dbgstr_w( ddW.DeviceName ) );
+            continue;
+        }
+
+        WINE_TRACE( "Device %s current display mode %ux%u %uBits %uHz at %d,%d.\n",
+                    wine_dbgstr_w( ddW.DeviceName ), dmW.dmPelsWidth, dmW.dmPelsHeight,
+                    dmW.dmBitsPerPel, dmW.dmDisplayFrequency, dmW.u1.s2.dmPosition.x,
+                    dmW.u1.s2.dmPosition.y );
+
+        if (ChangeDisplaySettingsExW( ddW.DeviceName, &dmW, 0,
+                                      CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, 0 ))
+            WINE_ERR( "Failed to initialize registry display settings for %s.\n",
+                       wine_dbgstr_w( ddW.DeviceName ) );
     }
 }
 
