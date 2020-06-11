@@ -22,15 +22,9 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <locale.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-
-#ifdef __APPLE__
-# include <CoreFoundation/CFLocale.h>
-# include <CoreFoundation/CFString.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -697,80 +691,18 @@ void init_unix_codepage(void)
     unix_funcs->get_unix_codepage( &unix_table );
 }
 
-/* Unix format is: lang[_country][.charset][@modifier]
- * Windows format is: lang[-script][-country][_modifier] */
-static LCID unix_locale_to_lcid( const char *unix_name )
+
+static LCID locale_to_lcid( WCHAR *win_name )
 {
-    static const WCHAR sepW[] = {'_','.','@',0};
-    static const WCHAR posixW[] = {'P','O','S','I','X',0};
-    static const WCHAR cW[] = {'C',0};
-    static const WCHAR euroW[] = {'e','u','r','o',0};
-    static const WCHAR latinW[] = {'l','a','t','i','n',0};
-    static const WCHAR latnW[] = {'-','L','a','t','n',0};
-    WCHAR buffer[LOCALE_NAME_MAX_LENGTH], win_name[LOCALE_NAME_MAX_LENGTH];
-    WCHAR *p, *country = NULL, *modifier = NULL;
-    DWORD len;
+    WCHAR *p;
     LCID lcid;
-
-    if (!unix_name || !unix_name[0] || !strcmp( unix_name, "C" ))
-    {
-        unix_name = getenv( "LC_ALL" );
-        if (!unix_name || !unix_name[0]) return 0;
-    }
-
-    len = ntdll_umbstowcs( unix_name, strlen(unix_name), buffer, ARRAY_SIZE(buffer) );
-    if (len == ARRAY_SIZE(buffer)) return 0;
-    buffer[len] = 0;
-
-    if (!(p = wcspbrk( buffer, sepW )))
-    {
-        if (!wcscmp( buffer, posixW ) || !wcscmp( buffer, cW ))
-            return MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-        wcscpy( win_name, buffer );
-    }
-    else
-    {
-        if (*p == '_')
-        {
-            *p++ = 0;
-            country = p;
-            p = wcspbrk( p, sepW + 1 );
-        }
-        if (p && *p == '.')
-        {
-            *p++ = 0;
-            /* charset, ignore */
-            p = wcschr( p, '@' );
-        }
-        if (p)
-        {
-            *p++ = 0;
-            modifier = p;
-        }
-    }
-
-    /* rebuild a Windows name */
-
-    wcscpy( win_name, buffer );
-    if (modifier)
-    {
-        if (!wcscmp( modifier, latinW )) wcscat( win_name, latnW );
-        else if (!wcscmp( modifier, euroW )) {} /* ignore */
-        else return 0;
-    }
-    if (country)
-    {
-        p = win_name + wcslen(win_name);
-        *p++ = '-';
-        wcscpy( p, country );
-    }
 
     if (!RtlLocaleNameToLcid( win_name, &lcid, 0 )) return lcid;
 
     /* try neutral name */
-    if (country)
+    if ((p = wcsrchr( win_name, '-' )))
     {
-        p[-1] = 0;
+        *p = 0;
         if (!RtlLocaleNameToLcid( win_name, &lcid, 2 ))
         {
             if (SUBLANGID(lcid) == SUBLANG_NEUTRAL)
@@ -787,75 +719,20 @@ static LCID unix_locale_to_lcid( const char *unix_name )
  */
 void init_locale( HMODULE module )
 {
+    WCHAR system_locale[LOCALE_NAME_MAX_LENGTH];
+    WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
     LCID system_lcid, user_lcid;
+
+#ifdef __APPLE__
+    const struct norm_table *info;
+    load_norm_table( NormalizationC, &info );
+#endif
 
     kernel32_handle = module;
 
-    setlocale( LC_ALL, "" );
-
-    system_lcid = unix_locale_to_lcid( setlocale( LC_CTYPE, NULL ));
-    user_lcid = unix_locale_to_lcid( setlocale( LC_MESSAGES, NULL ));
-
-#ifdef __APPLE__
-    {
-        const struct norm_table *info;
-        load_norm_table( NormalizationC, &info );
-    }
-    if (!system_lcid)
-    {
-        char buffer[LOCALE_NAME_MAX_LENGTH];
-
-        CFLocaleRef locale = CFLocaleCopyCurrent();
-        CFStringRef lang = CFLocaleGetValue( locale, kCFLocaleLanguageCode );
-        CFStringRef country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
-        CFStringRef locale_string;
-
-        if (country)
-            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
-        else
-            locale_string = CFStringCreateCopy(NULL, lang);
-
-        CFStringGetCString(locale_string, buffer, sizeof(buffer), kCFStringEncodingUTF8);
-        system_lcid = unix_locale_to_lcid( buffer );
-        CFRelease(locale);
-        CFRelease(locale_string);
-    }
-    if (!user_lcid)
-    {
-        /* Retrieve the preferred language as chosen in System Preferences. */
-        char buffer[LOCALE_NAME_MAX_LENGTH];
-        CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
-        if (preferred_langs && CFArrayGetCount( preferred_langs ))
-        {
-            CFStringRef preferred_lang = CFArrayGetValueAtIndex( preferred_langs, 0 );
-            CFDictionaryRef components = CFLocaleCreateComponentsFromLocaleIdentifier( NULL, preferred_lang );
-            if (components)
-            {
-                CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
-                CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
-                CFLocaleRef locale = NULL;
-                CFStringRef locale_string;
-
-                if (!country)
-                {
-                    locale = CFLocaleCopyCurrent();
-                    country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
-                }
-                if (country)
-                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
-                else
-                    locale_string = CFStringCreateCopy( NULL, lang );
-                CFStringGetCString( locale_string, buffer, sizeof(buffer), kCFStringEncodingUTF8 );
-                CFRelease( locale_string );
-                if (locale) CFRelease( locale );
-                CFRelease( components );
-                user_lcid = unix_locale_to_lcid( buffer );
-            }
-        }
-        if (preferred_langs) CFRelease( preferred_langs );
-    }
-#endif
-
+    unix_funcs->get_locales( system_locale, user_locale );
+    system_lcid = locale_to_lcid( system_locale );
+    user_lcid = locale_to_lcid( user_locale );
     if (!system_lcid) system_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
     if (!user_lcid) user_lcid = system_lcid;
 
@@ -863,8 +740,6 @@ void init_locale( HMODULE module )
     NtSetDefaultLocale( TRUE, user_lcid );
     NtSetDefaultLocale( FALSE, system_lcid );
     TRACE( "system=%04x user=%04x\n", system_lcid, user_lcid );
-
-    setlocale( LC_NUMERIC, "C" );  /* FIXME: oleaut32 depends on this */
 }
 
 

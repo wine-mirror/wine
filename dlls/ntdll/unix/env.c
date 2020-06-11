@@ -44,6 +44,10 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef __APPLE__
+# include <CoreFoundation/CFLocale.h>
+# include <CoreFoundation/CFString.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -67,6 +71,8 @@ static char **main_envp;
 static WCHAR **main_wargv;
 
 static CPTABLEINFO unix_table;
+static WCHAR system_locale[LOCALE_NAME_MAX_LENGTH];
+static WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
 
 
 #ifdef __APPLE__
@@ -529,12 +535,146 @@ static WCHAR **build_wargv( char **argv )
 }
 
 
+/* Unix format is: lang[_country][.charset][@modifier]
+ * Windows format is: lang[-script][-country][_modifier] */
+static BOOL unix_to_win_locale( const char *unix_name, WCHAR *win_name )
+{
+    static const WCHAR sepW[] = {'_','.','@',0};
+    static const WCHAR posixW[] = {'P','O','S','I','X',0};
+    static const WCHAR cW[] = {'C',0};
+    static const WCHAR euroW[] = {'e','u','r','o',0};
+    static const WCHAR latinW[] = {'l','a','t','i','n',0};
+    static const WCHAR latnW[] = {'-','L','a','t','n',0};
+    static const WCHAR enUSW[] = {'e','n','-','U','S',0};
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    WCHAR *p, *country = NULL, *modifier = NULL;
+    DWORD len;
+
+    if (!unix_name || !unix_name[0] || !strcmp( unix_name, "C" ))
+    {
+        unix_name = getenv( "LC_ALL" );
+        if (!unix_name || !unix_name[0]) return FALSE;
+    }
+
+    len = ntdll_umbstowcs( unix_name, strlen(unix_name), buffer, ARRAY_SIZE(buffer) );
+    if (len == ARRAY_SIZE(buffer)) return FALSE;
+    buffer[len] = 0;
+
+    if (!(p = wcspbrk( buffer, sepW )))
+    {
+        if (!wcscmp( buffer, posixW ) || !wcscmp( buffer, cW ))
+            wcscpy( win_name, enUSW );
+        else
+            wcscpy( win_name, buffer );
+        return TRUE;
+    }
+
+    if (*p == '_')
+    {
+        *p++ = 0;
+        country = p;
+        p = wcspbrk( p, sepW + 1 );
+    }
+    if (p && *p == '.')
+    {
+        *p++ = 0;
+        /* charset, ignore */
+        p = wcschr( p, '@' );
+    }
+    if (p)
+    {
+        *p++ = 0;
+        modifier = p;
+    }
+
+    /* rebuild a Windows name */
+
+    wcscpy( win_name, buffer );
+    if (modifier)
+    {
+        if (!wcscmp( modifier, latinW )) wcscat( win_name, latnW );
+        else if (!wcscmp( modifier, euroW )) {} /* ignore */
+        else return FALSE;
+    }
+    if (country)
+    {
+        p = win_name + wcslen(win_name);
+        *p++ = '-';
+        wcscpy( p, country );
+    }
+    return TRUE;
+}
+
+
+/******************************************************************
+ *		init_locale
+ */
+static void init_locale(void)
+{
+    setlocale( LC_ALL, "" );
+    if (!unix_to_win_locale( setlocale( LC_CTYPE, NULL ), system_locale )) system_locale[0] = 0;
+    if (!unix_to_win_locale( setlocale( LC_MESSAGES, NULL ), user_locale )) user_locale[0] = 0;
+
+#ifdef __APPLE__
+    if (!system_locale[0])
+    {
+        CFLocaleRef locale = CFLocaleCopyCurrent();
+        CFStringRef lang = CFLocaleGetValue( locale, kCFLocaleLanguageCode );
+        CFStringRef country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
+        CFStringRef locale_string;
+
+        if (country)
+            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
+        else
+            locale_string = CFStringCreateCopy(NULL, lang);
+
+        CFStringGetCString(locale_string, system_locale, sizeof(system_locale), kCFStringEncodingUTF8);
+        CFRelease(locale);
+        CFRelease(locale_string);
+    }
+    if (!user_locale[0])
+    {
+        /* Retrieve the preferred language as chosen in System Preferences. */
+        CFArrayRef preferred_langs = CFLocaleCopyPreferredLanguages();
+        if (preferred_langs && CFArrayGetCount( preferred_langs ))
+        {
+            CFStringRef preferred_lang = CFArrayGetValueAtIndex( preferred_langs, 0 );
+            CFDictionaryRef components = CFLocaleCreateComponentsFromLocaleIdentifier( NULL, preferred_lang );
+            if (components)
+            {
+                CFStringRef lang = CFDictionaryGetValue( components, kCFLocaleLanguageCode );
+                CFStringRef country = CFDictionaryGetValue( components, kCFLocaleCountryCode );
+                CFLocaleRef locale = NULL;
+                CFStringRef locale_string;
+
+                if (!country)
+                {
+                    locale = CFLocaleCopyCurrent();
+                    country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
+                }
+                if (country)
+                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
+                else
+                    locale_string = CFStringCreateCopy( NULL, lang );
+                CFStringGetCString( locale_string, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
+                CFRelease( locale_string );
+                if (locale) CFRelease( locale );
+                CFRelease( components );
+            }
+        }
+        if (preferred_langs) CFRelease( preferred_langs );
+    }
+#endif
+}
+
+
 /***********************************************************************
  *              init_environment
  */
 void init_environment( int argc, char *argv[], char *envp[] )
 {
     init_unix_codepage();
+    init_locale();
     set_process_name( argc, argv );
     __wine_main_argc = main_argc = argc;
     __wine_main_argv = main_argv = argv;
@@ -603,4 +743,16 @@ NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *siz
 void CDECL get_unix_codepage( CPTABLEINFO *table )
 {
     *table = unix_table;
+}
+
+
+/*************************************************************************
+ *		get_locales
+ *
+ * Return the system and user locales. Buffers must be at least LOCALE_NAME_MAX_LENGTH chars long.
+ */
+void CDECL get_locales( WCHAR *sys, WCHAR *user )
+{
+    wcscpy( sys, system_locale );
+    wcscpy( user, user_locale );
 }

@@ -81,6 +81,7 @@ int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T s
 extern void CDECL get_main_args( int *argc, char **argv[], char **envp[] ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
 extern void CDECL get_unix_codepage( CPTABLEINFO *table ) DECLSPEC_HIDDEN;
+extern void CDECL get_locales( WCHAR *sys, WCHAR *user ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
                                            const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
                                            ULONG protect, pe_image_info_t *image_info ) DECLSPEC_HIDDEN;
@@ -190,7 +191,35 @@ static inline WCHAR *ntdll_wcscpy( WCHAR *dst, const WCHAR *src )
     return dst;
 }
 
-#define wcslen(str) ntdll_wcslen(str)
+static inline WCHAR *ntdll_wcscat( WCHAR *dst, const WCHAR *src )
+{
+    ntdll_wcscpy( dst + ntdll_wcslen(dst), src );
+    return dst;
+}
+
+static inline int ntdll_wcscmp( const WCHAR *str1, const WCHAR *str2 )
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
+static inline WCHAR *ntdll_wcschr( const WCHAR *str, WCHAR ch )
+{
+    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
+    return NULL;
+}
+
+static inline WCHAR *ntdll_wcspbrk( const WCHAR *str, const WCHAR *accept )
+{
+    for ( ; *str; str++) if (ntdll_wcschr( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
+    return NULL;
+}
+
+#define wcslen(str)     ntdll_wcslen(str)
 #define wcscpy(dst,src) ntdll_wcscpy(dst,src)
+#define wcscat(dst,src) ntdll_wcscat(dst,src)
+#define wcscmp(s1,s2)   ntdll_wcscmp(s1,s2)
+#define wcschr(str,ch)  ntdll_wcschr(str,ch)
+#define wcspbrk(str,ac) ntdll_wcspbrk(str,ac)
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */
