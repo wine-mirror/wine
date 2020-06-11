@@ -27,8 +27,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <locale.h>
-#include <langinfo.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
@@ -37,9 +35,6 @@
 #endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
-#endif
-#ifdef HAVE_SYS_PRCTL_H
-# include <sys/prctl.h>
 #endif
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -100,9 +95,6 @@ static const BOOL use_preloader = FALSE;
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
-static int main_argc;
-static char **main_argv;
-static char **main_envp;
 static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;
@@ -112,8 +104,6 @@ static SIZE_T dll_path_maxlen;
 const char *data_dir = NULL;
 const char *build_dir = NULL;
 const char *config_dir = NULL;
-
-static CPTABLEINFO unix_table;
 
 static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
 {
@@ -275,9 +265,6 @@ static void init_paths( int argc, char *argv[], char *envp[] )
 {
     Dl_info info;
 
-    __wine_main_argc = main_argc = argc;
-    __wine_main_argv = main_argv = argv;
-    __wine_main_environ = main_envp = envp;
     argv0 = strdup( argv[0] );
 
     if (!dladdr( init_paths, &info ) || !(dll_dir = realpath_dirname( info.dli_fname )))
@@ -299,136 +286,6 @@ static void init_paths( int argc, char *argv[], char *envp[] )
     set_dll_path();
     set_config_dir();
 }
-
-#if !defined(__APPLE__) && !defined(__ANDROID__)  /* these platforms always use UTF-8 */
-
-/* charset to codepage map, sorted by name */
-static const struct { const char *name; UINT cp; } charset_names[] =
-{
-    { "ANSIX341968", 20127 },
-    { "BIG5", 950 },
-    { "BIG5HKSCS", 950 },
-    { "CP1250", 1250 },
-    { "CP1251", 1251 },
-    { "CP1252", 1252 },
-    { "CP1253", 1253 },
-    { "CP1254", 1254 },
-    { "CP1255", 1255 },
-    { "CP1256", 1256 },
-    { "CP1257", 1257 },
-    { "CP1258", 1258 },
-    { "CP932", 932 },
-    { "CP936", 936 },
-    { "CP949", 949 },
-    { "CP950", 950 },
-    { "EUCJP", 20932 },
-    { "EUCKR", 949 },
-    { "GB18030", 936  /* 54936 */ },
-    { "GB2312", 936 },
-    { "GBK", 936 },
-    { "IBM037", 37 },
-    { "IBM1026", 1026 },
-    { "IBM424", 20424 },
-    { "IBM437", 437 },
-    { "IBM500", 500 },
-    { "IBM850", 850 },
-    { "IBM852", 852 },
-    { "IBM855", 855 },
-    { "IBM857", 857 },
-    { "IBM860", 860 },
-    { "IBM861", 861 },
-    { "IBM862", 862 },
-    { "IBM863", 863 },
-    { "IBM864", 864 },
-    { "IBM865", 865 },
-    { "IBM866", 866 },
-    { "IBM869", 869 },
-    { "IBM874", 874 },
-    { "IBM875", 875 },
-    { "ISO88591", 28591 },
-    { "ISO885913", 28603 },
-    { "ISO885915", 28605 },
-    { "ISO88592", 28592 },
-    { "ISO88593", 28593 },
-    { "ISO88594", 28594 },
-    { "ISO88595", 28595 },
-    { "ISO88596", 28596 },
-    { "ISO88597", 28597 },
-    { "ISO88598", 28598 },
-    { "ISO88599", 28599 },
-    { "KOI8R", 20866 },
-    { "KOI8U", 21866 },
-    { "TIS620", 28601 },
-    { "UTF8", CP_UTF8 }
-};
-
-static void load_unix_cptable( unsigned int cp )
-{
-    const char *dir = build_dir ? build_dir : data_dir;
-    struct stat st;
-    char *name;
-    void *data;
-    int fd;
-
-    if (!(name = malloc( strlen(dir) + 22 ))) return;
-    sprintf( name, "%s/nls/c_%03u.nls", dir, cp );
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        fstat( fd, &st );
-        if ((data = malloc( st.st_size )) && st.st_size > 0x10000 &&
-            read( fd, data, st.st_size ) == st.st_size)
-        {
-            RtlInitCodePageTable( data, &unix_table );
-        }
-        else
-        {
-            free( data );
-        }
-        close( fd );
-    }
-    else ERR( "failed to load %s\n", name );
-    free( name );
-}
-
-static void init_unix_codepage(void)
-{
-    char charset_name[16];
-    const char *name;
-    size_t i, j;
-    int min = 0, max = ARRAY_SIZE(charset_names) - 1;
-
-    setlocale( LC_CTYPE, "" );
-    if (!(name = nl_langinfo( CODESET ))) return;
-
-    /* remove punctuation characters from charset name */
-    for (i = j = 0; name[i] && j < sizeof(charset_name)-1; i++)
-    {
-        if (name[i] >= '0' && name[i] <= '9') charset_name[j++] = name[i];
-        else if (name[i] >= 'A' && name[i] <= 'Z') charset_name[j++] = name[i];
-        else if (name[i] >= 'a' && name[i] <= 'z') charset_name[j++] = name[i] + ('A' - 'a');
-    }
-    charset_name[j] = 0;
-
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        int res = strcmp( charset_names[pos].name, charset_name );
-        if (!res)
-        {
-            if (charset_names[pos].cp != CP_UTF8) load_unix_cptable( charset_names[pos].cp );
-            return;
-        }
-        if (res > 0) max = pos - 1;
-        else min = pos + 1;
-    }
-    ERR( "unrecognized charset '%s'\n", name );
-}
-
-#else  /* __APPLE__ || __ANDROID__ */
-
-static void init_unix_codepage(void) { }
-
-#endif  /* __APPLE__ || __ANDROID__ */
 
 
 /*********************************************************************
@@ -474,19 +331,6 @@ void CDECL get_host_version( const char **sysname, const char **release )
 
 
 /*************************************************************************
- *		get_main_args
- *
- * Return the initial arguments.
- */
-static void CDECL get_main_args( int *argc, char **argv[], char **envp[] )
-{
-    *argc = main_argc;
-    *argv = main_argv;
-    *envp = main_envp;
-}
-
-
-/*************************************************************************
  *		get_paths
  *
  * Return the various configuration paths.
@@ -508,17 +352,6 @@ static void CDECL get_dll_path( const char ***paths, SIZE_T *maxlen )
 {
     *paths = dll_paths;
     *maxlen = dll_path_maxlen;
-}
-
-
-/*************************************************************************
- *		get_unix_codepage
- *
- * Return the Unix codepage data.
- */
-static void CDECL get_unix_codepage( CPTABLEINFO *table )
-{
-    *table = unix_table;
 }
 
 
@@ -1065,6 +898,7 @@ static struct unix_funcs unix_funcs =
     fast_RtlSleepConditionVariableCS,
     fast_RtlWakeConditionVariable,
     get_main_args,
+    get_initial_environment,
     get_paths,
     get_dll_path,
     get_unix_codepage,
@@ -1296,68 +1130,6 @@ static int pre_exec(void)
 
 
 /***********************************************************************
- *           set_process_name
- *
- * Change the process name in the ps output.
- */
-static void set_process_name( int argc, char *argv[] )
-{
-    BOOL shift_strings;
-    char *p, *name;
-    int i;
-
-#ifdef HAVE_SETPROCTITLE
-    setproctitle("-%s", argv[1]);
-    shift_strings = FALSE;
-#else
-    p = argv[0];
-
-    shift_strings = (argc >= 2);
-    for (i = 1; i < argc; i++)
-    {
-        p += strlen(p) + 1;
-        if (p != argv[i])
-        {
-            shift_strings = FALSE;
-            break;
-        }
-    }
-#endif
-
-    if (shift_strings)
-    {
-        int offset = argv[1] - argv[0];
-        char *end = argv[argc-1] + strlen(argv[argc-1]) + 1;
-        memmove( argv[0], argv[1], end - argv[1] );
-        memset( end - offset, 0, offset );
-        for (i = 1; i < argc; i++)
-            argv[i-1] = argv[i] - offset;
-        argv[i-1] = NULL;
-    }
-    else
-    {
-        /* remove argv[0] */
-        memmove( argv, argv + 1, argc * sizeof(argv[0]) );
-    }
-
-    name = argv[0];
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-
-#if defined(HAVE_SETPROGNAME)
-    setprogname( name );
-#endif
-
-#ifdef HAVE_PRCTL
-#ifndef PR_SET_NAME
-# define PR_SET_NAME 15
-#endif
-    prctl( PR_SET_NAME, name );
-#endif  /* HAVE_PRCTL */
-}
-
-
-/***********************************************************************
  *           check_command_line
  *
  * Check if command line is one that needs to be handled specially.
@@ -1425,8 +1197,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     module = load_ntdll();
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
 
-    set_process_name( argc, argv );
-    init_unix_codepage();
+    init_environment( argc, argv, envp );
 
 #ifdef __APPLE__
     apple_main_thread();
@@ -1460,8 +1231,7 @@ NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void 
 
     map_so_dll( nt, module );
     fixup_ntdll_imports( &__wine_spec_nt_header, module );
-    set_process_name( __wine_main_argc, __wine_main_argv );
-    init_unix_codepage();
+    init_environment( __wine_main_argc, __wine_main_argv, envp );
     *(struct unix_funcs **)ptr_out = &unix_funcs;
     wine_mmap_enum_reserved_areas( add_area, NULL, 0 );
     return STATUS_SUCCESS;

@@ -51,6 +51,7 @@ C_SRCS = \
 	threadpool.c \
 	time.c \
 	unix/debug.c \
+	unix/env.c \
 	unix/loader.c \
 	unix/server.c \
 	unix/signal_arm.c \

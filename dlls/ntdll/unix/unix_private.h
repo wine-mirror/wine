@@ -78,6 +78,9 @@ void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg), void *arg,
                                      int top_down ) DECLSPEC_HIDDEN;
+extern void CDECL get_main_args( int *argc, char **argv[], char **envp[] ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
+extern void CDECL get_unix_codepage( CPTABLEINFO *table ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
                                            const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
                                            ULONG protect, pe_image_info_t *image_info ) DECLSPEC_HIDDEN;
@@ -122,6 +125,9 @@ extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
+
+extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
+extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen ) DECLSPEC_HIDDEN;
 
 extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
@@ -169,5 +175,22 @@ extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE ent
 extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int) ) DECLSPEC_HIDDEN;
 
 extern void dbg_init(void) DECLSPEC_HIDDEN;
+
+static inline size_t ntdll_wcslen( const WCHAR *str )
+{
+    const WCHAR *s = str;
+    while (*s) s++;
+    return s - str;
+}
+
+static inline WCHAR *ntdll_wcscpy( WCHAR *dst, const WCHAR *src )
+{
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return dst;
+}
+
+#define wcslen(str) ntdll_wcslen(str)
+#define wcscpy(dst,src) ntdll_wcscpy(dst,src)
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */
