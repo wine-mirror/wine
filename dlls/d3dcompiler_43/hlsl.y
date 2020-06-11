@@ -237,6 +237,7 @@ static void declare_predefined_types(struct hlsl_scope *scope)
                     sprintf(name, "%s%u", names[bt], x);
                     type = new_hlsl_type(d3dcompiler_strdup(name), HLSL_CLASS_VECTOR, bt, x, y);
                     add_type_to_scope(scope, type);
+                    hlsl_ctx.builtin_types.vector[bt][x - 1] = type;
 
                     if (x == 1)
                     {
