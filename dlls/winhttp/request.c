@@ -3013,6 +3013,44 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
     return !ret;
 }
 
+HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR context )
+{
+    FIXME("%p, %08lx\n", hrequest, context);
+    return NULL;
+}
+
+DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_TYPE type, void *buf, DWORD len )
+{
+    FIXME("%p, %u, %p, %u\n", hsocket, type, buf, len);
+    return ERROR_INVALID_PARAMETER;
+}
+
+DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, DWORD *read,
+                                      WINHTTP_WEB_SOCKET_BUFFER_TYPE *type )
+{
+    FIXME("%p, %p, %u, %p, %p\n", hsocket, buf, len, read, type);
+    return ERROR_INVALID_PARAMETER;
+}
+
+DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *reason, DWORD len )
+{
+    FIXME("%p, %u, %p, %u\n", hsocket, status, reason, len);
+    return ERROR_INVALID_PARAMETER;
+}
+
+DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reason, DWORD len )
+{
+    FIXME("%p, %u, %p, %u\n", hsocket, status, reason, len);
+    return ERROR_INVALID_PARAMETER;
+}
+
+DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status, void *reason, DWORD len,
+                                               DWORD *consumed )
+{
+    FIXME("%p, %p, %p, %u, %p\n", hsocket, status, reason, len, consumed);
+    return ERROR_INVALID_PARAMETER;
+}
+
 enum request_state
 {
     REQUEST_STATE_INITIALIZED,
