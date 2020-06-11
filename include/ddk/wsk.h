@@ -27,6 +27,8 @@ extern "C"
 
 struct _WSK_CLIENT;
 typedef struct _WSK_CLIENT WSK_CLIENT, *PWSK_CLIENT;
+#define MAKE_WSK_VERSION(major, minor) ((USHORT)((major) << 8) | (USHORT)((minor) & 0xff))
+
 typedef struct _WSK_CLIENT_CONNECTION_DISPATCH WSK_CLIENT_CONNECTION_DISPATCH, *PWSK_CLIENT_CONNECTION_DISPATCH;
 
 typedef struct _WSK_BUF
