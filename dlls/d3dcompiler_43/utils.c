@@ -1831,10 +1831,10 @@ static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
             switch (type->base_type)
             {
                 case HLSL_TYPE_FLOAT:
-                    wine_dbg_printf("%g ", (double)constant->value.f[y * type->dimx + x]);
+                    wine_dbg_printf("%.8e ", constant->value.f[y * type->dimx + x]);
                     break;
                 case HLSL_TYPE_DOUBLE:
-                    wine_dbg_printf("%g ", constant->value.d[y * type->dimx + x]);
+                    wine_dbg_printf("%.16e ", constant->value.d[y * type->dimx + x]);
                     break;
                 case HLSL_TYPE_INT:
                     wine_dbg_printf("%d ", constant->value.i[y * type->dimx + x]);
