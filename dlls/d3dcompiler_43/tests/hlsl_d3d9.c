@@ -968,7 +968,7 @@ static void test_constant_table(void)
 {
     static const char *source =
         "typedef float3x3 matrix_t;\n"
-        "struct matrix_record { float3x3 a; };\n"
+        "struct matrix_record { float3x3 a; } dummy;\n"
         "uniform float4 a;\n"
         "uniform float b;\n"
         "uniform float unused;\n"
@@ -1191,6 +1191,12 @@ static void test_fail(void)
         "float4 test(out float4 o : SV_TARGET)\n"
         "{\n"
         "    o = float4(1, 1, 1, 1);\n"
+        "    return float4(0, 0, 0, 0);\n"
+        "}",
+
+        "struct {float4 a;};\n"
+        "float4 test() : SV_TARGET\n"
+        "{\n"
         "    return float4(0, 0, 0, 0);\n"
         "}",
     };
