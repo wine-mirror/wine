@@ -771,10 +771,12 @@ static HRESULT WINAPI IDirectMusicLoaderImpl_EnableCache(IDirectMusicLoader8 *if
     if (IsEqualGUID(class, &GUID_DirectMusicAllTypes))
         This->cache_class = enable ? ~0 : 0;
     else {
+        int idx = index_from_class(class);
+        if (idx == -1) return S_FALSE;
         if (enable)
-            This->cache_class |= 1 << index_from_class(class);
+            This->cache_class |= 1 << idx;
         else
-            This->cache_class &= ~(1 << index_from_class(class));
+            This->cache_class &= ~(1 << idx);
     }
 
     if (!enable)
