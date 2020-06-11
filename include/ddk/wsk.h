@@ -28,6 +28,8 @@ extern "C"
 struct _WSK_CLIENT;
 typedef struct _WSK_CLIENT WSK_CLIENT, *PWSK_CLIENT;
 #define MAKE_WSK_VERSION(major, minor) ((USHORT)((major) << 8) | (USHORT)((minor) & 0xff))
+#define WSK_NO_WAIT 0
+#define WSK_INFINITE_WAIT 0xffffffff
 
 typedef struct _WSK_CLIENT_CONNECTION_DISPATCH WSK_CLIENT_CONNECTION_DISPATCH, *PWSK_CLIENT_CONNECTION_DISPATCH;
 
