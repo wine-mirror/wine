@@ -5,7 +5,7 @@
 @ stub BindPTProviderThunk
 @ stub PTGetPrintCapabilities
 @ stub PTMergeAndValidatePrintTicket
-@ stub PTConvertPrintTicketToDevMode
+@ stdcall PTConvertPrintTicketToDevMode(ptr ptr long long ptr ptr ptr)
 @ stub PTConvertDevModeToPrintTicket
 @ stdcall PTReleaseMemory(ptr)
 @ stub ConvertDevModeToPrintTicketThunk2

@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winspool.h"
+#include "objbase.h"
 #include "prntvpt.h"
 #include "wine/heap.h"
 #include "wine/debug.h"

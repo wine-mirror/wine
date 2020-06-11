@@ -25,9 +25,25 @@ extern "C" {
 
 DECLARE_HANDLE(HPTPROVIDER);
 
+#define E_PRINTTICKET_FORMAT 0x80040003
+
+typedef enum
+{
+    kPTPageScope,
+    kPTDocumentScope,
+    kPTJobScope
+} EPrintTicketScope;
+
+typedef enum
+{
+    kUserDefaultDevmode,
+    kPrinterDefaultDevmode
+} EDefaultDevmodeType;
+
 HRESULT WINAPI PTOpenProvider(const WCHAR *printer, DWORD version, HPTPROVIDER *provider);
 HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD pref_version, HPTPROVIDER *provider, DWORD *used_version);
 HRESULT WINAPI PTCloseProvider(HPTPROVIDER);
+HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER, IStream *, EDefaultDevmodeType, EPrintTicketScope, ULONG *, PDEVMODEW *, BSTR *);
 HRESULT WINAPI PTReleaseMemory(PVOID);
 
 #ifdef __cplusplus
