@@ -552,6 +552,7 @@ struct scriptshaping_context
         {
             const UINT16 *glyphs;
             const DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            DWRITE_SHAPING_TEXT_PROPERTIES *text_props;
             const UINT16 *clustermap;
             p_apply_context_lookup apply_context_lookup;
         } pos;
@@ -559,6 +560,7 @@ struct scriptshaping_context
         {
             UINT16 *glyphs;
             DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
+            DWRITE_SHAPING_TEXT_PROPERTIES *text_props;
             UINT16 *clustermap;
             p_apply_context_lookup apply_context_lookup;
             unsigned int max_glyph_count;
@@ -569,6 +571,7 @@ struct scriptshaping_context
         {
             UINT16 *glyphs;
             struct shaping_glyph_properties *glyph_props;
+            DWRITE_SHAPING_TEXT_PROPERTIES *text_props;
             UINT16 *clustermap;
             p_apply_context_lookup apply_context_lookup;
         } buffer;

@@ -1167,9 +1167,6 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 
     get_number_substitutes(substitution, is_rtl, digits);
 
-    /* FIXME: have the shaping engine set this */
-    memset(text_props, 0, length * sizeof(*text_props));
-
     font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
 
     context.cache = fontface_get_shaping_cache(font_obj);
@@ -1179,6 +1176,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.is_sideways = is_sideways;
     context.u.subst.glyphs = heap_calloc(max_glyph_count, sizeof(*glyphs));
     context.u.subst.glyph_props = heap_calloc(max_glyph_count, sizeof(*glyph_props));
+    context.u.subst.text_props = text_props;
     context.u.subst.clustermap = clustermap;
     context.u.subst.max_glyph_count = max_glyph_count;
     context.u.subst.capacity = max_glyph_count;
@@ -1208,7 +1206,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2 *iface,
-    WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
+    WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES *text_props,
     UINT32 text_len, UINT16 const* glyphs, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
     UINT32 glyph_count, IDWriteFontFace *fontface, float emSize, BOOL is_sideways, BOOL is_rtl,
     DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale, DWRITE_TYPOGRAPHIC_FEATURES const** features,
@@ -1220,8 +1218,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     unsigned int i, script;
     HRESULT hr;
 
-    TRACE("(%s %p %p %u %p %p %u %p %.2f %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
-        clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
+    TRACE("%s, %p, %p, %u, %p, %p, %u, %p, %.2f, %d, %d, %s, %s, %p, %p, %u, %p, %p.\n", debugstr_wn(text, text_len),
+        clustermap, text_props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, is_sideways,
         is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale), features, feature_range_lengths,
         feature_ranges, advances, offsets);
 
@@ -1253,6 +1251,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     context.is_sideways = is_sideways;
     context.u.pos.glyphs = glyphs;
     context.u.pos.glyph_props = glyph_props;
+    context.u.pos.text_props = text_props;
     context.u.pos.clustermap = clustermap;
     context.glyph_count = glyph_count;
     context.emsize = emSize;
@@ -1274,7 +1273,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
 }
 
 static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,
-    WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
+    WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES *text_props,
     UINT32 text_len, UINT16 const* glyphs, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
     UINT32 glyph_count, IDWriteFontFace *fontface, float emSize, float ppdip,
     DWRITE_MATRIX const* transform, BOOL use_gdi_natural, BOOL is_sideways, BOOL is_rtl,
@@ -1288,10 +1287,10 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     unsigned int i, script;
     HRESULT hr;
 
-    TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %s %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
-        clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, ppdip,
-        transform, use_gdi_natural, is_sideways, is_rtl, debugstr_sa_script(analysis->script), debugstr_w(locale),
-        features, feature_range_lengths, feature_ranges, advances, offsets);
+    TRACE("%s, %p, %p, %u, %p, %p, %u, %p, %.2f, %.2f, %p, %d, %d, %d, %s, %s, %p, %p, %u, %p, %p.\n",
+            debugstr_wn(text, text_len), clustermap, text_props, text_len, glyphs, glyph_props, glyph_count, fontface,
+            emSize, ppdip, transform, use_gdi_natural, is_sideways, is_rtl, debugstr_sa_script(analysis->script),
+            debugstr_w(locale), features, feature_range_lengths, feature_ranges, advances, offsets);
 
     analyzer_dump_user_features(features, feature_range_lengths, feature_ranges);
 
@@ -1323,6 +1322,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     context.is_sideways = is_sideways;
     context.u.pos.glyphs = glyphs;
     context.u.pos.glyph_props = glyph_props;
+    context.u.pos.text_props = text_props;
     context.u.pos.clustermap = clustermap;
     context.glyph_count = glyph_count;
     context.emsize = emSize * ppdip;

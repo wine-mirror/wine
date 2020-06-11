@@ -5823,6 +5823,7 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
     BOOL bmp;
 
     memset(context->u.subst.glyph_props, 0, context->u.subst.max_glyph_count * sizeof(*context->u.subst.glyph_props));
+    memset(context->u.buffer.text_props, 0, context->length * sizeof(*context->u.buffer.text_props));
 
     for (i = 0; i < context->length; ++i)
     {
@@ -5869,9 +5870,12 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
 
         /* Set initial cluster map here, it's used for setting user features masks. */
         clustermap[i] = cluster_start_idx;
-        if (!bmp)
+        if (bmp)
+            context->u.buffer.text_props[i].canBreakShapingAfter = 1;
+        else
         {
             clustermap[i + 1] = cluster_start_idx;
+            context->u.buffer.text_props[i + 1].canBreakShapingAfter = 1;
             ++i;
         }
     }
