@@ -491,6 +491,20 @@ static void read_JobInputBin(IXMLDOMDocument2 *doc, struct ticket *ticket)
     IXMLDOMNode_Release(node);
 }
 
+static void read_JobCopies(IXMLDOMDocument2 *doc, struct ticket *ticket)
+{
+    IXMLDOMNode *node;
+    HRESULT hr;
+
+    hr = IXMLDOMDocument2_selectSingleNode(doc, (BSTR)L"psf:PrintTicket/psf:ParameterInit[@name='psk:JobCopiesAllDocuments']", &node);
+    if (hr != S_OK) return;
+
+    if (read_int_value(node, &ticket->job.copies) == S_OK)
+        TRACE("job.copies: %d\n", ticket->job.copies);
+
+    IXMLDOMNode_Release(node);
+}
+
 static void set_SelectionNamespaces(IXMLDOMDocument2 *doc)
 {
     IStream *stream;
@@ -596,6 +610,7 @@ static HRESULT parse_ticket(IStream *stream, EPrintTicketScope scope, struct tic
     if (scope > kPTDocumentScope)
     {
         read_JobInputBin(doc, ticket);
+        read_JobCopies(doc, ticket);
     }
 
 fail:
