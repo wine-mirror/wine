@@ -136,6 +136,21 @@ static CRITICAL_SECTION modes_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static BOOL inited_original_display_mode;
 
+static HANDLE get_display_device_init_mutex(void)
+{
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
+    HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
+
+    WaitForSingleObject(mutex, INFINITE);
+    return mutex;
+}
+
+static void release_display_device_init_mutex(HANDLE mutex)
+{
+    ReleaseMutex(mutex);
+    CloseHandle(mutex);
+}
+
 static BOOL get_display_device_reg_key(char *key, unsigned len)
 {
     static const char display_device_guid_prop[] = "__wine_display_device_guid";
@@ -1675,7 +1690,6 @@ static void cleanup_devices(void)
  */
 void macdrv_init_display_devices(BOOL force)
 {
-    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex;
     struct macdrv_gpu *gpus = NULL;
     struct macdrv_adapter *adapters = NULL;
@@ -1691,8 +1705,7 @@ void macdrv_init_display_devices(BOOL force)
     LUID gpu_luid;
     UINT output_id = 0;
 
-    mutex = CreateMutexW(NULL, FALSE, init_mutexW);
-    WaitForSingleObject(mutex, INFINITE);
+    mutex = get_display_device_init_mutex();
 
     if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, video_keyW, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &video_hkey,
                         &disposition))
@@ -1760,8 +1773,7 @@ done:
     SetupDiDestroyDeviceInfoList(gpu_devinfo);
     RegCloseKey(video_hkey);
 
-    ReleaseMutex(mutex);
-    CloseHandle(mutex);
+    release_display_device_init_mutex(mutex);
 
     macdrv_free_gpus(gpus);
     macdrv_free_adapters(adapters);
