@@ -161,7 +161,7 @@ static void *user_space_limit    = (void *)0x7fff0000;
 static void *working_set_limit   = (void *)0x7fff0000;
 #endif
 
-static struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
+struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
 SIZE_T signal_stack_size = 0;
 SIZE_T signal_stack_mask = 0;

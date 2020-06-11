@@ -38,9 +38,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef __APPLE__
-# include <mach/mach_time.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -103,33 +100,6 @@ static inline BOOL IsLeapYear(int Year)
     return Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
 }
 
-/* return a monotonic time counter, in Win32 ticks */
-static inline ULONGLONG monotonic_counter(void)
-{
-    struct timeval now;
-
-#ifdef __APPLE__
-    static mach_timebase_info_data_t timebase;
-
-    if (!timebase.denom) mach_timebase_info( &timebase );
-#ifdef HAVE_MACH_CONTINUOUS_TIME
-    if (&mach_continuous_time != NULL)
-        return mach_continuous_time() * timebase.numer / timebase.denom / 100;
-#endif
-    return mach_absolute_time() * timebase.numer / timebase.denom / 100;
-#elif defined(HAVE_CLOCK_GETTIME)
-    struct timespec ts;
-#ifdef CLOCK_MONOTONIC_RAW
-    if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
-        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
-#endif
-    if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
-        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
-#endif
-
-    gettimeofday( &now, 0 );
-    return now.tv_sec * (ULONGLONG)TICKSPERSEC + now.tv_usec * 10 + TICKS_1601_TO_1970 - server_start_time;
-}
 
 /******************************************************************************
  *       RtlTimeToTimeFields [NTDLL.@]
@@ -471,38 +441,7 @@ void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS 
  */
 NTSTATUS WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
 {
-#ifdef HAVE_CLOCK_GETTIME
-    struct timespec ts;
-    static clockid_t clock_id = CLOCK_MONOTONIC; /* placeholder */
-
-    if (clock_id == CLOCK_MONOTONIC)
-    {
-#ifdef CLOCK_REALTIME_COARSE
-        struct timespec res;
-
-        /* Use CLOCK_REALTIME_COARSE if it has 1 ms or better resolution */
-        if (!clock_getres( CLOCK_REALTIME_COARSE, &res ) && res.tv_sec == 0 && res.tv_nsec <= 1000000)
-            clock_id = CLOCK_REALTIME_COARSE;
-        else
-#endif /* CLOCK_REALTIME_COARSE */
-            clock_id = CLOCK_REALTIME;
-    }
-
-    if (!clock_gettime( clock_id, &ts ))
-    {
-        time->QuadPart = ts.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-        time->QuadPart += (ts.tv_nsec + 50) / 100;
-    }
-    else
-#endif /* HAVE_CLOCK_GETTIME */
-    {
-        struct timeval now;
-
-        gettimeofday( &now, 0 );
-        time->QuadPart = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-        time->QuadPart += now.tv_usec * 10;
-    }
-    return STATUS_SUCCESS;
+    return unix_funcs->NtQuerySystemTime( time );
 }
 
 /***********************************************************************
@@ -543,18 +482,18 @@ LONGLONG WINAPI RtlGetSystemTimePrecise( void )
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER *frequency )
 {
+    NTSTATUS status;
+
     __TRY
     {
-        counter->QuadPart = monotonic_counter();
-        if (frequency) frequency->QuadPart = TICKSPERSEC;
+        status = unix_funcs->NtQueryPerformanceCounter( counter, frequency );
     }
     __EXCEPT_PAGE_FAULT
     {
         return STATUS_ACCESS_VIOLATION;
     }
     __ENDTRY
-
-    return STATUS_SUCCESS;
+    return status;
 }
 
 /******************************************************************************
@@ -562,7 +501,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER
  */
 BOOL WINAPI DECLSPEC_HOTPATCH RtlQueryPerformanceCounter( LARGE_INTEGER *counter )
 {
-    counter->QuadPart = monotonic_counter();
+    unix_funcs->NtQueryPerformanceCounter( counter, NULL );
     return TRUE;
 }
 
@@ -1070,58 +1009,10 @@ NTSTATUS WINAPI RtlSetTimeZoneInformation( const RTL_TIME_ZONE_INFORMATION *tzin
 /***********************************************************************
  *        NtSetSystemTime [NTDLL.@]
  *        ZwSetSystemTime [NTDLL.@]
- *
- * Set the system time.
- *
- * PARAMS
- *   NewTime [I] The time to set.
- *   OldTime [O] Optional destination for the previous system time.
- *
- * RETURNS
- *   Success: STATUS_SUCCESS.
- *   Failure: An NTSTATUS error code indicating the problem.
  */
-NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *OldTime)
+NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *new, LARGE_INTEGER *old )
 {
-    struct timeval tv;
-    time_t tm_t;
-    DWORD sec, oldsec;
-    LARGE_INTEGER tm;
-
-    /* Return the old time if necessary */
-    if (!OldTime) OldTime = &tm;
-
-    NtQuerySystemTime( OldTime );
-    if (!RtlTimeToSecondsSince1970( OldTime, &oldsec )) return STATUS_INVALID_PARAMETER;
-    if (!RtlTimeToSecondsSince1970( NewTime, &sec )) return STATUS_INVALID_PARAMETER;
-
-    /* fake success if time didn't change */
-    if (oldsec == sec)
-        return STATUS_SUCCESS;
-
-    /* set the new time */
-    tv.tv_sec = sec;
-    tv.tv_usec = 0;
-
-#ifdef HAVE_SETTIMEOFDAY
-    tm_t = sec;
-    if (!settimeofday(&tv, NULL)) /* 0 is OK, -1 is error */
-    {
-        TRACE("OS time changed to %s\n", ctime(&tm_t));
-        return STATUS_SUCCESS;
-    }
-    ERR("Cannot set time to %s, time adjustment %ld: %s\n",
-        ctime(&tm_t), (long)(sec-oldsec), strerror(errno));
-    if (errno == EPERM)
-        return STATUS_PRIVILEGE_NOT_HELD;
-    else
-        return STATUS_INVALID_PARAMETER;
-#else
-    tm_t = sec;
-    FIXME("setting time to %s not implemented for missing settimeofday\n",
-        ctime(&tm_t));
-    return STATUS_NOT_IMPLEMENTED;
-#endif
+    return unix_funcs->NtSetSystemTime( new, old );
 }
 
 /***********************************************************************

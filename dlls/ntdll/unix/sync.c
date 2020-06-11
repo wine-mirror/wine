@@ -59,6 +59,7 @@
 # include <mach/mach.h>
 # include <mach/task.h>
 # include <mach/semaphore.h>
+# include <mach/mach_time.h>
 #endif
 
 #include "ntstatus.h"
@@ -66,6 +67,7 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "unix_private.h"
@@ -73,6 +75,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
 #define TICKSPERSEC 10000000
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 
 HANDLE keyed_event = 0;
 
@@ -86,6 +90,34 @@ static RTL_CRITICAL_SECTION_DEBUG addr_section_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": addr_section") }
 };
 static RTL_CRITICAL_SECTION addr_section = { &addr_section_debug, -1, 0, 0, 0, 0 };
+
+
+/* return a monotonic time counter, in Win32 ticks */
+static inline ULONGLONG monotonic_counter(void)
+{
+    struct timeval now;
+#ifdef __APPLE__
+    static mach_timebase_info_data_t timebase;
+
+    if (!timebase.denom) mach_timebase_info( &timebase );
+#ifdef HAVE_MACH_CONTINUOUS_TIME
+    if (&mach_continuous_time != NULL)
+        return mach_continuous_time() * timebase.numer / timebase.denom / 100;
+#endif
+    return mach_absolute_time() * timebase.numer / timebase.denom / 100;
+#elif defined(HAVE_CLOCK_GETTIME)
+    struct timespec ts;
+#ifdef CLOCK_MONOTONIC_RAW
+    if (!clock_gettime( CLOCK_MONOTONIC_RAW, &ts ))
+        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
+#endif
+    if (!clock_gettime( CLOCK_MONOTONIC, &ts ))
+        return ts.tv_sec * (ULONGLONG)TICKSPERSEC + ts.tv_nsec / 100;
+#endif
+    gettimeofday( &now, 0 );
+    return now.tv_sec * (ULONGLONG)TICKSPERSEC + now.tv_usec * 10 + TICKS_1601_TO_1970 - server_start_time;
+}
+
 
 #ifdef __linux__
 
@@ -903,6 +935,84 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
         }
     }
     return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *              NtQueryPerformanceCounter (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryPerformanceCounter( LARGE_INTEGER *counter, LARGE_INTEGER *frequency )
+{
+    counter->QuadPart = monotonic_counter();
+    if (frequency) frequency->QuadPart = TICKSPERSEC;
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtQuerySystemTime (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
+{
+#ifdef HAVE_CLOCK_GETTIME
+    struct timespec ts;
+    static clockid_t clock_id = CLOCK_MONOTONIC; /* placeholder */
+
+    if (clock_id == CLOCK_MONOTONIC)
+    {
+#ifdef CLOCK_REALTIME_COARSE
+        struct timespec res;
+
+        /* Use CLOCK_REALTIME_COARSE if it has 1 ms or better resolution */
+        if (!clock_getres( CLOCK_REALTIME_COARSE, &res ) && res.tv_sec == 0 && res.tv_nsec <= 1000000)
+            clock_id = CLOCK_REALTIME_COARSE;
+        else
+#endif /* CLOCK_REALTIME_COARSE */
+            clock_id = CLOCK_REALTIME;
+    }
+
+    if (!clock_gettime( clock_id, &ts ))
+    {
+        time->QuadPart = ts.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+        time->QuadPart += (ts.tv_nsec + 50) / 100;
+    }
+    else
+#endif /* HAVE_CLOCK_GETTIME */
+    {
+        struct timeval now;
+
+        gettimeofday( &now, 0 );
+        time->QuadPart = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+        time->QuadPart += now.tv_usec * 10;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *              NtSetSystemTime (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetSystemTime( const LARGE_INTEGER *new, LARGE_INTEGER *old )
+{
+    LARGE_INTEGER now;
+    LONGLONG diff;
+
+    NtQuerySystemTime( &now );
+    if (old) *old = now;
+    diff = new->QuadPart - now.QuadPart;
+    if (diff > -TICKSPERSEC / 2 && diff < TICKSPERSEC / 2) return STATUS_SUCCESS;
+    ERR( "not allowed: difference %d ms\n", (int)(diff / 10000) );
+    return STATUS_PRIVILEGE_NOT_HELD;
+}
+
+
+/******************************************************************************
+ *              NtGetTickCount (NTDLL.@)
+ */
+ULONG WINAPI NtGetTickCount(void)
+{
+    /* note: we ignore TickCountMultiplier */
+    return user_shared_data->u.TickCount.LowPart;
 }
 
 
