@@ -334,6 +334,39 @@ static void read_PageScaling(IXMLDOMDocument2 *doc, struct ticket *ticket)
     IXMLDOMNode_Release(node);
 }
 
+static void read_PageResolution(IXMLDOMDocument2 *doc, struct ticket *ticket)
+{
+    IXMLDOMNode *node, *option, *child;
+    HRESULT hr;
+
+    hr = IXMLDOMDocument2_selectSingleNode(doc, (BSTR)L"psf:PrintTicket/psf:Feature[@name='psk:PageResolution']", &node);
+    if (hr != S_OK) return;
+
+    hr = IXMLDOMNode_selectSingleNode(node, (BSTR)L"./psf:Option", &option);
+    if (hr == S_OK)
+    {
+        hr = IXMLDOMNode_selectSingleNode(option, (BSTR)L"./psf:ScoredProperty[@name='psk:ResolutionX']", &child);
+        if (hr == S_OK)
+        {
+            if (read_int_value(child, &ticket->page.resolution.x) == S_OK)
+                TRACE("resolution.x: %d\n", ticket->page.resolution.x);
+            IXMLDOMNode_Release(child);
+        }
+
+        hr = IXMLDOMNode_selectSingleNode(option, (BSTR)L"./psf:ScoredProperty[@name='psk:ResolutionY']", &child);
+        if (hr == S_OK)
+        {
+            if (read_int_value(child, &ticket->page.resolution.y) == S_OK)
+                TRACE("resolution.y: %d\n", ticket->page.resolution.y);
+            IXMLDOMNode_Release(child);
+        }
+
+        IXMLDOMNode_Release(option);
+    }
+
+    IXMLDOMNode_Release(node);
+}
+
 static void set_SelectionNamespaces(IXMLDOMDocument2 *doc)
 {
     IStream *stream;
@@ -430,6 +463,7 @@ static HRESULT parse_ticket(IStream *stream, EPrintTicketScope scope, struct tic
     read_PageMediaSize(doc, ticket);
     read_PageOutputColor(doc, ticket);
     read_PageScaling(doc, ticket);
+    read_PageResolution(doc, ticket);
 
 fail:
     IXMLDOMDocument2_Release(doc);
