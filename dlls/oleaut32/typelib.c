@@ -1701,6 +1701,19 @@ static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid(ITypeInfoImpl *typeinfo,
     return NULL;
 }
 
+static inline TLBFuncDesc *TLB_get_funcdesc_by_memberid_invkind(ITypeInfoImpl *typeinfo, MEMBERID memid, INVOKEKIND invkind)
+{
+    int i;
+
+    for (i = 0; i < typeinfo->typeattr.cFuncs; ++i)
+    {
+        if (typeinfo->funcdescs[i].funcdesc.memid == memid && typeinfo->funcdescs[i].funcdesc.invkind == invkind)
+            return &typeinfo->funcdescs[i];
+    }
+
+    return NULL;
+}
+
 static inline TLBVarDesc *TLB_get_vardesc_by_memberid(ITypeInfoImpl *typeinfo, MEMBERID memid)
 {
     int i;
@@ -7804,7 +7817,7 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
     if (This->typeattr.typekind != TKIND_MODULE)
         return TYPE_E_BADMODULEKIND;
 
-    pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
+    pFDesc = TLB_get_funcdesc_by_memberid_invkind(This, memid, invKind);
     if (!pFDesc) return TYPE_E_ELEMENTNOTFOUND;
 
     dump_TypeInfo(This);

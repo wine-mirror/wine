@@ -1050,11 +1050,9 @@ static void test_TypeInfo(void)
 
     /* correct memberid -- wrong invkind */
     hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x60000000, INVOKE_FUNC, &bstrDllName, &bstrName, &ordinal);
-todo_wine
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
 
     hr = ITypeInfo_GetDllEntry(pTypeInfo, 0x60000000, INVOKE_PROPERTYPUTREF, &bstrDllName, &bstrName, &ordinal);
-todo_wine
     ok(hr == TYPE_E_ELEMENTNOTFOUND, "ITypeInfo_GetDllEntry should have returned TYPE_E_ELEMENTNOTFOUND instead of 0x%08x\n", hr);
 
     /* correct memberid -- correct invkind */
@@ -1069,7 +1067,6 @@ todo_wine
     ok_ole_success(hr, ITypeInfo_GetDllEntry);
     ok(!lstrcmpW(bstrDllName, wszTestDll), "got %s\n", wine_dbgstr_w(bstrDllName));
     ok(bstrName == NULL, "got %s\n", wine_dbgstr_w(bstrName));
-todo_wine
     ok(ordinal == 2, "got ordinal: %04x\n", ordinal);
     SysFreeString(bstrDllName);
 
