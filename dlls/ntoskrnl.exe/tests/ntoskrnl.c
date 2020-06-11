@@ -109,17 +109,25 @@ static SC_HANDLE load_driver(char *filename, const char *resname, const char *dr
     return service;
 }
 
-static BOOL start_driver(HANDLE service)
+static BOOL start_driver(HANDLE service, BOOL vista_plus)
 {
     SERVICE_STATUS status;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
     ret = StartServiceA(service, 0, NULL);
-    if (!ret && (GetLastError() == ERROR_DRIVER_BLOCKED || GetLastError() == ERROR_INVALID_IMAGE_HASH))
+    if (!ret && (GetLastError() == ERROR_DRIVER_BLOCKED || GetLastError() == ERROR_INVALID_IMAGE_HASH
+            || (vista_plus && GetLastError() == ERROR_FILE_NOT_FOUND)))
     {
-        /* If Secure Boot is enabled or the machine is 64-bit, it will reject an unsigned driver. */
-        skip("Failed to start service; probably your machine doesn't accept unsigned drivers.\n");
+        if (vista_plus && GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            skip("Windows Vista or newer is required to run this service.\n");
+        }
+        else
+        {
+            /* If Secure Boot is enabled or the machine is 64-bit, it will reject an unsigned driver. */
+            skip("Failed to start service; probably your machine doesn't accept unsigned drivers.\n");
+        }
         DeleteService(service);
         CloseServiceHandle(service);
         return FALSE;
@@ -143,13 +151,14 @@ static BOOL start_driver(HANDLE service)
     return TRUE;
 }
 
+static ULONG64 modified_value;
+
 static void main_test(void)
 {
     static const WCHAR dokW[] = {'d','o','k',0};
     WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
     struct test_input *test_input;
     DWORD len, written, read;
-    ULONG64 modified_value;
     UNICODE_STRING pathU;
     LONG new_failures;
     char buffer[512];
@@ -177,8 +186,6 @@ static void main_test(void)
                           &new_failures, sizeof(new_failures), &written, NULL);
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(written == sizeof(new_failures), "got size %x\n", written);
-
-    todo_wine ok(modified_value == 0xdeadbeeffeedcafe, "Got unexpected value %#I64x.\n", modified_value);
 
     okfile = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(okfile != INVALID_HANDLE_VALUE, "failed to create %s: %u\n", wine_dbgstr_w(pathW), GetLastError());
@@ -506,6 +513,37 @@ static void test_driver3(void)
     DeleteFileA(filename);
 }
 
+void test_driver4(void)
+{
+    char filename[MAX_PATH];
+    SC_HANDLE service;
+    DWORD written;
+    BOOL ret;
+
+    if (!(service = load_driver(filename, "driver4.dll", "WineTestDriver4")))
+        return;
+
+    if (!start_driver(service, TRUE))
+    {
+        DeleteFileA(filename);
+        return;
+    }
+
+    device = CreateFileA("\\\\.\\WineTestDriver4", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
+
+    main_test();
+
+    ret = DeviceIoControl(device, IOCTL_WINETEST_DETACH, NULL, 0, NULL, 0, &written, NULL);
+    ok(ret, "DeviceIoControl failed: %u\n", GetLastError());
+
+    CloseHandle(device);
+
+    unload_driver(service);
+    ret = DeleteFileA(filename);
+    ok(ret, "DeleteFile failed: %u\n", GetLastError());
+}
+
 START_TEST(ntoskrnl)
 {
     char filename[MAX_PATH], filename2[MAX_PATH];
@@ -523,7 +561,7 @@ START_TEST(ntoskrnl)
     subtest("driver");
     if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
         return;
-    if (!start_driver(service))
+    if (!start_driver(service, FALSE))
     {
         DeleteFileA(filename);
         return;
@@ -535,7 +573,10 @@ START_TEST(ntoskrnl)
 
     test_basic_ioctl();
     test_mismatched_status_ioctl();
+
     main_test();
+    todo_wine ok(modified_value == 0xdeadbeeffeedcafe, "Got unexpected value %#I64x.\n", modified_value);
+
     test_overlapped();
     test_load_driver(service2);
     test_file_handles();
@@ -556,4 +597,6 @@ START_TEST(ntoskrnl)
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 
     test_driver3();
+    subtest("driver4");
+    test_driver4();
 }
