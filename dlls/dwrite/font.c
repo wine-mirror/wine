@@ -3002,11 +3002,23 @@ static HRESULT WINAPI dwritefontcollection1_GetFontFamily(IDWriteFontCollection3
 }
 
 static HRESULT WINAPI dwritefontcollection2_GetFontFamily(IDWriteFontCollection3 *iface,
-        UINT32 index, IDWriteFontFamily2 **family)
+        UINT32 index, IDWriteFontFamily2 **ret)
 {
-    FIXME("%p, %u, %p.\n", iface, index, family);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection3(iface);
+    struct dwrite_fontfamily *family;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, ret);
+
+    *ret = NULL;
+
+    if (index >= collection->count)
+        return E_FAIL;
+
+    if (SUCCEEDED(hr = create_fontfamily(collection, index, &family)))
+        *ret = &family->IDWriteFontFamily2_iface;
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefontcollection2_GetMatchingFonts(IDWriteFontCollection3 *iface,

@@ -1521,14 +1521,15 @@ static void test_GetFontFamily(void)
 {
     IDWriteFontCollection *collection, *collection2;
     IDWriteFontCollection *syscoll;
+    IDWriteFontCollection2 *coll2;
     IDWriteFontFamily *family, *family2;
     IDWriteFontFamily1 *family1;
     IDWriteGdiInterop *interop;
     IDWriteFont *font, *font2;
     IDWriteFactory *factory;
     LOGFONTW logfont;
+    ULONG ref, count;
     HRESULT hr;
-    ULONG ref;
 
     factory = create_factory();
 
@@ -1655,6 +1656,28 @@ if (0) /* crashes on native */
     }
     else
         win_skip("IDWriteFontFamily1 is not supported.\n");
+
+    /* IDWriteFontCollection2::GetFontFamily() */
+    if (SUCCEEDED(IDWriteFontCollection_QueryInterface(syscoll, &IID_IDWriteFontCollection2, (void **)&coll2)))
+    {
+        IDWriteFontFamily2 *family2;
+
+        count = IDWriteFontCollection2_GetFontFamilyCount(coll2);
+        ok(!!count, "Unexpected family count.\n");
+
+        family2 = (void *)0xdeadbeef;
+        hr = IDWriteFontCollection2_GetFontFamily(coll2, count, &family2);
+        ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+        ok(!family2, "Unexpected pointer.\n");
+
+        hr = IDWriteFontCollection2_GetFontFamily(coll2, 0, &family2);
+        ok(hr == S_OK, "Failed to get family, hr %#x.\n", hr);
+        IDWriteFontFamily2_Release(family2);
+
+        IDWriteFontCollection2_Release(coll2);
+    }
+    else
+        win_skip("IDWriteFontCollection2 is not supported.\n");
 
     IDWriteFontCollection_Release(syscoll);
     IDWriteFontCollection_Release(collection2);
