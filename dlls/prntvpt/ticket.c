@@ -297,6 +297,7 @@ static void read_PageOutputColor(IXMLDOMDocument2 *doc, struct ticket *ticket)
 static void read_PageScaling(IXMLDOMDocument2 *doc, struct ticket *ticket)
 {
     IXMLDOMNode *node, *option;
+    int scaling = 0;
     HRESULT hr;
 
     hr = IXMLDOMDocument2_selectSingleNode(doc, (BSTR)L"psf:PrintTicket/psf:Feature[@name='psk:PageScaling']", &node);
@@ -317,13 +318,11 @@ static void read_PageScaling(IXMLDOMDocument2 *doc, struct ticket *ticket)
             if (hr == S_OK && V_VT(&var) == VT_BSTR)
             {
                 if (!wcscmp(V_BSTR(&var), L"psk:None"))
-                    ticket->page.scaling = 100;
+                    scaling = 100;
+                else if (!wcscmp(V_BSTR(&var), L"psk:CustomSquare"))
+                    scaling = 0; /* psk:PageScalingScale */
                 else
-                {
                     FIXME("%s\n", wine_dbgstr_w(V_BSTR(&var)));
-                    ticket->page.scaling = 100;
-                }
-                TRACE("scaling: %s => %d\n", wine_dbgstr_w(V_BSTR(&var)), ticket->page.scaling);
             }
             VariantClear(&var);
 
@@ -332,6 +331,23 @@ static void read_PageScaling(IXMLDOMDocument2 *doc, struct ticket *ticket)
     }
 
     IXMLDOMNode_Release(node);
+
+    if (!scaling)
+    {
+        hr = IXMLDOMDocument2_selectSingleNode(doc, (BSTR)L"psf:PrintTicket/psf:ParameterInit[@name='psk:PageScalingScale']", &node);
+        if (hr == S_OK)
+        {
+            read_int_value(node, &scaling);
+            IXMLDOMNode_Release(node);
+        }
+    }
+
+    if (scaling)
+        ticket->page.scaling = scaling;
+    else
+        ticket->page.scaling = 100;
+
+    TRACE("page.scaling: %d\n", ticket->page.scaling);
 }
 
 static void read_PageResolution(IXMLDOMDocument2 *doc, struct ticket *ticket)
