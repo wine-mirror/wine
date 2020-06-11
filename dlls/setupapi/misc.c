@@ -933,6 +933,8 @@ static BOOL find_existing_inf(const WCHAR *source, WCHAR *target)
             if (dest_file == INVALID_HANDLE_VALUE)
                 continue;
 
+            SetFilePointer( source_file, 0, NULL, FILE_BEGIN );
+
             if (GetFileSizeEx( dest_file, &dest_file_size )
                     && dest_file_size.QuadPart == source_file_size.QuadPart
                     && !compare_files( source_file, dest_file ))
