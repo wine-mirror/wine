@@ -3746,7 +3746,7 @@ static BOOL opentype_match_class_func(UINT16 glyph, UINT16 glyph_data, const str
 static BOOL opentype_match_coverage_func(UINT16 glyph, UINT16 glyph_data, const struct match_data *data)
 {
     const struct match_context *mc = data->mc;
-    return opentype_layout_is_glyph_covered(&mc->context->table->table, data->subtable_offset + GET_BE_WORD(glyph_data), glyph)
+    return opentype_layout_is_glyph_covered(&mc->context->table->table, data->subtable_offset + glyph_data, glyph)
             != GLYPH_NOT_COVERED;
 }
 
@@ -3808,8 +3808,10 @@ static enum iterator_match glyph_iterator_may_match(const struct glyph_iterator 
     if (!(iter->mask & iter->context->glyph_infos[iter->pos].mask))
         return ITER_NO;
 
+    /* Glyph data is used for input, backtrack, and lookahead arrays, swap it here instead of doing that
+       in all matching functions. */
     if (iter->match_func)
-        return !!iter->match_func(iter->context->u.buffer.glyphs[iter->pos], *iter->glyph_data, iter->match_data);
+        return !!iter->match_func(iter->context->u.buffer.glyphs[iter->pos], GET_BE_WORD(*iter->glyph_data), iter->match_data);
 
     return ITER_MAYBE;
 }
