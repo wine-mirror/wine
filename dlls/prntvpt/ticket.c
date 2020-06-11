@@ -294,6 +294,46 @@ static void read_PageOutputColor(IXMLDOMDocument2 *doc, struct ticket *ticket)
     IXMLDOMNode_Release(node);
 }
 
+static void read_PageScaling(IXMLDOMDocument2 *doc, struct ticket *ticket)
+{
+    IXMLDOMNode *node, *option;
+    HRESULT hr;
+
+    hr = IXMLDOMDocument2_selectSingleNode(doc, (BSTR)L"psf:PrintTicket/psf:Feature[@name='psk:PageScaling']", &node);
+    if (hr != S_OK) return;
+
+    hr = IXMLDOMNode_selectSingleNode(node, (BSTR)L"./psf:Option", &option);
+    if (hr == S_OK)
+    {
+        IXMLDOMElement *element;
+
+        hr = IXMLDOMNode_QueryInterface(option, &IID_IXMLDOMElement, (void **)&element);
+        if (hr == S_OK)
+        {
+            VARIANT var;
+
+            VariantInit(&var);
+            hr = IXMLDOMElement_getAttribute(element, (BSTR)L"name", &var);
+            if (hr == S_OK && V_VT(&var) == VT_BSTR)
+            {
+                if (!wcscmp(V_BSTR(&var), L"psk:None"))
+                    ticket->page.scaling = 100;
+                else
+                {
+                    FIXME("%s\n", wine_dbgstr_w(V_BSTR(&var)));
+                    ticket->page.scaling = 100;
+                }
+                TRACE("scaling: %s => %d\n", wine_dbgstr_w(V_BSTR(&var)), ticket->page.scaling);
+            }
+            VariantClear(&var);
+
+            IXMLDOMElement_Release(element);
+        }
+    }
+
+    IXMLDOMNode_Release(node);
+}
+
 static void set_SelectionNamespaces(IXMLDOMDocument2 *doc)
 {
     IStream *stream;
@@ -389,6 +429,7 @@ static HRESULT parse_ticket(IStream *stream, EPrintTicketScope scope, struct tic
     /* PageScope is always added */
     read_PageMediaSize(doc, ticket);
     read_PageOutputColor(doc, ticket);
+    read_PageScaling(doc, ticket);
 
 fail:
     IXMLDOMDocument2_Release(doc);
