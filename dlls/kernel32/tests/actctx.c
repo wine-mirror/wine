@@ -1422,9 +1422,7 @@ enum comclass_miscfields {
 
 struct comclassredirect_data {
     ULONG size;
-    BYTE  res;
-    BYTE  miscmask;
-    BYTE  res1[2];
+    ULONG flags;
     DWORD model;
     GUID  clsid;
     GUID  alias;
@@ -1481,12 +1479,9 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
     ok_(__FILE__, line)(comclass->size == sizeof(*comclass), "got %d for header size\n", comclass->size);
     if (data.lpData && comclass->size == sizeof(*comclass))
     {
+        ULONG len, miscmask;
         WCHAR *ptr;
-        ULONG len;
 
-        ok_(__FILE__, line)(comclass->res == 0, "got res as %d\n", comclass->res);
-        ok_(__FILE__, line)(comclass->res1[0] == 0, "got res1[0] as %02x\n", comclass->res1[0]);
-        ok_(__FILE__, line)(comclass->res1[1] == 0, "got res1[1] as %02x\n", comclass->res1[1]);
         ok_(__FILE__, line)(comclass->model == ThreadingModel_Neutral, "got model %d\n", comclass->model);
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid, clsid), "got wrong clsid %s\n", wine_dbgstr_guid(&comclass->clsid));
         ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", wine_dbgstr_guid(&comclass->clsid2));
@@ -1519,19 +1514,21 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
         ok_(__FILE__, line)(data.ulSectionTotalLength > comclass->name_offset, "got wrong offset %d\n", comclass->name_offset);
 
         /* check misc fields are set */
-        if (comclass->miscmask)
+        miscmask = (comclass->flags >> 8) & 0xff;
+        if (miscmask)
         {
-            if (comclass->miscmask & MiscStatus)
+            if (miscmask & MiscStatus)
                 ok_(__FILE__, line)(comclass->miscstatus != 0, "got miscstatus 0x%08x\n", comclass->miscstatus);
-            if (comclass->miscmask & MiscStatusIcon)
+            if (miscmask & MiscStatusIcon)
                 ok_(__FILE__, line)(comclass->miscstatusicon != 0, "got miscstatusicon 0x%08x\n", comclass->miscstatusicon);
-            if (comclass->miscmask & MiscStatusContent)
+            if (miscmask & MiscStatusContent)
                 ok_(__FILE__, line)(comclass->miscstatuscontent != 0, "got miscstatuscontent 0x%08x\n", comclass->miscstatuscontent);
-            if (comclass->miscmask & MiscStatusThumbnail)
+            if (miscmask & MiscStatusThumbnail)
                 ok_(__FILE__, line)(comclass->miscstatusthumbnail != 0, "got miscstatusthumbnail 0x%08x\n", comclass->miscstatusthumbnail);
-            if (comclass->miscmask & MiscStatusDocPrint)
+            if (miscmask & MiscStatusDocPrint)
                 ok_(__FILE__, line)(comclass->miscstatusdocprint != 0, "got miscstatusdocprint 0x%08x\n", comclass->miscstatusdocprint);
         }
+        ok_(__FILE__, line)(!(comclass->flags & 0xffff00ff), "Unexpected flags %#x.\n", comclass->flags);
 
         /* part used for clrClass only */
         if (comclass->clrdata_len)

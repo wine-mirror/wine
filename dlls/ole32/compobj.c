@@ -105,9 +105,7 @@ enum comclass_miscfields
 struct comclassredirect_data
 {
     ULONG size;
-    BYTE  res;
-    BYTE  miscmask;
-    BYTE  res1[2];
+    ULONG flags;
     DWORD model;
     GUID  clsid;
     GUID  alias;
@@ -265,10 +263,11 @@ BOOL actctx_get_miscstatus(const CLSID *clsid, DWORD aspect, DWORD *status)
     {
         struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
         enum comclass_miscfields misc = dvaspect_to_miscfields(aspect);
+        ULONG miscmask = (comclass->flags >> 8) & 0xff;
 
-        if (!(comclass->miscmask & misc))
+        if (!(miscmask & misc))
         {
-            if (!(comclass->miscmask & MiscStatus))
+            if (!(miscmask & MiscStatus))
             {
                 *status = 0;
                 return TRUE;
