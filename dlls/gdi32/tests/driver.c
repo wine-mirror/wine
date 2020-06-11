@@ -86,6 +86,8 @@ static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
         }
 
         ok(open_adapter_gdi_desc.hAdapter, "Expect not null.\n");
+        ok(open_adapter_gdi_desc.AdapterLuid.LowPart || open_adapter_gdi_desc.AdapterLuid.HighPart,
+           "Expect LUID not zero.\n");
 
         close_adapter_desc.hAdapter = open_adapter_gdi_desc.hAdapter;
         status = pD3DKMTCloseAdapter(&close_adapter_desc);

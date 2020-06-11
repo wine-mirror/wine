@@ -31,10 +31,14 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "ddrawgdi.h"
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "winternl.h"
+#include "initguid.h"
+#include "devguid.h"
+#include "setupapi.h"
 #include "ddk/d3dkmthk.h"
 
 #include "gdi_private.h"
@@ -44,6 +48,8 @@
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
+
+DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 
 struct graphics_driver
 {
@@ -159,6 +165,20 @@ static BOOL is_display_device( LPCWSTR name )
     return TRUE;
 }
 
+static HANDLE get_display_device_init_mutex( void )
+{
+    static const WCHAR init_mutex[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
+    HANDLE mutex = CreateMutexW( NULL, FALSE, init_mutex );
+
+    WaitForSingleObject( mutex, INFINITE );
+    return mutex;
+}
+
+static void release_display_device_init_mutex( HANDLE mutex )
+{
+    ReleaseMutex( mutex );
+    CloseHandle( mutex );
+}
 
 /**********************************************************************
  *	     DRIVER_load_driver
@@ -1351,23 +1371,70 @@ NTSTATUS WINAPI D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
 NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *desc )
 {
     static const WCHAR displayW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
+    static const WCHAR state_flagsW[] = {'S','t','a','t','e','F','l','a','g','s',0};
+    static const WCHAR video_value_fmtW[] = {'\\','D','e','v','i','c','e','\\',
+                                             'V','i','d','e','o','%','d',0};
+    static const WCHAR video_keyW[] = {'H','A','R','D','W','A','R','E','\\',
+                                       'D','E','V','I','C','E','M','A','P','\\',
+                                       'V','I','D','E','O','\\',0};
+    static const WCHAR gpu_idW[] = {'G','P','U','I','D',0};
+    WCHAR *end, key_nameW[MAX_PATH], bufferW[MAX_PATH];
+    HDEVINFO devinfo = INVALID_HANDLE_VALUE;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     static D3DKMT_HANDLE handle_start = 0;
     struct d3dkmt_adapter *adapter;
-    WCHAR *end;
-    int id;
+    SP_DEVINFO_DATA device_data;
+    DWORD size, state_flags;
+    DEVPROPTYPE type;
+    HANDLE mutex;
+    LUID luid;
+    int index;
 
-    TRACE("(%p) semi-stub\n", desc);
+    TRACE("(%p)\n", desc);
 
-    if (!desc || strncmpiW( desc->DeviceName, displayW, ARRAY_SIZE(displayW) ))
+    if (!desc)
         return STATUS_UNSUCCESSFUL;
 
-    id = strtolW( desc->DeviceName + ARRAY_SIZE(displayW), &end, 10 ) - 1;
+    TRACE("DeviceName: %s\n", wine_dbgstr_w( desc->DeviceName ));
+    if (strncmpiW( desc->DeviceName, displayW, ARRAY_SIZE(displayW) ))
+        return STATUS_UNSUCCESSFUL;
+
+    index = strtolW( desc->DeviceName + ARRAY_SIZE(displayW), &end, 10 ) - 1;
     if (*end)
         return STATUS_UNSUCCESSFUL;
 
     adapter = heap_alloc( sizeof( *adapter ) );
     if (!adapter)
         return STATUS_NO_MEMORY;
+
+    /* Get adapter LUID from SetupAPI */
+    mutex = get_display_device_init_mutex();
+
+    size = sizeof( bufferW );
+    sprintfW( key_nameW, video_value_fmtW, index );
+    if (RegGetValueW( HKEY_LOCAL_MACHINE, video_keyW, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
+        goto done;
+
+    /* Strip \Registry\Machine\ prefix and retrieve Wine specific data set by the display driver */
+    lstrcpyW( key_nameW, bufferW + 18 );
+    size = sizeof( state_flags );
+    if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, state_flagsW, RRF_RT_REG_DWORD, NULL,
+                      &state_flags, &size ))
+        goto done;
+
+    if (!(state_flags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+        goto done;
+
+    size = sizeof( bufferW );
+    if (RegGetValueW( HKEY_CURRENT_CONFIG, key_nameW, gpu_idW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
+        goto done;
+
+    devinfo = SetupDiCreateDeviceInfoList( &GUID_DEVCLASS_DISPLAY, NULL );
+    device_data.cbSize = sizeof( device_data );
+    SetupDiOpenDeviceInfoW( devinfo, bufferW, NULL, 0, &device_data );
+    if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &DEVPROPKEY_GPU_LUID, &type,
+                                    (BYTE *)&luid, sizeof( luid ), NULL, 0))
+        goto done;
 
     EnterCriticalSection( &driver_section );
     /* D3DKMT_HANDLE is UINT, so we can't use pointer as handle */
@@ -1376,11 +1443,16 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     LeaveCriticalSection( &driver_section );
 
     desc->hAdapter = handle_start;
-    /* FIXME: Support AdapterLuid */
-    desc->AdapterLuid.LowPart = 0;
-    desc->AdapterLuid.HighPart = 0;
-    desc->VidPnSourceId = id;
-    return STATUS_SUCCESS;
+    desc->AdapterLuid = luid;
+    desc->VidPnSourceId = index;
+    status = STATUS_SUCCESS;
+
+done:
+    SetupDiDestroyDeviceInfoList( devinfo );
+    release_display_device_init_mutex( mutex );
+    if (status != STATUS_SUCCESS)
+        heap_free( adapter );
+    return status;
 }
 
 /******************************************************************************
