@@ -66,10 +66,14 @@ static void netio_init(void)
 
     client_npi.Dispatch = &client_dispatch;
     status = WskRegister(&client_npi, &registration);
-    todo_wine ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
 
     status = WskCaptureProviderNPI(&registration, WSK_INFINITE_WAIT, &provider_npi);
-    todo_wine ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+
+    ok(provider_npi.Dispatch->Version >= MAKE_WSK_VERSION(1, 0), "Got unexpected version %#x.\n",
+            provider_npi.Dispatch->Version);
+    ok(!!provider_npi.Client, "Got null WSK_CLIENT.\n");
 }
 
 static void netio_uninit(void)
