@@ -7805,28 +7805,24 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
         return TYPE_E_BADMODULEKIND;
 
     pFDesc = TLB_get_funcdesc_by_memberid(This, memid);
-    if(pFDesc){
-	    dump_TypeInfo(This);
-	    if (TRACE_ON(ole))
-		dump_TLBFuncDescOne(pFDesc);
+    if (!pFDesc) return TYPE_E_ELEMENTNOTFOUND;
 
-	    if (pBstrDllName)
-		*pBstrDllName = SysAllocString(TLB_get_bstr(This->DllName));
+    dump_TypeInfo(This);
+    if (TRACE_ON(ole)) dump_TLBFuncDescOne(pFDesc);
 
-            if (!IS_INTRESOURCE(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
-		if (pBstrName)
-		    *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Entry));
-		if (pwOrdinal)
-		    *pwOrdinal = -1;
-		return S_OK;
-	    }
-	    if (pBstrName)
-		*pBstrName = NULL;
-	    if (pwOrdinal)
-		*pwOrdinal = LOWORD(pFDesc->Entry);
-	    return S_OK;
-        }
-    return TYPE_E_ELEMENTNOTFOUND;
+    if (pBstrDllName) *pBstrDllName = SysAllocString(TLB_get_bstr(This->DllName));
+
+    if (!IS_INTRESOURCE(pFDesc->Entry) && (pFDesc->Entry != (void*)-1))
+    {
+        if (pBstrName) *pBstrName = SysAllocString(TLB_get_bstr(pFDesc->Entry));
+        if (pwOrdinal) *pwOrdinal = -1;
+    }
+    else
+    {
+        if (pBstrName) *pBstrName = NULL;
+        if (pwOrdinal) *pwOrdinal = LOWORD(pFDesc->Entry);
+    }
+    return S_OK;
 }
 
 /* internal function to make the inherited interfaces' methods appear
