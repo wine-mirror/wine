@@ -124,7 +124,7 @@ static CRITICAL_SECTION_DEBUG screen_critsect_debug =
 };
 static CRITICAL_SECTION screen_section = {&screen_critsect_debug, -1, 0, 0, 0, 0};
 
-static HANDLE get_display_device_init_mutex(void)
+HANDLE get_display_device_init_mutex(void)
 {
     static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
     HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
@@ -133,7 +133,7 @@ static HANDLE get_display_device_init_mutex(void)
     return mutex;
 }
 
-static void release_display_device_init_mutex(HANDLE mutex)
+void release_display_device_init_mutex(HANDLE mutex)
 {
     ReleaseMutex(mutex);
     CloseHandle(mutex);

@@ -754,6 +754,8 @@ struct x11drv_display_device_handler
     void (*register_event_handlers)(void);
 };
 
+extern HANDLE get_display_device_init_mutex(void) DECLSPEC_HIDDEN;
+extern void release_display_device_init_mutex(HANDLE) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *handler) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_Init(BOOL force) DECLSPEC_HIDDEN;
 extern void X11DRV_DisplayDevices_RegisterEventHandlers(void) DECLSPEC_HIDDEN;
