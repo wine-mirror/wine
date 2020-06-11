@@ -51,6 +51,12 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+HRESULT WINAPI PTReleaseMemory(PVOID mem)
+{
+    heap_free(mem);
+    return S_OK;
+}
+
 HRESULT WINAPI PTQuerySchemaVersionSupport(PCWSTR printer, DWORD *version)
 {
     FIXME("stub:%s %p\n", debugstr_w(printer), version);
