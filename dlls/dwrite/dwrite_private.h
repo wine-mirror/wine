@@ -529,7 +529,7 @@ struct shaping_glyph_properties
     UINT16 isZeroWidthSpace : 1;
     UINT16 reserved : 1;
     UINT16 components : 4;
-    UINT16 reserved2 : 4;
+    UINT16 lig_component : 4;
 };
 
 struct scriptshaping_context;

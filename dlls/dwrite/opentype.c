@@ -5104,11 +5104,71 @@ static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_con
     return TRUE;
 }
 
-static BOOL opentype_layout_apply_ligature(struct scriptshaping_context *context, unsigned int offset)
+static BOOL opentype_layout_context_match_input(const struct match_context *mc, unsigned int count, const UINT16 *input,
+        unsigned int *end_offset, unsigned int *match_positions)
 {
+    struct match_data match_data = { .mc = mc, .subtable_offset = mc->input_offset };
+    struct scriptshaping_context *context = mc->context;
+    struct glyph_iterator iter;
+    unsigned int i;
+
+    if (count > GLYPH_CONTEXT_MAX_LENGTH)
+        return FALSE;
+
+    match_positions[0] = context->cur;
+
+    glyph_iterator_init(context, mc->lookup->flags, context->cur, count - 1, &iter);
+    iter.mask = mc->lookup->mask;
+    iter.match_func = mc->match_func;
+    iter.match_data = &match_data;
+    iter.glyph_data = input;
+
+    for (i = 1; i < count; ++i)
+    {
+        if (!glyph_iterator_next(&iter))
+            return FALSE;
+
+        match_positions[i] = iter.pos;
+    }
+
+    *end_offset = iter.pos - context->cur + 1;
+
+    return TRUE;
+}
+
+static void opentype_layout_unsafe_to_break(struct scriptshaping_context *context, unsigned int idx)
+{
+    if (context->u.buffer.glyph_props[idx].isClusterStart)
+        context->u.buffer.text_props[context->glyph_infos[idx].start_text_idx].canBreakShapingAfter = 0;
+}
+
+static void opentype_layout_delete_glyph(struct scriptshaping_context *context, unsigned int idx)
+{
+    unsigned int shift_len;
+
+    shift_len = context->glyph_count - context->cur - 1;
+
+    if (shift_len)
+    {
+        memmove(&context->u.buffer.glyphs[idx], &context->u.buffer.glyphs[idx + 1],
+                shift_len * sizeof(*context->u.buffer.glyphs));
+        memmove(&context->u.buffer.glyph_props[idx], &context->u.buffer.glyph_props[idx + 1],
+                shift_len * sizeof(*context->u.buffer.glyph_props));
+        memmove(&context->glyph_infos[idx], &context->glyph_infos[idx + 1], shift_len * sizeof(*context->glyph_infos));
+    }
+
+    context->glyph_count--;
+}
+
+static BOOL opentype_layout_apply_ligature(struct scriptshaping_context *context, unsigned int offset,
+        const struct lookup *lookup)
+{
+    struct match_context mc = { .context = context, .lookup = lookup, .match_func = opentype_match_glyph_func };
     const struct dwrite_fonttable *gsub = &context->table->table;
+    unsigned int match_positions[GLYPH_CONTEXT_MAX_LENGTH];
+    unsigned int i, j, comp_count, match_length = 0;
     const struct ot_gsub_lig *lig;
-    unsigned int comp_count;
+    UINT16 lig_glyph;
 
     comp_count = table_read_be_word(gsub, offset + FIELD_OFFSET(struct ot_gsub_lig, comp_count));
 
@@ -5119,16 +5179,46 @@ static BOOL opentype_layout_apply_ligature(struct scriptshaping_context *context
     if (!lig)
         return FALSE;
 
+    lig_glyph = GET_BE_WORD(lig->lig_glyph);
+
     if (comp_count == 1)
     {
-        opentype_layout_replace_glyph(context, GET_BE_WORD(lig->lig_glyph));
+        opentype_layout_replace_glyph(context, lig_glyph);
         context->cur++;
         return TRUE;
     }
 
-    /* TODO: actually apply ligature */
+    if (!opentype_layout_context_match_input(&mc, comp_count, lig->components, &match_length, match_positions))
+        return FALSE;
 
-    return FALSE;
+    opentype_layout_replace_glyph(context, lig_glyph);
+    context->u.buffer.glyph_props[context->cur].components = comp_count;
+
+    /* Positioning against a ligature implies keeping track of ligature component
+       glyph should be attached to. Update per-glyph property for interleaving glyphs,
+       0 means attaching to last component, n - attaching to n-th glyph before last. */
+    for (i = 1; i < comp_count; ++i)
+    {
+        j = match_positions[i - 1] + 1;
+        while (j < match_positions[i])
+        {
+            context->u.buffer.glyph_props[j++].lig_component = comp_count - i;
+        }
+        opentype_layout_unsafe_to_break(context, i);
+        context->u.buffer.glyph_props[i].isClusterStart = 0;
+        context->glyph_infos[i].start_text_idx = 0;
+    }
+
+    /* Delete ligated glyphs, backwards to preserve index. */
+    for (i = 1; i < comp_count; ++i)
+    {
+        opentype_layout_delete_glyph(context, match_positions[comp_count - i]);
+    }
+
+    /* Skip whole matched sequence, accounting for deleted glyphs. */
+    context->cur += match_length - (comp_count - 1);
+
+    return TRUE;
 }
 
 static BOOL opentype_layout_apply_gsub_lig_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
@@ -5173,7 +5263,7 @@ static BOOL opentype_layout_apply_gsub_lig_substitution(struct scriptshaping_con
         /* First applicable ligature is used. */
         for (i = 0; i < lig_count; ++i)
         {
-            if (opentype_layout_apply_ligature(context, offset + GET_BE_WORD(lig_set->offsets[i])))
+            if (opentype_layout_apply_ligature(context, offset + GET_BE_WORD(lig_set->offsets[i]), lookup))
                 return TRUE;
         }
     }
@@ -5181,38 +5271,6 @@ static BOOL opentype_layout_apply_gsub_lig_substitution(struct scriptshaping_con
         WARN("Unexpected ligature substitution format %d.\n", format);
 
     return FALSE;
-}
-
-static BOOL opentype_layout_context_match_input(const struct match_context *mc, unsigned int count, const UINT16 *input,
-        unsigned int *end_offset, unsigned int *match_positions)
-{
-    struct match_data match_data = { .mc = mc, .subtable_offset = mc->input_offset };
-    struct scriptshaping_context *context = mc->context;
-    struct glyph_iterator iter;
-    unsigned int i;
-
-    if (count > GLYPH_CONTEXT_MAX_LENGTH)
-        return FALSE;
-
-    match_positions[0] = context->cur;
-
-    glyph_iterator_init(context, mc->lookup->flags, context->cur, count - 1, &iter);
-    iter.mask = mc->lookup->mask;
-    iter.match_func = mc->match_func;
-    iter.match_data = &match_data;
-    iter.glyph_data = input;
-
-    for (i = 1; i < count; ++i)
-    {
-        if (!glyph_iterator_next(&iter))
-            return FALSE;
-
-        match_positions[i] = iter.pos;
-    }
-
-    *end_offset = iter.pos - context->cur + 1;
-
-    return TRUE;
 }
 
 static BOOL opentype_layout_context_match_backtrack(const struct match_context *mc, unsigned int count,
