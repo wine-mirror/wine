@@ -246,7 +246,7 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
             owner = sd->Owner;
             group = sd->Group;
             if (sd->Control & SE_SACL_PRESENT) sacl = sd->Sacl;
-            if (sd->Control & SE_SACL_PRESENT) dacl = sd->Dacl;
+            if (sd->Control & SE_DACL_PRESENT) dacl = sd->Dacl;
         }
 
         if (owner) len += offsetof( SID, SubAuthority[owner->SubAuthorityCount] );
