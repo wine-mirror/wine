@@ -513,8 +513,12 @@ struct scriptshaping_cache
 
 struct shaping_glyph_info
 {
+    /* Combined features mask. */
     unsigned int mask;
+    /* Derived from glyph class, supplied by GDEF. */
     unsigned int props;
+    /* Only relevant for isClusterStart glyphs. Indicates text position for this cluster. */
+    unsigned int start_text_idx;
 };
 
 struct shaping_glyph_properties

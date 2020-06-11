@@ -4949,30 +4949,6 @@ static BOOL opentype_layout_gsub_ensure_buffer(struct scriptshaping_context *con
     return ret;
 }
 
-static unsigned int opentype_layout_get_next_char_index(const struct scriptshaping_context *context, unsigned int idx)
-{
-    unsigned int start = 0, end = context->length - 1, mid, ret = ~0u;
-
-    for (;;)
-    {
-        mid = (start + end) / 2;
-
-        if (context->u.buffer.clustermap[mid] <= idx)
-        {
-            if (mid == end) break;
-            start = mid + 1;
-        }
-        else
-        {
-            ret = mid;
-            if (mid == start) break;
-            end = mid - 1;
-        }
-    }
-
-    return ret;
-}
-
 static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
@@ -5053,18 +5029,11 @@ static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_co
                 {
                     context->u.subst.glyph_props[idx + i].isClusterStart = 0;
                     context->u.buffer.glyph_props[idx + i].components = 0;
+                    context->glyph_infos[idx + i].start_text_idx = 0;
                 }
                 opentype_set_subst_glyph_props(context, idx + i);
                 /* Inherit feature mask from original matched glyph. */
                 context->glyph_infos[idx + i].mask = mask;
-            }
-
-            /* Update following clusters. */
-            idx = opentype_layout_get_next_char_index(context, context->cur);
-            if (idx != ~0u)
-            {
-                for (i = idx; i < context->length; ++i)
-                    context->u.subst.clustermap[i] += glyph_count;
             }
 
             context->cur += glyph_count + 1;
@@ -5889,6 +5858,7 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         if (!g || !opentype_is_diacritic(codepoint))
         {
             context->u.buffer.glyph_props[g].isClusterStart = 1;
+            context->glyph_infos[g].start_text_idx = i;
             cluster_start_idx = g;
         }
 
@@ -5932,7 +5902,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
         unsigned int language_index, const struct shaping_features *features)
 {
     struct lookups lookups = { 0 };
-    unsigned int i;
+    unsigned int i, j, start_idx;
     BOOL ret;
 
     context->nesting_level_left = SHAPE_MAX_NESTING_LEVEL;
@@ -5980,6 +5950,29 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
             }
         }
     }
+
+    /* For every glyph range of [<last>.isClusterStart, <next>.isClusterStart) set corresponding
+       text span to start_idx. */
+    start_idx = 0;
+    for (i = 1; i < context->glyph_count; ++i)
+    {
+        if (context->u.buffer.glyph_props[i].isClusterStart)
+        {
+            unsigned int start_text, end_text;
+
+            start_text = context->glyph_infos[start_idx].start_text_idx;
+            end_text = context->glyph_infos[i].start_text_idx;
+
+            for (j = start_text; j < end_text; ++j)
+                context->u.buffer.clustermap[j] = start_idx;
+
+            start_idx = i;
+        }
+    }
+
+    /* Fill the tail. */
+    for (j = context->glyph_infos[start_idx].start_text_idx; j < context->length; ++j)
+        context->u.buffer.clustermap[j] = start_idx;
 
     heap_free(lookups.lookups);
 }
