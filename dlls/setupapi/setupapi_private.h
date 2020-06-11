@@ -43,6 +43,8 @@
 #define REGPART_RENAME "\\Rename"
 #define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
+#define PNF_HEADER L"Wine PNF header\n"
+
 extern HINSTANCE SETUPAPI_hInstance DECLSPEC_HIDDEN;
 
 static inline void * __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t len)
