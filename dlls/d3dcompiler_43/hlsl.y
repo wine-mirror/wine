@@ -508,8 +508,8 @@ static struct hlsl_ir_swizzle *get_swizzle(struct hlsl_ir_node *value, const cha
     return NULL;
 }
 
-static struct hlsl_ir_var *new_synthetic_var(const char *name, struct hlsl_type *type,
-        const struct source_location loc)
+static struct hlsl_ir_var *new_var(const char *name, struct hlsl_type *type, const struct source_location loc,
+        const char *semantic, unsigned int modifiers, const struct reg_reservation *reg_reservation)
 {
     struct hlsl_ir_var *var;
 
@@ -519,10 +519,22 @@ static struct hlsl_ir_var *new_synthetic_var(const char *name, struct hlsl_type 
         return NULL;
     }
 
-    var->name = strdup(name);
+    var->name = name;
     var->data_type = type;
     var->loc = loc;
-    list_add_tail(&hlsl_ctx.globals->vars, &var->scope_entry);
+    var->semantic = semantic;
+    var->modifiers = modifiers;
+    var->reg_reservation = reg_reservation;
+    return var;
+}
+
+static struct hlsl_ir_var *new_synthetic_var(const char *name, struct hlsl_type *type,
+        const struct source_location loc)
+{
+    struct hlsl_ir_var *var = new_var(strdup(name), type, loc, NULL, 0, NULL);
+
+    if (var)
+        list_add_tail(&hlsl_ctx.globals->vars, &var->scope_entry);
     return var;
 }
 
@@ -785,23 +797,16 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
 
     LIST_FOR_EACH_ENTRY_SAFE(v, v_next, var_list, struct parse_variable_def, entry)
     {
-        var = d3dcompiler_alloc(sizeof(*var));
-        if (!var)
-        {
-            ERR("Out of memory.\n");
-            free_parse_variable_def(v);
-            continue;
-        }
         if (v->array_size)
             type = new_array_type(basic_type, v->array_size);
         else
             type = basic_type;
-        var->data_type = type;
-        var->loc = v->loc;
-        var->name = v->name;
-        var->modifiers = modifiers;
-        var->semantic = v->semantic;
-        var->reg_reservation = v->reg_reservation;
+
+        if (!(var = new_var(v->name, type, v->loc, v->semantic, modifiers, v->reg_reservation)))
+        {
+            free_parse_variable_def(v);
+            continue;
+        }
         debug_dump_decl(type, modifiers, v->name, v->loc.line);
 
         if (hlsl_ctx.cur_scope == hlsl_ctx.globals)
@@ -1081,29 +1086,20 @@ static BOOL add_typedef(DWORD modifiers, struct hlsl_type *orig_type, struct lis
 
 static BOOL add_func_parameter(struct list *list, struct parse_parameter *param, const struct source_location loc)
 {
-    struct hlsl_ir_var *decl = d3dcompiler_alloc(sizeof(*decl));
+    struct hlsl_ir_var *var;
 
     if (param->type->type == HLSL_CLASS_MATRIX)
         assert(param->type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK);
 
-    if (!decl)
-    {
-        ERR("Out of memory.\n");
+    if (!(var = new_var(param->name, param->type, loc, param->semantic, param->modifiers, param->reg_reservation)))
         return FALSE;
-    }
-    decl->data_type = param->type;
-    decl->loc = loc;
-    decl->name = param->name;
-    decl->semantic = param->semantic;
-    decl->reg_reservation = param->reg_reservation;
-    decl->modifiers = param->modifiers;
 
-    if (!add_declaration(hlsl_ctx.cur_scope, decl, FALSE))
+    if (!add_declaration(hlsl_ctx.cur_scope, var, FALSE))
     {
-        free_declaration(decl);
+        free_declaration(var);
         return FALSE;
     }
-    list_add_tail(list, &decl->param_entry);
+    list_add_tail(list, &var->param_entry);
     return TRUE;
 }
 
