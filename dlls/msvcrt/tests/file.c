@@ -687,7 +687,7 @@ static void test_fflush( void )
   char buf1[16], buf2[24];
   char *tempf;
   FILE *tempfh;
-  int ret;
+  int ret, fd;
 
   tempf=_tempnam(".","wne");
 
@@ -728,7 +728,23 @@ static void test_fflush( void )
   ok(memcmp(buf1, buf2, sizeof(buf1)) == 0, "Got unexpected data (%c)\n", buf2[0]);
 
   fclose(tempfh);
+  unlink(tempf);
 
+  /* test flush failure */
+  tempfh = fopen(tempf,"wb");
+  ok(tempfh != NULL, "Can't open test file.\n");
+  fwrite(obuf, 1, sizeof(obuf), tempfh);
+  fd = tempfh->_file;
+  tempfh->_file = -1;
+
+  ok(tempfh->_ptr - tempfh->_base, "buffer is empty\n");
+  ret = fflush(tempfh);
+  ok(ret == EOF, "expected EOF, got %d\n", ret);
+  ok(!(tempfh->_ptr - tempfh->_base), "buffer should be empty\n");
+  ok(!tempfh->_cnt, "tempfh->_cnt = %d\n", tempfh->_cnt);
+
+  tempfh->_file = fd;
+  fclose(tempfh);
   unlink(tempf);
   free(tempf);
 }

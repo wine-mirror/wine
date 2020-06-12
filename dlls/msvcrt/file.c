@@ -656,21 +656,22 @@ void msvcrt_init_io(void)
 /* INTERNAL: Flush stdio file buffer */
 static int msvcrt_flush_buffer(MSVCRT_FILE* file)
 {
+    int ret = 0;
+
     if((file->_flag & (MSVCRT__IOREAD|MSVCRT__IOWRT)) == MSVCRT__IOWRT &&
             file->_flag & (MSVCRT__IOMYBUF|MSVCRT__USERBUF)) {
         int cnt=file->_ptr-file->_base;
         if(cnt>0 && MSVCRT__write(file->_file, file->_base, cnt) != cnt) {
             file->_flag |= MSVCRT__IOERR;
-            return MSVCRT_EOF;
-        }
-
-        if(file->_flag & MSVCRT__IORW)
+            ret = MSVCRT_EOF;
+        } else if(file->_flag & MSVCRT__IORW) {
             file->_flag &= ~MSVCRT__IOWRT;
+        }
     }
 
     file->_ptr=file->_base;
     file->_cnt=0;
-    return 0;
+    return ret;
 }
 
 /*********************************************************************
