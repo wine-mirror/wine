@@ -20,6 +20,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "oleidl.h"
+#include "rpcproxy.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(manipulation);
@@ -41,6 +43,16 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( dm_instance );
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( dm_instance );
 }
 
 HRESULT WINAPI DllCanUnloadNow(void)
