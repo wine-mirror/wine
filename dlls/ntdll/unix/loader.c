@@ -424,8 +424,8 @@ static NTSTATUS loader_exec( const char *loader, char **argv, int is_child_64bit
  *
  * argv[0] and argv[1] must be reserved for the preloader and loader respectively.
  */
-static NTSTATUS CDECL exec_wineloader( char **argv, int socketfd, int is_child_64bit,
-                                       ULONGLONG res_start, ULONGLONG res_end )
+NTSTATUS exec_wineloader( char **argv, int socketfd, int is_child_64bit,
+                          ULONGLONG res_start, ULONGLONG res_end )
 {
     const char *loader = argv0;
     const char *loader_env = getenv( "WINELOADER" );
@@ -906,7 +906,6 @@ static struct unix_funcs unix_funcs =
     get_version,
     get_build_id,
     get_host_version,
-    exec_wineloader,
     map_so_dll,
     virtual_map_section,
     virtual_get_system_info,
@@ -925,6 +924,9 @@ static struct unix_funcs unix_funcs =
     exit_thread,
     exit_process,
     get_thread_ldt_entry,
+    spawn_process,
+    exec_process,
+    fork_and_exec,
     wine_server_call,
     server_send_fd,
     server_get_unix_fd,

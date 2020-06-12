@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 40
+#define NTDLL_UNIXLIB_VERSION 41
 
 struct unix_funcs
 {
@@ -180,10 +180,6 @@ struct unix_funcs
     const char *  (CDECL *get_build_id)(void);
     void          (CDECL *get_host_version)( const char **sysname, const char **release );
 
-    /* loader functions */
-    NTSTATUS      (CDECL *exec_wineloader)( char **argv, int socketfd, int is_child_64bit,
-                                            ULONGLONG res_start, ULONGLONG res_end );
-
     /* virtual memory functions */
     NTSTATUS      (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );
     NTSTATUS      (CDECL *virtual_map_section)( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
@@ -208,6 +204,12 @@ struct unix_funcs
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
     NTSTATUS      (CDECL *get_thread_ldt_entry)( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
+    NTSTATUS      (CDECL *spawn_process)( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
+                                          const char *unixdir, char *winedebug,
+                                          const pe_image_info_t *pe_info );
+    NTSTATUS      (CDECL *exec_process)( const UNICODE_STRING *cmdline, const pe_image_info_t *pe_info );
+    NTSTATUS      (CDECL *fork_and_exec)( const char *unix_name, const char *unix_dir,
+                                          const RTL_USER_PROCESS_PARAMETERS *params );
 
     /* server functions */
     unsigned int  (CDECL *server_call)( void *req_ptr );

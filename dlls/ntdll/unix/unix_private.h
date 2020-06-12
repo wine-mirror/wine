@@ -114,6 +114,11 @@ extern TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_co
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
+                                     const char *unixdir, char *winedebug, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL fork_and_exec( const char *unix_name, const char *unix_dir,
+                                     const RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
 
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
@@ -129,6 +134,10 @@ extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 
 extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
 extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen ) DECLSPEC_HIDDEN;
+extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict ) DECLSPEC_HIDDEN;
+extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
+extern NTSTATUS exec_wineloader( char **argv, int socketfd, int is_child_64bit,
+                                 ULONGLONG res_start, ULONGLONG res_end ) DECLSPEC_HIDDEN;
 
 extern unsigned int server_call_unlocked( void *req_ptr ) DECLSPEC_HIDDEN;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;

@@ -840,133 +840,6 @@ NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
 }
 
 
-/***********************************************************************
- *           build_argv
- *
- * Build an argv array from a command-line.
- * 'reserved' is the number of args to reserve before the first one.
- */
-static char **build_argv( const UNICODE_STRING *cmdlineW, int reserved )
-{
-    int argc;
-    char **argv;
-    char *arg, *s, *d, *cmdline;
-    int in_quotes, bcount, len;
-
-    len = cmdlineW->Length / sizeof(WCHAR);
-    if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * 3 + 1 ))) return NULL;
-    len = ntdll_wcstoumbs( cmdlineW->Buffer, len, cmdline, len * 3, FALSE );
-    cmdline[len++] = 0;
-
-    argc = reserved + 1;
-    bcount = 0;
-    in_quotes = 0;
-    s = cmdline;
-    while (1)
-    {
-        if (*s == '\0' || ((*s == ' ' || *s == '\t') && !in_quotes))
-        {
-            /* space */
-            argc++;
-            /* skip the remaining spaces */
-            while (*s == ' ' || *s == '\t') s++;
-            if (*s == '\0') break;
-            bcount = 0;
-            continue;
-        }
-        else if (*s == '\\') bcount++;  /* '\', count them */
-        else if ((*s == '"') && ((bcount & 1) == 0))
-        {
-            if (in_quotes && s[1] == '"') s++;
-            else
-            {
-                /* unescaped '"' */
-                in_quotes = !in_quotes;
-                bcount = 0;
-            }
-        }
-        else bcount = 0; /* a regular character */
-        s++;
-    }
-    if (!(argv = RtlAllocateHeap( GetProcessHeap(), 0, argc * sizeof(*argv) + len )))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, cmdline );
-        return NULL;
-    }
-
-    arg = d = s = (char *)(argv + argc);
-    memcpy( d, cmdline, len );
-    bcount = 0;
-    in_quotes = 0;
-    argc = reserved;
-    while (*s)
-    {
-        if ((*s == ' ' || *s == '\t') && !in_quotes)
-        {
-            /* Close the argument and copy it */
-            *d = 0;
-            argv[argc++] = arg;
-            /* skip the remaining spaces */
-            do
-            {
-                s++;
-            } while (*s == ' ' || *s == '\t');
-
-            /* Start with a new argument */
-            arg = d = s;
-            bcount = 0;
-        }
-        else if (*s == '\\')
-        {
-            *d++ = *s++;
-            bcount++;
-        }
-        else if (*s == '"')
-        {
-            if ((bcount & 1) == 0)
-            {
-                /* Preceded by an even number of '\', this is half that
-                 * number of '\', plus a '"' which we discard.
-                 */
-                d -= bcount/2;
-                s++;
-                if (in_quotes && *s == '"')
-                {
-                    *d++ = '"';
-                    s++;
-                }
-                else in_quotes = !in_quotes;
-            }
-            else
-            {
-                /* Preceded by an odd number of '\', this is half that
-                 * number of '\' followed by a '"'
-                 */
-                d = d - bcount / 2 - 1;
-                *d++ = '"';
-                s++;
-            }
-            bcount = 0;
-        }
-        else
-        {
-            /* a regular character */
-            *d++ = *s++;
-            bcount = 0;
-        }
-    }
-    if (*arg)
-    {
-        *d = '\0';
-        argv[argc++] = arg;
-    }
-    argv[argc] = NULL;
-
-    RtlFreeHeap( GetProcessHeap(), 0, cmdline );
-    return argv;
-}
-
-
 static inline const WCHAR *get_params_string( const RTL_USER_PROCESS_PARAMETERS *params,
                                               const UNICODE_STRING *str )
 {
@@ -1032,136 +905,6 @@ static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *p
     info->shellinfo_len = append_string( &ptr, params, &params->ShellInfo );
     info->runtime_len = append_string( &ptr, params, &params->RuntimeInfo );
     return info;
-}
-
-
-#ifdef __APPLE__
-/***********************************************************************
- *           terminate_main_thread
- *
- * On some versions of Mac OS X, the execve system call fails with
- * ENOTSUP if the process has multiple threads.  Wine is always multi-
- * threaded on Mac OS X because it specifically reserves the main thread
- * for use by the system frameworks (see apple_main_thread() in
- * libs/wine/loader.c).  So, when we need to exec without first forking,
- * we need to terminate the main thread first.  We do this by installing
- * a custom run loop source onto the main run loop and signaling it.
- * The source's "perform" callback is pthread_exit and it will be
- * executed on the main thread, terminating it.
- *
- * Returns TRUE if there's still hope the main thread has terminated or
- * will soon.  Return FALSE if we've given up.
- */
-static BOOL terminate_main_thread(void)
-{
-    static int delayms;
-
-    if (!delayms)
-    {
-        CFRunLoopSourceContext source_context = { 0 };
-        CFRunLoopSourceRef source;
-
-        source_context.perform = pthread_exit;
-        if (!(source = CFRunLoopSourceCreate( NULL, 0, &source_context )))
-            return FALSE;
-
-        CFRunLoopAddSource( CFRunLoopGetMain(), source, kCFRunLoopCommonModes );
-        CFRunLoopSourceSignal( source );
-        CFRunLoopWakeUp( CFRunLoopGetMain() );
-        CFRelease( source );
-
-        delayms = 20;
-    }
-
-    if (delayms > 1000)
-        return FALSE;
-
-    usleep(delayms * 1000);
-    delayms *= 2;
-
-    return TRUE;
-}
-#endif
-
-
-/***********************************************************************
- *           set_stdio_fd
- */
-static void set_stdio_fd( int stdin_fd, int stdout_fd )
-{
-    int fd = -1;
-
-    if (stdin_fd == -1 || stdout_fd == -1)
-    {
-        fd = open( "/dev/null", O_RDWR );
-        if (stdin_fd == -1) stdin_fd = fd;
-        if (stdout_fd == -1) stdout_fd = fd;
-    }
-
-    dup2( stdin_fd, 0 );
-    dup2( stdout_fd, 1 );
-    if (fd != -1) close( fd );
-}
-
-
-/***********************************************************************
- *           spawn_loader
- */
-static NTSTATUS spawn_loader( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
-                              const char *unixdir, char *winedebug, const pe_image_info_t *pe_info )
-{
-    const int is_child_64bit = (pe_info->cpu == CPU_x86_64 || pe_info->cpu == CPU_ARM64);
-    pid_t pid;
-    int stdin_fd = -1, stdout_fd = -1;
-    char **argv;
-    NTSTATUS status = STATUS_SUCCESS;
-
-    argv = build_argv( &params->CommandLine, 2 );
-
-    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
-    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
-
-    if (!(pid = fork()))  /* child */
-    {
-        if (!(pid = fork()))  /* grandchild */
-        {
-            if (params->ConsoleFlags ||
-                params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
-                (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
-            {
-                setsid();
-                set_stdio_fd( -1, -1 );  /* close stdin and stdout */
-            }
-            else set_stdio_fd( stdin_fd, stdout_fd );
-
-            if (stdin_fd != -1) close( stdin_fd );
-            if (stdout_fd != -1) close( stdout_fd );
-
-            if (winedebug) putenv( winedebug );
-            if (unixdir) chdir( unixdir );
-
-            unix_funcs->exec_wineloader( argv, socketfd, is_child_64bit,
-                                         pe_info->base, pe_info->base + pe_info->map_size );
-            _exit(1);
-        }
-
-        _exit(pid == -1);
-    }
-
-    if (pid != -1)
-    {
-        /* reap child */
-        pid_t wret;
-        do {
-            wret = waitpid(pid, NULL, 0);
-        } while (wret < 0 && errno == EINTR);
-    }
-    else status = FILE_GetNtStatus();
-
-    if (stdin_fd != -1) close( stdin_fd );
-    if (stdout_fd != -1) close( stdout_fd );
-    RtlFreeHeap( GetProcessHeap(), 0, argv );
-    return status;
 }
 
 
@@ -1404,9 +1147,6 @@ static char *get_unix_curdir( const RTL_USER_PROCESS_PARAMETERS *params )
  */
 static NTSTATUS fork_and_exec( UNICODE_STRING *path, const RTL_USER_PROCESS_PARAMETERS *params )
 {
-    pid_t pid;
-    int fd[2], stdin_fd = -1, stdout_fd = -1;
-    char **argv, **envp;
     char *unixdir;
     ANSI_STRING unix_name;
     NTSTATUS status;
@@ -1414,79 +1154,8 @@ static NTSTATUS fork_and_exec( UNICODE_STRING *path, const RTL_USER_PROCESS_PARA
     status = wine_nt_to_unix_file_name( path, &unix_name, FILE_OPEN, FALSE );
     if (status) return status;
 
-#ifdef HAVE_PIPE2
-    if (pipe2( fd, O_CLOEXEC ) == -1)
-#endif
-    {
-        if (pipe(fd) == -1)
-        {
-            RtlFreeAnsiString( &unix_name );
-            return STATUS_TOO_MANY_OPENED_FILES;
-        }
-        fcntl( fd[0], F_SETFD, FD_CLOEXEC );
-        fcntl( fd[1], F_SETFD, FD_CLOEXEC );
-    }
-
-    wine_server_handle_to_fd( params->hStdInput, FILE_READ_DATA, &stdin_fd, NULL );
-    wine_server_handle_to_fd( params->hStdOutput, FILE_WRITE_DATA, &stdout_fd, NULL );
-
-    argv = build_argv( &params->CommandLine, 0 );
-    envp = build_envp( params->Environment );
     unixdir = get_unix_curdir( params );
-
-    if (!(pid = fork()))  /* child */
-    {
-        if (!(pid = fork()))  /* grandchild */
-        {
-            close( fd[0] );
-
-            if (params->ConsoleFlags ||
-                params->ConsoleHandle == (HANDLE)1 /* KERNEL32_CONSOLE_ALLOC */ ||
-                (params->hStdInput == INVALID_HANDLE_VALUE && params->hStdOutput == INVALID_HANDLE_VALUE))
-            {
-                setsid();
-                set_stdio_fd( -1, -1 );  /* close stdin and stdout */
-            }
-            else set_stdio_fd( stdin_fd, stdout_fd );
-
-            if (stdin_fd != -1) close( stdin_fd );
-            if (stdout_fd != -1) close( stdout_fd );
-
-            /* Reset signals that we previously set to SIG_IGN */
-            signal( SIGPIPE, SIG_DFL );
-
-            if (unixdir) chdir( unixdir );
-
-            if (argv && envp) execve( unix_name.Buffer, argv, envp );
-        }
-
-        if (pid <= 0)  /* grandchild if exec failed or child if fork failed */
-        {
-            status = FILE_GetNtStatus();
-            write( fd[1], &status, sizeof(status) );
-            _exit(1);
-        }
-
-        _exit(0); /* child if fork succeeded */
-    }
-    close( fd[1] );
-
-    if (pid != -1)
-    {
-        /* reap child */
-        pid_t wret;
-        do {
-            wret = waitpid(pid, NULL, 0);
-        } while (wret < 0 && errno == EINTR);
-        read( fd[0], &status, sizeof(status) );  /* if we read something, exec or second fork failed */
-    }
-    else status = FILE_GetNtStatus();
-
-    close( fd[0] );
-    if (stdin_fd != -1) close( stdin_fd );
-    if (stdout_fd != -1) close( stdout_fd );
-    RtlFreeHeap( GetProcessHeap(), 0, argv );
-    RtlFreeHeap( GetProcessHeap(), 0, envp );
+    status = unix_funcs->fork_and_exec( unix_name.Buffer, unixdir, params );
     RtlFreeHeap( GetProcessHeap(), 0, unixdir );
     RtlFreeAnsiString( &unix_name );
     return status;
@@ -1503,7 +1172,6 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     static const WCHAR comW[] = {'.','c','o','m',0};
     static const WCHAR pifW[] = {'.','p','i','f',0};
 
-    int socketfd[2];
     WCHAR *p, *cmdline;
     UNICODE_STRING strW;
     pe_image_info_t pe_info;
@@ -1548,49 +1216,7 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
         return status;
     }
 
-    /* exec the new process */
-
-    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
-#ifdef SO_PASSCRED
-    else
-    {
-        int enable = 1;
-        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
-    }
-#endif
-    wine_server_send_fd( socketfd[1] );
-    close( socketfd[1] );
-
-    SERVER_START_REQ( exec_process )
-    {
-        req->socket_fd = socketfd[1];
-        req->cpu       = pe_info.cpu;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    if (!status)
-    {
-        const int is_child_64bit = (pe_info.cpu == CPU_x86_64 || pe_info.cpu == CPU_ARM64);
-        char **argv = build_argv( &strW, 2 );
-        if (argv)
-        {
-            do
-            {
-                status = unix_funcs->exec_wineloader( argv, socketfd[0], is_child_64bit,
-                                                      pe_info.base, pe_info.base + pe_info.map_size );
-            }
-#ifdef __APPLE__
-            while (errno == ENOTSUP && terminate_main_thread());
-#else
-            while (0);
-#endif
-            RtlFreeHeap( GetProcessHeap(), 0, argv );
-        }
-        else status = STATUS_NO_MEMORY;
-    }
-    close( socketfd[0] );
-    return status;
+    return unix_funcs->exec_process( &strW, &pe_info );
 }
 
 
@@ -1743,7 +1369,8 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 
     /* create the child process */
 
-    if ((status = spawn_loader( params, socketfd[0], unixdir, winedebug, &pe_info ))) goto done;
+    if ((status = unix_funcs->spawn_process( params, socketfd[0], unixdir, winedebug, &pe_info )))
+        goto done;
 
     close( socketfd[0] );
     socketfd[0] = -1;

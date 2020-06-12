@@ -408,6 +408,14 @@ static void init_unix_codepage(void)
 #endif  /* __APPLE__ || __ANDROID__ */
 
 
+static inline SIZE_T get_env_length( const WCHAR *env )
+{
+    const WCHAR *end = env;
+    while (*end) end += wcslen(end) + 1;
+    return end + 1 - env;
+}
+
+
 /***********************************************************************
  *           is_special_env_var
  *
@@ -443,6 +451,122 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
     if (reslen && nfc_table) reslen = compose_string( nfc_table, dst, reslen );
 #endif
     return reslen;
+}
+
+
+/******************************************************************
+ *      ntdll_wcstoumbs
+ */
+int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
+{
+    DWORD i, reslen;
+
+    if (unix_table.CodePage)
+    {
+        if (unix_table.DBCSOffsets)
+        {
+            const unsigned short *uni2cp = unix_table.WideCharTable;
+            for (i = dstlen; srclen && i; i--, srclen--, src++)
+            {
+                unsigned short ch = uni2cp[*src];
+                if (ch >> 8)
+                {
+                    if (strict && unix_table.DBCSOffsets[unix_table.DBCSOffsets[ch >> 8] + (ch & 0xff)] != *src)
+                        return -1;
+                    if (i == 1) break;  /* do not output a partial char */
+                    i--;
+                    *dst++ = ch >> 8;
+                }
+                else
+                {
+                    if (unix_table.MultiByteTable[ch] != *src) return -1;
+                    *dst++ = (char)ch;
+                }
+            }
+            reslen = dstlen - i;
+        }
+        else
+        {
+            const unsigned char *uni2cp = unix_table.WideCharTable;
+            reslen = min( srclen, dstlen );
+            for (i = 0; i < reslen; i++)
+            {
+                unsigned char ch = uni2cp[src[i]];
+                if (strict && unix_table.MultiByteTable[ch] != src[i]) return -1;
+                dst[i] = ch;
+            }
+        }
+    }
+    else RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
+
+    return reslen;
+}
+
+
+/***********************************************************************
+ *           build_envp
+ *
+ * Build the environment of a new child process.
+ */
+char **build_envp( const WCHAR *envW )
+{
+    static const char * const unix_vars[] = { "PATH", "TEMP", "TMP", "HOME" };
+    char **envp;
+    char *env, *p;
+    int count = 1, length, lenW;
+    unsigned int i;
+
+    lenW = get_env_length( envW );
+    if (!(env = malloc( lenW * 3 ))) return NULL;
+    length = ntdll_wcstoumbs( envW, lenW, env, lenW * 3, FALSE );
+
+    for (p = env; *p; p += strlen(p) + 1, count++)
+        if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
+
+    for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
+    {
+        if (!(p = getenv(unix_vars[i]))) continue;
+        length += strlen(unix_vars[i]) + strlen(p) + 2;
+        count++;
+    }
+
+    if ((envp = malloc( count * sizeof(*envp) + length )))
+    {
+        char **envptr = envp;
+        char *dst = (char *)(envp + count);
+
+        /* some variables must not be modified, so we get them directly from the unix env */
+        for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
+        {
+            if (!(p = getenv( unix_vars[i] ))) continue;
+            *envptr++ = strcpy( dst, unix_vars[i] );
+            strcat( dst, "=" );
+            strcat( dst, p );
+            dst += strlen(dst) + 1;
+        }
+
+        /* now put the Windows environment strings */
+        for (p = env; *p; p += strlen(p) + 1)
+        {
+            if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
+            if (!strncmp( p, "WINEPRELOADRESERVE=", sizeof("WINEPRELOADRESERVE=")-1 )) continue;
+            if (!strncmp( p, "WINELOADERNOEXEC=", sizeof("WINELOADERNOEXEC=")-1 )) continue;
+            if (!strncmp( p, "WINESERVERSOCKET=", sizeof("WINESERVERSOCKET=")-1 )) continue;
+            if (is_special_env_var( p ))  /* prefix it with "WINE" */
+            {
+                *envptr++ = strcpy( dst, "WINE" );
+                strcat( dst, p );
+            }
+            else
+            {
+                *envptr++ = strcpy( dst, p );
+            }
+            dst += strlen(dst) + 1;
+        }
+        *envptr = 0;
+    }
+    free( env );
+    return envp;
 }
 
 
