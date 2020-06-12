@@ -1778,12 +1778,40 @@ static BOOL parse_nummethods(const xmlstr_t *str, struct entity *entity)
     return TRUE;
 }
 
+static void parse_add_interface_class( xmlbuf_t *xmlbuf, struct entity_array *entities,
+        struct actctx_loader *acl, WCHAR *clsid )
+{
+    struct entity *entity;
+    WCHAR *str;
+
+    if (!clsid) return;
+
+    if (!(str = strdupW(clsid)))
+    {
+        set_error( xmlbuf );
+        return;
+    }
+
+    if (!(entity = add_entity(entities, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION)))
+    {
+        RtlFreeHeap(GetProcessHeap(), 0, str);
+        set_error( xmlbuf );
+        return;
+    }
+
+    entity->u.comclass.clsid = str;
+    entity->u.comclass.model = ThreadingModel_Both;
+
+    acl->actctx->sections |= SERVERREDIRECT_SECTION;
+}
+
 static void parse_cominterface_proxy_stub_elem( xmlbuf_t *xmlbuf, struct dll_redirect *dll,
                                                 struct actctx_loader *acl, const struct xml_elem *parent )
 {
+    WCHAR *psclsid = NULL;
+    struct entity *entity;
     struct xml_attr attr;
     BOOL end = FALSE;
-    struct entity*      entity;
 
     if (!(entity = add_entity(&dll->entities, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION)))
     {
@@ -1815,8 +1843,12 @@ static void parse_cominterface_proxy_stub_elem( xmlbuf_t *xmlbuf, struct dll_red
         {
             if (!(entity->u.ifaceps.tlib = xmlstrdupW(&attr.value))) set_error( xmlbuf );
         }
+        else if (xml_attr_cmp(&attr, proxyStubClsid32W))
+        {
+            if (!(psclsid = xmlstrdupW(&attr.value))) set_error( xmlbuf );
+        }
         /* not used */
-        else if (xml_attr_cmp(&attr, proxyStubClsid32W) || xml_attr_cmp(&attr, threadingmodelW))
+        else if (xml_attr_cmp(&attr, threadingmodelW))
         {
         }
         else if (!is_xmlns_attr( &attr ))
@@ -1827,6 +1859,10 @@ static void parse_cominterface_proxy_stub_elem( xmlbuf_t *xmlbuf, struct dll_red
 
     acl->actctx->sections |= IFACEREDIRECT_SECTION;
     if (!end) parse_expect_end_elem(xmlbuf, parent);
+
+    parse_add_interface_class(xmlbuf, &dll->entities, acl, psclsid ? psclsid : entity->u.ifaceps.iid);
+
+    RtlFreeHeap(GetProcessHeap(), 0, psclsid);
 }
 
 static BOOL parse_typelib_flags(const xmlstr_t *value, struct entity *entity)
