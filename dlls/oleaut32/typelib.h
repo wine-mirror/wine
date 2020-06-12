@@ -326,12 +326,11 @@ typedef struct {
 
 /* These then get followed by this magic */
 typedef struct {
-/*00*/ BYTE res00;		/* always 0x01 */
-/*01*/ CHAR CompObj_magic[8];	/* always "CompObj" */
+/*00*/ CHAR CompObj_magic[9];	/* always "\1CompObj" */
 /*09*/ CHAR dir_magic[4];	/* always "dir" */
 } SLTG_Magic;
 
-#define SLTG_COMPOBJ_MAGIC "CompObj"
+#define SLTG_COMPOBJ_MAGIC "\1CompObj"
 #define SLTG_DIR_MAGIC "dir"
 
 /* Next we have SLTG_Header.nrOfFileBlks - 2 of Index strings.  These
