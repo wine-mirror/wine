@@ -3166,7 +3166,9 @@ static void test_filter_state(void)
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
+    /* Using IPin::Connect instead of IFilterGraph2::ConnectDirect to show that */
+    /* FilterGraph does not rely on ::ConnectDirect to track filter connections. */
+    IPin_Connect(&source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
 
     check_filter_state(graph, State_Stopped);
 
@@ -3241,9 +3243,12 @@ static void test_filter_state(void)
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
-    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    /* Add the filters in reverse order this time. */
     IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    /* Using IPin::Connect instead of IFilterGraph2::ConnectDirect to show that */
+    /* FilterGraph does not rely on ::ConnectDirect to track filter connections. */
+    IPin_Connect(&source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
 
     hr = IMediaFilter_Pause(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
