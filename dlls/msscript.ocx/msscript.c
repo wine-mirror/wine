@@ -100,7 +100,6 @@ struct ScriptControl {
     LONG timeout;
     VARIANT_BOOL allow_ui;
     VARIANT_BOOL use_safe_subset;
-    ScriptControlStates state;
 
     /* connection points */
     ConnectionPoint *cp_list;
@@ -242,7 +241,7 @@ static HRESULT start_script(struct ScriptControl *control)
 {
     HRESULT hr = S_OK;
 
-    if (!control->host || control->state != Initialized)
+    if (!control->host)
         return E_FAIL;
 
     if (control->host->script_state != SCRIPTSTATE_STARTED)
@@ -1196,6 +1195,9 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
 static HRESULT WINAPI ScriptControl_get_State(IScriptControl *iface, ScriptControlStates *p)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
+    SCRIPTSTATE state;
+    HRESULT hres;
+
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
@@ -1204,7 +1206,22 @@ static HRESULT WINAPI ScriptControl_get_State(IScriptControl *iface, ScriptContr
     if(!This->host)
         return E_FAIL;
 
-    *p = This->state;
+    hres = IActiveScript_GetScriptState(This->host->script, &state);
+    if (FAILED(hres)) return hres;
+
+    switch (state)
+    {
+    case SCRIPTSTATE_INITIALIZED:
+    case SCRIPTSTATE_STARTED:
+        *p = Initialized;
+        break;
+    case SCRIPTSTATE_CONNECTED:
+        *p = Connected;
+        break;
+    default:
+        WARN("unexpected state %d\n", state);
+        return E_FAIL;
+    }
     return S_OK;
 }
 
@@ -1219,8 +1236,7 @@ static HRESULT WINAPI ScriptControl_put_State(IScriptControl *iface, ScriptContr
     if(state != Initialized && state != Connected)
         return CTL_E_INVALIDPROPERTYVALUE;
 
-    This->state = state;
-    return S_OK;
+    return IActiveScript_SetScriptState(This->host->script, state == Connected ? SCRIPTSTATE_CONNECTED : SCRIPTSTATE_STARTED);
 }
 
 static HRESULT WINAPI ScriptControl_put_SitehWnd(IScriptControl *iface, LONG hwnd)
@@ -2433,7 +2449,6 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
     script_control->timeout = 10000;
     script_control->allow_ui = VARIANT_TRUE;
     script_control->use_safe_subset = VARIANT_FALSE;
-    script_control->state = Initialized;
 
     ConnectionPoint_Init(&script_control->cp_scsource, script_control, &DIID_DScriptControlSource);
     ConnectionPoint_Init(&script_control->cp_propnotif, script_control, &IID_IPropertyNotifySink);
