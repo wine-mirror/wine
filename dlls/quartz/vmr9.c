@@ -1679,20 +1679,21 @@ static HRESULT WINAPI VMR9WindowlessControl_GetMaxIdealVideoSize(IVMRWindowlessC
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessControl9 *iface, const RECT *source, const RECT *dest)
+static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessControl9 *iface,
+        const RECT *src, const RECT *dst)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
 
-    TRACE("(%p/%p)->(%p, %p)\n", iface, This, source, dest);
+    TRACE("filter %p, src %s, dst %s.\n", filter, wine_dbgstr_rect(src), wine_dbgstr_rect(dst));
 
-    EnterCriticalSection(&This->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
 
-    if (source)
-        This->window.src = *source;
-    if (dest)
-        This->window.dst = *dest;
+    if (src)
+        filter->window.src = *src;
+    if (dst)
+        filter->window.dst = *dst;
 
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
 
     return S_OK;
 }
