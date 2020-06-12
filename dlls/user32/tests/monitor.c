@@ -448,7 +448,6 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmDisplayFrequency = vid_modes_test[i].freq;
         dm.dmFields           = vid_modes_test[i].fields;
         res = ChangeDisplaySettingsExA(NULL, &dm, NULL, CDS_TEST, NULL);
-        todo_wine_if(i == 2)
         ok(vid_modes_test[i].must_succeed ?
            (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_RESTART) :
            (res == DISP_CHANGE_SUCCESSFUL || res == DISP_CHANGE_RESTART ||

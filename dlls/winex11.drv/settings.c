@@ -420,7 +420,7 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                 continue;
         }
         if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && (dd_modes[i].refresh_rate != 0) &&
-            devmode->dmDisplayFrequency != 0)
+            devmode->dmDisplayFrequency != 0 && devmode->dmDisplayFrequency != 1)
         {
             if (devmode->dmDisplayFrequency != dd_modes[i].refresh_rate)
                 continue;
