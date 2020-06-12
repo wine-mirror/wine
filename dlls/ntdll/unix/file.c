@@ -6257,16 +6257,33 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
     io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
     if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
     {
+        struct async_irp *async;
+        HANDLE wait_handle;
+        NTSTATUS status;
+
+        if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
+            return STATUS_NO_MEMORY;
+        async->buffer  = buffer;
+        async->size    = length;
+
         SERVER_START_REQ( get_volume_info )
         {
+            req->async = server_async( handle, &async->io, NULL, NULL, NULL, io );
             req->handle = wine_server_obj_handle( handle );
             req->info_class = info_class;
             wine_server_set_reply( req, buffer, length );
-            io->u.Status = wine_server_call( req );
-            if (!io->u.Status) io->Information = wine_server_reply_size( reply );
+            status = wine_server_call( req );
+            if (status != STATUS_PENDING)
+            {
+                io->u.Status = status;
+                io->Information = wine_server_reply_size( reply );
+            }
+            wait_handle = wine_server_ptr_handle( reply->wait );
         }
         SERVER_END_REQ;
-        return io->u.Status;
+        if (status != STATUS_PENDING) free( async );
+        if (wait_handle) status = wait_async( wait_handle, FALSE, io );
+        return status;
     }
     else if (io->u.Status) return io->u.Status;
 
