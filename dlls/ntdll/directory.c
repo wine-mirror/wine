@@ -215,28 +215,6 @@ void init_directories(void)
 }
 
 
-/***********************************************************************
- *           DIR_is_hidden_file
- *
- * Check if the specified file should be hidden based on its name and the show dot files option.
- */
-BOOL DIR_is_hidden_file( const UNICODE_STRING *name )
-{
-    WCHAR *p, *end;
-
-    if (show_dot_files) return FALSE;
-
-    end = p = name->Buffer + name->Length/sizeof(WCHAR);
-    while (p > name->Buffer && IS_SEPARATOR(p[-1])) p--;
-    while (p > name->Buffer && !IS_SEPARATOR(p[-1])) p--;
-    if (p == end || *p != '.') return FALSE;
-    /* make sure it isn't '.' or '..' */
-    if (p + 1 == end) return FALSE;
-    if (p[1] == '.' && p + 2 == end) return FALSE;
-    return TRUE;
-}
-
-
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile	[NTDLL.@]

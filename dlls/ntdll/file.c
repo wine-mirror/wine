@@ -111,7 +111,6 @@
 #include "ddk/mountmgr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 mode_t FILE_umask = 0;
 
@@ -157,8 +156,7 @@ int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULONG *attr
     return ret;
 }
 
-/* get the stat info and file attributes for a file (by name) */
-int get_file_info( const char *path, struct stat *st, ULONG *attr )
+static int get_file_info( const char *path, struct stat *st, ULONG *attr )
 {
     char *parent_path;
     int ret;
@@ -190,121 +188,6 @@ int get_file_info( const char *path, struct stat *st, ULONG *attr )
     return ret;
 }
 
-/**************************************************************************
- *                 FILE_CreateFile                    (internal)
- * Open a file.
- *
- * Parameter set fully identical with NtCreateFile
- */
-static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIBUTES attr,
-                                 PIO_STATUS_BLOCK io, PLARGE_INTEGER alloc_size,
-                                 ULONG attributes, ULONG sharing, ULONG disposition,
-                                 ULONG options, PVOID ea_buffer, ULONG ea_length )
-{
-    ANSI_STRING unix_name;
-    BOOL created = FALSE;
-
-    TRACE("handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p "
-          "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
-          handle, access, debugstr_us(attr->ObjectName), attr->Attributes,
-          attr->RootDirectory, attr->SecurityDescriptor, io, alloc_size,
-          attributes, sharing, disposition, options, ea_buffer, ea_length );
-
-    if (!attr || !attr->ObjectName) return STATUS_INVALID_PARAMETER;
-
-    if (alloc_size) FIXME( "alloc_size not supported\n" );
-
-    if (options & FILE_OPEN_BY_FILE_ID)
-        io->u.Status = unix_funcs->file_id_to_unix_file_name( attr, &unix_name );
-    else
-        io->u.Status = unix_funcs->nt_to_unix_file_name_attr( attr, &unix_name, disposition );
-
-    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
-    {
-        SERVER_START_REQ( open_file_object )
-        {
-            req->access     = access;
-            req->attributes = attr->Attributes;
-            req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-            req->sharing    = sharing;
-            req->options    = options;
-            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-            io->u.Status = wine_server_call( req );
-            *handle = wine_server_ptr_handle( reply->handle );
-        }
-        SERVER_END_REQ;
-        if (io->u.Status == STATUS_SUCCESS) io->Information = FILE_OPENED;
-        return io->u.Status;
-    }
-
-    if (io->u.Status == STATUS_NO_SUCH_FILE &&
-        disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
-    {
-        created = TRUE;
-        io->u.Status = STATUS_SUCCESS;
-    }
-
-    if (io->u.Status == STATUS_SUCCESS)
-    {
-        static UNICODE_STRING empty_string;
-        OBJECT_ATTRIBUTES unix_attr = *attr;
-        data_size_t len;
-        struct object_attributes *objattr;
-
-        unix_attr.ObjectName = &empty_string;  /* we send the unix name instead */
-        if ((io->u.Status = alloc_object_attributes( &unix_attr, &objattr, &len )))
-        {
-            RtlFreeAnsiString( &unix_name );
-            return io->u.Status;
-        }
-
-        SERVER_START_REQ( create_file )
-        {
-            req->access     = access;
-            req->sharing    = sharing;
-            req->create     = disposition;
-            req->options    = options;
-            req->attrs      = attributes;
-            wine_server_add_data( req, objattr, len );
-            wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
-            io->u.Status = wine_server_call( req );
-            *handle = wine_server_ptr_handle( reply->handle );
-        }
-        SERVER_END_REQ;
-        RtlFreeHeap( GetProcessHeap(), 0, objattr );
-        RtlFreeAnsiString( &unix_name );
-    }
-    else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );
-
-    if (io->u.Status == STATUS_SUCCESS)
-    {
-        if (created) io->Information = FILE_CREATED;
-        else switch(disposition)
-        {
-        case FILE_SUPERSEDE:
-            io->Information = FILE_SUPERSEDED;
-            break;
-        case FILE_CREATE:
-            io->Information = FILE_CREATED;
-            break;
-        case FILE_OPEN:
-        case FILE_OPEN_IF:
-            io->Information = FILE_OPENED;
-            break;
-        case FILE_OVERWRITE:
-        case FILE_OVERWRITE_IF:
-            io->Information = FILE_OVERWRITTEN;
-            break;
-        }
-    }
-    else if (io->u.Status == STATUS_TOO_MANY_OPENED_FILES)
-    {
-        static int once;
-        if (!once++) ERR_(winediag)( "Too many open files, ulimit -n probably needs to be increased\n" );
-    }
-
-    return io->u.Status;
-}
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.@]
@@ -328,8 +211,7 @@ NTSTATUS WINAPI NtOpenFile( PHANDLE handle, ACCESS_MASK access,
                             POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK io,
                             ULONG sharing, ULONG options )
 {
-    return FILE_CreateFile( handle, access, attr, io, NULL, 0,
-                            sharing, FILE_OPEN, options, NULL, 0 );
+    return unix_funcs->NtOpenFile( handle, access, attr, io, sharing, options );
 }
 
 /**************************************************************************
@@ -361,8 +243,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
                               ULONG attributes, ULONG sharing, ULONG disposition,
                               ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
-    return FILE_CreateFile( handle, access, attr, io, alloc_size, attributes,
-                            sharing, disposition, options, ea_buffer, ea_length );
+    return unix_funcs->NtCreateFile( handle, access, attr, io, alloc_size, attributes,
+                                     sharing, disposition, options, ea_buffer, ea_length );
 }
 
 /***********************************************************************
@@ -3002,40 +2884,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
                                            FILE_NETWORK_OPEN_INFORMATION *info )
 {
-    ANSI_STRING unix_name;
-    NTSTATUS status;
-
-    if (!(status = unix_funcs->nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
-    {
-        ULONG attributes;
-        struct stat st;
-
-        if (get_file_info( unix_name.Buffer, &st, &attributes ) == -1)
-            status = FILE_GetNtStatus();
-        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-            status = STATUS_INVALID_INFO_CLASS;
-        else
-        {
-            FILE_BASIC_INFORMATION basic;
-            FILE_STANDARD_INFORMATION std;
-
-            fill_file_info( &st, attributes, &basic, FileBasicInformation );
-            fill_file_info( &st, attributes, &std, FileStandardInformation );
-
-            info->CreationTime   = basic.CreationTime;
-            info->LastAccessTime = basic.LastAccessTime;
-            info->LastWriteTime  = basic.LastWriteTime;
-            info->ChangeTime     = basic.ChangeTime;
-            info->AllocationSize = std.AllocationSize;
-            info->EndOfFile      = std.EndOfFile;
-            info->FileAttributes = basic.FileAttributes;
-            if (DIR_is_hidden_file( attr->ObjectName ))
-                info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-        }
-        RtlFreeAnsiString( &unix_name );
-    }
-    else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
-    return status;
+    return unix_funcs->NtQueryFullAttributesFile( attr, info );
 }
 
 
@@ -3045,28 +2894,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
  */
 NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
 {
-    ANSI_STRING unix_name;
-    NTSTATUS status;
-
-    if (!(status = unix_funcs->nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
-    {
-        ULONG attributes;
-        struct stat st;
-
-        if (get_file_info( unix_name.Buffer, &st, &attributes ) == -1)
-            status = FILE_GetNtStatus();
-        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
-            status = STATUS_INVALID_INFO_CLASS;
-        else
-        {
-            status = fill_file_info( &st, attributes, info, FileBasicInformation );
-            if (DIR_is_hidden_file( attr->ObjectName ))
-                info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
-        }
-        RtlFreeAnsiString( &unix_name );
-    }
-    else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
-    return status;
+    return unix_funcs->NtQueryAttributesFile( attr, info );
 }
 
 
@@ -3732,75 +3560,26 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
 
 /******************************************************************
  *		NtCreateNamedPipeFile    (NTDLL.@)
- *
- *
  */
 NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
                                        POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK iosb,
                                        ULONG sharing, ULONG dispo, ULONG options,
-                                       ULONG pipe_type, ULONG read_mode, 
+                                       ULONG pipe_type, ULONG read_mode,
                                        ULONG completion_mode, ULONG max_inst,
                                        ULONG inbound_quota, ULONG outbound_quota,
                                        PLARGE_INTEGER timeout)
 {
-    NTSTATUS status;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    if (!attr) return STATUS_INVALID_PARAMETER;
-
-    TRACE("(%p %x %s %p %x %d %x %d %d %d %d %d %d %p)\n",
-          handle, access, debugstr_us(attr->ObjectName), iosb, sharing, dispo,
-          options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
-          outbound_quota, timeout);
-
-    /* assume we only get relative timeout */
-    if (timeout->QuadPart > 0)
-        FIXME("Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart));
-
-    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
-
-    SERVER_START_REQ( create_named_pipe )
-    {
-        req->access  = access;
-        req->options = options;
-        req->sharing = sharing;
-        req->flags = 
-            (pipe_type ? NAMED_PIPE_MESSAGE_STREAM_WRITE   : 0) |
-            (read_mode ? NAMED_PIPE_MESSAGE_STREAM_READ    : 0) |
-            (completion_mode ? NAMED_PIPE_NONBLOCKING_MODE : 0);
-        req->maxinstances = max_inst;
-        req->outsize = outbound_quota;
-        req->insize  = inbound_quota;
-        req->timeout = timeout->QuadPart;
-        wine_server_add_data( req, objattr, len );
-        status = wine_server_call( req );
-        if (!status) *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return status;
+    return unix_funcs->NtCreateNamedPipeFile( handle, access, attr, iosb, sharing, dispo, options,
+                                              pipe_type, read_mode, completion_mode, max_inst,
+                                              inbound_quota, outbound_quota, timeout );
 }
 
 /******************************************************************
  *		NtDeleteFile    (NTDLL.@)
- *
- *
  */
-NTSTATUS WINAPI NtDeleteFile( POBJECT_ATTRIBUTES ObjectAttributes )
+NTSTATUS WINAPI NtDeleteFile( OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS status;
-    HANDLE hFile;
-    IO_STATUS_BLOCK io;
-
-    TRACE("%p\n", ObjectAttributes);
-    status = NtCreateFile( &hFile, GENERIC_READ | GENERIC_WRITE | DELETE,
-                           ObjectAttributes, &io, NULL, 0,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 
-                           FILE_OPEN, FILE_DELETE_ON_CLOSE, NULL, 0 );
-    if (status == STATUS_SUCCESS) status = NtClose(hFile);
-    return status;
+    return unix_funcs->NtDeleteFile( attr );
 }
 
 /******************************************************************
@@ -3848,59 +3627,10 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
 /******************************************************************************
  *  NtCreateMailslotFile	[NTDLL.@]
  *  ZwCreateMailslotFile	[NTDLL.@]
- *
- * PARAMS
- *  pHandle          [O] pointer to receive the handle created
- *  DesiredAccess    [I] access mode (read, write, etc)
- *  ObjectAttributes [I] fully qualified NT path of the mailslot
- *  IoStatusBlock    [O] receives completion status and other info
- *  CreateOptions    [I]
- *  MailslotQuota    [I]
- *  MaxMessageSize   [I]
- *  TimeOut          [I]
- *
- * RETURNS
- *  An NT status code
  */
-NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
-     POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK IoStatusBlock,
-     ULONG CreateOptions, ULONG MailslotQuota, ULONG MaxMessageSize,
-     PLARGE_INTEGER TimeOut)
+NTSTATUS WINAPI NtCreateMailslotFile( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
+                                      IO_STATUS_BLOCK *io, ULONG options, ULONG quota, ULONG msg_size,
+                                      LARGE_INTEGER *timeout )
 {
-    LARGE_INTEGER timeout;
-    NTSTATUS ret;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    TRACE("%p %08x %p %p %08x %08x %08x %p\n",
-              pHandle, DesiredAccess, attr, IoStatusBlock,
-              CreateOptions, MailslotQuota, MaxMessageSize, TimeOut);
-
-    if (!pHandle) return STATUS_ACCESS_VIOLATION;
-    if (!attr) return STATUS_INVALID_PARAMETER;
-
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
-
-    /*
-     *  For a NULL TimeOut pointer set the default timeout value
-     */
-    if  (!TimeOut)
-        timeout.QuadPart = -1;
-    else
-        timeout.QuadPart = TimeOut->QuadPart;
-
-    SERVER_START_REQ( create_mailslot )
-    {
-        req->access = DesiredAccess;
-        req->max_msgsize = MaxMessageSize;
-        req->read_timeout = timeout.QuadPart;
-        wine_server_add_data( req, objattr, len );
-        ret = wine_server_call( req );
-        if( ret == STATUS_SUCCESS )
-            *pHandle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return ret;
+    return unix_funcs->NtCreateMailslotFile( handle, access, attr, io, options, quota, msg_size, timeout );
 }

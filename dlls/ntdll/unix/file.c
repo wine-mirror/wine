@@ -111,6 +111,7 @@
 #include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define MAX_DOS_DRIVES 26
 
@@ -310,6 +311,48 @@ static inline BOOL has_wildcard( const UNICODE_STRING *mask )
     for (i = 0; i < mask->Length / sizeof(WCHAR); i++)
         if (mask->Buffer[i] == '*' || mask->Buffer[i] == '?') return TRUE;
     return FALSE;
+}
+
+static NTSTATUS errno_to_status( int err )
+{
+    TRACE( "errno = %d\n", err );
+    switch (err)
+    {
+    case EAGAIN:    return STATUS_SHARING_VIOLATION;
+    case EBADF:     return STATUS_INVALID_HANDLE;
+    case EBUSY:     return STATUS_DEVICE_BUSY;
+    case ENOSPC:    return STATUS_DISK_FULL;
+    case EPERM:
+    case EROFS:
+    case EACCES:    return STATUS_ACCESS_DENIED;
+    case ENOTDIR:   return STATUS_OBJECT_PATH_NOT_FOUND;
+    case ENOENT:    return STATUS_OBJECT_NAME_NOT_FOUND;
+    case EISDIR:    return STATUS_FILE_IS_A_DIRECTORY;
+    case EMFILE:
+    case ENFILE:    return STATUS_TOO_MANY_OPENED_FILES;
+    case EINVAL:    return STATUS_INVALID_PARAMETER;
+    case ENOTEMPTY: return STATUS_DIRECTORY_NOT_EMPTY;
+    case EPIPE:     return STATUS_PIPE_DISCONNECTED;
+    case EIO:       return STATUS_DEVICE_NOT_READY;
+#ifdef ENOMEDIUM
+    case ENOMEDIUM: return STATUS_NO_MEDIA_IN_DEVICE;
+#endif
+    case ENXIO:     return STATUS_NO_SUCH_DEVICE;
+    case ENOTTY:
+    case EOPNOTSUPP:return STATUS_NOT_SUPPORTED;
+    case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
+    case EFAULT:    return STATUS_ACCESS_VIOLATION;
+    case ESPIPE:    return STATUS_ILLEGAL_FUNCTION;
+    case ELOOP:     return STATUS_REPARSE_POINT_NOT_RESOLVED;
+#ifdef ETIME /* Missing on FreeBSD */
+    case ETIME:     return STATUS_IO_TIMEOUT;
+#endif
+    case ENOEXEC:   /* ?? */
+    case EEXIST:    /* ?? */
+    default:
+        FIXME( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
+        return STATUS_UNSUCCESSFUL;
+    }
 }
 
 /* get space from the current directory data buffer, allocating a new one if necessary */
@@ -1166,6 +1209,28 @@ static BOOLEAN get_dir_case_sensitivity( const char *dir )
     if (case_sensitive != -1) return case_sensitive;
 #endif
     return get_dir_case_sensitivity_stat( dir );
+}
+
+
+/***********************************************************************
+ *           is_hidden_file
+ *
+ * Check if the specified file should be hidden based on its name and the show dot files option.
+ */
+static BOOL is_hidden_file( const UNICODE_STRING *name )
+{
+    WCHAR *p, *end;
+
+    if (show_dot_files) return FALSE;
+
+    end = p = name->Buffer + name->Length/sizeof(WCHAR);
+    while (p > name->Buffer && IS_SEPARATOR(p[-1])) p--;
+    while (p > name->Buffer && !IS_SEPARATOR(p[-1])) p--;
+    if (p == end || *p != '.') return FALSE;
+    /* make sure it isn't '.' or '..' */
+    if (p + 1 == end) return FALSE;
+    if (p[1] == '.' && p + 2 == end) return FALSE;
+    return TRUE;
 }
 
 
@@ -2924,4 +2989,296 @@ NTSTATUS CDECL unmount_device( HANDLE handle )
 void CDECL set_show_dot_files( BOOL enable )
 {
     show_dot_files = enable;
+}
+
+
+/******************************************************************************
+ *              NtCreateFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                              IO_STATUS_BLOCK *io, LARGE_INTEGER *alloc_size,
+                              ULONG attributes, ULONG sharing, ULONG disposition,
+                              ULONG options, void *ea_buffer, ULONG ea_length )
+{
+    ANSI_STRING unix_name;
+    BOOL created = FALSE;
+
+    TRACE( "handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p "
+           "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
+           handle, access, debugstr_us(attr->ObjectName), attr->Attributes,
+           attr->RootDirectory, attr->SecurityDescriptor, io, alloc_size,
+           attributes, sharing, disposition, options, ea_buffer, ea_length );
+
+    if (!attr || !attr->ObjectName) return STATUS_INVALID_PARAMETER;
+
+    if (alloc_size) FIXME( "alloc_size not supported\n" );
+
+    if (options & FILE_OPEN_BY_FILE_ID)
+        io->u.Status = file_id_to_unix_file_name( attr, &unix_name );
+    else
+        io->u.Status = nt_to_unix_file_name_attr( attr, &unix_name, disposition );
+
+    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    {
+        SERVER_START_REQ( open_file_object )
+        {
+            req->access     = access;
+            req->attributes = attr->Attributes;
+            req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+            req->sharing    = sharing;
+            req->options    = options;
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+            io->u.Status = wine_server_call( req );
+            *handle = wine_server_ptr_handle( reply->handle );
+        }
+        SERVER_END_REQ;
+        if (io->u.Status == STATUS_SUCCESS) io->Information = FILE_OPENED;
+        return io->u.Status;
+    }
+
+    if (io->u.Status == STATUS_NO_SUCH_FILE && disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
+    {
+        created = TRUE;
+        io->u.Status = STATUS_SUCCESS;
+    }
+
+    if (io->u.Status == STATUS_SUCCESS)
+    {
+        static UNICODE_STRING empty_string;
+        OBJECT_ATTRIBUTES unix_attr = *attr;
+        data_size_t len;
+        struct object_attributes *objattr;
+
+        unix_attr.ObjectName = &empty_string;  /* we send the unix name instead */
+        if ((io->u.Status = alloc_object_attributes( &unix_attr, &objattr, &len )))
+        {
+            RtlFreeAnsiString( &unix_name );
+            return io->u.Status;
+        }
+        SERVER_START_REQ( create_file )
+        {
+            req->access     = access;
+            req->sharing    = sharing;
+            req->create     = disposition;
+            req->options    = options;
+            req->attrs      = attributes;
+            wine_server_add_data( req, objattr, len );
+            wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
+            io->u.Status = wine_server_call( req );
+            *handle = wine_server_ptr_handle( reply->handle );
+        }
+        SERVER_END_REQ;
+        RtlFreeHeap( GetProcessHeap(), 0, objattr );
+        RtlFreeAnsiString( &unix_name );
+    }
+    else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );
+
+    if (io->u.Status == STATUS_SUCCESS)
+    {
+        if (created) io->Information = FILE_CREATED;
+        else switch(disposition)
+        {
+        case FILE_SUPERSEDE:
+            io->Information = FILE_SUPERSEDED;
+            break;
+        case FILE_CREATE:
+            io->Information = FILE_CREATED;
+            break;
+        case FILE_OPEN:
+        case FILE_OPEN_IF:
+            io->Information = FILE_OPENED;
+            break;
+        case FILE_OVERWRITE:
+        case FILE_OVERWRITE_IF:
+            io->Information = FILE_OVERWRITTEN;
+            break;
+        }
+    }
+    else if (io->u.Status == STATUS_TOO_MANY_OPENED_FILES)
+    {
+        static int once;
+        if (!once++) ERR_(winediag)( "Too many open files, ulimit -n probably needs to be increased\n" );
+    }
+
+    return io->u.Status;
+}
+
+
+/******************************************************************************
+ *              NtOpenFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                            IO_STATUS_BLOCK *io, ULONG sharing, ULONG options )
+{
+    return NtCreateFile( handle, access, attr, io, NULL, 0, sharing, FILE_OPEN, options, NULL, 0 );
+}
+
+
+/******************************************************************************
+ *		NtCreateMailslotFile    (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateMailslotFile( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
+                                      IO_STATUS_BLOCK *io, ULONG options, ULONG quota, ULONG msg_size,
+                                      LARGE_INTEGER *timeout )
+{
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    TRACE( "%p %08x %p %p %08x %08x %08x %p\n",
+           handle, access, attr, io, options, quota, msg_size, timeout );
+
+    if (!handle) return STATUS_ACCESS_VIOLATION;
+    if (!attr) return STATUS_INVALID_PARAMETER;
+
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
+    SERVER_START_REQ( create_mailslot )
+    {
+        req->access       = access;
+        req->max_msgsize  = msg_size;
+        req->read_timeout = timeout ? timeout->QuadPart : -1;
+        wine_server_add_data( req, objattr, len );
+        if (!(status = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return status;
+}
+
+
+/******************************************************************
+ *		NtCreateNamedPipeFile    (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
+                                       IO_STATUS_BLOCK *io, ULONG sharing, ULONG dispo, ULONG options,
+                                       ULONG pipe_type, ULONG read_mode, ULONG completion_mode,
+                                       ULONG max_inst, ULONG inbound_quota, ULONG outbound_quota,
+                                       LARGE_INTEGER *timeout )
+{
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if (!attr) return STATUS_INVALID_PARAMETER;
+
+    TRACE( "(%p %x %s %p %x %d %x %d %d %d %d %d %d %p)\n",
+           handle, access, debugstr_us(attr->ObjectName), io, sharing, dispo,
+           options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
+           outbound_quota, timeout );
+
+    /* assume we only get relative timeout */
+    if (timeout->QuadPart > 0) FIXME( "Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart) );
+
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
+    SERVER_START_REQ( create_named_pipe )
+    {
+        req->access  = access;
+        req->options = options;
+        req->sharing = sharing;
+        req->flags =
+            (pipe_type ? NAMED_PIPE_MESSAGE_STREAM_WRITE   : 0) |
+            (read_mode ? NAMED_PIPE_MESSAGE_STREAM_READ    : 0) |
+            (completion_mode ? NAMED_PIPE_NONBLOCKING_MODE : 0);
+        req->maxinstances = max_inst;
+        req->outsize = outbound_quota;
+        req->insize  = inbound_quota;
+        req->timeout = timeout->QuadPart;
+        wine_server_add_data( req, objattr, len );
+        if (!(status = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return status;
+}
+
+
+/******************************************************************
+ *              NtDeleteFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtDeleteFile( OBJECT_ATTRIBUTES *attr )
+{
+    HANDLE handle;
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+
+    status = NtCreateFile( &handle, GENERIC_READ | GENERIC_WRITE | DELETE, attr, &io, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                           FILE_DELETE_ON_CLOSE, NULL, 0 );
+    if (status == STATUS_SUCCESS) NtClose( handle );
+    return status;
+}
+
+
+/******************************************************************************
+ *              NtQueryFullAttributesFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
+                                           FILE_NETWORK_OPEN_INFORMATION *info )
+{
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
+    {
+        ULONG attributes;
+        struct stat st;
+
+        if (get_file_info( unix_name.Buffer, &st, &attributes ) == -1)
+            status = errno_to_status( errno );
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            status = STATUS_INVALID_INFO_CLASS;
+        else
+        {
+            FILE_BASIC_INFORMATION basic;
+            FILE_STANDARD_INFORMATION std;
+
+            fill_file_info( &st, attributes, &basic, FileBasicInformation );
+            fill_file_info( &st, attributes, &std, FileStandardInformation );
+
+            info->CreationTime   = basic.CreationTime;
+            info->LastAccessTime = basic.LastAccessTime;
+            info->LastWriteTime  = basic.LastWriteTime;
+            info->ChangeTime     = basic.ChangeTime;
+            info->AllocationSize = std.AllocationSize;
+            info->EndOfFile      = std.EndOfFile;
+            info->FileAttributes = basic.FileAttributes;
+            if (is_hidden_file( attr->ObjectName )) info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+        }
+        RtlFreeAnsiString( &unix_name );
+    }
+    else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
+    return status;
+}
+
+
+/******************************************************************************
+ *              NtQueryAttributesFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
+{
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+
+    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
+    {
+        ULONG attributes;
+        struct stat st;
+
+        if (get_file_info( unix_name.Buffer, &st, &attributes ) == -1)
+            status = errno_to_status( errno );
+        else if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            status = STATUS_INVALID_INFO_CLASS;
+        else
+        {
+            status = fill_file_info( &st, attributes, info, FileBasicInformation );
+            if (is_hidden_file( attr->ObjectName )) info->FileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+        }
+        RtlFreeAnsiString( &unix_name );
+    }
+    else WARN( "%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
+    return status;
 }

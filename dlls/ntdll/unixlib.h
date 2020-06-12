@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 42
+#define NTDLL_UNIXLIB_VERSION 43
 
 struct unix_funcs
 {
@@ -44,10 +44,23 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtContinue)( CONTEXT *context, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtCreateEvent)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, EVENT_TYPE type, BOOLEAN state );
+    NTSTATUS      (WINAPI *NtCreateFile)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                          IO_STATUS_BLOCK *io, LARGE_INTEGER *alloc_size,
+                                          ULONG attributes, ULONG sharing, ULONG disposition,
+                                          ULONG options, void *ea_buffer, ULONG ea_length );
     NTSTATUS      (WINAPI *NtCreateKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
                                                 const OBJECT_ATTRIBUTES *attr, ULONG flags );
+    NTSTATUS      (WINAPI *NtCreateMailslotFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
+                                                  IO_STATUS_BLOCK *io, ULONG options, ULONG quota,
+                                                  ULONG msg_size, LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtCreateMutant)( HANDLE *handle, ACCESS_MASK access,
                                             const OBJECT_ATTRIBUTES *attr, BOOLEAN owned );
+    NTSTATUS      (WINAPI *NtCreateNamedPipeFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
+                                                   IO_STATUS_BLOCK *io, ULONG sharing, ULONG dispo,
+                                                   ULONG options, ULONG pipe_type, ULONG read_mode,
+                                                   ULONG completion_mode, ULONG max_inst,
+                                                   ULONG inbound_quota, ULONG outbound_quota,
+                                                   LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtCreateSection)( HANDLE *handle, ACCESS_MASK access,
                                              const OBJECT_ATTRIBUTES *attr, const LARGE_INTEGER *size,
                                              ULONG protect, ULONG sec_flags, HANDLE file );
@@ -61,6 +74,7 @@ struct unix_funcs
                                            const OBJECT_ATTRIBUTES *attr, TIMER_TYPE type );
     TEB *         (WINAPI *NtCurrentTeb)(void);
     NTSTATUS      (WINAPI *NtDelayExecution)( BOOLEAN alertable, const LARGE_INTEGER *timeout );
+    NTSTATUS      (WINAPI *NtDeleteFile)( OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtDuplicateObject)( HANDLE source_process, HANDLE source,
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
@@ -78,6 +92,8 @@ struct unix_funcs
                                                 SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect );
     NTSTATUS      (WINAPI *NtOpenEvent)( HANDLE *handle, ACCESS_MASK access,
                                          const OBJECT_ATTRIBUTES *attr );
+    NTSTATUS      (WINAPI *NtOpenFile)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                        IO_STATUS_BLOCK *io, ULONG sharing, ULONG options );
     NTSTATUS      (WINAPI *NtOpenKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
                                               const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenMutant)( HANDLE *handle, ACCESS_MASK access,
@@ -92,6 +108,8 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtProtectVirtualMemory)( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                                     ULONG new_prot, ULONG *old_prot );
     NTSTATUS      (WINAPI *NtPulseEvent)( HANDLE handle, LONG *prev_state );
+    NTSTATUS      (WINAPI *NtQueryAttributesFile)( const OBJECT_ATTRIBUTES *attr,
+                                                   FILE_BASIC_INFORMATION *info );
     NTSTATUS      (WINAPI *NtQueryDirectoryFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine,
                                                   void *apc_context, IO_STATUS_BLOCK *io, void *buffer,
                                                   ULONG length, FILE_INFORMATION_CLASS info_class,
@@ -99,6 +117,8 @@ struct unix_funcs
                                                   BOOLEAN restart_scan );
     NTSTATUS      (WINAPI *NtQueryEvent)( HANDLE handle, EVENT_INFORMATION_CLASS class,
                                           void *info, ULONG len, ULONG *ret_len );
+    NTSTATUS      (WINAPI *NtQueryFullAttributesFile)( const OBJECT_ATTRIBUTES *attr,
+                                                       FILE_NETWORK_OPEN_INFORMATION *info );
     NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
                                            void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
