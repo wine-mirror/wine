@@ -106,6 +106,7 @@ struct quartz_vmr
 
     LONG VideoWidth;
     LONG VideoHeight;
+    VMR9AspectRatioMode aspect_mode;
 
     HANDLE run_event;
 };
@@ -1715,18 +1716,26 @@ static HRESULT WINAPI VMR9WindowlessControl_GetVideoPosition(IVMRWindowlessContr
 
 static HRESULT WINAPI VMR9WindowlessControl_GetAspectRatioMode(IVMRWindowlessControl9 *iface, DWORD *mode)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
 
-    FIXME("(%p/%p)->(...) stub\n", iface, This);
-    return E_NOTIMPL;
+    TRACE("filter %p, mode %p.\n", filter, mode);
+
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    *mode = filter->aspect_mode;
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9WindowlessControl_SetAspectRatioMode(IVMRWindowlessControl9 *iface, DWORD mode)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl9(iface);
 
-    FIXME("(%p/%p)->(...) stub\n", iface, This);
-    return E_NOTIMPL;
+    TRACE("filter %p, mode %u.\n", filter, mode);
+
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    filter->aspect_mode = mode;
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl9 *iface, HWND window)
@@ -2625,36 +2634,58 @@ static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(struct default_presen
 static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *iface,
         DWORD_PTR cookie, VMR9PresentationInfo *info)
 {
-    struct default_presenter *This = impl_from_IVMRImagePresenter9(iface);
+    struct default_presenter *presenter = impl_from_IVMRImagePresenter9(iface);
+    const struct quartz_vmr *filter = presenter->pVMR9;
+    IDirect3DDevice9 *device = presenter->d3d9_dev;
+    const RECT src = filter->window.src;
+    RECT dst = filter->window.dst;
     HRESULT hr;
-    BOOL render = FALSE;
 
-    TRACE("presenter %p, cookie %#Ix, info %p.\n", This, cookie, info);
+    TRACE("presenter %p, cookie %#Ix, info %p.\n", presenter, cookie, info);
 
     /* This might happen if we don't have active focus (eg on a different virtual desktop) */
-    if (!This->d3d9_dev)
+    if (!device)
         return S_OK;
 
-    /* Display image here */
-    hr = IDirect3DDevice9_Clear(This->d3d9_dev, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
-    if (FAILED(hr))
-        FIXME("hr: %08x\n", hr);
-    hr = IDirect3DDevice9_BeginScene(This->d3d9_dev);
-    if (SUCCEEDED(hr))
+    if (FAILED(hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET,
+            D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0)))
+        ERR("Failed to clear, hr %#x.\n", hr);
+
+    if (FAILED(hr = IDirect3DDevice9_BeginScene(device)))
+        ERR("Failed to begin scene, hr %#x.\n", hr);
+
+    VMR9_ImagePresenter_PresentOffscreenSurface(presenter, info->lpSurf);
+
+    if (FAILED(hr = IDirect3DDevice9_EndScene(device)))
+        ERR("Failed to end scene, hr %#x.\n", hr);
+
+    if (filter->aspect_mode == VMR9ARMode_LetterBox)
     {
-        hr = VMR9_ImagePresenter_PresentOffscreenSurface(This, info->lpSurf);
-        render = SUCCEEDED(hr);
+        unsigned int src_width = src.right - src.left, src_height = src.bottom - src.top;
+        unsigned int dst_width = dst.right - dst.left, dst_height = dst.bottom - dst.top;
+
+        if (src_width * dst_height > dst_width * src_height)
+        {
+            /* src is "wider" than dst. */
+            unsigned int dst_center = (dst.top + dst.bottom) / 2;
+            unsigned int scaled_height = src_height * dst_width / src_width;
+
+            dst.top = dst_center - scaled_height / 2;
+            dst.bottom = dst.top + scaled_height;
+        }
+        else if (src_width * dst_height < dst_width * src_height)
+        {
+            /* src is "taller" than dst. */
+            unsigned int dst_center = (dst.left + dst.right) / 2;
+            unsigned int scaled_width = src_width * dst_height / src_height;
+
+            dst.left = dst_center - scaled_width / 2;
+            dst.right = dst.left + scaled_width;
+        }
     }
-    else
-        FIXME("BeginScene: %08x\n", hr);
-    hr = IDirect3DDevice9_EndScene(This->d3d9_dev);
-    if (render && SUCCEEDED(hr))
-    {
-        hr = IDirect3DDevice9_Present(This->d3d9_dev, &This->pVMR9->window.src,
-                &This->pVMR9->window.dst, NULL, NULL);
-        if (FAILED(hr))
-            FIXME("Presenting image: %08x\n", hr);
-    }
+
+    if (FAILED(hr = IDirect3DDevice9_Present(device, &src, &dst, NULL, NULL)))
+        ERR("Failed to present, hr %#x.\n", hr);
 
     return S_OK;
 }

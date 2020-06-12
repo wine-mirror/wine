@@ -3770,6 +3770,7 @@ static void test_windowless_size(void)
     LONG width, height, aspect_width, aspect_height;
     IVMRWindowlessControl9 *windowless_control;
     IFilterGraph2 *graph = create_graph();
+    VMR9AspectRatioMode aspect_mode;
     struct testfilter source;
     IMemAllocator *allocator;
     RECT src, dst, expect;
@@ -3812,6 +3813,11 @@ static void test_windowless_size(void)
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, NULL, &aspect_width, &aspect_height);
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    aspect_mode = 0xdeadbeef;
+    hr = IVMRWindowlessControl9_GetAspectRatioMode(windowless_control, &aspect_mode);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_mode == VMR9ARMode_None, "Got mode %u.\n", aspect_mode);
 
     width = height = 0xdeadbeef;
     hr = IVMRWindowlessControl9_GetNativeVideoSize(windowless_control, &width, &height, NULL, NULL);
@@ -3866,6 +3872,37 @@ static void test_windowless_size(void)
     GetWindowRect(window, &src);
     SetRect(&expect, 0, 0, 640, 480);
     ok(EqualRect(&src, &expect), "Got window rect %s.\n", wine_dbgstr_rect(&src));
+
+    hr = IVMRWindowlessControl9_SetAspectRatioMode(windowless_control, VMR9ARMode_LetterBox);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    aspect_mode = 0xdeadbeef;
+    hr = IVMRWindowlessControl9_GetAspectRatioMode(windowless_control, &aspect_mode);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_mode == VMR9ARMode_LetterBox, "Got mode %u.\n", aspect_mode);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 4, 6, 16, 12);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 40, 60, 120, 160);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    SetRect(&src, 0, 0, 32, 16);
+    SetRect(&dst, 0, 0, 640, 480);
+    hr = IVMRWindowlessControl9_SetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl9_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 0, 0, 32, 16);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 0, 0, 640, 480);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
 
 out:
     ref = IFilterGraph2_Release(graph);
