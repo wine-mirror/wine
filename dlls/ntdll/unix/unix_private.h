@@ -123,6 +123,8 @@ extern NTSTATUS CDECL fork_and_exec( const char *unix_name, const char *unix_dir
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
+extern USHORT *uctable DECLSPEC_HIDDEN;
+extern USHORT *lctable DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern HANDLE keyed_event DECLSPEC_HIDDEN;
@@ -212,6 +214,13 @@ static inline int ntdll_wcscmp( const WCHAR *str1, const WCHAR *str2 )
     return *str1 - *str2;
 }
 
+static inline int ntdll_wcsncmp( const WCHAR *str1, const WCHAR *str2, int n )
+{
+    if (n <= 0) return 0;
+    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
 static inline WCHAR *ntdll_wcschr( const WCHAR *str, WCHAR ch )
 {
     do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
@@ -224,11 +233,53 @@ static inline WCHAR *ntdll_wcspbrk( const WCHAR *str, const WCHAR *accept )
     return NULL;
 }
 
-#define wcslen(str)     ntdll_wcslen(str)
-#define wcscpy(dst,src) ntdll_wcscpy(dst,src)
-#define wcscat(dst,src) ntdll_wcscat(dst,src)
-#define wcscmp(s1,s2)   ntdll_wcscmp(s1,s2)
-#define wcschr(str,ch)  ntdll_wcschr(str,ch)
-#define wcspbrk(str,ac) ntdll_wcspbrk(str,ac)
+static inline WCHAR ntdll_towupper( WCHAR ch )
+{
+    return ch + uctable[uctable[uctable[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
+}
+
+static inline WCHAR ntdll_towlower( WCHAR ch )
+{
+    return ch + lctable[lctable[lctable[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
+}
+
+static inline WCHAR *ntdll_wcsupr( WCHAR *str )
+{
+    WCHAR *ret;
+    for (ret = str; *str; str++) *str = ntdll_towupper(*str);
+    return ret;
+}
+
+static inline int ntdll_wcsicmp( const WCHAR *str1, const WCHAR *str2 )
+{
+    int ret;
+    for (;;)
+    {
+        if ((ret = ntdll_towupper( *str1 ) - ntdll_towupper( *str2 )) || !*str1) return ret;
+        str1++;
+        str2++;
+    }
+}
+
+static inline int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n )
+{
+    int ret;
+    for (ret = 0; n > 0; n--, str1++, str2++)
+        if ((ret = ntdll_towupper(*str1) - ntdll_towupper(*str2)) || !*str1) break;
+    return ret;
+}
+
+#define wcslen(str)        ntdll_wcslen(str)
+#define wcscpy(dst,src)    ntdll_wcscpy(dst,src)
+#define wcscat(dst,src)    ntdll_wcscat(dst,src)
+#define wcscmp(s1,s2)      ntdll_wcscmp(s1,s2)
+#define wcsncmp(s1,s2,n)   ntdll_wcsncmp(s1,s2,n)
+#define wcschr(str,ch)     ntdll_wcschr(str,ch)
+#define wcspbrk(str,ac)    ntdll_wcspbrk(str,ac)
+#define wcsicmp(s1, s2)    ntdll_wcsicmp(s1,s2)
+#define wcsnicmp(s1, s2,n) ntdll_wcsnicmp(s1,s2,n)
+#define wcsupr(str)        ntdll_wcsupr(str)
+#define towupper(c)        ntdll_towupper(c)
+#define towlower(c)        ntdll_towlower(c)
 
 #endif /* __NTDLL_UNIX_PRIVATE_H */

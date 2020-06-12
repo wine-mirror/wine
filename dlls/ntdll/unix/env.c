@@ -65,6 +65,8 @@ extern char **__wine_main_argv;
 extern char **__wine_main_environ;
 extern WCHAR **__wine_main_wargv;
 
+USHORT *uctable = NULL, *lctable = NULL;
+
 static int main_argc;
 static char **main_argv;
 static char **main_envp;
@@ -73,6 +75,36 @@ static WCHAR **main_wargv;
 static CPTABLEINFO unix_table;
 static WCHAR system_locale[LOCALE_NAME_MAX_LENGTH];
 static WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
+
+static void *read_nls_file( const char *name )
+{
+    const char *dir = build_dir ? build_dir : data_dir;
+    struct stat st;
+    char *path;
+    void *data, *ret = NULL;
+    int fd;
+
+    if (!(path = malloc( strlen(dir) + 22 ))) return NULL;
+    sprintf( path, "%s/nls/%s.nls", dir, name );
+    if ((fd = open( path, O_RDONLY )) != -1)
+    {
+        fstat( fd, &st );
+        if ((data = malloc( st.st_size )) && st.st_size > 0x1000 &&
+            read( fd, data, st.st_size ) == st.st_size)
+        {
+            ret = data;
+        }
+        else
+        {
+            free( data );
+            data = NULL;
+        }
+        close( fd );
+    }
+    else ERR( "failed to load %s\n", path );
+    free( path );
+    return ret;
+}
 
 
 #ifdef __APPLE__
@@ -112,31 +144,7 @@ static struct norm_table *nfc_table;
 
 static void init_unix_codepage(void)
 {
-    const char *dir = build_dir ? build_dir : data_dir;
-    struct stat st;
-    char *name;
-    void *data;
-    int fd;
-
-    if (!(name = malloc( strlen(dir) + 17 ))) return;
-    sprintf( name, "%s/nls/normnfc.nls", dir );
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        fstat( fd, &st );
-        if ((data = malloc( st.st_size )) &&
-            st.st_size > 0x4000 &&
-            read( fd, data, st.st_size ) == st.st_size)
-        {
-            nfc_table = data;
-        }
-        else
-        {
-            free( data );
-        }
-        close( fd );
-    }
-    else ERR( "failed to load %s\n", name );
-    free( name );
+    nfc_table = read_nls_file( "normnfc" );
 }
 
 static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
@@ -343,34 +351,6 @@ static const struct { const char *name; UINT cp; } charset_names[] =
     { "UTF8", CP_UTF8 }
 };
 
-static void load_unix_cptable( unsigned int cp )
-{
-    const char *dir = build_dir ? build_dir : data_dir;
-    struct stat st;
-    char *name;
-    void *data;
-    int fd;
-
-    if (!(name = malloc( strlen(dir) + 22 ))) return;
-    sprintf( name, "%s/nls/c_%03u.nls", dir, cp );
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        fstat( fd, &st );
-        if ((data = malloc( st.st_size )) && st.st_size > 0x10000 &&
-            read( fd, data, st.st_size ) == st.st_size)
-        {
-            RtlInitCodePageTable( data, &unix_table );
-        }
-        else
-        {
-            free( data );
-        }
-        close( fd );
-    }
-    else ERR( "failed to load %s\n", name );
-    free( name );
-}
-
 static void init_unix_codepage(void)
 {
     char charset_name[16];
@@ -396,7 +376,14 @@ static void init_unix_codepage(void)
         int res = strcmp( charset_names[pos].name, charset_name );
         if (!res)
         {
-            if (charset_names[pos].cp != CP_UTF8) load_unix_cptable( charset_names[pos].cp );
+            if (charset_names[pos].cp != CP_UTF8)
+            {
+                char name[16];
+                void *data;
+
+                sprintf( name, "c_%03u", charset_names[pos].cp );
+                if ((data = read_nls_file( name ))) RtlInitCodePageTable( data, &unix_table );
+            }
             return;
         }
         if (res > 0) max = pos - 1;
@@ -797,9 +784,17 @@ static void init_locale(void)
  */
 void init_environment( int argc, char *argv[], char *envp[] )
 {
+    USHORT *case_table;
+
     init_unix_codepage();
     init_locale();
     set_process_name( argc, argv );
+
+    if ((case_table = read_nls_file( "l_intl" )))
+    {
+        uctable = case_table + 2;
+        lctable = case_table + case_table[1] + 2;
+    }
     __wine_main_argc = main_argc = argc;
     __wine_main_argv = main_argv = argv;
     __wine_main_wargv = main_wargv = build_wargv( argv );
