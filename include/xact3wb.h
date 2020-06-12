@@ -138,7 +138,7 @@ typedef struct WAVEBANKDATA
     DWORD dwEntryMetaDataElementSize;
     DWORD dwEntryNameElementSize;
     DWORD dwAlignment;
-    WAVEBANKMINIFORMAT CompactFormat;
+    WAVEBANKMINIWAVEFORMAT CompactFormat;
     FILETIME BuildTime;
 } WAVEBANKDATA, *LPWAVEBANKDATA;
 typedef const WAVEBANKDATA *LPCWAVEBANKDATA;
