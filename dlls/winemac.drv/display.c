@@ -893,7 +893,9 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
             if (devmode->dmPelsHeight != height)
                 continue;
         }
-        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) && devmode->dmDisplayFrequency != 0)
+        if ((devmode->dmFields & DM_DISPLAYFREQUENCY) &&
+            devmode->dmDisplayFrequency != 0 &&
+            devmode->dmDisplayFrequency != 1)
         {
             double refresh_rate = CGDisplayModeGetRefreshRate(display_mode);
             if (!refresh_rate)
