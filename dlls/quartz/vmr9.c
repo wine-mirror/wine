@@ -2611,26 +2611,6 @@ static HRESULT WINAPI VMR9_ImagePresenter_StopPresenting(IVMRImagePresenter9 *if
     return S_OK;
 }
 
-static HRESULT VMR9_ImagePresenter_PresentOffscreenSurface(struct default_presenter *This, IDirect3DSurface9 *surface)
-{
-    HRESULT hr;
-    IDirect3DSurface9 *target = NULL;
-
-    hr = IDirect3DDevice9_GetBackBuffer(This->d3d9_dev, 0, 0, D3DBACKBUFFER_TYPE_MONO, &target);
-    if (FAILED(hr))
-    {
-        ERR("IDirect3DDevice9_GetBackBuffer -- %08x\n", hr);
-        return hr;
-    }
-
-    hr = IDirect3DDevice9_StretchRect(This->d3d9_dev, surface, NULL, target, NULL, D3DTEXF_POINT);
-    if (FAILED(hr))
-        ERR("IDirect3DDevice9_StretchRect -- %08x\n", hr);
-    IDirect3DSurface9_Release(target);
-
-    return hr;
-}
-
 static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *iface,
         DWORD_PTR cookie, VMR9PresentationInfo *info)
 {
@@ -2638,6 +2618,7 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     const struct quartz_vmr *filter = presenter->pVMR9;
     IDirect3DDevice9 *device = presenter->d3d9_dev;
     const RECT src = filter->window.src;
+    IDirect3DSurface9 *backbuffer;
     RECT dst = filter->window.dst;
     HRESULT hr;
 
@@ -2654,7 +2635,15 @@ static HRESULT WINAPI VMR9_ImagePresenter_PresentImage(IVMRImagePresenter9 *ifac
     if (FAILED(hr = IDirect3DDevice9_BeginScene(device)))
         ERR("Failed to begin scene, hr %#x.\n", hr);
 
-    VMR9_ImagePresenter_PresentOffscreenSurface(presenter, info->lpSurf);
+    if (FAILED(hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer)))
+    {
+        ERR("Failed to get backbuffer, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IDirect3DDevice9_StretchRect(device, info->lpSurf, NULL, backbuffer, NULL, D3DTEXF_POINT)))
+        ERR("Failed to blit image, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(backbuffer);
 
     if (FAILED(hr = IDirect3DDevice9_EndScene(device)))
         ERR("Failed to end scene, hr %#x.\n", hr);
