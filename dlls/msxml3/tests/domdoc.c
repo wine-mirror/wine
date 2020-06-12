@@ -8541,6 +8541,33 @@ static void test_put_nodeTypedValue(void)
        "got %s, expected \"1\"\n", wine_dbgstr_w(V_BSTR(&type)));
     VariantClear(&type);
 
+    /* int */
+    hr = IXMLDOMElement_put_dataType(elem, _bstr_("int"));
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&value) = VT_BSTR;
+    V_BSTR(&value) = _bstr_("1");
+    hr = IXMLDOMElement_put_nodeTypedValue(elem, value);
+    EXPECT_HR(hr, S_OK);
+    VariantClear(&value);
+
+    V_VT(&value) = VT_EMPTY;
+    hr = IXMLDOMElement_get_nodeTypedValue(elem, &value);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&value) == VT_I4, "got %d\n", V_VT(&value));
+    ok(V_I4(&value) == 1, "got %d\n", V_I4(&value));
+
+    V_VT(&value) = VT_I2;
+    V_I2(&value) = -1;
+    hr = IXMLDOMElement_put_nodeTypedValue(elem, value);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&value) = VT_EMPTY;
+    hr = IXMLDOMElement_get_nodeTypedValue(elem, &value);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&value) == VT_I4, "got %d\n", V_VT(&value));
+    ok(V_I4(&value) == -1, "got %d\n", V_I4(&value));
+
     hr = IXMLDOMElement_get_firstChild(elem, &node);
     EXPECT_HR(hr, S_OK);
     hr = IXMLDOMElement_removeChild(elem, node, NULL);

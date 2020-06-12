@@ -847,6 +847,7 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     {
     /* for untyped node coerce to BSTR and set */
     case DT_INVALID:
+    case DT_INT:
         if (V_VT(&value) != VT_BSTR)
         {
             VARIANT content;
