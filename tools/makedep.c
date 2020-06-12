@@ -183,6 +183,7 @@ struct makefile
     struct strarray install_lib;
     struct strarray install_dev;
     struct strarray extra_targets;
+    struct strarray extra_imports;
     struct list     sources;
     struct list     includes;
     const char     *base_dir;
@@ -1957,6 +1958,12 @@ static void add_generated_sources( struct makefile *make )
         {
             if (!make->disabled)
                 strarray_add_uniq( &linguas, replace_extension( source->name, ".po", "" ));
+        }
+        if (strendswith( source->name, ".spec" ))
+        {
+            char *obj = replace_extension( source->name, ".spec", "" );
+            strarray_addall_uniq( &make->extra_imports,
+                                  get_expanded_file_local_var( make, obj, "IMPORTS" ));
         }
     }
     if (make->testdll)
@@ -4361,8 +4368,8 @@ static void load_sources( struct makefile *make )
 
     if (make->is_cross)
     {
-        for (i = 0; i < make->imports.count; i++)
-            strarray_add_uniq( &cross_import_libs, make->imports.str[i] );
+        strarray_addall_uniq( &cross_import_libs, make->imports );
+        strarray_addall_uniq( &cross_import_libs, make->extra_imports );
         if (make->is_win16) strarray_add_uniq( &cross_import_libs, "kernel" );
         strarray_add_uniq( &cross_import_libs, "winecrt0" );
         strarray_add_uniq( &cross_import_libs, "kernel32" );
