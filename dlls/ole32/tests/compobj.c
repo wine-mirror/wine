@@ -347,6 +347,32 @@ static const char actctx_manifest[] =
 "    </clrClass>"
 "</assembly>";
 
+static const char actctx_manifest2[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.2.3.4\"  name=\"Wine.Test\" type=\"win32\""
+" publicKeyToken=\"6595b6414666f1df\" />"
+"<file name=\"testlib.dll\">"
+"    <comInterfaceProxyStub "
+"        name=\"Testiface7\""
+"        iid=\"{52222222-1234-1234-1234-56789abcdef0}\""
+"        proxyStubClsid32=\"{82222222-1234-1234-1234-56789abcdef0}\""
+"        threadingModel=\"Apartment\""
+"    />"
+"</file>"
+"<file name=\"testlib4.dll\">"
+"    <comInterfaceProxyStub "
+"        name=\"Testiface8\""
+"        iid=\"{92222222-1234-1234-1234-56789abcdef0}\""
+"        threadingModel=\"Apartment\""
+"    />"
+"</file>"
+"    <comInterfaceExternalProxyStub "
+"        name=\"Iifaceps3\""
+"        iid=\"{42222222-1234-1234-1234-56789abcdef0}\""
+"        proxyStubClsid32=\"{66666666-8888-7777-6666-555555555555}\""
+"    />"
+"</assembly>";
+
 DEFINE_GUID(CLSID_Testclass, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0);
 
 static void test_ProgIDFromCLSID(void)
@@ -692,6 +718,28 @@ static void test_CoCreateInstance(void)
     test_apt_type(APTTYPE_CURRENT, APTTYPEQUALIFIER_NONE);
 }
 
+struct comclassredirect_data
+{
+    ULONG size;
+    ULONG flags;
+    DWORD model;
+    GUID  clsid;
+    GUID  alias;
+    GUID  clsid2;
+    GUID  tlid;
+    ULONG name_len;
+    ULONG name_offset;
+    ULONG progid_len;
+    ULONG progid_offset;
+    ULONG clrdata_len;
+    ULONG clrdata_offset;
+    DWORD miscstatus;
+    DWORD miscstatuscontent;
+    DWORD miscstatusthumbnail;
+    DWORD miscstatusicon;
+    DWORD miscstatusdocprint;
+};
+
 static void test_CoGetClassObject(void)
 {
     HRESULT hr;
@@ -759,6 +807,53 @@ static void test_CoGetClassObject(void)
 
         hr = CoGetClassObject(&IID_Testiface8, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
         ok(hr == REGDB_E_CLASSNOTREG, "Unexpected hr %#x.\n", hr);
+
+        deactivate_context(handle, cookie);
+    }
+
+    if ((handle = activate_context(actctx_manifest2, &cookie)))
+    {
+        struct comclassredirect_data *comclass;
+        ACTCTX_SECTION_KEYED_DATA data;
+        BOOL ret;
+
+        /* This one will load test dll and get back specific error code. */
+        hr = CoGetClassObject(&IID_Testiface7, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+        ok(hr == 0x80001235 || broken(hr == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) /* winxp */, "Unexpected hr %#x.\n", hr);
+
+        hr = CoGetClassObject(&IID_Testiface8, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+        ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+        memset(&data, 0, sizeof(data));
+        data.cbSize = sizeof(data);
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_INTERFACE_REDIRECTION, &IID_Testiface8, &data);
+        ok(ret, "Section not found.\n");
+
+        memset(&data, 0, sizeof(data));
+        data.cbSize = sizeof(data);
+
+        /* External proxy-stubs are not accessible. */
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, &IID_Testiface3, &data);
+        ok(!ret, "Unexpected return value.\n");
+
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, &IID_TestPS, &data);
+        ok(!ret, "Unexpected return value.\n");
+
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, &IID_Testiface7, &data);
+        ok(ret, "Unexpected return value.\n");
+
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, &IID_Testiface4, &data);
+        ok(!ret, "Unexpected return value.\n");
+
+        ret = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, &IID_Testiface8, &data);
+        ok(ret, "Unexpected return value.\n");
+
+        comclass = data.lpData;
+        if (comclass)
+        {
+            WCHAR *name = (WCHAR *)((char *)data.lpSectionBase + comclass->name_offset);
+            ok(!lstrcmpW(name, L"testlib4.dll"), "Unexpected module name %s.\n", wine_dbgstr_w(name));
+        }
 
         deactivate_context(handle, cookie);
     }
