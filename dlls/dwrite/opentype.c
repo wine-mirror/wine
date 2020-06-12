@@ -4802,6 +4802,8 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
         const struct lookup *lookup = &lookups.lookups[i];
 
         context->cur = 0;
+        context->lookup_mask = lookup->mask;
+
         while (context->cur < context->glyph_count)
         {
             ret = FALSE;
@@ -5037,8 +5039,8 @@ static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_con
         if (!count)
             return FALSE;
 
-        BitScanForward(&shift, lookup->mask);
-        alt_index = (lookup->mask & context->glyph_infos[idx].mask) >> shift;
+        BitScanForward(&shift, context->lookup_mask);
+        alt_index = (context->lookup_mask & context->glyph_infos[idx].mask) >> shift;
 
         if (alt_index > count || !alt_index)
             return FALSE;
@@ -5071,7 +5073,7 @@ static BOOL opentype_layout_context_match_input(const struct match_context *mc, 
     match_positions[0] = context->cur;
 
     glyph_iterator_init(context, mc->lookup->flags, context->cur, count - 1, &iter);
-    iter.mask = mc->lookup->mask;
+    iter.mask = context->lookup_mask;
     iter.match_func = mc->match_func;
     iter.match_data = &match_data;
     iter.glyph_data = input;
@@ -5932,6 +5934,8 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     for (i = 0; i < lookups.count; ++i)
     {
         const struct lookup *lookup = &lookups.lookups[i];
+
+        context->lookup_mask = lookup->mask;
 
         if (!opentype_is_gsub_lookup_reversed(context, lookup))
         {
