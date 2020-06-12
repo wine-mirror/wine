@@ -99,8 +99,10 @@ DEFINE_EXPECT(Invoke);
 DEFINE_EXPECT(InvokeEx);
 DEFINE_EXPECT(SetScriptSite);
 DEFINE_EXPECT(QI_IActiveScriptParse);
+DEFINE_EXPECT(GetScriptState);
 DEFINE_EXPECT(SetScriptState_INITIALIZED);
 DEFINE_EXPECT(SetScriptState_STARTED);
+DEFINE_EXPECT(SetScriptState_CONNECTED);
 DEFINE_EXPECT(ParseScriptText);
 DEFINE_EXPECT(AddNamedItem);
 DEFINE_EXPECT(GetScriptDispatch);
@@ -498,24 +500,30 @@ static HRESULT WINAPI ActiveScript_GetScriptSite(IActiveScript *iface, REFIID ri
 
 static HRESULT WINAPI ActiveScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE ss)
 {
-    if (ss == SCRIPTSTATE_INITIALIZED) {
+    switch(ss)
+    {
+    case SCRIPTSTATE_INITIALIZED:
         CHECK_EXPECT(SetScriptState_INITIALIZED);
         return S_OK;
-    }
-    else if (ss == SCRIPTSTATE_STARTED) {
+    case SCRIPTSTATE_STARTED:
         CHECK_EXPECT(SetScriptState_STARTED);
         return S_OK;
-    }
-    else
+    case SCRIPTSTATE_CONNECTED:
+        CHECK_EXPECT(SetScriptState_CONNECTED);
+        return S_OK;
+    default:
         ok(0, "unexpected call, state %u\n", ss);
-
-    return E_NOTIMPL;
+        return E_NOTIMPL;
+    }
 }
+
+static SCRIPTSTATE emulated_script_state;
 
 static HRESULT WINAPI ActiveScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *pssState)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetScriptState);
+    *pssState = emulated_script_state;
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScript_Close(IActiveScript *iface)
@@ -1553,6 +1561,169 @@ static void test_State(void)
     ok(state == Connected, "got %d\n", state);
 
     IScriptControl_Release(sc);
+
+    /* custom script engine */
+    if (have_custom_engine)
+    {
+        BSTR language, code_str;
+
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        language = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, language);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(language);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        hr = IScriptControl_put_State(sc, Initialized);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        hr = IScriptControl_put_State(sc, Initialized);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+
+        SET_EXPECT(SetScriptState_CONNECTED);
+        hr = IScriptControl_put_State(sc, Connected);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_CONNECTED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        hr = IScriptControl_put_State(sc, Initialized);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_item_name = NULL;
+        parse_flags = SCRIPTTEXT_ISVISIBLE;
+        code_str = SysAllocString(L"1 + 1");
+        hr = IScriptControl_AddCode(sc, code_str);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        SysFreeString(code_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        emulated_script_state = SCRIPTSTATE_INITIALIZED;
+        SET_EXPECT(GetScriptState);
+        hr = IScriptControl_get_State(sc, &state);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(state == Initialized, "got %d\n", state);
+        CHECK_CALLED(GetScriptState);
+
+        emulated_script_state = SCRIPTSTATE_STARTED;
+        SET_EXPECT(GetScriptState);
+        hr = IScriptControl_get_State(sc, &state);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(state == Initialized, "got %d\n", state);
+        CHECK_CALLED(GetScriptState);
+
+        emulated_script_state = SCRIPTSTATE_CONNECTED;
+        SET_EXPECT(GetScriptState);
+        hr = IScriptControl_get_State(sc, &state);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(state == Connected, "got %d\n", state);
+        CHECK_CALLED(GetScriptState);
+
+        emulated_script_state = SCRIPTSTATE_UNINITIALIZED;
+        SET_EXPECT(GetScriptState);
+        hr = IScriptControl_get_State(sc, &state);
+        ok(hr == E_FAIL, "got 0x%08x\n", hr);
+        CHECK_CALLED(GetScriptState);
+
+        SET_EXPECT(ParseScriptText);
+        code_str = SysAllocString(L"0x100");
+        hr = IScriptControl_AddCode(sc, code_str);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        SysFreeString(code_str);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void **)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+
+        language = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, language);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(language);
+
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        hr = IScriptControl_put_State(sc, Initialized);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        hr = IScriptControl_put_State(sc, Initialized);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+
+        SET_EXPECT(SetScriptState_CONNECTED);
+        hr = IScriptControl_put_State(sc, Connected);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_CONNECTED);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_item_name = NULL;
+        parse_flags = SCRIPTTEXT_ISVISIBLE;
+        code_str = SysAllocString(L"1 + 1");
+        hr = IScriptControl_AddCode(sc, code_str);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        SysFreeString(code_str);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
+
+        SET_EXPECT(SetScriptState_CONNECTED);
+        hr = IScriptControl_put_State(sc, Connected);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        CHECK_CALLED(SetScriptState_CONNECTED);
+
+        SET_EXPECT(ParseScriptText);
+        code_str = SysAllocString(L"0x100");
+        hr = IScriptControl_AddCode(sc, code_str);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        SysFreeString(code_str);
+        CHECK_CALLED(ParseScriptText);
+
+        IActiveScriptSite_Release(site);
+
+        SET_EXPECT(Close);
+        IScriptControl_Release(sc);
+        CHECK_CALLED(Close);
+    }
 }
 
 #define CHECK_ERROR(sc,exp_num) _check_error(sc, exp_num, __LINE__)
