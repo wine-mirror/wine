@@ -237,15 +237,12 @@ static HRESULT set_script_state(ScriptHost *host, SCRIPTSTATE state)
     return hr;
 }
 
-static HRESULT start_script(struct ScriptControl *control)
+static HRESULT start_script(ScriptHost *host)
 {
     HRESULT hr = S_OK;
 
-    if (!control->host)
-        return E_FAIL;
-
-    if (control->host->script_state != SCRIPTSTATE_STARTED)
-        hr = set_script_state(control->host, SCRIPTSTATE_STARTED);
+    if (host->script_state != SCRIPTSTATE_STARTED)
+        hr = set_script_state(host, SCRIPTSTATE_STARTED);
 
     return hr;
 }
@@ -1421,15 +1418,15 @@ static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
     return set_script_state(This->host, SCRIPTSTATE_INITIALIZED);
 }
 
-static HRESULT parse_script_text(ScriptControl *control, BSTR script_text, DWORD flag, VARIANT *res)
+static HRESULT parse_script_text(ScriptHost *host, BSTR script_text, DWORD flag, VARIANT *res)
 {
     EXCEPINFO excepinfo;
     HRESULT hr;
 
-    hr = start_script(control);
+    hr = start_script(host);
     if (FAILED(hr)) return hr;
 
-    hr = IActiveScriptParse_ParseScriptText(control->host->parse, script_text, NULL,
+    hr = IActiveScriptParse_ParseScriptText(host->parse, script_text, NULL,
                                             NULL, NULL, 0, 1, flag, res, &excepinfo);
     /* FIXME: more error handling */
     return hr;
@@ -1441,7 +1438,10 @@ static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
 
     TRACE("(%p)->(%s).\n", This, debugstr_w(code));
 
-    return parse_script_text(This, code, SCRIPTTEXT_ISVISIBLE, NULL);
+    if (!This->host)
+        return E_FAIL;
+
+    return parse_script_text(This->host, code, SCRIPTTEXT_ISVISIBLE, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression, VARIANT *res)
@@ -1453,8 +1453,10 @@ static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression,
     if (!res)
         return E_POINTER;
     V_VT(res) = VT_EMPTY;
+    if (!This->host)
+        return E_FAIL;
 
-    return parse_script_text(This, expression, SCRIPTTEXT_ISEXPRESSION, res);
+    return parse_script_text(This->host, expression, SCRIPTTEXT_ISEXPRESSION, res);
 }
 
 static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR statement)
@@ -1463,7 +1465,10 @@ static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(statement));
 
-    return parse_script_text(This, statement, 0, NULL);
+    if (!This->host)
+        return E_FAIL;
+
+    return parse_script_text(This->host, statement, 0, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
@@ -1486,7 +1491,9 @@ static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_na
     if (sa->cDims == 0) return DISP_E_BADINDEX;
     if (!(sa->fFeatures & FADF_VARIANT)) return DISP_E_BADVARTYPE;
 
-    hr = start_script(This);
+
+    if (!This->host) return E_FAIL;
+    hr = start_script(This->host);
     if (FAILED(hr)) return hr;
 
     hr = get_script_dispatch(This, &disp);
