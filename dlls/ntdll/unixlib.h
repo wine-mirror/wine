@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 41
+#define NTDLL_UNIXLIB_VERSION 42
 
 struct unix_funcs
 {
@@ -92,6 +92,11 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtProtectVirtualMemory)( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                                     ULONG new_prot, ULONG *old_prot );
     NTSTATUS      (WINAPI *NtPulseEvent)( HANDLE handle, LONG *prev_state );
+    NTSTATUS      (WINAPI *NtQueryDirectoryFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc_routine,
+                                                  void *apc_context, IO_STATUS_BLOCK *io, void *buffer,
+                                                  ULONG length, FILE_INFORMATION_CLASS info_class,
+                                                  BOOLEAN single_entry, UNICODE_STRING *mask,
+                                                  BOOLEAN restart_scan );
     NTSTATUS      (WINAPI *NtQueryEvent)( HANDLE handle, EVENT_INFORMATION_CLASS class,
                                           void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
@@ -222,6 +227,16 @@ struct unix_funcs
                                                 unsigned int *options );
     void          (CDECL *server_release_fd)( HANDLE handle, int unix_fd );
     void          (CDECL *server_init_process_done)( void *relay );
+
+    /* file functions */
+    NTSTATUS      (CDECL *file_id_to_unix_file_name)( const OBJECT_ATTRIBUTES *attr,
+                                                      ANSI_STRING *unix_name );
+    NTSTATUS      (CDECL *nt_to_unix_file_name_attr)( const OBJECT_ATTRIBUTES *attr,
+                                                      ANSI_STRING *unix_name_ret, UINT disposition );
+    NTSTATUS      (CDECL *nt_to_unix_file_name)( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+                                                 UINT disposition, BOOLEAN check_case );
+    NTSTATUS      (CDECL *unmount_device)( HANDLE handle );
+    void          (CDECL *set_show_dot_files)( BOOL enable );
 
     /* debugging functions */
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );

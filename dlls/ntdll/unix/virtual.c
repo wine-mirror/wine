@@ -3069,6 +3069,50 @@ BOOL CDECL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
 }
 
 
+/*************************************************************
+ *            IsBadStringPtrA
+ *
+ * IsBadStringPtrA replacement for ntdll, to catch exception in debug traces.
+ */
+BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const char *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+
+/*************************************************************
+ *            IsBadStringPtrW
+ *
+ * IsBadStringPtrW replacement for ntdll, to catch exception in debug traces.
+ */
+BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
+{
+    if (!str) return TRUE;
+    __TRY
+    {
+        volatile const WCHAR *p = str;
+        while (p != str + max) if (!*p++) break;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return TRUE;
+    }
+    __ENDTRY
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           virtual_uninterrupted_read_memory
  *

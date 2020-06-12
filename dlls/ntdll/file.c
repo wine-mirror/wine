@@ -215,9 +215,9 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
     if (options & FILE_OPEN_BY_FILE_ID)
-        io->u.Status = file_id_to_unix_file_name( attr, &unix_name );
+        io->u.Status = unix_funcs->file_id_to_unix_file_name( attr, &unix_name );
     else
-        io->u.Status = nt_to_unix_file_name_attr( attr, &unix_name, disposition );
+        io->u.Status = unix_funcs->nt_to_unix_file_name_attr( attr, &unix_name, disposition );
 
     if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
     {
@@ -1704,7 +1704,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
     case FSCTL_DISMOUNT_VOLUME:
         status = server_ioctl_file( handle, event, apc, apc_context, io, code,
                                     in_buffer, in_size, out_buffer, out_size );
-        if (!status) status = DIR_unmount_device( handle );
+        if (!status) status = unix_funcs->unmount_device( handle );
         return status;
 
     case FSCTL_PIPE_IMPERSONATE:
@@ -2929,7 +2929,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             attr.RootDirectory = info->RootDirectory;
             attr.Attributes = OBJ_CASE_INSENSITIVE;
 
-            io->u.Status = nt_to_unix_file_name_attr( &attr, &unix_name, FILE_OPEN_IF );
+            io->u.Status = unix_funcs->nt_to_unix_file_name_attr( &attr, &unix_name, FILE_OPEN_IF );
             if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
                 break;
 
@@ -2966,7 +2966,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             attr.RootDirectory = info->RootDirectory;
             attr.Attributes = OBJ_CASE_INSENSITIVE;
 
-            io->u.Status = nt_to_unix_file_name_attr( &attr, &unix_name, FILE_OPEN_IF );
+            io->u.Status = unix_funcs->nt_to_unix_file_name_attr( &attr, &unix_name, FILE_OPEN_IF );
             if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
                 break;
 
@@ -3005,7 +3005,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
+    if (!(status = unix_funcs->nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
     {
         ULONG attributes;
         struct stat st;
@@ -3048,7 +3048,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
     ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
+    if (!(status = unix_funcs->nt_to_unix_file_name_attr( attr, &unix_name, FILE_OPEN )))
     {
         ULONG attributes;
         struct stat st;

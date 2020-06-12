@@ -52,6 +52,7 @@ C_SRCS = \
 	time.c \
 	unix/debug.c \
 	unix/env.c \
+	unix/file.c \
 	unix/loader.c \
 	unix/process.c \
 	unix/server.c \

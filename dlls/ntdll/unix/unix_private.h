@@ -120,6 +120,14 @@ extern NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_imag
 extern NTSTATUS CDECL fork_and_exec( const char *unix_name, const char *unix_dir,
                                      const RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
 
+extern NTSTATUS CDECL file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret,
+                                                 UINT disposition ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
+                                            UINT disposition, BOOLEAN check_case ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL unmount_device( HANDLE handle ) DECLSPEC_HIDDEN;
+extern void CDECL set_show_dot_files( BOOL enable ) DECLSPEC_HIDDEN;
+
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
@@ -186,7 +194,19 @@ extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE ent
                                                    BOOL suspend, void *relay, TEB *teb ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int) ) DECLSPEC_HIDDEN;
 
+extern void init_files(void) DECLSPEC_HIDDEN;
+
 extern void dbg_init(void) DECLSPEC_HIDDEN;
+
+#define TICKSPERSEC 10000000
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+
+static inline const char *debugstr_us( const UNICODE_STRING *us )
+{
+    if (!us) return "<null>";
+    return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
+}
 
 static inline size_t ntdll_wcslen( const WCHAR *str )
 {
