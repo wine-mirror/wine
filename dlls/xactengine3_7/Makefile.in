@@ -1,0 +1,6 @@
+MODULE    = xactengine3_7.dll
+
+C_SRCS = \
+	xact_dll.c
+
+IDL_SRCS = xact_classes.idl

@@ -1704,6 +1704,7 @@ enable_x3daudio1_4
 enable_x3daudio1_5
 enable_x3daudio1_6
 enable_x3daudio1_7
+enable_xactengine3_7
 enable_xapofx1_1
 enable_xapofx1_2
 enable_xapofx1_3
@@ -21329,6 +21330,7 @@ wine_fn_config_makefile dlls/x3daudio1_4 enable_x3daudio1_4
 wine_fn_config_makefile dlls/x3daudio1_5 enable_x3daudio1_5
 wine_fn_config_makefile dlls/x3daudio1_6 enable_x3daudio1_6
 wine_fn_config_makefile dlls/x3daudio1_7 enable_x3daudio1_7
+wine_fn_config_makefile dlls/xactengine3_7 enable_xactengine3_7
 wine_fn_config_makefile dlls/xapofx1_1 enable_xapofx1_1
 wine_fn_config_makefile dlls/xapofx1_2 enable_xapofx1_2
 wine_fn_config_makefile dlls/xapofx1_3 enable_xapofx1_3
