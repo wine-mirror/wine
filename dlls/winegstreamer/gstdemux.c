@@ -79,7 +79,7 @@ struct gstdemux_source
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
     AM_MEDIA_TYPE mt;
-    HANDLE caps_event;
+    HANDLE caps_event, eos_event;
     GstSegment *segment;
     SourceSeeking seek;
 };
@@ -699,6 +699,8 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_EOS:
             if (pin->pin.pin.peer)
                 IPin_EndOfStream(pin->pin.pin.peer);
+            else
+                SetEvent(pin->eos_event);
             return TRUE;
         case GST_EVENT_FLUSH_START:
             if (impl_from_strmbase_filter(pin->pin.pin.filter)->ignore_flush) {
@@ -2129,6 +2131,7 @@ static void free_source_pin(struct gstdemux_source *pin)
     }
     gst_object_unref(pin->my_sink);
     CloseHandle(pin->caps_event);
+    CloseHandle(pin->eos_event);
     FreeMediaType(&pin->mt);
     gst_segment_free(pin->segment);
 
@@ -2161,6 +2164,7 @@ static struct gstdemux_source *create_pin(struct gstdemux *filter, const WCHAR *
 
     strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
     pin->caps_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    pin->eos_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     pin->segment = gst_segment_new();
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
@@ -2561,7 +2565,8 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
     static const WCHAR source_name[] = {'A','u','d','i','o',0};
     struct gstdemux_source *pin;
     GstElement *element;
-    HANDLE events[2];
+    HANDLE events[3];
+    DWORD res;
     int ret;
 
     if (!(element = gst_element_factory_make("mpegaudioparse", NULL)))
@@ -2600,7 +2605,9 @@ static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
 
     events[0] = filter->duration_event;
     events[1] = filter->error_event;
-    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+    events[2] = pin->eos_event;
+    res = WaitForMultipleObjects(3, events, FALSE, INFINITE);
+    if (res == 1)
         return FALSE;
 
     pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
