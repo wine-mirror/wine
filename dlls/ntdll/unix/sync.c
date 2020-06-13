@@ -1100,6 +1100,195 @@ NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
 
 
 /***********************************************************************
+ *             NtCreateIoCompletion (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateIoCompletion( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                      ULONG threads )
+{
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    TRACE( "(%p, %x, %p, %d)\n", handle, access, attr, threads );
+
+    if (!handle) return STATUS_INVALID_PARAMETER;
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
+    SERVER_START_REQ( create_completion )
+    {
+        req->access     = access;
+        req->concurrent = threads;
+        wine_server_add_data( req, objattr, len );
+        if (!(status = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtOpenIoCompletion (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenIoCompletion( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS status;
+
+    if (!handle) return STATUS_INVALID_PARAMETER;
+    if ((status = validate_open_object_attributes( attr ))) return status;
+
+    SERVER_START_REQ( open_completion )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtSetIoCompletion (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetIoCompletion( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
+                                   NTSTATUS status, SIZE_T count )
+{
+    NTSTATUS ret;
+
+    TRACE( "(%p, %lx, %lx, %x, %lx)\n", handle, key, value, status, count );
+
+    SERVER_START_REQ( add_completion )
+    {
+        req->handle      = wine_server_obj_handle( handle );
+        req->ckey        = key;
+        req->cvalue      = value;
+        req->status      = status;
+        req->information = count;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
+ *             NtRemoveIoCompletion (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
+                                      IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %p, %p, %p)\n", handle, key, value, io, timeout );
+
+    for (;;)
+    {
+        SERVER_START_REQ( remove_completion )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            if (!(status = wine_server_call( req )))
+            {
+                *key            = reply->ckey;
+                *value          = reply->cvalue;
+                io->Information = reply->information;
+                io->u.Status    = reply->status;
+            }
+        }
+        SERVER_END_REQ;
+        if (status != STATUS_PENDING) return status;
+        status = NtWaitForSingleObject( handle, FALSE, timeout );
+        if (status != WAIT_OBJECT_0) return status;
+    }
+}
+
+
+/***********************************************************************
+ *             NtRemoveIoCompletionEx (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info, ULONG count,
+                                        ULONG *written, LARGE_INTEGER *timeout, BOOLEAN alertable )
+{
+    NTSTATUS status;
+    ULONG i = 0;
+
+    TRACE( "%p %p %u %p %p %u\n", handle, info, count, written, timeout, alertable );
+
+    for (;;)
+    {
+        while (i < count)
+        {
+            SERVER_START_REQ( remove_completion )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (!(status = wine_server_call( req )))
+                {
+                    info[i].CompletionKey             = reply->ckey;
+                    info[i].CompletionValue           = reply->cvalue;
+                    info[i].IoStatusBlock.Information = reply->information;
+                    info[i].IoStatusBlock.u.Status    = reply->status;
+                }
+            }
+            SERVER_END_REQ;
+            if (status != STATUS_SUCCESS) break;
+            ++i;
+        }
+        if (i || status != STATUS_PENDING)
+        {
+            if (status == STATUS_PENDING) status = STATUS_SUCCESS;
+            break;
+        }
+        status = NtWaitForSingleObject( handle, alertable, timeout );
+        if (status != WAIT_OBJECT_0) break;
+    }
+    *written = i ? i : 1;
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtQueryIoCompletion (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryIoCompletion( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
+                                     void *buffer, ULONG len, ULONG *ret_len )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %d, %p, 0x%x, %p)\n", handle, class, buffer, len, ret_len );
+
+    if (!buffer) return STATUS_INVALID_PARAMETER;
+
+    switch (class)
+    {
+    case IoCompletionBasicInformation:
+    {
+        ULONG *info = buffer;
+        if (ret_len) *ret_len = sizeof(*info);
+        if (len == sizeof(*info))
+        {
+            SERVER_START_REQ( query_completion )
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (!(status = wine_server_call( req ))) *info = reply->depth;
+            }
+            SERVER_END_REQ;
+        }
+        else status = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+    return status;
+}
+
+
+/***********************************************************************
  *             NtCreateSection (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,

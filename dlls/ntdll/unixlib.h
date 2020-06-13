@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 43
+#define NTDLL_UNIXLIB_VERSION 44
 
 struct unix_funcs
 {
@@ -48,6 +48,8 @@ struct unix_funcs
                                           IO_STATUS_BLOCK *io, LARGE_INTEGER *alloc_size,
                                           ULONG attributes, ULONG sharing, ULONG disposition,
                                           ULONG options, void *ea_buffer, ULONG ea_length );
+    NTSTATUS      (WINAPI *NtCreateIoCompletion)( HANDLE *handle, ACCESS_MASK access,
+                                                  OBJECT_ATTRIBUTES *attr, ULONG threads );
     NTSTATUS      (WINAPI *NtCreateKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
                                                 const OBJECT_ATTRIBUTES *attr, ULONG flags );
     NTSTATUS      (WINAPI *NtCreateMailslotFile)( HANDLE *handle, ULONG access, OBJECT_ATTRIBUTES *attr,
@@ -94,6 +96,8 @@ struct unix_funcs
                                          const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenFile)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                                         IO_STATUS_BLOCK *io, ULONG sharing, ULONG options );
+    NTSTATUS      (WINAPI *NtOpenIoCompletion)( HANDLE *handle, ACCESS_MASK access,
+                                                const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenKeyedEvent)( HANDLE *handle, ACCESS_MASK access,
                                               const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenMutant)( HANDLE *handle, ACCESS_MASK access,
@@ -119,6 +123,8 @@ struct unix_funcs
                                           void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryFullAttributesFile)( const OBJECT_ATTRIBUTES *attr,
                                                        FILE_NETWORK_OPEN_INFORMATION *info );
+    NTSTATUS      (WINAPI *NtQueryIoCompletion)( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
+                                                 void *buffer, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
                                            void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
@@ -141,11 +147,18 @@ struct unix_funcs
                                                  BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtReleaseMutant)( HANDLE handle, LONG *prev_count );
     NTSTATUS      (WINAPI *NtReleaseSemaphore)( HANDLE handle, ULONG count, ULONG *previous );
+    NTSTATUS      (WINAPI *NtRemoveIoCompletion)( HANDLE handle, ULONG_PTR *key, ULONG_PTR *value,
+                                                  IO_STATUS_BLOCK *io, LARGE_INTEGER *timeout );
+    NTSTATUS      (WINAPI *NtRemoveIoCompletionEx)( HANDLE handle, FILE_IO_COMPLETION_INFORMATION *info,
+                                                    ULONG count, ULONG *written,
+                                                    LARGE_INTEGER *timeout, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtResetEvent)( HANDLE handle, LONG *prev_state );
     NTSTATUS      (WINAPI *NtResetWriteWatch)( HANDLE process, PVOID base, SIZE_T size );
     NTSTATUS      (WINAPI *NtResumeThread)( HANDLE handle, ULONG *count );
     NTSTATUS      (WINAPI *NtSetContextThread)( HANDLE handle, const CONTEXT *context );
     NTSTATUS      (WINAPI *NtSetEvent)( HANDLE handle, LONG *prev_state );
+    NTSTATUS      (WINAPI *NtSetIoCompletion)( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
+                                               NTSTATUS status, SIZE_T count );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
     NTSTATUS      (WINAPI *NtSetSystemTime)( const LARGE_INTEGER *new, LARGE_INTEGER *old );
     NTSTATUS      (WINAPI *NtSetTimer)( HANDLE handle, const LARGE_INTEGER *when,
