@@ -1430,7 +1430,7 @@ static void test_sample_time(IPin *pin, IMemInputPin *input, IMediaControl *cont
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     thread = send_frame_time(input, 2, 0x00ff00ff); /* magenta */
-    ok(WaitForSingleObject(thread, 800) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 500) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
     hr = join_thread(thread);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 

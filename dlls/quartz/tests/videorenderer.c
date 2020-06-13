@@ -1082,7 +1082,7 @@ static void test_sample_time(IBaseFilter *filter, IPin *pin, IMemInputPin *input
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     thread = send_frame_time(input, 2, 0x66); /* orange */
-    ok(WaitForSingleObject(thread, 800) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+    ok(WaitForSingleObject(thread, 500) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
     hr = join_thread(thread);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
