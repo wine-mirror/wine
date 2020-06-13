@@ -2689,7 +2689,7 @@ static void init_redirects(void)
     char *dir;
     struct stat st;
 
-    if (!(dir = RtlAllocateHeap( GetProcessHeap(), 0, strlen(config_dir) + sizeof(windows_dir) ))) return;
+    if (!(dir = malloc( strlen(config_dir) + sizeof(windows_dir) ))) return;
     strcpy( dir, config_dir );
     strcat( dir, windows_dir );
     if (!stat( dir, &st ))
@@ -2699,7 +2699,7 @@ static void init_redirects(void)
         nb_redirects = ARRAY_SIZE( redirects );
     }
     else ERR( "%s: %s\n", dir, strerror(errno) );
-    RtlFreeHeap( GetProcessHeap(), 0, dir );
+    free( dir );
 
 }
 

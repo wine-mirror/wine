@@ -110,6 +110,7 @@ TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZ
     server_init_process();
     info_size = server_init_thread( teb->Peb, suspend );
     virtual_map_user_shared_data();
+    init_files();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
 
     if (size) *size = info_size;
