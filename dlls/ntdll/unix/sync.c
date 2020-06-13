@@ -684,6 +684,236 @@ NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
 
 
 /**************************************************************************
+ *		NtCreateJobObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateJobObject( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_job )
+    {
+        req->access = access;
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
+    return ret;
+}
+
+
+/**************************************************************************
+ *		NtOpenJobObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenJobObject( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
+
+    SERVER_START_REQ( open_job )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**************************************************************************
+ *		NtTerminateJobObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
+{
+    NTSTATUS ret;
+
+    TRACE( "(%p, %d)\n", handle, status );
+
+    SERVER_START_REQ( terminate_job )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->status = status;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *		NtQueryInformationJobObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, void *info,
+                                             ULONG len, ULONG *ret_len )
+{
+    NTSTATUS ret;
+
+    TRACE( "semi-stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
+
+    if (class >= MaxJobObjectInfoClass) return STATUS_INVALID_PARAMETER;
+
+    switch (class)
+    {
+    case JobObjectBasicAccountingInformation:
+    {
+        JOBOBJECT_BASIC_ACCOUNTING_INFORMATION *accounting = info;
+
+        if (len < sizeof(*accounting)) return STATUS_INFO_LENGTH_MISMATCH;
+        SERVER_START_REQ(get_job_info)
+        {
+            req->handle = wine_server_obj_handle( handle );
+            if (!(ret = wine_server_call( req )))
+            {
+                memset( accounting, 0, sizeof(*accounting) );
+                accounting->TotalProcesses = reply->total_processes;
+                accounting->ActiveProcesses = reply->active_processes;
+            }
+        }
+        SERVER_END_REQ;
+        if (ret_len) *ret_len = sizeof(*accounting);
+        return ret;
+    }
+    case JobObjectBasicProcessIdList:
+    {
+        JOBOBJECT_BASIC_PROCESS_ID_LIST *process = info;
+
+        if (len < sizeof(*process)) return STATUS_INFO_LENGTH_MISMATCH;
+        memset( process, 0, sizeof(*process) );
+        if (ret_len) *ret_len = sizeof(*process);
+        return STATUS_SUCCESS;
+    }
+    case JobObjectExtendedLimitInformation:
+    {
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION *extended_limit = info;
+
+        if (len < sizeof(*extended_limit)) return STATUS_INFO_LENGTH_MISMATCH;
+        memset( extended_limit, 0, sizeof(*extended_limit) );
+        if (ret_len) *ret_len = sizeof(*extended_limit);
+        return STATUS_SUCCESS;
+    }
+    case JobObjectBasicLimitInformation:
+    {
+        JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit = info;
+
+        if (len < sizeof(*basic_limit)) return STATUS_INFO_LENGTH_MISMATCH;
+        memset( basic_limit, 0, sizeof(*basic_limit) );
+        if (ret_len) *ret_len = sizeof(*basic_limit);
+        return STATUS_SUCCESS;
+    }
+    default:
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+
+/**************************************************************************
+ *		NtSetInformationJobObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, void *info, ULONG len )
+{
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit;
+    ULONG info_size = sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION);
+    DWORD limit_flags = JOB_OBJECT_BASIC_LIMIT_VALID_FLAGS;
+
+    TRACE( "(%p, %u, %p, %u)\n", handle, class, info, len );
+
+    if (class >= MaxJobObjectInfoClass) return STATUS_INVALID_PARAMETER;
+
+    switch (class)
+    {
+
+    case JobObjectExtendedLimitInformation:
+        info_size = sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION);
+        limit_flags = JOB_OBJECT_EXTENDED_LIMIT_VALID_FLAGS;
+        /* fall through */
+    case JobObjectBasicLimitInformation:
+        if (len != info_size) return STATUS_INVALID_PARAMETER;
+        basic_limit = info;
+        if (basic_limit->LimitFlags & ~limit_flags) return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_job_limits )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->limit_flags = basic_limit->LimitFlags;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        break;
+    case JobObjectAssociateCompletionPortInformation:
+        if (len != sizeof(JOBOBJECT_ASSOCIATE_COMPLETION_PORT)) return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_job_completion_port )
+        {
+            JOBOBJECT_ASSOCIATE_COMPLETION_PORT *port_info = info;
+            req->job = wine_server_obj_handle( handle );
+            req->port = wine_server_obj_handle( port_info->CompletionPort );
+            req->key = wine_server_client_ptr( port_info->CompletionKey );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        break;
+    case JobObjectBasicUIRestrictions:
+        status = STATUS_SUCCESS;
+        /* fall through */
+    default:
+        FIXME( "stub: %p %u %p %u\n", handle, class, info, len );
+    }
+    return status;
+}
+
+
+/**************************************************************************
+ *		NtIsProcessInJob (NTDLL.@)
+ */
+NTSTATUS WINAPI NtIsProcessInJob( HANDLE process, HANDLE job )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p %p)\n", job, process );
+
+    SERVER_START_REQ( process_in_job )
+    {
+        req->job     = wine_server_obj_handle( job );
+        req->process = wine_server_obj_handle( process );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
+/**************************************************************************
+ *		NtAssignProcessToJobObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p %p)\n", job, process );
+
+    SERVER_START_REQ( assign_job )
+    {
+        req->job     = wine_server_obj_handle( job );
+        req->process = wine_server_obj_handle( process );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
+/**************************************************************************
  *		NtCreateTimer (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,

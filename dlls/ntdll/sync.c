@@ -24,28 +24,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <assert.h>
-#include <errno.h>
 #include <limits.h>
-#include <signal.h>
-#ifdef HAVE_SYS_SYSCALL_H
-#include <sys/syscall.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-# include <sys/poll.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_SCHED_H
-# include <sched.h>
-#endif
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -321,23 +300,7 @@ NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
  */
 NTSTATUS WINAPI NtCreateJobObject( PHANDLE handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS ret;
-    data_size_t len;
-    struct object_attributes *objattr;
-
-    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
-
-    SERVER_START_REQ( create_job )
-    {
-        req->access = access;
-        wine_server_add_data( req, objattr, len );
-        ret = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    RtlFreeHeap( GetProcessHeap(), 0, objattr );
-    return ret;
+    return unix_funcs->NtCreateJobObject( handle, access, attr );
 }
 
 /******************************************************************************
@@ -346,22 +309,7 @@ NTSTATUS WINAPI NtCreateJobObject( PHANDLE handle, ACCESS_MASK access, const OBJ
  */
 NTSTATUS WINAPI NtOpenJobObject( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS ret;
-
-    if ((ret = validate_open_object_attributes( attr ))) return ret;
-
-    SERVER_START_REQ( open_job )
-    {
-        req->access     = access;
-        req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-        if (attr->ObjectName)
-            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
-        ret = wine_server_call( req );
-        *handle = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return unix_funcs->NtOpenJobObject( handle, access, attr );
 }
 
 /******************************************************************************
@@ -370,19 +318,7 @@ NTSTATUS WINAPI NtOpenJobObject( HANDLE *handle, ACCESS_MASK access, const OBJEC
  */
 NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
 {
-    NTSTATUS ret;
-
-    TRACE( "(%p, %d)\n", handle, status );
-
-    SERVER_START_REQ( terminate_job )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->status = status;
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    return unix_funcs->NtTerminateJobObject( handle, status );
 }
 
 /******************************************************************************
@@ -392,78 +328,7 @@ NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
 NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, PVOID info,
                                              ULONG len, PULONG ret_len )
 {
-    NTSTATUS ret;
-
-    TRACE( "semi-stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
-
-    if (class >= MaxJobObjectInfoClass)
-        return STATUS_INVALID_PARAMETER;
-
-    switch (class)
-    {
-    case JobObjectBasicAccountingInformation:
-        {
-            JOBOBJECT_BASIC_ACCOUNTING_INFORMATION *accounting;
-            if (len < sizeof(*accounting))
-                return STATUS_INFO_LENGTH_MISMATCH;
-
-            accounting = (JOBOBJECT_BASIC_ACCOUNTING_INFORMATION *)info;
-
-            SERVER_START_REQ(get_job_info)
-            {
-                req->handle = wine_server_obj_handle( handle );
-                if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
-                {
-                    memset(accounting, 0, sizeof(*accounting));
-                    accounting->TotalProcesses = reply->total_processes;
-                    accounting->ActiveProcesses = reply->active_processes;
-                }
-            }
-            SERVER_END_REQ;
-
-            if (ret_len) *ret_len = sizeof(*accounting);
-            return ret;
-        }
-
-    case JobObjectBasicProcessIdList:
-        {
-            JOBOBJECT_BASIC_PROCESS_ID_LIST *process;
-            if (len < sizeof(*process))
-                return STATUS_INFO_LENGTH_MISMATCH;
-
-            process = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)info;
-            memset(process, 0, sizeof(*process));
-            if (ret_len) *ret_len = sizeof(*process);
-            return STATUS_SUCCESS;
-        }
-
-    case JobObjectExtendedLimitInformation:
-        {
-            JOBOBJECT_EXTENDED_LIMIT_INFORMATION *extended_limit;
-            if (len < sizeof(*extended_limit))
-                return STATUS_INFO_LENGTH_MISMATCH;
-
-            extended_limit = (JOBOBJECT_EXTENDED_LIMIT_INFORMATION *)info;
-            memset(extended_limit, 0, sizeof(*extended_limit));
-            if (ret_len) *ret_len = sizeof(*extended_limit);
-            return STATUS_SUCCESS;
-        }
-
-    case JobObjectBasicLimitInformation:
-        {
-            JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit;
-            if (len < sizeof(*basic_limit))
-                return STATUS_INFO_LENGTH_MISMATCH;
-
-            basic_limit = (JOBOBJECT_BASIC_LIMIT_INFORMATION *)info;
-            memset(basic_limit, 0, sizeof(*basic_limit));
-            if (ret_len) *ret_len = sizeof(*basic_limit);
-            return STATUS_SUCCESS;
-        }
-
-    default:
-        return STATUS_NOT_IMPLEMENTED;
-    }
+    return unix_funcs->NtQueryInformationJobObject( handle, class, info, len, ret_len );
 }
 
 /******************************************************************************
@@ -472,63 +337,7 @@ NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS c
  */
 NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS class, PVOID info, ULONG len )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit;
-    ULONG info_size = sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION);
-    DWORD limit_flags = JOB_OBJECT_BASIC_LIMIT_VALID_FLAGS;
-
-    TRACE( "(%p, %u, %p, %u)\n", handle, class, info, len );
-
-    if (class >= MaxJobObjectInfoClass)
-        return STATUS_INVALID_PARAMETER;
-
-    switch (class)
-    {
-
-    case JobObjectExtendedLimitInformation:
-        info_size = sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION);
-        limit_flags = JOB_OBJECT_EXTENDED_LIMIT_VALID_FLAGS;
-        /* fallthrough */
-    case JobObjectBasicLimitInformation:
-        if (len != info_size)
-            return STATUS_INVALID_PARAMETER;
-
-        basic_limit = info;
-        if (basic_limit->LimitFlags & ~limit_flags)
-            return STATUS_INVALID_PARAMETER;
-
-        SERVER_START_REQ( set_job_limits )
-        {
-            req->handle = wine_server_obj_handle( handle );
-            req->limit_flags = basic_limit->LimitFlags;
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        break;
-
-    case JobObjectAssociateCompletionPortInformation:
-        if (len != sizeof(JOBOBJECT_ASSOCIATE_COMPLETION_PORT))
-            return STATUS_INVALID_PARAMETER;
-
-        SERVER_START_REQ( set_job_completion_port )
-        {
-            JOBOBJECT_ASSOCIATE_COMPLETION_PORT *port_info = info;
-            req->job = wine_server_obj_handle( handle );
-            req->port = wine_server_obj_handle( port_info->CompletionPort );
-            req->key = wine_server_client_ptr( port_info->CompletionKey );
-            status = wine_server_call(req);
-        }
-        SERVER_END_REQ;
-        break;
-
-    case JobObjectBasicUIRestrictions:
-        status = STATUS_SUCCESS;
-        /* fallthrough */
-    default:
-        FIXME( "stub: %p %u %p %u\n", handle, class, info, len );
-    }
-
-    return status;
+    return unix_funcs->NtSetInformationJobObject( handle, class, info, len );
 }
 
 /******************************************************************************
@@ -537,19 +346,7 @@ NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS cla
  */
 NTSTATUS WINAPI NtIsProcessInJob( HANDLE process, HANDLE job )
 {
-    NTSTATUS status;
-
-    TRACE( "(%p %p)\n", job, process );
-
-    SERVER_START_REQ( process_in_job )
-    {
-        req->job     = wine_server_obj_handle( job );
-        req->process = wine_server_obj_handle( process );
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return status;
+    return unix_funcs->NtIsProcessInJob( process, job );
 }
 
 /******************************************************************************
@@ -558,19 +355,7 @@ NTSTATUS WINAPI NtIsProcessInJob( HANDLE process, HANDLE job )
  */
 NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
 {
-    NTSTATUS status;
-
-    TRACE( "(%p %p)\n", job, process );
-
-    SERVER_START_REQ( assign_job )
-    {
-        req->job     = wine_server_obj_handle( job );
-        req->process = wine_server_obj_handle( process );
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return status;
+    return unix_funcs->NtAssignProcessToJobObject( job, process );
 }
 
 /*
