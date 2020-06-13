@@ -4384,10 +4384,6 @@ void __wine_process_init(void)
     init_user_process_params( info_size );
     params = peb->ProcessParameters;
 
-    /* retrieve current umask */
-    FILE_umask = umask(0777);
-    umask( FILE_umask );
-
     load_global_options();
     version_init();
 

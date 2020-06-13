@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 45
+#define NTDLL_UNIXLIB_VERSION 46
 
 struct unix_funcs
 {
@@ -129,6 +129,8 @@ struct unix_funcs
                                           void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryFullAttributesFile)( const OBJECT_ATTRIBUTES *attr,
                                                        FILE_NETWORK_OPEN_INFORMATION *info );
+    NTSTATUS      (WINAPI *NtQueryInformationFile)( HANDLE hFile, IO_STATUS_BLOCK *io,
+                                                    void *ptr, LONG len, FILE_INFORMATION_CLASS class );
     NTSTATUS      (WINAPI *NtQueryInformationJobObject)( HANDLE handle, JOBOBJECTINFOCLASS class,
                                                          void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryIoCompletion)( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
@@ -165,6 +167,8 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtResumeThread)( HANDLE handle, ULONG *count );
     NTSTATUS      (WINAPI *NtSetContextThread)( HANDLE handle, const CONTEXT *context );
     NTSTATUS      (WINAPI *NtSetEvent)( HANDLE handle, LONG *prev_state );
+    NTSTATUS      (WINAPI *NtSetInformationFile)( HANDLE handle, IO_STATUS_BLOCK *io,
+                                                  void *ptr, ULONG len, FILE_INFORMATION_CLASS class );
     NTSTATUS      (WINAPI *NtSetInformationJobObject)( HANDLE handle, JOBOBJECTINFOCLASS class,
                                                        void *info, ULONG len );
     NTSTATUS      (WINAPI *NtSetIoCompletion)( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
@@ -273,10 +277,6 @@ struct unix_funcs
     void          (CDECL *server_init_process_done)( void *relay );
 
     /* file functions */
-    NTSTATUS      (CDECL *file_id_to_unix_file_name)( const OBJECT_ATTRIBUTES *attr,
-                                                      ANSI_STRING *unix_name );
-    NTSTATUS      (CDECL *nt_to_unix_file_name_attr)( const OBJECT_ATTRIBUTES *attr,
-                                                      ANSI_STRING *unix_name_ret, UINT disposition );
     NTSTATUS      (CDECL *nt_to_unix_file_name)( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                                  UINT disposition, BOOLEAN check_case );
     NTSTATUS      (CDECL *unmount_device)( HANDLE handle );

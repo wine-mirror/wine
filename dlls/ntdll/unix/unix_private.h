@@ -120,9 +120,6 @@ extern NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_imag
 extern NTSTATUS CDECL fork_and_exec( const char *unix_name, const char *unix_dir,
                                      const RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
 
-extern NTSTATUS CDECL file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret,
-                                                 UINT disposition ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                             UINT disposition, BOOLEAN check_case ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL unmount_device( HANDLE handle ) DECLSPEC_HIDDEN;
