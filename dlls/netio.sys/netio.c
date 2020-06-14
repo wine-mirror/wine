@@ -44,6 +44,14 @@ struct _WSK_CLIENT
     WSK_CLIENT_NPI *client_npi;
 };
 
+struct wsk_socket_internal
+{
+    WSK_SOCKET wsk_socket;
+    SOCKET s;
+    const void *client_dispatch;
+    void *client_context;
+};
+
 static NTSTATUS sock_error_to_ntstatus(DWORD err)
 {
     switch (err)
@@ -92,16 +100,131 @@ static void dispatch_irp(IRP *irp, NTSTATUS status)
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
-static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_family, USHORT socket_type,
-        ULONG protocol, ULONG Flags, void *socket_context, const void *dispatch, PEPROCESS owning_process,
-        PETHREAD owning_thread, SECURITY_DESCRIPTOR *security_descriptor, IRP *irp)
+static NTSTATUS WINAPI wsk_control_socket(WSK_SOCKET *socket, WSK_CONTROL_SOCKET_TYPE request_type,
+        ULONG control_code, ULONG level, SIZE_T input_size, void *input_buffer, SIZE_T output_size,
+        void *output_buffer, SIZE_T *output_size_returned, IRP *irp)
 {
-    FIXME("client %p, address_family %#x, socket_type %#x, protocol %#x, Flags %#x, socket_context %p, dispatch %p, "
-            "owning_process %p, owning_thread %p, security_descriptor %p, irp %p stub.\n",
-            client, address_family, socket_type, protocol, Flags, socket_context, dispatch, owning_process,
-            owning_thread, security_descriptor, irp);
+    FIXME("socket %p, request_type %u, control_code %#x, level %u, input_size %lu, input_buffer %p, "
+            "output_size %lu, output_buffer %p, output_size_returned %p, irp %p stub.\n",
+            socket, request_type, control_code, level, input_size, input_buffer, output_size,
+            output_buffer, output_size_returned, irp);
 
     return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_close_socket(WSK_SOCKET *socket, IRP *irp)
+{
+    FIXME("socket %p, irp %p stub.\n", socket, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_bind(WSK_SOCKET *socket, SOCKADDR *local_address, ULONG flags, IRP *irp)
+{
+    FIXME("socket %p, local_address %p, flags %#x, irp %p stub.\n",
+            socket, local_address, flags, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_accept(WSK_SOCKET *listen_socket, ULONG flags, void *accept_socket_context,
+        const WSK_CLIENT_CONNECTION_DISPATCH *accept_socket_dispatch, SOCKADDR *local_address,
+        SOCKADDR *remote_address, IRP *irp)
+{
+    FIXME("listen_socket %p, flags %#x, accept_socket_context %p, accept_socket_dispatch %p, "
+            "local_address %p, remote_address %p, irp %p stub.\n",
+            listen_socket, flags, accept_socket_context, accept_socket_dispatch, local_address,
+            remote_address, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_inspect_complete(WSK_SOCKET *listen_socket, WSK_INSPECT_ID *inspect_id,
+        WSK_INSPECT_ACTION action, IRP *irp)
+{
+    FIXME("listen_socket %p, inspect_id %p, action %u, irp %p stub.\n",
+            listen_socket, inspect_id, action, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_get_local_address(WSK_SOCKET *socket, SOCKADDR *local_address, IRP *irp)
+{
+    FIXME("socket %p, local_address %p, irp %p stub.\n", socket, local_address, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static const WSK_PROVIDER_LISTEN_DISPATCH wsk_provider_listen_dispatch =
+{
+    {
+        wsk_control_socket,
+        wsk_close_socket,
+    },
+    wsk_bind,
+    wsk_accept,
+    wsk_inspect_complete,
+    wsk_get_local_address,
+};
+
+static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_family, USHORT socket_type,
+        ULONG protocol, ULONG flags, void *socket_context, const void *dispatch, PEPROCESS owning_process,
+        PETHREAD owning_thread, SECURITY_DESCRIPTOR *security_descriptor, IRP *irp)
+{
+    struct wsk_socket_internal *socket;
+    NTSTATUS status;
+    SOCKET s;
+
+    TRACE("client %p, address_family %#x, socket_type %#x, protocol %#x, flags %#x, socket_context %p, dispatch %p, "
+            "owning_process %p, owning_thread %p, security_descriptor %p, irp %p.\n",
+            client, address_family, socket_type, protocol, flags, socket_context, dispatch, owning_process,
+            owning_thread, security_descriptor, irp);
+
+    if (!irp)
+        return STATUS_INVALID_PARAMETER;
+
+    if (!client)
+        return STATUS_INVALID_HANDLE;
+
+    irp->IoStatus.Information = 0;
+
+    if ((s = WSASocketW(address_family, socket_type, protocol, NULL, 0, 0)) == INVALID_SOCKET)
+    {
+        status = sock_error_to_ntstatus(WSAGetLastError());
+        goto done;
+    }
+
+    if (!(socket = heap_alloc(sizeof(*socket))))
+    {
+        status = STATUS_NO_MEMORY;
+        closesocket(s);
+        goto done;
+    }
+
+    socket->s = s;
+    socket->client_dispatch = dispatch;
+    socket->client_context = socket_context;
+
+    switch (flags)
+    {
+        case WSK_FLAG_LISTEN_SOCKET:
+            socket->wsk_socket.Dispatch = &wsk_provider_listen_dispatch;
+            break;
+
+        default:
+            FIXME("Flags %#x not implemented.\n", flags);
+            closesocket(s);
+            heap_free(socket);
+            status = STATUS_NOT_IMPLEMENTED;
+            goto done;
+    }
+
+    irp->IoStatus.Information = (ULONG_PTR)&socket->wsk_socket;
+    status = STATUS_SUCCESS;
+
+done:
+    dispatch_irp(irp, status);
+    return status ? status : STATUS_PENDING;
 }
 
 static NTSTATUS WINAPI wsk_socket_connect(WSK_CLIENT *client, USHORT socket_type, ULONG protocol,

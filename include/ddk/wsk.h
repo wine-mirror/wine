@@ -136,6 +136,20 @@ typedef struct _WSK_CLIENT_CONNECTION_DISPATCH
     PFN_WSK_SEND_BACKLOG_EVENT WskSendBacklogEvent;
 } WSK_CLIENT_CONNECTION_DISPATCH, *PWSK_CLIENT_CONNECTION_DISPATCH;
 
+typedef NTSTATUS (WINAPI *PFN_WSK_ACCEPT_EVENT)(void *socket_context, ULONG flags, SOCKADDR *local_address,
+        SOCKADDR *remote_address, WSK_SOCKET *accept_socket, void *accept_socket_context,
+        const WSK_CLIENT_CONNECTION_DISPATCH **accept_socket_dispatch);
+typedef WSK_INSPECT_ACTION (WINAPI *PFN_WSK_INSPECT_EVENT)(void *socket_context, SOCKADDR *local_address,
+        SOCKADDR *remote_address, WSK_INSPECT_ID *inspect_id);
+typedef NTSTATUS (WINAPI *PFN_WSK_ABORT_EVENT)(void *socket_context, WSK_INSPECT_ID *inspect_id);
+
+typedef struct _WSK_CLIENT_LISTEN_DISPATCH
+{
+  PFN_WSK_ACCEPT_EVENT WskAcceptEvent;
+  PFN_WSK_INSPECT_EVENT WskInspectEvent;
+  PFN_WSK_ABORT_EVENT WskAbortEvent;
+} WSK_CLIENT_LISTEN_DISPATCH, *PWSK_CLIENT_LISTEN_DISPATCH;
+
 typedef struct _WSK_CLIENT_DISPATCH
 {
     USHORT Version;
