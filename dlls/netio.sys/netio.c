@@ -203,7 +203,9 @@ static NTSTATUS WINAPI wsk_get_address_info(WSK_CLIENT *client, UNICODE_STRING *
 
 static void WINAPI wsk_free_address_info(WSK_CLIENT *client, ADDRINFOEXW *addr_info)
 {
-    FIXME("client %p, addr_info %p stub.\n", client, addr_info);
+    TRACE("client %p, addr_info %p.\n", client, addr_info);
+
+    FreeAddrInfoExW(addr_info);
 }
 
 static NTSTATUS WINAPI wsk_get_name_info(WSK_CLIENT *client, SOCKADDR *sock_addr, ULONG sock_addr_length,
