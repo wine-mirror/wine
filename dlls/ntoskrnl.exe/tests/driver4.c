@@ -163,6 +163,56 @@ static void test_wsk_get_address_info(void)
     provider_npi.Dispatch->WskFreeAddressInfo(provider_npi.Client, result);
 }
 
+struct socket_context
+{
+};
+
+static void test_wsk_listen_socket(void)
+{
+    static const WSK_CLIENT_LISTEN_DISPATCH client_listen_dispatch;
+    const WSK_PROVIDER_LISTEN_DISPATCH *dispatch;
+    struct socket_context context;
+    NTSTATUS status;
+    WSK_SOCKET *s;
+
+    status = provider_npi.Dispatch->WskSocket(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP,
+            WSK_FLAG_LISTEN_SOCKET, &context, &client_listen_dispatch, NULL, NULL, NULL, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
+
+    IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+    IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+    status = provider_npi.Dispatch->WskSocket(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP,
+            WSK_FLAG_LISTEN_SOCKET, &context, &client_listen_dispatch, NULL, NULL, NULL, wsk_irp);
+    ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#x.\n", status);
+
+    IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+    IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+    wsk_irp->IoStatus.Status = 0xdeadbeef;
+    wsk_irp->IoStatus.Information = 0xdeadbeef;
+    status = provider_npi.Dispatch->WskSocket(provider_npi.Client, AF_INET, SOCK_STREAM, IPPROTO_TCP,
+            WSK_FLAG_LISTEN_SOCKET, &context, &client_listen_dispatch, NULL, NULL, NULL, wsk_irp);
+    ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+    status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+    ok(wsk_irp->IoStatus.Information, "Got zero Information.\n");
+
+    s = (WSK_SOCKET *)wsk_irp->IoStatus.Information;
+    dispatch = s->Dispatch;
+
+    IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+    IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+    wsk_irp->IoStatus.Status = 0xdeadbeef;
+    wsk_irp->IoStatus.Information = 0xdeadbeef;
+    status = dispatch->Basic.WskCloseSocket(s, wsk_irp);
+    ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+    status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+    ok(!wsk_irp->IoStatus.Information, "Got unexpected Information %#lx.\n",
+            wsk_irp->IoStatus.Information);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -188,6 +238,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 
     netio_init();
     test_wsk_get_address_info();
+    test_wsk_listen_socket();
 
     if (winetest_debug)
     {
