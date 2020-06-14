@@ -19,6 +19,7 @@
 #define _INC_WSK
 
 #include <winsock2.h>
+#include <mswsock.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -26,10 +27,36 @@ extern "C"
 #endif
 
 struct _WSK_CLIENT;
+
 typedef struct _WSK_CLIENT WSK_CLIENT, *PWSK_CLIENT;
+
+typedef struct _WSK_SOCKET
+{
+    const void *Dispatch;
+} WSK_SOCKET, *PWSK_SOCKET;
+
 #define MAKE_WSK_VERSION(major, minor) ((USHORT)((major) << 8) | (USHORT)((minor) & 0xff))
 #define WSK_NO_WAIT 0
 #define WSK_INFINITE_WAIT 0xffffffff
+
+#define WSK_FLAG_BASIC_SOCKET      0x00000000
+#define WSK_FLAG_LISTEN_SOCKET     0x00000001
+#define WSK_FLAG_CONNECTION_SOCKET 0x00000002
+#define WSK_FLAG_DATAGRAM_SOCKET   0x00000004
+#define WSK_FLAG_STREAM_SOCKET     0x00000008
+
+typedef enum _WSK_CONTROL_SOCKET_TYPE
+{
+     WskSetOption,
+     WskGetOption,
+     WskIoctl,
+} WSK_CONTROL_SOCKET_TYPE;
+
+typedef enum _WSK_INSPECT_ACTION
+{
+    WskInspectReject,
+    WskInspectAccept,
+} WSK_INSPECT_ACTION;
 
 typedef struct _WSK_CLIENT_CONNECTION_DISPATCH WSK_CLIENT_CONNECTION_DISPATCH, *PWSK_CLIENT_CONNECTION_DISPATCH;
 
@@ -40,11 +67,32 @@ typedef struct _WSK_BUF
     SIZE_T Length;
 } WSK_BUF, *PWSK_BUF;
 
+typedef struct _WSK_BUF_LIST
+{
+    struct _WSK_BUF_LIST *Next;
+    WSK_BUF Buffer;
+} WSK_BUF_LIST, *PWSK_BUF_LIST;
+
 typedef struct _WSK_DATA_INDICATION
 {
     struct _WSK_DATA_INDICATION *Next;
-    WSK_BUF                      Buffer;
+    WSK_BUF Buffer;
 } WSK_DATA_INDICATION, *PWSK_DATA_INDICATION;
+
+typedef struct _WSK_INSPECT_ID
+{
+    ULONG_PTR Key;
+    ULONG SerialNumber;
+} WSK_INSPECT_ID, *PWSK_INSPECT_ID;
+
+typedef struct _WSK_DATAGRAM_INDICATION
+{
+    struct _WSK_DATAGRAM_INDICATION *Next;
+    WSK_BUF Buffer;
+    PCMSGHDR ControlInfo;
+    ULONG ControlInfoLength;
+    PSOCKADDR RemoteAddress;
+} WSK_DATAGRAM_INDICATION, *PWSK_DATAGRAM_INDICATION;
 
 typedef NTSTATUS (WINAPI *PFN_WSK_CLIENT_EVENT)(void *context, ULONG event, void *info, SIZE_T length);
 typedef NTSTATUS (WINAPI *PFN_WSK_DISCONNECT_EVENT)(void *context, ULONG flags);
@@ -113,6 +161,100 @@ typedef struct _WSK_PROVIDER_NPI
     PWSK_CLIENT Client;
     const WSK_PROVIDER_DISPATCH *Dispatch;
 } WSK_PROVIDER_NPI, *PWSK_PROVIDER_NPI;
+
+typedef NTSTATUS (WINAPI *PFN_WSK_CONTROL_SOCKET)(WSK_SOCKET *socket, WSK_CONTROL_SOCKET_TYPE request_type,
+        ULONG control_code, ULONG level, SIZE_T input_size, void *input_buffer, SIZE_T output_size,
+        void *output_buffer, SIZE_T *output_size_returned, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_CLOSE_SOCKET)(WSK_SOCKET *socket, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_BIND)(WSK_SOCKET *socket, SOCKADDR *local_address, ULONG flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_ACCEPT)(WSK_SOCKET *listen_socket, ULONG flags, void *accept_socket_context,
+        const WSK_CLIENT_CONNECTION_DISPATCH *accept_socket_dispatch, SOCKADDR *local_address,
+        SOCKADDR *remote_address, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_CONNECT)(WSK_SOCKET *socket, SOCKADDR *remote_address, ULONG flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_LISTEN)(WSK_SOCKET *socket, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_SEND)(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_RECEIVE)(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_DISCONNECT)(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_GET_LOCAL_ADDRESS)(WSK_SOCKET *socket, SOCKADDR *local_address, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_GET_REMOTE_ADDRESS)(WSK_SOCKET *socket, SOCKADDR *remote_address, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_CONNECT_EX)(WSK_SOCKET *socket, SOCKADDR *remote_address, WSK_BUF *buffer,
+        ULONG flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_RELEASE_DATA_INDICATION_LIST)(WSK_SOCKET *socket,
+        WSK_DATA_INDICATION *data_indication);
+typedef NTSTATUS (WINAPI *PFN_WSK_SEND_MESSAGES) (WSK_SOCKET *socket, WSK_BUF_LIST *buffer_list, ULONG flags,
+        SOCKADDR *remote_address, ULONG control_info_length, CMSGHDR *control_info, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_SEND_TO)(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, SOCKADDR *remote_address,
+        ULONG control_info_length, CMSGHDR *control_info, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_RECEIVE_FROM)(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags,
+        SOCKADDR *remote_address, ULONG *control_length, CMSGHDR *control_info, ULONG *control_flags, IRP *irp);
+typedef NTSTATUS (WINAPI *PFN_WSK_RELEASE_DATAGRAM_INDICATION_LIST)(WSK_SOCKET *socket,
+        WSK_DATAGRAM_INDICATION *datagram_indication);
+typedef NTSTATUS (WINAPI *PFN_WSK_INSPECT_COMPLETE)(WSK_SOCKET *listen_socket, WSK_INSPECT_ID *inspect_id,
+        WSK_INSPECT_ACTION action, IRP *irp);
+
+/* PFN_WSK_SEND_EX, PFN_WSK_RECEIVE_EX functions are undocumented and reserved for system use. */
+typedef void *PFN_WSK_SEND_EX;
+typedef void *PFN_WSK_RECEIVE_EX;
+
+typedef struct _WSK_PROVIDER_BASIC_DISPATCH
+{
+    PFN_WSK_CONTROL_SOCKET WskControlSocket;
+    PFN_WSK_CLOSE_SOCKET WskCloseSocket;
+} WSK_PROVIDER_BASIC_DISPATCH, *PWSK_PROVIDER_BASIC_DISPATCH;
+
+typedef struct _WSK_PROVIDER_STREAM_DISPATCH
+{
+    WSK_PROVIDER_BASIC_DISPATCH Basic;
+    PFN_WSK_BIND WskBind;
+    PFN_WSK_ACCEPT WskAccept;
+    PFN_WSK_CONNECT WskConnect;
+    PFN_WSK_LISTEN WskListen;
+    PFN_WSK_SEND WskSend;
+    PFN_WSK_RECEIVE WskReceive;
+    PFN_WSK_DISCONNECT WskDisconnect;
+    PFN_WSK_RELEASE_DATA_INDICATION_LIST WskRelease;
+    PFN_WSK_GET_LOCAL_ADDRESS WskGetLocalAddress;
+    PFN_WSK_GET_REMOTE_ADDRESS WskGetRemoteAddress;
+    PFN_WSK_CONNECT_EX WskConnectEx;
+    PFN_WSK_SEND_EX WskSendEx;
+    PFN_WSK_RECEIVE_EX WskReceiveEx;
+} WSK_PROVIDER_STREAM_DISPATCH, *PWSK_PROVIDER_STREAM_DISPATCH;
+
+typedef struct _WSK_PROVIDER_CONNECTION_DISPATCH
+{
+    WSK_PROVIDER_BASIC_DISPATCH Basic;
+    PFN_WSK_BIND WskBind;
+    PFN_WSK_CONNECT WskConnect;
+    PFN_WSK_GET_LOCAL_ADDRESS WskGetLocalAddress;
+    PFN_WSK_GET_REMOTE_ADDRESS WskGetRemoteAddress;
+    PFN_WSK_SEND WskSend;
+    PFN_WSK_RECEIVE WskReceive;
+    PFN_WSK_DISCONNECT WskDisconnect;
+    PFN_WSK_RELEASE_DATA_INDICATION_LIST WskRelease;
+    PFN_WSK_CONNECT_EX WskConnectEx;
+    PFN_WSK_SEND_EX WskSendEx;
+    PFN_WSK_RECEIVE_EX WskReceiveEx;
+} WSK_PROVIDER_CONNECTION_DISPATCH, *PWSK_PROVIDER_CONNECTION_DISPATCH;
+
+typedef struct _WSK_PROVIDER_DATAGRAM_DISPATCH
+{
+    WSK_PROVIDER_BASIC_DISPATCH Basic;
+    PFN_WSK_BIND WskBind;
+    PFN_WSK_SEND_TO WskSendTo;
+    PFN_WSK_RECEIVE_FROM WskReceiveFrom;
+    PFN_WSK_RELEASE_DATAGRAM_INDICATION_LIST WskRelease;
+    PFN_WSK_GET_LOCAL_ADDRESS WskGetLocalAddress;
+    PFN_WSK_SEND_MESSAGES WskSendMessages;
+} WSK_PROVIDER_DATAGRAM_DISPATCH, *PWSK_PROVIDER_DATAGRAM_DISPATCH;
+
+typedef struct _WSK_PROVIDER_LISTEN_DISPATCH
+{
+    WSK_PROVIDER_BASIC_DISPATCH Basic;
+    PFN_WSK_BIND WskBind;
+    PFN_WSK_ACCEPT WskAccept;
+    PFN_WSK_INSPECT_COMPLETE WskInspectComplete;
+    PFN_WSK_GET_LOCAL_ADDRESS WskGetLocalAddress;
+} WSK_PROVIDER_LISTEN_DISPATCH, *PWSK_PROVIDER_LISTEN_DISPATCH;
 
 NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration);
 void WINAPI WskDeregister(WSK_REGISTRATION *wsk_registration);
