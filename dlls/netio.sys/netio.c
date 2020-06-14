@@ -31,6 +31,8 @@
 #include "ddk/wdm.h"
 #include "ddk/wsk.h"
 #include "wine/debug.h"
+#include "winsock2.h"
+#include "ws2tcpip.h"
 
 #include "wine/heap.h"
 
@@ -41,6 +43,54 @@ struct _WSK_CLIENT
     WSK_REGISTRATION *registration;
     WSK_CLIENT_NPI *client_npi;
 };
+
+static NTSTATUS sock_error_to_ntstatus(DWORD err)
+{
+    switch (err)
+    {
+        case 0:                    return STATUS_SUCCESS;
+        case WSAEBADF:             return STATUS_INVALID_HANDLE;
+        case WSAEACCES:            return STATUS_ACCESS_DENIED;
+        case WSAEFAULT:            return STATUS_NO_MEMORY;
+        case WSAEINVAL:            return STATUS_INVALID_PARAMETER;
+        case WSAEMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
+        case WSAEWOULDBLOCK:       return STATUS_CANT_WAIT;
+        case WSAEINPROGRESS:       return STATUS_PENDING;
+        case WSAEALREADY:          return STATUS_NETWORK_BUSY;
+        case WSAENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
+        case WSAEDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
+        case WSAEMSGSIZE:          return STATUS_BUFFER_OVERFLOW;
+        case WSAEPROTONOSUPPORT:
+        case WSAESOCKTNOSUPPORT:
+        case WSAEPFNOSUPPORT:
+        case WSAEAFNOSUPPORT:
+        case WSAEPROTOTYPE:        return STATUS_NOT_SUPPORTED;
+        case WSAENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
+        case WSAEOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
+        case WSAEADDRINUSE:        return STATUS_ADDRESS_ALREADY_ASSOCIATED;
+        case WSAEADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
+        case WSAECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
+        case WSAESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
+        case WSAENOTCONN:          return STATUS_CONNECTION_DISCONNECTED;
+        case WSAETIMEDOUT:         return STATUS_IO_TIMEOUT;
+        case WSAENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
+        case WSAENETDOWN:          return STATUS_NETWORK_BUSY;
+        case WSAECONNRESET:        return STATUS_CONNECTION_RESET;
+        case WSAECONNABORTED:      return STATUS_CONNECTION_ABORTED;
+        case WSAHOST_NOT_FOUND:    return STATUS_NOT_FOUND;
+        default:
+            FIXME("Unmapped error %u.\n", err);
+            return STATUS_UNSUCCESSFUL;
+    }
+}
+
+static void dispatch_irp(IRP *irp, NTSTATUS status)
+{
+    irp->IoStatus.u.Status = status;
+    --irp->CurrentLocation;
+    --irp->Tail.Overlay.s.u2.CurrentStackLocation;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
 
 static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_family, USHORT socket_type,
         ULONG protocol, ULONG Flags, void *socket_context, const void *dispatch, PEPROCESS owning_process,
@@ -81,16 +131,74 @@ static NTSTATUS WINAPI wsk_control_client(WSK_CLIENT *client, ULONG control_code
     return STATUS_NOT_IMPLEMENTED;
 }
 
+struct wsk_get_address_info_context
+{
+    UNICODE_STRING *node_name;
+    UNICODE_STRING *service_name;
+    ULONG namespace;
+    GUID *provider;
+    ADDRINFOEXW *hints;
+    ADDRINFOEXW **result;
+    IRP *irp;
+};
+
+static void WINAPI get_address_info_callback(TP_CALLBACK_INSTANCE *instance, void *context_)
+{
+    struct wsk_get_address_info_context *context = context_;
+    INT ret;
+
+    TRACE("instance %p, context %p.\n", instance, context);
+
+    ret = GetAddrInfoExW( context->node_name ? context->node_name->Buffer : NULL,
+            context->service_name ? context->service_name->Buffer : NULL, context->namespace,
+            context->provider, context->hints, context->result, NULL, NULL, NULL, NULL);
+
+    context->irp->IoStatus.Information = 0;
+    dispatch_irp(context->irp, sock_error_to_ntstatus(ret));
+    heap_free(context);
+}
+
 static NTSTATUS WINAPI wsk_get_address_info(WSK_CLIENT *client, UNICODE_STRING *node_name,
         UNICODE_STRING *service_name, ULONG name_space, GUID *provider, ADDRINFOEXW *hints,
         ADDRINFOEXW **result, PEPROCESS owning_process, PETHREAD owning_thread, IRP *irp)
 {
-    FIXME("client %p, node_name %p, service_name %p, name_space %#x, provider %p, hints %p, "
-            "result %p, owning_process %p, owning_thread %p, irp %p stub.\n",
+    struct wsk_get_address_info_context *context;
+    NTSTATUS status;
+
+    TRACE("client %p, node_name %p, service_name %p, name_space %#x, provider %p, hints %p, "
+            "result %p, owning_process %p, owning_thread %p, irp %p.\n",
             client, node_name, service_name, name_space, provider, hints, result,
             owning_process, owning_thread, irp);
 
-    return STATUS_NOT_IMPLEMENTED;
+    if (!irp)
+        return STATUS_INVALID_PARAMETER;
+
+    if (!(context = heap_alloc(sizeof(*context))))
+    {
+        ERR("No memory.\n");
+        status = STATUS_NO_MEMORY;
+        dispatch_irp(irp, status);
+        return status;
+    }
+
+    context->node_name = node_name;
+    context->service_name = service_name;
+    context->namespace = name_space;
+    context->provider = provider;
+    context->hints = hints;
+    context->result = result;
+    context->irp = irp;
+
+    if (!TrySubmitThreadpoolCallback(get_address_info_callback, context, NULL))
+    {
+        ERR("Could not submit thread pool callback.\n");
+        status = STATUS_UNSUCCESSFUL;
+        dispatch_irp(irp, status);
+        heap_free(context);
+        return status;
+    }
+    TRACE("Submitted threadpool callback, context %p.\n", context);
+    return STATUS_PENDING;
 }
 
 static void WINAPI wsk_free_address_info(WSK_CLIENT *client, ADDRINFOEXW *addr_info)
@@ -142,6 +250,9 @@ void WINAPI WskReleaseProviderNPI(WSK_REGISTRATION *wsk_registration)
 
 NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *wsk_registration)
 {
+    static const WORD version = MAKEWORD( 2, 2 );
+    WSADATA data;
+
     WSK_CLIENT *client;
 
     TRACE("wsk_client_npi %p, wsk_registration %p.\n", wsk_client_npi, wsk_registration);
@@ -155,6 +266,9 @@ NTSTATUS WINAPI WskRegister(WSK_CLIENT_NPI *wsk_client_npi, WSK_REGISTRATION *ws
     client->registration = wsk_registration;
     client->client_npi = wsk_client_npi;
     wsk_registration->ReservedRegistrationContext = client;
+
+    if (WSAStartup(version, &data))
+        return STATUS_INTERNAL_ERROR;
 
     return STATUS_SUCCESS;
 }
