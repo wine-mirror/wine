@@ -52,6 +52,11 @@ struct wsk_socket_internal
     void *client_context;
 };
 
+static inline struct wsk_socket_internal *wsk_socket_internal_from_wsk_socket(WSK_SOCKET *wsk_socket)
+{
+    return CONTAINING_RECORD(wsk_socket, struct wsk_socket_internal, wsk_socket);
+}
+
 static NTSTATUS sock_error_to_ntstatus(DWORD err)
 {
     switch (err)
@@ -114,9 +119,18 @@ static NTSTATUS WINAPI wsk_control_socket(WSK_SOCKET *socket, WSK_CONTROL_SOCKET
 
 static NTSTATUS WINAPI wsk_close_socket(WSK_SOCKET *socket, IRP *irp)
 {
-    FIXME("socket %p, irp %p stub.\n", socket, irp);
+    struct wsk_socket_internal *s = wsk_socket_internal_from_wsk_socket(socket);
+    NTSTATUS status;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE("socket %p, irp %p.\n", socket, irp);
+
+    status = closesocket(s->s) ? sock_error_to_ntstatus(WSAGetLastError()) : STATUS_SUCCESS;
+    heap_free(socket);
+
+    irp->IoStatus.Information = 0;
+    dispatch_irp(irp, status);
+
+    return status ? status : STATUS_PENDING;
 }
 
 static NTSTATUS WINAPI wsk_bind(WSK_SOCKET *socket, SOCKADDR *local_address, ULONG flags, IRP *irp)
