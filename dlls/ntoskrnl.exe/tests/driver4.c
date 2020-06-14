@@ -54,14 +54,23 @@ static POBJECT_TYPE *pIoDriverObjectType;
 static WSK_CLIENT_NPI client_npi;
 static WSK_REGISTRATION registration;
 static WSK_PROVIDER_NPI provider_npi;
+static KEVENT irp_complete_event;
+static IRP *wsk_irp;
+
+static NTSTATUS WINAPI irp_completion_routine(DEVICE_OBJECT *reserved, IRP *irp, void *context)
+{
+    KEVENT *event = context;
+
+    KeSetEvent(event, 1, FALSE);
+    return STATUS_MORE_PROCESSING_REQUIRED;
+}
 
 static void netio_init(void)
 {
-    const WSK_CLIENT_DISPATCH client_dispatch =
+    static const WSK_CLIENT_DISPATCH client_dispatch =
     {
         MAKE_WSK_VERSION(1, 0), 0, NULL
     };
-
     NTSTATUS status;
 
     client_npi.Dispatch = &client_dispatch;
@@ -74,12 +83,84 @@ static void netio_init(void)
     ok(provider_npi.Dispatch->Version >= MAKE_WSK_VERSION(1, 0), "Got unexpected version %#x.\n",
             provider_npi.Dispatch->Version);
     ok(!!provider_npi.Client, "Got null WSK_CLIENT.\n");
+
+    KeInitializeEvent(&irp_complete_event, SynchronizationEvent, FALSE);
+    wsk_irp = IoAllocateIrp(1, FALSE);
 }
 
 static void netio_uninit(void)
 {
+    IoFreeIrp(wsk_irp);
     WskReleaseProviderNPI(&registration);
     WskDeregister(&registration);
+}
+
+static void test_wsk_get_address_info(void)
+{
+    UNICODE_STRING node_name, service_name;
+    ADDRINFOEXW *result, *addr_info;
+    unsigned int count;
+    NTSTATUS status;
+
+    RtlInitUnicodeString(&service_name, L"12345");
+
+    wsk_irp->IoStatus.Status = 0xdeadbeef;
+    wsk_irp->IoStatus.Information = 0xdeadbeef;
+    status = provider_npi.Dispatch->WskGetAddressInfo(provider_npi.Client, &node_name, &service_name,
+            NS_ALL, NULL, NULL, &result, NULL, NULL, NULL);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
+    ok(wsk_irp->IoStatus.Status == 0xdeadbeef, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+    ok(wsk_irp->IoStatus.Information == 0xdeadbeef, "Got unexpected Information %#lx.\n",
+            wsk_irp->IoStatus.Information);
+
+    RtlInitUnicodeString(&node_name, L"dead.beef");
+
+    IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+    IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+    wsk_irp->IoStatus.Status = 0xdeadbeef;
+    wsk_irp->IoStatus.Information = 0xdeadbeef;
+    status = provider_npi.Dispatch->WskGetAddressInfo(provider_npi.Client, &node_name, &service_name,
+            NS_ALL, NULL, NULL,  &result, NULL, NULL, wsk_irp);
+    ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+    status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(wsk_irp->IoStatus.Status == STATUS_NOT_FOUND
+            || broken(wsk_irp->IoStatus.Status == STATUS_NO_MATCH) /* Win7 */,
+            "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+    ok(wsk_irp->IoStatus.Information == 0, "Got unexpected Information %#lx.\n",
+            wsk_irp->IoStatus.Information);
+
+    RtlInitUnicodeString(&node_name, L"127.0.0.1");
+    IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+    IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+    wsk_irp->IoStatus.Status = 0xdeadbeef;
+    wsk_irp->IoStatus.Information = 0xdeadbeef;
+    status = provider_npi.Dispatch->WskGetAddressInfo(provider_npi.Client, &node_name, &service_name,
+            NS_ALL, NULL, NULL, &result, NULL, NULL, wsk_irp);
+    ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+    status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+    ok(wsk_irp->IoStatus.Information == 0, "Got unexpected Information %#lx.\n",
+            wsk_irp->IoStatus.Information);
+
+    count = 0;
+    addr_info = result;
+    while (addr_info)
+    {
+        struct sockaddr_in *addr = (struct sockaddr_in *)addr_info->ai_addr;
+
+        ok(addr_info->ai_addrlen == sizeof(*addr), "Got unexpected ai_addrlen %u.\n", addr_info->ai_addrlen);
+        ok(addr->sin_family == AF_INET, "Got unexpected sin_family %u.\n", addr->sin_family);
+        ok(ntohs(addr->sin_port) == 12345, "Got unexpected sin_port %u.\n", ntohs(addr->sin_port));
+        ok(ntohl(addr->sin_addr.s_addr) == 0x7f000001, "Got unexpected sin_addr %#x.\n",
+                ntohl(addr->sin_addr.s_addr));
+
+        ++count;
+        addr_info = addr_info->ai_next;
+    }
+    ok(count, "Got zero addr_info count.\n");
+    provider_npi.Dispatch->WskFreeAddressInfo(provider_npi.Client, result);
 }
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
@@ -106,6 +187,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
 
     netio_init();
+    test_wsk_get_address_info();
 
     if (winetest_debug)
     {
