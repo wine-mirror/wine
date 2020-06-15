@@ -2331,11 +2331,11 @@ static void test_IScriptControl_get_Modules(void)
     ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
 
     hr = IScriptModuleCollection_get_Count(mods, NULL);
-    todo_wine ok(hr == E_POINTER, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
     count = 0;
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
-    todo_wine ok(count == 1, "count is not 1, got %d.\n", count);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
+    ok(count == 1, "count is not 1, got %d.\n", count);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
@@ -2372,7 +2372,7 @@ static void test_IScriptControl_get_Modules(void)
     SysFreeString(str);
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
     todo_wine ok(count == 3, "count is not 3, got %d.\n", count);
     V_VT(&var) = VT_I4;
     V_I4(&var) = count + 1;
@@ -2411,8 +2411,8 @@ static void test_IScriptControl_get_Modules(void)
     SysFreeString(str);
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
-    todo_wine ok(count == 1, "count is not 1, got %d.\n", count);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
+    ok(count == 1, "count is not 1, got %d.\n", count);
 
     IScriptModuleCollection_Release(mods);
     IScriptControl_Release(sc);

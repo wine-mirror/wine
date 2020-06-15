@@ -893,9 +893,12 @@ static HRESULT WINAPI ScriptModuleCollection_get_Count(IScriptModuleCollection *
 {
     ScriptControl *This = impl_from_IScriptModuleCollection(iface);
 
-    FIXME("(%p)->(%p)\n", This, plCount);
+    TRACE("(%p)->(%p)\n", This, plCount);
 
-    return E_NOTIMPL;
+    if (!plCount) return E_POINTER;
+
+    *plCount = This->module_count;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptModuleCollection_Add(IScriptModuleCollection *iface, BSTR name,
