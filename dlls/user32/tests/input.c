@@ -1874,15 +1874,86 @@ struct rawinput_test rawinput_tests[] =
     { TRUE,  FALSE, 0,                TRUE,  TRUE,  TRUE, /* todos: */ FALSE, FALSE, FALSE },
     { TRUE,  TRUE,  0,                TRUE,  TRUE,  TRUE, /* todos: */ FALSE, FALSE, FALSE },
     { TRUE,  TRUE,  RIDEV_NOLEGACY,  FALSE,  TRUE,  TRUE, /* todos: */  TRUE, FALSE, FALSE },
+
+    /* same-process foreground tests */
+    { TRUE,  FALSE, 0,               FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  TRUE,  0,               FALSE,  TRUE,  TRUE, /* todos: */ FALSE, FALSE, FALSE },
 };
+
+struct rawinput_test_thread_params
+{
+    HANDLE ready;
+    HANDLE start;
+    HANDLE done;
+};
+
+static DWORD WINAPI rawinput_test_thread(void *arg)
+{
+    struct rawinput_test_thread_params *params = arg;
+    POINT pt;
+    HWND hwnd = NULL;
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(rawinput_tests); ++i)
+    {
+        WaitForSingleObject(params->ready, INFINITE);
+        ResetEvent(params->ready);
+
+        switch (i)
+        {
+        case 4:
+        case 5:
+            GetCursorPos(&pt);
+
+            hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
+                                 pt.x - 50, pt.y - 50, 100, 100, 0, NULL, NULL, NULL);
+            ok(hwnd != 0, "CreateWindow failed\n");
+            empty_message_queue();
+
+            /* FIXME: Try to workaround X11/Win32 focus inconsistencies and
+             * make the window visible and foreground as hard as possible. */
+            ShowWindow(hwnd, SW_SHOW);
+            SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+            SetForegroundWindow(hwnd);
+            UpdateWindow(hwnd);
+            empty_message_queue();
+
+            mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
+            empty_message_queue();
+            break;
+        }
+
+        SetEvent(params->start);
+
+        WaitForSingleObject(params->done, INFINITE);
+        ResetEvent(params->done);
+        if (hwnd) DestroyWindow(hwnd);
+    }
+
+    return 0;
+}
 
 static void test_rawinput(void)
 {
+    struct rawinput_test_thread_params params;
     RAWINPUTDEVICE raw_devices[1];
+    HANDLE thread;
     DWORD ret;
     POINT pt, newpt;
     HWND hwnd;
     int i;
+
+    params.ready = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(params.ready != NULL, "CreateEvent failed\n");
+
+    params.start = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(params.start != NULL, "CreateEvent failed\n");
+
+    params.done = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(params.done != NULL, "CreateEvent failed\n");
+
+    thread = CreateThread(NULL, 0, rawinput_test_thread, &params, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
 
     SetCursorPos(100, 100);
     empty_message_queue();
@@ -1922,8 +1993,14 @@ static void test_rawinput(void)
             ok(GetLastError() == 0xdeadbeef, "%d: RegisterRawInputDevices returned %08x\n", i, GetLastError());
         }
 
-        mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
+        SetEvent(params.ready);
+        WaitForSingleObject(params.start, INFINITE);
+        ResetEvent(params.start);
+
+        if (i <= 3) mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
         empty_message_queue();
+
+        SetEvent(params.done);
 
         todo_wine_if(rawinput_tests[i].todo_legacy)
         ok(rawinput_test_received_legacy == rawinput_tests[i].expect_legacy,
@@ -1951,6 +2028,13 @@ static void test_rawinput(void)
 
         DestroyWindow(hwnd);
     }
+
+    WaitForSingleObject(thread, INFINITE);
+
+    CloseHandle(params.done);
+    CloseHandle(params.start);
+    CloseHandle(params.ready);
+    CloseHandle(thread);
 }
 
 static void test_key_map(void)
