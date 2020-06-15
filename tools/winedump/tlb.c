@@ -1214,7 +1214,7 @@ static void print_sltg_name(const char *name)
     printf(")\n");
 }
 
-static int dump_sltg_header(int *sltg_first_blk, int *size_of_index)
+static int dump_sltg_header(int *sltg_first_blk, int *size_of_index, int *size_of_pad)
 {
     int n_file_blocks;
 
@@ -1222,7 +1222,7 @@ static int dump_sltg_header(int *sltg_first_blk, int *size_of_index)
 
     print_hex("magic");
     n_file_blocks = print_short_dec("# file blocks");
-    print_short_hex("res06");
+    *size_of_pad = print_short_hex("pad");
     *size_of_index = print_short_hex("size of index");
     *sltg_first_blk = print_short_dec("first block");
     print_guid("guid");
@@ -1254,10 +1254,10 @@ static void dump_sltg_index(int count)
     printf("\n");
 }
 
-static void dump_sltg_pad9(void)
+static void dump_sltg_pad(int size_of_pad)
 {
-    printf("pad9:\n");
-    dump_binary(9);
+    printf("pad:\n");
+    dump_binary(size_of_pad);
     printf("\n");
 }
 
@@ -1937,13 +1937,13 @@ static void dump_type(int len, const char *hlp_strings)
 
 static void sltg_dump(void)
 {
-    int i, n_file_blocks, n_first_blk, size_of_index;
+    int i, n_file_blocks, n_first_blk, size_of_index, size_of_pad;
     int name_table_start, name_table_size, saved_offset;
     int libblk_start, libblk_len, hlpstr_len, len;
     const char *index, *hlp_strings;
     const struct block_entry *entry;
 
-    n_file_blocks = dump_sltg_header(&n_first_blk, &size_of_index);
+    n_file_blocks = dump_sltg_header(&n_first_blk, &size_of_index, &size_of_pad);
 
     saved_offset = offset;
     entry = tlb_read((n_file_blocks - 1) * sizeof(*entry));
@@ -1959,7 +1959,7 @@ static void sltg_dump(void)
     dump_sltg_index(n_file_blocks);
     assert(offset - saved_offset == size_of_index);
 
-    dump_sltg_pad9();
+    dump_sltg_pad(size_of_pad);
 
     /* read the helpstrings for later decoding */
     saved_offset = offset;
