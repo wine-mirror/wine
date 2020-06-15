@@ -1570,6 +1570,33 @@ static void test_stack_limits(void)
     ok(low < (ULONG_PTR)&low && (ULONG_PTR)&low < high, "stack variable is not in stack limits\n");
 }
 
+static unsigned int got_completion;
+
+static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *context)
+{
+    todo_wine ok(device == context, "Got device %p; expected %p.\n", device, context);
+    ++got_completion;
+    return STATUS_SUCCESS;
+}
+
+static void test_completion(void)
+{
+    IO_STATUS_BLOCK io;
+    NTSTATUS ret;
+    KEVENT event;
+    IRP *irp;
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    irp = IoBuildDeviceIoControlRequest(IOCTL_WINETEST_COMPLETION, upper_device,
+            NULL, 0, NULL, 0, FALSE, &event, &io);
+
+    IoSetCompletionRoutine(irp, completion_cb, NULL, TRUE, TRUE, TRUE);
+    ret = IoCallDriver(upper_device, irp);
+    ok(ret == STATUS_SUCCESS, "IoCallDriver returned %#x\n", ret);
+    ok(got_completion == 2, "got %u calls to completion routine\n");
+}
+
 static void test_IoAttachDeviceToDeviceStack(void)
 {
     DEVICE_OBJECT *dev1, *dev2, *dev3, *ret;
@@ -1714,6 +1741,7 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     test_call_driver(device);
     test_cancel_irp(device);
     test_stack_limits();
+    test_completion();
 
     /* print process report */
     if (winetest_debug)
@@ -2174,6 +2202,23 @@ static NTSTATUS test_mismatched_status_ioctl(IRP *irp, IO_STACK_LOCATION *stack,
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS test_completion_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    if (device == upper_device)
+    {
+        IoCopyCurrentIrpStackLocationToNext(irp);
+        IoSetCompletionRoutine(irp, completion_cb, upper_device, TRUE, TRUE, TRUE);
+        return IoCallDriver(lower_device, irp);
+    }
+    else
+    {
+        ok(device == lower_device, "Got wrong device.\n");
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_SUCCESS;
+    }
+}
+
 static NTSTATUS WINAPI driver_Create(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -2237,6 +2282,8 @@ static NTSTATUS WINAPI driver_IoControl(DEVICE_OBJECT *device, IRP *irp)
             break;
         case IOCTL_WINETEST_MISMATCHED_STATUS:
             return test_mismatched_status_ioctl(irp, stack, &irp->IoStatus.Information);
+        case IOCTL_WINETEST_COMPLETION:
+            return test_completion_ioctl(device, irp);
         default:
             break;
     }

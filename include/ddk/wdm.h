@@ -1599,6 +1599,14 @@ static inline void IoMarkIrpPending(IRP *irp)
     IoGetCurrentIrpStackLocation(irp)->Control |= SL_PENDING_RETURNED;
 }
 
+static inline void IoCopyCurrentIrpStackLocationToNext(IRP *irp)
+{
+    IO_STACK_LOCATION *current = IoGetCurrentIrpStackLocation(irp);
+    IO_STACK_LOCATION *next = IoGetNextIrpStackLocation(irp);
+    memcpy(next, current, FIELD_OFFSET(IO_STACK_LOCATION, CompletionRoutine));
+    next->Control = 0;
+}
+
 #define KernelMode 0
 #define UserMode   1
 
