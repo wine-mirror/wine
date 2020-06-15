@@ -394,7 +394,7 @@ static BOOL match_token(const char *haystack, const char *needle)
 static BOOL is_tablet_cursor(const char *name, const char *type)
 {
     int i;
-    static const char *tablet_cursor_whitelist[] = {
+    static const char *tablet_cursor_allowlist[] = {
         "wacom",
         "wizardpen",
         "acecad",
@@ -406,10 +406,10 @@ static BOOL is_tablet_cursor(const char *name, const char *type)
         NULL
     };
 
-    for (i=0; tablet_cursor_whitelist[i] != NULL; i++) {
-        if (name && match_token(name, tablet_cursor_whitelist[i]))
+    for (i=0; tablet_cursor_allowlist[i] != NULL; i++) {
+        if (name && match_token(name, tablet_cursor_allowlist[i]))
             return TRUE;
-        if (type && match_token(type, tablet_cursor_whitelist[i]))
+        if (type && match_token(type, tablet_cursor_allowlist[i]))
             return TRUE;
     }
     return FALSE;
@@ -418,7 +418,7 @@ static BOOL is_tablet_cursor(const char *name, const char *type)
 static UINT get_cursor_type(const char *name, const char *type)
 {
     int i;
-    static const char* tablet_stylus_whitelist[] = {
+    static const char* tablet_stylus_allowlist[] = {
         "stylus",
         "wizardpen",
         "acecad",
@@ -427,14 +427,14 @@ static UINT get_cursor_type(const char *name, const char *type)
     };
 
     /* First check device type to avoid cases where name is "Pen and Eraser" and type is "ERASER" */
-    for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
-        if (type && match_token(type, tablet_stylus_whitelist[i]))
+    for (i=0; tablet_stylus_allowlist[i] != NULL; i++) {
+        if (type && match_token(type, tablet_stylus_allowlist[i]))
             return CSR_TYPE_PEN;
     }
     if (type && match_token(type, "eraser"))
         return CSR_TYPE_ERASER;
-    for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
-        if (name && match_token(name, tablet_stylus_whitelist[i]))
+    for (i=0; tablet_stylus_allowlist[i] != NULL; i++) {
+        if (name && match_token(name, tablet_stylus_allowlist[i]))
             return CSR_TYPE_PEN;
     }
     if (name && match_token(name, "eraser"))
