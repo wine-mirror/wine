@@ -1679,13 +1679,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
 
     for (; gl_type <= gl_type_end; ++gl_type)
     {
-        if ((format->flags[gl_type] & format_flags) != format_flags)
-        {
-            TRACE("Requested format flags %#x, but format %s only has %#x.\n",
-                    format_flags, debug_d3dformat(check_format_id), format->flags[gl_type]);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
         if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
                 && !adapter->adapter_ops->adapter_check_format(adapter, adapter_format, format, NULL))
         {
@@ -1703,6 +1696,13 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         {
             TRACE("Requested WINED3D_BIND_DEPTH_STENCIL, but format %s is not supported for depth/stencil buffers.\n",
                     debug_d3dformat(check_format_id));
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        if ((format->flags[gl_type] & format_flags) != format_flags)
+        {
+            TRACE("Requested format flags %#x, but format %s only has %#x.\n",
+                    format_flags, debug_d3dformat(check_format_id), format->flags[gl_type]);
             return WINED3DERR_NOTAVAILABLE;
         }
 
