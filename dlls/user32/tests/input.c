@@ -1819,6 +1819,140 @@ static void test_RegisterRawInputDevices(void)
     DestroyWindow(hwnd);
 }
 
+static BOOL rawinput_test_received_legacy;
+static BOOL rawinput_test_received_raw;
+static BOOL rawinput_test_received_rawfg;
+
+static LRESULT CALLBACK rawinput_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    UINT ret, raw_size;
+    RAWINPUT raw;
+
+    if (msg == WM_INPUT)
+    {
+        todo_wine_if(rawinput_test_received_raw)
+        ok(!rawinput_test_received_raw, "Unexpected spurious WM_INPUT message.\n");
+        ok(wparam == RIM_INPUT || wparam == RIM_INPUTSINK, "Unexpected wparam: %lu\n", wparam);
+
+        rawinput_test_received_raw = TRUE;
+        if (wparam == RIM_INPUT) rawinput_test_received_rawfg = TRUE;
+
+        ret = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, NULL, &raw_size, sizeof(RAWINPUTHEADER));
+        ok(ret == 0, "GetRawInputData failed\n");
+        ok(raw_size <= sizeof(raw), "Unexpected rawinput data size: %u", raw_size);
+
+        raw_size = sizeof(raw);
+        ret = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &raw, &raw_size, sizeof(RAWINPUTHEADER));
+        ok(ret > 0 && ret != (UINT)-1, "GetRawInputData failed\n");
+        ok(raw.header.dwType == RIM_TYPEMOUSE, "Unexpected rawinput type: %u\n", raw.header.dwType);
+
+        ok(!(raw.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE), "Unexpected absolute rawinput motion\n");
+        ok(!(raw.data.mouse.usFlags & MOUSE_VIRTUAL_DESKTOP), "Unexpected virtual desktop rawinput motion\n");
+    }
+
+    if (msg == WM_MOUSEMOVE) rawinput_test_received_legacy = TRUE;
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+struct rawinput_test
+{
+    BOOL register_device;
+    BOOL register_window;
+    DWORD register_flags;
+    BOOL expect_legacy;
+    BOOL expect_raw;
+    BOOL expect_rawfg;
+    BOOL todo_legacy;
+    BOOL todo_raw;
+    BOOL todo_rawfg;
+};
+
+struct rawinput_test rawinput_tests[] =
+{
+    { FALSE, FALSE, 0,                TRUE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  FALSE, 0,                TRUE,  TRUE,  TRUE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  TRUE,  0,                TRUE,  TRUE,  TRUE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  TRUE,  RIDEV_NOLEGACY,  FALSE,  TRUE,  TRUE, /* todos: */  TRUE, FALSE, FALSE },
+};
+
+static void test_rawinput(void)
+{
+    RAWINPUTDEVICE raw_devices[1];
+    DWORD ret;
+    POINT pt, newpt;
+    HWND hwnd;
+    int i;
+
+    SetCursorPos(100, 100);
+    empty_message_queue();
+
+    for (i = 0; i < ARRAY_SIZE(rawinput_tests); ++i)
+    {
+        GetCursorPos(&pt);
+
+        hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
+                             pt.x - 50, pt.y - 50, 100, 100, 0, NULL, NULL, NULL);
+        ok(hwnd != 0, "CreateWindow failed\n");
+        SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)rawinput_wndproc);
+        empty_message_queue();
+
+        /* FIXME: Try to workaround X11/Win32 focus inconsistencies and
+         * make the window visible and foreground as hard as possible. */
+        ShowWindow(hwnd, SW_SHOW);
+        SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+        SetForegroundWindow(hwnd);
+        UpdateWindow(hwnd);
+        empty_message_queue();
+
+        rawinput_test_received_legacy = FALSE;
+        rawinput_test_received_raw = FALSE;
+        rawinput_test_received_rawfg = FALSE;
+
+        raw_devices[0].usUsagePage = 0x01;
+        raw_devices[0].usUsage = 0x02;
+        raw_devices[0].dwFlags = rawinput_tests[i].register_flags;
+        raw_devices[0].hwndTarget = rawinput_tests[i].register_window ? hwnd : 0;
+
+        if (rawinput_tests[i].register_device)
+        {
+            SetLastError(0xdeadbeef);
+            ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+            ok(ret, "%d: RegisterRawInputDevices failed\n", i);
+            ok(GetLastError() == 0xdeadbeef, "%d: RegisterRawInputDevices returned %08x\n", i, GetLastError());
+        }
+
+        mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
+        empty_message_queue();
+
+        todo_wine_if(rawinput_tests[i].todo_legacy)
+        ok(rawinput_test_received_legacy == rawinput_tests[i].expect_legacy,
+           "%d: %sexpected WM_MOUSEMOVE message\n", i, rawinput_tests[i].expect_legacy ? "" : "un");
+        todo_wine_if(rawinput_tests[i].todo_raw)
+        ok(rawinput_test_received_raw == rawinput_tests[i].expect_raw,
+           "%d: %sexpected WM_INPUT message\n", i, rawinput_tests[i].expect_raw ? "" : "un");
+        todo_wine_if(rawinput_tests[i].todo_rawfg)
+        ok(rawinput_test_received_rawfg == rawinput_tests[i].expect_rawfg,
+           "%d: %sexpected RIM_INPUT message\n", i, rawinput_tests[i].expect_rawfg ? "" : "un");
+
+        GetCursorPos(&newpt);
+        ok((newpt.x - pt.x) == 5 || (newpt.x - pt.x) == 4, "%d: Unexpected cursor movement\n", i);
+
+        if (rawinput_tests[i].register_device)
+        {
+            raw_devices[0].dwFlags = RIDEV_REMOVE;
+            raw_devices[0].hwndTarget = 0;
+
+            SetLastError(0xdeadbeef);
+            ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+            ok(ret, "%d: RegisterRawInputDevices failed\n", i);
+            ok(GetLastError() == 0xdeadbeef, "%d: RegisterRawInputDevices returned %08x\n", i, GetLastError());
+        }
+
+        DestroyWindow(hwnd);
+    }
+}
+
 static void test_key_map(void)
 {
     HKL kl = GetKeyboardLayout(0);
@@ -3034,6 +3168,7 @@ START_TEST(input)
     test_OemKeyScan();
     test_GetRawInputData();
     test_RegisterRawInputDevices();
+    test_rawinput();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
