@@ -1888,6 +1888,9 @@ struct rawinput_test rawinput_tests[] =
     { TRUE,  TRUE,  0,               FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
     { TRUE,  TRUE,  RIDEV_INPUTSINK, FALSE,  TRUE, FALSE, /* todos: */ FALSE,  TRUE, FALSE },
     { TRUE,  TRUE,  RIDEV_INPUTSINK, FALSE,  TRUE, FALSE, /* todos: */ FALSE,  TRUE, FALSE },
+
+    { TRUE,  TRUE,  RIDEV_EXINPUTSINK, FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  TRUE,  RIDEV_EXINPUTSINK, FALSE,  TRUE, FALSE, /* todos: */ FALSE,  TRUE, FALSE },
 };
 
 static void rawinput_test_process(void)
@@ -1922,6 +1925,8 @@ static void rawinput_test_process(void)
         case 9:
         case 10:
         case 11:
+        case 12:
+        case 13:
             GetCursorPos(&pt);
 
             hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
@@ -1938,7 +1943,7 @@ static void rawinput_test_process(void)
             UpdateWindow(hwnd);
             empty_message_queue();
 
-            if (i == 9 || i == 10 || i == 11)
+            if (i == 9 || i == 10 || i == 11 || i == 12)
             {
                 raw_devices[0].usUsagePage = 0x01;
                 raw_devices[0].usUsage = 0x02;
@@ -1967,7 +1972,7 @@ static void rawinput_test_process(void)
 
         ResetEvent(done);
 
-        if (i == 9 || i == 10 || i == 11)
+        if (i == 9 || i == 10 || i == 11 || i == 12)
         {
             raw_devices[0].dwFlags = RIDEV_REMOVE;
             raw_devices[0].hwndTarget = 0;
@@ -2054,6 +2059,7 @@ static void test_rawinput(const char* argv0)
     DWORD ret;
     POINT pt, newpt;
     HWND hwnd;
+    BOOL skipped;
     char path[MAX_PATH];
     int i;
 
@@ -2117,14 +2123,16 @@ static void test_rawinput(const char* argv0)
         raw_devices[0].dwFlags = rawinput_tests[i].register_flags;
         raw_devices[0].hwndTarget = rawinput_tests[i].register_window ? hwnd : 0;
 
-        if (rawinput_tests[i].register_device)
+        if (!rawinput_tests[i].register_device)
+            skipped = FALSE;
+        else
         {
             SetLastError(0xdeadbeef);
-            ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-            ok(ret || broken(rawinput_tests[i].register_flags == RIDEV_EXINPUTSINK), /* < vista */
-               "%d: RegisterRawInputDevices failed\n", i);
-            ok(GetLastError() == 0xdeadbeef || broken(rawinput_tests[i].register_flags == RIDEV_EXINPUTSINK), /* < vista */
-               "%d: RegisterRawInputDevices returned %08x\n", i, GetLastError());
+            skipped = !RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+            if (rawinput_tests[i].register_flags == RIDEV_EXINPUTSINK && skipped)
+                win_skip("RIDEV_EXINPUTSINK not supported\n");
+            else
+                ok(!skipped, "%d: RegisterRawInputDevices failed: %u\n", i, GetLastError());
         }
 
         SetEvent(process_ready);
@@ -2141,15 +2149,18 @@ static void test_rawinput(const char* argv0)
         SetEvent(process_done);
         SetEvent(params.done);
 
-        todo_wine_if(rawinput_tests[i].todo_legacy)
-        ok(rawinput_test_received_legacy == rawinput_tests[i].expect_legacy,
-           "%d: %sexpected WM_MOUSEMOVE message\n", i, rawinput_tests[i].expect_legacy ? "" : "un");
-        todo_wine_if(rawinput_tests[i].todo_raw)
-        ok(rawinput_test_received_raw == rawinput_tests[i].expect_raw,
-           "%d: %sexpected WM_INPUT message\n", i, rawinput_tests[i].expect_raw ? "" : "un");
-        todo_wine_if(rawinput_tests[i].todo_rawfg)
-        ok(rawinput_test_received_rawfg == rawinput_tests[i].expect_rawfg,
-           "%d: %sexpected RIM_INPUT message\n", i, rawinput_tests[i].expect_rawfg ? "" : "un");
+        if (!skipped)
+        {
+            todo_wine_if(rawinput_tests[i].todo_legacy)
+            ok(rawinput_test_received_legacy == rawinput_tests[i].expect_legacy,
+               "%d: %sexpected WM_MOUSEMOVE message\n", i, rawinput_tests[i].expect_legacy ? "" : "un");
+            todo_wine_if(rawinput_tests[i].todo_raw)
+            ok(rawinput_test_received_raw == rawinput_tests[i].expect_raw,
+               "%d: %sexpected WM_INPUT message\n", i, rawinput_tests[i].expect_raw ? "" : "un");
+            todo_wine_if(rawinput_tests[i].todo_rawfg)
+            ok(rawinput_test_received_rawfg == rawinput_tests[i].expect_rawfg,
+               "%d: %sexpected RIM_INPUT message\n", i, rawinput_tests[i].expect_rawfg ? "" : "un");
+        }
 
         GetCursorPos(&newpt);
         ok((newpt.x - pt.x) == 5 || (newpt.x - pt.x) == 4, "%d: Unexpected cursor movement\n", i);
@@ -2161,8 +2172,7 @@ static void test_rawinput(const char* argv0)
 
             SetLastError(0xdeadbeef);
             ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
-            ok(ret, "%d: RegisterRawInputDevices failed\n", i);
-            ok(GetLastError() == 0xdeadbeef, "%d: RegisterRawInputDevices returned %08x\n", i, GetLastError());
+            ok(ret, "%d: RegisterRawInputDevices failed: %u\n", i, GetLastError());
         }
 
         DestroyWindow(hwnd);
