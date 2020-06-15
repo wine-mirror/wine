@@ -45,7 +45,7 @@ static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
     return diff <= max_diff;
 }
 
-static BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
+BOOL color_match(ARGB c1, ARGB c2, BYTE max_diff)
 {
     if (!compare_uint(c1 & 0xff, c2 & 0xff, max_diff)) return FALSE;
     c1 >>= 8; c2 >>= 8;
