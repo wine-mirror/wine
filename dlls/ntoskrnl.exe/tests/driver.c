@@ -1574,7 +1574,7 @@ static unsigned int got_completion;
 
 static NTSTATUS WINAPI completion_cb(DEVICE_OBJECT *device, IRP *irp, void *context)
 {
-    todo_wine ok(device == context, "Got device %p; expected %p.\n", device, context);
+    ok(device == context, "Got device %p; expected %p.\n", device, context);
     ++got_completion;
     return STATUS_SUCCESS;
 }

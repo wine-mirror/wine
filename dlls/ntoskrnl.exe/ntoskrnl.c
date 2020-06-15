@@ -1902,6 +1902,7 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
     IO_STACK_LOCATION *irpsp;
     PIO_COMPLETION_ROUTINE routine;
     NTSTATUS status, stat;
+    DEVICE_OBJECT *device;
     int call_flag = 0;
 
     TRACE( "%p %u\n", irp, priority_boost );
@@ -1923,11 +1924,14 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
         }
         ++irp->CurrentLocation;
         ++irp->Tail.Overlay.s.u2.CurrentStackLocation;
+        if (irp->CurrentLocation <= irp->StackCount)
+            device = IoGetCurrentIrpStackLocation(irp)->DeviceObject;
+        else
+            device = NULL;
         if (call_flag)
         {
-            TRACE( "calling %p( %p, %p, %p )\n", routine,
-                    irpsp->DeviceObject, irp, irpsp->Context );
-            stat = routine( irpsp->DeviceObject, irp, irpsp->Context );
+            TRACE( "calling %p( %p, %p, %p )\n", routine, device, irp, irpsp->Context );
+            stat = routine( device, irp, irpsp->Context );
             TRACE( "CompletionRoutine returned %x\n", stat );
             if (STATUS_MORE_PROCESSING_REQUIRED == stat)
                 return;
