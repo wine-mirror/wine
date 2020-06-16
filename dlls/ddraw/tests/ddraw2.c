@@ -5573,6 +5573,119 @@ static void test_set_surface_desc(void)
 
     IDirectDrawSurface3_Release(surface3);
 
+    /* Test mipmap texture. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    U2(ddsd).dwMipMapCount = 3;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    if (FAILED(hr))
+    {
+        skip("Mipmaps are not supported.\n");
+    }
+    else
+    {
+        hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        IDirectDrawSurface_Release(surface);
+
+        /* Changing surface desc for mipmap fails even without changing any
+         * parameters. */
+        hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
+        ok(hr == DDERR_INVALIDSURFACETYPE, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_LPSURFACE;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
+        ok(hr == DDERR_INVALIDSURFACETYPE, "Got unexpected hr %#x.\n", hr);
+        IDirectDrawSurface3_Release(surface3);
+    }
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    U2(ddsd).dwMipMapCount = 3;
+    ddsd.lpSurface = data;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    if (hr == DD_OK)
+    {
+        static DDSCAPS caps = {DDSCAPS_TEXTURE};
+        IDirectDrawSurface3 *surface2;
+
+        hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        IDirectDrawSurface_Release(surface);
+
+        hr = IDirectDrawSurface3_GetAttachedSurface(surface3, &caps, &surface2);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        reset_ddsd(&ddsd);
+        hr = IDirectDrawSurface3_GetSurfaceDesc(surface2, &ddsd);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ddsd.dwWidth == 4, "Got unexpected dwWidth %u.\n", ddsd.dwWidth);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 16;
+        ddsd.dwHeight = 16;
+        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
+        todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 8;
+        ddsd.dwHeight = 8;
+        U1(ddsd).lPitch = 8 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        if (0)
+        {
+            /* _Lock causes access violation on Windows. */
+            reset_ddsd(&ddsd);
+            hr = IDirectDrawSurface3_Lock(surface2, NULL, &ddsd, DDLOCK_WAIT, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            IDirectDrawSurface3_Unlock(surface2, NULL);
+        }
+
+        if (0)
+        {
+            /* Causes access violation on Windows. */
+            reset_ddsd(&ddsd);
+            ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+            ddsd.dwWidth = 4;
+            ddsd.dwHeight = 4;
+            U1(ddsd).lPitch = 4 * 4;
+            ddsd.lpSurface = data;
+            hr = IDirectDrawSurface3_SetSurfaceDesc(surface2, &ddsd, 0);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        }
+        IDirectDrawSurface3_Release(surface2);
+        IDirectDrawSurface3_Release(surface3);
+    }
+
+    /* Test surface created with DDSD_LPSURFACE. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LPSURFACE | DDSD_PITCH;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    ddsd.lpSurface = data;
+    U1(ddsd).lPitch = 8 * 4;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
     /* SetSurfaceDesc needs systemmemory surfaces.
      *
      * As a sidenote, fourcc surfaces aren't allowed in sysmem, thus testing DDSD_LINEARSIZE is moot. */
@@ -5595,7 +5708,7 @@ static void test_set_surface_desc(void)
         }
 
         hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
-        ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
+        ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW, "Got unexpected hr %#x.\n", hr);
         if (FAILED(hr))
         {
             skip("Cannot create a %s surface, skipping vidmem SetSurfaceDesc test.\n",
@@ -5603,7 +5716,7 @@ static void test_set_surface_desc(void)
             goto done;
         }
         hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
-        ok(SUCCEEDED(hr), "Failed to get IDirectDrawSurface3 interface, hr %#x.\n", hr);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         IDirectDrawSurface_Release(surface);
 
         reset_ddsd(&ddsd);
@@ -5612,7 +5725,7 @@ static void test_set_surface_desc(void)
         hr = IDirectDrawSurface3_SetSurfaceDesc(surface3, &ddsd, 0);
         if (invalid_caps_tests[i].supported)
         {
-            ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         }
         else
         {
