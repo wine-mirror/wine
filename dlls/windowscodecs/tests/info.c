@@ -105,6 +105,11 @@ static void test_decoder_info(void)
             ".tiff,.tif",
             1
         },
+        {
+            &CLSID_WICDdsDecoder,
+            "image/vnd.ms-dds",
+            ".dds",
+        }
     };
     IWICBitmapDecoderInfo *decoder_info, *decoder_info2;
     IWICComponentInfo *info;
@@ -124,6 +129,10 @@ static void test_decoder_info(void)
         WCHAR mimetypeW[64];
 
         hr = CoCreateInstance(test->clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IWICBitmapDecoder, (void **)&decoder);
+        if (test->clsid == &CLSID_WICDdsDecoder && hr != S_OK) {
+            win_skip("DDS decoder is not supported\n");
+            continue;
+        }
         ok(SUCCEEDED(hr), "Failed to create decoder, hr %#x.\n", hr);
 
         decoder_info = NULL;
@@ -184,6 +193,7 @@ static void test_decoder_info(void)
         hr = IWICBitmapDecoderInfo_GetMimeTypes(decoder_info, len, value, &len);
         ok(hr == S_OK, "GetMimeType failed, hr=%x\n", hr);
     todo_wine_if(test->todo) {
+        todo_wine_if(i == 6)
         ok(lstrcmpW(value, mimetypeW) == 0, "GetMimeType returned wrong value %s\n", wine_dbgstr_w(value));
         ok(len == lstrlenW(mimetypeW) + 1, "GetMimeType returned wrong len %i\n", len);
     }
@@ -195,6 +205,7 @@ static void test_decoder_info(void)
         hr = IWICBitmapDecoderInfo_GetMimeTypes(decoder_info, 256, value, &len);
         ok(hr == S_OK, "GetMimeType failed, hr=%x\n", hr);
     todo_wine_if(test->todo) {
+        todo_wine_if(i == 6)
         ok(lstrcmpW(value, mimetypeW) == 0, "GetMimeType returned wrong value %s\n", wine_dbgstr_w(value));
         ok(len == lstrlenW(mimetypeW) + 1, "GetMimeType returned wrong len %i\n", len);
     }
