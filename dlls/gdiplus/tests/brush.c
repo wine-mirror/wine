@@ -1778,6 +1778,98 @@ static void test_hatchBrushStyles(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_renderingOrigin(void)
+{
+    static const int width = 8, height = 8;
+    GpStatus status;
+    HDC hdc;
+    GpBitmap *bitmap;
+    GpGraphics *graphics_hdc;
+    GpGraphics *graphics_image;
+    GpHatch *brush;
+    BOOL match_hdc;
+    BOOL match_image;
+    static const INT tests[][2] = {{3, 6}, {-7, -4}};
+    static const ARGB fore_color = 0xff000000;
+    static const ARGB back_color = 0xffffffff;
+    INT x, y;
+    int i;
+
+    hdc = GetDC(hwnd);
+    GdipCreateFromHDC(hdc, &graphics_hdc);
+
+    GdipCreateBitmapFromScan0(width, height, 0, PixelFormat32bppRGB, NULL, &bitmap);
+    GdipGetImageGraphicsContext((GpImage *)bitmap, &graphics_image);
+
+    GdipCreateHatchBrush(HatchStyleCross, fore_color, back_color, &brush);
+
+    x = y = 0xdeadbeef;
+    status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+    expect(Ok, status);
+    ok(x == 0 && y == 0, "Expected (%d, %d) got (%d, %d)\n", 0, 0, x, y);
+    x = y = 0xdeadbeef;
+    status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+    expect(Ok, status);
+    ok(x == 0 && y == 0, "Expected (%d, %d) got (%d, %d)\n", 0, 0, x, y);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        const INT exp_x = ((tests[i][0] % 8) + 8) % 8;
+        const INT exp_y = ((tests[i][1] % 8) + 8) % 8;
+
+        status = GdipSetRenderingOrigin(graphics_image, tests[i][0], tests[i][1]);
+        expect(Ok, status);
+        status = GdipSetRenderingOrigin(graphics_hdc, tests[i][0], tests[i][1]);
+        expect(Ok, status);
+
+        status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+        expect(Ok, status);
+        ok(x == tests[i][0] && y == tests[i][1], "Expected (%d, %d) got (%d, %d)\n",
+                tests[i][0], tests[i][1], x, y);
+        status = GdipGetRenderingOrigin(graphics_image, &x, &y);
+        expect(Ok, status);
+        ok(x == tests[i][0] && y == tests[i][1], "Expected (%d, %d) got (%d, %d)\n",
+                tests[i][0], tests[i][1], x, y);
+
+        GdipFillRectangleI(graphics_image, (GpBrush *)brush, 0, 0, width, height);
+        GdipFillRectangleI(graphics_hdc, (GpBrush *)brush, 0, 0, width, height);
+
+        match_hdc = TRUE;
+        match_image = TRUE;
+        for (y = 0; y < height && (match_hdc || match_image); y++)
+        {
+            for (x = 0; x < width && (match_hdc || match_image); x++)
+            {
+                ARGB color;
+                const ARGB exp_color = (x == exp_x || y == exp_y) ? fore_color : back_color;
+
+                color = COLORREF2ARGB(GetPixel(hdc, x, y));
+                if (color != exp_color)
+                    match_hdc = FALSE;
+
+                GdipBitmapGetPixel(bitmap, x, y, &color);
+                if (color != exp_color)
+                    match_image = FALSE;
+            }
+        }
+        todo_wine
+        {
+        ok(match_hdc, "Hatch brush rendered incorrectly on hdc with rendering origin (%d, %d).\n",
+                tests[i][0], tests[i][1]);
+        ok(match_image, "Hatch brush rendered incorrectly on image with rendering origin (%d, %d).\n",
+                tests[i][0], tests[i][1]);
+        }
+    }
+
+    GdipDeleteBrush((GpBrush *)brush);
+
+    GdipDeleteGraphics(graphics_image);
+    GdipDisposeImage((GpImage*)bitmap);
+
+    GdipDeleteGraphics(graphics_hdc);
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1831,6 +1923,7 @@ START_TEST(brush)
     test_pathgradientblend();
     test_getHatchStyle();
     test_hatchBrushStyles();
+    test_renderingOrigin();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow(hwnd);
