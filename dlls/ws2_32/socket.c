@@ -7269,6 +7269,24 @@ void WINAPI FreeAddrInfoW(PADDRINFOW ai)
 }
 
 /***********************************************************************
+ *      FreeAddrInfoEx      (WS2_32.@)
+ */
+void WINAPI FreeAddrInfoEx(ADDRINFOEXA *ai)
+{
+    TRACE("(%p)\n", ai);
+
+    while (ai)
+    {
+        ADDRINFOEXA *next;
+        HeapFree(GetProcessHeap(), 0, ai->ai_canonname);
+        HeapFree(GetProcessHeap(), 0, ai->ai_addr);
+        next = ai->ai_next;
+        HeapFree(GetProcessHeap(), 0, ai);
+        ai = next;
+    }
+}
+
+/***********************************************************************
  *      FreeAddrInfoExW      (WS2_32.@)
  */
 void WINAPI FreeAddrInfoExW(ADDRINFOEXW *ai)

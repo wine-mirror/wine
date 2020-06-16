@@ -177,7 +177,11 @@ void WINAPI WS(freeaddrinfo)(LPADDRINFO);
 #define     FreeAddrInfoA WS(freeaddrinfo)
 void WINAPI FreeAddrInfoW(PADDRINFOW);
 #define     FreeAddrInfo WINELIB_NAME_AW(FreeAddrInfo)
+void WINAPI FreeAddrInfoEx(ADDRINFOEXA*);
 void WINAPI FreeAddrInfoExW(ADDRINFOEXW*);
+#ifdef UNICODE
+#define     FreeAddrInfoEx FreeAddrInfoExW
+#endif
 int WINAPI  WS(getaddrinfo)(const char*,const char*,const struct WS(addrinfo)*,struct WS(addrinfo)**);
 #define     GetAddrInfoA WS(getaddrinfo)
 int WINAPI  GetAddrInfoW(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);

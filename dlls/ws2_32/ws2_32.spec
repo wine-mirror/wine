@@ -50,6 +50,7 @@
 
 500 stub     WEP
 
+@ stdcall FreeAddrInfoEx(ptr)
 @ stdcall FreeAddrInfoExW(ptr)
 @ stdcall FreeAddrInfoW(ptr)
 @ stdcall GetAddrInfoExCancel(ptr)
