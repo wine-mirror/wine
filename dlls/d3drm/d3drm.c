@@ -1549,7 +1549,7 @@ static HRESULT WINAPI d3drm3_CreateLight(IDirect3DRM3 *iface,
     struct d3drm_light *object;
     HRESULT hr;
 
-    FIXME("iface %p, type %#x, color 0x%08x, light %p partial stub!\n", iface, type, color, light);
+    TRACE("iface %p, type %#x, color 0x%08x, light %p.\n", iface, type, color, light);
 
     if (SUCCEEDED(hr = d3drm_light_create(&object, &d3drm->IDirect3DRM_iface)))
     {
@@ -1569,7 +1569,7 @@ static HRESULT WINAPI d3drm3_CreateLightRGB(IDirect3DRM3 *iface, D3DRMLIGHTTYPE 
     struct d3drm_light *object;
     HRESULT hr;
 
-    FIXME("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p partial stub!\n",
+    TRACE("iface %p, type %#x, red %.8e, green %.8e, blue %.8e, light %p.\n",
             iface, type, red, green, blue, light);
 
     if (SUCCEEDED(hr = d3drm_light_create(&object, &d3drm->IDirect3DRM_iface)))
