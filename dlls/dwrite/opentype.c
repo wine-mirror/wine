@@ -4135,6 +4135,51 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
     return TRUE;
 }
 
+static BOOL opentype_layout_apply_mark_array(struct scriptshaping_context *context, unsigned int subtable_offset,
+        unsigned int mark_array, unsigned int mark_index, unsigned int glyph_index, unsigned int anchors_matrix,
+        unsigned int class_count, unsigned int glyph_pos)
+{
+    const struct dwrite_fonttable *table = &context->table->table;
+    unsigned int mark_class, mark_count, glyph_count;
+    const struct ot_gpos_mark_record *record;
+    float mark_x, mark_y, base_x, base_y;
+    const UINT16 *anchors;
+
+    mark_count = table_read_be_word(table, subtable_offset + mark_array);
+    if (mark_index >= mark_count) return FALSE;
+
+    if (!(record = table_read_ensure(table, subtable_offset + mark_array +
+            FIELD_OFFSET(struct ot_gpos_mark_array, records[mark_index]), sizeof(*record))))
+    {
+        return FALSE;
+    }
+
+    mark_class = GET_BE_WORD(record->mark_class);
+    if (mark_class >= class_count) return FALSE;
+
+    glyph_count = table_read_be_word(table, subtable_offset + anchors_matrix);
+    if (glyph_index >= glyph_count) return FALSE;
+
+    /* Anchors data is stored as two dimensional array [glyph_count][class_count], starting with row count field. */
+    anchors = table_read_ensure(table, subtable_offset + anchors_matrix + 2, glyph_count * class_count * sizeof(*anchors));
+    if (!anchors) return FALSE;
+
+    opentype_layout_gpos_get_anchor(context, subtable_offset + mark_array + GET_BE_WORD(record->mark_anchor),
+            context->cur, &mark_x, &mark_y);
+    opentype_layout_gpos_get_anchor(context, subtable_offset + anchors_matrix +
+            GET_BE_WORD(anchors[glyph_index * class_count + mark_class]), glyph_pos, &base_x, &base_y);
+
+    if (context->is_rtl)
+        context->offsets[context->cur].advanceOffset = mark_x - base_x;
+    else
+        context->offsets[context->cur].advanceOffset = -context->advances[glyph_pos] + base_x - mark_x;
+
+    context->offsets[context->cur].ascenderOffset = base_y - mark_y;
+    context->cur++;
+
+    return TRUE;
+}
+
 static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
@@ -4213,6 +4258,18 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshap
     return TRUE;
 }
 
+static BOOL table_read_array_be_word(const struct dwrite_fonttable *table, unsigned int offset,
+        unsigned int index, UINT16 *data)
+{
+    unsigned int count = table_read_be_word(table, offset);
+    const UINT16 *array;
+
+    if (index >= count) return FALSE;
+    if (!(array = table_read_ensure(table, offset + 2, count * sizeof(*array)))) return FALSE;
+    *data = GET_BE_WORD(array[index]);
+    return TRUE;
+}
+
 static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
@@ -4223,17 +4280,17 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshapi
 
     if (format == 1)
     {
-        const struct ot_gpos_mark_to_lig_format1 *format1 = table_read_ensure(table, subtable_offset, sizeof(*format1));
-        unsigned int mark_index, lig_index;
+        unsigned int mark_index, lig_index, comp_index, class_count, comp_count;
+        const struct ot_gpos_mark_to_lig_format1 *format1;
         struct glyph_iterator lig_iter;
+        unsigned int lig_array;
+        UINT16 lig_attach;
 
-        if (!format1)
-            return FALSE;
+        if (!(format1 = table_read_ensure(table, subtable_offset, sizeof(*format1)))) return FALSE;
 
         mark_index = opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(format1->mark_coverage),
                 context->u.pos.glyphs[context->cur]);
-        if (mark_index == GLYPH_NOT_COVERED)
-            return FALSE;
+        if (mark_index == GLYPH_NOT_COVERED) return FALSE;
 
         glyph_iterator_init(context, LOOKUP_FLAG_IGNORE_MARKS, context->cur, 1, &lig_iter);
         if (!glyph_iterator_prev(&lig_iter))
@@ -4241,10 +4298,23 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshapi
 
         lig_index = opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(format1->lig_coverage),
                 context->u.pos.glyphs[lig_iter.pos]);
-        if (lig_index == GLYPH_NOT_COVERED)
-            return FALSE;
+        if (lig_index == GLYPH_NOT_COVERED) return FALSE;
 
-        FIXME("Unimplemented.\n");
+        class_count = GET_BE_WORD(format1->mark_class_count);
+
+        lig_array = GET_BE_WORD(format1->lig_array);
+
+        if (!table_read_array_be_word(table, subtable_offset + lig_array, lig_index, &lig_attach)) return FALSE;
+
+        comp_count = table_read_be_word(table, subtable_offset + lig_array + lig_attach);
+        if (!comp_count) return FALSE;
+
+        comp_index = context->u.buffer.glyph_props[lig_iter.pos].components -
+                context->u.buffer.glyph_props[context->cur].lig_component - 1;
+        if (comp_index >= comp_count) return FALSE;
+
+        return opentype_layout_apply_mark_array(context, subtable_offset, GET_BE_WORD(format1->mark_array), mark_index,
+                comp_index, lig_array + lig_attach, class_count, lig_iter.pos);
     }
     else
         WARN("Unknown mark-to-ligature format %u.\n", format);
