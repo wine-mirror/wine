@@ -7260,6 +7260,148 @@ static void test_set_surface_desc(void)
 
     IDirectDrawSurface4_Release(surface);
 
+    /* Test mipmap texture. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    U2(ddsd).dwMipMapCount = 3;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    if (FAILED(hr))
+    {
+        skip("Mipmaps are not supported.\n");
+    }
+    else
+    {
+        /* Changing surface desc for mipmap fails even without changing any
+         * parameters. */
+        hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+        ok(hr == DDERR_INVALIDSURFACETYPE, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_LPSURFACE;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+        ok(hr == DDERR_INVALIDSURFACETYPE, "Got unexpected hr %#x.\n", hr);
+        IDirectDrawSurface4_Release(surface);
+    }
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    U2(ddsd).dwMipMapCount = 3;
+    ddsd.lpSurface = data;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    if (hr == DD_OK)
+    {
+        static DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, {0}};
+        IDirectDrawSurface4 *surface2;
+
+        hr = IDirectDrawSurface4_GetAttachedSurface(surface, &caps, &surface2);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        reset_ddsd(&ddsd);
+        hr = IDirectDrawSurface4_GetSurfaceDesc(surface2, &ddsd);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ddsd.dwWidth == 4, "Got unexpected dwWidth %u.\n", ddsd.dwWidth);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 16;
+        ddsd.dwHeight = 16;
+        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+        todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 8;
+        ddsd.dwHeight = 8;
+        U1(ddsd).lPitch = 8 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        if (0)
+        {
+            /* _Lock causes access violation on Windows. */
+            reset_ddsd(&ddsd);
+            hr = IDirectDrawSurface4_Lock(surface2, NULL, &ddsd, DDLOCK_WAIT, NULL);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+            IDirectDrawSurface4_Unlock(surface2, NULL);
+        }
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 4;
+        ddsd.dwHeight = 4;
+        U1(ddsd).lPitch = 4 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface4_SetSurfaceDesc(surface2, &ddsd, 0);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        /* Does not crash now after setting user memory for the level. */
+        hr = IDirectDrawSurface4_Lock(surface2, NULL, &ddsd, DDLOCK_WAIT, NULL);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ddsd.lpSurface == data, "Got unexpected lpSurface %p.\n", ddsd.lpSurface);
+        IDirectDrawSurface4_Unlock(surface2, NULL);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 16;
+        ddsd.dwHeight = 16;
+        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface4_SetSurfaceDesc(surface2, &ddsd, 0);
+        todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        IDirectDrawSurface4_Release(surface2);
+        IDirectDrawSurface4_Release(surface);
+    }
+
+    /* Test surface created with DDSD_LPSURFACE. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_LPSURFACE | DDSD_PITCH;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    ddsd.lpSurface = data;
+    U1(ddsd).lPitch = 8 * 4;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDCAPS, "Got unexpected hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    /* Cannot reset lpSurface. */
+    hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_LPSURFACE | DDSD_PITCH;
+    ddsd.dwWidth = 4;
+    ddsd.dwHeight = 4;
+    ddsd.lpSurface = data;
+    U1(ddsd).lPitch = 8 * 4;
+    /* Can change the parameters of surface created with DDSD_LPSURFACE. */
+    hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    IDirectDrawSurface4_Release(surface);
+
     /* SetSurfaceDesc needs systemmemory surfaces.
      *
      * As a sidenote, fourcc surfaces aren't allowed in sysmem, thus testing DDSD_LINEARSIZE is moot. */
@@ -7283,7 +7425,7 @@ static void test_set_surface_desc(void)
         }
 
         hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
-        ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
+        ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW, "Got unexpected hr %#x.\n", hr);
         if (FAILED(hr))
         {
             skip("Cannot create a %s surface, skipping vidmem SetSurfaceDesc test.\n",
@@ -7297,7 +7439,7 @@ static void test_set_surface_desc(void)
         hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
         if (invalid_caps_tests[i].supported)
         {
-            ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         }
         else
         {
