@@ -1119,10 +1119,12 @@ static HRESULT create_filter(IFilterGraphImpl *graph, IMoniker *moniker, IBaseFi
         return IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)filter);
 }
 
-static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink, unsigned int recursion_depth);
+static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink,
+        BOOL render_to_existing, unsigned int recursion_depth);
 
 static HRESULT autoplug_through_sink(IFilterGraphImpl *graph, IPin *source,
-        IBaseFilter *filter, IPin *middle_sink, IPin *sink, unsigned int recursion_depth)
+        IBaseFilter *filter, IPin *middle_sink, IPin *sink,
+        BOOL render_to_existing, BOOL allow_renderers, unsigned int recursion_depth)
 {
     BOOL any = FALSE, all = TRUE;
     IPin *middle_source, *peer;
@@ -1171,7 +1173,7 @@ static HRESULT autoplug_through_sink(IFilterGraphImpl *graph, IPin *source,
             continue;
         }
 
-        hr = autoplug(graph, middle_source, sink, recursion_depth + 1);
+        hr = autoplug(graph, middle_source, sink, render_to_existing, recursion_depth + 1);
         IPin_Release(middle_source);
         if (SUCCEEDED(hr) && sink)
         {
@@ -1187,7 +1189,7 @@ static HRESULT autoplug_through_sink(IFilterGraphImpl *graph, IPin *source,
 
     if (!sink)
     {
-        if (all)
+        if (all && (any || allow_renderers))
             return S_OK;
         if (any)
             return VFW_S_PARTIAL_RENDER;
@@ -1200,7 +1202,8 @@ err:
 }
 
 static HRESULT autoplug_through_filter(IFilterGraphImpl *graph, IPin *source,
-        IBaseFilter *filter, IPin *sink, unsigned int recursion_depth)
+        IBaseFilter *filter, IPin *sink, BOOL render_to_existing,
+        BOOL allow_renderers, unsigned int recursion_depth)
 {
     IEnumPins *sink_enum;
     IPin *filter_sink;
@@ -1213,7 +1216,8 @@ static HRESULT autoplug_through_filter(IFilterGraphImpl *graph, IPin *source,
 
     while (IEnumPins_Next(sink_enum, 1, &filter_sink, NULL) == S_OK)
     {
-        hr = autoplug_through_sink(graph, source, filter, filter_sink, sink, recursion_depth);
+        hr = autoplug_through_sink(graph, source, filter, filter_sink, sink,
+                render_to_existing, allow_renderers, recursion_depth);
         IPin_Release(filter_sink);
         if (SUCCEEDED(hr))
         {
@@ -1227,7 +1231,8 @@ static HRESULT autoplug_through_filter(IFilterGraphImpl *graph, IPin *source,
 
 /* Common helper for IGraphBuilder::Connect() and IGraphBuilder::Render(), which
  * share most of the same code. Render() calls this with a NULL sink. */
-static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink, unsigned int recursion_depth)
+static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink,
+        BOOL render_to_existing, unsigned int recursion_depth)
 {
     IAMGraphBuilderCallback *callback = NULL;
     IEnumMediaTypes *enummt;
@@ -1259,7 +1264,8 @@ static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink, unsig
     /* Always prefer filters in the graph. */
     LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
     {
-        if (SUCCEEDED(hr = autoplug_through_filter(graph, source, filter->filter, sink, recursion_depth)))
+        if (SUCCEEDED(hr = autoplug_through_filter(graph, source, filter->filter,
+                sink, render_to_existing, TRUE, recursion_depth)))
             return hr;
     }
 
@@ -1334,7 +1340,8 @@ static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink, unsig
                 continue;
             }
 
-            hr = autoplug_through_filter(graph, source, filter, sink, recursion_depth);
+            hr = autoplug_through_filter(graph, source, filter, sink,
+                    render_to_existing, !render_to_existing, recursion_depth);
             if (SUCCEEDED(hr))
             {
                 IBaseFilter_Release(filter);
@@ -1383,7 +1390,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *source, I
 
     EnterCriticalSection(&graph->cs);
 
-    hr = autoplug(graph, source, sink, 0);
+    hr = autoplug(graph, source, sink, FALSE, 0);
 
     LeaveCriticalSection(&graph->cs);
 
@@ -1399,7 +1406,7 @@ static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *source)
     TRACE("graph %p, source %p.\n", graph, source);
 
     EnterCriticalSection(&graph->cs);
-    hr = autoplug(graph, source, NULL, 0);
+    hr = autoplug(graph, source, NULL, FALSE, 0);
     LeaveCriticalSection(&graph->cs);
     if (hr == VFW_E_CANNOT_CONNECT)
         hr = VFW_E_CANNOT_RENDER;
@@ -1598,14 +1605,24 @@ static HRESULT WINAPI FilterGraph2_ReconnectEx(IFilterGraph2 *iface, IPin *pin, 
     return hr;
 }
 
-static HRESULT WINAPI FilterGraph2_RenderEx(IFilterGraph2 *iface, IPin *pPinOut, DWORD dwFlags,
-        DWORD *pvContext)
+static HRESULT WINAPI FilterGraph2_RenderEx(IFilterGraph2 *iface, IPin *source, DWORD flags, DWORD *context)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%p %08x %p): stub !!!\n", This, iface, pPinOut, dwFlags, pvContext);
+    TRACE("graph %p, source %p, flags %#x, context %p.\n", graph, source, flags, context);
 
-    return S_OK;
+    if (flags & ~AM_RENDEREX_RENDERTOEXISTINGRENDERERS)
+        FIXME("Unknown flags %#x.\n", flags);
+
+    EnterCriticalSection(&graph->cs);
+    hr = autoplug(graph, source, NULL, !!(flags & AM_RENDEREX_RENDERTOEXISTINGRENDERERS), 0);
+    LeaveCriticalSection(&graph->cs);
+    if (hr == VFW_E_CANNOT_CONNECT)
+        hr = VFW_E_CANNOT_RENDER;
+
+    TRACE("Returning %#x.\n", hr);
+    return hr;
 }
 
 

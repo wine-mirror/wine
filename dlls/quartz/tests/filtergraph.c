@@ -1978,9 +1978,6 @@ static void test_graph_builder_render(void)
 
     /* Test enumeration of filters from the registry. */
 
-    graph = create_graph();
-    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
-
     CoRegisterClassObject(&sink1_clsid, (IUnknown *)&sink1_cf.IClassFactory_iface,
             CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie1);
     CoRegisterClassObject(&sink2_clsid, (IUnknown *)&sink2_cf.IClassFactory_iface,
@@ -2006,6 +2003,9 @@ static void test_graph_builder_render(void)
         goto out;
     }
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
 
     regpins.dwFlags = REG_PINFLAG_B_RENDERER;
     IFilterMapper2_RegisterFilter(mapper, &sink2_clsid, L"test", NULL, NULL, NULL, &regfilter);
@@ -2086,6 +2086,26 @@ static void test_graph_builder_render(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
 
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* Test AM_RENDEREX_RENDERTOEXISTINGRENDERERS. */
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_RenderEx(graph, &source_pin.IPin_iface, AM_RENDEREX_RENDERTOEXISTINGRENDERERS, NULL);
+    ok(hr == VFW_E_CANNOT_RENDER, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_AddFilter(graph, &sink1.IBaseFilter_iface, NULL);
+
+    hr = IFilterGraph2_RenderEx(graph, &source_pin.IPin_iface, AM_RENDEREX_RENDERTOEXISTINGRENDERERS, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink1_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink1_clsid);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &sink2_clsid);
 
@@ -2093,8 +2113,6 @@ out:
     CoRevokeClassObject(cookie1);
     CoRevokeClassObject(cookie2);
     IFilterMapper2_Release(mapper);
-    ref = IFilterGraph2_Release(graph);
-    ok(!ref, "Got outstanding refcount %d.\n", ref);
     ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
     ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
     ok(sink1.ref == 1, "Got outstanding refcount %d.\n", sink1.ref);
