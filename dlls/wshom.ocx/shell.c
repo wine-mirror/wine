@@ -1714,6 +1714,9 @@ static HRESULT WINAPI WshShell3_SendKeys(IWshShell3 *iface, BSTR Keys, VARIANT *
 
 static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec **ret)
 {
+    BSTR expandedcmd;
+    HRESULT hr;
+
     TRACE("(%s %p)\n", debugstr_w(command), ret);
 
     if (!ret)
@@ -1722,7 +1725,13 @@ static HRESULT WINAPI WshShell3_Exec(IWshShell3 *iface, BSTR command, IWshExec *
     if (!command)
         return DISP_E_EXCEPTION;
 
-    return WshExec_create(command, ret);
+    hr = WshShell3_ExpandEnvironmentStrings(iface, command, &expandedcmd);
+    if (FAILED(hr))
+        return hr;
+
+    hr = WshExec_create(expandedcmd, ret);
+    SysFreeString(expandedcmd);
+    return hr;
 }
 
 static HRESULT WINAPI WshShell3_get_CurrentDirectory(IWshShell3 *iface, BSTR *dir)

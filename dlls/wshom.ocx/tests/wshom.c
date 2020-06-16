@@ -327,6 +327,16 @@ static void test_wshshell(void)
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
     SysFreeString(str);
 
+    str = SysAllocString(L"%deadbeaf% /c echo test");
+    hr = IWshShell3_Exec(sh3, str, &shexec);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    str = SysAllocString(L"%ComSpec% /c echo test");
+    hr = IWshShell3_Exec(sh3, str, &shexec);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_SUCCESS), "got 0x%08x\n", hr);
+    SysFreeString(str);
+
     IWshCollection_Release(coll);
     IDispatch_Release(disp);
     IWshShell3_Release(sh3);
