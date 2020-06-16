@@ -7147,6 +7147,93 @@ static void test_set_surface_desc(void)
          * parameters. */
         hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
         ok(hr == DDERR_INVALIDSURFACETYPE, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_LPSURFACE;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+        ok(hr == DDERR_INVALIDSURFACETYPE, "Got unexpected hr %#x.\n", hr);
+        IDirectDrawSurface7_Release(surface);
+    }
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    U2(ddsd).dwMipMapCount = 3;
+    ddsd.lpSurface = data;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW || hr == E_NOINTERFACE, "Got unexpected hr %#x.\n", hr);
+
+    if (hr == DD_OK)
+    {
+        static DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, {0}};
+        void *surface2_system_mem;
+        IDirectDrawSurface7 *surface2;
+
+        hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &surface2);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        reset_ddsd(&ddsd);
+        hr = IDirectDrawSurface7_GetSurfaceDesc(surface2, &ddsd);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ddsd.dwWidth == 4, "Got unexpected dwWidth %u.\n", ddsd.dwWidth);
+
+        hr = IDirectDrawSurface7_Lock(surface2, NULL, &ddsd, 0, NULL);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        surface2_system_mem = ddsd.lpSurface;
+        IDirectDrawSurface7_Unlock(surface2, NULL);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 16;
+        ddsd.dwHeight = 16;
+        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+        todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 8;
+        ddsd.dwHeight = 8;
+        U1(ddsd).lPitch = 8 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        hr = IDirectDrawSurface7_Lock(surface2, NULL, &ddsd, 0, NULL);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ddsd.lpSurface == surface2_system_mem, "Got unexpected lpSurface %p.\n", ddsd.lpSurface);
+        IDirectDrawSurface7_Unlock(surface2, NULL);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 4;
+        ddsd.dwHeight = 4;
+        U1(ddsd).lPitch = 4 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface7_SetSurfaceDesc(surface2, &ddsd, 0);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        reset_ddsd(&ddsd);
+        hr = IDirectDrawSurface7_Lock(surface2, NULL, &ddsd, 0, NULL);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ddsd.lpSurface == data, "Got unexpected lpSurface %p.\n", ddsd.lpSurface);
+        IDirectDrawSurface7_Unlock(surface2, NULL);
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH | DDSD_LPSURFACE;
+        ddsd.dwWidth = 16;
+        ddsd.dwHeight = 16;
+        U1(ddsd).lPitch = 16 * 4;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface7_SetSurfaceDesc(surface2, &ddsd, 0);
+        todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+        IDirectDrawSurface7_Release(surface2);
         IDirectDrawSurface7_Release(surface);
     }
 
