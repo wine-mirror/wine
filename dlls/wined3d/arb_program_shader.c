@@ -332,7 +332,6 @@ static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
     if (need_rel_addr_const(shader_data, reg_maps, gl_info)) return TRUE;
     if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
     if (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT) return TRUE; /* Load the immval offset. */
-    if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
     if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
     if (reg_maps->usesnrm) return TRUE; /* 0.0 */
     if (reg_maps->usespow) return TRUE; /* EPS, 0.0 and 1.0 */
@@ -4106,7 +4105,6 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
 {
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
-    struct shader_arb_priv *priv = shader->device->shader_priv;
     GLuint ret;
     DWORD next_local = 0;
     struct shader_arb_ctx_priv priv_ctx;
@@ -4201,17 +4199,6 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     {
         const char *color_init = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_0001);
         shader_addline(buffer, "MOV result.color.secondary, %s;\n", color_init);
-
-        if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !priv->ffp_proj_control)
-        {
-            int i;
-            const char *one = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_ONE);
-            for(i = 0; i < MAX_REG_TEXCRD; i++)
-            {
-                if (reg_maps->u.texcoord_mask[i] && reg_maps->u.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL)
-                    shader_addline(buffer, "MOV result.texcoord[%u].w, %s\n", i, one);
-            }
-        }
     }
 
     /* The shader starts with the main function */

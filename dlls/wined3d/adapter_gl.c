@@ -525,23 +525,6 @@ static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
     }
 }
 
-static BOOL match_apple_intel(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
-{
-    return (card_vendor == HW_VENDOR_INTEL) && (gl_vendor == GL_VENDOR_APPLE);
-}
-
-static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
-        const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
-        enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
-{
-    if (gl_vendor != GL_VENDOR_APPLE) return FALSE;
-    if (card_vendor != HW_VENDOR_AMD) return FALSE;
-    if (device == CARD_AMD_RADEON_X1600) return FALSE;
-    return TRUE;
-}
-
 static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, struct wined3d_caps_gl_ctx *ctx,
         const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
@@ -948,30 +931,6 @@ static void quirk_no_np2(struct wined3d_gl_info *gl_info)
     gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
 }
 
-static void quirk_texcoord_w(struct wined3d_gl_info *gl_info)
-{
-    /* The Intel GPUs on macOS set the .w register of texcoords to 0.0 by
-     * default, which causes problems with fixed-function fragment processing.
-     * Ideally this flag should be detected with a test shader and OpenGL
-     * feedback mode, but some OpenGL implementations (macOS ATI at least,
-     * probably all macOS ones) do not like vertex shaders in feedback mode
-     * and return an error, even though it should be valid according to the
-     * spec.
-     *
-     * We don't want to enable this on all cards, as it adds an extra
-     * instruction per texcoord used. This makes the shader slower and eats
-     * instruction slots which should be available to the Direct3D
-     * application.
-     *
-     * ATI Radeon HD 2xxx cards on macOS have the issue. Instead of checking
-     * for the buggy cards, blacklist all Radeon cards on macOS and whitelist
-     * the good ones. That way we're prepared for the future. If this
-     * workaround is activated on cards that do not need it, it won't break
-     * things, just affect performance negatively. */
-    TRACE("Enabling vertex texture coord fixes in vertex shaders.\n");
-    gl_info->quirks |= WINED3D_QUIRK_SET_TEXCOORD_W;
-}
-
 static void quirk_clip_varying(struct wined3d_gl_info *gl_info)
 {
     gl_info->quirks |= WINED3D_QUIRK_GLSL_CLIP_VARYING;
@@ -1104,16 +1063,6 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, struct wined3d_cap
             match_geforce5,
             quirk_no_np2,
             "Geforce 5 NP2 disable"
-        },
-        {
-            match_apple_intel,
-            quirk_texcoord_w,
-            "Init texcoord .w for Apple Intel GPU driver"
-        },
-        {
-            match_apple_nonr500ati,
-            quirk_texcoord_w,
-            "Init texcoord .w for Apple ATI >= r600 GPU driver"
         },
         {
             match_dx10_capable,
