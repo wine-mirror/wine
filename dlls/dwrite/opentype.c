@@ -3497,7 +3497,7 @@ static float opentype_scale_gpos_be_value(WORD value, float emsize, UINT16 upem)
 
 static int opentype_layout_gpos_get_dev_value(const struct scriptshaping_context *context, unsigned int offset)
 {
-    const struct scriptshaping_cache *cache = context->cache;
+    const struct dwrite_fonttable *table = &context->table->table;
     unsigned int start_size, end_size, format, value_word;
     unsigned int index, ppem, mask;
     int value;
@@ -3505,22 +3505,21 @@ static int opentype_layout_gpos_get_dev_value(const struct scriptshaping_context
     if (!offset)
         return 0;
 
-    start_size = table_read_be_word(&cache->gpos.table, offset);
-    end_size = table_read_be_word(&cache->gpos.table, offset + FIELD_OFFSET(struct ot_gpos_device_table, end_size));
+    start_size = table_read_be_word(table, offset);
+    end_size = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gpos_device_table, end_size));
 
     ppem = context->emsize;
     if (ppem < start_size || ppem > end_size)
         return 0;
 
-    format = table_read_be_word(&cache->gpos.table, offset + FIELD_OFFSET(struct ot_gpos_device_table, format));
+    format = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gpos_device_table, format));
 
     if (format < 1 || format > 3)
         return 0;
 
     index = ppem - start_size;
 
-    value_word = table_read_be_word(&cache->gpos.table, offset +
-            FIELD_OFFSET(struct ot_gpos_device_table, values[index >> (4 - format)]));
+    value_word = table_read_be_word(table, offset + FIELD_OFFSET(struct ot_gpos_device_table, values[index >> (4 - format)]));
     mask = 0xffff >> (16 - (1 << format));
 
     value = (value_word >> ((index % (4 - format)) * (1 << format))) & mask;
@@ -3812,24 +3811,21 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
         const struct lookup *lookup, unsigned int subtable_offset)
 {
     const struct dwrite_fonttable *table = &context->table->table;
-    struct scriptshaping_cache *cache = context->cache;
     UINT16 format, value_format, value_len, coverage, glyph;
 
     unsigned int coverage_index;
 
-    format = table_read_be_word(&cache->gpos.table, subtable_offset);
+    format = table_read_be_word(table, subtable_offset);
 
-    coverage = table_read_be_word(&cache->gpos.table, subtable_offset +
-            FIELD_OFFSET(struct ot_gpos_singlepos_format1, coverage));
-    value_format = table_read_be_word(&cache->gpos.table, subtable_offset +
-            FIELD_OFFSET(struct ot_gpos_singlepos_format1, value_format));
+    coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_singlepos_format1, coverage));
+    value_format = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_singlepos_format1, value_format));
     value_len = dwrite_popcount(value_format);
 
     glyph = context->u.pos.glyphs[context->cur];
 
     if (format == 1)
     {
-        const struct ot_gpos_singlepos_format1 *format1 = table_read_ensure(&cache->gpos.table, subtable_offset,
+        const struct ot_gpos_singlepos_format1 *format1 = table_read_ensure(table, subtable_offset,
                 FIELD_OFFSET(struct ot_gpos_singlepos_format1, value[value_len]));
 
         coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
@@ -3840,9 +3836,9 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
     }
     else if (format == 2)
     {
-        WORD value_count = table_read_be_word(&cache->gpos.table, subtable_offset +
+        WORD value_count = table_read_be_word(table, subtable_offset +
                 FIELD_OFFSET(struct ot_gpos_singlepos_format2, value_count));
-        const struct ot_gpos_singlepos_format2 *format2 = table_read_ensure(&cache->gpos.table, subtable_offset,
+        const struct ot_gpos_singlepos_format2 *format2 = table_read_ensure(table, subtable_offset,
                 FIELD_OFFSET(struct ot_gpos_singlepos_format2, values) + value_count * value_len * sizeof(WORD));
 
         coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
@@ -3873,8 +3869,7 @@ static int gpos_pair_adjustment_compare_format1(const void *g, const void *r)
 static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
-    struct scriptshaping_cache *cache = context->cache;
-    const struct dwrite_fonttable *table = &cache->gpos.table;
+    const struct dwrite_fonttable *table = &context->table->table;
     unsigned int first_glyph, second_glyph;
     struct glyph_iterator iter_pair;
     WORD format, coverage;
@@ -3910,8 +3905,8 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
     if (format == 1)
     {
         const struct ot_gpos_pairpos_format1 *format1;
-        WORD pairset_count = table_read_be_word(&cache->gpos.table, subtable_offset +
-                FIELD_OFFSET(struct ot_gpos_pairpos_format1, pairset_count));
+        WORD pairset_count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gpos_pairpos_format1,
+                pairset_count));
         unsigned int pairvalue_len, pairset_offset;
         const struct ot_gpos_pairset *pairset;
         const WORD *pairvalue;
@@ -3939,8 +3934,7 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
                 value_len2 * sizeof(WORD);
 
         pairset_offset = subtable_offset + GET_BE_WORD(format1->pairsets[coverage_index]);
-        pairset = table_read_ensure(&cache->gpos.table, subtable_offset + pairset_offset,
-                pairvalue_len * pairvalue_count);
+        pairset = table_read_ensure(table, subtable_offset + pairset_offset, pairvalue_len * pairvalue_count);
         if (!pairset)
             return FALSE;
 
@@ -4011,15 +4005,15 @@ static void opentype_layout_gpos_get_anchor(const struct scriptshaping_context *
         unsigned int glyph_index, float *x, float *y)
 {
     const struct scriptshaping_cache *cache = context->cache;
+    const struct dwrite_fonttable *table = &context->table->table;
 
-    WORD format = table_read_be_word(&cache->gpos.table, anchor_offset);
+    WORD format = table_read_be_word(table, anchor_offset);
 
     *x = *y = 0.0f;
 
     if (format == 1)
     {
-        const struct ot_gpos_anchor_format1 *format1 = table_read_ensure(&cache->gpos.table, anchor_offset,
-                sizeof(*format1));
+        const struct ot_gpos_anchor_format1 *format1 = table_read_ensure(table, anchor_offset, sizeof(*format1));
 
         if (format1)
         {
@@ -4029,8 +4023,7 @@ static void opentype_layout_gpos_get_anchor(const struct scriptshaping_context *
     }
     else if (format == 2)
     {
-        const struct ot_gpos_anchor_format2 *format2 = table_read_ensure(&cache->gpos.table, anchor_offset,
-                sizeof(*format2));
+        const struct ot_gpos_anchor_format2 *format2 = table_read_ensure(table, anchor_offset, sizeof(*format2));
 
         if (format2)
         {
@@ -4043,8 +4036,7 @@ static void opentype_layout_gpos_get_anchor(const struct scriptshaping_context *
     }
     else if (format == 3)
     {
-        const struct ot_gpos_anchor_format3 *format3 = table_read_ensure(&cache->gpos.table, anchor_offset,
-                sizeof(*format3));
+        const struct ot_gpos_anchor_format3 *format3 = table_read_ensure(table, anchor_offset, sizeof(*format3));
 
         if (format3)
         {
@@ -4067,10 +4059,11 @@ static void opentype_layout_gpos_get_anchor(const struct scriptshaping_context *
 static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
-    struct scriptshaping_cache *cache = context->cache;
-    const struct dwrite_fonttable *table = &cache->gpos.table;
-    WORD format = table_read_be_word(&cache->gpos.table, subtable_offset);
-    UINT16 glyph = context->u.pos.glyphs[context->cur];
+    const struct dwrite_fonttable *table = &context->table->table;
+    UINT16 format, glyph;
+
+    format = table_read_be_word(table, subtable_offset);
+    glyph = context->u.pos.glyphs[context->cur];
 
     if (format == 1)
     {
@@ -4145,8 +4138,7 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
 static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
-    struct scriptshaping_cache *cache = context->cache;
-    const struct dwrite_fonttable *table = &cache->gpos.table;
+    const struct dwrite_fonttable *table = &context->table->table;
     WORD format;
 
     format = table_read_be_word(table, subtable_offset);
@@ -4224,11 +4216,10 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshap
 static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
-    struct scriptshaping_cache *cache = context->cache;
-    const struct dwrite_fonttable *table = &cache->gpos.table;
+    const struct dwrite_fonttable *table = &context->table->table;
     WORD format;
 
-    format = table_read_be_word(&cache->gpos.table, subtable_offset);
+    format = table_read_be_word(table, subtable_offset);
 
     if (format == 1)
     {
@@ -4264,8 +4255,7 @@ static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshapi
 static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
-    struct scriptshaping_cache *cache = context->cache;
-    const struct dwrite_fonttable *table = &cache->gpos.table;
+    const struct dwrite_fonttable *table = &context->table->table;
     WORD format;
 
     format = table_read_be_word(table, subtable_offset);
@@ -4305,7 +4295,7 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
             return FALSE;
 
         mark2_array_offset = subtable_offset + GET_BE_WORD(format1->mark2_array);
-        if (!(count = table_read_be_word(&cache->gpos.table, mark2_array_offset)))
+        if (!(count = table_read_be_word(table, mark2_array_offset)))
             return FALSE;
 
         mark_class_count = GET_BE_WORD(format1->mark_class_count);
