@@ -2840,7 +2840,7 @@ static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_wat
 /***********************************************************************
  *           virtual_locked_server_call
  */
-unsigned int CDECL virtual_locked_server_call( void *req_ptr )
+unsigned int virtual_locked_server_call( void *req_ptr )
 {
     struct __server_request_info * const req = req_ptr;
     sigset_t sigset;
@@ -3040,7 +3040,7 @@ BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
  *
  * Check if a memory buffer can be written to, triggering page faults if needed for write watches.
  */
-BOOL CDECL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
+BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
 {
     if (!size) return TRUE;
     if (!ptr) return FALSE;

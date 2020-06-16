@@ -331,7 +331,7 @@ static inline BOOL has_wildcard( const UNICODE_STRING *mask )
     return FALSE;
 }
 
-static NTSTATUS errno_to_status( int err )
+NTSTATUS errno_to_status( int err )
 {
     TRACE( "errno = %d\n", err );
     switch (err)
@@ -3336,7 +3336,7 @@ NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *u
  *
  * Unmount the specified device.
  */
-NTSTATUS CDECL unmount_device( HANDLE handle )
+static NTSTATUS unmount_device( HANDLE handle )
 {
     NTSTATUS status;
     int unix_fd, needs_close;
@@ -4579,6 +4579,51 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
     return status;
 }
 
+/* do an ioctl call through the server */
+static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
+                                   PIO_APC_ROUTINE apc, PVOID apc_context,
+                                   IO_STATUS_BLOCK *io, ULONG code,
+                                   const void *in_buffer, ULONG in_size,
+                                   PVOID out_buffer, ULONG out_size )
+{
+    struct async_irp *async;
+    NTSTATUS status;
+    HANDLE wait_handle;
+    ULONG options;
+
+    if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
+        return STATUS_NO_MEMORY;
+    async->buffer  = out_buffer;
+    async->size    = out_size;
+
+    SERVER_START_REQ( ioctl )
+    {
+        req->code        = code;
+        req->async       = server_async( handle, &async->io, event, apc, apc_context, io );
+        wine_server_add_data( req, in_buffer, in_size );
+        if ((code & 3) != METHOD_BUFFERED) wine_server_add_data( req, out_buffer, out_size );
+        wine_server_set_reply( req, out_buffer, out_size );
+        status = virtual_locked_server_call( req );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+        options     = reply->options;
+        if (wait_handle && status != STATUS_PENDING)
+        {
+            io->u.Status    = status;
+            io->Information = wine_server_reply_size( reply );
+        }
+    }
+    SERVER_END_REQ;
+
+    if (status == STATUS_NOT_SUPPORTED)
+        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+
+    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
+
+    if (wait_handle) status = wait_async( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), io );
+    return status;
+}
+
 
 struct io_timeouts
 {
@@ -5352,4 +5397,202 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     }
     if (send_completion) add_completion( file, cvalue, status, total, FALSE );
     return status;
+}
+
+
+/******************************************************************************
+ *              NtDeviceIoControlFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,
+                                       IO_STATUS_BLOCK *io, ULONG code, void *in_buffer, ULONG in_size,
+                                       void *out_buffer, ULONG out_size )
+{
+    ULONG device = (code >> 16);
+    NTSTATUS status = STATUS_NOT_SUPPORTED;
+
+    TRACE( "(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
+           handle, event, apc, apc_context, io, code, in_buffer, in_size, out_buffer, out_size );
+
+    switch (device)
+    {
+    case FILE_DEVICE_DISK:
+    case FILE_DEVICE_CD_ROM:
+    case FILE_DEVICE_DVD:
+    case FILE_DEVICE_CONTROLLER:
+    case FILE_DEVICE_MASS_STORAGE:
+        status = cdrom_DeviceIoControl( handle, event, apc, apc_context, io, code,
+                                        in_buffer, in_size, out_buffer, out_size );
+        break;
+    case FILE_DEVICE_SERIAL_PORT:
+        status = serial_DeviceIoControl( handle, event, apc, apc_context, io, code,
+                                         in_buffer, in_size, out_buffer, out_size );
+        break;
+    case FILE_DEVICE_TAPE:
+        status = tape_DeviceIoControl( handle, event, apc, apc_context, io, code,
+                                       in_buffer, in_size, out_buffer, out_size );
+        break;
+    }
+
+    if (status == STATUS_NOT_SUPPORTED || status == STATUS_BAD_DEVICE_TYPE)
+        return server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                  in_buffer, in_size, out_buffer, out_size );
+
+    if (status != STATUS_PENDING) io->u.Status = status;
+    return status;
+}
+
+
+/* Tell Valgrind to ignore any holes in structs we will be passing to the
+ * server */
+static void ignore_server_ioctl_struct_holes( ULONG code, const void *in_buffer, ULONG in_size )
+{
+#ifdef VALGRIND_MAKE_MEM_DEFINED
+# define IGNORE_STRUCT_HOLE(buf, size, t, f1, f2) \
+    do { \
+        if (FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1) < FIELD_OFFSET(t, f2)) \
+            if ((size) >= FIELD_OFFSET(t, f2)) \
+                VALGRIND_MAKE_MEM_DEFINED( \
+                    (const char *)(buf) + FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1), \
+                    FIELD_OFFSET(t, f2) - FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1)); \
+    } while (0)
+
+    switch (code)
+    {
+    case FSCTL_PIPE_WAIT:
+        IGNORE_STRUCT_HOLE(in_buffer, in_size, FILE_PIPE_WAIT_FOR_BUFFER, TimeoutSpecified, Name);
+        break;
+    }
+#endif
+}
+
+
+/******************************************************************************
+ *              NtFsControlFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,
+                                 IO_STATUS_BLOCK *io, ULONG code, void *in_buffer, ULONG in_size,
+                                 void *out_buffer, ULONG out_size )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
+           handle, event, apc, apc_context, io, code, in_buffer, in_size, out_buffer, out_size );
+
+    if (!io) return STATUS_INVALID_PARAMETER;
+
+    ignore_server_ioctl_struct_holes( code, in_buffer, in_size );
+
+    switch (code)
+    {
+    case FSCTL_DISMOUNT_VOLUME:
+        status = server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                    in_buffer, in_size, out_buffer, out_size );
+        if (!status) status = unmount_device( handle );
+        return status;
+
+    case FSCTL_PIPE_IMPERSONATE:
+        FIXME("FSCTL_PIPE_IMPERSONATE: impersonating self\n");
+        status = RtlImpersonateSelf( SecurityImpersonation );
+        break;
+
+    case FSCTL_IS_VOLUME_MOUNTED:
+    case FSCTL_LOCK_VOLUME:
+    case FSCTL_UNLOCK_VOLUME:
+        FIXME("stub! return success - Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+        status = STATUS_SUCCESS;
+        break;
+
+    case FSCTL_GET_RETRIEVAL_POINTERS:
+    {
+        RETRIEVAL_POINTERS_BUFFER *buffer = (RETRIEVAL_POINTERS_BUFFER *)out_buffer;
+
+        FIXME("stub: FSCTL_GET_RETRIEVAL_POINTERS\n");
+
+        if (out_size >= sizeof(RETRIEVAL_POINTERS_BUFFER))
+        {
+            buffer->ExtentCount                 = 1;
+            buffer->StartingVcn.QuadPart        = 1;
+            buffer->Extents[0].NextVcn.QuadPart = 0;
+            buffer->Extents[0].Lcn.QuadPart     = 0;
+            io->Information = sizeof(RETRIEVAL_POINTERS_BUFFER);
+            status = STATUS_SUCCESS;
+        }
+        else
+        {
+            io->Information = 0;
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        break;
+    }
+    case FSCTL_SET_SPARSE:
+        TRACE("FSCTL_SET_SPARSE: Ignoring request\n");
+        io->Information = 0;
+        status = STATUS_SUCCESS;
+        break;
+    default:
+        return server_ioctl_file( handle, event, apc, apc_context, io, code,
+                                  in_buffer, in_size, out_buffer, out_size );
+    }
+
+    if (status != STATUS_PENDING) io->u.Status = status;
+    return status;
+}
+
+
+/******************************************************************************
+ *              NtFlushBuffersFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
+{
+    NTSTATUS ret;
+    HANDLE wait_handle;
+    enum server_fd_type type;
+    int fd, needs_close;
+
+    if (!io || !virtual_check_buffer_for_write( io, sizeof(*io) )) return STATUS_ACCESS_VIOLATION;
+
+    ret = server_get_unix_fd( handle, FILE_WRITE_DATA, &fd, &needs_close, &type, NULL );
+    if (ret == STATUS_ACCESS_DENIED)
+        ret = server_get_unix_fd( handle, FILE_APPEND_DATA, &fd, &needs_close, &type, NULL );
+
+    if (!ret && (type == FD_TYPE_FILE || type == FD_TYPE_DIR))
+    {
+        if (fsync(fd)) ret = errno_to_status( errno );
+        io->u.Status    = ret;
+        io->Information = 0;
+    }
+    else if (!ret && type == FD_TYPE_SERIAL)
+    {
+        ret = serial_FlushBuffersFile( fd );
+    }
+    else if (ret != STATUS_ACCESS_DENIED)
+    {
+        struct async_irp *async;
+
+        if (!(async = (struct async_irp *)alloc_fileio( sizeof(*async), irp_completion, handle )))
+            return STATUS_NO_MEMORY;
+        async->buffer  = NULL;
+        async->size    = 0;
+
+        SERVER_START_REQ( flush )
+        {
+            req->async = server_async( handle, &async->io, NULL, NULL, NULL, io );
+            ret = wine_server_call( req );
+            wait_handle = wine_server_ptr_handle( reply->event );
+            if (wait_handle && ret != STATUS_PENDING)
+            {
+                io->u.Status    = ret;
+                io->Information = 0;
+            }
+        }
+        SERVER_END_REQ;
+
+        if (ret != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
+
+        if (wait_handle) ret = wait_async( wait_handle, FALSE, io );
+    }
+
+    if (needs_close) close( fd );
+    return ret;
 }

@@ -114,30 +114,6 @@ extern const WCHAR syswow64_dir[] DECLSPEC_HIDDEN;
 
 extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 
-/* Device IO */
-extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice, 
-                                      HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
-                                      PVOID UserApcContext, 
-                                      PIO_STATUS_BLOCK piosb, 
-                                      ULONG IoControlCode,
-                                      LPVOID lpInBuffer, DWORD nInBufferSize,
-                                      LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
-extern NTSTATUS COMM_DeviceIoControl(HANDLE hDevice, 
-                                     HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
-                                     PVOID UserApcContext, 
-                                     PIO_STATUS_BLOCK piosb, 
-                                     ULONG IoControlCode,
-                                     LPVOID lpInBuffer, DWORD nInBufferSize,
-                                     LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
-extern NTSTATUS TAPE_DeviceIoControl(HANDLE hDevice, 
-                                     HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
-                                     PVOID UserApcContext, 
-                                     PIO_STATUS_BLOCK piosb, 
-                                     ULONG IoControlCode,
-                                     LPVOID lpInBuffer, DWORD nInBufferSize,
-                                     LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
-extern NTSTATUS COMM_FlushBuffersFile( int fd ) DECLSPEC_HIDDEN;
-
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void) DECLSPEC_HIDDEN;
 extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;

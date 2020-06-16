@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 49
+#define NTDLL_UNIXLIB_VERSION 50
 
 struct unix_funcs
 {
@@ -86,13 +86,22 @@ struct unix_funcs
     TEB *         (WINAPI *NtCurrentTeb)(void);
     NTSTATUS      (WINAPI *NtDelayExecution)( BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtDeleteFile)( OBJECT_ATTRIBUTES *attr );
+    NTSTATUS      (WINAPI *NtDeviceIoControlFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
+                                                   void *apc_context, IO_STATUS_BLOCK *io, ULONG code,
+                                                   void *in_buffer, ULONG in_size,
+                                                   void *out_buffer, ULONG out_size );
     NTSTATUS      (WINAPI *NtDuplicateObject)( HANDLE source_process, HANDLE source,
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
+    NTSTATUS      (WINAPI *NtFlushBuffersFile)( HANDLE handle, IO_STATUS_BLOCK *io );
     NTSTATUS      (WINAPI *NtFlushVirtualMemory)( HANDLE process, LPCVOID *addr_ptr,
                                                   SIZE_T *size_ptr, ULONG unknown );
     NTSTATUS      (WINAPI *NtFreeVirtualMemory)( HANDLE process, PVOID *addr_ptr,
                                                  SIZE_T *size_ptr, ULONG type );
+    NTSTATUS      (WINAPI *NtFsControlFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
+                                             void *apc_context, IO_STATUS_BLOCK *io, ULONG code,
+                                             void *in_buffer, ULONG in_size,
+                                             void *out_buffer, ULONG out_size );
     NTSTATUS      (WINAPI *NtGetContextThread)( HANDLE handle, CONTEXT *context );
     NTSTATUS      (WINAPI *NtGetWriteWatch)( HANDLE process, ULONG flags, PVOID base, SIZE_T size,
                                              PVOID *addresses, ULONG_PTR *count, ULONG *granularity );
@@ -266,9 +275,7 @@ struct unix_funcs
     void          (CDECL *virtual_get_system_info)( SYSTEM_BASIC_INFORMATION *info );
     NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
-    unsigned int  (CDECL *virtual_locked_server_call)( void *req_ptr );
     ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
-    BOOL          (CDECL *virtual_check_buffer_for_write)( void *ptr, SIZE_T size );
     void          (CDECL *virtual_release_address_space)(void);
     void          (CDECL *virtual_set_large_address_space)(void);
 
@@ -295,7 +302,6 @@ struct unix_funcs
     /* file functions */
     NTSTATUS      (CDECL *nt_to_unix_file_name)( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                                  UINT disposition, BOOLEAN check_case );
-    NTSTATUS      (CDECL *unmount_device)( HANDLE handle );
     void          (CDECL *set_show_dot_files)( BOOL enable );
 
     /* debugging functions */

@@ -9,7 +9,6 @@ EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 C_SRCS = \
 	actctx.c \
 	atom.c \
-	cdrom.c \
 	critsection.c \
 	crypt.c \
 	debugbuffer.c \
@@ -37,7 +36,6 @@ C_SRCS = \
 	rtlbitmap.c \
 	rtlstr.c \
 	sec.c \
-	serial.c \
 	server.c \
 	signal_arm.c \
 	signal_arm64.c \
@@ -46,15 +44,16 @@ C_SRCS = \
 	signal_x86_64.c \
 	string.c \
 	sync.c \
-	tape.c \
 	thread.c \
 	threadpool.c \
 	time.c \
+	unix/cdrom.c \
 	unix/debug.c \
 	unix/env.c \
 	unix/file.c \
 	unix/loader.c \
 	unix/process.c \
+	unix/serial.c \
 	unix/server.c \
 	unix/signal_arm.c \
 	unix/signal_arm64.c \
@@ -62,6 +61,7 @@ C_SRCS = \
 	unix/signal_powerpc.c \
 	unix/signal_x86_64.c \
 	unix/sync.c \
+	unix/tape.c \
 	unix/thread.c \
 	unix/virtual.c \
 	version.c \

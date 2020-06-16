@@ -18,11 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <errno.h>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
@@ -42,7 +47,6 @@
 #ifndef MT_ST_BLKSIZE_MASK
 #define MT_ST_BLKSIZE_MASK 0xffffff
 #endif
-
 /* Darwin 7.9.0 has MTSETBSIZ instead of MTSETBLK */
 #if !defined(MTSETBLK) && defined(MTSETBSIZ)
 #define MTSETBLK MTSETBSIZ
@@ -55,8 +59,8 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ddk/ntddtape.h"
-#include "ntdll_misc.h"
 #include "wine/server.h"
+#include "unix_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(tape);
@@ -91,7 +95,7 @@ static const char *io2str( DWORD io )
 static inline NTSTATUS TAPE_GetStatus( int error )
 {
     if (!error) return STATUS_SUCCESS;
-    return FILE_GetNtStatus();
+    return errno_to_status( errno );
 }
 #endif
 
@@ -376,7 +380,7 @@ static NTSTATUS TAPE_SetDriveParams( int fd, const TAPE_SET_DRIVE_PARAMETERS *da
     return STATUS_NOT_SUPPORTED;
 #endif
 }
-        
+
 /******************************************************************
  *      TAPE_SetMediaParams
  */
@@ -386,7 +390,7 @@ static NTSTATUS TAPE_SetMediaParams( int fd, const TAPE_SET_MEDIA_PARAMETERS *da
     struct mtop cmd;
 
     TRACE( "fd: %d blocksize: 0x%08x\n", fd, data->BlockSize );
-    
+
     cmd.mt_op = MTSETBLK;
     cmd.mt_count = data->BlockSize;
 
@@ -396,7 +400,7 @@ static NTSTATUS TAPE_SetMediaParams( int fd, const TAPE_SET_MEDIA_PARAMETERS *da
     return STATUS_NOT_SUPPORTED;
 #endif
 }
-        
+
 /******************************************************************
  *      TAPE_SetPosition
  */
@@ -511,29 +515,24 @@ static NTSTATUS TAPE_WriteMarks( int fd, const TAPE_WRITE_MARKS *data )
 }
 
 /******************************************************************
- *		TAPE_DeviceIoControl
- *
- * SEE ALSO
- *   NtDeviceIoControl.
+ *		tape_DeviceIoControl
  */
-NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
-    PIO_APC_ROUTINE apc, PVOID apc_user, PIO_STATUS_BLOCK io_status,
-    ULONG io_control, LPVOID in_buffer, DWORD in_size,
-    LPVOID out_buffer, DWORD out_size )
+NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                               IO_STATUS_BLOCK *io, ULONG code,
+                               void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
 {
     DWORD sz = 0;
     NTSTATUS status = STATUS_INVALID_PARAMETER;
     int fd, needs_close;
 
-    TRACE( "%p %s %p %d %p %d %p\n", device, io2str(io_control),
-           in_buffer, in_size, out_buffer, out_size, io_status );
+    TRACE( "%p %s %p %d %p %d %p\n", device, io2str(code),
+           in_buffer, in_size, out_buffer, out_size, io );
 
-    io_status->Information = 0;
+    io->Information = 0;
 
-    if ((status = unix_funcs->server_get_unix_fd( device, 0, &fd, &needs_close, NULL, NULL )))
-        goto error;
+    if ((status = server_get_unix_fd( device, 0, &fd, &needs_close, NULL, NULL ))) goto error;
 
-    switch (io_control)
+    switch (code)
     {
     case IOCTL_TAPE_CREATE_PARTITION:
         status = TAPE_CreatePartition( fd, in_buffer );
@@ -552,7 +551,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
                                    out_buffer );
         break;
     case IOCTL_TAPE_GET_STATUS:
-        status = FILE_GetNtStatus();
+        status = errno_to_status( errno );
         break;
     case IOCTL_TAPE_PREPARE:
         status = TAPE_Prepare( fd, in_buffer );
@@ -575,16 +574,15 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
         break;
     default:
         FIXME( "Unsupported IOCTL %x (type=%x access=%x func=%x meth=%x)\n",
-               io_control, io_control >> 16, (io_control >> 14) & 3,
-               (io_control >> 2) & 0xfff, io_control & 3 );
+               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3 );
         break;
     }
 
     if (needs_close) close( fd );
 
 error:
-    io_status->u.Status = status;
-    io_status->Information = sz;
+    io->u.Status = status;
+    io->Information = sz;
     if (event) NtSetEvent( event, NULL );
     return status;
 }
