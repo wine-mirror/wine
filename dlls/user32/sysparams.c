@@ -3910,7 +3910,7 @@ static BOOL update_monitor_cache(void)
     HANDLE mutex = NULL;
     DWORD state_flags;
     BOOL ret = FALSE;
-    BOOL mirrored_slave;
+    BOOL is_replica;
     DWORD i = 0, j;
     DWORD type;
 
@@ -3956,17 +3956,17 @@ static BOOL update_monitor_cache(void)
                                         (BYTE *)&monitors[monitor_count].rcMonitor, sizeof(RECT), NULL, 0 ))
             goto fail;
 
-        /* Mirrored slave monitors also don't get enumerated */
-        mirrored_slave = FALSE;
+        /* Replicas in mirroring monitor sets don't get enumerated */
+        is_replica = FALSE;
         for (j = 0; j < monitor_count; j++)
         {
             if (EqualRect(&monitors[j].rcMonitor, &monitors[monitor_count].rcMonitor))
             {
-                mirrored_slave = TRUE;
+                is_replica = TRUE;
                 break;
             }
         }
-        if (mirrored_slave)
+        if (is_replica)
             continue;
 
         if (!SetupDiGetDevicePropertyW( devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_RCWORK, &type,
