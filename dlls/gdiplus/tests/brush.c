@@ -1852,13 +1852,10 @@ static void test_renderingOrigin(void)
                     match_image = FALSE;
             }
         }
-        todo_wine
-        {
         ok(match_hdc, "Hatch brush rendered incorrectly on hdc with rendering origin (%d, %d).\n",
                 tests[i][0], tests[i][1]);
         ok(match_image, "Hatch brush rendered incorrectly on image with rendering origin (%d, %d).\n",
                 tests[i][0], tests[i][1]);
-        }
     }
 
     GdipDeleteBrush((GpBrush *)brush);

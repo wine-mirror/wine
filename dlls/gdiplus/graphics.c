@@ -127,7 +127,7 @@ static void init_hatch_palette(ARGB *hatch_palette, ARGB fore_color, ARGB back_c
     hatch_palette[3] = fore_color;
 }
 
-static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
+static HBITMAP create_hatch_bitmap(const GpHatch *hatch, INT origin_x, INT origin_y)
 {
     HBITMAP hbmp;
     BITMAPINFOHEADER bmih;
@@ -159,7 +159,9 @@ static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
              * degree of shading needed. */
             for (y = 0; y < 8; y++)
             {
-                unsigned int row = 0x101 * hatch_data[y];
+                const int hy = (((y + origin_y) % 8) + 8) % 8;
+                const int hx = ((origin_x % 8) + 8) % 8;
+                unsigned int row = (0x10101 * hatch_data[hy]) >> hx;
 
                 for (x = 0; x < 8; x++, row >>= 1)
                 {
@@ -184,7 +186,7 @@ static HBITMAP create_hatch_bitmap(const GpHatch *hatch)
     return hbmp;
 }
 
-static GpStatus create_gdi_logbrush(const GpBrush *brush, LOGBRUSH *lb)
+static GpStatus create_gdi_logbrush(const GpBrush *brush, LOGBRUSH *lb, INT origin_x, INT origin_y)
 {
     switch (brush->bt)
     {
@@ -202,7 +204,7 @@ static GpStatus create_gdi_logbrush(const GpBrush *brush, LOGBRUSH *lb)
             const GpHatch *hatch = (const GpHatch *)brush;
             HBITMAP hbmp;
 
-            hbmp = create_hatch_bitmap(hatch);
+            hbmp = create_hatch_bitmap(hatch, origin_x, origin_y);
             if (!hbmp) return OutOfMemory;
 
             lb->lbStyle = BS_PATTERN;
@@ -231,12 +233,12 @@ static GpStatus free_gdi_logbrush(LOGBRUSH *lb)
     return Ok;
 }
 
-static HBRUSH create_gdi_brush(const GpBrush *brush)
+static HBRUSH create_gdi_brush(const GpBrush *brush, INT origin_x, INT origin_y)
 {
     LOGBRUSH lb;
     HBRUSH gdibrush;
 
-    if (create_gdi_logbrush(brush, &lb) != Ok) return 0;
+    if (create_gdi_logbrush(brush, &lb, origin_x, origin_y) != Ok) return 0;
 
     gdibrush = CreateBrushIndirect(&lb);
     free_gdi_logbrush(&lb);
@@ -293,14 +295,14 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         }
         TRACE("\n and the pen style is %x\n", pen->style);
 
-        create_gdi_logbrush(pen->brush, &lb);
+        create_gdi_logbrush(pen->brush, &lb, graphics->origin_x, graphics->origin_y);
         gdipen = ExtCreatePen(pen->style, gdip_round(width), &lb,
                               numdashes, dash_array);
         free_gdi_logbrush(&lb);
     }
     else
     {
-        create_gdi_logbrush(pen->brush, &lb);
+        create_gdi_logbrush(pen->brush, &lb, graphics->origin_x, graphics->origin_y);
         gdipen = ExtCreatePen(pen->style, gdip_round(width), &lb, 0, NULL);
         free_gdi_logbrush(&lb);
     }
@@ -1134,7 +1136,7 @@ static GpStatus brush_fill_path(GpGraphics *graphics, GpBrush *brush)
     {
         HBRUSH gdibrush, old_brush;
 
-        gdibrush = create_gdi_brush(brush);
+        gdibrush = create_gdi_brush(brush, graphics->origin_x, graphics->origin_y);
         if (!gdibrush)
         {
             status = OutOfMemory;
@@ -1196,9 +1198,9 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         /* See create_hatch_bitmap for an explanation of how index is derived. */
         for (y = 0; y < fill_area->Height; y++, argb_pixels += cdwStride)
         {
-            /* FIXME: Account for the rendering origin */
-            const int hy = 7 - ((y + fill_area->Y) % 8);
-            const unsigned int row = 0x101 * hatch_data[hy];
+            const int hy = (7 - ((y + fill_area->Y - graphics->origin_y) % 8)) % 8;
+            const int hx = ((graphics->origin_x % 8) + 8) % 8;
+            const unsigned int row = (0x10101 * hatch_data[hy]) >> hx;
 
             for (x = 0; x < fill_area->Width; x++)
             {
@@ -6193,12 +6195,7 @@ GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics *graphics, PixelOffsetMode
 
 GpStatus WINGDIPAPI GdipSetRenderingOrigin(GpGraphics *graphics, INT x, INT y)
 {
-    static int calls;
-
     TRACE("(%p,%i,%i)\n", graphics, x, y);
-
-    if (!(calls++))
-        FIXME("value is unused in rendering\n");
 
     if (!graphics)
         return InvalidParameter;
