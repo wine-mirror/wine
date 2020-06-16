@@ -3592,8 +3592,7 @@ void WINAPI RtlExitUserProcess( DWORD status )
     RtlAcquirePebLock();
     NtTerminateProcess( 0, status );
     LdrShutdownProcess();
-    NtTerminateProcess( GetCurrentProcess(), status );
-    exit( get_unix_exit_code( status ));
+    for (;;) NtTerminateProcess( GetCurrentProcess(), status );
 }
 
 /******************************************************************

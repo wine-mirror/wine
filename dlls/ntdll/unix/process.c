@@ -70,9 +70,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
 
+static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE | (sizeof(void *) > sizeof(int) ?
+                                                           MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION |
+                                                           MEM_EXECUTE_OPTION_PERMANENT : 0);
+
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
+
+static UINT process_error_mode;
 
 static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
 {
@@ -941,4 +947,581 @@ done:
     RtlFreeHeap( GetProcessHeap(), 0, winedebug );
     RtlFreeHeap( GetProcessHeap(), 0, unixdir );
     return status;
+}
+
+
+/******************************************************************************
+ *              NtTerminateProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
+{
+    NTSTATUS ret;
+    BOOL self;
+
+    SERVER_START_REQ( terminate_process )
+    {
+        req->handle    = wine_server_obj_handle( handle );
+        req->exit_code = exit_code;
+        ret = wine_server_call( req );
+        self = reply->self;
+    }
+    SERVER_END_REQ;
+    if (self && handle) abort_process( exit_code );
+    return ret;
+}
+
+
+#if defined(HAVE_MACH_MACH_H)
+
+static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+{
+#if defined(MACH_TASK_BASIC_INFO)
+    struct mach_task_basic_info info;
+    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+    if(task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount) == KERN_SUCCESS)
+    {
+        pvmi->VirtualSize = info.resident_size + info.virtual_size;
+        pvmi->PagefileUsage = info.virtual_size;
+        pvmi->WorkingSetSize = info.resident_size;
+        pvmi->PeakWorkingSetSize = info.resident_size_max;
+    }
+#endif
+}
+
+#elif defined(linux)
+
+static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+{
+    FILE *f;
+    char line[256];
+    unsigned long value;
+
+    f = fopen("/proc/self/status", "r");
+    if (!f) return;
+
+    while (fgets(line, sizeof(line), f))
+    {
+        if (sscanf(line, "VmPeak: %lu", &value))
+            pvmi->PeakVirtualSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmSize: %lu", &value))
+            pvmi->VirtualSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmHWM: %lu", &value))
+            pvmi->PeakWorkingSetSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "VmRSS: %lu", &value))
+            pvmi->WorkingSetSize = (ULONG64)value * 1024;
+        else if (sscanf(line, "RssAnon: %lu", &value))
+            pvmi->PagefileUsage += (ULONG64)value * 1024;
+        else if (sscanf(line, "VmSwap: %lu", &value))
+            pvmi->PagefileUsage += (ULONG64)value * 1024;
+    }
+    pvmi->PeakPagefileUsage = pvmi->PagefileUsage;
+
+    fclose(f);
+}
+
+#else
+
+static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+{
+    /* FIXME : real data */
+}
+
+#endif
+
+#define UNIMPLEMENTED_INFO_CLASS(c) \
+    case c: \
+        FIXME( "(process=%p) Unimplemented information class: " #c "\n", handle); \
+        ret = STATUS_INVALID_INFO_CLASS; \
+        break
+
+/**********************************************************************
+ *           NtQueryInformationProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class, void *info,
+                                           ULONG size, ULONG *ret_len )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+    ULONG len = 0;
+
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, size, ret_len );
+
+    switch (class)
+    {
+    UNIMPLEMENTED_INFO_CLASS(ProcessQuotaLimits);
+    UNIMPLEMENTED_INFO_CLASS(ProcessBasePriority);
+    UNIMPLEMENTED_INFO_CLASS(ProcessRaisePriority);
+    UNIMPLEMENTED_INFO_CLASS(ProcessExceptionPort);
+    UNIMPLEMENTED_INFO_CLASS(ProcessAccessToken);
+    UNIMPLEMENTED_INFO_CLASS(ProcessLdtInformation);
+    UNIMPLEMENTED_INFO_CLASS(ProcessLdtSize);
+    UNIMPLEMENTED_INFO_CLASS(ProcessIoPortHandlers);
+    UNIMPLEMENTED_INFO_CLASS(ProcessPooledUsageAndLimits);
+    UNIMPLEMENTED_INFO_CLASS(ProcessWorkingSetWatch);
+    UNIMPLEMENTED_INFO_CLASS(ProcessUserModeIOPL);
+    UNIMPLEMENTED_INFO_CLASS(ProcessEnableAlignmentFaultFixup);
+    UNIMPLEMENTED_INFO_CLASS(ProcessWx86Information);
+    UNIMPLEMENTED_INFO_CLASS(ProcessPriorityBoost);
+    UNIMPLEMENTED_INFO_CLASS(ProcessDeviceMap);
+    UNIMPLEMENTED_INFO_CLASS(ProcessSessionInformation);
+    UNIMPLEMENTED_INFO_CLASS(ProcessForegroundInformation);
+    UNIMPLEMENTED_INFO_CLASS(ProcessLUIDDeviceMapsEnabled);
+    UNIMPLEMENTED_INFO_CLASS(ProcessBreakOnTermination);
+    UNIMPLEMENTED_INFO_CLASS(ProcessHandleTracing);
+
+    case ProcessBasicInformation:
+        {
+            PROCESS_BASIC_INFORMATION pbi;
+            const ULONG_PTR affinity_mask = get_system_affinity_mask();
+
+            if (size >= sizeof(PROCESS_BASIC_INFORMATION))
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else
+                {
+                    SERVER_START_REQ(get_process_info)
+                    {
+                        req->handle = wine_server_obj_handle( handle );
+                        if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                        {
+                            pbi.ExitStatus = reply->exit_code;
+                            pbi.PebBaseAddress = wine_server_get_ptr( reply->peb );
+                            pbi.AffinityMask = reply->affinity & affinity_mask;
+                            pbi.BasePriority = reply->priority;
+                            pbi.UniqueProcessId = reply->pid;
+                            pbi.InheritedFromUniqueProcessId = reply->ppid;
+                        }
+                    }
+                    SERVER_END_REQ;
+
+                    memcpy( info, &pbi, sizeof(PROCESS_BASIC_INFORMATION) );
+                    len = sizeof(PROCESS_BASIC_INFORMATION);
+                }
+                if (size > sizeof(PROCESS_BASIC_INFORMATION)) ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+            else
+            {
+                len = sizeof(PROCESS_BASIC_INFORMATION);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        break;
+
+    case ProcessIoCounters:
+        {
+            IO_COUNTERS pii;
+
+            if (size >= sizeof(IO_COUNTERS))
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else if (!handle) ret = STATUS_INVALID_HANDLE;
+                else
+                {
+                    /* FIXME : real data */
+                    memset(&pii, 0 , sizeof(IO_COUNTERS));
+                    memcpy(info, &pii, sizeof(IO_COUNTERS));
+                    len = sizeof(IO_COUNTERS);
+                }
+                if (size > sizeof(IO_COUNTERS)) ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+            else
+            {
+                len = sizeof(IO_COUNTERS);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        break;
+
+    case ProcessVmCounters:
+        {
+            VM_COUNTERS pvmi;
+
+            /* older Windows versions don't have the PrivatePageCount field */
+            if (size >= FIELD_OFFSET(VM_COUNTERS,PrivatePageCount))
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else
+                {
+                    memset(&pvmi, 0 , sizeof(VM_COUNTERS));
+                    if (handle == GetCurrentProcess()) fill_VM_COUNTERS(&pvmi);
+                    else
+                    {
+                        SERVER_START_REQ(get_process_vm_counters)
+                        {
+                            req->handle = wine_server_obj_handle( handle );
+                            if (!(ret = wine_server_call( req )))
+                            {
+                                pvmi.PeakVirtualSize = reply->peak_virtual_size;
+                                pvmi.VirtualSize = reply->virtual_size;
+                                pvmi.PeakWorkingSetSize = reply->peak_working_set_size;
+                                pvmi.WorkingSetSize = reply->working_set_size;
+                                pvmi.PagefileUsage = reply->pagefile_usage;
+                                pvmi.PeakPagefileUsage = reply->peak_pagefile_usage;
+                            }
+                        }
+                        SERVER_END_REQ;
+                        if (ret) break;
+                    }
+                    len = size;
+                    if (len != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount)) len = sizeof(VM_COUNTERS);
+                    memcpy(info, &pvmi, min(size,sizeof(VM_COUNTERS)));
+                }
+                if (size != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount) && size != sizeof(VM_COUNTERS))
+                    ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+            else
+            {
+                len = sizeof(pvmi);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        break;
+
+    case ProcessTimes:
+        {
+            KERNEL_USER_TIMES pti = {{{0}}};
+
+            if (size >= sizeof(KERNEL_USER_TIMES))
+            {
+                if (!info) ret = STATUS_ACCESS_VIOLATION;
+                else if (!handle) ret = STATUS_INVALID_HANDLE;
+                else
+                {
+                    long ticks = sysconf(_SC_CLK_TCK);
+                    struct tms tms;
+
+                    /* FIXME: user/kernel times only work for current process */
+                    if (ticks && times( &tms ) != -1)
+                    {
+                        pti.UserTime.QuadPart = (ULONGLONG)tms.tms_utime * 10000000 / ticks;
+                        pti.KernelTime.QuadPart = (ULONGLONG)tms.tms_stime * 10000000 / ticks;
+                    }
+
+                    SERVER_START_REQ(get_process_info)
+                    {
+                        req->handle = wine_server_obj_handle( handle );
+                        if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                        {
+                            pti.CreateTime.QuadPart = reply->start_time;
+                            pti.ExitTime.QuadPart = reply->end_time;
+                        }
+                    }
+                    SERVER_END_REQ;
+
+                    memcpy(info, &pti, sizeof(KERNEL_USER_TIMES));
+                    len = sizeof(KERNEL_USER_TIMES);
+                }
+                if (size > sizeof(KERNEL_USER_TIMES)) ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+            else
+            {
+                len = sizeof(KERNEL_USER_TIMES);
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        break;
+
+    case ProcessDebugPort:
+        len = sizeof(DWORD_PTR);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+                SERVER_START_REQ(get_process_info)
+                {
+                    req->handle = wine_server_obj_handle( handle );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        *(DWORD_PTR *)info = reply->debugger_present ? ~(DWORD_PTR)0 : 0;
+                    }
+                }
+                SERVER_END_REQ;
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessDebugFlags:
+        len = sizeof(DWORD);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+                SERVER_START_REQ(get_process_info)
+                {
+                    req->handle = wine_server_obj_handle( handle );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        *(DWORD *)info = reply->debug_children;
+                    }
+                }
+                SERVER_END_REQ;
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessDefaultHardErrorMode:
+        len = sizeof(process_error_mode);
+        if (size == len) memcpy(info, &process_error_mode, len);
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessDebugObjectHandle:
+        /* "These are not the debuggers you are looking for." *
+         * set it to 0 aka "no debugger" to satisfy copy protections */
+        len = sizeof(HANDLE);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else if (!handle) ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                memset(info, 0, size);
+                ret = STATUS_PORT_NOT_SET;
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessHandleCount:
+        if (size >= 4)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else if (!handle) ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                memset(info, 0, 4);
+                len = 4;
+            }
+            if (size > 4) ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        else
+        {
+            len = 4;
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+
+    case ProcessAffinityMask:
+        len = sizeof(ULONG_PTR);
+        if (size == len)
+        {
+            const ULONG_PTR system_mask = get_system_affinity_mask();
+
+            SERVER_START_REQ(get_process_info)
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (!(ret = wine_server_call( req )))
+                    *(ULONG_PTR *)info = reply->affinity & system_mask;
+            }
+            SERVER_END_REQ;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessWow64Information:
+        len = sizeof(ULONG_PTR);
+        if (size != len) ret = STATUS_INFO_LENGTH_MISMATCH;
+        else if (!info) ret = STATUS_ACCESS_VIOLATION;
+        else if (!handle) ret = STATUS_INVALID_HANDLE;
+        else
+        {
+            ULONG_PTR val = 0;
+
+            if (handle == GetCurrentProcess()) val = is_wow64;
+            else if (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64)))
+            {
+                SERVER_START_REQ( get_process_info )
+                {
+                    req->handle = wine_server_obj_handle( handle );
+                    if (!(ret = wine_server_call( req )))
+                        val = (reply->cpu != CPU_x86_64 && reply->cpu != CPU_ARM64);
+                }
+                SERVER_END_REQ;
+            }
+            *(ULONG_PTR *)info = val;
+        }
+        break;
+
+    case ProcessImageFileName:
+        /* FIXME: Should return a device path */
+    case ProcessImageFileNameWin32:
+        SERVER_START_REQ(get_dll_info)
+        {
+            UNICODE_STRING *image_file_name_str = info;
+
+            req->handle = wine_server_obj_handle( handle );
+            req->base_address = 0; /* main module */
+            wine_server_set_reply( req, image_file_name_str ? image_file_name_str + 1 : NULL,
+                                   size > sizeof(UNICODE_STRING) ? size - sizeof(UNICODE_STRING) : 0 );
+            ret = wine_server_call( req );
+            if (ret == STATUS_BUFFER_TOO_SMALL) ret = STATUS_INFO_LENGTH_MISMATCH;
+
+            len = sizeof(UNICODE_STRING) + reply->filename_len;
+            if (ret == STATUS_SUCCESS)
+            {
+                image_file_name_str->MaximumLength = image_file_name_str->Length = reply->filename_len;
+                image_file_name_str->Buffer = (PWSTR)(image_file_name_str + 1);
+            }
+        }
+        SERVER_END_REQ;
+        break;
+
+    case ProcessExecuteFlags:
+        len = sizeof(ULONG);
+        if (size == len) *(ULONG *)info = execute_flags;
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessPriorityClass:
+        len = sizeof(PROCESS_PRIORITY_CLASS);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+                PROCESS_PRIORITY_CLASS *priority = info;
+
+                SERVER_START_REQ(get_process_info)
+                {
+                    req->handle = wine_server_obj_handle( handle );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        priority->PriorityClass = reply->priority;
+                        /* FIXME: Not yet supported by the wineserver */
+                        priority->Foreground = FALSE;
+                    }
+                }
+                SERVER_END_REQ;
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessCookie:
+        FIXME( "ProcessCookie (%p,%p,0x%08x,%p) stub\n", handle, info, size, ret_len );
+        if (handle == NtCurrentProcess())
+        {
+            len = sizeof(ULONG);
+            if (size == len) *(ULONG *)info = 0;
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        else ret = STATUS_INVALID_PARAMETER;
+        break;
+
+    case ProcessImageInformation:
+        len = sizeof(SECTION_IMAGE_INFORMATION);
+        if (size == len)
+        {
+            if (info)
+            {
+                pe_image_info_t pe_info;
+
+                SERVER_START_REQ( get_process_info )
+                {
+                    req->handle = wine_server_obj_handle( handle );
+                    wine_server_set_reply( req, &pe_info, sizeof(pe_info) );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                        virtual_fill_image_information( &pe_info, info );
+                }
+                SERVER_END_REQ;
+            }
+            else ret = STATUS_ACCESS_VIOLATION;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    default:
+        FIXME("(%p,info_class=%d,%p,0x%08x,%p) Unknown information class\n",
+              handle, class, info, size, ret_len );
+        ret = STATUS_INVALID_INFO_CLASS;
+        break;
+    }
+
+    if (ret_len) *ret_len = len;
+    return ret;
+}
+
+
+/**********************************************************************
+ *           NtSetInformationProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, void *info, ULONG size )
+{
+    NTSTATUS ret = STATUS_SUCCESS;
+
+    switch (class)
+    {
+    case ProcessDefaultHardErrorMode:
+        if (size != sizeof(UINT)) return STATUS_INVALID_PARAMETER;
+        process_error_mode = *(UINT *)info;
+        break;
+
+    case ProcessAffinityMask:
+    {
+        const ULONG_PTR system_mask = get_system_affinity_mask();
+
+        if (size != sizeof(DWORD_PTR)) return STATUS_INVALID_PARAMETER;
+        if (*(PDWORD_PTR)info & ~system_mask)
+            return STATUS_INVALID_PARAMETER;
+        if (!*(PDWORD_PTR)info)
+            return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_process_info )
+        {
+            req->handle   = wine_server_obj_handle( handle );
+            req->affinity = *(PDWORD_PTR)info;
+            req->mask     = SET_PROCESS_INFO_AFFINITY;
+            ret = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        break;
+    }
+    case ProcessPriorityClass:
+        if (size != sizeof(PROCESS_PRIORITY_CLASS)) return STATUS_INVALID_PARAMETER;
+        else
+        {
+            PROCESS_PRIORITY_CLASS* ppc = info;
+
+            SERVER_START_REQ( set_process_info )
+            {
+                req->handle   = wine_server_obj_handle( handle );
+                /* FIXME Foreground isn't used */
+                req->priority = ppc->PriorityClass;
+                req->mask     = SET_PROCESS_INFO_PRIORITY;
+                ret = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        break;
+
+    case ProcessExecuteFlags:
+        if (is_win64 || size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER;
+        if (execute_flags & MEM_EXECUTE_OPTION_PERMANENT) return STATUS_ACCESS_DENIED;
+        else
+        {
+            BOOL enable;
+            switch (*(ULONG *)info & (MEM_EXECUTE_OPTION_ENABLE|MEM_EXECUTE_OPTION_DISABLE))
+            {
+            case MEM_EXECUTE_OPTION_ENABLE:
+                enable = TRUE;
+                break;
+            case MEM_EXECUTE_OPTION_DISABLE:
+                enable = FALSE;
+                break;
+            default:
+                return STATUS_INVALID_PARAMETER;
+            }
+            execute_flags = *(ULONG *)info;
+            virtual_set_force_exec( enable );
+        }
+        break;
+
+    default:
+        FIXME( "(%p,0x%08x,%p,0x%08x) stub\n", handle, class, info, size );
+        ret = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+    return ret;
 }

@@ -2458,7 +2458,7 @@ void virtual_init(void)
 }
 
 
-static ULONG_PTR get_system_affinity_mask(void)
+ULONG_PTR get_system_affinity_mask(void)
 {
     ULONG num_cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
     if (num_cpus >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
@@ -3180,7 +3180,7 @@ NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZ
  *
  * Whether to force exec prot on all views.
  */
-void CDECL virtual_set_force_exec( BOOL enable )
+void virtual_set_force_exec( BOOL enable )
 {
     struct file_view *view;
     sigset_t sigset;

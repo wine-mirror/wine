@@ -196,13 +196,6 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
-static inline int get_unix_exit_code( NTSTATUS status )
-{
-    /* prevent a nonzero exit code to end up truncated to zero in unix */
-    if (status && !(status & 0xff)) return 1;
-    return status;
-}
-
 extern SYSTEM_CPU_INFORMATION cpu_info DECLSPEC_HIDDEN;
 
 #define HASH_STRING_ALGORITHM_DEFAULT  0

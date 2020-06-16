@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 47
+#define NTDLL_UNIXLIB_VERSION 48
 
 struct unix_funcs
 {
@@ -139,6 +139,8 @@ struct unix_funcs
                                                     void *ptr, LONG len, FILE_INFORMATION_CLASS class );
     NTSTATUS      (WINAPI *NtQueryInformationJobObject)( HANDLE handle, JOBOBJECTINFOCLASS class,
                                                          void *info, ULONG len, ULONG *ret_len );
+    NTSTATUS      (WINAPI *NtQueryInformationProcess)( HANDLE handle, PROCESSINFOCLASS class, void *info,
+                                                       ULONG size, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryIoCompletion)( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
                                                  void *buffer, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
@@ -177,6 +179,8 @@ struct unix_funcs
                                                   void *ptr, ULONG len, FILE_INFORMATION_CLASS class );
     NTSTATUS      (WINAPI *NtSetInformationJobObject)( HANDLE handle, JOBOBJECTINFOCLASS class,
                                                        void *info, ULONG len );
+    NTSTATUS      (WINAPI *NtSetInformationProcess)( HANDLE handle, PROCESSINFOCLASS class,
+                                                     void *info, ULONG size );
     NTSTATUS      (WINAPI *NtSetIoCompletion)( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
                                                NTSTATUS status, SIZE_T count );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
@@ -188,6 +192,7 @@ struct unix_funcs
                                                             BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtSuspendThread)( HANDLE handle, ULONG *count );
     NTSTATUS      (WINAPI *NtTerminateJobObject)( HANDLE handle, NTSTATUS status );
+    NTSTATUS      (WINAPI *NtTerminateProcess)( HANDLE handle, LONG exit_code );
     NTSTATUS      (WINAPI *NtTerminateThread)( HANDLE handle, LONG exit_code );
     NTSTATUS      (WINAPI *NtUnlockVirtualMemory)( HANDLE process, PVOID *addr,
                                                    SIZE_T *size, ULONG unknown );
@@ -253,7 +258,6 @@ struct unix_funcs
     ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
     BOOL          (CDECL *virtual_check_buffer_for_read)( const void *ptr, SIZE_T size );
     BOOL          (CDECL *virtual_check_buffer_for_write)( void *ptr, SIZE_T size );
-    void          (CDECL *virtual_set_force_exec)( BOOL enable );
     void          (CDECL *virtual_release_address_space)(void);
     void          (CDECL *virtual_set_large_address_space)(void);
 

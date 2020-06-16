@@ -327,8 +327,17 @@ done:
 void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (InterlockedDecrement( nb_threads ) <= 0) _exit( get_unix_exit_code( status ));
+    if (InterlockedDecrement( nb_threads ) <= 0) abort_process( status );
     signal_exit_thread( status, pthread_exit_wrapper );
+}
+
+
+/***********************************************************************
+ *           abort_process
+ */
+void abort_process( int status )
+{
+    _exit( get_unix_exit_code( status ));
 }
 
 
