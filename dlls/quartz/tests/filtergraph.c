@@ -800,6 +800,7 @@ struct testpin
     const AM_MEDIA_TYPE *types;
     unsigned int type_count, enum_idx;
     AM_MEDIA_TYPE *request_mt, *accept_mt;
+    const struct testpin *require_connected_pin;
 
     HRESULT Connect_hr;
     HRESULT EnumMediaTypes_hr;
@@ -1059,6 +1060,9 @@ static HRESULT WINAPI testsink_ReceiveConnection(IPin *iface, IPin *peer, const 
     if (pin->accept_mt && memcmp(pin->accept_mt, mt, sizeof(*mt)))
         return VFW_E_TYPE_NOT_ACCEPTED;
 
+    if (pin->require_connected_pin && !pin->require_connected_pin->peer)
+        return VFW_E_TYPE_NOT_ACCEPTED;
+
     pin->peer = peer;
     IPin_AddRef(peer);
     return S_OK;
@@ -1111,6 +1115,9 @@ static HRESULT WINAPI testsource_Connect(IPin *iface, IPin *peer, const AM_MEDIA
 
     if (FAILED(pin->Connect_hr))
         return pin->Connect_hr;
+
+    if (pin->require_connected_pin && !pin->require_connected_pin->peer)
+        return VFW_E_NO_ACCEPTABLE_TYPES;
 
     ok(!mt, "Got media type %p.\n", mt);
 
@@ -2334,6 +2341,33 @@ todo_wine
     hr = IFilterGraph2_Connect(graph, &parser1_pins[1].IPin_iface, &parser1_pins[0].IPin_iface);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
     parser1_pins[0].QueryInternalConnections_hr = E_NOTIMPL;
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    /* The graph connects from source to sink, not from sink to source. */
+
+    graph = create_graph();
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, &parser1.IBaseFilter_iface, L"parser");
+    IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, L"sink");
+
+    parser1_pins[0].require_connected_pin = &parser1_pins[1];
+
+    hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+    ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
+    ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
+    ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+
+    parser1_pins[0].require_connected_pin = NULL;
+    parser1_pins[1].require_connected_pin = &parser1_pins[0];
+
+    hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &parser1_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(sink_pin.peer == &parser1_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+
+    parser1_pins[1].require_connected_pin = NULL;
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
