@@ -104,34 +104,6 @@ struct cmap_header
     WORD version;
     WORD num_tables;
     struct cmap_encoding_record tables[1];
-} CMAP_Header;
-
-typedef struct {
-    DWORD startCharCode;
-    DWORD endCharCode;
-    DWORD startGlyphID;
-} CMAP_SegmentedCoverage_group;
-
-struct cmap_segmented_coverage
-{
-    WORD format;
-    WORD reserved;
-    DWORD length;
-    DWORD language;
-    DWORD num_groups;
-    CMAP_SegmentedCoverage_group groups[1];
-};
-
-struct cmap_segment_mapping
-{
-    WORD format;
-    WORD length;
-    WORD language;
-    WORD seg_count_x2;
-    WORD search_range;
-    WORD entry_selector;
-    WORD range_shift;
-    WORD end_code[1];
 };
 
 enum OPENTYPE_CMAP_TABLE_FORMAT
