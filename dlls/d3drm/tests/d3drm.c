@@ -2589,6 +2589,11 @@ static void test_Light(void)
     color = IDirect3DRMLight_GetColor(light);
     ok(color == 0xff180587, "wrong color (%x)\n", color);
 
+    hr = IDirect3DRMLight_SetColor(light, 0x00c0c0c0);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+    color = IDirect3DRMLight_GetColor(light);
+    ok(color == 0xffc0c0c0, "Got unexpected color 0x%08x.\n", color);
+
     hr = IDirect3DRMLight_SetColorRGB(light, 0.5, 0.5, 0.5);
     ok(hr == D3DRM_OK, "Cannot set color (hr = %x)\n", hr);
     color = IDirect3DRMLight_GetColor(light);
