@@ -2601,6 +2601,17 @@ static void test_Light(void)
 
     IDirect3DRMLight_Release(light);
 
+    hr = IDirect3DRM_CreateLight(d3drm, D3DRMLIGHT_SPOT, 0x00c0c0c0, &light);
+    ok(hr == D3DRM_OK, "Got unexpected hr %#x.\n", hr);
+
+    type = IDirect3DRMLight_GetType(light);
+    ok(type == D3DRMLIGHT_SPOT, "Got unexpected type %#x.\n", type);
+
+    color = IDirect3DRMLight_GetColor(light);
+    ok(color == 0xffc0c0c0, "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DRMLight_Release(light);
+
     IDirect3DRM_Release(d3drm);
 }
 
