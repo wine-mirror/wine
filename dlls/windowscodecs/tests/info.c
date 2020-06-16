@@ -193,7 +193,6 @@ static void test_decoder_info(void)
         hr = IWICBitmapDecoderInfo_GetMimeTypes(decoder_info, len, value, &len);
         ok(hr == S_OK, "GetMimeType failed, hr=%x\n", hr);
     todo_wine_if(test->todo) {
-        todo_wine_if(i == 6)
         ok(lstrcmpW(value, mimetypeW) == 0, "GetMimeType returned wrong value %s\n", wine_dbgstr_w(value));
         ok(len == lstrlenW(mimetypeW) + 1, "GetMimeType returned wrong len %i\n", len);
     }
@@ -205,7 +204,6 @@ static void test_decoder_info(void)
         hr = IWICBitmapDecoderInfo_GetMimeTypes(decoder_info, 256, value, &len);
         ok(hr == S_OK, "GetMimeType failed, hr=%x\n", hr);
     todo_wine_if(test->todo) {
-        todo_wine_if(i == 6)
         ok(lstrcmpW(value, mimetypeW) == 0, "GetMimeType returned wrong value %s\n", wine_dbgstr_w(value));
         ok(len == lstrlenW(mimetypeW) + 1, "GetMimeType returned wrong len %i\n", len);
     }

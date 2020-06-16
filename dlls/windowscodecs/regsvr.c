@@ -1298,7 +1298,7 @@ static struct regsvr_decoder const decoder_list[] = {
     "1.0.0.0",
     &GUID_VendorMicrosoft,
     &GUID_ContainerFormatDds,
-    "image/vnd-ms.dds",
+    "image/vnd.ms-dds",
     ".dds",
     dds_formats,
     dds_patterns
