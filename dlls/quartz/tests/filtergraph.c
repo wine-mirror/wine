@@ -2110,7 +2110,7 @@ static void test_graph_builder_connect(void)
 {
     static const GUID parser1_clsid = {0x12345678};
     static const GUID parser2_clsid = {0x87654321};
-    AM_MEDIA_TYPE source_type = {{0}}, sink_type = {{0}}, parser3_type = {{0}};
+    AM_MEDIA_TYPE source_types[2] = {{{0}}}, sink_type = {{0}}, parser3_type = {{0}};
     struct testpin source_pin, sink_pin, sink2_pin, parser1_pins[3], parser2_pins[2], parser3_pins[2];
     struct testfilter source, sink, sink2, parser1, parser2, parser3;
     struct testfilter_cf parser1_cf = { {&testfilter_cf_vtbl}, &parser1 };
@@ -2125,10 +2125,11 @@ static void test_graph_builder_connect(void)
     HRESULT hr;
     ULONG ref;
 
-    memset(&source_type.majortype, 0xcc, sizeof(GUID));
+    memset(&source_types[0].majortype, 0xcc, sizeof(GUID));
+    memset(&source_types[1].majortype, 0xdd, sizeof(GUID));
     memset(&sink_type.majortype, 0x66, sizeof(GUID));
-    testsource_init(&source_pin, &source_type, 1);
-    source_pin.request_mt = &source_type;
+    testsource_init(&source_pin, source_types, 2);
+    source_pin.request_mt = &source_types[1];
     testfilter_init(&source, &source_pin, 1);
     testsink_init(&sink_pin);
     testfilter_init(&sink, &sink_pin, 1);
@@ -2398,7 +2399,7 @@ todo_wine
     regpins[1].cInstances = 1;
     regpins[1].nMediaTypes = 1;
     regpins[1].lpMediaType = &regtypes;
-    regtypes.clsMajorType = &source_type.majortype;
+    regtypes.clsMajorType = &source_types[1].majortype;
     regtypes.clsMinorType = &MEDIASUBTYPE_NULL;
     hr = IFilterMapper2_RegisterFilter(mapper, &parser1_clsid, L"test", NULL, NULL, NULL, &regfilter);
     if (hr == E_ACCESSDENIED)

@@ -207,7 +207,6 @@ typedef struct _IFilterGraphImpl {
     int nItfCacheEntries;
     BOOL defaultclock;
     GUID timeformatseek;
-    LONG recursioncount;
     IUnknown *pSite;
     LONG version;
 
@@ -1059,27 +1058,6 @@ static HRESULT WINAPI FilterGraph2_SetDefaultSyncSource(IFilterGraph2 *iface)
     return hr;
 }
 
-static HRESULT GetFilterInfo(IMoniker* pMoniker, VARIANT* pvar)
-{
-    IPropertyBag * pPropBagCat = NULL;
-    HRESULT hr;
-
-    VariantInit(pvar);
-
-    hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID*)&pPropBagCat);
-
-    if (SUCCEEDED(hr))
-        hr = IPropertyBag_Read(pPropBagCat, L"FriendlyName", pvar, NULL);
-
-    if (SUCCEEDED(hr))
-        TRACE("Moniker = %s\n", debugstr_w(V_BSTR(pvar)));
-
-    if (pPropBagCat)
-        IPropertyBag_Release(pPropBagCat);
-
-    return hr;
-}
-
 struct filter_create_params
 {
     HRESULT hr;
@@ -1141,98 +1119,256 @@ static HRESULT create_filter(IFilterGraphImpl *graph, IMoniker *moniker, IBaseFi
         return IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)filter);
 }
 
-/* Attempt to connect one of the output pins on filter to sink. Helper for
- * FilterGraph2_Connect(). */
-static HRESULT connect_output_pin(IFilterGraphImpl *graph, IBaseFilter *filter, IPin *sink)
+static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink, unsigned int recursion_depth);
+
+static HRESULT autoplug_through_sink(IFilterGraphImpl *graph, IPin *source,
+        IBaseFilter *filter, IPin *middle_sink, IPin *sink, unsigned int recursion_depth)
 {
-    IEnumPins *enumpins;
+    BOOL any = FALSE, all = TRUE;
+    IPin *middle_source, *peer;
+    IEnumPins *source_enum;
+    PIN_DIRECTION dir;
     PIN_INFO info;
     HRESULT hr;
-    IPin *pin;
 
-    hr = IBaseFilter_EnumPins(filter, &enumpins);
-    if (FAILED(hr))
-        return hr;
+    TRACE("Trying to autoplug %p to %p through %p.\n", source, sink, middle_sink);
 
-    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
+    IPin_QueryDirection(middle_sink, &dir);
+    if (dir != PINDIR_INPUT)
+        return E_FAIL;
+
+    if (IPin_ConnectedTo(middle_sink, &peer) == S_OK)
     {
-        IPin_QueryPinInfo(pin, &info);
-        IBaseFilter_Release(info.pFilter);
-        if (info.dir == PINDIR_OUTPUT)
-        {
-            if (info.achName[0] == '~')
-            {
-                TRACE("Skipping non-rendered pin %s.\n", debugstr_w(info.achName));
-                IPin_Release(pin);
-                continue;
-            }
-
-            if (SUCCEEDED(IFilterGraph2_Connect(&graph->IFilterGraph2_iface, pin, sink)))
-            {
-                IPin_Release(pin);
-                IEnumPins_Release(enumpins);
-                return S_OK;
-            }
-        }
-        IPin_Release(pin);
+        IPin_Release(peer);
+        return E_FAIL;
     }
 
-    IEnumPins_Release(enumpins);
+    if (FAILED(hr = IFilterGraph2_ConnectDirect(&graph->IFilterGraph2_iface, source, middle_sink, NULL)))
+        return E_FAIL;
+
+    if (FAILED(hr = IBaseFilter_EnumPins(filter, &source_enum)))
+        goto err;
+
+    while (IEnumPins_Next(source_enum, 1, &middle_source, NULL) == S_OK)
+    {
+        IPin_QueryPinInfo(middle_source, &info);
+        IBaseFilter_Release(info.pFilter);
+        if (info.dir != PINDIR_OUTPUT)
+        {
+            IPin_Release(middle_source);
+            continue;
+        }
+        if (info.achName[0] == '~')
+        {
+            TRACE("Skipping non-rendered pin %s.\n", debugstr_w(info.achName));
+            IPin_Release(middle_source);
+            continue;
+        }
+        if (IPin_ConnectedTo(middle_source, &peer) == S_OK)
+        {
+            IPin_Release(peer);
+            IPin_Release(middle_source);
+            continue;
+        }
+
+        hr = autoplug(graph, middle_source, sink, recursion_depth + 1);
+        IPin_Release(middle_source);
+        if (SUCCEEDED(hr) && sink)
+        {
+            IEnumPins_Release(source_enum);
+            return hr;
+        }
+        if (SUCCEEDED(hr))
+            any = TRUE;
+        if (hr != S_OK)
+            all = FALSE;
+    }
+    IEnumPins_Release(source_enum);
+
+    if (!sink)
+    {
+        if (all)
+            return S_OK;
+        if (any)
+            return VFW_S_PARTIAL_RENDER;
+    }
+
+err:
+    IFilterGraph2_Disconnect(&graph->IFilterGraph2_iface, source);
+    IFilterGraph2_Disconnect(&graph->IFilterGraph2_iface, middle_sink);
+    return E_FAIL;
+}
+
+static HRESULT autoplug_through_filter(IFilterGraphImpl *graph, IPin *source,
+        IBaseFilter *filter, IPin *sink, unsigned int recursion_depth)
+{
+    IEnumPins *sink_enum;
+    IPin *filter_sink;
+    HRESULT hr;
+
+    TRACE("Trying to autoplug %p to %p through %p.\n", source, sink, filter);
+
+    if (FAILED(hr = IBaseFilter_EnumPins(filter, &sink_enum)))
+        return hr;
+
+    while (IEnumPins_Next(sink_enum, 1, &filter_sink, NULL) == S_OK)
+    {
+        hr = autoplug_through_sink(graph, source, filter, filter_sink, sink, recursion_depth);
+        IPin_Release(filter_sink);
+        if (SUCCEEDED(hr))
+        {
+            IEnumPins_Release(sink_enum);
+            return hr;
+        }
+    }
+    IEnumPins_Release(sink_enum);
     return VFW_E_CANNOT_CONNECT;
 }
 
-/*** IGraphBuilder methods ***/
-static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, IPin *ppinIn)
+/* Common helper for IGraphBuilder::Connect() and IGraphBuilder::Render(), which
+ * share most of the same code. Render() calls this with a NULL sink. */
+static HRESULT autoplug(IFilterGraphImpl *graph, IPin *source, IPin *sink, unsigned int recursion_depth)
 {
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
+    IAMGraphBuilderCallback *callback = NULL;
+    IEnumMediaTypes *enummt;
+    IFilterMapper2 *mapper;
     struct filter *filter;
+    AM_MEDIA_TYPE *mt;
     HRESULT hr;
-    IPin *pin;
-    AM_MEDIA_TYPE* mt = NULL;
-    IEnumMediaTypes* penummt = NULL;
-    ULONG nbmt;
-    IEnumPins* penumpins;
-    IEnumMoniker* pEnumMoniker;
-    GUID tab[2];
-    IMoniker* pMoniker;
-    PIN_INFO PinInfo;
+
+    TRACE("Trying to autoplug %p to %p, recursion depth %u.\n", source, sink, recursion_depth);
+
+    if (recursion_depth >= 5)
+    {
+        WARN("Recursion depth has reached 5; aborting.\n");
+        return VFW_E_CANNOT_CONNECT;
+    }
+
+    if (sink)
+    {
+        /* Try to connect directly to this sink. */
+        hr = IFilterGraph2_ConnectDirect(&graph->IFilterGraph2_iface, source, sink, NULL);
+
+        /* If direct connection succeeded, we should propagate that return value.
+         * If it returned VFW_E_NOT_CONNECTED or VFW_E_NO_AUDIO_HARDWARE, then don't
+         * even bother trying intermediate filters, since they won't succeed. */
+        if (SUCCEEDED(hr) || hr == VFW_E_NOT_CONNECTED || hr == VFW_E_NO_AUDIO_HARDWARE)
+            return hr;
+    }
+
+    /* Always prefer filters in the graph. */
+    LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+    {
+        if (SUCCEEDED(hr = autoplug_through_filter(graph, source, filter->filter, sink, recursion_depth)))
+            return hr;
+    }
+
+    IUnknown_QueryInterface(graph->punkFilterMapper2, &IID_IFilterMapper2, (void **)&mapper);
+
+    if (FAILED(hr = IPin_EnumMediaTypes(source, &enummt)))
+    {
+        IFilterMapper2_Release(mapper);
+        return hr;
+    }
+
+    if (graph->pSite)
+        IUnknown_QueryInterface(graph->pSite, &IID_IAMGraphBuilderCallback, (void **)&callback);
+
+    while (IEnumMediaTypes_Next(enummt, 1, &mt, NULL) == S_OK)
+    {
+        GUID types[2] = {mt->majortype, mt->subtype};
+        IEnumMoniker *enummoniker;
+        IBaseFilter *filter;
+        IMoniker *moniker;
+
+        DeleteMediaType(mt);
+
+        if (FAILED(hr = IFilterMapper2_EnumMatchingFilters(mapper, &enummoniker, 0, FALSE,
+                MERIT_UNLIKELY, TRUE, 1, types, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL)))
+            goto out;
+
+        while (IEnumMoniker_Next(enummoniker, 1, &moniker, NULL) == S_OK)
+        {
+            IPropertyBag *bag;
+            VARIANT var;
+
+            VariantInit(&var);
+            IMoniker_BindToStorage(moniker, NULL, NULL, &IID_IPropertyBag, (void **)&bag);
+            hr = IPropertyBag_Read(bag, L"FriendlyName", &var, NULL);
+            IPropertyBag_Release(bag);
+            if (FAILED(hr))
+            {
+                IMoniker_Release(moniker);
+                continue;
+            }
+
+            if (callback && FAILED(hr = IAMGraphBuilderCallback_SelectedFilter(callback, moniker)))
+            {
+                TRACE("Filter rejected by IAMGraphBuilderCallback::SelectedFilter(), hr %#x.\n", hr);
+                IMoniker_Release(moniker);
+                continue;
+            }
+
+            hr = create_filter(graph, moniker, &filter);
+            IMoniker_Release(moniker);
+            if (FAILED(hr))
+            {
+                ERR("Failed to create filter for %s, hr %#x.\n", debugstr_w(V_BSTR(&var)), hr);
+                VariantClear(&var);
+                continue;
+            }
+
+            if (callback && FAILED(hr = IAMGraphBuilderCallback_CreatedFilter(callback, filter)))
+            {
+                TRACE("Filter rejected by IAMGraphBuilderCallback::CreatedFilter(), hr %#x.\n", hr);
+                IBaseFilter_Release(filter);
+                continue;
+            }
+
+            hr = IFilterGraph2_AddFilter(&graph->IFilterGraph2_iface, filter, V_BSTR(&var));
+            VariantClear(&var);
+            if (FAILED(hr))
+            {
+                ERR("Failed to add filter, hr %#x.\n", hr);
+                IBaseFilter_Release(filter);
+                continue;
+            }
+
+            hr = autoplug_through_filter(graph, source, filter, sink, recursion_depth);
+            if (SUCCEEDED(hr))
+            {
+                IBaseFilter_Release(filter);
+                goto out;
+            }
+
+            IFilterGraph2_RemoveFilter(&graph->IFilterGraph2_iface, filter);
+            IBaseFilter_Release(filter);
+        }
+        IEnumMoniker_Release(enummoniker);
+    }
+
+    hr = VFW_E_CANNOT_CONNECT;
+
+out:
+    if (callback) IAMGraphBuilderCallback_Release(callback);
+    IEnumMediaTypes_Release(enummt);
+    IFilterMapper2_Release(mapper);
+    return hr;
+}
+
+static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *source, IPin *sink)
+{
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
     PIN_DIRECTION dir;
-    IFilterMapper2 *pFilterMapper2 = NULL;
+    HRESULT hr;
 
-    TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
+    TRACE("graph %p, source %p, sink %p.\n", graph, source, sink);
 
-    if(!ppinOut || !ppinIn)
+    if (!source || !sink)
         return E_POINTER;
 
-    if (TRACE_ON(quartz))
-    {
-        hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
-        if (FAILED(hr))
-            return hr;
-
-        TRACE("Filter owning ppinIn(%p) => %p\n", ppinIn, PinInfo.pFilter);
-        IBaseFilter_Release(PinInfo.pFilter);
-
-        hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
-        if (FAILED(hr))
-            return hr;
-
-        TRACE("Filter owning ppinOut(%p) => %p\n", ppinOut, PinInfo.pFilter);
-        IBaseFilter_Release(PinInfo.pFilter);
-    }
-
-    EnterCriticalSection(&This->cs);
-    ++This->recursioncount;
-    if (This->recursioncount >= 5)
-    {
-        WARN("Recursion count has reached %d\n", This->recursioncount);
-        hr = VFW_E_CANNOT_CONNECT;
-        goto out;
-    }
-
-    hr = IPin_QueryDirection(ppinOut, &dir);
-    if (FAILED(hr))
-        goto out;
+    if (FAILED(hr = IPin_QueryDirection(source, &dir)))
+        return hr;
 
     if (dir == PINDIR_INPUT)
     {
@@ -1240,522 +1376,35 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
 
         TRACE("Directions seem backwards, swapping pins\n");
 
-        temp = ppinIn;
-        ppinIn = ppinOut;
-        ppinOut = temp;
+        temp = sink;
+        sink = source;
+        source = temp;
     }
 
-    /* Try direct connection first */
-    hr = IFilterGraph2_ConnectDirect(iface, ppinOut, ppinIn, NULL);
+    EnterCriticalSection(&graph->cs);
 
-    /* If direct connection succeeded, we should propagate that return value.
-     * If it returned VFW_E_NOT_CONNECTED or VFW_E_NO_AUDIO_HARDWARE, then don't
-     * even bother trying intermediate filters, since they won't succeed. */
-    if (SUCCEEDED(hr) || hr == VFW_E_NOT_CONNECTED || hr == VFW_E_NO_AUDIO_HARDWARE)
-        goto out;
+    hr = autoplug(graph, source, sink, 0);
 
-    TRACE("Direct connection failed, trying to render using extra filters\n");
+    LeaveCriticalSection(&graph->cs);
 
-    LIST_FOR_EACH_ENTRY(filter, &This->filters, struct filter, entry)
-    {
-        hr = IBaseFilter_EnumPins(filter->filter, &penumpins);
-        if (FAILED(hr))
-            goto out;
-
-        while (IEnumPins_Next(penumpins, 1, &pin, NULL) == S_OK)
-        {
-            IPin_QueryDirection(pin, &dir);
-            if (dir == PINDIR_INPUT && SUCCEEDED(IFilterGraph2_ConnectDirect(iface,
-                    ppinOut, pin, NULL)))
-            {
-                if (SUCCEEDED(hr = connect_output_pin(This, filter->filter, ppinIn)))
-                {
-                    IPin_Release(pin);
-                    IEnumPins_Release(penumpins);
-                    goto out;
-                }
-
-                IFilterGraph2_Disconnect(iface, pin);
-                IFilterGraph2_Disconnect(iface, ppinOut);
-            }
-            IPin_Release(pin);
-        }
-
-        IEnumPins_Release(penumpins);
-    }
-
-    /* Find the appropriate transform filter than can transform the minor media type of output pin of the upstream 
-     * filter to the minor mediatype of input pin of the renderer */
-    hr = IPin_EnumMediaTypes(ppinOut, &penummt);
-    if (FAILED(hr))
-    {
-        WARN("EnumMediaTypes (%x)\n", hr);
-        goto out;
-    }
-
-    hr = IEnumMediaTypes_Next(penummt, 1, &mt, &nbmt);
-    if (FAILED(hr)) {
-        WARN("IEnumMediaTypes_Next (%x)\n", hr);
-        goto out;
-    }
-
-    if (!nbmt)
-    {
-        WARN("No media type found!\n");
-        hr = VFW_E_INVALIDMEDIATYPE;
-        goto out;
-    }
-    TRACE("MajorType %s\n", debugstr_guid(&mt->majortype));
-    TRACE("SubType %s\n", debugstr_guid(&mt->subtype));
-
-    hr = IUnknown_QueryInterface(This->punkFilterMapper2, &IID_IFilterMapper2, (void**)&pFilterMapper2);
-    if (FAILED(hr)) {
-        WARN("Unable to get IFilterMapper2 (%x)\n", hr);
-        goto out;
-    }
-
-    /* Try to find a suitable filter that can connect to the pin to render */
-    tab[0] = mt->majortype;
-    tab[1] = mt->subtype;
-    hr = IFilterMapper2_EnumMatchingFilters(pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
-    if (FAILED(hr)) {
-        WARN("Unable to enum filters (%x)\n", hr);
-        goto out;
-    }
-
-    hr = VFW_E_CANNOT_RENDER;
-    while (IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, NULL) == S_OK)
-    {
-        VARIANT var;
-        IBaseFilter* pfilter = NULL;
-        IAMGraphBuilderCallback *callback = NULL;
-
-        hr = GetFilterInfo(pMoniker, &var);
-        if (FAILED(hr)) {
-            WARN("Unable to retrieve filter info (%x)\n", hr);
-            goto error;
-        }
-
-        hr = create_filter(This, pMoniker, &pfilter);
-        IMoniker_Release(pMoniker);
-        if (FAILED(hr)) {
-            WARN("Unable to create filter (%x), trying next one\n", hr);
-            goto error;
-        }
-
-        if (This->pSite)
-        {
-            IUnknown_QueryInterface(This->pSite, &IID_IAMGraphBuilderCallback, (LPVOID*)&callback);
-            if (callback)
-            {
-                HRESULT rc;
-                rc = IAMGraphBuilderCallback_SelectedFilter(callback, pMoniker);
-                if (FAILED(rc))
-                {
-                    TRACE("Filter rejected by IAMGraphBuilderCallback_SelectedFilter\n");
-                    IAMGraphBuilderCallback_Release(callback);
-                    goto error;
-                }
-            }
-        }
-
-        if (callback)
-        {
-            HRESULT rc;
-            rc = IAMGraphBuilderCallback_CreatedFilter(callback, pfilter);
-            IAMGraphBuilderCallback_Release(callback);
-            if (FAILED(rc))
-            {
-                IBaseFilter_Release(pfilter);
-                pfilter = NULL;
-                TRACE("Filter rejected by IAMGraphBuilderCallback_CreatedFilter\n");
-                goto error;
-            }
-        }
-
-        hr = IFilterGraph2_AddFilter(iface, pfilter, V_BSTR(&var));
-        if (FAILED(hr)) {
-            WARN("Unable to add filter (%x)\n", hr);
-            IBaseFilter_Release(pfilter);
-            pfilter = NULL;
-            goto error;
-        }
-
-        VariantClear(&var);
-
-        hr = IBaseFilter_EnumPins(pfilter, &penumpins);
-        if (FAILED(hr)) {
-            WARN("Enumpins (%x)\n", hr);
-            goto error;
-        }
-
-        while (IEnumPins_Next(penumpins, 1, &pin, NULL) == S_OK)
-        {
-            if (SUCCEEDED(IFilterGraph2_ConnectDirect(iface, ppinOut, pin, NULL)))
-            {
-                if (SUCCEEDED(hr = connect_output_pin(This, pfilter, ppinIn)))
-                {
-                    IPin_Release(pin);
-                    IEnumPins_Release(penumpins);
-                    IBaseFilter_Release(pfilter);
-                    IEnumMoniker_Release(pEnumMoniker);
-                    goto out;
-                }
-                IFilterGraph2_Disconnect(iface, pin);
-                IFilterGraph2_Disconnect(iface, ppinOut);
-            }
-            IPin_Release(pin);
-        }
-        IEnumPins_Release(penumpins);
-
-error:
-        VariantClear(&var);
-        if (pfilter) {
-            IFilterGraph2_RemoveFilter(iface, pfilter);
-            IBaseFilter_Release(pfilter);
-        }
-    }
-
-    if (FAILED(hr))
-        hr = VFW_E_CANNOT_CONNECT;
-
-    IEnumMoniker_Release(pEnumMoniker);
-
-out:
-    if (pFilterMapper2)
-        IFilterMapper2_Release(pFilterMapper2);
-    if (penummt)
-        IEnumMediaTypes_Release(penummt);
-    if (mt)
-        DeleteMediaType(mt);
-    --This->recursioncount;
-    LeaveCriticalSection(&This->cs);
-    TRACE("--> %08x\n", hr);
+    TRACE("Returning %#x.\n", hr);
     return hr;
 }
 
-/* Render all output pins of the given filter. Helper for FilterGraph2_Render(). */
-static HRESULT render_output_pins(IFilterGraphImpl *graph, IBaseFilter *filter)
+static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *source)
 {
-    BOOL renderany = FALSE;
-    BOOL renderall = TRUE;
-    IEnumPins *enumpins;
-    IPin *pin, *peer;
-    PIN_INFO info;
-
-    IBaseFilter_EnumPins(filter, &enumpins);
-    while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
-    {
-        IPin_QueryPinInfo(pin, &info);
-        IBaseFilter_Release(info.pFilter);
-        if (info.dir == PINDIR_OUTPUT)
-        {
-            if (info.achName[0] == '~')
-            {
-                TRACE("Skipping non-rendered pin %s.\n", debugstr_w(info.achName));
-                IPin_Release(pin);
-                continue;
-            }
-
-            if (IPin_ConnectedTo(pin, &peer) == VFW_E_NOT_CONNECTED)
-            {
-                HRESULT hr;
-                hr = IFilterGraph2_Render(&graph->IFilterGraph2_iface, pin);
-                if (SUCCEEDED(hr))
-                    renderany = TRUE;
-                else
-                    renderall = FALSE;
-            }
-            else
-                IPin_Release(peer);
-        }
-
-        IPin_Release(pin);
-    }
-
-    IEnumPins_Release(enumpins);
-
-    if (renderall)
-        return S_OK;
-
-    if (renderany)
-        return VFW_S_PARTIAL_RENDER;
-
-    return VFW_E_CANNOT_RENDER;
-}
-
-/* Ogg hates me if I create a direct rendering method
- *
- * It can only connect to a pin properly once, so use a recursive method that does
- *
- *  +----+ --- (PIN 1) (Render is called on this pin)
- *  |    |
- *  +----+ --- (PIN 2)
- *
- *  Enumerate possible renderers that EXACTLY match the requested type
- *
- *  If none is available, try to add intermediate filters that can connect to the input pin
- *  then call Render on that intermediate pin's output pins
- *  if it succeeds: Render returns success, if it doesn't, the intermediate filter is removed,
- *  and another filter that can connect to the input pin is tried
- *  if we run out of filters that can, give up and return VFW_E_CANNOT_RENDER
- *  It's recursive, but fun!
- */
-
-static HRESULT WINAPI FilterGraph2_Render(IFilterGraph2 *iface, IPin *ppinOut)
-{
-    IFilterGraphImpl *This = impl_from_IFilterGraph2(iface);
-    IEnumMediaTypes* penummt;
-    struct filter *filter;
-    AM_MEDIA_TYPE* mt;
-    ULONG nbmt;
+    IFilterGraphImpl *graph = impl_from_IFilterGraph2(iface);
     HRESULT hr;
 
-    IEnumMoniker* pEnumMoniker;
-    GUID tab[4];
-    ULONG nb;
-    IMoniker* pMoniker;
-    IFilterMapper2 *pFilterMapper2 = NULL;
+    TRACE("graph %p, source %p.\n", graph, source);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppinOut);
+    EnterCriticalSection(&graph->cs);
+    hr = autoplug(graph, source, NULL, 0);
+    LeaveCriticalSection(&graph->cs);
+    if (hr == VFW_E_CANNOT_CONNECT)
+        hr = VFW_E_CANNOT_RENDER;
 
-    if (TRACE_ON(quartz))
-    {
-        PIN_INFO PinInfo;
-
-        hr = IPin_QueryPinInfo(ppinOut, &PinInfo);
-        if (FAILED(hr))
-            return hr;
-
-        TRACE("Filter owning pin => %p\n", PinInfo.pFilter);
-        IBaseFilter_Release(PinInfo.pFilter);
-    }
-
-    /* Try to find out if there is a renderer for the specified subtype already, and use that
-     */
-    EnterCriticalSection(&This->cs);
-    LIST_FOR_EACH_ENTRY(filter, &This->filters, struct filter, entry)
-    {
-        IEnumPins *enumpins = NULL;
-        IPin *pin = NULL;
-
-        hr = IBaseFilter_EnumPins(filter->filter, &enumpins);
-
-        if (FAILED(hr) || !enumpins)
-            continue;
-
-        IEnumPins_Reset(enumpins);
-        while (IEnumPins_Next(enumpins, 1, &pin, NULL) == S_OK)
-        {
-            IPin *to = NULL;
-            PIN_DIRECTION dir = PINDIR_OUTPUT;
-
-            IPin_QueryDirection(pin, &dir);
-            if (dir != PINDIR_INPUT)
-            {
-                IPin_Release(pin);
-                continue;
-            }
-            IPin_ConnectedTo(pin, &to);
-
-            if (to == NULL)
-            {
-                hr = FilterGraph2_ConnectDirect(iface, ppinOut, pin, NULL);
-                if (SUCCEEDED(hr))
-                {
-                    TRACE("Connected successfully %p/%p, %08x look if we should render more!\n", ppinOut, pin, hr);
-                    IPin_Release(pin);
-
-                    hr = render_output_pins(This, filter->filter);
-                    if (FAILED(hr))
-                    {
-                        IPin_Disconnect(ppinOut);
-                        IPin_Disconnect(pin);
-                        continue;
-                    }
-                    IEnumPins_Release(enumpins);
-                    LeaveCriticalSection(&This->cs);
-                    return hr;
-                }
-                WARN("Could not connect!\n");
-            }
-            else
-                IPin_Release(to);
-
-            IPin_Release(pin);
-        }
-        IEnumPins_Release(enumpins);
-    }
-
-    LeaveCriticalSection(&This->cs);
-
-    hr = IPin_EnumMediaTypes(ppinOut, &penummt);
-    if (FAILED(hr)) {
-        WARN("EnumMediaTypes (%x)\n", hr);
-        return hr;
-    }
-
-    IEnumMediaTypes_Reset(penummt);
-
-    /* Looks like no existing renderer of the kind exists
-     * Try adding new ones
-     */
-    tab[0] = tab[1] = GUID_NULL;
-    while (SUCCEEDED(hr))
-    {
-        hr = IEnumMediaTypes_Next(penummt, 1, &mt, &nbmt);
-        if (FAILED(hr)) {
-            WARN("IEnumMediaTypes_Next (%x)\n", hr);
-            break;
-        }
-        if (!nbmt)
-        {
-            hr = VFW_E_CANNOT_RENDER;
-            break;
-        }
-        else
-        {
-            TRACE("MajorType %s\n", debugstr_guid(&mt->majortype));
-            TRACE("SubType %s\n", debugstr_guid(&mt->subtype));
-
-            /* Only enumerate once, this doesn't account for all previous ones, but this should be enough nonetheless */
-            if (IsEqualIID(&tab[0], &mt->majortype) && IsEqualIID(&tab[1], &mt->subtype))
-            {
-                DeleteMediaType(mt);
-                continue;
-            }
-
-            if (pFilterMapper2 == NULL)
-            {
-                hr = IUnknown_QueryInterface(This->punkFilterMapper2, &IID_IFilterMapper2, (void**)&pFilterMapper2);
-                if (FAILED(hr))
-                {
-                    WARN("Unable to query IFilterMapper2 (%x)\n", hr);
-                    break;
-                }
-            }
-
-            /* Try to find a suitable renderer with the same media type */
-            tab[0] = mt->majortype;
-            tab[1] = mt->subtype;
-            hr = IFilterMapper2_EnumMatchingFilters(pFilterMapper2, &pEnumMoniker, 0, FALSE, MERIT_UNLIKELY, TRUE, 1, tab, NULL, NULL, FALSE, FALSE, 0, NULL, NULL, NULL);
-            if (FAILED(hr))
-            {
-                WARN("Unable to enum filters (%x)\n", hr);
-                break;
-            }
-        }
-        hr = E_FAIL;
-
-        while (IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, &nb) == S_OK)
-        {
-            VARIANT var;
-            IPin* ppinfilter;
-            IBaseFilter* pfilter = NULL;
-            IEnumPins* penumpins = NULL;
-            ULONG pin;
-
-            hr = GetFilterInfo(pMoniker, &var);
-            if (FAILED(hr)) {
-                WARN("Unable to retrieve filter info (%x)\n", hr);
-                goto error;
-            }
-
-            hr = create_filter(This, pMoniker, &pfilter);
-            IMoniker_Release(pMoniker);
-            if (FAILED(hr))
-            {
-                WARN("Unable to create filter (%x), trying next one\n", hr);
-                goto error;
-            }
-
-            hr = IFilterGraph2_AddFilter(iface, pfilter, V_BSTR(&var));
-            if (FAILED(hr)) {
-                WARN("Unable to add filter (%x)\n", hr);
-                IBaseFilter_Release(pfilter);
-                pfilter = NULL;
-                goto error;
-            }
-
-            hr = IBaseFilter_EnumPins(pfilter, &penumpins);
-            if (FAILED(hr)) {
-                WARN("Splitter Enumpins (%x)\n", hr);
-                goto error;
-            }
-
-            while ((hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin)) == S_OK)
-            {
-                PIN_DIRECTION dir;
-
-                if (pin == 0) {
-                    WARN("No Pin\n");
-                    hr = E_FAIL;
-                    goto error;
-                }
-
-                hr = IPin_QueryDirection(ppinfilter, &dir);
-                if (FAILED(hr)) {
-                    IPin_Release(ppinfilter);
-                    WARN("QueryDirection failed (%x)\n", hr);
-                    goto error;
-                }
-                if (dir != PINDIR_INPUT) {
-                    IPin_Release(ppinfilter);
-                    continue; /* Wrong direction */
-                }
-
-                /* Connect the pin to the "Renderer" */
-                hr = IFilterGraph2_ConnectDirect(iface, ppinOut, ppinfilter, NULL);
-                IPin_Release(ppinfilter);
-
-                if (FAILED(hr)) {
-                    WARN("Unable to connect %s to renderer (%x)\n", debugstr_w(V_BSTR(&var)), hr);
-                    goto error;
-                }
-                TRACE("Connected, recursing %s\n",  debugstr_w(V_BSTR(&var)));
-
-                VariantClear(&var);
-
-                hr = render_output_pins(This, pfilter);
-                if (FAILED(hr)) {
-                    WARN("Unable to connect recursively (%x)\n", hr);
-                    goto error;
-                }
-                IBaseFilter_Release(pfilter);
-                break;
-            }
-            if (SUCCEEDED(hr)) {
-                IEnumPins_Release(penumpins);
-                break; /* out of IEnumMoniker_Next loop */
-            }
-
-            /* IEnumPins_Next failed, all other failure case caught by goto error */
-            WARN("IEnumPins_Next (%x)\n", hr);
-            /* goto error */
-
-error:
-            VariantClear(&var);
-            if (penumpins)
-                IEnumPins_Release(penumpins);
-            if (pfilter) {
-                IFilterGraph2_RemoveFilter(iface, pfilter);
-                IBaseFilter_Release(pfilter);
-            }
-            if (SUCCEEDED(hr)) DebugBreak();
-        }
-
-        IEnumMoniker_Release(pEnumMoniker);
-        if (nbmt)
-            DeleteMediaType(mt);
-        if (SUCCEEDED(hr))
-            break;
-        hr = S_OK;
-    }
-
-    if (pFilterMapper2)
-        IFilterMapper2_Release(pFilterMapper2);
-
-    IEnumMediaTypes_Release(penummt);
+    TRACE("Returning %#x.\n", hr);
     return hr;
 }
 
@@ -5755,7 +5404,6 @@ static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL 
     memcpy(&fimpl->timeformatseek, &TIME_FORMAT_MEDIA_TIME, sizeof(GUID));
     fimpl->stream_start = fimpl->stream_elapsed = 0;
     fimpl->punkFilterMapper2 = NULL;
-    fimpl->recursioncount = 0;
     fimpl->version = 0;
     fimpl->current_pos = 0;
 
