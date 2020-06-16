@@ -84,8 +84,10 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD secu
                 if (!(security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
                     err = ERROR_WINHTTP_SECURE_CERT_DATE_INVALID;
             }
-            else if (chain->TrustStatus.dwErrorStatus &
-                     CERT_TRUST_IS_UNTRUSTED_ROOT)
+            else if ((chain->TrustStatus.dwErrorStatus &
+                      CERT_TRUST_IS_UNTRUSTED_ROOT) ||
+                     (chain->TrustStatus.dwErrorStatus &
+                      CERT_TRUST_IS_PARTIAL_CHAIN))
             {
                 if (!(security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
                     err = ERROR_WINHTTP_SECURE_INVALID_CA;
