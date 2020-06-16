@@ -4058,7 +4058,6 @@ struct wined3d_texture
     DWORD flags;
     DWORD update_map_binding;
 
-    void *user_memory;
     unsigned int row_pitch;
     unsigned int slice_pitch;
 
@@ -4111,6 +4110,8 @@ struct wined3d_texture
         uint32_t map_flags;
         DWORD locations;
         struct wined3d_bo_gl bo;
+
+        void *user_memory;
     } *sub_resources;
 };
 

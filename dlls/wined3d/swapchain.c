@@ -1925,14 +1925,14 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
         HRESULT hr;
         UINT i;
 
-        if (FAILED(hr = wined3d_texture_update_desc(swapchain->front_buffer, desc->backbuffer_width,
+        if (FAILED(hr = wined3d_texture_update_desc(swapchain->front_buffer, 0, desc->backbuffer_width,
                 desc->backbuffer_height, desc->backbuffer_format,
                 desc->multisample_type, desc->multisample_quality, NULL, 0)))
             return hr;
 
         for (i = 0; i < desc->backbuffer_count; ++i)
         {
-            if (FAILED(hr = wined3d_texture_update_desc(swapchain->back_buffers[i], desc->backbuffer_width,
+            if (FAILED(hr = wined3d_texture_update_desc(swapchain->back_buffers[i], 0, desc->backbuffer_width,
                     desc->backbuffer_height, desc->backbuffer_format,
                     desc->multisample_type, desc->multisample_quality, NULL, 0)))
                 return hr;
