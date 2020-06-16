@@ -582,24 +582,6 @@ NTSTATUS WINAPI NtQueryIoCompletion( HANDLE handle, IO_COMPLETION_INFORMATION_CL
     return unix_funcs->NtQueryIoCompletion( handle, class, buffer, len, ret_len );
 }
 
-NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
-                              NTSTATUS CompletionStatus, ULONG Information, BOOL async )
-{
-    NTSTATUS status;
-
-    SERVER_START_REQ( add_fd_completion )
-    {
-        req->handle      = wine_server_obj_handle( hFile );
-        req->cvalue      = CompletionValue;
-        req->status      = CompletionStatus;
-        req->information = Information;
-        req->async       = async;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return status;
-}
-
 /******************************************************************
  *              RtlRunOnceInitialize (NTDLL.@)
  */

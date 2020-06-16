@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 48
+#define NTDLL_UNIXLIB_VERSION 49
 
 struct unix_funcs
 {
@@ -159,6 +159,13 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtQueueApcThread)( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1,
                                               ULONG_PTR arg2, ULONG_PTR arg3 );
     NTSTATUS      (WINAPI *NtRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
+    NTSTATUS      (WINAPI *NtReadFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                                        IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                        LARGE_INTEGER *offset, ULONG *key );
+    NTSTATUS      (WINAPI *NtReadFileScatter)( HANDLE file, HANDLE event, PIO_APC_ROUTINE apc,
+                                               void *apc_user, IO_STATUS_BLOCK *io,
+                                               FILE_SEGMENT_ELEMENT *segments, ULONG length,
+                                               LARGE_INTEGER *offset, ULONG *key );
     NTSTATUS      (WINAPI *NtReadVirtualMemory)( HANDLE process, const void *addr, void *buffer,
                                                  SIZE_T size, SIZE_T *bytes_read );
     NTSTATUS      (WINAPI *NtReleaseKeyedEvent)( HANDLE handle, const void *key,
@@ -204,6 +211,13 @@ struct unix_funcs
                                                       const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtWaitForSingleObject)( HANDLE handle, BOOLEAN alertable,
                                                    const LARGE_INTEGER *timeout );
+    NTSTATUS      (WINAPI *NtWriteFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                                         IO_STATUS_BLOCK *io, const void *buffer, ULONG length,
+                                         LARGE_INTEGER *offset, ULONG *key );
+    NTSTATUS      (WINAPI *NtWriteFileGather)( HANDLE file, HANDLE event, PIO_APC_ROUTINE apc,
+                                               void *apc_user, IO_STATUS_BLOCK *io,
+                                               FILE_SEGMENT_ELEMENT *segments, ULONG length,
+                                               LARGE_INTEGER *offset, ULONG *key );
     NTSTATUS      (WINAPI *NtWriteVirtualMemory)( HANDLE process, void *addr, const void *buffer,
                                                   SIZE_T size, SIZE_T *bytes_written );
     NTSTATUS      (WINAPI *NtYieldExecution)(void);
@@ -253,10 +267,7 @@ struct unix_funcs
     NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
     unsigned int  (CDECL *virtual_locked_server_call)( void *req_ptr );
-    ssize_t       (CDECL *virtual_locked_read)( int fd, void *addr, size_t size );
-    ssize_t       (CDECL *virtual_locked_pread)( int fd, void *addr, size_t size, off_t offset );
     ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
-    BOOL          (CDECL *virtual_check_buffer_for_read)( const void *ptr, SIZE_T size );
     BOOL          (CDECL *virtual_check_buffer_for_write)( void *ptr, SIZE_T size );
     void          (CDECL *virtual_release_address_space)(void);
     void          (CDECL *virtual_set_large_address_space)(void);
