@@ -114,11 +114,7 @@ extern TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_co
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
-                                     const char *unixdir, char *winedebug, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL fork_and_exec( const char *unix_name, const char *unix_dir,
-                                     const RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                             UINT disposition, BOOLEAN check_case ) DECLSPEC_HIDDEN;
@@ -181,6 +177,8 @@ extern BOOL virtual_is_valid_code_address( const void *addr, SIZE_T size ) DECLS
 extern int virtual_handle_stack_fault( void *addr ) DECLSPEC_HIDDEN;
 extern SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_T size ) DECLSPEC_HIDDEN;
+extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
+                                            SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
 
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
 extern NTSTATUS signal_alloc_thread( TEB *teb ) DECLSPEC_HIDDEN;

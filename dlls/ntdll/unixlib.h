@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 46
+#define NTDLL_UNIXLIB_VERSION 47
 
 struct unix_funcs
 {
@@ -77,6 +77,12 @@ struct unix_funcs
                                               SIZE_T stack_reserve, PS_ATTRIBUTE_LIST *attr_list );
     NTSTATUS      (WINAPI *NtCreateTimer)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, TIMER_TYPE type );
+    NTSTATUS      (WINAPI *NtCreateUserProcess)( HANDLE *process_handle_ptr, HANDLE *thread_handle_ptr,
+                                                 ACCESS_MASK process_access, ACCESS_MASK thread_access,
+                                                 OBJECT_ATTRIBUTES *process_attr, OBJECT_ATTRIBUTES *thread_attr,
+                                                 ULONG process_flags, ULONG thread_flags,
+                                                 RTL_USER_PROCESS_PARAMETERS *params, PS_CREATE_INFO *info,
+                                                 PS_ATTRIBUTE_LIST *attr );
     TEB *         (WINAPI *NtCurrentTeb)(void);
     NTSTATUS      (WINAPI *NtDelayExecution)( BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtDeleteFile)( OBJECT_ATTRIBUTES *attr );
@@ -257,12 +263,7 @@ struct unix_funcs
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
     NTSTATUS      (CDECL *get_thread_ldt_entry)( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
-    NTSTATUS      (CDECL *spawn_process)( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
-                                          const char *unixdir, char *winedebug,
-                                          const pe_image_info_t *pe_info );
     NTSTATUS      (CDECL *exec_process)( const UNICODE_STRING *cmdline, const pe_image_info_t *pe_info );
-    NTSTATUS      (CDECL *fork_and_exec)( const char *unix_name, const char *unix_dir,
-                                          const RTL_USER_PROCESS_PARAMETERS *params );
 
     /* server functions */
     unsigned int  (CDECL *server_call)( void *req_ptr );

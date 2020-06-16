@@ -4035,7 +4035,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
  *
  * Helper for NtQuerySection.
  */
-static void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMAGE_INFORMATION *info )
+void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMAGE_INFORMATION *info )
 {
     info->TransferAddress      = wine_server_get_ptr( pe_info->entry_point );
     info->ZeroBits             = pe_info->zerobits;
