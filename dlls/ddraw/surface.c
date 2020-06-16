@@ -1288,11 +1288,12 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
 {
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
+    struct ddraw_texture *dst_ddraw_texture, *src_ddraw_texture;
     struct wined3d_rendertarget_view *tmp_rtv, *src_rtv, *rtv;
-    struct ddraw_texture *ddraw_texture, *prev_ddraw_texture;
     DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, {0}};
     struct wined3d_texture *texture;
     IDirectDrawSurface7 *current;
+    void *texture_memory;
     HRESULT hr;
 
     TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
@@ -1318,7 +1319,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
         ERR("Invalid sub-resource index %u on surface %p.\n", dst_impl->sub_resource_idx, dst_impl);
     texture = dst_impl->wined3d_texture;
     rtv = wined3d_device_get_rendertarget_view(dst_impl->ddraw->wined3d_device, 0);
-    ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
+    dst_ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
+    texture_memory = dst_ddraw_texture->texture_memory;
 
     if (src_impl)
     {
@@ -1345,12 +1347,13 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
         wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
         dst_impl->wined3d_rtv = src_rtv;
         wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
-        prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
-        wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
+        src_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
+        dst_ddraw_texture->texture_memory = src_ddraw_texture->texture_memory;
+        wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), dst_ddraw_texture);
+        dst_ddraw_texture = src_ddraw_texture;
         if (src_impl->sub_resource_idx)
             ERR("Invalid sub-resource index %u on surface %p.\n", src_impl->sub_resource_idx, src_impl);
         dst_impl->wined3d_texture = src_impl->wined3d_texture;
-        ddraw_texture = prev_ddraw_texture;
     }
     else
     {
@@ -1376,9 +1379,10 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
             wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
             dst_impl->wined3d_rtv = src_rtv;
             wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
-            prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
-            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
-            ddraw_texture = prev_ddraw_texture;
+            src_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
+            dst_ddraw_texture->texture_memory = src_ddraw_texture->texture_memory;
+            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), dst_ddraw_texture);
+            dst_ddraw_texture = src_ddraw_texture;
             if (src_impl->sub_resource_idx)
                 ERR("Invalid sub-resource index %u on surface %p.\n", src_impl->sub_resource_idx, src_impl);
             dst_impl->wined3d_texture = src_impl->wined3d_texture;
@@ -1393,7 +1397,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
     src_impl->wined3d_rtv = tmp_rtv;
     wined3d_texture_set_sub_resource_parent(texture, 0, src_impl);
-    wined3d_resource_set_parent(wined3d_texture_get_resource(texture), ddraw_texture);
+    dst_ddraw_texture->texture_memory = texture_memory;
+    wined3d_resource_set_parent(wined3d_texture_get_resource(texture), dst_ddraw_texture);
     src_impl->wined3d_texture = texture;
 
     if (flags & ~(DDFLIP_NOVSYNC | DDFLIP_INTERVAL2 | DDFLIP_INTERVAL3 | DDFLIP_INTERVAL4))
