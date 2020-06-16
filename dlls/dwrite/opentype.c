@@ -4295,30 +4295,15 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
 
     if (format == 1)
     {
-        const struct ot_gpos_mark_to_mark_format1 *format1 = table_read_ensure(table, subtable_offset, sizeof(*format1));
-        unsigned int count, mark1_array_offset, mark2_array_offset, mark_class_count;
-        unsigned int mark1_index, mark2_index, mark2_anchor;
-        const struct ot_gpos_mark_array *mark1_array;
-        const struct ot_gpos_base_array *mark2_array;
-        float mark1_x, mark1_y, mark2_x, mark2_y;
+        const struct ot_gpos_mark_to_mark_format1 *format1;
+        unsigned int mark1_index, mark2_index;
         struct glyph_iterator mark_iter;
 
-        if (!format1)
-            return FALSE;
+        if (!(format1 = table_read_ensure(table, subtable_offset, sizeof(*format1)))) return FALSE;
 
         mark1_index = opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(format1->mark1_coverage),
                 context->u.pos.glyphs[context->cur]);
-
-        mark1_array_offset = subtable_offset + GET_BE_WORD(format1->mark1_array);
-        if (!(count = table_read_be_word(table, mark1_array_offset)))
-            return FALSE;
-
-        mark1_array = table_read_ensure(table, mark1_array_offset, FIELD_OFFSET(struct ot_gpos_mark_array, records[count]));
-        if (!mark1_array)
-            return FALSE;
-
-        if (mark1_index == GLYPH_NOT_COVERED || mark1_index >= count)
-            return FALSE;
+        if (mark1_index == GLYPH_NOT_COVERED) return FALSE;
 
         glyph_iterator_init(context, lookup->flags & ~LOOKUP_FLAG_IGNORE_MASK, context->cur, 1, &mark_iter);
         if (!glyph_iterator_prev(&mark_iter))
@@ -4327,34 +4312,12 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
         if (!context->u.pos.glyph_props[mark_iter.pos].isDiacritic)
             return FALSE;
 
-        mark2_array_offset = subtable_offset + GET_BE_WORD(format1->mark2_array);
-        if (!(count = table_read_be_word(table, mark2_array_offset)))
-            return FALSE;
-
-        mark_class_count = GET_BE_WORD(format1->mark_class_count);
-
-        mark2_array = table_read_ensure(table, mark2_array_offset,
-                FIELD_OFFSET(struct ot_gpos_base_array, offsets[count * mark_class_count]));
-        if (!mark2_array)
-            return FALSE;
-
         mark2_index = opentype_layout_is_glyph_covered(table, subtable_offset + GET_BE_WORD(format1->mark2_coverage),
                 context->u.pos.glyphs[mark_iter.pos]);
+        if (mark2_index == GLYPH_NOT_COVERED) return FALSE;
 
-        if (mark2_index == GLYPH_NOT_COVERED || mark2_index >= count)
-            return FALSE;
-
-        mark2_anchor = GET_BE_WORD(mark2_array->offsets[mark2_index * mark_class_count +
-                GET_BE_WORD(mark1_array->records[mark1_index].mark_class)]);
-        opentype_layout_gpos_get_anchor(context, mark1_array_offset +
-                GET_BE_WORD(mark1_array->records[mark1_index].mark_anchor), context->cur, &mark1_x, &mark1_y);
-        opentype_layout_gpos_get_anchor(context, mark2_array_offset + mark2_anchor, mark_iter.pos,
-                &mark2_x, &mark2_y);
-
-        context->offsets[context->cur].advanceOffset = mark2_x - mark1_x;
-        context->offsets[context->cur].ascenderOffset = mark2_y - mark1_y;
-
-        context->cur++;
+        return opentype_layout_apply_mark_array(context, subtable_offset, GET_BE_WORD(format1->mark1_array), mark1_index,
+                mark2_index, GET_BE_WORD(format1->mark2_array), GET_BE_WORD(format1->mark_class_count), mark_iter.pos);
     }
     else
     {
