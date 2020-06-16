@@ -168,17 +168,18 @@ static struct test_data {
     BYTE *data;
     UINT size;
     UINT expected_frame_count;
+    const GUID *expected_pixel_format;
     WICDdsParameters expected_parameters;
 } test_data[] = {
-    { test_dds_image,   sizeof(test_dds_image),   1,
+    { test_dds_image,   sizeof(test_dds_image),   1, &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 1, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
-    { test_dds_mipmaps, sizeof(test_dds_mipmaps), 3,
+    { test_dds_mipmaps, sizeof(test_dds_mipmaps), 3, &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  1, 3, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModePremultiplied } },
-    { test_dds_volume,  sizeof(test_dds_volume),  7,
+    { test_dds_volume,  sizeof(test_dds_volume),  7, &GUID_WICPixelFormat32bppPBGRA,
       { 4,  4,  4, 3, 1, DXGI_FORMAT_BC1_UNORM, WICDdsTexture3D, WICDdsAlphaModePremultiplied } },
-    { test_dds_array,   sizeof(test_dds_array),   9,
+    { test_dds_array,   sizeof(test_dds_array),   9, &GUID_WICPixelFormat32bppBGRA,
       { 4,  4,  1, 3, 3, DXGI_FORMAT_BC1_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown } },
-    { test_dds_dxt3,    sizeof(test_dds_dxt3),    8,
+    { test_dds_dxt3,    sizeof(test_dds_dxt3),    8, &GUID_WICPixelFormat32bppBGRA,
       { 12, 12, 1, 4, 2, DXGI_FORMAT_BC2_UNORM, WICDdsTexture2D, WICDdsAlphaModeUnknown } },
 };
 
@@ -446,6 +447,7 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     UINT width, height ,expected_width, expected_height, slice_index, depth;
     UINT width_in_blocks, height_in_blocks, expected_width_in_blocks, expected_height_in_blocks;
     WICDdsFormatInfo format_info;
+    GUID pixel_format;
 
     /* frame size tests */
 
@@ -511,6 +513,15 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     ok (height_in_blocks == expected_height_in_blocks,
         "%d: [frame %d] Expected height in blocks %d, got %d\n", i, frame_index, expected_height_in_blocks, height_in_blocks);
 
+    /* pixel format tests */
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, NULL);
+    todo_wine ok (hr == E_INVALIDARG, "[%d, frame %d] GetPixelFormat got unexpected hr %x\n", i, frame_index, hr);
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, &pixel_format);
+    todo_wine ok (hr == S_OK, "[%d, frame %d] GetPixelFormat failed\n", i, frame_index);
+    if (hr != S_OK) return;
+    todo_wine ok (IsEqualGUID(&pixel_format, test_data[i].expected_pixel_format),
+        "[%d, frame %d] Got unexpected pixel format %s\n", i, frame_index, debugstr_guid(&pixel_format));
 }
 
 static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT frame_count, WICDdsParameters *params,
