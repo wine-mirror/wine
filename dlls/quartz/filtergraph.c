@@ -1327,7 +1327,6 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
     while (IEnumMoniker_Next(pEnumMoniker, 1, &pMoniker, NULL) == S_OK)
     {
         VARIANT var;
-        IPin* ppinfilter = NULL;
         IBaseFilter* pfilter = NULL;
         IAMGraphBuilderCallback *callback = NULL;
 
@@ -1390,35 +1389,27 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
             goto error;
         }
 
-        hr = IEnumPins_Next(penumpins, 1, &ppinfilter, NULL);
-        IEnumPins_Release(penumpins);
-
-        if (FAILED(hr)) {
-            WARN("Obtaining next pin: (%x)\n", hr);
-            goto error;
-        }
-        if (hr == S_FALSE) {
-            WARN("Cannot use this filter: no pins\n");
-            goto error;
-        }
-
-        hr = IFilterGraph2_ConnectDirect(iface, ppinOut, ppinfilter, NULL);
-        if (FAILED(hr)) {
-            TRACE("Cannot connect to filter (%x), trying next one\n", hr);
-            goto error;
-        }
-        TRACE("Successfully connected to filter, follow chain...\n");
-
-        if (SUCCEEDED(hr = connect_output_pin(This, pfilter, ppinIn)))
+        while (IEnumPins_Next(penumpins, 1, &pin, NULL) == S_OK)
         {
-            IPin_Release(ppinfilter);
-            IBaseFilter_Release(pfilter);
-            break;
+            if (SUCCEEDED(IFilterGraph2_ConnectDirect(iface, ppinOut, pin, NULL)))
+            {
+                if (SUCCEEDED(hr = connect_output_pin(This, pfilter, ppinIn)))
+                {
+                    IPin_Release(pin);
+                    IEnumPins_Release(penumpins);
+                    IBaseFilter_Release(pfilter);
+                    IEnumMoniker_Release(pEnumMoniker);
+                    goto out;
+                }
+                IFilterGraph2_Disconnect(iface, pin);
+                IFilterGraph2_Disconnect(iface, ppinOut);
+            }
+            IPin_Release(pin);
         }
+        IEnumPins_Release(penumpins);
 
 error:
         VariantClear(&var);
-        if (ppinfilter) IPin_Release(ppinfilter);
         if (pfilter) {
             IFilterGraph2_RemoveFilter(iface, pfilter);
             IBaseFilter_Release(pfilter);

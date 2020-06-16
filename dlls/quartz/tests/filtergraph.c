@@ -2136,9 +2136,9 @@ static void test_graph_builder_connect(void)
     testfilter_init(&parser1, parser1_pins, 3);
     parser1.pin_count = 2;
 
-    testsink_init(&parser2_pins[0]);
-    testsource_init(&parser2_pins[1], &sink_type, 1);
-    parser2_pins[1].request_mt = &sink_type;
+    testsource_init(&parser2_pins[0], &sink_type, 1);
+    testsink_init(&parser2_pins[1]);
+    parser2_pins[0].request_mt = &sink_type;
     testfilter_init(&parser2, parser2_pins, 2);
 
     testsink_init(&parser3_pins[0]);
@@ -2215,8 +2215,8 @@ static void test_graph_builder_connect(void)
     sink_pin.accept_mt = &sink_type;
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(source_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
-    ok(sink_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+    ok(source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
     IFilterGraph2_Disconnect(graph, source_pin.peer);
     IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
     IFilterGraph2_Disconnect(graph, sink_pin.peer);
@@ -2227,8 +2227,8 @@ static void test_graph_builder_connect(void)
     {
         hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
         ok(hr == S_OK, "Got hr %#x for Connect() hr %#x.\n", hr, source_pin.Connect_hr);
-        ok(source_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
-        ok(sink_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+        ok(source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
+        ok(sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
         IFilterGraph2_Disconnect(graph, source_pin.peer);
         IFilterGraph2_Disconnect(graph, &source_pin.IPin_iface);
         IFilterGraph2_Disconnect(graph, sink_pin.peer);
@@ -2379,9 +2379,9 @@ todo_wine
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &parser1_pins[0].IPin_iface
-            || source_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
+            || source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &parser1_pins[1].IPin_iface
-            || sink_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+            || sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -2417,8 +2417,8 @@ todo_wine
 
     hr = IFilterGraph2_Connect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(source_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", source_pin.peer);
-    ok(sink_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", sink_pin.peer);
+    ok(source_pin.peer == &parser2_pins[1].IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(sink_pin.peer == &parser2_pins[0].IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
