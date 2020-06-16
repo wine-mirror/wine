@@ -1506,14 +1506,6 @@ static BOOL wined3d_check_depth_stencil_format(const struct wined3d_adapter *ada
     if (!ds_format->depth_size && !ds_format->stencil_size)
         return FALSE;
 
-    /* Blacklist formats not supported on Windows */
-    if (ds_format->id == WINED3DFMT_S1_UINT_D15_UNORM /* Breaks the shadowvol2 dx7 sdk sample */
-            || ds_format->id == WINED3DFMT_S4X4_UINT_D24_UNORM)
-    {
-        TRACE("Format %s is blacklisted.\n", debug_d3dformat(ds_format->id));
-        return FALSE;
-    }
-
     return adapter->adapter_ops->adapter_check_format(adapter, adapter_format, NULL, ds_format);
 }
 

@@ -1007,52 +1007,6 @@ static void convert_r32g32_float(const BYTE *src, BYTE *dst, UINT src_row_pitch,
     }
 }
 
-static void convert_s1_uint_d15_unorm(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
-        UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth)
-{
-    unsigned int x, y, z;
-
-    for (z = 0; z < depth; z++)
-    {
-        for (y = 0; y < height; ++y)
-        {
-            const WORD *source = (const WORD *)(src + z * src_slice_pitch + y * src_row_pitch);
-            DWORD *dest = (DWORD *)(dst + z * dst_slice_pitch + y * dst_row_pitch);
-
-            for (x = 0; x < width; ++x)
-            {
-                /* The depth data is normalized, so needs to be scaled,
-                * the stencil data isn't.  Scale depth data by
-                *      (2^24-1)/(2^15-1) ~~ (2^9 + 2^-6). */
-                WORD d15 = source[x] >> 1;
-                DWORD d24 = (d15 << 9) + (d15 >> 6);
-                dest[x] = (d24 << 8) | (source[x] & 0x1);
-            }
-        }
-    }
-}
-
-static void convert_s4x4_uint_d24_unorm(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
-        UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth)
-{
-    unsigned int x, y, z;
-
-    for (z = 0; z < depth; z++)
-    {
-        for (y = 0; y < height; ++y)
-        {
-            const DWORD *source = (const DWORD *)(src + z * src_slice_pitch + y * src_row_pitch);
-            DWORD *dest = (DWORD *)(dst + z * dst_slice_pitch + y * dst_row_pitch);
-
-            for (x = 0; x < width; ++x)
-            {
-                /* Just need to clear out the X4 part. */
-                dest[x] = source[x] & ~0xf0;
-            }
-        }
-    }
-}
-
 static void convert_s8_uint_d24_float(const BYTE *src, BYTE *dst, UINT src_row_pitch, UINT src_slice_pitch,
         UINT dst_row_pitch, UINT dst_slice_pitch, UINT width, UINT height, UINT depth)
 {
@@ -1791,14 +1745,6 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_DEPTH_COMPONENT,         GL_UNSIGNED_SHORT,                0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_DEPTH_STENCIL | WINED3DFMT_FLAG_SHADOW,
             ARB_DEPTH_TEXTURE,          NULL},
-    {WINED3DFMT_S1_UINT_D15_UNORM,      GL_DEPTH_COMPONENT16,             GL_DEPTH_COMPONENT16,                   0,
-            GL_DEPTH_COMPONENT,         GL_UNSIGNED_SHORT,                0,
-            WINED3DFMT_FLAG_DEPTH_STENCIL | WINED3DFMT_FLAG_SHADOW,
-            ARB_DEPTH_TEXTURE,          NULL},
-    {WINED3DFMT_S1_UINT_D15_UNORM,      GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
-            GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,             4,
-            WINED3DFMT_FLAG_DEPTH_STENCIL | WINED3DFMT_FLAG_SHADOW,
-            EXT_PACKED_DEPTH_STENCIL,   convert_s1_uint_d15_unorm},
     {WINED3DFMT_D24_UNORM_S8_UINT,      GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,         GL_UNSIGNED_INT,                  0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
@@ -1818,14 +1764,6 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_DEPTH_STENCIL | WINED3DFMT_FLAG_SHADOW,
             ARB_DEPTH_TEXTURE,          x8_d24_unorm_upload,              x8_d24_unorm_download},
-    {WINED3DFMT_S4X4_UINT_D24_UNORM,    GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
-            GL_DEPTH_COMPONENT,         GL_UNSIGNED_INT,                  0,
-            WINED3DFMT_FLAG_DEPTH_STENCIL | WINED3DFMT_FLAG_SHADOW,
-            ARB_DEPTH_TEXTURE,          NULL},
-    {WINED3DFMT_S4X4_UINT_D24_UNORM,    GL_DEPTH24_STENCIL8,              GL_DEPTH24_STENCIL8,                    0,
-            GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,             4,
-            WINED3DFMT_FLAG_DEPTH_STENCIL | WINED3DFMT_FLAG_SHADOW,
-            EXT_PACKED_DEPTH_STENCIL,   convert_s4x4_uint_d24_unorm},
     {WINED3DFMT_D16_UNORM,              GL_DEPTH_COMPONENT,               GL_DEPTH_COMPONENT,                     0,
             GL_DEPTH_COMPONENT,         GL_UNSIGNED_SHORT,                0,
             WINED3DFMT_FLAG_DEPTH_STENCIL,
