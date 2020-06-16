@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 50
+#define NTDLL_UNIXLIB_VERSION 51
 
 struct unix_funcs
 {
@@ -302,6 +302,7 @@ struct unix_funcs
     /* file functions */
     NTSTATUS      (CDECL *nt_to_unix_file_name)( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                                  UINT disposition, BOOLEAN check_case );
+    NTSTATUS      (CDECL *unix_to_nt_file_name)( const ANSI_STRING *name, UNICODE_STRING *nt );
     void          (CDECL *set_show_dot_files)( BOOL enable );
 
     /* debugging functions */

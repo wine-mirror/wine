@@ -961,6 +961,7 @@ static struct unix_funcs unix_funcs =
     server_release_fd,
     server_init_process_done,
     nt_to_unix_file_name,
+    unix_to_nt_file_name,
     set_show_dot_files,
     __wine_dbg_get_channel_flags,
     __wine_dbg_strdup,
