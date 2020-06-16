@@ -33,8 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM
-        | WINED3D_LOCATION_USER_MEMORY | WINED3D_LOCATION_BUFFER;
+static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_BUFFER;
 
 /* Works correctly only for <= 4 bpp formats. */
 static void get_color_masks(const struct wined3d_format *format, DWORD *masks)

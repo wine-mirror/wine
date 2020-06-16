@@ -30,8 +30,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINED3D_TEXTURE_DYNAMIC_MAP_THRESHOLD 50
 
-static const uint32_t wined3d_texture_sysmem_locations = WINED3D_LOCATION_SYSMEM
-        | WINED3D_LOCATION_USER_MEMORY | WINED3D_LOCATION_BUFFER;
+static const uint32_t wined3d_texture_sysmem_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_BUFFER;
 static const struct wined3d_texture_ops texture_gl_ops;
 
 struct wined3d_texture_idx
@@ -132,7 +131,6 @@ static DWORD wined3d_resource_access_from_location(DWORD location)
             return 0;
 
         case WINED3D_LOCATION_SYSMEM:
-        case WINED3D_LOCATION_USER_MEMORY:
             return WINED3D_RESOURCE_ACCESS_CPU;
 
         case WINED3D_LOCATION_BUFFER:
@@ -733,16 +731,18 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
         data->buffer_object = (uintptr_t)&sub_resource->bo;
         return;
     }
-    if (locations & WINED3D_LOCATION_USER_MEMORY)
-    {
-        data->addr = texture->user_memory;
-        data->buffer_object = 0;
-        return;
-    }
+
     if (locations & WINED3D_LOCATION_SYSMEM)
     {
-        data->addr = texture->resource.heap_memory;
-        data->addr += sub_resource->offset;
+        if (texture->user_memory)
+        {
+            data->addr = texture->user_memory;
+        }
+        else
+        {
+            data->addr = texture->resource.heap_memory;
+            data->addr += sub_resource->offset;
+        }
         data->buffer_object = 0;
         return;
     }
@@ -1741,7 +1741,6 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     unsigned int resource_size;
     const struct wined3d *d3d;
     unsigned int slice_pitch;
-    DWORD valid_location = 0;
     bool update_memory_only;
     bool create_dib = false;
 
@@ -1872,16 +1871,10 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         }
     }
 
-    if ((texture->user_memory = mem))
-    {
-        texture->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
-        valid_location = WINED3D_LOCATION_USER_MEMORY;
-    }
-    else
+    if (!(texture->user_memory = mem))
     {
         if (!wined3d_resource_prepare_sysmem(&texture->resource))
             ERR("Failed to allocate resource memory.\n");
-        valid_location = WINED3D_LOCATION_SYSMEM;
     }
 
     /* The format might be changed to a format that needs conversion.
@@ -1891,8 +1884,8 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     if (texture->resource.map_binding == WINED3D_LOCATION_BUFFER && !wined3d_texture_use_pbo(texture, gl_info))
         texture->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
-    wined3d_texture_validate_location(texture, 0, valid_location);
-    wined3d_texture_invalidate_location(texture, 0, ~valid_location);
+    wined3d_texture_validate_location(texture, 0, WINED3D_LOCATION_SYSMEM);
+    wined3d_texture_invalidate_location(texture, 0, ~WINED3D_LOCATION_SYSMEM);
 
     if (create_dib)
     {
@@ -3123,12 +3116,8 @@ static BOOL wined3d_texture_gl_prepare_location(struct wined3d_texture *texture,
     switch (location)
     {
         case WINED3D_LOCATION_SYSMEM:
-            return wined3d_resource_prepare_sysmem(&texture->resource);
-
-        case WINED3D_LOCATION_USER_MEMORY:
-            if (!texture->user_memory)
-                ERR("Preparing WINED3D_LOCATION_USER_MEMORY, but texture->user_memory is NULL.\n");
-            return TRUE;
+            return texture->user_memory ? TRUE
+                    : wined3d_resource_prepare_sysmem(&texture->resource);
 
         case WINED3D_LOCATION_BUFFER:
             wined3d_texture_prepare_buffer_object(texture, sub_resource_idx, context_gl->gl_info);
@@ -3176,7 +3165,6 @@ static BOOL wined3d_texture_gl_load_location(struct wined3d_texture *texture,
 
     switch (location)
     {
-        case WINED3D_LOCATION_USER_MEMORY:
         case WINED3D_LOCATION_SYSMEM:
         case WINED3D_LOCATION_BUFFER:
             return wined3d_texture_gl_load_sysmem(texture_gl, sub_resource_idx, context_gl, location);
@@ -4431,20 +4419,12 @@ static void wined3d_texture_no3d_download_data(struct wined3d_context *context,
 static BOOL wined3d_texture_no3d_prepare_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, unsigned int location)
 {
-    switch (location)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-            return wined3d_resource_prepare_sysmem(&texture->resource);
+    if (location == WINED3D_LOCATION_SYSMEM)
+        return texture->user_memory ? TRUE
+                : wined3d_resource_prepare_sysmem(&texture->resource);
 
-        case WINED3D_LOCATION_USER_MEMORY:
-            if (!texture->user_memory)
-                ERR("Preparing WINED3D_LOCATION_USER_MEMORY, but texture->user_memory is NULL.\n");
-            return TRUE;
-
-        default:
-            FIXME("Unhandled location %s.\n", wined3d_debug_location(location));
-            return FALSE;
-    }
+    FIXME("Unhandled location %s.\n", wined3d_debug_location(location));
+    return FALSE;
 }
 
 static BOOL wined3d_texture_no3d_load_location(struct wined3d_texture *texture,
@@ -4453,7 +4433,7 @@ static BOOL wined3d_texture_no3d_load_location(struct wined3d_texture *texture,
     TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
             texture, sub_resource_idx, context, wined3d_debug_location(location));
 
-    if (location == WINED3D_LOCATION_USER_MEMORY || location == WINED3D_LOCATION_SYSMEM)
+    if (location == WINED3D_LOCATION_SYSMEM)
         return TRUE;
 
     ERR("Unhandled location %s.\n", wined3d_debug_location(location));
@@ -5078,12 +5058,8 @@ static BOOL wined3d_texture_vk_prepare_location(struct wined3d_texture *texture,
     switch (location)
     {
         case WINED3D_LOCATION_SYSMEM:
-            return wined3d_resource_prepare_sysmem(&texture->resource);
-
-        case WINED3D_LOCATION_USER_MEMORY:
-            if (!texture->user_memory)
-                ERR("Preparing WINED3D_LOCATION_USER_MEMORY, but texture->user_memory is NULL.\n");
-            return TRUE;
+            return texture->user_memory ? TRUE
+                    : wined3d_resource_prepare_sysmem(&texture->resource);
 
         case WINED3D_LOCATION_TEXTURE_RGB:
             return wined3d_texture_vk_prepare_texture(wined3d_texture_vk(texture), wined3d_context_vk(context));
