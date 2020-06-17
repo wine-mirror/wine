@@ -19,6 +19,7 @@
 struct prn_provider
 {
     DWORD owner;
+    WCHAR *name;
     HANDLE hprn;
 };
 

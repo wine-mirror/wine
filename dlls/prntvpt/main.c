@@ -33,6 +33,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(prntvpt);
 
+static WCHAR *heap_strdupW(const WCHAR *src)
+{
+    WCHAR *dst;
+    size_t len;
+    if (!src) return NULL;
+    len = (wcslen(src) + 1) * sizeof(WCHAR);
+    if ((dst = heap_alloc(len))) memcpy(dst, src, len);
+    return dst;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
 {
     TRACE("(%p, %d, %p)\n", hinst, reason, reserved);
@@ -70,6 +80,7 @@ HRESULT WINAPI PTCloseProvider(HPTPROVIDER provider)
         return E_HANDLE;
 
     prov->owner = 0;
+    heap_free(prov->name);
     ClosePrinter(prov->hprn);
     heap_free(prov);
 
@@ -105,6 +116,7 @@ HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD p
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
+    prov->name = heap_strdupW(printer);
     prov->owner = GetCurrentThreadId();
     *provider = (HPTPROVIDER)prov;
     *used_version = 1;

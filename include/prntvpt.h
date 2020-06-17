@@ -47,6 +47,7 @@ HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD p
 HRESULT WINAPI PTCloseProvider(HPTPROVIDER);
 HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER, ULONG, PDEVMODEW, EPrintTicketScope, IStream *);
 HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER, IStream *, EDefaultDevmodeType, EPrintTicketScope, ULONG *, PDEVMODEW *, BSTR *);
+HRESULT WINAPI PTGetPrintCapabilities(HPTPROVIDER, IStream *, IStream *, BSTR *);
 HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER, IStream *, IStream *, EPrintTicketScope, IStream *, BSTR *);
 HRESULT WINAPI PTReleaseMemory(PVOID);
 

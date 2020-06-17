@@ -3,7 +3,7 @@
 @ stdcall PTOpenProviderEx(wstr long long ptr ptr)
 @ stdcall PTCloseProvider(ptr)
 @ stub BindPTProviderThunk
-@ stub PTGetPrintCapabilities
+@ stdcall PTGetPrintCapabilities(ptr ptr ptr ptr)
 @ stdcall PTMergeAndValidatePrintTicket(ptr ptr ptr long ptr ptr)
 @ stdcall PTConvertPrintTicketToDevMode(ptr ptr long long ptr ptr ptr)
 @ stdcall PTConvertDevModeToPrintTicket(ptr long ptr long ptr)

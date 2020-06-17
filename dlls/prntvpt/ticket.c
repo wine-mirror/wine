@@ -845,6 +845,16 @@ static HRESULT create_ParameterRef(IXMLDOMElement *root, const WCHAR *name, IXML
     return add_attribute(*child, L"name", name);
 }
 
+static HRESULT create_ParameterDef(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:ParameterDef", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
 static HRESULT create_ScoredProperty(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
 {
     HRESULT hr;
@@ -1254,4 +1264,275 @@ HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER provider, IStream *base
 
     hr = write_ticket(result, &ticket, scope);
     return hr ? hr : S_PT_NO_CONFLICT;
+}
+
+static HRESULT write_PageMediaSize_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int count, i;
+    POINT *pt;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    count = DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, NULL, NULL);
+    if (count <= 0)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    pt = heap_alloc(count * sizeof(*pt));
+    if (!pt) return E_OUTOFMEMORY;
+
+    count = DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, (LPWSTR)pt, NULL);
+    if (count <= 0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto fail;
+    }
+
+    hr = create_Feature(root, L"psk:PageMediaSize", &feature);
+    if (hr != S_OK) goto fail;
+
+    for (i = 0; i < count; i++)
+    {
+    }
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    heap_free(pt);
+    return hr;
+}
+
+static HRESULT write_PageOutputColor_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int color;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    color = DeviceCapabilitiesW(device, NULL, DC_COLORDEVICE, NULL, NULL);
+    TRACE("DC_COLORDEVICE: %d\n", color);
+
+    hr = create_Feature(root, L"psk:PageOutputColor", &feature);
+    if (hr != S_OK) goto fail;
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    return hr;
+}
+
+static HRESULT write_PageScaling_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    hr = create_Feature(root, L"psk:PageScaling", &feature);
+    if (hr != S_OK) goto fail;
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    return hr;
+}
+
+static HRESULT write_PageResolution_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int count, i;
+    struct
+    {
+        LONG x;
+        LONG y;
+    } *res;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    count = DeviceCapabilitiesW(device, NULL, DC_ENUMRESOLUTIONS, NULL, NULL);
+    if (count <= 0)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    res = heap_alloc(count * sizeof(*res));
+    if (!res) return E_OUTOFMEMORY;
+
+    count = DeviceCapabilitiesW(device, NULL, DC_ENUMRESOLUTIONS, (LPWSTR)res, NULL);
+    if (count <= 0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto fail;
+    }
+
+    hr = create_Feature(root, L"psk:PageResolution", &feature);
+    if (hr != S_OK) goto fail;
+
+    for (i = 0; i < count; i++)
+    {
+    }
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    heap_free(res);
+    return hr;
+}
+
+static HRESULT write_PageOrientation_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int landscape;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    landscape = DeviceCapabilitiesW(device, NULL, DC_ORIENTATION, NULL, NULL);
+    TRACE("DC_ORIENTATION: %d\n", landscape);
+
+    hr = create_Feature(root, L"psk:PageOrientation", &feature);
+    if (hr != S_OK) goto fail;
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    return hr;
+}
+
+static HRESULT write_DocumentCollate_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int collate;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    collate = DeviceCapabilitiesW(device, NULL, DC_COLLATE, NULL, NULL);
+    TRACE("DC_COLLATE: %d\n", collate);
+
+    hr = create_Feature(root, L"psk:DocumentCollate", &feature);
+    if (hr != S_OK) goto fail;
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    return hr;
+}
+
+static HRESULT write_JobInputBin_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int count, i;
+    WORD *bin;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    count = DeviceCapabilitiesW(device, NULL, DC_BINS, NULL, NULL);
+    if (count <= 0)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    bin = heap_alloc(count * sizeof(*bin));
+    if (!bin) return E_OUTOFMEMORY;
+
+    count = DeviceCapabilitiesW(device, NULL, DC_BINS, (LPWSTR)bin, NULL);
+    if (count <= 0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto fail;
+    }
+
+    hr = create_Feature(root, L"psk:JobInputBin", &feature);
+    if (hr != S_OK) goto fail;
+
+    for (i = 0; i < count; i++)
+    {
+    }
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    heap_free(bin);
+    return hr;
+}
+
+static HRESULT write_JobCopies_caps(const WCHAR *device, IXMLDOMElement *root)
+{
+    HRESULT hr = S_OK;
+    int copies;
+    IXMLDOMElement *feature = NULL;
+
+    FIXME("stub\n");
+
+    copies = DeviceCapabilitiesW(device, NULL, DC_COPIES, NULL, NULL);
+    TRACE("DC_COPIES: %d\n", copies);
+
+    hr = create_ParameterDef(root, L"psk:JobCopiesAllDocuments", &feature);
+    if (hr != S_OK) goto fail;
+
+fail:
+    if (feature) IXMLDOMElement_Release(feature);
+    return hr;
+}
+
+static HRESULT write_print_capabilities(const WCHAR *device, IStream *stream)
+{
+    static const char xmldecl[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+    HRESULT hr;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *root = NULL;
+    VARIANT var;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IXMLDOMDocument, (void **)&doc);
+    if (hr != S_OK) return hr;
+
+    hr = IXMLDOMDocument_createElement(doc, (BSTR)L"psf:PrintCapabilities", &root);
+    if (hr != S_OK) goto fail;
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)root, NULL);
+    if (hr != S_OK) goto fail;
+
+    hr = write_attributes(root);
+    if (hr != S_OK) goto fail;
+
+    hr = write_PageMediaSize_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_PageOutputColor_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_PageScaling_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_PageResolution_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_PageOrientation_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_DocumentCollate_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_JobInputBin_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_JobCopies_caps(device, root);
+    if (hr != S_OK) goto fail;
+
+    hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
+    if (hr != S_OK) goto fail;
+
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown *)stream;
+    hr = IXMLDOMDocument_save(doc, var);
+
+fail:
+    if (root) IXMLDOMElement_Release(root);
+    IXMLDOMDocument_Release(doc);
+    return hr;
+}
+
+HRESULT WINAPI PTGetPrintCapabilities(HPTPROVIDER provider, IStream *stream, IStream *caps, BSTR *error)
+{
+    struct prn_provider *prov = (struct prn_provider *)provider;
+    struct ticket ticket;
+    HRESULT hr;
+
+    TRACE("%p,%p,%p,%p\n", provider, stream, caps, error);
+
+    if (!is_valid_provider(provider) || !stream || !caps)
+        return E_INVALIDARG;
+
+    hr = parse_ticket(stream, kPTJobScope, &ticket);
+    if (hr != S_OK) return hr;
+
+    return write_print_capabilities(prov->name, caps);
 }
