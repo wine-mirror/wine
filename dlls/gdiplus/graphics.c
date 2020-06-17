@@ -159,8 +159,8 @@ static HBITMAP create_hatch_bitmap(const GpHatch *hatch, INT origin_x, INT origi
              * degree of shading needed. */
             for (y = 0; y < 8; y++)
             {
-                const int hy = (((y + origin_y) % 8) + 8) % 8;
-                const int hx = ((origin_x % 8) + 8) % 8;
+                const int hy = (y + origin_y) & 7;
+                const int hx = origin_x & 7;
                 unsigned int row = (0x10101 * hatch_data[hy]) >> hx;
 
                 for (x = 0; x < 8; x++, row >>= 1)
@@ -1198,13 +1198,13 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         /* See create_hatch_bitmap for an explanation of how index is derived. */
         for (y = 0; y < fill_area->Height; y++, argb_pixels += cdwStride)
         {
-            const int hy = (7 - ((y + fill_area->Y - graphics->origin_y) % 8)) % 8;
-            const int hx = ((graphics->origin_x % 8) + 8) % 8;
+            const int hy = ~(y + fill_area->Y - graphics->origin_y) & 7;
+            const int hx = graphics->origin_x & 7;
             const unsigned int row = (0x10101 * hatch_data[hy]) >> hx;
 
             for (x = 0; x < fill_area->Width; x++)
             {
-                const unsigned int srow = row >> (7 - ((x + fill_area->X) % 8));
+                const unsigned int srow = row >> (~(x + fill_area->X) & 7);
                 int index;
                 if (hatch_data[8])
                     index = (srow & 1) ? 2 : (srow & 0x82) ? 1 : 0;

@@ -1814,8 +1814,8 @@ static void test_renderingOrigin(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
-        const INT exp_x = ((tests[i][0] % 8) + 8) % 8;
-        const INT exp_y = ((tests[i][1] % 8) + 8) % 8;
+        const INT exp_x = tests[i][0] & 7;
+        const INT exp_y = tests[i][1] & 7;
 
         status = GdipSetRenderingOrigin(graphics_image, tests[i][0], tests[i][1]);
         expect(Ok, status);
