@@ -2133,7 +2133,7 @@ typedef struct _CONTEXT
 
     DWORD ContextFlags;
     DWORD Fill[2];
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 #endif  /* _MIPS_ */
 
@@ -2245,7 +2245,7 @@ typedef struct
     DWORD Dr5;
     DWORD Dr6;
     DWORD Dr7;
-} CONTEXT;
+} CONTEXT, *PCONTEXT;
 
 typedef struct _STACK_FRAME_HEADER
 {
