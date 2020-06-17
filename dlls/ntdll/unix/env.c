@@ -855,6 +855,75 @@ NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *siz
 
 
 /*************************************************************************
+ *		get_initial_directory
+ *
+ * Get the current directory at startup.
+ */
+void CDECL get_initial_directory( UNICODE_STRING *dir )
+{
+    const char *pwd;
+    char *cwd;
+    int size;
+
+    dir->Length = 0;
+
+    /* try to get it from the Unix cwd */
+
+    for (size = 1024; ; size *= 2)
+    {
+        if (!(cwd = malloc( size ))) break;
+        if (getcwd( cwd, size )) break;
+        free( cwd );
+        if (errno == ERANGE) continue;
+        cwd = NULL;
+        break;
+    }
+
+    /* try to use PWD if it is valid, so that we don't resolve symlinks */
+
+    pwd = getenv( "PWD" );
+    if (cwd)
+    {
+        struct stat st1, st2;
+
+        if (!pwd || stat( pwd, &st1 ) == -1 ||
+            (!stat( cwd, &st2 ) && (st1.st_dev != st2.st_dev || st1.st_ino != st2.st_ino)))
+            pwd = cwd;
+    }
+
+    if (pwd)
+    {
+        ANSI_STRING unix_name;
+        UNICODE_STRING nt_name;
+
+        RtlInitAnsiString( &unix_name, pwd );
+        if (!unix_to_nt_file_name( &unix_name, &nt_name ))
+        {
+            /* skip the \??\ prefix */
+            if (nt_name.Length > 6 * sizeof(WCHAR) && nt_name.Buffer[5] == ':')
+            {
+                dir->Length = nt_name.Length - 4 * sizeof(WCHAR);
+                memcpy( dir->Buffer, nt_name.Buffer + 4, dir->Length );
+            }
+            else  /* change \??\ to \\?\ */
+            {
+                dir->Length = nt_name.Length;
+                memcpy( dir->Buffer, nt_name.Buffer, dir->Length );
+                dir->Buffer[1] = '\\';
+            }
+            RtlFreeUnicodeString( &nt_name );
+        }
+    }
+
+    if (!dir->Length)  /* still not initialized */
+        MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
+                "starting in the Windows directory.\n", cwd ? cwd : "" );
+    free( cwd );
+    chdir( "/" ); /* avoid locking removable devices */
+}
+
+
+/*************************************************************************
  *		get_unix_codepage
  *
  * Return the Unix codepage data.

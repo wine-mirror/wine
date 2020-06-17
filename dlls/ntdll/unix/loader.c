@@ -951,6 +951,7 @@ static struct unix_funcs unix_funcs =
     fast_RtlWakeConditionVariable,
     get_main_args,
     get_initial_environment,
+    get_initial_directory,
     get_paths,
     get_dll_path,
     get_unix_codepage,

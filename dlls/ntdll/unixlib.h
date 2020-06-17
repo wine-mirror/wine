@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 51
+#define NTDLL_UNIXLIB_VERSION 52
 
 struct unix_funcs
 {
@@ -259,6 +259,7 @@ struct unix_funcs
     /* environment functions */
     void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );
     NTSTATUS      (CDECL *get_initial_environment)( WCHAR **wargv[], WCHAR *env, SIZE_T *size );
+    void          (CDECL *get_initial_directory)( UNICODE_STRING *dir );
     void          (CDECL *get_paths)( const char **builddir, const char **datadir, const char **configdir );
     void          (CDECL *get_dll_path)( const char ***paths, SIZE_T *maxlen );
     void          (CDECL *get_unix_codepage)( CPTABLEINFO *table );
