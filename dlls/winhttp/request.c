@@ -2353,8 +2353,11 @@ static void set_content_length( struct request *request, DWORD status )
     WCHAR encoding[20];
     DWORD buflen = sizeof(request->content_length);
 
-    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED || !wcscmp( request->verb, L"HEAD" ))
+    if (status == HTTP_STATUS_NO_CONTENT || status == HTTP_STATUS_NOT_MODIFIED ||
+        status == HTTP_STATUS_SWITCH_PROTOCOLS || !wcscmp( request->verb, L"HEAD" ))
+    {
         request->content_length = 0;
+    }
     else
     {
         if (query_headers( request, WINHTTP_QUERY_CONTENT_LENGTH|WINHTTP_QUERY_FLAG_NUMBER,
