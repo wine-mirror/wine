@@ -28,6 +28,9 @@
 #include "wincodec.h"
 #include "wine/heap.h"
 
+static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
+        const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
+
 static BOOL use_mt = TRUE;
 
 static struct test_entry
@@ -7911,6 +7914,7 @@ static void test_bezier_intersect(void)
 
 static void test_create_device(void)
 {
+    D2D1_CREATION_PROPERTIES properties = {0};
     ID3D10Device1 *d3d_device;
     IDXGIDevice *dxgi_device;
     ID2D1Factory1 *factory;
@@ -7942,6 +7946,19 @@ static void test_create_device(void)
     ok(factory2 == (ID2D1Factory *)factory, "Got unexpected factory %p, expected %p.\n", factory2, factory);
     ID2D1Factory_Release(factory2);
     ID2D1Device_Release(device);
+
+    if (pD2D1CreateDevice)
+    {
+        hr = pD2D1CreateDevice(dxgi_device, NULL, &device);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Device_Release(device);
+
+        hr = pD2D1CreateDevice(dxgi_device, &properties, &device);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ID2D1Device_Release(device);
+    }
+    else
+        win_skip("D2D1CreateDevice() is unavailable.\n");
 
     IDXGIDevice_Release(dxgi_device);
     ID3D10Device1_Release(d3d_device);
@@ -9415,6 +9432,8 @@ START_TEST(d2d1)
 {
     unsigned int argc, i;
     char **argv;
+
+    pD2D1CreateDevice = (void *)GetProcAddress(GetModuleHandleA("d2d1.dll"), "D2D1CreateDevice");
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
 

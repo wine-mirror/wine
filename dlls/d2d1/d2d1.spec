@@ -4,7 +4,7 @@
 @ stdcall D2D1IsMatrixInvertible(ptr)
 @ stdcall D2D1InvertMatrix(ptr)
 @ stub D2D1ConvertColorSpace
-@ stub D2D1CreateDevice
+@ stdcall D2D1CreateDevice(ptr ptr ptr)
 @ stub D2D1CreateDeviceContext
 @ stub D2D1SinCos
 @ stub D2D1Tan
