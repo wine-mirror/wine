@@ -2470,7 +2470,7 @@ static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const ch
     return ret;
 }
 
-static BOOL is_extension_blacklisted(LPCWSTR extension)
+static BOOL is_extension_banned(LPCWSTR extension)
 {
     /* These are managed through external tools like wine.desktop, to evade malware created file type associations */
     static const WCHAR comW[] = {'.','c','o','m',0};
@@ -2564,7 +2564,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             size *= 2;
         } while (ret == ERROR_MORE_DATA);
 
-        if (ret == ERROR_SUCCESS && extensionW[0] == '.' && !is_extension_blacklisted(extensionW))
+        if (ret == ERROR_SUCCESS && extensionW[0] == '.' && !is_extension_banned(extensionW))
         {
             char *extensionA = NULL;
             WCHAR *commandW = NULL;
