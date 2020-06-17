@@ -102,6 +102,18 @@ static int media_to_paper(const WCHAR *name)
     return DMPAPER_A4;
 }
 
+static const WCHAR *paper_to_media(int paper)
+{
+    int i;
+
+    for (i = 0 ; i < ARRAY_SIZE(psk_media); i++)
+        if (psk_media[i].paper == paper)
+            return psk_media[i].name;
+
+    FIXME("%d\n", paper);
+    return psk_media[0].name;
+}
+
 static BOOL is_valid_node_name(const WCHAR *name)
 {
     static const WCHAR * const psf_names[] = { L"psf:ParameterInit", L"psf:Feature" };
@@ -692,4 +704,310 @@ HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER provider, IStream *stre
     *size = sizeof(**dm);
 
     return S_OK;
+}
+
+static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
+{
+    if (dm->dmFields & DM_ORIENTATION)
+        ticket->page.orientation = dm->u1.s1.dmOrientation;
+    if (dm->dmFields & DM_PAPERSIZE)
+        ticket->page.media.paper = dm->u1.s1.dmPaperSize;
+    if (dm->dmFields & DM_PAPERLENGTH)
+        ticket->page.media.size.width = dm->u1.s1.dmPaperWidth * 100;
+    if (dm->dmFields & DM_PAPERWIDTH)
+        ticket->page.media.size.height = dm->u1.s1.dmPaperLength * 100;
+    if (dm->dmFields & DM_SCALE)
+        ticket->page.scaling = dm->u1.s1.dmScale;
+    if (dm->dmFields & DM_COPIES)
+        ticket->job.copies = dm->u1.s1.dmCopies;
+    if (dm->dmFields & DM_COLOR)
+        ticket->page.color = dm->dmColor;
+    if (dm->dmFields & DM_PRINTQUALITY)
+    {
+        ticket->page.resolution.x = dm->u1.s1.dmPrintQuality;
+        ticket->page.resolution.y = dm->u1.s1.dmPrintQuality;
+    }
+    if (dm->dmFields & DM_YRESOLUTION)
+        ticket->page.resolution.y = dm->dmYResolution;
+    if (dm->dmFields & DM_LOGPIXELS)
+    {
+        ticket->page.resolution.x = dm->dmLogPixels;
+        ticket->page.resolution.y = dm->dmLogPixels;
+    }
+    if (dm->dmFields & DM_COLLATE)
+        ticket->document.collate = dm->dmCollate;
+}
+
+static HRESULT add_attribute(IXMLDOMElement *element, const WCHAR *attr, const WCHAR *value)
+{
+    VARIANT var;
+    BSTR name;
+    HRESULT hr;
+
+    name = SysAllocString(attr);
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(value);
+
+    hr = IXMLDOMElement_setAttribute(element, name, var);
+
+    SysFreeString(name);
+    SysFreeString(V_BSTR(&var));
+
+    return hr;
+}
+
+static HRESULT create_element(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    hr = IXMLDOMElement_get_ownerDocument(root, &doc);
+    if (hr != S_OK) return hr;
+
+    hr = IXMLDOMDocument_createElement(doc, (BSTR)name, child);
+    if (hr == S_OK)
+        hr = IXMLDOMElement_appendChild(root, (IXMLDOMNode *)*child, NULL);
+
+    IXMLDOMDocument_Release(doc);
+    return hr;
+}
+
+static HRESULT write_int_value(IXMLDOMElement *root, int value)
+{
+    HRESULT hr;
+    IXMLDOMElement *child;
+    VARIANT var;
+
+    hr = create_element(root, L"psf:Value", &child);
+    if (hr != S_OK) return hr;
+
+    hr = add_attribute(child, L"xsi:type", L"xsd:integer");
+    if (hr != S_OK) return hr;
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = value;
+    hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+
+    IXMLDOMElement_Release(child);
+    return hr;
+}
+
+static HRESULT create_Feature(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:Feature", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
+static HRESULT create_Option(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:Option", child);
+    if (hr != S_OK) return hr;
+
+    if (name)
+        hr = add_attribute(*child, L"name", name);
+
+    return hr;
+}
+
+static HRESULT create_ScoredProperty(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:ScoredProperty", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
+static HRESULT write_PageMediaSize(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL, *property;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:PageMediaSize", &feature);
+    if (hr != S_OK) return hr;
+
+    hr = create_Option(feature, paper_to_media(ticket->page.media.paper), &option);
+    if (hr != S_OK) goto fail;
+
+    hr = create_ScoredProperty(option, L"psk:MediaSizeWidth", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_int_value(property, ticket->page.media.size.width);
+    IXMLDOMElement_Release(property);
+    if (hr != S_OK) goto fail;
+
+    hr = create_ScoredProperty(option, L"psk:MediaSizeHeight", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_int_value(property, ticket->page.media.size.height);
+    IXMLDOMElement_Release(property);
+
+fail:
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
+static HRESULT write_attributes(IXMLDOMElement *element)
+{
+    HRESULT hr;
+
+    hr = add_attribute(element, L"xmlns:psf", L"http://schemas.microsoft.com/windows/2003/08/printing/printschemaframework");
+    if (hr != S_OK) return hr;
+    hr = add_attribute(element, L"xmlns:psk", L"http://schemas.microsoft.com/windows/2003/08/printing/printschemakeywords");
+    if (hr != S_OK) return hr;
+    hr = add_attribute(element, L"xmlns:xsi", L"http://www.w3.org/2001/XMLSchema-instance");
+    if (hr != S_OK) return hr;
+    hr = add_attribute(element, L"xmlns:xsd", L"http://www.w3.org/2001/XMLSchema");
+    if (hr != S_OK) return hr;
+
+    return add_attribute(element, L"version", L"1");
+}
+
+static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrintTicketScope scope)
+{
+    static const char xmldecl[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+    HRESULT hr;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *root = NULL;
+    VARIANT var;
+
+    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IXMLDOMDocument, (void **)&doc);
+    if (hr != S_OK) return hr;
+
+    hr = IXMLDOMDocument_createElement(doc, (BSTR)L"psf:PrintTicket", &root);
+    if (hr != S_OK) goto fail;
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)root, NULL);
+    if (hr != S_OK) goto fail;
+
+    hr = write_attributes(root);
+    if (hr != S_OK) goto fail;
+
+    hr = write_PageMediaSize(root, ticket);
+    if (hr != S_OK) goto fail;
+
+    hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
+    if (hr != S_OK) goto fail;
+
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown *)stream;
+    hr = IXMLDOMDocument_save(doc, var);
+
+fail:
+    if (root) IXMLDOMElement_Release(root);
+    IXMLDOMDocument_Release(doc);
+    return hr;
+}
+
+static void dump_fields(DWORD fields)
+{
+    int add_space = 0;
+
+#define CHECK_FIELD(flag) \
+do \
+{ \
+    if (fields & flag) \
+    { \
+        if (add_space++) TRACE(" "); \
+        TRACE(#flag); \
+        fields &= ~flag; \
+    } \
+} \
+while (0)
+
+    CHECK_FIELD(DM_ORIENTATION);
+    CHECK_FIELD(DM_PAPERSIZE);
+    CHECK_FIELD(DM_PAPERLENGTH);
+    CHECK_FIELD(DM_PAPERWIDTH);
+    CHECK_FIELD(DM_SCALE);
+    CHECK_FIELD(DM_POSITION);
+    CHECK_FIELD(DM_NUP);
+    CHECK_FIELD(DM_DISPLAYORIENTATION);
+    CHECK_FIELD(DM_COPIES);
+    CHECK_FIELD(DM_DEFAULTSOURCE);
+    CHECK_FIELD(DM_PRINTQUALITY);
+    CHECK_FIELD(DM_COLOR);
+    CHECK_FIELD(DM_DUPLEX);
+    CHECK_FIELD(DM_YRESOLUTION);
+    CHECK_FIELD(DM_TTOPTION);
+    CHECK_FIELD(DM_COLLATE);
+    CHECK_FIELD(DM_FORMNAME);
+    CHECK_FIELD(DM_LOGPIXELS);
+    CHECK_FIELD(DM_BITSPERPEL);
+    CHECK_FIELD(DM_PELSWIDTH);
+    CHECK_FIELD(DM_PELSHEIGHT);
+    CHECK_FIELD(DM_DISPLAYFLAGS);
+    CHECK_FIELD(DM_DISPLAYFREQUENCY);
+    CHECK_FIELD(DM_ICMMETHOD);
+    CHECK_FIELD(DM_ICMINTENT);
+    CHECK_FIELD(DM_MEDIATYPE);
+    CHECK_FIELD(DM_DITHERTYPE);
+    CHECK_FIELD(DM_PANNINGWIDTH);
+    CHECK_FIELD(DM_PANNINGHEIGHT);
+    if (fields) TRACE(" %#x", fields);
+    TRACE("\n");
+#undef CHECK_FIELD
+}
+
+/* Dump DEVMODE structure without a device specific part.
+ * Some applications and drivers fail to specify correct field
+ * flags (like DM_FORMNAME), so dump everything.
+ */
+static void dump_devmode(const DEVMODEW *dm)
+{
+    if (!TRACE_ON(prntvpt)) return;
+
+    TRACE("dmDeviceName: %s\n", debugstr_w(dm->dmDeviceName));
+    TRACE("dmSpecVersion: 0x%04x\n", dm->dmSpecVersion);
+    TRACE("dmDriverVersion: 0x%04x\n", dm->dmDriverVersion);
+    TRACE("dmSize: 0x%04x\n", dm->dmSize);
+    TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
+    TRACE("dmFields: 0x%04x\n", dm->dmFields);
+    dump_fields(dm->dmFields);
+    TRACE("dmOrientation: %d\n", dm->u1.s1.dmOrientation);
+    TRACE("dmPaperSize: %d\n", dm->u1.s1.dmPaperSize);
+    TRACE("dmPaperLength: %d\n", dm->u1.s1.dmPaperLength);
+    TRACE("dmPaperWidth: %d\n", dm->u1.s1.dmPaperWidth);
+    TRACE("dmScale: %d\n", dm->u1.s1.dmScale);
+    TRACE("dmCopies: %d\n", dm->u1.s1.dmCopies);
+    TRACE("dmDefaultSource: %d\n", dm->u1.s1.dmDefaultSource);
+    TRACE("dmPrintQuality: %d\n", dm->u1.s1.dmPrintQuality);
+    TRACE("dmColor: %d\n", dm->dmColor);
+    TRACE("dmDuplex: %d\n", dm->dmDuplex);
+    TRACE("dmYResolution: %d\n", dm->dmYResolution);
+    TRACE("dmTTOption: %d\n", dm->dmTTOption);
+    TRACE("dmCollate: %d\n", dm->dmCollate);
+    TRACE("dmFormName: %s\n", debugstr_w(dm->dmFormName));
+    TRACE("dmLogPixels %u\n", dm->dmLogPixels);
+    TRACE("dmBitsPerPel %u\n", dm->dmBitsPerPel);
+    TRACE("dmPelsWidth %u\n", dm->dmPelsWidth);
+    TRACE("dmPelsHeight %u\n", dm->dmPelsHeight);
+}
+
+HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, PDEVMODEW dm,
+                                             EPrintTicketScope scope, IStream *stream)
+{
+    struct ticket ticket;
+
+    TRACE("%p,%u,%p,%d,%p\n", provider, size, dm, scope, stream);
+
+    if (!provider || !dm || !stream)
+        return E_INVALIDARG;
+
+    dump_devmode(dm);
+
+    if (!IsValidDevmodeW(dm, size))
+        return E_INVALIDARG;
+
+    initialize_ticket(&ticket);
+    devmode_to_ticket(dm, &ticket);
+
+    return write_ticket(stream, &ticket, scope);
 }

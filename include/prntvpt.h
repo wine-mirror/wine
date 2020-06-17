@@ -43,6 +43,7 @@ typedef enum
 HRESULT WINAPI PTOpenProvider(const WCHAR *printer, DWORD version, HPTPROVIDER *provider);
 HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD pref_version, HPTPROVIDER *provider, DWORD *used_version);
 HRESULT WINAPI PTCloseProvider(HPTPROVIDER);
+HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER, ULONG, PDEVMODEW, EPrintTicketScope, IStream *);
 HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER, IStream *, EDefaultDevmodeType, EPrintTicketScope, ULONG *, PDEVMODEW *, BSTR *);
 HRESULT WINAPI PTReleaseMemory(PVOID);
 
