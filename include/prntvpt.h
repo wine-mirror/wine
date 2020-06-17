@@ -25,7 +25,9 @@ extern "C" {
 
 DECLARE_HANDLE(HPTPROVIDER);
 
-#define E_PRINTTICKET_FORMAT 0x80040003
+#define S_PT_NO_CONFLICT       0x00040001
+#define S_PT_CONFLICT_RESOLVED 0x00040002
+#define E_PRINTTICKET_FORMAT   0x80040003
 
 typedef enum
 {
@@ -45,6 +47,7 @@ HRESULT WINAPI PTOpenProviderEx(const WCHAR *printer, DWORD max_version, DWORD p
 HRESULT WINAPI PTCloseProvider(HPTPROVIDER);
 HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER, ULONG, PDEVMODEW, EPrintTicketScope, IStream *);
 HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER, IStream *, EDefaultDevmodeType, EPrintTicketScope, ULONG *, PDEVMODEW *, BSTR *);
+HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER, IStream *, IStream *, EPrintTicketScope, IStream *, BSTR *);
 HRESULT WINAPI PTReleaseMemory(PVOID);
 
 #ifdef __cplusplus

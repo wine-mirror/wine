@@ -1227,3 +1227,31 @@ HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, P
 
     return write_ticket(stream, &ticket, scope);
 }
+
+HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER provider, IStream *base, IStream *delta,
+                                             EPrintTicketScope scope, IStream *result, BSTR *error)
+{
+    struct prn_provider *prov = (struct prn_provider *)provider;
+    struct ticket ticket;
+    HRESULT hr;
+
+    TRACE("%p,%p,%p,%d,%p,%p\n", provider, base, delta, scope, result, error);
+
+    if (!is_valid_provider(provider) || !base || !result)
+        return E_INVALIDARG;
+
+    hr = initialize_ticket(prov, &ticket);
+    if (hr != S_OK) return hr;
+
+    hr = parse_ticket(base, scope, &ticket);
+    if (hr != S_OK) return hr;
+
+    if (delta)
+    {
+        hr = parse_ticket(delta, scope, &ticket);
+        if (hr != S_OK) return hr;
+    }
+
+    hr = write_ticket(result, &ticket, scope);
+    return hr ? hr : S_PT_NO_CONFLICT;
+}

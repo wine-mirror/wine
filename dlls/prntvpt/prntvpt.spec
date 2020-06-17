@@ -4,7 +4,7 @@
 @ stdcall PTCloseProvider(ptr)
 @ stub BindPTProviderThunk
 @ stub PTGetPrintCapabilities
-@ stub PTMergeAndValidatePrintTicket
+@ stdcall PTMergeAndValidatePrintTicket(ptr ptr ptr long ptr ptr)
 @ stdcall PTConvertPrintTicketToDevMode(ptr ptr long long ptr ptr ptr)
 @ stdcall PTConvertDevModeToPrintTicket(ptr long ptr long ptr)
 @ stdcall PTReleaseMemory(ptr)
