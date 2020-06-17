@@ -825,6 +825,16 @@ static HRESULT create_ParameterInit(IXMLDOMElement *root, const WCHAR *name, IXM
     return add_attribute(*child, L"name", name);
 }
 
+static HRESULT create_ParameterRef(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:ParameterRef", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
 static HRESULT create_ScoredProperty(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
 {
     HRESULT hr;
@@ -889,12 +899,41 @@ static HRESULT write_PageScaling(IXMLDOMElement *root, const struct ticket *tick
     hr = create_Feature(root, L"psk:PageScaling", &feature);
     if (hr != S_OK) return hr;
 
-    if (ticket->page.scaling != 100)
-        FIXME("page.scaling: %d\n", ticket->page.scaling);
+    if (ticket->page.scaling == 100)
+    {
+        hr = create_Option(feature, L"psk:None", &option);
+        if (hr == S_OK) IXMLDOMElement_Release(option);
+    }
+    else
+    {
+        hr = create_Option(feature, L"psk:CustomSquare", &option);
+        if (hr == S_OK)
+        {
+            IXMLDOMElement *property, *parameter;
 
-    hr = create_Option(feature, L"psk:None", &option);
+            hr = create_ScoredProperty(option, L"psk:Scale", &property);
+            if (hr == S_OK)
+            {
+                hr = create_ParameterRef(property, L"psk:PageScalingScale", &parameter);
+                if (hr == S_OK)
+                {
+                    IXMLDOMElement_Release(parameter);
 
-    if (option) IXMLDOMElement_Release(option);
+                    hr = create_ParameterInit(root, L"psk:PageScalingScale", &parameter);
+                    if (hr == S_OK)
+                    {
+                        hr = write_int_value(parameter, ticket->page.scaling);
+                        IXMLDOMElement_Release(parameter);
+                    }
+                }
+
+                IXMLDOMElement_Release(property);
+            }
+
+            IXMLDOMElement_Release(option);
+        }
+    }
+
     IXMLDOMElement_Release(feature);
     return hr;
 }
