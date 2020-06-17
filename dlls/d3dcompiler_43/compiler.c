@@ -805,7 +805,7 @@ static HRESULT compile_shader(const char *preproc_shader, const char *target, co
             if (FAILED(blob_hr = D3DCreateBlob(size, &buffer)))
             {
                 HeapFree(GetProcessHeap(), 0, messages);
-                if (*shader)
+                if (shader && *shader)
                 {
                     ID3D10Blob_Release(*shader);
                     *shader = NULL;
