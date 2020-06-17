@@ -837,12 +837,152 @@ static void test_Command(void)
     _Command_Release( command );
 }
 
+struct conn_event {
+    ConnectionEventsVt conn_event_sink;
+    LONG refs;
+};
+
+static HRESULT WINAPI conneventvt_QueryInterface( ConnectionEventsVt *iface, REFIID riid, void **obj )
+{
+    struct conn_event *conn_event = CONTAINING_RECORD( iface, struct conn_event, conn_event_sink );
+
+    if (IsEqualGUID( &IID_ConnectionEventsVt, riid ))
+    {
+        InterlockedIncrement( &conn_event->refs );
+        *obj = iface;
+        return S_OK;
+    }
+
+    ok( 0, "unexpected call\n" );
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI conneventvt_AddRef( ConnectionEventsVt *iface )
+{
+    struct conn_event *conn_event = CONTAINING_RECORD( iface, struct conn_event, conn_event_sink );
+    return InterlockedIncrement( &conn_event->refs );
+}
+
+static ULONG WINAPI conneventvt_Release( ConnectionEventsVt *iface )
+{
+    struct conn_event *conn_event = CONTAINING_RECORD( iface, struct conn_event, conn_event_sink );
+    return InterlockedDecrement( &conn_event->refs );
+}
+
+static HRESULT WINAPI conneventvt_InfoMessage( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *Connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_BeginTransComplete( ConnectionEventsVt *iface, LONG TransactionLevel,
+        Error *error, EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_CommitTransComplete( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_RollbackTransComplete( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_WillExecute( ConnectionEventsVt *iface, BSTR *source,
+        CursorTypeEnum *cursor_type, LockTypeEnum *lock_type, LONG *options, EventStatusEnum *status,
+        _Command *command, _Recordset *record_set, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_ExecuteComplete( ConnectionEventsVt *iface, LONG records_affected,
+        Error *error, EventStatusEnum *status, _Command *command, _Recordset *record_set,
+        _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_WillConnect( ConnectionEventsVt *iface, BSTR *string, BSTR *userid,
+        BSTR *password, LONG *options, EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_ConnectComplete( ConnectionEventsVt *iface, Error *error,
+        EventStatusEnum *status, _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI conneventvt_Disconnect( ConnectionEventsVt *iface, EventStatusEnum *status,
+        _Connection *connection )
+{
+    return E_NOTIMPL;
+}
+
+static const ConnectionEventsVtVtbl conneventvt_vtbl = {
+    conneventvt_QueryInterface,
+    conneventvt_AddRef,
+    conneventvt_Release,
+    conneventvt_InfoMessage,
+    conneventvt_BeginTransComplete,
+    conneventvt_CommitTransComplete,
+    conneventvt_RollbackTransComplete,
+    conneventvt_WillExecute,
+    conneventvt_ExecuteComplete,
+    conneventvt_WillConnect,
+    conneventvt_ConnectComplete,
+    conneventvt_Disconnect
+};
+
+static HRESULT WINAPI supporterror_QueryInterface( ISupportErrorInfo *iface, REFIID riid, void **obj )
+{
+    if (IsEqualGUID( &IID_ISupportErrorInfo, riid ))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI supporterror_AddRef( ISupportErrorInfo *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI supporterror_Release( ISupportErrorInfo *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI supporterror_InterfaceSupportsErrorInfo( ISupportErrorInfo *iface, REFIID riid )
+{
+    return E_NOTIMPL;
+}
+
+static const struct ISupportErrorInfoVtbl support_error_vtbl =
+{
+    supporterror_QueryInterface,
+    supporterror_AddRef,
+    supporterror_Release,
+    supporterror_InterfaceSupportsErrorInfo
+};
+
 static void test_ConnectionPoint(void)
 {
     HRESULT hr;
     ULONG refs;
+    DWORD cookie;
     IConnectionPoint *point;
     IConnectionPointContainer *pointcontainer;
+    struct conn_event conn_event = { { &conneventvt_vtbl }, 0 };
+    ISupportErrorInfo support_err_sink = { &support_error_vtbl };
 
     hr = CoCreateInstance( &CLSID_Connection, NULL, CLSCTX_INPROC_SERVER,
             &IID_IConnectionPointContainer, (void**)&pointcontainer );
@@ -856,10 +996,59 @@ static void test_ConnectionPoint(void)
     hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_ConnectionEvents, &point );
     ok( hr == S_OK, "got %08x\n", hr );
 
+todo_wine {
+    /* nothing advised yet */
+    hr = IConnectionPoint_Unadvise( point, 3 );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    hr = IConnectionPoint_Advise( point, NULL, NULL );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, NULL );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    cookie = 0xdeadbeef;
+    hr = IConnectionPoint_Advise( point, NULL, &cookie );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+}
+    ok( cookie == 0xdeadbeef, "got %08x\n", cookie );
+
+todo_wine {
+    /* unsupported sink */
+    cookie = 0xdeadbeef;
+    hr = IConnectionPoint_Advise( point, (void*)&support_err_sink, &cookie );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+    ok( !cookie, "got %08x\n", cookie );
+
+    cookie = 0;
+    hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, &cookie );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cookie, "got %08x\n", cookie );
+
+    /* invalid cookie */
+    hr = IConnectionPoint_Unadvise( point, 0 );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    /* wrong cookie */
+    hr = IConnectionPoint_Unadvise( point, cookie + 1 );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+
+    hr = IConnectionPoint_Unadvise( point, cookie );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* sinks are released when the connection is destroyed */
+    cookie = 0;
+    hr = IConnectionPoint_Advise( point, (void*)&conn_event.conn_event_sink, &cookie );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cookie, "got %08x\n", cookie );
+    ok( conn_event.refs == 1, "got %d\n", conn_event.refs );
+}
     refs = IConnectionPoint_Release( point );
     ok( refs == 1, "got %u", refs );
 
     IConnectionPointContainer_Release( pointcontainer );
+
+    ok( !conn_event.refs, "got %d\n", conn_event.refs );
 }
 
 START_TEST(msado15)
