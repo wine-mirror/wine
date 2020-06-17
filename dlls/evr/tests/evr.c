@@ -22,6 +22,7 @@
 #include "dshow.h"
 #include "wine/test.h"
 #include "d3d9.h"
+#include "evr.h"
 #include "initguid.h"
 #include "dxva2api.h"
 
@@ -337,6 +338,36 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_default_mixer(void)
+{
+    IMFTransform *transform;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&transform);
+todo_wine
+    ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IMFTopologyServiceLookupClient, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    IMFTransform_Release(transform);
+
+    hr = MFCreateVideoMixer(NULL, &IID_IMFTransform, &IID_IMFTransform, (void **)&transform);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_MFVideoMixer9, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
+    IMFTransform_Release(transform);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -346,6 +377,7 @@ START_TEST(evr)
     test_enum_pins();
     test_find_pin();
     test_pin_info();
+    test_default_mixer();
 
     CoUninitialize();
 }

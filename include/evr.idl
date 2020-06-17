@@ -107,3 +107,57 @@ interface IMFVideoRenderer : IUnknown
         [in] IMFVideoPresenter *pVideoPresenter
     );
 }
+
+typedef enum _MF_SERVICE_LOOKUP_TYPE
+{
+    MF_SERVICE_LOOKUP_UPSTREAM,
+    MF_SERVICE_LOOKUP_UPSTREAM_DIRECT,
+    MF_SERVICE_LOOKUP_DOWNSTREAM,
+    MF_SERVICE_LOOKUP_DOWNSTREAM_DIRECT,
+    MF_SERVICE_LOOKUP_ALL,
+    MF_SERVICE_LOOKUP_GLOBAL,
+} MF_SERVICE_LOOKUP_TYPE;
+
+[
+    object,
+    uuid(fa993889-4383-415a-a930-dd472a8cf6f7),
+    local
+]
+interface IMFTopologyServiceLookup : IUnknown
+{
+    HRESULT LookupService(
+        [in] MF_SERVICE_LOOKUP_TYPE lookup_type,
+        [in] DWORD index,
+        [in] REFGUID service,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **objects,
+        [in, out] DWORD *num_objects
+    );
+}
+
+[
+    object,
+    uuid(fa99388a-4383-415a-a930-dd472a8cf6f7),
+    local
+]
+interface IMFTopologyServiceLookupClient : IUnknown
+{
+    HRESULT InitServicePointers(
+        [in] IMFTopologyServiceLookup *service_lookup
+    );
+    HRESULT ReleaseServicePointers();
+}
+
+[
+    object,
+    uuid(a38d9567-5a9c-4f3c-b293-8eb415b279ba),
+    local
+]
+interface IMFVideoDeviceID : IUnknown
+{
+    HRESULT GetDeviceID(
+        [out] IID *device_id
+    );
+}
+
+cpp_quote("HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj);")

@@ -13,7 +13,7 @@
 @ stub MFCreateVideoMediaTypeFromSubtype
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader2
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader
-@ stub MFCreateVideoMixer
+@ stdcall MFCreateVideoMixer(ptr ptr ptr ptr)
 @ stub MFCreateVideoMixerAndPresenter
 @ stub MFCreateVideoOTA
 @ stub MFCreateVideoPresenter2
