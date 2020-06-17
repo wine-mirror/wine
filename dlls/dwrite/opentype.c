@@ -4221,16 +4221,16 @@ static BOOL opentype_layout_apply_gpos_mark_to_base_attachment(struct scriptshap
     return TRUE;
 }
 
-static BOOL table_read_array_be_word(const struct dwrite_fonttable *table, unsigned int offset,
+static const UINT16 * table_read_array_be_word(const struct dwrite_fonttable *table, unsigned int offset,
         unsigned int index, UINT16 *data)
 {
     unsigned int count = table_read_be_word(table, offset);
     const UINT16 *array;
 
-    if (index >= count) return FALSE;
+    if (index != ~0u && index >= count) return NULL;
     if (!(array = table_read_ensure(table, offset + 2, count * sizeof(*array)))) return FALSE;
-    *data = GET_BE_WORD(array[index]);
-    return TRUE;
+    *data = index == ~0u ? count : GET_BE_WORD(array[index]);
+    return array;
 }
 
 static BOOL opentype_layout_apply_gpos_mark_to_lig_attachment(struct scriptshaping_context *context,
@@ -4887,10 +4887,7 @@ static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_co
             return FALSE;
         }
 
-        glyph_count = table_read_be_word(table, subtable_offset + seq_offset);
-
-        if (!(glyphs = table_read_ensure(table, subtable_offset + seq_offset + 2, glyph_count * sizeof(*glyphs))))
-            return FALSE;
+        if (!(glyphs = table_read_array_be_word(table, subtable_offset + seq_offset, ~0u, &glyph_count))) return FALSE;
 
         if (glyph_count == 1)
         {
@@ -4959,43 +4956,36 @@ static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_co
 static BOOL opentype_layout_apply_gsub_alt_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
-    const struct dwrite_fonttable *gsub = &context->table->table;
-    unsigned int idx, coverage_index, offset;
+    const struct dwrite_fonttable *table = &context->table->table;
+    unsigned int idx, coverage_index;
     UINT16 format, coverage, glyph;
 
     idx = context->cur;
     glyph = context->u.subst.glyphs[idx];
 
-    format = table_read_be_word(gsub, subtable_offset);
+    format = table_read_be_word(table, subtable_offset);
 
     if (format == 1)
     {
-        const struct ot_gsub_altsubst_format1 *format1 = table_read_ensure(gsub, subtable_offset, sizeof(*format1));
-        unsigned int count, shift, alt_index;
+        const struct ot_gsub_altsubst_format1 *format1 = table_read_ensure(table, subtable_offset, sizeof(*format1));
+        unsigned int shift, alt_index;
+        UINT16 set_offset;
 
-        coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_altsubst_format1, coverage));
+        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_altsubst_format1, coverage));
 
-        coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
-        if (coverage_index == GLYPH_NOT_COVERED)
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED) return FALSE;
+
+        if (!table_read_array_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_altsubst_format1, count),
+                coverage_index, &set_offset))
             return FALSE;
 
-        if (coverage_index >= GET_BE_WORD(format1->count))
-            return FALSE;
-
-        offset = table_read_be_word(gsub, subtable_offset +
-                FIELD_OFFSET(struct ot_gsub_altsubst_format1, sets[coverage_index]));
-
-        count = table_read_be_word(gsub, subtable_offset + offset);
-        if (!count)
-            return FALSE;
-
+        /* Argument is 1-based. */
         BitScanForward(&shift, context->lookup_mask);
         alt_index = (context->lookup_mask & context->glyph_infos[idx].mask) >> shift;
+        if (!alt_index) return FALSE;
 
-        if (alt_index > count || !alt_index)
-            return FALSE;
-
-        glyph = table_read_be_word(gsub, subtable_offset + offset + 2 + (alt_index - 1) * sizeof(glyph));
+        if (!table_read_array_be_word(table, subtable_offset + set_offset, alt_index - 1, &glyph)) return FALSE;
     }
     else
     {
