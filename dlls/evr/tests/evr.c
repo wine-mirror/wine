@@ -345,18 +345,19 @@ static void test_default_mixer(void)
     HRESULT hr;
 
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&transform);
-todo_wine
     ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
-    if (FAILED(hr))
-        return;
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFTopologyServiceLookupClient, (void **)&unk);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&unk);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
 
     IMFTransform_Release(transform);
 

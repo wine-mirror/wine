@@ -18,11 +18,16 @@
 
 #pragma makedep register
 
-#include "strmif.idl"
-
 [
     helpstring("Enhanced Video Renderer"),
     threading(both),
     uuid(fa10746c-9b63-4b6c-bc49-fc300ea5f256)
 ]
 coclass EnhancedVideoRenderer { interface IBaseFilter; }
+
+[
+    helpstring("MF Video Mixer"),
+    threading(both),
+    uuid(e474e05a-ab65-4f6a-827c-218b1baaf31f)
+]
+coclass MFVideoMixer9 { interface IMFTransform; }
