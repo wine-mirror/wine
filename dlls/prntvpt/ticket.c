@@ -889,6 +889,34 @@ static HRESULT write_PageScaling(IXMLDOMElement *root, const struct ticket *tick
     return hr;
 }
 
+static HRESULT write_PageResolution(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL, *property;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:PageResolution", &feature);
+    if (hr != S_OK) return hr;
+
+    hr = create_Option(feature, NULL, &option);
+    if (hr != S_OK) goto fail;
+
+    hr = create_ScoredProperty(option, L"psk:ResolutionX", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_int_value(property, ticket->page.resolution.x);
+    IXMLDOMElement_Release(property);
+    if (hr != S_OK) goto fail;
+
+    hr = create_ScoredProperty(option, L"psk:ResolutionY", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_int_value(property, ticket->page.resolution.y);
+    IXMLDOMElement_Release(property);
+
+fail:
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -931,6 +959,8 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     hr = write_PageOutputColor(root, ticket);
     if (hr != S_OK) goto fail;
     hr = write_PageScaling(root, ticket);
+    if (hr != S_OK) goto fail;
+    hr = write_PageResolution(root, ticket);
     if (hr != S_OK) goto fail;
 
     hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
