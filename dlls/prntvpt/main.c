@@ -29,13 +29,9 @@
 #include "wine/heap.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(prntvpt);
+#include "prntvpt_private.h"
 
-struct prn_provider
-{
-    DWORD owner;
-    HANDLE hprn;
-};
+WINE_DEFAULT_DEBUG_CHANNEL(prntvpt);
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
 {
@@ -64,18 +60,13 @@ HRESULT WINAPI PTQuerySchemaVersionSupport(PCWSTR printer, DWORD *version)
     return E_NOTIMPL;
 }
 
-static BOOL is_valid_provider(struct prn_provider *prov)
-{
-    return prov && prov->owner == GetCurrentThreadId();
-}
-
 HRESULT WINAPI PTCloseProvider(HPTPROVIDER provider)
 {
     struct prn_provider *prov = (struct prn_provider *)provider;
 
     TRACE("%p\n", provider);
 
-    if (!is_valid_provider(prov))
+    if (!is_valid_provider(provider))
         return E_HANDLE;
 
     prov->owner = 0;

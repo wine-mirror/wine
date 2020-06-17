@@ -33,6 +33,8 @@
 #include "wine/heap.h"
 #include "wine/debug.h"
 
+#include "prntvpt_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(prntvpt);
 
 struct size
@@ -665,47 +667,6 @@ static void ticket_to_devmode(const struct ticket *ticket, DEVMODEW *dm)
     dm->dmCollate = ticket->document.collate;
 }
 
-static void initialize_ticket(struct ticket *ticket)
-{
-    ticket->job.nup = 0;
-    ticket->job.copies = 1;
-    ticket->job.input_bin = DMBIN_AUTO;
-    ticket->document.collate = DMCOLLATE_FALSE;
-    ticket->page.media.paper = DMPAPER_A4;
-    ticket->page.media.size.width = 210000;
-    ticket->page.media.size.height = 297000;
-    ticket->page.resolution.x = 600;
-    ticket->page.resolution.y = 600;
-    ticket->page.orientation = DMORIENT_PORTRAIT;
-    ticket->page.scaling = 100;
-    ticket->page.color = DMCOLOR_MONOCHROME;
-}
-
-HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER provider, IStream *stream, EDefaultDevmodeType type,
-                                             EPrintTicketScope scope, ULONG *size, PDEVMODEW *dm, BSTR *error)
-{
-    HRESULT hr;
-    struct ticket ticket;
-
-    TRACE("%p,%p,%d,%d,%p,%p,%p\n", provider, stream, type, scope, size, dm, error);
-
-    if (!provider || !stream || !size || !dm)
-        return E_INVALIDARG;
-
-    initialize_ticket(&ticket);
-
-    hr = parse_ticket(stream, scope, &ticket);
-    if (hr != S_OK) return hr;
-
-    *dm = heap_alloc(sizeof(**dm));
-    if (!dm) return E_OUTOFMEMORY;
-
-    ticket_to_devmode(&ticket, *dm);
-    *size = sizeof(**dm);
-
-    return S_OK;
-}
-
 static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
 {
     if (dm->dmFields & DM_ORIENTATION)
@@ -736,6 +697,55 @@ static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
     }
     if (dm->dmFields & DM_COLLATE)
         ticket->document.collate = dm->dmCollate;
+}
+
+static HRESULT initialize_ticket(struct prn_provider *prov, struct ticket *ticket)
+{
+    PRINTER_INFO_2W *pi2;
+    DWORD size;
+    HRESULT hr = S_OK;
+
+    GetPrinterW(prov->hprn, 2, NULL, 0, &size);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    pi2 = heap_alloc(size);
+    if (!pi2) return E_OUTOFMEMORY;
+
+    if (!GetPrinterW(prov->hprn, 2, (LPBYTE)pi2, size, NULL))
+        hr = HRESULT_FROM_WIN32(GetLastError());
+    else
+        devmode_to_ticket(pi2->pDevMode, ticket);
+
+    heap_free(pi2);
+    return hr;
+}
+
+HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER provider, IStream *stream, EDefaultDevmodeType type,
+                                             EPrintTicketScope scope, ULONG *size, PDEVMODEW *dm, BSTR *error)
+{
+    struct prn_provider *prov = (struct prn_provider *)provider;
+    HRESULT hr;
+    struct ticket ticket;
+
+    TRACE("%p,%p,%d,%d,%p,%p,%p\n", provider, stream, type, scope, size, dm, error);
+
+    if (!is_valid_provider(provider) || !stream || !size || !dm)
+        return E_INVALIDARG;
+
+    hr = initialize_ticket(prov, &ticket);
+    if (hr != S_OK) return hr;
+
+    hr = parse_ticket(stream, scope, &ticket);
+    if (hr != S_OK) return hr;
+
+    *dm = heap_alloc(sizeof(**dm));
+    if (!dm) return E_OUTOFMEMORY;
+
+    ticket_to_devmode(&ticket, *dm);
+    *size = sizeof(**dm);
+
+    return S_OK;
 }
 
 static HRESULT add_attribute(IXMLDOMElement *element, const WCHAR *attr, const WCHAR *value)
@@ -1197,11 +1207,13 @@ static void dump_devmode(const DEVMODEW *dm)
 HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, PDEVMODEW dm,
                                              EPrintTicketScope scope, IStream *stream)
 {
+    struct prn_provider *prov = (struct prn_provider *)provider;
     struct ticket ticket;
+    HRESULT hr;
 
     TRACE("%p,%u,%p,%d,%p\n", provider, size, dm, scope, stream);
 
-    if (!provider || !dm || !stream)
+    if (!is_valid_provider(provider) || !dm || !stream)
         return E_INVALIDARG;
 
     dump_devmode(dm);
@@ -1209,7 +1221,8 @@ HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, P
     if (!IsValidDevmodeW(dm, size))
         return E_INVALIDARG;
 
-    initialize_ticket(&ticket);
+    hr = initialize_ticket(prov, &ticket);
+    if (hr != S_OK) return hr;
     devmode_to_ticket(dm, &ticket);
 
     return write_ticket(stream, &ticket, scope);
