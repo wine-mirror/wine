@@ -93,7 +93,7 @@ extern "C" {
 #   define __cdecl __attribute__((pcs("aapcs-vfp")))
 # elif defined(__aarch64__) && defined (__GNUC__)
 #  define __cdecl __attribute__((ms_abi))
-# elif !defined(_MSC_VER)
+# else
 #  define __cdecl
 # endif
 #endif /* __cdecl */
