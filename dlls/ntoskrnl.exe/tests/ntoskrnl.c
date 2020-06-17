@@ -27,6 +27,7 @@
 #include "winsvc.h"
 #include "winioctl.h"
 #include "winternl.h"
+#include "winsock2.h"
 #include "wine/test.h"
 #include "wine/heap.h"
 
@@ -513,10 +514,42 @@ static void test_driver3(void)
     DeleteFileA(filename);
 }
 
-void test_driver4(void)
+static DWORD WINAPI wsk_test_thread(void *parameter)
+{
+    static const WORD version = MAKEWORD(2, 2);
+    struct sockaddr_in addr;
+    int ret, err;
+    WSADATA data;
+    SOCKET s;
+
+    ret = WSAStartup(version, &data);
+    ok(!ret, "WSAStartup() failed, ret %u.\n", ret);
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(s != INVALID_SOCKET, "Error creating socket, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(12345);
+    addr.sin_addr.s_addr = htonl(0x7f000001);
+
+    ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+    while (ret && ((err = WSAGetLastError()) == WSAECONNREFUSED || err == WSAECONNABORTED))
+    {
+        SwitchToThread();
+        ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+    }
+    ok(!ret, "Error connecting, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    closesocket(s);
+    return TRUE;
+}
+
+static void test_driver4(void)
 {
     char filename[MAX_PATH];
     SC_HANDLE service;
+    HANDLE hthread;
     DWORD written;
     BOOL ret;
 
@@ -532,7 +565,9 @@ void test_driver4(void)
     device = CreateFileA("\\\\.\\WineTestDriver4", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
 
+    hthread = CreateThread(NULL, 0, wsk_test_thread, NULL, 0, NULL);
     main_test();
+    WaitForSingleObject(hthread, INFINITE);
 
     ret = DeviceIoControl(device, IOCTL_WINETEST_DETACH, NULL, 0, NULL, 0, &written, NULL);
     ok(ret, "DeviceIoControl failed: %u\n", GetLastError());
