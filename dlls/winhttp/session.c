@@ -63,9 +63,6 @@ BOOL WINAPI WinHttpCheckPlatform( void )
     return TRUE;
 }
 
-/***********************************************************************
- *          session_destroy (internal)
- */
 static void session_destroy( struct object_header *hdr )
 {
     struct session *session = (struct session *)hdr;
@@ -296,9 +293,6 @@ end:
     return handle;
 }
 
-/***********************************************************************
- *          connect_destroy (internal)
- */
 static void connect_destroy( struct object_header *hdr )
 {
     struct connect *connect = (struct connect *)hdr;
@@ -581,9 +575,6 @@ end:
     return hconnect;
 }
 
-/***********************************************************************
- *          request_destroy (internal)
- */
 static void request_destroy( struct object_header *hdr )
 {
     struct request *request = (struct request *)hdr;
@@ -1037,6 +1028,10 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;
         }
+
+    case WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET:
+        request->flags |= REQUEST_FLAG_WEBSOCKET_UPGRADE;
+        return TRUE;
 
     case WINHTTP_OPTION_CONNECT_RETRIES:
         FIXME("WINHTTP_OPTION_CONNECT_RETRIES\n");

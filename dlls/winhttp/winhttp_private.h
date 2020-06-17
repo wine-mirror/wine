@@ -26,6 +26,8 @@
 #include "sspi.h"
 #include "wincrypt.h"
 
+#define WINHTTP_HANDLE_TYPE_SOCKET 4
+
 struct object_header;
 struct object_vtbl
 {
@@ -154,10 +156,16 @@ struct authinfo
     BOOL finished; /* finished authenticating */
 };
 
+enum request_flags
+{
+    REQUEST_FLAG_WEBSOCKET_UPGRADE = 0x01,
+};
+
 struct request
 {
     struct object_header hdr;
     struct connect *connect;
+    enum request_flags flags;
     WCHAR *verb;
     WCHAR *path;
     WCHAR *version;
@@ -199,6 +207,12 @@ struct request
         WCHAR *username;
         WCHAR *password;
     } creds[TARGET_MAX][SCHEME_MAX];
+};
+
+struct socket
+{
+    struct object_header hdr;
+    struct request *request;
 };
 
 struct task_header

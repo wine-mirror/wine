@@ -3119,7 +3119,7 @@ static void test_websocket(int port)
     ok(request != NULL, "got %u\n", GetLastError());
 
     ret = WinHttpSetOption(request, WINHTTP_OPTION_UPGRADE_TO_WEB_SOCKET, NULL, 0);
-    todo_wine ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %u\n", GetLastError());
 
     size = sizeof(header);
     SetLastError(0xdeadbeef);
@@ -3175,41 +3175,41 @@ static void test_websocket(int port)
     size = sizeof(buf);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
                               L"Sec-WebSocket-Key", buf, &size, &index);
-    todo_wine ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %u\n", GetLastError());
 
     index = 0;
     buf[0] = 0;
     size = sizeof(buf);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
                               L"Sec-WebSocket-Version", buf, &size, &index);
-    todo_wine ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(request, NULL);
-    todo_wine ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %u\n", GetLastError());
 
     count = 0xdeadbeef;
     ret = WinHttpQueryDataAvailable(request, &count);
     ok(ret, "got %u\n", GetLastError());
-    todo_wine ok(!count, "got %u\n", count);
+    ok(!count, "got %u\n", count);
 
     header[0] = 0;
     size = sizeof(header);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_UPGRADE, NULL, &header, &size, NULL);
-    todo_wine ok(ret, "got %u\n", GetLastError());
-    todo_wine ok(!wcscmp( header, L"websocket" ), "got %s\n", wine_dbgstr_w(header));
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"websocket" ), "got %s\n", wine_dbgstr_w(header));
 
     header[0] = 0;
     size = sizeof(header);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONNECTION, NULL, &header, &size, NULL);
-    todo_wine ok(ret, "got %u\n", GetLastError());
-    todo_wine ok(!wcscmp( header, L"Upgrade" ), "got %s\n", wine_dbgstr_w(header));
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"Upgrade" ), "got %s\n", wine_dbgstr_w(header));
 
     status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status,
                               &size, NULL);
     ok(ret, "got %u\n", GetLastError());
-    todo_wine ok(status == HTTP_STATUS_SWITCH_PROTOCOLS, "got %u\n", status);
+    ok(status == HTTP_STATUS_SWITCH_PROTOCOLS, "got %u\n", status);
 
     len = 0xdeadbeef;
     size = sizeof(len);
@@ -3220,27 +3220,27 @@ static void test_websocket(int port)
     index = 0;
     size = sizeof(buf);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, L"Sec-WebSocket-Accept", buf, &size, &index);
-    todo_wine ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %u\n", GetLastError());
 
     socket = pWinHttpWebSocketCompleteUpgrade(request, 0);
-    todo_wine ok(socket != NULL, "got %u\n", GetLastError());
+    ok(socket != NULL, "got %u\n", GetLastError());
 
     header[0] = 0;
     size = sizeof(header);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_UPGRADE, NULL, &header, &size, NULL);
-    todo_wine ok(ret, "got %u\n", GetLastError());
-    todo_wine ok(!wcscmp( header, L"websocket" ), "got %s\n", wine_dbgstr_w(header));
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"websocket" ), "got %s\n", wine_dbgstr_w(header));
 
     header[0] = 0;
     size = sizeof(header);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CONNECTION, NULL, &header, &size, NULL);
-    todo_wine ok(ret, "got %u\n", GetLastError());
-    todo_wine ok(!wcscmp( header, L"Upgrade" ), "got %s\n", wine_dbgstr_w(header));
+    ok(ret, "got %u\n", GetLastError());
+    ok(!wcscmp( header, L"Upgrade" ), "got %s\n", wine_dbgstr_w(header));
 
     index = 0;
     size = sizeof(buf);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM, L"Sec-WebSocket-Accept", buf, &size, &index);
-    todo_wine ok(ret, "got %u\n", GetLastError());
+    ok(ret, "got %u\n", GetLastError());
 
     /* Send/Receive on websock */
 

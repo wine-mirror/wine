@@ -33,6 +33,7 @@
 #include "httprequestid.h"
 #include "schannel.h"
 #include "winhttp.h"
+#include "ntsecapi.h"
 
 #include "wine/debug.h"
 #include "winhttp_private.h"
@@ -2098,6 +2099,25 @@ static char *build_wire_request( struct request *request, DWORD *len )
     return ret;
 }
 
+static WCHAR *create_websocket_key(void)
+{
+    WCHAR *ret;
+    char buf[16];
+    DWORD base64_len = ((sizeof(buf) + 2) * 4) / 3;
+    if (!RtlGenRandom( buf, sizeof(buf) )) return NULL;
+    if ((ret = heap_alloc( (base64_len + 1) * sizeof(WCHAR) ))) encode_base64( buf, sizeof(buf), ret );
+    return ret;
+}
+
+static DWORD add_websocket_key_header( struct request *request )
+{
+    WCHAR *key = create_websocket_key();
+    if (!key) return ERROR_OUTOFMEMORY;
+    process_header( request, L"Sec-WebSocket-Key", key, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, TRUE );
+    heap_free( key );
+    return ERROR_SUCCESS;
+}
+
 static DWORD send_request( struct request *request, const WCHAR *headers, DWORD headers_len, void *optional,
                            DWORD optional_len, DWORD total_len, DWORD_PTR context, BOOL async )
 {
@@ -2125,7 +2145,14 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
         swprintf( length, ARRAY_SIZE(length), L"%ld", total_len );
         process_header( request, L"Content-Length", length, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
-    if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
+    if (request->flags & REQUEST_FLAG_WEBSOCKET_UPGRADE)
+    {
+        process_header( request, L"Upgrade", L"websocket", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, L"Connection", L"Upgrade", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        process_header( request, L"Sec-WebSocket-Version", L"13", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
+        if ((ret = add_websocket_key_header( request ))) return ret;
+    }
+    else if (!(request->hdr.disable_flags & WINHTTP_DISABLE_KEEP_ALIVE))
     {
         process_header( request, L"Connection", L"Keep-Alive", WINHTTP_ADDREQ_FLAG_ADD_IF_NEW, TRUE );
     }
@@ -3016,10 +3043,78 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
     return !ret;
 }
 
+static BOOL socket_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
+{
+    FIXME("unimplemented option %u\n", option);
+    SetLastError( ERROR_WINHTTP_INVALID_OPTION );
+    return FALSE;
+}
+
+static void socket_destroy( struct object_header *hdr )
+{
+    struct socket *socket = (struct socket *)hdr;
+
+    TRACE("%p\n", socket);
+
+    release_object( &socket->request->hdr );
+    heap_free( socket );
+}
+
+static BOOL socket_set_option( struct object_header *hdr, DWORD option, void *buffer, DWORD buflen )
+{
+    FIXME("unimplemented option %u\n", option);
+    SetLastError( ERROR_WINHTTP_INVALID_OPTION );
+    return FALSE;
+}
+
+static const struct object_vtbl socket_vtbl =
+{
+    socket_destroy,
+    socket_query_option,
+    socket_set_option,
+};
+
 HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR context )
 {
-    FIXME("%p, %08lx\n", hrequest, context);
-    return NULL;
+    struct socket *socket;
+    struct request *request;
+    HINTERNET hsocket = NULL;
+
+    TRACE("%p, %08lx\n", hrequest, context);
+
+    if (!(request = (struct request *)grab_object( hrequest )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        SetLastError( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return NULL;
+    }
+    if (!(socket = heap_alloc_zero( sizeof(struct socket) )))
+    {
+        release_object( &request->hdr );
+        return NULL;
+    }
+    socket->hdr.type = WINHTTP_HANDLE_TYPE_SOCKET;
+    socket->hdr.vtbl = &socket_vtbl;
+    socket->hdr.refs = 1;
+    socket->hdr.context = context;
+    list_init( &socket->hdr.children );
+
+    addref_object( &request->hdr );
+    socket->request = request;
+    list_add_head( &request->hdr.children, &socket->hdr.entry );
+
+    if ((hsocket = alloc_handle( &socket->hdr ))) socket->hdr.handle = hsocket;
+
+    release_object( &socket->hdr );
+    release_object( &request->hdr );
+    TRACE("returning %p\n", hsocket);
+    if (hsocket) SetLastError( ERROR_SUCCESS );
+    return hsocket;
 }
 
 DWORD WINAPI WinHttpWebSocketSend( HINTERNET hsocket, WINHTTP_WEB_SOCKET_BUFFER_TYPE type, void *buf, DWORD len )
