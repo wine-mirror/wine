@@ -152,7 +152,7 @@ static void start_thread( TEB *teb )
         RtlActivateActivationContext( 0, info->actctx, &cookie );
         RtlReleaseActivationContext( info->actctx );
     }
-    signal_start_thread( info->entry, info->arg, suspend, RtlUserThreadStart, teb );
+    signal_start_thread( info->entry, info->arg, suspend, pRtlUserThreadStart, teb );
 }
 
 
@@ -456,7 +456,7 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
         NtSetContextThread( GetCurrentThread(), context );
 
-    if (first_chance) KiUserExceptionDispatcher( rec, context );
+    if (first_chance) pKiUserExceptionDispatcher( rec, context );
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
         ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");

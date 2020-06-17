@@ -587,7 +587,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
 
         result->type = APC_BREAK_PROCESS;
         result->break_process.status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL,
-                                                         NtCurrentProcess(), DbgUiRemoteBreakin, NULL,
+                                                         NtCurrentProcess(), pDbgUiRemoteBreakin, NULL,
                                                          0, 0, 0, 0, NULL );
         if (!result->break_process.status) NtClose( handle );
         break;

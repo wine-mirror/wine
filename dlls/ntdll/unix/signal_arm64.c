@@ -483,7 +483,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     PC_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline; /* raise_generic_exception; */
     REGn_sig(0, sigcontext) = (ULONG_PTR)&stack->rec;  /* first arg for raise_generic_exception */
     REGn_sig(1, sigcontext) = (ULONG_PTR)&stack->context; /* second arg for raise_generic_exception */
-    REGn_sig(2, sigcontext) = (ULONG_PTR)KiUserExceptionDispatcher; /* third arg for raise_func_trampoline */
+    REGn_sig(2, sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher; /* third arg for raise_func_trampoline */
     REGn_sig(18, sigcontext) = (ULONG_PTR)NtCurrentTeb();
 }
 
@@ -828,7 +828,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
-    LdrInitializeThunk( ctx, (void **)&ctx->u.s.X0, 0, 0 );
+    pLdrInitializeThunk( ctx, (void **)&ctx->u.s.X0, 0, 0 );
     return ctx;
 }
 

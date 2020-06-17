@@ -1565,7 +1565,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
         return;
     }
     ESP_sig(sigcontext) = (DWORD)stack;
-    EIP_sig(sigcontext) = (DWORD)KiUserExceptionDispatcher;
+    EIP_sig(sigcontext) = (DWORD)pKiUserExceptionDispatcher;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
     CS_sig(sigcontext)  = get_cs();
@@ -2290,7 +2290,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
-    LdrInitializeThunk( ctx, (void **)&ctx->Eax, 0, 0 );
+    pLdrInitializeThunk( ctx, (void **)&ctx->Eax, 0, 0 );
     return ctx;
 }
 

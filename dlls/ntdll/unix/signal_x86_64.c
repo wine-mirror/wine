@@ -893,7 +893,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
     RCX_sig(sigcontext) = (ULONG_PTR)&stack->rec;
     RDX_sig(sigcontext) = (ULONG_PTR)&stack->context;
-    R8_sig(sigcontext)  = (ULONG_PTR)KiUserExceptionDispatcher;
+    R8_sig(sigcontext)  = (ULONG_PTR)pKiUserExceptionDispatcher;
     RBP_sig(sigcontext) = (ULONG_PTR)rsp_ptr;
     RSP_sig(sigcontext) = (ULONG_PTR)stack;
     /* clear single-step, direction, and align check flag */
@@ -1458,7 +1458,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
-    LdrInitializeThunk( ctx, (void **)&ctx->Rcx, 0, 0 );
+    pLdrInitializeThunk( ctx, (void **)&ctx->Rcx, 0, 0 );
     return ctx;
 }
 

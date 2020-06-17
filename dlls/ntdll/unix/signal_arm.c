@@ -906,7 +906,7 @@ PCONTEXT DECLSPEC_HIDDEN attach_thread( LPTHREAD_START_ROUTINE entry, void *arg,
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
-    LdrInitializeThunk( ctx, (void **)&ctx->R0, 0, 0 );
+    pLdrInitializeThunk( ctx, (void **)&ctx->R0, 0, 0 );
     return ctx;
 }
 

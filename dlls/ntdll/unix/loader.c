@@ -77,7 +77,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
-extern void CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs );
+
+void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) = NULL;
+NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) = NULL;
+void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
+void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
+
+static void (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -713,31 +719,36 @@ static ULONG_PTR find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTO
 }
 
 static ULONG_PTR find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    const IMAGE_IMPORT_BY_NAME *name )
+                                    const char *name )
 {
     const WORD *ordinals = (const WORD *)((BYTE *)module + exports->AddressOfNameOrdinals);
     const DWORD *names = (const DWORD *)((BYTE *)module + exports->AddressOfNames);
     int min = 0, max = exports->NumberOfNames - 1;
 
-    /* first check the hint */
-    if (name->Hint <= max)
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        char *ename = (char *)module + names[pos];
+        if (!(res = strcmp( ename, name ))) return find_ordinal_export( module, exports, ordinals[pos] );
+        if (res > 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    return 0;
+}
+
+static ULONG_PTR find_pe_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                 const IMAGE_IMPORT_BY_NAME *name )
+{
+    const WORD *ordinals = (const WORD *)((BYTE *)module + exports->AddressOfNameOrdinals);
+    const DWORD *names = (const DWORD *)((BYTE *)module + exports->AddressOfNames);
+
+    if (name->Hint < exports->NumberOfNames)
     {
         char *ename = (char *)module + names[name->Hint];
         if (!strcmp( ename, (char *)name->Name ))
             return find_ordinal_export( module, exports, ordinals[name->Hint] );
     }
-
-    /* then do a binary search */
-    while (min <= max)
-    {
-        int res, pos = (min + max) / 2;
-        char *ename = (char *)module + names[pos];
-        if (!(res = strcmp( ename, (char *)name->Name )))
-            return find_ordinal_export( module, exports, ordinals[pos] );
-        if (res > 0) max = pos - 1;
-        else min = pos + 1;
-    }
-    return 0;
+    return find_named_export( module, exports, (char *)name->Name );
 }
 
 static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt, HMODULE ntdll_module )
@@ -750,38 +761,45 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt, HMODULE ntdll_modul
     assert( ntdll_exports );
 
     descr = get_rva( nt, nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].VirtualAddress );
-    while (descr->Name)
+
+    /* ntdll must be the only import */
+    assert( !strcmp( get_rva( nt, descr->Name ), "ntdll.dll" ));
+    assert( !descr[1].Name );
+
+    thunk_list = get_rva( nt, (DWORD)descr->FirstThunk );
+    if (descr->u.OriginalFirstThunk)
+        import_list = get_rva( nt, (DWORD)descr->u.OriginalFirstThunk );
+    else
+        import_list = thunk_list;
+
+    while (import_list->u1.Ordinal)
     {
-        /* ntdll must be the only import */
-        assert( !strcmp( get_rva( nt, descr->Name ), "ntdll.dll" ));
-
-        thunk_list = get_rva( nt, (DWORD)descr->FirstThunk );
-        if (descr->u.OriginalFirstThunk)
-            import_list = get_rva( nt, (DWORD)descr->u.OriginalFirstThunk );
-        else
-            import_list = thunk_list;
-
-
-        while (import_list->u1.Ordinal)
+        if (IMAGE_SNAP_BY_ORDINAL( import_list->u1.Ordinal ))
         {
-            if (IMAGE_SNAP_BY_ORDINAL( import_list->u1.Ordinal ))
-            {
-                int ordinal = IMAGE_ORDINAL( import_list->u1.Ordinal ) - ntdll_exports->Base;
-                thunk_list->u1.Function = find_ordinal_export( ntdll_module, ntdll_exports, ordinal );
-                if (!thunk_list->u1.Function) ERR( "ordinal %u not found\n", ordinal );
-            }
-            else  /* import by name */
-            {
-                IMAGE_IMPORT_BY_NAME *pe_name = get_rva( nt, import_list->u1.AddressOfData );
-                thunk_list->u1.Function = find_named_export( ntdll_module, ntdll_exports, pe_name );
-                if (!thunk_list->u1.Function) ERR( "%s not found\n", pe_name->Name );
-            }
-            import_list++;
-            thunk_list++;
+            int ordinal = IMAGE_ORDINAL( import_list->u1.Ordinal ) - ntdll_exports->Base;
+            thunk_list->u1.Function = find_ordinal_export( ntdll_module, ntdll_exports, ordinal );
+            if (!thunk_list->u1.Function) ERR( "ordinal %u not found\n", ordinal );
         }
-
-        descr++;
+        else  /* import by name */
+        {
+            IMAGE_IMPORT_BY_NAME *pe_name = get_rva( nt, import_list->u1.AddressOfData );
+            thunk_list->u1.Function = find_pe_export( ntdll_module, ntdll_exports, pe_name );
+            if (!thunk_list->u1.Function) ERR( "%s not found\n", pe_name->Name );
+        }
+        import_list++;
+        thunk_list++;
     }
+
+#define GET_FUNC(name) \
+    if (!(p##name = (void *)find_named_export( ntdll_module, ntdll_exports, #name ))) \
+        ERR( "%s not found\n", #name )
+
+    GET_FUNC( DbgUiRemoteBreakin );
+    GET_FUNC( KiUserExceptionDispatcher );
+    GET_FUNC( LdrInitializeThunk );
+    GET_FUNC( RtlUserThreadStart );
+    GET_FUNC( __wine_set_unix_funcs );
+#undef GET_FUNC
 }
 
 /***********************************************************************
@@ -979,7 +997,7 @@ struct apple_stack_info
 
 static void *apple_wine_thread( void *arg )
 {
-    __wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     return NULL;
 }
 
@@ -1234,7 +1252,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 #ifdef __APPLE__
     apple_main_thread();
 #endif
-    __wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
 }
 
 
