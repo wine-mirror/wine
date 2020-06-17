@@ -27,6 +27,7 @@
 #include <math.h>
 #define COBJMACROS
 #include "d2d1_2.h"
+#include "d3d11.h"
 #ifdef D2D1_INIT_GUID
 #include "initguid.h"
 #endif

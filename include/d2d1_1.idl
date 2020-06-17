@@ -187,6 +187,20 @@ typedef enum D2D1_PROPERTY_TYPE
     D2D1_PROPERTY_TYPE_FORCE_DWORD = 0xffffffff,
 } D2D1_PROPERTY_TYPE;
 
+typedef enum D2D1_THREADING_MODE
+{
+    D2D1_THREADING_MODE_SINGLE_THREADED = D2D1_FACTORY_TYPE_SINGLE_THREADED,
+    D2D1_THREADING_MODE_MULTI_THREADED = D2D1_FACTORY_TYPE_MULTI_THREADED,
+    D2D1_THREADING_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_THREADING_MODE;
+
+typedef struct D2D1_CREATION_PROPERTIES
+{
+    D2D1_THREADING_MODE threadingMode;
+    D2D1_DEBUG_LEVEL debugLevel;
+    D2D1_DEVICE_CONTEXT_OPTIONS options;
+} D2D1_CREATION_PROPERTIES;
+
 typedef struct D2D1_STROKE_STYLE_PROPERTIES1
 {
     D2D1_CAP_STYLE startCap;
@@ -777,3 +791,6 @@ interface ID2D1Factory1 : ID2D1Factory
         [out] ID2D1Properties **props
     );
 }
+
+[local] HRESULT __stdcall D2D1CreateDevice(IDXGIDevice *dxgi_device,
+        const D2D1_CREATION_PROPERTIES *creation_properties, ID2D1Device **device);
