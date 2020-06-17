@@ -35,8 +35,13 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #include <X11/extensions/Xrandr.h>
 #include "x11drv.h"
 
+#define VK_NO_PROTOTYPES
+#define WINE_VK_HOST
+
 #include "wine/heap.h"
 #include "wine/unicode.h"
+#include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 
 static void *xrandr_handle;
 
@@ -680,6 +685,99 @@ static BOOL is_crtc_primary( RECT primary, const XRRCrtcInfo *crtc )
            crtc->y + crtc->height == primary.bottom;
 }
 
+VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDisplayKHR)
+
+static void get_vulkan_device_uuid( GUID *uuid, const XRRProviderInfo *provider_info )
+{
+    static const char *extensions[] =
+    {
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+        "VK_EXT_acquire_xlib_display",
+        "VK_EXT_direct_mode_display",
+    };
+    const struct vulkan_funcs *vulkan_funcs = get_vulkan_driver( WINE_VULKAN_DRIVER_VERSION );
+    VkResult (*pvkGetRandROutputDisplayEXT)( VkPhysicalDevice, Display *, RROutput, VkDisplayKHR * );
+    PFN_vkGetPhysicalDeviceProperties2 pvkGetPhysicalDeviceProperties2;
+    PFN_vkEnumeratePhysicalDevices pvkEnumeratePhysicalDevices;
+    uint32_t device_count, device_idx, output_idx;
+    VkPhysicalDevice *vk_physical_devices = NULL;
+    VkPhysicalDeviceProperties2 properties2;
+    VkInstanceCreateInfo create_info;
+    VkPhysicalDeviceIDProperties id;
+    VkInstance vk_instance = NULL;
+    VkDisplayKHR vk_display;
+    VkResult vr;
+
+    if (!vulkan_funcs)
+        goto done;
+
+    memset( &create_info, 0, sizeof(create_info) );
+    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    create_info.enabledExtensionCount = ARRAY_SIZE(extensions);
+    create_info.ppEnabledExtensionNames = extensions;
+
+    vr = vulkan_funcs->p_vkCreateInstance( &create_info, NULL, &vk_instance );
+    if (vr != VK_SUCCESS)
+    {
+        WARN("Failed to create a Vulkan instance, vr %d.\n", vr);
+        goto done;
+    }
+
+#define LOAD_VK_FUNC(f)                                                             \
+    if (!(p##f = (void *)vulkan_funcs->p_vkGetInstanceProcAddr( vk_instance, #f ))) \
+    {                                                                               \
+        WARN("Failed to load " #f ".\n");                                           \
+        goto done;                                                                  \
+    }
+
+    LOAD_VK_FUNC(vkEnumeratePhysicalDevices)
+    LOAD_VK_FUNC(vkGetPhysicalDeviceProperties2)
+    LOAD_VK_FUNC(vkGetRandROutputDisplayEXT)
+#undef LOAD_VK_FUNC
+
+    vr = pvkEnumeratePhysicalDevices( vk_instance, &device_count, NULL );
+    if (vr != VK_SUCCESS || !device_count)
+    {
+        WARN("No Vulkan device found, vr %d, device_count %d.\n", vr, device_count);
+        goto done;
+    }
+
+    if (!(vk_physical_devices = heap_calloc( device_count, sizeof(*vk_physical_devices) )))
+        goto done;
+
+    vr = pvkEnumeratePhysicalDevices( vk_instance, &device_count, vk_physical_devices );
+    if (vr != VK_SUCCESS)
+    {
+        WARN("vkEnumeratePhysicalDevices failed, vr %d.\n", vr);
+        goto done;
+    }
+
+    for (device_idx = 0; device_idx < device_count; ++device_idx)
+    {
+        for (output_idx = 0; output_idx < provider_info->noutputs; ++output_idx)
+        {
+            vr = pvkGetRandROutputDisplayEXT( vk_physical_devices[device_idx], gdi_display,
+                                              provider_info->outputs[output_idx], &vk_display );
+            if (vr != VK_SUCCESS || vk_display == VK_NULL_HANDLE)
+                continue;
+
+            memset( &id, 0, sizeof(id) );
+            id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+            properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+            properties2.pNext = &id;
+
+            pvkGetPhysicalDeviceProperties2( vk_physical_devices[device_idx], &properties2 );
+            memcpy( uuid, id.deviceUUID, sizeof(id.deviceUUID) );
+            goto done;
+        }
+    }
+
+done:
+    heap_free( vk_physical_devices );
+    if (vk_instance)
+        vulkan_funcs->p_vkDestroyInstance( vk_instance, NULL );
+}
+
 static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
 {
     static const WCHAR wine_adapterW[] = {'W','i','n','e',' ','A','d','a','p','t','e','r',0};
@@ -742,6 +840,7 @@ static BOOL xrandr14_get_gpus( struct x11drv_gpu **new_gpus, int *count )
         }
 
         gpus[i].id = provider_resources->providers[i];
+        get_vulkan_device_uuid( &gpus[i].vulkan_uuid, provider_info );
         MultiByteToWideChar( CP_UTF8, 0, provider_info->name, -1, gpus[i].name, ARRAY_SIZE(gpus[i].name) );
         /* PCI IDs are all zero because there is currently no portable way to get it via XRandR. Some AMD drivers report
          * their PCI address in the name but many others don't */

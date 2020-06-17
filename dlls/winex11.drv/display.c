@@ -43,7 +43,8 @@ DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
 
-/* Wine specific monitor properties */
+/* Wine specific properties */
+DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCMONITOR, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 3);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_RCWORK, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 4);
@@ -337,6 +338,8 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
     BOOL ret = FALSE;
     FILETIME filetime;
 
+    TRACE("GPU id:0x%s name:%s.\n", wine_dbgstr_longlong(gpu->id), wine_dbgstr_w(gpu->name));
+
     sprintfW(instanceW, gpu_instance_fmtW, gpu->vendor_id, gpu->device_id, gpu->subsys_id, gpu->revision_id, gpu_index);
     if (!SetupDiOpenDeviceInfoW(devinfo, instanceW, NULL, 0, &device_data))
     {
@@ -369,8 +372,14 @@ static BOOL X11DRV_InitGpu(HDEVINFO devinfo, const struct x11drv_gpu *gpu, INT g
             goto done;
     }
     *gpu_luid = luid;
-    TRACE("GPU id:0x%s name:%s LUID:%08x:%08x.\n", wine_dbgstr_longlong(gpu->id),
-          wine_dbgstr_w(gpu->name), luid.HighPart, luid.LowPart);
+    TRACE("LUID:%08x:%08x.\n", luid.HighPart, luid.LowPart);
+
+    /* Write WINE_DEVPROPKEY_GPU_VULKAN_UUID property */
+    if (!SetupDiSetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_GPU_VULKAN_UUID,
+                                   DEVPROP_TYPE_GUID, (const BYTE *)&gpu->vulkan_uuid,
+                                   sizeof(gpu->vulkan_uuid), 0))
+        goto done;
+    TRACE("Vulkan UUID:%s.\n", wine_dbgstr_guid(&gpu->vulkan_uuid));
 
     /* Open driver key.
      * This is where HKLM\System\CurrentControlSet\Control\Video\{GPU GUID}\{Adapter Index} links to */

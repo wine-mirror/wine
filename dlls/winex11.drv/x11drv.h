@@ -690,6 +690,8 @@ struct x11drv_gpu
     UINT device_id;
     UINT subsys_id;
     UINT revision_id;
+    /* Vulkan device UUID */
+    GUID vulkan_uuid;
 };
 
 /* Represent an adapter in EnumDisplayDevices context */
