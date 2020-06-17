@@ -4862,37 +4862,34 @@ static BOOL opentype_layout_gsub_ensure_buffer(struct scriptshaping_context *con
 static BOOL opentype_layout_apply_gsub_mult_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
-    const struct dwrite_fonttable *gsub = &context->table->table;
-    UINT16 format, coverage, glyph, seq_count, glyph_count;
-    const struct ot_gsub_multsubst_format1 *format1;
+    const struct dwrite_fonttable *table = &context->table->table;
+    UINT16 format, coverage, glyph, glyph_count;
     unsigned int i, idx, coverage_index;
     const UINT16 *glyphs;
 
     idx = context->cur;
     glyph = context->u.subst.glyphs[idx];
 
-    format = table_read_be_word(gsub, subtable_offset);
+    format = table_read_be_word(table, subtable_offset);
 
-    coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_multsubst_format1, coverage));
+    coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_multsubst_format1, coverage));
 
     if (format == 1)
     {
-        coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
-        if (coverage_index == GLYPH_NOT_COVERED)
+        UINT16 seq_offset;
+
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED) return FALSE;
+
+        if (!table_read_array_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_multsubst_format1, seq_count),
+                coverage_index, &seq_offset))
+        {
             return FALSE;
+        }
 
-        seq_count = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_multsubst_format1, seq_count));
+        glyph_count = table_read_be_word(table, subtable_offset + seq_offset);
 
-        format1 = table_read_ensure(gsub, subtable_offset, FIELD_OFFSET(struct ot_gsub_multsubst_format1, seq[seq_count]));
-
-        if (!seq_count || seq_count <= coverage_index || !format1)
-            return FALSE;
-
-        glyph_count = table_read_be_word(gsub, subtable_offset + GET_BE_WORD(format1->seq[coverage_index]));
-
-        glyphs = table_read_ensure(gsub, subtable_offset + GET_BE_WORD(format1->seq[coverage_index]) + 2,
-                glyph_count * sizeof(*glyphs));
-        if (!glyphs)
+        if (!(glyphs = table_read_ensure(table, subtable_offset + seq_offset + 2, glyph_count * sizeof(*glyphs))))
             return FALSE;
 
         if (glyph_count == 1)
