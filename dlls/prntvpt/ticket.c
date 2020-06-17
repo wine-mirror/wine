@@ -917,6 +917,24 @@ fail:
     return hr;
 }
 
+static HRESULT write_PageOrientation(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:PageOrientation", &feature);
+    if (hr != S_OK) return hr;
+
+    if (ticket->page.orientation == DMORIENT_PORTRAIT)
+        hr = create_Option(feature, L"psk:Portrait", &option);
+    else /* DMORIENT_LANDSCAPE */
+        hr = create_Option(feature, L"psk:Landscape", &option);
+
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -961,6 +979,8 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     hr = write_PageScaling(root, ticket);
     if (hr != S_OK) goto fail;
     hr = write_PageResolution(root, ticket);
+    if (hr != S_OK) goto fail;
+    hr = write_PageOrientation(root, ticket);
     if (hr != S_OK) goto fail;
 
     hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
