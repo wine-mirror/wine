@@ -181,6 +181,90 @@ static const WSK_PROVIDER_LISTEN_DISPATCH wsk_provider_listen_dispatch =
     wsk_get_local_address,
 };
 
+static NTSTATUS WINAPI wsk_connect(WSK_SOCKET *socket, SOCKADDR *remote_address, ULONG flags, IRP *irp)
+{
+    FIXME("socket %p, remote_address %p, flags %#x, irp %p stub.\n", socket, remote_address, flags, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_get_remote_address(WSK_SOCKET *socket, SOCKADDR *remote_address, IRP *irp)
+{
+    FIXME("socket %p, remote_address %p, irp %p stub.\n", socket, remote_address, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_send(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
+{
+    FIXME("socket %p, buffer %p, flags %#x, irp %p stub.\n", socket, buffer, flags, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_receive(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
+{
+    FIXME("socket %p, buffer %p, flags %#x, irp %p stub.\n", socket, buffer, flags, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_disconnect(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
+{
+    FIXME("socket %p, buffer %p, flags %#x, irp %p stub.\n", socket, buffer, flags, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_release(WSK_SOCKET *socket, WSK_DATA_INDICATION *data_indication)
+{
+    FIXME("socket %p, data_indication %p stub.\n", socket, data_indication);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_connext_ex(WSK_SOCKET *socket, SOCKADDR *remote_address, WSK_BUF *buffer,
+        ULONG flags, IRP *irp)
+{
+    FIXME("socket %p, remote_address %p, buffer %p, flags %#x, irp %p stub.\n",
+            socket, remote_address, buffer, flags, irp);
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_send_ex(void)
+{
+    FIXME("stub (no prototype, will crash).\n");
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS WINAPI wsk_receive_ex(void)
+{
+    FIXME("stub (no prototype, will crash).\n");
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static const WSK_PROVIDER_CONNECTION_DISPATCH wsk_provider_connection_dispatch =
+{
+    {
+        wsk_control_socket,
+        wsk_close_socket,
+    },
+    wsk_bind,
+    wsk_connect,
+    wsk_get_local_address,
+    wsk_get_remote_address,
+    wsk_send,
+    wsk_receive,
+    wsk_disconnect,
+    wsk_release,
+    wsk_connext_ex,
+    wsk_send_ex,
+    wsk_receive_ex,
+};
+
 static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_family, USHORT socket_type,
         ULONG protocol, ULONG flags, void *socket_context, const void *dispatch, PEPROCESS owning_process,
         PETHREAD owning_thread, SECURITY_DESCRIPTOR *security_descriptor, IRP *irp)
@@ -223,6 +307,10 @@ static NTSTATUS WINAPI wsk_socket(WSK_CLIENT *client, ADDRESS_FAMILY address_fam
     {
         case WSK_FLAG_LISTEN_SOCKET:
             socket->wsk_socket.Dispatch = &wsk_provider_listen_dispatch;
+            break;
+
+        case WSK_FLAG_CONNECTION_SOCKET:
+            socket->wsk_socket.Dispatch = &wsk_provider_connection_dispatch;
             break;
 
         default:
