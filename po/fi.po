@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-12-30 02:40+0200\n"
+"PO-Revision-Date: 2020-06-17 12:10+0300\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
@@ -3608,7 +3608,7 @@ msgstr "Peliohjaimet"
 
 #: joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Testaa ja säädä peliohjaimia."
 
 #: jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3623,10 +3623,8 @@ msgid "Subscript out of range"
 msgstr "Indeksi alueen ulkopuolella"
 
 #: jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Paperi loppu; "
+msgstr "Pinosta loppui tila"
 
 #: jscript.rc:32
 msgid "Object required"
@@ -3765,16 +3763,12 @@ msgid "JScript object expected"
 msgstr "Odotettiin JScript-objektia"
 
 #: jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "Odotettiin taulukkoa"
+msgstr "Odotettiin Enumerator-objektia"
 
 #: jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "Odotettiin totuusarvoa"
+msgstr "Odotettiin säännöllistä lauseketta"
 
 #: jscript.rc:65
 msgid "Syntax error in regular expression"
