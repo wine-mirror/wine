@@ -350,10 +350,8 @@ static void test_default_mixer(void)
     ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFTopologyServiceLookupClient, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+    IUnknown_Release(unk);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
