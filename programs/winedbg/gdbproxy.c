@@ -1650,10 +1650,6 @@ static void packet_query_target_xml(struct gdb_context* gdbctx, struct backend_c
         packet_reply_add(gdbctx, "<architecture>i386</architecture>");
         feature_prefix = "org.gnu.gdb.i386.";
         break;
-    case IMAGE_FILE_MACHINE_POWERPC:
-        packet_reply_add(gdbctx, "<architecture>powerpc:common</architecture>");
-        feature_prefix = "org.gnu.gdb.power.";
-        break;
     case IMAGE_FILE_MACHINE_ARMNT:
         packet_reply_add(gdbctx, "<architecture>arm</architecture>");
         feature_prefix = "org.gnu.gdb.arm.";
