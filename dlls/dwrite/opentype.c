@@ -5119,46 +5119,37 @@ static BOOL opentype_layout_apply_ligature(struct scriptshaping_context *context
 static BOOL opentype_layout_apply_gsub_lig_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
-    const struct dwrite_fonttable *gsub = &context->table->table;
-    unsigned int coverage_index, offset, lig_set_offset, lig_set_count;
-    UINT16 format, coverage, glyph;
+    const struct dwrite_fonttable *table = &context->table->table;
+    UINT16 format, coverage, glyph, lig_set_offset;
+    unsigned int coverage_index;
 
     glyph = context->u.subst.glyphs[context->cur];
 
-    format = table_read_be_word(gsub, subtable_offset);
+    format = table_read_be_word(table, subtable_offset);
 
     if (format == 1)
     {
-        const struct ot_gsub_ligsubst_format1 *format1 = table_read_ensure(gsub, subtable_offset, sizeof(*format1));
-        const struct ot_gsub_ligset *lig_set;
-        unsigned int i, lig_count;
+        const struct ot_gsub_ligsubst_format1 *format1 = table_read_ensure(table, subtable_offset, sizeof(*format1));
+        unsigned int i;
+        const UINT16 *offsets;
+        UINT16 lig_count;
 
-        coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_ligsubst_format1, coverage));
+        coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_ligsubst_format1, coverage));
 
-        coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
-        if (coverage_index == GLYPH_NOT_COVERED)
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED) return FALSE;
+
+        if (!table_read_array_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_ligsubst_format1, lig_set_count),
+                coverage_index, &lig_set_offset))
             return FALSE;
 
-        lig_set_count = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_ligsubst_format1, lig_set_count));
-        if (coverage_index >= lig_set_count || !table_read_ensure(gsub, subtable_offset,
-                FIELD_OFFSET(struct ot_gsub_ligsubst_format1, lig_sets[lig_set_count])))
-        {
-            return FALSE;
-        }
-
-        lig_set_offset = table_read_be_word(gsub, subtable_offset +
-                FIELD_OFFSET(struct ot_gsub_ligsubst_format1, lig_sets[coverage_index]));
-        offset = subtable_offset + lig_set_offset;
-
-        lig_count = table_read_be_word(gsub, offset);
-        lig_set = table_read_ensure(gsub, offset, FIELD_OFFSET(struct ot_gsub_ligset, offsets[lig_count]));
-        if (!lig_count || !lig_set)
+        if (!(offsets = table_read_array_be_word(table, subtable_offset + lig_set_offset, ~0u, &lig_count)))
             return FALSE;
 
         /* First applicable ligature is used. */
         for (i = 0; i < lig_count; ++i)
         {
-            if (opentype_layout_apply_ligature(context, offset + GET_BE_WORD(lig_set->offsets[i]), lookup))
+            if (opentype_layout_apply_ligature(context, subtable_offset + lig_set_offset + GET_BE_WORD(offsets[i]), lookup))
                 return TRUE;
         }
     }
