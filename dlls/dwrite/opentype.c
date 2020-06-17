@@ -4793,38 +4793,33 @@ static void opentype_layout_replace_glyph(struct scriptshaping_context *context,
 static BOOL opentype_layout_apply_gsub_single_substitution(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset)
 {
-    const struct dwrite_fonttable *gsub = &context->table->table;
+    const struct dwrite_fonttable *table = &context->table->table;
     UINT16 format, coverage, orig_glyph, glyph;
-    unsigned int idx, coverage_index;
+    unsigned int coverage_index;
 
-    idx = context->cur;
-    orig_glyph = glyph = context->u.subst.glyphs[idx];
+    orig_glyph = glyph = context->u.subst.glyphs[context->cur];
 
-    format = table_read_be_word(gsub, subtable_offset);
+    format = table_read_be_word(table, subtable_offset);
 
-    coverage = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format1, coverage));
+    coverage = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format1, coverage));
 
     if (format == 1)
     {
-        const struct ot_gsub_singlesubst_format1 *format1 = table_read_ensure(gsub, subtable_offset, sizeof(*format1));
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED) return FALSE;
 
-        coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
-        if (coverage_index == GLYPH_NOT_COVERED)
-            return FALSE;
-
-        glyph = orig_glyph + GET_BE_WORD(format1->delta);
+        glyph = orig_glyph + table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format1, delta));
     }
     else if (format == 2)
     {
-        UINT16 count = table_read_be_word(gsub, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count));
-        const struct ot_gsub_singlesubst_format2 *format2 = table_read_ensure(gsub, subtable_offset,
-                FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count) + count * sizeof(UINT16));
+        coverage_index = opentype_layout_is_glyph_covered(table, subtable_offset + coverage, glyph);
+        if (coverage_index == GLYPH_NOT_COVERED) return FALSE;
 
-        coverage_index = opentype_layout_is_glyph_covered(gsub, subtable_offset + coverage, glyph);
-        if (coverage_index == GLYPH_NOT_COVERED || coverage_index >= count)
+        if (!table_read_array_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count),
+                coverage_index, &glyph))
+        {
             return FALSE;
-
-        glyph = GET_BE_WORD(format2->substitutes[coverage_index]);
+        }
     }
     else
     {
