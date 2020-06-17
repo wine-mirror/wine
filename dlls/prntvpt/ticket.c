@@ -953,6 +953,24 @@ static HRESULT write_DocumentCollate(IXMLDOMElement *root, const struct ticket *
     return hr;
 }
 
+static HRESULT write_JobInputBin(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:JobInputBin", &feature);
+    if (hr != S_OK) return hr;
+
+    if (ticket->job.input_bin != DMBIN_AUTO)
+        FIXME("job.input_bin: %d\n", ticket->job.input_bin);
+
+    hr = create_Option(feature, L"psk:AutoSelect", &option);
+
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -1004,6 +1022,12 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     if (scope >= kPTDocumentScope)
     {
         hr = write_DocumentCollate(root, ticket);
+        if (hr != S_OK) goto fail;
+    }
+
+    if (scope >= kPTJobScope)
+    {
+        hr = write_JobInputBin(root, ticket);
         if (hr != S_OK) goto fail;
     }
 
