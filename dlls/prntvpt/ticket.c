@@ -815,6 +815,16 @@ static HRESULT create_Option(IXMLDOMElement *root, const WCHAR *name, IXMLDOMEle
     return hr;
 }
 
+static HRESULT create_ParameterInit(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:ParameterInit", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
 static HRESULT create_ScoredProperty(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
 {
     HRESULT hr;
@@ -971,6 +981,20 @@ static HRESULT write_JobInputBin(IXMLDOMElement *root, const struct ticket *tick
     return hr;
 }
 
+static HRESULT write_JobCopies(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *parameter;
+    HRESULT hr;
+
+    hr = create_ParameterInit(root, L"psk:JobCopiesAllDocuments", &parameter);
+    if (hr != S_OK) return hr;
+
+    hr = write_int_value(parameter, ticket->job.copies);
+
+    IXMLDOMElement_Release(parameter);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -1028,6 +1052,8 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     if (scope >= kPTJobScope)
     {
         hr = write_JobInputBin(root, ticket);
+        if (hr != S_OK) goto fail;
+        hr = write_JobCopies(root, ticket);
         if (hr != S_OK) goto fail;
     }
 
