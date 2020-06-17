@@ -29,6 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(evr);
 struct video_mixer
 {
     IMFTransform IMFTransform_iface;
+    IMFVideoDeviceID IMFVideoDeviceID_iface;
     LONG refcount;
 };
 
@@ -37,19 +38,35 @@ static struct video_mixer *impl_from_IMFTransform(IMFTransform *iface)
     return CONTAINING_RECORD(iface, struct video_mixer, IMFTransform_iface);
 }
 
+static struct video_mixer *impl_from_IMFVideoDeviceID(IMFVideoDeviceID *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoDeviceID_iface);
+}
+
 static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, REFIID riid, void **obj)
 {
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
     if (IsEqualIID(riid, &IID_IMFTransform) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IMFTransform_AddRef(iface);
-        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoDeviceID))
+    {
+        *obj = &mixer->IMFVideoDeviceID_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
-    *obj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
 }
 
 static ULONG WINAPI video_mixer_transform_AddRef(IMFTransform *iface)
@@ -273,6 +290,44 @@ static const IMFTransformVtbl video_mixer_transform_vtbl =
     video_mixer_transform_ProcessOutput,
 };
 
+static HRESULT WINAPI video_mixer_device_id_QueryInterface(IMFVideoDeviceID *iface, REFIID riid, void **obj)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoDeviceID(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, obj);
+}
+
+static ULONG WINAPI video_mixer_device_id_AddRef(IMFVideoDeviceID *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoDeviceID(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_device_id_Release(IMFVideoDeviceID *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoDeviceID(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_device_id_GetDeviceID(IMFVideoDeviceID *iface, IID *device_id)
+{
+    TRACE("%p, %p.\n", iface, device_id);
+
+    if (!device_id)
+        return E_POINTER;
+
+    memcpy(device_id, &IID_IDirect3DDevice9, sizeof(*device_id));
+
+    return S_OK;
+}
+
+static const IMFVideoDeviceIDVtbl video_mixer_device_id_vtbl =
+{
+    video_mixer_device_id_QueryInterface,
+    video_mixer_device_id_AddRef,
+    video_mixer_device_id_Release,
+    video_mixer_device_id_GetDeviceID,
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -296,6 +351,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
         return E_OUTOFMEMORY;
 
     object->IMFTransform_iface.lpVtbl = &video_mixer_transform_vtbl;
+    object->IMFVideoDeviceID_iface.lpVtbl = &video_mixer_device_id_vtbl;
     object->refcount = 1;
 
     *out = &object->IMFTransform_iface;

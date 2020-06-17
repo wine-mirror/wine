@@ -340,9 +340,11 @@ static void test_pin_info(void)
 
 static void test_default_mixer(void)
 {
+    IMFVideoDeviceID *deviceid;
     IMFTransform *transform;
     IUnknown *unk;
     HRESULT hr;
+    IID iid;
 
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&transform);
     ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
@@ -353,11 +355,17 @@ todo_wine
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&unk);
-todo_wine
+    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+
+    hr = IMFVideoDeviceID_GetDeviceID(deviceid, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDeviceID_GetDeviceID(deviceid, &iid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualIID(&iid, &IID_IDirect3DDevice9), "Unexpected id %s.\n", wine_dbgstr_guid(&iid));
+
+    IMFVideoDeviceID_Release(deviceid);
 
     IMFTransform_Release(transform);
 
