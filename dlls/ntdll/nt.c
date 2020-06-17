@@ -1161,42 +1161,6 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
     }
 }
 
-#elif defined(__powerpc__) || defined(__ppc__)
-
-static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
-{
-#ifdef __APPLE__
-    size_t valSize;
-    int value;
-
-    valSize = sizeof(value);
-    if (sysctlbyname("hw.cpusubtype", &value, &valSize, NULL, 0) == 0)
-    {
-        switch (value)
-        {
-            case CPU_SUBTYPE_POWERPC_601:
-            case CPU_SUBTYPE_POWERPC_602:       info->Level = 1;   break;
-            case CPU_SUBTYPE_POWERPC_603:       info->Level = 3;   break;
-            case CPU_SUBTYPE_POWERPC_603e:
-            case CPU_SUBTYPE_POWERPC_603ev:     info->Level = 6;   break;
-            case CPU_SUBTYPE_POWERPC_604:       info->Level = 4;   break;
-            case CPU_SUBTYPE_POWERPC_604e:      info->Level = 9;   break;
-            case CPU_SUBTYPE_POWERPC_620:       info->Level = 20;  break;
-            case CPU_SUBTYPE_POWERPC_750:       /* G3/G4 derive from 603 so ... */
-            case CPU_SUBTYPE_POWERPC_7400:
-            case CPU_SUBTYPE_POWERPC_7450:      info->Level = 6;   break;
-            case CPU_SUBTYPE_POWERPC_970:       info->Level = 9;
-                /* :o) user_shared_data->ProcessorFeatures[PF_ALTIVEC_INSTRUCTIONS_AVAILABLE] ;-) */
-                break;
-            default: break;
-        }
-    }
-#else
-    FIXME("CPU Feature detection not implemented.\n");
-#endif
-    info->Architecture = PROCESSOR_ARCHITECTURE_PPC;
-}
-
 #elif defined(__arm__)
 
 static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)

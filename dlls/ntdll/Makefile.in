@@ -40,7 +40,6 @@ C_SRCS = \
 	signal_arm.c \
 	signal_arm64.c \
 	signal_i386.c \
-	signal_powerpc.c \
 	signal_x86_64.c \
 	string.c \
 	sync.c \
@@ -58,7 +57,6 @@ C_SRCS = \
 	unix/signal_arm.c \
 	unix/signal_arm64.c \
 	unix/signal_i386.c \
-	unix/signal_powerpc.c \
 	unix/signal_x86_64.c \
 	unix/sync.c \
 	unix/tape.c \

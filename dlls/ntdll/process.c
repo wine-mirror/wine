@@ -318,7 +318,6 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
         switch (header.elf.machine)
         {
         case 3:   info->cpu = CPU_x86; break;
-        case 20:  info->cpu = CPU_POWERPC; break;
         case 40:  info->cpu = CPU_ARM; break;
         case 62:  info->cpu = CPU_x86_64; break;
         case 183: info->cpu = CPU_ARM64; break;
@@ -351,7 +350,6 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
         case 0x01000007: info->cpu = CPU_x86_64; break;
         case 0x0000000c: info->cpu = CPU_ARM; break;
         case 0x0100000c: info->cpu = CPU_ARM64; break;
-        case 0x00000012: info->cpu = CPU_POWERPC; break;
         }
         if (header.macho.filetype == 8) return TRUE;
     }
@@ -383,8 +381,6 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
             /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
             info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
-#elif defined(__powerpc__)
-            info->cpu = CPU_POWERPC;
 #elif defined(__arm__)
             info->cpu = CPU_ARM;
 #elif defined(__aarch64__)
