@@ -871,6 +871,24 @@ static HRESULT write_PageOutputColor(IXMLDOMElement *root, const struct ticket *
     return hr;
 }
 
+static HRESULT write_PageScaling(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:PageScaling", &feature);
+    if (hr != S_OK) return hr;
+
+    if (ticket->page.scaling != 100)
+        FIXME("page.scaling: %d\n", ticket->page.scaling);
+
+    hr = create_Option(feature, L"psk:None", &option);
+
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -911,6 +929,8 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     hr = write_PageMediaSize(root, ticket);
     if (hr != S_OK) goto fail;
     hr = write_PageOutputColor(root, ticket);
+    if (hr != S_OK) goto fail;
+    hr = write_PageScaling(root, ticket);
     if (hr != S_OK) goto fail;
 
     hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
