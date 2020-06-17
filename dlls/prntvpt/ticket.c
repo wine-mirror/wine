@@ -935,6 +935,24 @@ static HRESULT write_PageOrientation(IXMLDOMElement *root, const struct ticket *
     return hr;
 }
 
+static HRESULT write_DocumentCollate(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:DocumentCollate", &feature);
+    if (hr != S_OK) return hr;
+
+    if (ticket->document.collate == DMCOLLATE_TRUE)
+        hr = create_Option(feature, L"psk:Collated", &option);
+    else /* DMCOLLATE_FALSE */
+        hr = create_Option(feature, L"psk:Uncollated", &option);
+
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -982,6 +1000,12 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     if (hr != S_OK) goto fail;
     hr = write_PageOrientation(root, ticket);
     if (hr != S_OK) goto fail;
+
+    if (scope >= kPTDocumentScope)
+    {
+        hr = write_DocumentCollate(root, ticket);
+        if (hr != S_OK) goto fail;
+    }
 
     hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
     if (hr != S_OK) goto fail;
