@@ -5913,7 +5913,7 @@ static void test_graphics_clear(void)
     if (!match)
     {
         bits = data.Scan0;
-        trace("format %#x, bits %02x,%02x,%02x,%02x %02x,%02x,%02x,%02x\n", PixelFormat32bppPARGB,
+        trace("format %#x, bits %02x,%02x,%02x,%02x %02x,%02x,%02x,%02x\n", PixelFormat32bppARGB,
                bits[0], bits[1], bits[2], bits[3], bits[4], bits[5], bits[6], bits[7]);
     }
     status = GdipBitmapUnlockBits(bitmap, &data);
