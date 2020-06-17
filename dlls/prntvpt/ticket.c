@@ -853,6 +853,24 @@ fail:
     return hr;
 }
 
+static HRESULT write_PageOutputColor(IXMLDOMElement *root, const struct ticket *ticket)
+{
+    IXMLDOMElement *feature, *option = NULL;
+    HRESULT hr;
+
+    hr = create_Feature(root, L"psk:PageOutputColor", &feature);
+    if (hr != S_OK) return hr;
+
+    if (ticket->page.color == DMCOLOR_COLOR)
+        hr = create_Option(feature, L"psk:Color", &option);
+    else /* DMCOLOR_MONOCHROME */
+        hr = create_Option(feature, L"psk:Monochrome", &option);
+
+    if (option) IXMLDOMElement_Release(option);
+    IXMLDOMElement_Release(feature);
+    return hr;
+}
+
 static HRESULT write_attributes(IXMLDOMElement *element)
 {
     HRESULT hr;
@@ -891,6 +909,8 @@ static HRESULT write_ticket(IStream *stream, const struct ticket *ticket, EPrint
     if (hr != S_OK) goto fail;
 
     hr = write_PageMediaSize(root, ticket);
+    if (hr != S_OK) goto fail;
+    hr = write_PageOutputColor(root, ticket);
     if (hr != S_OK) goto fail;
 
     hr = IStream_Write(stream, xmldecl, strlen(xmldecl), NULL);
