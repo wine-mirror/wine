@@ -135,10 +135,24 @@ static NTSTATUS WINAPI wsk_close_socket(WSK_SOCKET *socket, IRP *irp)
 
 static NTSTATUS WINAPI wsk_bind(WSK_SOCKET *socket, SOCKADDR *local_address, ULONG flags, IRP *irp)
 {
-    FIXME("socket %p, local_address %p, flags %#x, irp %p stub.\n",
+    struct wsk_socket_internal *s = wsk_socket_internal_from_wsk_socket(socket);
+    NTSTATUS status;
+
+    TRACE("socket %p, local_address %p, flags %#x, irp %p.\n",
             socket, local_address, flags, irp);
 
-    return STATUS_NOT_IMPLEMENTED;
+    if (!irp)
+        return STATUS_INVALID_PARAMETER;
+
+    if (bind(s->s, local_address, sizeof(*local_address)))
+        status = sock_error_to_ntstatus(WSAGetLastError());
+    else
+        status = STATUS_SUCCESS;
+
+    TRACE("status %#x.\n", status);
+    irp->IoStatus.Information = 0;
+    dispatch_irp(irp, status);
+    return STATUS_PENDING;
 }
 
 static NTSTATUS WINAPI wsk_accept(WSK_SOCKET *listen_socket, ULONG flags, void *accept_socket_context,
