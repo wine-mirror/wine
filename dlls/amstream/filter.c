@@ -174,6 +174,7 @@ struct filter
     IAMMediaStream **streams;
     IAMMediaStream *seekable_stream;
     FILTER_STATE state;
+    REFERENCE_TIME start_time;
 };
 
 static inline struct filter *impl_from_IMediaStreamFilter(IMediaStreamFilter *iface)
@@ -295,6 +296,7 @@ static HRESULT WINAPI filter_Run(IMediaStreamFilter *iface, REFERENCE_TIME start
 
     EnterCriticalSection(&filter->cs);
 
+    filter->start_time = start;
     set_state(filter, State_Running);
 
     LeaveCriticalSection(&filter->cs);
@@ -614,11 +616,31 @@ static HRESULT WINAPI filter_ReferenceTimeToStreamTime(IMediaStreamFilter *iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI filter_GetCurrentStreamTime(IMediaStreamFilter *iface, REFERENCE_TIME *pCurrentStreamTime)
+static HRESULT WINAPI filter_GetCurrentStreamTime(IMediaStreamFilter *iface, REFERENCE_TIME *time)
 {
-    FIXME("(%p)->(%p): Stub!\n", iface, pCurrentStreamTime);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("filter %p, time %p.\n", filter, time);
+
+    if (!time)
+        return E_POINTER;
+
+    EnterCriticalSection(&filter->cs);
+
+    if (filter->state != State_Running || !filter->clock)
+    {
+        *time = 0;
+        LeaveCriticalSection(&filter->cs);
+        return S_FALSE;
+    }
+
+    IReferenceClock_GetTime(filter->clock, time);
+
+    *time -= filter->start_time;
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_WaitUntil(IMediaStreamFilter *iface, REFERENCE_TIME WaitStreamTime)

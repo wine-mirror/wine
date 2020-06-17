@@ -2641,6 +2641,87 @@ static const IMediaSeekingVtbl testsource_seeking_vtbl =
     testsource_seeking_GetPreroll,
 };
 
+struct testclock
+{
+    IReferenceClock IReferenceClock_iface;
+    LONG refcount;
+    LONGLONG time;
+    HRESULT get_time_hr;
+};
+
+static inline struct testclock *impl_from_IReferenceClock(IReferenceClock *iface)
+{
+    return CONTAINING_RECORD(iface, struct testclock, IReferenceClock_iface);
+}
+
+static HRESULT WINAPI testclock_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
+{
+    if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
+    if (IsEqualGUID(iid, &IID_IReferenceClock)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        *out = iface;
+        IReferenceClock_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI testclock_AddRef(IReferenceClock *iface)
+{
+    struct testclock *clock = impl_from_IReferenceClock(iface);
+    return InterlockedIncrement(&clock->refcount);
+}
+
+static ULONG WINAPI testclock_Release(IReferenceClock *iface)
+{
+    struct testclock *clock = impl_from_IReferenceClock(iface);
+    return InterlockedDecrement(&clock->refcount);
+}
+
+static HRESULT WINAPI testclock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    struct testclock *clock = impl_from_IReferenceClock(iface);
+    if (SUCCEEDED(clock->get_time_hr))
+        *time = clock->time;
+    return clock->get_time_hr;
+}
+
+static HRESULT WINAPI testclock_AdviseTime(IReferenceClock *iface, REFERENCE_TIME base, REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testclock_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME start, REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testclock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static IReferenceClockVtbl testclock_vtbl =
+{
+    testclock_QueryInterface,
+    testclock_AddRef,
+    testclock_Release,
+    testclock_GetTime,
+    testclock_AdviseTime,
+    testclock_AdvisePeriodic,
+    testclock_Unadvise,
+};
+
+static void testclock_init(struct testclock *clock)
+{
+    memset(clock, 0, sizeof(*clock));
+    clock->IReferenceClock_iface.lpVtbl = &testclock_vtbl;
+}
+
 static void test_audiostream_get_format(void)
 {
     static const WAVEFORMATEX pin_format =
@@ -4330,6 +4411,61 @@ static void test_mediastreamfilter_set_positions(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_mediastreamfilter_get_current_stream_time(void)
+{
+    IMediaStreamFilter *filter;
+    struct testclock clock;
+    REFERENCE_TIME time;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaStreamFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testclock_init(&clock);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IMediaStreamFilter_GetCurrentStreamTime(filter, NULL);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    }
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(time == 0, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaStreamFilter_SetSyncSource(filter, &clock.IReferenceClock_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.get_time_hr = E_FAIL;
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(time == 0, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    hr = IMediaStreamFilter_Run(filter, 23456789);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0xdeadbeefdd47d2da, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    clock.time = 34567890;
+    clock.get_time_hr = S_OK;
+
+    time = 0xdeadbeefdeadbeef;
+    hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 11111101, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -4383,6 +4519,7 @@ START_TEST(amstream)
     test_mediastreamfilter_stop_pause_run();
     test_mediastreamfilter_support_seeking();
     test_mediastreamfilter_set_positions();
+    test_mediastreamfilter_get_current_stream_time();
 
     CoUninitialize();
 }
