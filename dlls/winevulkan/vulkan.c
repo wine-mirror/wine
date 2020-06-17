@@ -1245,6 +1245,22 @@ VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevi
     return res;
 }
 
+void WINAPI wine_vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
+        VkPhysicalDeviceProperties2 *properties2)
+{
+    TRACE("%p, %p\n", phys_dev, properties2);
+
+    thunk_vkGetPhysicalDeviceProperties2(phys_dev, properties2);
+}
+
+void WINAPI wine_vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
+        VkPhysicalDeviceProperties2 *properties2)
+{
+    TRACE("%p, %p\n", phys_dev, properties2);
+
+    thunk_vkGetPhysicalDeviceProperties2KHR(phys_dev, properties2);
+}
+
 void WINAPI wine_vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice phys_dev,
         const VkPhysicalDeviceExternalSemaphoreInfo *semaphore_info, VkExternalSemaphoreProperties *properties)
 {
