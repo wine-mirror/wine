@@ -959,7 +959,6 @@ static void test_ConnectionPoint(void)
     hr = IConnectionPointContainer_FindConnectionPoint( pointcontainer, &DIID_ConnectionEvents, &point );
     ok( hr == S_OK, "got %08x\n", hr );
 
-todo_wine {
     /* nothing advised yet */
     hr = IConnectionPoint_Unadvise( point, 3 );
     ok( hr == E_FAIL, "got %08x\n", hr );
@@ -973,10 +972,8 @@ todo_wine {
     cookie = 0xdeadbeef;
     hr = IConnectionPoint_Advise( point, NULL, &cookie );
     ok( hr == E_FAIL, "got %08x\n", hr );
-}
     ok( cookie == 0xdeadbeef, "got %08x\n", cookie );
 
-todo_wine {
     /* unsupported sink */
     cookie = 0xdeadbeef;
     hr = IConnectionPoint_Advise( point, (void*)&support_err_sink, &cookie );
@@ -1005,7 +1002,7 @@ todo_wine {
     ok( hr == S_OK, "got %08x\n", hr );
     ok( cookie, "got %08x\n", cookie );
     ok( conn_event.refs == 1, "got %d\n", conn_event.refs );
-}
+
     refs = IConnectionPoint_Release( point );
     ok( refs == 1, "got %u", refs );
 
