@@ -406,7 +406,6 @@ static void test_default_mixer(void)
     ok(input_id == 0 && output_id == 0, "Unexpected stream ids.\n");
 
     hr = IMFTransform_GetInputStreamAttributes(transform, 1, &attributes);
-todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetOutputStreamAttributes(transform, 1, &attributes);
@@ -444,29 +443,22 @@ todo_wine
 
     attributes = NULL;
     hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!attributes, "Unexpected attributes.\n");
-}
+
     attributes2 = NULL;
     hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes2);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(attributes == attributes2, "Unexpected instance.\n");
 
-    if (attributes2)
-        IMFAttributes_Release(attributes2);
-    if (attributes)
-        IMFAttributes_Release(attributes);
+    IMFAttributes_Release(attributes2);
+    IMFAttributes_Release(attributes);
 
     attributes = NULL;
     hr = IMFTransform_GetInputStreamAttributes(transform, 1, &attributes);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!attributes, "Unexpected attributes.\n");
-}
-    if (attributes)
-        IMFAttributes_Release(attributes);
+    IMFAttributes_Release(attributes);
 
     hr = IMFTransform_DeleteInputStream(transform, 0);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
