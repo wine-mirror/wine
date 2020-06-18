@@ -55,7 +55,6 @@ struct drive_info
 };
 
 extern NTSTATUS close_handle( HANDLE ) DECLSPEC_HIDDEN;
-extern ULONG_PTR get_system_affinity_mask(void) DECLSPEC_HIDDEN;
 
 /* exceptions */
 extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;

@@ -170,6 +170,7 @@ static SIZE_T signal_stack_align;
 static TEB *teb_block;
 static TEB *next_free_teb;
 static int teb_block_pos;
+static struct list teb_list = LIST_INIT( teb_list );
 
 #define ROUND_ADDR(addr,mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 #define ROUND_SIZE(addr,size) (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
@@ -2537,6 +2538,25 @@ NTSTATUS CDECL virtual_create_builtin_view( void *module )
 }
 
 
+/* set some initial values in a new TEB */
+static void init_teb( TEB *teb, PEB *peb )
+{
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+
+    teb->Peb = peb;
+    teb->Tib.Self = &teb->Tib;
+    teb->Tib.ExceptionList = (void *)~0ul;
+    teb->Tib.StackBase = (void *)~0ul;
+    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    thread_data->request_fd = -1;
+    thread_data->reply_fd   = -1;
+    thread_data->wait_fd[0] = -1;
+    thread_data->wait_fd[1] = -1;
+    list_add_head( &teb_list, &thread_data->entry );
+}
+
+
 /***********************************************************************
  *           virtual_alloc_first_teb
  */
@@ -2566,13 +2586,7 @@ TEB *virtual_alloc_first_teb(void)
     peb = (PEB *)((char *)teb_block + 32 * teb_size - peb_size);
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &teb_size, MEM_COMMIT, PAGE_READWRITE );
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&peb, 0, &peb_size, MEM_COMMIT, PAGE_READWRITE );
-
-    teb->Peb = peb;
-    teb->Tib.Self = &teb->Tib;
-    teb->Tib.ExceptionList = (void *)~0ul;
-    teb->Tib.StackBase = (void *)~0ul;
-    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
-    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    init_teb( teb, peb );
     use_locks = TRUE;
     return teb;
 }
@@ -2615,14 +2629,10 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &teb_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
+    init_teb( teb, NtCurrentTeb()->Peb );
+    *ret_teb = teb;
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
-    *ret_teb = teb;
-    teb->Peb = NtCurrentTeb()->Peb;
-    teb->Tib.Self = &teb->Tib;
-    teb->Tib.ExceptionList = (void *)~0UL;
-    teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
-    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
     if ((status = signal_alloc_thread( teb )))
     {
         server_enter_uninterrupted_section( &csVirtual, &sigset );
@@ -2656,9 +2666,46 @@ void virtual_free_teb( TEB *teb )
     }
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
+    list_remove( &thread_data->entry );
     *(TEB **)teb = next_free_teb;
     next_free_teb = teb;
     server_leave_uninterrupted_section( &csVirtual, &sigset );
+}
+
+
+/***********************************************************************
+ *           virtual_clear_tls_index
+ */
+NTSTATUS virtual_clear_tls_index( ULONG index )
+{
+    struct ntdll_thread_data *thread_data;
+    sigset_t sigset;
+
+    if (index < TLS_MINIMUM_AVAILABLE)
+    {
+        server_enter_uninterrupted_section( &csVirtual, &sigset );
+        LIST_FOR_EACH_ENTRY( thread_data, &teb_list, struct ntdll_thread_data, entry )
+        {
+            TEB *teb = CONTAINING_RECORD( thread_data, TEB, GdiTebBatch );
+            teb->TlsSlots[index] = 0;
+        }
+        server_leave_uninterrupted_section( &csVirtual, &sigset );
+    }
+    else
+    {
+        index -= TLS_MINIMUM_AVAILABLE;
+        if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
+            return STATUS_INVALID_PARAMETER;
+
+        server_enter_uninterrupted_section( &csVirtual, &sigset );
+        LIST_FOR_EACH_ENTRY( thread_data, &teb_list, struct ntdll_thread_data, entry )
+        {
+            TEB *teb = CONTAINING_RECORD( thread_data, TEB, GdiTebBatch );
+            if (teb->TlsExpansionSlots) teb->TlsExpansionSlots[index] = 0;
+        }
+        server_leave_uninterrupted_section( &csVirtual, &sigset );
+    }
+    return STATUS_SUCCESS;
 }
 
 

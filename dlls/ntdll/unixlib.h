@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 53
+#define NTDLL_UNIXLIB_VERSION 54
 
 struct unix_funcs
 {
@@ -105,6 +105,7 @@ struct unix_funcs
                                              void *in_buffer, ULONG in_size,
                                              void *out_buffer, ULONG out_size );
     NTSTATUS      (WINAPI *NtGetContextThread)( HANDLE handle, CONTEXT *context );
+    ULONG         (WINAPI *NtGetCurrentProcessorNumber)(void);
     NTSTATUS      (WINAPI *NtGetWriteWatch)( HANDLE process, ULONG flags, PVOID base, SIZE_T size,
                                              PVOID *addresses, ULONG_PTR *count, ULONG *granularity );
     NTSTATUS      (WINAPI *NtIsProcessInJob)( HANDLE process, HANDLE job );
@@ -154,6 +155,8 @@ struct unix_funcs
                                                          void *info, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryInformationProcess)( HANDLE handle, PROCESSINFOCLASS class, void *info,
                                                        ULONG size, ULONG *ret_len );
+    NTSTATUS      (WINAPI *NtQueryInformationThread)( HANDLE handle, THREADINFOCLASS class,
+                                                      void *data, ULONG length, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryIoCompletion)( HANDLE handle, IO_COMPLETION_INFORMATION_CLASS class,
                                                  void *buffer, ULONG len, ULONG *ret_len );
     NTSTATUS      (WINAPI *NtQueryMutant)( HANDLE handle, MUTANT_INFORMATION_CLASS class,
@@ -202,6 +205,8 @@ struct unix_funcs
                                                        void *info, ULONG len );
     NTSTATUS      (WINAPI *NtSetInformationProcess)( HANDLE handle, PROCESSINFOCLASS class,
                                                      void *info, ULONG size );
+    NTSTATUS      (WINAPI *NtSetInformationThread)( HANDLE handle, THREADINFOCLASS class,
+                                                    const void *data, ULONG length );
     NTSTATUS      (WINAPI *NtSetIoCompletion)( HANDLE handle, ULONG_PTR key, ULONG_PTR value,
                                                NTSTATUS status, SIZE_T count );
     NTSTATUS      (WINAPI *NtSetLdtEntries)( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_ENTRY entry2 );
@@ -291,7 +296,6 @@ struct unix_funcs
                                            BOOL *suspend, unsigned int *cpus, BOOL *wow64, timeout_t *start_time );
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
-    NTSTATUS      (CDECL *get_thread_ldt_entry)( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
     NTSTATUS      (CDECL *exec_process)( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status );
 
     /* server functions */

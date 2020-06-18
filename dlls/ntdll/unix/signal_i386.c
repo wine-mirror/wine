@@ -2039,7 +2039,7 @@ static void ldt_set_fs( WORD sel, TEB *teb )
 /**********************************************************************
  *           get_thread_ldt_entry
  */
-NTSTATUS CDECL get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
+NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len )
 {
     THREAD_DESCRIPTOR_INFORMATION *info = data;
     NTSTATUS status = STATUS_SUCCESS;

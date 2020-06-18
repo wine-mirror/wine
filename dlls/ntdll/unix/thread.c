@@ -89,7 +89,6 @@ TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZ
 {
     TEB *teb;
     SIZE_T info_size;
-    struct ntdll_thread_data *thread_data;
 #ifdef __i386__
     extern struct ldt_copy __wine_ldt_copy;
     *ldt_copy = &__wine_ldt_copy;
@@ -97,11 +96,6 @@ TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZ
     nb_threads = nb_threads_ptr;
 
     teb = virtual_alloc_first_teb();
-    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    thread_data->request_fd = -1;
-    thread_data->reply_fd   = -1;
-    thread_data->wait_fd[0] = -1;
-    thread_data->wait_fd[1] = -1;
 
     signal_init_threading();
     signal_alloc_thread( teb );
@@ -288,9 +282,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];
-    thread_data->reply_fd    = -1;
-    thread_data->wait_fd[0]  = -1;
-    thread_data->wait_fd[1]  = -1;
     thread_data->start_stack = (char *)teb->Tib.StackBase;
 
     pthread_attr_init( &pthread_attr );
@@ -672,4 +663,435 @@ NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int fla
         SERVER_END_REQ;
     }
     return ret;
+}
+
+
+/******************************************************************************
+ *              NtQueryInformationThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
+                                          void *data, ULONG length, ULONG *ret_len )
+{
+    NTSTATUS status;
+
+    switch (class)
+    {
+    case ThreadBasicInformation:
+    {
+        THREAD_BASIC_INFORMATION info;
+        const ULONG_PTR affinity_mask = get_system_affinity_mask();
+
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->tid_in = 0;
+            if (!(status = wine_server_call( req )))
+            {
+                info.ExitStatus             = reply->exit_code;
+                info.TebBaseAddress         = wine_server_get_ptr( reply->teb );
+                info.ClientId.UniqueProcess = ULongToHandle(reply->pid);
+                info.ClientId.UniqueThread  = ULongToHandle(reply->tid);
+                info.AffinityMask           = reply->affinity & affinity_mask;
+                info.Priority               = reply->priority;
+                info.BasePriority           = reply->priority;  /* FIXME */
+            }
+        }
+        SERVER_END_REQ;
+        if (status == STATUS_SUCCESS)
+        {
+            if (data) memcpy( data, &info, min( length, sizeof(info) ));
+            if (ret_len) *ret_len = min( length, sizeof(info) );
+        }
+        return status;
+    }
+
+    case ThreadAffinityMask:
+    {
+        const ULONG_PTR affinity_mask = get_system_affinity_mask();
+        ULONG_PTR affinity = 0;
+
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->tid_in = 0;
+            if (!(status = wine_server_call( req ))) affinity = reply->affinity & affinity_mask;
+        }
+        SERVER_END_REQ;
+        if (status == STATUS_SUCCESS)
+        {
+            if (data) memcpy( data, &affinity, min( length, sizeof(affinity) ));
+            if (ret_len) *ret_len = min( length, sizeof(affinity) );
+        }
+        return status;
+    }
+
+    case ThreadTimes:
+    {
+        KERNEL_USER_TIMES kusrt;
+
+        SERVER_START_REQ( get_thread_times )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+            {
+                kusrt.CreateTime.QuadPart = reply->creation_time;
+                kusrt.ExitTime.QuadPart = reply->exit_time;
+            }
+        }
+        SERVER_END_REQ;
+        if (status == STATUS_SUCCESS)
+        {
+            /* We call times(2) for kernel time or user time */
+            /* We can only (portably) do this for the current thread */
+            if (handle == GetCurrentThread())
+            {
+                struct tms time_buf;
+                long clocks_per_sec = sysconf(_SC_CLK_TCK);
+
+                times(&time_buf);
+                kusrt.KernelTime.QuadPart = (ULONGLONG)time_buf.tms_stime * 10000000 / clocks_per_sec;
+                kusrt.UserTime.QuadPart = (ULONGLONG)time_buf.tms_utime * 10000000 / clocks_per_sec;
+            }
+            else
+            {
+                static BOOL reported = FALSE;
+
+                kusrt.KernelTime.QuadPart = 0;
+                kusrt.UserTime.QuadPart = 0;
+                if (reported)
+                    TRACE("Cannot get kerneltime or usertime of other threads\n");
+                else
+                {
+                    FIXME("Cannot get kerneltime or usertime of other threads\n");
+                    reported = TRUE;
+                }
+            }
+            if (data) memcpy( data, &kusrt, min( length, sizeof(kusrt) ));
+            if (ret_len) *ret_len = min( length, sizeof(kusrt) );
+        }
+        return status;
+    }
+
+    case ThreadDescriptorTableEntry:
+        return get_thread_ldt_entry( handle, data, length, ret_len );
+
+    case ThreadAmILastThread:
+    {
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->tid_in = 0;
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+            {
+                BOOLEAN last = reply->last;
+                if (data) memcpy( data, &last, min( length, sizeof(last) ));
+                if (ret_len) *ret_len = min( length, sizeof(last) );
+            }
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadQuerySetWin32StartAddress:
+    {
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->tid_in = 0;
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+            {
+                PRTL_THREAD_START_ROUTINE entry = wine_server_get_ptr( reply->entry_point );
+                if (data) memcpy( data, &entry, min( length, sizeof(entry) ) );
+                if (ret_len) *ret_len = min( length, sizeof(entry) );
+            }
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadGroupInformation:
+    {
+        const ULONG_PTR affinity_mask = get_system_affinity_mask();
+        GROUP_AFFINITY affinity;
+
+        memset( &affinity, 0, sizeof(affinity) );
+        affinity.Group = 0; /* Wine only supports max 64 processors */
+
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->tid_in = 0;
+            if (!(status = wine_server_call( req ))) affinity.Mask = reply->affinity & affinity_mask;
+        }
+        SERVER_END_REQ;
+        if (status == STATUS_SUCCESS)
+        {
+            if (data) memcpy( data, &affinity, min( length, sizeof(affinity) ));
+            if (ret_len) *ret_len = min( length, sizeof(affinity) );
+        }
+        return status;
+    }
+
+    case ThreadIsIoPending:
+        FIXME( "ThreadIsIoPending info class not supported yet\n" );
+        if (length != sizeof(BOOL)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!data) return STATUS_ACCESS_DENIED;
+        *(BOOL*)data = FALSE;
+        if (ret_len) *ret_len = sizeof(BOOL);
+        return STATUS_SUCCESS;
+
+    case ThreadSuspendCount:
+        if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!data) return STATUS_ACCESS_VIOLATION;
+
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->tid_in = 0;
+            if (!(status = wine_server_call( req ))) *(ULONG *)data = reply->suspend_count;
+        }
+        SERVER_END_REQ;
+        return status;
+
+    case ThreadDescription:
+    {
+        THREAD_DESCRIPTION_INFORMATION *info = data;
+        data_size_t len, desc_len = 0;
+        WCHAR *ptr;
+
+        len = length >= sizeof(*info) ? length - sizeof(*info) : 0;
+        ptr = info ? (WCHAR *)(info + 1) : NULL;
+
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            if (ptr) wine_server_set_reply( req, ptr, len );
+            status = wine_server_call( req );
+            desc_len = reply->desc_len;
+        }
+        SERVER_END_REQ;
+
+        if (!info) status = STATUS_BUFFER_TOO_SMALL;
+        else if (status == STATUS_SUCCESS)
+        {
+            info->Description.Length = info->Description.MaximumLength = desc_len;
+            info->Description.Buffer = ptr;
+        }
+
+        if (ret_len && (status == STATUS_SUCCESS || status == STATUS_BUFFER_TOO_SMALL))
+            *ret_len = sizeof(*info) + desc_len;
+        return status;
+    }
+
+    case ThreadPriority:
+    case ThreadBasePriority:
+    case ThreadImpersonationToken:
+    case ThreadEnableAlignmentFaultFixup:
+    case ThreadEventPair_Reusable:
+    case ThreadZeroTlsCell:
+    case ThreadPerformanceCount:
+    case ThreadIdealProcessor:
+    case ThreadPriorityBoost:
+    case ThreadSetTlsArrayAddress:
+    default:
+        FIXME( "info class %d not supported yet\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+
+/******************************************************************************
+ *              NtSetInformationThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
+                                        const void *data, ULONG length )
+{
+    NTSTATUS status;
+
+    switch (class)
+    {
+    case ThreadZeroTlsCell:
+        if (handle == GetCurrentThread())
+        {
+            if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+            return virtual_clear_tls_index( *(const ULONG *)data );
+        }
+        FIXME( "ZeroTlsCell not supported on other threads\n" );
+        return STATUS_NOT_IMPLEMENTED;
+
+    case ThreadImpersonationToken:
+    {
+        const HANDLE *token = data;
+
+        if (length != sizeof(HANDLE)) return STATUS_INVALID_PARAMETER;
+        TRACE("Setting ThreadImpersonationToken handle to %p\n", *token );
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle   = wine_server_obj_handle( handle );
+            req->token    = wine_server_obj_handle( *token );
+            req->mask     = SET_THREAD_INFO_TOKEN;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadBasePriority:
+    {
+        const DWORD *pprio = data;
+        if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle   = wine_server_obj_handle( handle );
+            req->priority = *pprio;
+            req->mask     = SET_THREAD_INFO_PRIORITY;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadAffinityMask:
+    {
+        const ULONG_PTR affinity_mask = get_system_affinity_mask();
+        ULONG_PTR req_aff;
+
+        if (length != sizeof(ULONG_PTR)) return STATUS_INVALID_PARAMETER;
+        req_aff = *(const ULONG_PTR *)data & affinity_mask;
+        if (!req_aff) return STATUS_INVALID_PARAMETER;
+
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle   = wine_server_obj_handle( handle );
+            req->affinity = req_aff;
+            req->mask     = SET_THREAD_INFO_AFFINITY;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadHideFromDebugger:
+        /* pretend the call succeeded to satisfy some code protectors */
+        return STATUS_SUCCESS;
+
+    case ThreadQuerySetWin32StartAddress:
+    {
+        const PRTL_THREAD_START_ROUTINE *entry = data;
+        if (length != sizeof(PRTL_THREAD_START_ROUTINE)) return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle   = wine_server_obj_handle( handle );
+            req->mask     = SET_THREAD_INFO_ENTRYPOINT;
+            req->entry_point = wine_server_client_ptr( *entry );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadGroupInformation:
+    {
+        const ULONG_PTR affinity_mask = get_system_affinity_mask();
+        const GROUP_AFFINITY *req_aff;
+
+        if (length != sizeof(*req_aff)) return STATUS_INVALID_PARAMETER;
+        if (!data) return STATUS_ACCESS_VIOLATION;
+        req_aff = data;
+
+        /* On Windows the request fails if the reserved fields are set */
+        if (req_aff->Reserved[0] || req_aff->Reserved[1] || req_aff->Reserved[2])
+            return STATUS_INVALID_PARAMETER;
+
+        /* Wine only supports max 64 processors */
+        if (req_aff->Group) return STATUS_INVALID_PARAMETER;
+        if (req_aff->Mask & ~affinity_mask) return STATUS_INVALID_PARAMETER;
+        if (!req_aff->Mask) return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle   = wine_server_obj_handle( handle );
+            req->affinity = req_aff->Mask;
+            req->mask     = SET_THREAD_INFO_AFFINITY;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadDescription:
+    {
+        const THREAD_DESCRIPTION_INFORMATION *info = data;
+
+        if (length != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!info) return STATUS_ACCESS_VIOLATION;
+        if (info->Description.Length != info->Description.MaximumLength) return STATUS_INVALID_PARAMETER;
+        if (info->Description.Length && !info->Description.Buffer) return STATUS_ACCESS_VIOLATION;
+
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->mask   = SET_THREAD_INFO_DESCRIPTION;
+            wine_server_add_data( req, info->Description.Buffer, info->Description.Length );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
+    case ThreadBasicInformation:
+    case ThreadTimes:
+    case ThreadPriority:
+    case ThreadDescriptorTableEntry:
+    case ThreadEnableAlignmentFaultFixup:
+    case ThreadEventPair_Reusable:
+    case ThreadPerformanceCount:
+    case ThreadAmILastThread:
+    case ThreadIdealProcessor:
+    case ThreadPriorityBoost:
+    case ThreadSetTlsArrayAddress:
+    case ThreadIsIoPending:
+    default:
+        FIXME( "info class %d not supported yet\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+
+/******************************************************************************
+ *              NtGetCurrentProcessorNumber  (NTDLL.@)
+ */
+ULONG WINAPI NtGetCurrentProcessorNumber(void)
+{
+    ULONG processor;
+
+#if defined(__linux__) && defined(__NR_getcpu)
+    int res = syscall(__NR_getcpu, &processor, NULL, NULL);
+    if (res != -1) return processor;
+#endif
+
+    if (NtCurrentTeb()->Peb->NumberOfProcessors > 1)
+    {
+        ULONG_PTR thread_mask, processor_mask;
+
+        if (!NtQueryInformationThread( GetCurrentThread(), ThreadAffinityMask,
+                                       &thread_mask, sizeof(thread_mask), NULL ))
+        {
+            for (processor = 0; processor < NtCurrentTeb()->Peb->NumberOfProcessors; processor++)
+            {
+                processor_mask = (1 << processor);
+                if (thread_mask & processor_mask)
+                {
+                    if (thread_mask != processor_mask)
+                        FIXME( "need multicore support (%d processors)\n",
+                               NtCurrentTeb()->Peb->NumberOfProcessors );
+                    return processor;
+                }
+            }
+        }
+    }
+    /* fallback to the first processor */
+    return 0;
 }

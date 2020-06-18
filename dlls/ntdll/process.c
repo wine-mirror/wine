@@ -85,13 +85,6 @@ HANDLE CDECL __wine_make_process_system(void)
     return ret;
 }
 
-ULONG_PTR get_system_affinity_mask(void)
-{
-    ULONG num_cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
-    if (num_cpus >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
-    return ((ULONG_PTR)1 << num_cpus) - 1;
-}
-
 /******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.@]
 *  ZwQueryInformationProcess		[NTDLL.@]
