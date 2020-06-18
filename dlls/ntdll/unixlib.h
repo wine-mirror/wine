@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 52
+#define NTDLL_UNIXLIB_VERSION 53
 
 struct unix_funcs
 {
@@ -94,6 +94,8 @@ struct unix_funcs
                                                HANDLE dest_process, HANDLE *dest,
                                                ACCESS_MASK access, ULONG attributes, ULONG options );
     NTSTATUS      (WINAPI *NtFlushBuffersFile)( HANDLE handle, IO_STATUS_BLOCK *io );
+    NTSTATUS      (WINAPI *NtFlushInstructionCache)( HANDLE handle, const void *addr, SIZE_T size );
+    void          (WINAPI *NtFlushProcessWriteBuffers)(void);
     NTSTATUS      (WINAPI *NtFlushVirtualMemory)( HANDLE process, LPCVOID *addr_ptr,
                                                   SIZE_T *size_ptr, ULONG unknown );
     NTSTATUS      (WINAPI *NtFreeVirtualMemory)( HANDLE process, PVOID *addr_ptr,
@@ -123,6 +125,8 @@ struct unix_funcs
                                               const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenMutant)( HANDLE *handle, ACCESS_MASK access,
                                           const OBJECT_ATTRIBUTES *attr );
+    NTSTATUS      (WINAPI *NtOpenProcess)( HANDLE *handle, ACCESS_MASK access,
+                                           const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id );
     NTSTATUS      (WINAPI *NtOpenSection)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenSemaphore)( HANDLE *handle, ACCESS_MASK access,
@@ -188,6 +192,7 @@ struct unix_funcs
                                                     LARGE_INTEGER *timeout, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtResetEvent)( HANDLE handle, LONG *prev_state );
     NTSTATUS      (WINAPI *NtResetWriteWatch)( HANDLE process, PVOID base, SIZE_T size );
+    NTSTATUS      (WINAPI *NtResumeProcess)( HANDLE handle );
     NTSTATUS      (WINAPI *NtResumeThread)( HANDLE handle, ULONG *count );
     NTSTATUS      (WINAPI *NtSetContextThread)( HANDLE handle, const CONTEXT *context );
     NTSTATUS      (WINAPI *NtSetEvent)( HANDLE handle, LONG *prev_state );
@@ -206,6 +211,7 @@ struct unix_funcs
                                         BOOLEAN resume, ULONG period, BOOLEAN *state );
     NTSTATUS      (WINAPI *NtSignalAndWaitForSingleObject)( HANDLE signal, HANDLE wait,
                                                             BOOLEAN alertable, const LARGE_INTEGER *timeout );
+    NTSTATUS      (WINAPI *NtSuspendProcess)( HANDLE handle );
     NTSTATUS      (WINAPI *NtSuspendThread)( HANDLE handle, ULONG *count );
     NTSTATUS      (WINAPI *NtTerminateJobObject)( HANDLE handle, NTSTATUS status );
     NTSTATUS      (WINAPI *NtTerminateProcess)( HANDLE handle, LONG exit_code );
@@ -286,7 +292,7 @@ struct unix_funcs
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
     NTSTATUS      (CDECL *get_thread_ldt_entry)( HANDLE handle, void *data, ULONG len, ULONG *ret_len );
-    NTSTATUS      (CDECL *exec_process)( const UNICODE_STRING *cmdline, const pe_image_info_t *pe_info );
+    NTSTATUS      (CDECL *exec_process)( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status );
 
     /* server functions */
     unsigned int  (CDECL *server_call)( void *req_ptr );

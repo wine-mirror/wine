@@ -4337,3 +4337,38 @@ NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
 }
+
+
+/**********************************************************************
+ *           NtFlushInstructionCache  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtFlushInstructionCache( HANDLE handle, const void *addr, SIZE_T size )
+{
+#if defined(__x86_64__) || defined(__i386__)
+    /* no-op */
+#elif defined(HAVE___CLEAR_CACHE)
+    if (handle == GetCurrentProcess())
+    {
+        __clear_cache( (char *)addr, (char *)addr + size );
+    }
+    else
+    {
+        static int once;
+        if (!once++) FIXME( "%p %p %ld other process not supported\n", handle, addr, size );
+    }
+#else
+    static int once;
+    if (!once++) FIXME( "%p %p %ld\n", handle, addr, size );
+#endif
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *           NtFlushProcessWriteBuffers  (NTDLL.@)
+ */
+void WINAPI NtFlushProcessWriteBuffers(void)
+{
+    static int once = 0;
+    if (!once++) FIXME( "stub\n" );
+}

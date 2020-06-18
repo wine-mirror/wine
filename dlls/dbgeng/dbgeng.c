@@ -36,9 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
 
-extern NTSTATUS WINAPI NtSuspendProcess(HANDLE handle);
-extern NTSTATUS WINAPI NtResumeProcess(HANDLE handle);
-
 struct module_info
 {
     DEBUG_MODULE_PARAMETERS params;

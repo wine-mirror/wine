@@ -29,26 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_TIMES_H
-# include <sys/times.h>
-#endif
 #include <sys/types.h>
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#include <pthread.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -58,10 +39,6 @@
 #include "ntdll_misc.h"
 #include "wine/exception.h"
 #include "wine/server.h"
-
-#ifdef HAVE_MACH_MACH_H
-#include <mach/mach.h>
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 
@@ -227,193 +204,6 @@ NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
 }
 
 
-/***************************************************************************
- *	is_builtin_path
- */
-static BOOL is_builtin_path( UNICODE_STRING *path, BOOL *is_64bit )
-{
-    static const WCHAR systemW[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
-                                    's','y','s','t','e','m','3','2','\\'};
-    static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
-                                   's','y','s','w','o','w','6','4'};
-
-    *is_64bit = is_win64;
-    if (path->Length > sizeof(systemW) && !wcsnicmp( path->Buffer, systemW, ARRAY_SIZE(systemW) ))
-    {
-        if (is_wow64 && !ntdll_get_thread_data()->wow64_redir) *is_64bit = TRUE;
-        return TRUE;
-    }
-    if ((is_win64 || is_wow64) && path->Length > sizeof(wow64W) &&
-        !wcsnicmp( path->Buffer, wow64W, ARRAY_SIZE(wow64W) ))
-    {
-        *is_64bit = FALSE;
-        return TRUE;
-    }
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           get_so_file_info
- */
-static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
-{
-    union
-    {
-        struct
-        {
-            unsigned char magic[4];
-            unsigned char class;
-            unsigned char data;
-            unsigned char version;
-            unsigned char ignored1[9];
-            unsigned short type;
-            unsigned short machine;
-            unsigned char ignored2[8];
-            unsigned int phoff;
-            unsigned char ignored3[12];
-            unsigned short phnum;
-        } elf;
-        struct
-        {
-            unsigned char magic[4];
-            unsigned char class;
-            unsigned char data;
-            unsigned char ignored1[10];
-            unsigned short type;
-            unsigned short machine;
-            unsigned char ignored2[12];
-            unsigned __int64 phoff;
-            unsigned char ignored3[16];
-            unsigned short phnum;
-        } elf64;
-        struct
-        {
-            unsigned int magic;
-            unsigned int cputype;
-            unsigned int cpusubtype;
-            unsigned int filetype;
-        } macho;
-        IMAGE_DOS_HEADER mz;
-    } header;
-
-    IO_STATUS_BLOCK io;
-    LARGE_INTEGER offset;
-
-    offset.QuadPart = 0;
-    if (NtReadFile( handle, 0, NULL, NULL, &io, &header, sizeof(header), &offset, 0 )) return FALSE;
-    if (io.Information != sizeof(header)) return FALSE;
-
-    if (!memcmp( header.elf.magic, "\177ELF", 4 ))
-    {
-        unsigned int type;
-        unsigned short phnum;
-
-        if (header.elf.version != 1 /* EV_CURRENT */) return FALSE;
-#ifdef WORDS_BIGENDIAN
-        if (header.elf.data != 2 /* ELFDATA2MSB */) return FALSE;
-#else
-        if (header.elf.data != 1 /* ELFDATA2LSB */) return FALSE;
-#endif
-        switch (header.elf.machine)
-        {
-        case 3:   info->cpu = CPU_x86; break;
-        case 40:  info->cpu = CPU_ARM; break;
-        case 62:  info->cpu = CPU_x86_64; break;
-        case 183: info->cpu = CPU_ARM64; break;
-        }
-        if (header.elf.type != 3 /* ET_DYN */) return FALSE;
-        if (header.elf.class == 2 /* ELFCLASS64 */)
-        {
-            offset.QuadPart = header.elf64.phoff;
-            phnum = header.elf64.phnum;
-        }
-        else
-        {
-            offset.QuadPart = header.elf.phoff;
-            phnum = header.elf.phnum;
-        }
-        while (phnum--)
-        {
-            if (NtReadFile( handle, 0, NULL, NULL, &io, &type, sizeof(type), &offset, 0 )) return FALSE;
-            if (io.Information < sizeof(type)) return FALSE;
-            if (type == 3 /* PT_INTERP */) return FALSE;
-            offset.QuadPart += (header.elf.class == 2) ? 56 : 32;
-        }
-        return TRUE;
-    }
-    else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xfeedfacf)
-    {
-        switch (header.macho.cputype)
-        {
-        case 0x00000007: info->cpu = CPU_x86; break;
-        case 0x01000007: info->cpu = CPU_x86_64; break;
-        case 0x0000000c: info->cpu = CPU_ARM; break;
-        case 0x0100000c: info->cpu = CPU_ARM64; break;
-        }
-        if (header.macho.filetype == 8) return TRUE;
-    }
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           get_pe_file_info
- */
-static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
-                                  HANDLE *handle, pe_image_info_t *info )
-{
-    NTSTATUS status;
-    HANDLE mapping;
-    OBJECT_ATTRIBUTES attr;
-    IO_STATUS_BLOCK io;
-
-    memset( info, 0, sizeof(*info) );
-    InitializeObjectAttributes( &attr, path, attributes, 0, 0 );
-    if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT )))
-    {
-        BOOL is_64bit;
-
-        if (is_builtin_path( path, &is_64bit ))
-        {
-            TRACE( "assuming %u-bit builtin for %s\n", is_64bit ? 64 : 32, debugstr_us(path));
-            /* assume current arch */
-#if defined(__i386__) || defined(__x86_64__)
-            info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
-#elif defined(__arm__)
-            info->cpu = CPU_ARM;
-#elif defined(__aarch64__)
-            info->cpu = CPU_ARM64;
-#endif
-            *handle = 0;
-            return STATUS_SUCCESS;
-        }
-        return status;
-    }
-
-    if (!(status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
-                                    SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                                    NULL, NULL, PAGE_EXECUTE_READ, SEC_IMAGE, *handle )))
-    {
-        SERVER_START_REQ( get_mapping_info )
-        {
-            req->handle = wine_server_obj_handle( mapping );
-            req->access = SECTION_QUERY;
-            wine_server_set_reply( req, info, sizeof(*info) );
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        NtClose( mapping );
-    }
-    else if (status == STATUS_INVALID_IMAGE_NOT_MZ)
-    {
-        if (get_so_file_info( *handle, info )) return STATUS_SUCCESS;
-    }
-    return status;
-}
-
-
 /***********************************************************************
  *           restart_process
  */
@@ -425,9 +215,7 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     static const WCHAR pifW[] = {'.','p','i','f',0};
 
     WCHAR *p, *cmdline;
-    UNICODE_STRING strW;
-    pe_image_info_t pe_info;
-    HANDLE handle;
+    UNICODE_STRING pathW, cmdW;
 
     /* check for .com or .pif extension */
     if (status == STATUS_INVALID_IMAGE_NOT_MZ &&
@@ -441,14 +229,9 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     case STATUS_NO_MEMORY:
     case STATUS_INVALID_IMAGE_FORMAT:
     case STATUS_INVALID_IMAGE_NOT_MZ:
-        if (getenv( "WINEPRELOADRESERVE" ))
+        if (!RtlDosPathNameToNtPathName_U( params->ImagePathName.Buffer, &pathW, NULL, NULL ))
             return status;
-        if ((status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &strW,
-                                                               NULL, NULL )))
-            return status;
-        if ((status = get_pe_file_info( &strW, OBJ_CASE_INSENSITIVE, &handle, &pe_info )))
-            return status;
-        strW = params->CommandLine;
+        status = unix_funcs->exec_process( &pathW, &params->CommandLine, status );
         break;
     case STATUS_INVALID_IMAGE_WIN_16:
     case STATUS_INVALID_IMAGE_NE_FORMAT:
@@ -460,15 +243,12 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
         if (!cmdline) return STATUS_NO_MEMORY;
         NTDLL_swprintf( cmdline, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
                   winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
-        RtlInitUnicodeString( &strW, cmdline );
-        memset( &pe_info, 0, sizeof(pe_info) );
-        pe_info.cpu = CPU_x86;
+        RtlInitUnicodeString( &pathW, winevdm );
+        RtlInitUnicodeString( &cmdW, cmdline );
+        status = unix_funcs->exec_process( &pathW, &cmdW, status );
         break;
-    default:
-        return status;
     }
-
-    return unix_funcs->exec_process( &strW, &pe_info );
+    return status;
 }
 
 

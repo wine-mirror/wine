@@ -397,8 +397,7 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
 /***********************************************************************
  *           get_pe_file_info
  */
-static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
-                                  HANDLE *handle, pe_image_info_t *info )
+static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image_info_t *info )
 {
     NTSTATUS status;
     HANDLE mapping;
@@ -406,7 +405,7 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, ULONG attributes,
     IO_STATUS_BLOCK io;
 
     memset( info, 0, sizeof(*info) );
-    InitializeObjectAttributes( &attr, path, attributes, 0, 0 );
+    InitializeObjectAttributes( &attr, path, OBJ_CASE_INSENSITIVE, 0, 0 );
     if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
                               FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT )))
     {
@@ -586,12 +585,35 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
 /***********************************************************************
  *           exec_process
  */
-NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_image_info_t *pe_info )
+NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status )
 {
-    const int is_child_64bit = (pe_info->cpu == CPU_x86_64 || pe_info->cpu == CPU_ARM64);
-    NTSTATUS status;
+    pe_image_info_t pe_info;
+    BOOL is_child_64bit;
     int socketfd[2];
     char **argv;
+    HANDLE handle;
+
+    switch (status)
+    {
+    case STATUS_CONFLICTING_ADDRESSES:
+    case STATUS_NO_MEMORY:
+    case STATUS_INVALID_IMAGE_FORMAT:
+    case STATUS_INVALID_IMAGE_NOT_MZ:
+        if (getenv( "WINEPRELOADRESERVE" )) return status;
+        if ((status = get_pe_file_info( path, &handle, &pe_info ))) return status;
+        is_child_64bit = (pe_info.cpu == CPU_x86_64 || pe_info.cpu == CPU_ARM64);
+        break;
+    case STATUS_INVALID_IMAGE_WIN_16:
+    case STATUS_INVALID_IMAGE_NE_FORMAT:
+    case STATUS_INVALID_IMAGE_PROTECT:
+        /* we'll start winevdm */
+        memset( &pe_info, 0, sizeof(pe_info) );
+        pe_info.cpu = CPU_x86;
+        is_child_64bit = FALSE;
+        break;
+    default:
+        return status;
+    }
 
     if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
 #ifdef SO_PASSCRED
@@ -607,7 +629,7 @@ NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_image_info_
     SERVER_START_REQ( exec_process )
     {
         req->socket_fd = socketfd[1];
-        req->cpu       = pe_info->cpu;
+        req->cpu       = pe_info.cpu;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -618,7 +640,7 @@ NTSTATUS CDECL exec_process( const UNICODE_STRING *cmdline, const pe_image_info_
         do
         {
             status = exec_wineloader( argv, socketfd[0], is_child_64bit,
-                                      pe_info->base, pe_info->base + pe_info->map_size );
+                                      pe_info.base, pe_info.base + pe_info.map_size );
         }
 #ifdef __APPLE__
         while (errno == ENOTSUP && terminate_main_thread());
@@ -792,7 +814,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 
     unixdir = get_unix_curdir( params );
 
-    if ((status = get_pe_file_info( &path, OBJ_CASE_INSENSITIVE, &file_handle, &pe_info )))
+    if ((status = get_pe_file_info( &path, &file_handle, &pe_info )))
     {
         if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &path, unixdir, params ))
         {
@@ -1533,5 +1555,60 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         ret = STATUS_NOT_IMPLEMENTED;
         break;
     }
+    return ret;
+}
+
+
+/**********************************************************************
+ *           NtOpenProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtOpenProcess( HANDLE *handle, ACCESS_MASK access,
+                               const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( open_process )
+    {
+        req->pid        = HandleToULong( id->UniqueProcess );
+        req->access     = access;
+        req->attributes = attr ? attr->Attributes : 0;
+        status = wine_server_call( req );
+        if (!status) *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
+/**********************************************************************
+ *           NtSuspendProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( suspend_process )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *           NtResumeProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( resume_process )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
     return ret;
 }
