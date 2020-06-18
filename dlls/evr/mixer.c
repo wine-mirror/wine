@@ -41,6 +41,7 @@ struct video_mixer
     IMFTransform IMFTransform_iface;
     IMFVideoDeviceID IMFVideoDeviceID_iface;
     IMFTopologyServiceLookupClient IMFTopologyServiceLookupClient_iface;
+    IMFVideoMixerControl2 IMFVideoMixerControl2_iface;
     LONG refcount;
 
     struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
@@ -62,6 +63,11 @@ static struct video_mixer *impl_from_IMFVideoDeviceID(IMFVideoDeviceID *iface)
 static struct video_mixer *impl_from_IMFTopologyServiceLookupClient(IMFTopologyServiceLookupClient *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFTopologyServiceLookupClient_iface);
+}
+
+static struct video_mixer *impl_from_IMFVideoMixerControl2(IMFVideoMixerControl2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoMixerControl2_iface);
 }
 
 static int video_mixer_compare_input_id(const void *a, const void *b)
@@ -103,6 +109,11 @@ static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, 
     else if (IsEqualIID(riid, &IID_IMFTopologyServiceLookupClient))
     {
         *obj = &mixer->IMFTopologyServiceLookupClient_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoMixerControl2) ||
+            IsEqualIID(riid, &IID_IMFVideoMixerControl))
+    {
+        *obj = &mixer->IMFVideoMixerControl2_iface;
     }
     else
     {
@@ -564,6 +575,81 @@ static const IMFTopologyServiceLookupClientVtbl video_mixer_service_client_vtbl 
     video_mixer_service_client_ReleaseServicePointers,
 };
 
+static HRESULT WINAPI video_mixer_control_QueryInterface(IMFVideoMixerControl2 *iface, REFIID riid, void **obj)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, obj);
+}
+
+static ULONG WINAPI video_mixer_control_AddRef(IMFVideoMixerControl2 *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_control_Release(IMFVideoMixerControl2 *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoMixerControl2(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_control_SetStreamZOrder(IMFVideoMixerControl2 *iface, DWORD stream_id, DWORD zorder)
+{
+    FIXME("%p, %u, %u.\n", iface, stream_id, zorder);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_control_GetStreamZOrder(IMFVideoMixerControl2 *iface, DWORD stream_id, DWORD *zorder)
+{
+    FIXME("%p, %u, %p.\n", iface, stream_id, zorder);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_control_SetStreamOutputRect(IMFVideoMixerControl2 *iface, DWORD stream_id,
+        const MFVideoNormalizedRect *rect)
+{
+    FIXME("%p, %u, %p.\n", iface, stream_id, rect);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_control_GetStreamOutputRect(IMFVideoMixerControl2 *iface, DWORD stream_id,
+        MFVideoNormalizedRect *rect)
+{
+    FIXME("%p, %u, %p.\n", iface, stream_id, rect);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_control_SetMixingPrefs(IMFVideoMixerControl2 *iface, DWORD flags)
+{
+    FIXME("%p, %#x.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_control_GetMixingPrefs(IMFVideoMixerControl2 *iface, DWORD *flags)
+{
+    FIXME("%p, %p.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoMixerControl2Vtbl video_mixer_control_vtbl =
+{
+    video_mixer_control_QueryInterface,
+    video_mixer_control_AddRef,
+    video_mixer_control_Release,
+    video_mixer_control_SetStreamZOrder,
+    video_mixer_control_GetStreamZOrder,
+    video_mixer_control_SetStreamOutputRect,
+    video_mixer_control_GetStreamOutputRect,
+    video_mixer_control_SetMixingPrefs,
+    video_mixer_control_GetMixingPrefs,
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -589,6 +675,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFTransform_iface.lpVtbl = &video_mixer_transform_vtbl;
     object->IMFVideoDeviceID_iface.lpVtbl = &video_mixer_device_id_vtbl;
     object->IMFTopologyServiceLookupClient_iface.lpVtbl = &video_mixer_service_client_vtbl;
+    object->IMFVideoMixerControl2_iface.lpVtbl = &video_mixer_control_vtbl;
     object->refcount = 1;
     object->input_count = 1;
     video_mixer_init_input(&object->inputs[0]);
