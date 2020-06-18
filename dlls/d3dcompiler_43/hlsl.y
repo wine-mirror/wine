@@ -620,7 +620,7 @@ static struct hlsl_ir_load *new_var_load(struct hlsl_ir_var *var, const struct s
     return load;
 }
 
-static struct hlsl_ir_load *new_load(struct hlsl_ir_node *var_node, struct hlsl_ir_node *offset,
+static struct hlsl_ir_load *add_load(struct list *instrs, struct hlsl_ir_node *var_node, struct hlsl_ir_node *offset,
         struct hlsl_type *data_type, const struct source_location loc)
 {
     struct hlsl_ir_node *add = NULL;
@@ -636,7 +636,7 @@ static struct hlsl_ir_load *new_load(struct hlsl_ir_node *var_node, struct hlsl_
         {
             if (!(add = new_binary_expr(HLSL_IR_BINOP_ADD, src->offset, offset, loc)))
                 return NULL;
-            list_add_after(&offset->entry, &add->entry);
+            list_add_tail(instrs, &add->entry);
             offset = add;
         }
     }
@@ -654,7 +654,7 @@ static struct hlsl_ir_load *new_load(struct hlsl_ir_node *var_node, struct hlsl_
         if (!(assign = make_simple_assignment(var, var_node)))
             return NULL;
 
-        list_add_after(&var_node->entry, &assign->node.entry);
+        list_add_tail(instrs, &assign->node.entry);
     }
 
     if (!(load = d3dcompiler_alloc(sizeof(*load))))
@@ -662,23 +662,23 @@ static struct hlsl_ir_load *new_load(struct hlsl_ir_node *var_node, struct hlsl_
     init_node(&load->node, HLSL_IR_LOAD, data_type, loc);
     load->src.var = var;
     load->src.offset = offset;
-    list_add_after(&offset->entry, &load->node.entry);
+    list_add_tail(instrs, &load->node.entry);
     return load;
 }
 
-static struct hlsl_ir_load *new_record_load(struct hlsl_ir_node *record,
+static struct hlsl_ir_load *add_record_load(struct list *instrs, struct hlsl_ir_node *record,
         const struct hlsl_struct_field *field, const struct source_location loc)
 {
     struct hlsl_ir_constant *c;
 
     if (!(c = new_uint_constant(field->reg_offset * 4, loc)))
         return NULL;
-    list_add_after(&record->entry, &c->node.entry);
+    list_add_tail(instrs, &c->node.entry);
 
-    return new_load(record, &c->node, field->type, loc);
+    return add_load(instrs, record, &c->node, field->type, loc);
 }
 
-static struct hlsl_ir_load *new_array_load(struct hlsl_ir_node *array,
+static struct hlsl_ir_load *add_array_load(struct list *instrs, struct hlsl_ir_node *array,
         struct hlsl_ir_node *index, const struct source_location loc)
 {
     const struct hlsl_type *expr_type = array->data_type;
@@ -709,13 +709,13 @@ static struct hlsl_ir_load *new_array_load(struct hlsl_ir_node *array,
 
     if (!(c = new_uint_constant(data_type->reg_size * 4, loc)))
         return NULL;
-    list_add_after(&index->entry, &c->node.entry);
+    list_add_tail(instrs, &c->node.entry);
     if (!(mul = new_binary_expr(HLSL_IR_BINOP_MUL, index, &c->node, loc)))
         return NULL;
-    list_add_after(&c->node.entry, &mul->entry);
+    list_add_tail(instrs, &mul->entry);
     index = mul;
 
-    return new_load(array, index, data_type, loc);
+    return add_load(instrs, array, index, data_type, loc);
 }
 
 static void struct_var_initializer(struct list *list, struct hlsl_ir_var *var,
@@ -2365,7 +2365,7 @@ postfix_expr:             primary_expr
                                     {
                                         if (!strcmp($3, field->name))
                                         {
-                                            if (!new_record_load(node, field, loc))
+                                            if (!add_record_load($1, node, field, loc))
                                                 YYABORT;
                                             $$ = $1;
                                             break;
@@ -2398,26 +2398,27 @@ postfix_expr:             primary_expr
                                     YYABORT;
                                 }
                             }
-                        | postfix_expr '[' expr ']'
-                            {
-                                struct hlsl_ir_load *load;
+    | postfix_expr '[' expr ']'
+        {
+            struct hlsl_ir_node *array = node_from_list($1), *index = node_from_list($3);
 
-                                if (node_from_list($3)->data_type->type != HLSL_CLASS_SCALAR)
-                                {
-                                    hlsl_report_message(get_location(&@3), HLSL_LEVEL_ERROR, "array index is not scalar");
-                                    free_instr_list($1);
-                                    free_instr_list($3);
-                                    YYABORT;
-                                }
+            list_move_tail($1, $3);
+            d3dcompiler_free($3);
 
-                                if (!(load = new_array_load(node_from_list($1), node_from_list($3), get_location(&@2))))
-                                {
-                                    free_instr_list($1);
-                                    free_instr_list($3);
-                                    YYABORT;
-                                }
-                                $$ = append_binop($1, $3, &load->node);
-                            }
+            if (index->data_type->type != HLSL_CLASS_SCALAR)
+            {
+                hlsl_report_message(get_location(&@3), HLSL_LEVEL_ERROR, "array index is not scalar");
+                free_instr_list($1);
+                YYABORT;
+            }
+
+            if (!add_array_load($1, array, index, get_location(&@2)))
+            {
+                free_instr_list($1);
+                YYABORT;
+            }
+            $$ = $1;
+        }
 
       /* "var_modifiers" doesn't make sense in this case, but it's needed
          in the grammar to avoid shift/reduce conflicts. */
