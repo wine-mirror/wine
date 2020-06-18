@@ -46,6 +46,9 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
@@ -1610,7 +1613,7 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
 #ifdef HAVE_FUTIMES
     if (futimes( fd, tv ) == -1) status = errno_to_status( errno );
 #elif defined(HAVE_FUTIMESAT)
-    if (futimesat( fd, NULL, tv ) == -1) status = FILE_GetNtStatus();
+    if (futimesat( fd, NULL, tv ) == -1) status = errno_to_status( errno );
 #endif
 
 #else  /* HAVE_FUTIMES || HAVE_FUTIMESAT */
@@ -5724,4 +5727,441 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
 
     if (needs_close) close( fd );
     return ret;
+}
+
+
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+/* helper for FILE_GetDeviceInfo to hide some platform differences in fstatfs */
+static inline void get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, const char *fstypename,
+                                            unsigned int flags )
+{
+    if (!strcmp("cd9660", fstypename) || !strcmp("udf", fstypename))
+    {
+        info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+        /* Don't assume read-only, let the mount options set it below */
+        info->Characteristics |= FILE_REMOVABLE_MEDIA;
+    }
+    else if (!strcmp("nfs", fstypename) || !strcmp("nwfs", fstypename) ||
+             !strcmp("smbfs", fstypename) || !strcmp("afpfs", fstypename))
+    {
+        info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+        info->Characteristics |= FILE_REMOTE_DEVICE;
+    }
+    else if (!strcmp("procfs", fstypename))
+        info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+    else
+        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+
+    if (flags & MNT_RDONLY)
+        info->Characteristics |= FILE_READ_ONLY_DEVICE;
+
+    if (!(flags & MNT_LOCAL))
+    {
+        info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+        info->Characteristics |= FILE_REMOTE_DEVICE;
+    }
+}
+#endif
+
+static inline BOOL is_device_placeholder( int fd )
+{
+    static const char wine_placeholder[] = "Wine device placeholder";
+    char buffer[sizeof(wine_placeholder)-1];
+
+    if (pread( fd, buffer, sizeof(wine_placeholder) - 1, 0 ) != sizeof(wine_placeholder) - 1)
+        return FALSE;
+    return !memcmp( buffer, wine_placeholder, sizeof(wine_placeholder) - 1 );
+}
+
+static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
+{
+    struct stat st;
+
+    info->Characteristics = 0;
+    if (fstat( fd, &st ) < 0) return errno_to_status( errno );
+    if (S_ISCHR( st.st_mode ))
+    {
+        info->DeviceType = FILE_DEVICE_UNKNOWN;
+#ifdef linux
+        switch(major(st.st_rdev))
+        {
+        case MEM_MAJOR:
+            info->DeviceType = FILE_DEVICE_NULL;
+            break;
+        case TTY_MAJOR:
+            info->DeviceType = FILE_DEVICE_SERIAL_PORT;
+            break;
+        case LP_MAJOR:
+            info->DeviceType = FILE_DEVICE_PARALLEL_PORT;
+            break;
+        case SCSI_TAPE_MAJOR:
+            info->DeviceType = FILE_DEVICE_TAPE;
+            break;
+        }
+#endif
+    }
+    else if (S_ISBLK( st.st_mode ))
+    {
+        info->DeviceType = FILE_DEVICE_DISK;
+    }
+    else if (S_ISFIFO( st.st_mode ) || S_ISSOCK( st.st_mode ))
+    {
+        info->DeviceType = FILE_DEVICE_NAMED_PIPE;
+    }
+    else if (is_device_placeholder( fd ))
+    {
+        info->DeviceType = FILE_DEVICE_DISK;
+    }
+    else  /* regular file or directory */
+    {
+#if defined(linux) && defined(HAVE_FSTATFS)
+        struct statfs stfs;
+
+        /* check for floppy disk */
+        if (major(st.st_dev) == FLOPPY_MAJOR)
+            info->Characteristics |= FILE_REMOVABLE_MEDIA;
+
+        if (fstatfs( fd, &stfs ) < 0) stfs.f_type = 0;
+        switch (stfs.f_type)
+        {
+        case 0x9660:      /* iso9660 */
+        case 0x9fa1:      /* supermount */
+        case 0x15013346:  /* udf */
+            info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+            break;
+        case 0x6969:  /* nfs */
+        case 0xff534d42: /* cifs */
+        case 0xfe534d42: /* smb2 */
+        case 0x517b:  /* smbfs */
+        case 0x564c:  /* ncpfs */
+            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+            info->Characteristics |= FILE_REMOTE_DEVICE;
+            break;
+        case 0x01021994:  /* tmpfs */
+        case 0x28cd3d45:  /* cramfs */
+        case 0x1373:      /* devfs */
+        case 0x9fa0:      /* procfs */
+            info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+            break;
+        default:
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            break;
+        }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+        struct statfs stfs;
+
+        if (fstatfs( fd, &stfs ) < 0)
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+        else
+            get_device_info_fstatfs( info, stfs.f_fstypename, stfs.f_flags );
+#elif defined(__NetBSD__)
+        struct statvfs stfs;
+
+        if (fstatvfs( fd, &stfs) < 0)
+            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+        else
+            get_device_info_fstatfs( info, stfs.f_fstypename, stfs.f_flag );
+#elif defined(sun)
+        /* Use dkio to work out device types */
+        {
+# include <sys/dkio.h>
+# include <sys/vtoc.h>
+            struct dk_cinfo dkinf;
+            int retval = ioctl(fd, DKIOCINFO, &dkinf);
+            if(retval==-1){
+                WARN("Unable to get disk device type information - assuming a disk like device\n");
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            }
+            switch (dkinf.dki_ctype)
+            {
+            case DKC_CDROM:
+                info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+                info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+                break;
+            case DKC_NCRFLOPPY:
+            case DKC_SMSFLOPPY:
+            case DKC_INTEL82072:
+            case DKC_INTEL82077:
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                info->Characteristics |= FILE_REMOVABLE_MEDIA;
+                break;
+            case DKC_MD:
+                info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+                break;
+            default:
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+            }
+        }
+#else
+        static int warned;
+        if (!warned++) FIXME( "device info not properly supported on this platform\n" );
+        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+#endif
+        info->Characteristics |= FILE_DEVICE_IS_MOUNTED;
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************************
+ *              NtQueryVolumeInformationFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
+                                              void *buffer, ULONG length,
+                                              FS_INFORMATION_CLASS info_class )
+{
+    int fd, needs_close;
+    struct stat st;
+
+    io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
+    if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
+    {
+        SERVER_START_REQ( get_volume_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            req->info_class = info_class;
+            wine_server_set_reply( req, buffer, length );
+            io->u.Status = wine_server_call( req );
+            if (!io->u.Status) io->Information = wine_server_reply_size( reply );
+        }
+        SERVER_END_REQ;
+        return io->u.Status;
+    }
+    else if (io->u.Status) return io->u.Status;
+
+    io->u.Status = STATUS_NOT_IMPLEMENTED;
+    io->Information = 0;
+
+    switch( info_class )
+    {
+    case FileFsLabelInformation:
+        FIXME( "%p: label info not supported\n", handle );
+        break;
+
+    case FileFsSizeInformation:
+        if (length < sizeof(FILE_FS_SIZE_INFORMATION))
+            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_SIZE_INFORMATION *info = buffer;
+
+            if (fstat( fd, &st ) < 0)
+            {
+                io->u.Status = errno_to_status( errno );
+                break;
+            }
+            if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            {
+                io->u.Status = STATUS_INVALID_DEVICE_REQUEST;
+            }
+            else
+            {
+                ULONGLONG bsize;
+                /* Linux's fstatvfs is buggy */
+#if !defined(linux) || !defined(HAVE_FSTATFS)
+                struct statvfs stfs;
+
+                if (fstatvfs( fd, &stfs ) < 0)
+                {
+                    io->u.Status = errno_to_status( errno );
+                    break;
+                }
+                bsize = stfs.f_frsize;
+#else
+                struct statfs stfs;
+                if (fstatfs( fd, &stfs ) < 0)
+                {
+                    io->u.Status = errno_to_status( errno );
+                    break;
+                }
+                bsize = stfs.f_bsize;
+#endif
+                if (bsize == 2048)  /* assume CD-ROM */
+                {
+                    info->BytesPerSector = 2048;
+                    info->SectorsPerAllocationUnit = 1;
+                }
+                else
+                {
+                    info->BytesPerSector = 512;
+                    info->SectorsPerAllocationUnit = 8;
+                }
+                info->TotalAllocationUnits.QuadPart = bsize * stfs.f_blocks / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+                info->AvailableAllocationUnits.QuadPart = bsize * stfs.f_bavail / (info->BytesPerSector * info->SectorsPerAllocationUnit);
+                io->Information = sizeof(*info);
+                io->u.Status = STATUS_SUCCESS;
+            }
+        }
+        break;
+
+    case FileFsDeviceInformation:
+        if (length < sizeof(FILE_FS_DEVICE_INFORMATION))
+            io->u.Status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_DEVICE_INFORMATION *info = buffer;
+
+            if ((io->u.Status = get_device_info( fd, info )) == STATUS_SUCCESS)
+                io->Information = sizeof(*info);
+        }
+        break;
+
+    case FileFsAttributeInformation:
+    {
+        static const WCHAR fatW[] = {'F','A','T'};
+        static const WCHAR fat32W[] = {'F','A','T','3','2'};
+        static const WCHAR ntfsW[] = {'N','T','F','S'};
+        static const WCHAR cdfsW[] = {'C','D','F','S'};
+        static const WCHAR udfW[] = {'U','D','F'};
+
+        FILE_FS_ATTRIBUTE_INFORMATION *info = buffer;
+        struct mountmgr_unix_drive *drive;
+        enum mountmgr_fs_type fs_type = MOUNTMGR_FS_TYPE_NTFS;
+
+        if (length < sizeof(FILE_FS_ATTRIBUTE_INFORMATION))
+        {
+            io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+
+        if ((drive = get_mountmgr_fs_info( handle, fd )))
+        {
+            fs_type = drive->fs_type;
+            RtlFreeHeap( GetProcessHeap(), 0, drive );
+        }
+        else
+        {
+            struct statfs stfs;
+
+            if (!fstatfs( fd, &stfs ))
+            {
+#if defined(linux) && defined(HAVE_FSTATFS)
+                switch (stfs.f_type)
+                {
+                case 0x9660:
+                    fs_type = MOUNTMGR_FS_TYPE_ISO9660;
+                    break;
+                case 0x15013346:
+                    fs_type = MOUNTMGR_FS_TYPE_UDF;
+                    break;
+                case 0x4d44:
+                    fs_type = MOUNTMGR_FS_TYPE_FAT32;
+                    break;
+                }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+                if (!strcmp( stfs.f_fstypename, "cd9660" ))
+                    fs_type = MOUNTMGR_FS_TYPE_ISO9660;
+                else if (!strcmp( stfs.f_fstypename, "udf" ))
+                    fs_type = MOUNTMGR_FS_TYPE_UDF;
+                else if (!strcmp( stfs.f_fstypename, "msdos" ))
+                    fs_type = MOUNTMGR_FS_TYPE_FAT32;
+#endif
+            }
+        }
+
+        switch (fs_type)
+        {
+        case MOUNTMGR_FS_TYPE_ISO9660:
+            info->FileSystemAttributes = FILE_READ_ONLY_VOLUME;
+            info->MaximumComponentNameLength = 221;
+            info->FileSystemNameLength = min( sizeof(cdfsW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, cdfsW, info->FileSystemNameLength);
+            break;
+        case MOUNTMGR_FS_TYPE_UDF:
+            info->FileSystemAttributes = FILE_READ_ONLY_VOLUME | FILE_UNICODE_ON_DISK | FILE_CASE_SENSITIVE_SEARCH;
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(udfW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, udfW, info->FileSystemNameLength);
+            break;
+        case MOUNTMGR_FS_TYPE_FAT:
+            info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES; /* FIXME */
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(fatW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, fatW, info->FileSystemNameLength);
+            break;
+        case MOUNTMGR_FS_TYPE_FAT32:
+            info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES; /* FIXME */
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(fat32W), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, fat32W, info->FileSystemNameLength);
+            break;
+        default:
+            info->FileSystemAttributes = FILE_CASE_PRESERVED_NAMES | FILE_PERSISTENT_ACLS;
+            info->MaximumComponentNameLength = 255;
+            info->FileSystemNameLength = min( sizeof(ntfsW), length - offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) );
+            memcpy(info->FileSystemName, ntfsW, info->FileSystemNameLength);
+            break;
+        }
+
+        io->Information = offsetof( FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName ) + info->FileSystemNameLength;
+        io->u.Status = STATUS_SUCCESS;
+        break;
+    }
+
+    case FileFsVolumeInformation:
+    {
+        FILE_FS_VOLUME_INFORMATION *info = buffer;
+        struct mountmgr_unix_drive *drive;
+        const WCHAR *label;
+
+        if (length < sizeof(FILE_FS_VOLUME_INFORMATION))
+        {
+            io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+
+        if (!(drive = get_mountmgr_fs_info( handle, fd )))
+        {
+            io->u.Status = STATUS_NOT_IMPLEMENTED;
+            break;
+        }
+
+        label = (WCHAR *)((char *)drive + drive->label_offset);
+        info->VolumeCreationTime.QuadPart = 0; /* FIXME */
+        info->VolumeSerialNumber = drive->serial;
+        info->VolumeLabelLength = min( wcslen( label ) * sizeof(WCHAR),
+                                       length - offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) );
+        info->SupportsObjects = (drive->fs_type == MOUNTMGR_FS_TYPE_NTFS);
+        memcpy( info->VolumeLabel, label, info->VolumeLabelLength );
+        RtlFreeHeap( GetProcessHeap(), 0, drive );
+
+        io->Information = offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) + info->VolumeLabelLength;
+        io->u.Status = STATUS_SUCCESS;
+        break;
+    }
+
+    case FileFsControlInformation:
+        FIXME( "%p: control info not supported\n", handle );
+        break;
+
+    case FileFsFullSizeInformation:
+        FIXME( "%p: full size info not supported\n", handle );
+        break;
+
+    case FileFsObjectIdInformation:
+        FIXME( "%p: object id info not supported\n", handle );
+        break;
+
+    case FileFsMaximumInformation:
+        FIXME( "%p: maximum info not supported\n", handle );
+        break;
+
+    default:
+        io->u.Status = STATUS_INVALID_PARAMETER;
+        break;
+    }
+    if (needs_close) close( fd );
+    return io->u.Status;
+}
+
+
+/******************************************************************************
+ *              NtSetVolumeInformationFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io, void *info,
+                                            ULONG length, FS_INFORMATION_CLASS class )
+{
+    FIXME( "(%p,%p,%p,0x%08x,0x%08x) stub\n", handle, io, info, length, class );
+    return STATUS_SUCCESS;
 }

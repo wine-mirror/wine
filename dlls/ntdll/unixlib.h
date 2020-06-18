@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 54
+#define NTDLL_UNIXLIB_VERSION 55
 
 struct unix_funcs
 {
@@ -172,6 +172,9 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtQueryVirtualMemory)( HANDLE process, LPCVOID addr,
                                                   MEMORY_INFORMATION_CLASS info_class,
                                                   PVOID buffer, SIZE_T len, SIZE_T *res_len );
+    NTSTATUS      (WINAPI *NtQueryVolumeInformationFile)( HANDLE handle, IO_STATUS_BLOCK *io,
+                                                          void *buffer, ULONG length,
+                                                          FS_INFORMATION_CLASS info_class );
     NTSTATUS      (WINAPI *NtQueueApcThread)( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1,
                                               ULONG_PTR arg2, ULONG_PTR arg3 );
     NTSTATUS      (WINAPI *NtRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
@@ -214,6 +217,8 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtSetTimer)( HANDLE handle, const LARGE_INTEGER *when,
                                         PTIMER_APC_ROUTINE callback, void *arg,
                                         BOOLEAN resume, ULONG period, BOOLEAN *state );
+    NTSTATUS      (WINAPI *NtSetVolumeInformationFile)( HANDLE handle, IO_STATUS_BLOCK *io, void *info,
+                                                        ULONG length, FS_INFORMATION_CLASS class );
     NTSTATUS      (WINAPI *NtSignalAndWaitForSingleObject)( HANDLE signal, HANDLE wait,
                                                             BOOLEAN alertable, const LARGE_INTEGER *timeout );
     NTSTATUS      (WINAPI *NtSuspendProcess)( HANDLE handle );
