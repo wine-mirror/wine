@@ -21,10 +21,18 @@
 #include "wine/debug.h"
 #include "evr.h"
 #include "d3d9.h"
+#include "mferror.h"
 
 #include "evr_classes.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
+
+#define MAX_MIXER_INPUT_STREAMS 16
+
+struct input_stream
+{
+    unsigned int id;
+};
 
 struct video_mixer
 {
@@ -32,6 +40,11 @@ struct video_mixer
     IMFVideoDeviceID IMFVideoDeviceID_iface;
     IMFTopologyServiceLookupClient IMFTopologyServiceLookupClient_iface;
     LONG refcount;
+
+    struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
+    unsigned int input_ids[MAX_MIXER_INPUT_STREAMS];
+    unsigned int input_count;
+    CRITICAL_SECTION cs;
 };
 
 static struct video_mixer *impl_from_IMFTransform(IMFTransform *iface)
@@ -47,6 +60,21 @@ static struct video_mixer *impl_from_IMFVideoDeviceID(IMFVideoDeviceID *iface)
 static struct video_mixer *impl_from_IMFTopologyServiceLookupClient(IMFTopologyServiceLookupClient *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFTopologyServiceLookupClient_iface);
+}
+
+static int video_mixer_compare_input_id(const void *a, const void *b)
+{
+    const unsigned int *key = a;
+    const struct input_stream *input = b;
+
+    if (*key > input->id) return 1;
+    if (*key < input->id) return -1;
+    return 0;
+}
+
+static struct input_stream * video_mixer_get_input(const struct video_mixer *mixer, unsigned int id)
+{
+    return bsearch(&id, mixer->inputs, mixer->input_count, sizeof(*mixer->inputs), video_mixer_compare_input_id);
 }
 
 static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, REFIID riid, void **obj)
@@ -97,7 +125,10 @@ static ULONG WINAPI video_mixer_transform_Release(IMFTransform *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        DeleteCriticalSection(&mixer->cs);
         free(mixer);
+    }
 
     return refcount;
 }
@@ -105,38 +136,81 @@ static ULONG WINAPI video_mixer_transform_Release(IMFTransform *iface)
 static HRESULT WINAPI video_mixer_transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
         DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
 {
-    FIXME("%p, %p, %p, %p, %p.\n", iface, input_minimum, input_maximum, output_minimum, output_maximum);
+    TRACE("%p, %p, %p, %p, %p.\n", iface, input_minimum, input_maximum, output_minimum, output_maximum);
 
-    return E_NOTIMPL;
+    *input_minimum = 1;
+    *input_maximum = 16;
+    *output_minimum = 1;
+    *output_maximum = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
 {
-    FIXME("%p, %p, %p.\n", iface, inputs, outputs);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, inputs, outputs);
+
+    EnterCriticalSection(&mixer->cs);
+    if (inputs) *inputs = mixer->input_count;
+    if (outputs) *outputs = 1;
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
         DWORD output_size, DWORD *outputs)
 {
-    FIXME("%p, %u, %p, %u, %p.\n", iface, input_size, inputs, output_size, outputs);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %u, %p.\n", iface, input_size, inputs, output_size, outputs);
+
+    EnterCriticalSection(&mixer->cs);
+    if (mixer->input_count > input_size || !output_size)
+        hr = MF_E_BUFFERTOOSMALL;
+    else if (inputs)
+        memcpy(inputs, mixer->input_ids, mixer->input_count * sizeof(*inputs));
+    if (outputs) *outputs = 0;
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
 {
-    FIXME("%p, %u, %p.\n", iface, id, info);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct input_stream *input;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, id, info);
+
+    EnterCriticalSection(&mixer->cs);
+    if (!(input = video_mixer_get_input(mixer, id)))
+        hr = MF_E_INVALIDSTREAMNUMBER;
+    else
+    {
+        memset(info, 0, sizeof(*info));
+        if (id)
+            info->dwFlags |= MFT_INPUT_STREAM_REMOVABLE | MFT_INPUT_STREAM_OPTIONAL;
+    }
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    FIXME("%p, %u, %p.\n", iface, id, info);
+    TRACE("%p, %u, %p.\n", iface, id, info);
 
-    return E_NOTIMPL;
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    memset(info, 0, sizeof(*info));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
@@ -157,23 +231,93 @@ static HRESULT WINAPI video_mixer_transform_GetInputStreamAttributes(IMFTransfor
 static HRESULT WINAPI video_mixer_transform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id,
         IMFAttributes **attributes)
 {
-    FIXME("%p, %u, %p.\n", iface, id, attributes);
+    TRACE("%p, %u, %p.\n", iface, id, attributes);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI video_mixer_transform_DeleteInputStream(IMFTransform *iface, DWORD id)
 {
-    FIXME("%p, %u.\n", iface, id);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct input_stream *input;
+    HRESULT hr = S_OK;
+    unsigned int idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u.\n", iface, id);
+
+    EnterCriticalSection(&mixer->cs);
+
+    /* Can't delete reference stream. */
+    if (!id || !(input = video_mixer_get_input(mixer, id)))
+        hr = MF_E_INVALIDSTREAMNUMBER;
+    else
+    {
+        mixer->input_count--;
+        idx = input - mixer->inputs;
+        if (idx < mixer->input_count)
+        {
+            memmove(&mixer->inputs[idx], &mixer->inputs[idx + 1], (mixer->input_count - idx) * sizeof(*mixer->inputs));
+            memmove(&mixer->input_ids[idx], &mixer->input_ids[idx + 1], (mixer->input_count - idx) *
+                    sizeof(*mixer->input_ids));
+        }
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
+static int video_mixer_add_input_sort_compare(const void *a, const void *b)
 {
-    FIXME("%p, %u, %p.\n", iface, streams, ids);
+    const struct input_stream *left = a, *right = b;
+    return left->id != right->id ? (left->id < right->id ? -1 : 1) : 0;
+};
 
-    return E_NOTIMPL;
+static HRESULT WINAPI video_mixer_transform_AddInputStreams(IMFTransform *iface, DWORD count, DWORD *ids)
+{
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct input_stream inputs[MAX_MIXER_INPUT_STREAMS] = { {0} };
+    unsigned int i, len;
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %u, %p.\n", iface, count, ids);
+
+    if (!ids)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+    if (count > ARRAY_SIZE(mixer->inputs) - mixer->input_count)
+        hr = E_INVALIDARG;
+    else
+    {
+        /* Test for collisions. */
+        memcpy(inputs, mixer->inputs, mixer->input_count * sizeof(*inputs));
+        for (i = 0; i < count; ++i)
+            inputs[i + mixer->input_count].id = ids[i];
+
+        len = mixer->input_count + count;
+
+        qsort(inputs, len, sizeof(*inputs), video_mixer_add_input_sort_compare);
+
+        for (i = 1; i < len; ++i)
+        {
+            if (inputs[i - 1].id == inputs[i].id)
+            {
+                hr = E_INVALIDARG;
+                break;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            memcpy(&mixer->input_ids[mixer->input_count], ids, count * sizeof(*ids));
+            memcpy(mixer->inputs, inputs, len * sizeof(*inputs));
+            mixer->input_count += count;
+        }
+    }
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
@@ -407,6 +551,8 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFVideoDeviceID_iface.lpVtbl = &video_mixer_device_id_vtbl;
     object->IMFTopologyServiceLookupClient_iface.lpVtbl = &video_mixer_service_client_vtbl;
     object->refcount = 1;
+    object->input_count = 1;
+    InitializeCriticalSection(&object->cs);
 
     *out = &object->IMFTransform_iface;
 

@@ -25,6 +25,7 @@
 #include "evr.h"
 #include "initguid.h"
 #include "dxva2api.h"
+#include "mferror.h"
 
 static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
 
@@ -340,8 +341,16 @@ static void test_pin_info(void)
 
 static void test_default_mixer(void)
 {
+    DWORD input_min, input_max, output_min, output_max;
+    MFT_OUTPUT_STREAM_INFO output_info;
+    MFT_INPUT_STREAM_INFO input_info;
+    DWORD input_count, output_count;
     IMFVideoDeviceID *deviceid;
+    DWORD input_id, output_id;
+    IMFAttributes *attributes, *attributes2;
     IMFTransform *transform;
+    unsigned int i;
+    DWORD ids[16];
     IUnknown *unk;
     HRESULT hr;
     IID iid;
@@ -364,6 +373,111 @@ static void test_default_mixer(void)
     ok(IsEqualIID(&iid, &IID_IDirect3DDevice9), "Unexpected id %s.\n", wine_dbgstr_guid(&iid));
 
     IMFVideoDeviceID_Release(deviceid);
+
+    /* Stream configuration. */
+    input_count = output_count = 0;
+    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
+    ok(hr == S_OK, "Failed to get stream count, hr %#x.\n", hr);
+    ok(input_count == 1 && output_count == 1, "Unexpected stream count %u/%u.\n", input_count, output_count);
+
+    hr = IMFTransform_GetStreamLimits(transform, &input_min, &input_max, &output_min, &output_max);
+    ok(hr == S_OK, "Failed to get stream limits, hr %#x.\n", hr);
+    ok(input_min == 1 && input_max == 16 && output_min == 1 && output_max == 1, "Unexpected stream limits %u/%u, %u/%u.\n",
+            input_min, input_max, output_min, output_max);
+
+    hr = IMFTransform_GetInputStreamInfo(transform, 1, &input_info);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamInfo(transform, 1, &output_info);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    memset(&input_info, 0xcc, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == S_OK, "Failed to get input info, hr %#x.\n", hr);
+
+    memset(&output_info, 0xcc, sizeof(output_info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "Failed to get input info, hr %#x.\n", hr);
+    ok(!(output_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES)),
+            "Unexpected output flags %#x.\n", output_info.dwFlags);
+
+    hr = IMFTransform_GetStreamIDs(transform, 1, &input_id, 1, &output_id);
+    ok(hr == S_OK, "Failed to get input info, hr %#x.\n", hr);
+    ok(input_id == 0 && output_id == 0, "Unexpected stream ids.\n");
+
+    hr = IMFTransform_GetInputStreamAttributes(transform, 1, &attributes);
+todo_wine
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamAttributes(transform, 1, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStreamAttributes(transform, 0, &attributes);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_AddInputStreams(transform, 16, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_AddInputStreams(transform, 16, ids);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    memset(ids, 0, sizeof(ids));
+    hr = IMFTransform_AddInputStreams(transform, 15, ids);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(ids); ++i)
+        ids[i] = i + 1;
+
+    hr = IMFTransform_AddInputStreams(transform, 15, ids);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    input_count = output_count = 0;
+    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
+    ok(hr == S_OK, "Failed to get stream count, hr %#x.\n", hr);
+    ok(input_count == 16 && output_count == 1, "Unexpected stream count %u/%u.\n", input_count, output_count);
+
+    memset(&input_info, 0, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 1, &input_info);
+    ok(hr == S_OK, "Failed to get input info, hr %#x.\n", hr);
+    ok((input_info.dwFlags & (MFT_INPUT_STREAM_REMOVABLE | MFT_INPUT_STREAM_OPTIONAL)) ==
+            (MFT_INPUT_STREAM_REMOVABLE | MFT_INPUT_STREAM_OPTIONAL), "Unexpected flags %#x.\n", input_info.dwFlags);
+
+    attributes = NULL;
+    hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!attributes, "Unexpected attributes.\n");
+}
+    attributes2 = NULL;
+    hr = IMFTransform_GetInputStreamAttributes(transform, 0, &attributes2);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(attributes == attributes2, "Unexpected instance.\n");
+
+    if (attributes2)
+        IMFAttributes_Release(attributes2);
+    if (attributes)
+        IMFAttributes_Release(attributes);
+
+    attributes = NULL;
+    hr = IMFTransform_GetInputStreamAttributes(transform, 1, &attributes);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!attributes, "Unexpected attributes.\n");
+}
+    if (attributes)
+        IMFAttributes_Release(attributes);
+
+    hr = IMFTransform_DeleteInputStream(transform, 0);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_DeleteInputStream(transform, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    input_count = output_count = 0;
+    hr = IMFTransform_GetStreamCount(transform, &input_count, &output_count);
+    ok(hr == S_OK, "Failed to get stream count, hr %#x.\n", hr);
+    ok(input_count == 15 && output_count == 1, "Unexpected stream count %u/%u.\n", input_count, output_count);
 
     IMFTransform_Release(transform);
 
