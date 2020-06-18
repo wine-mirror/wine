@@ -888,14 +888,17 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
                 continue;
             }
 
-            list_move_tail(statements_list, v->initializer.instrs);
-            d3dcompiler_free(v->initializer.instrs);
-
             load = new_var_load(var, var->loc);
-            list_add_tail(statements_list, &load->node.entry);
+            list_add_tail(v->initializer.instrs, &load->node.entry);
             assignment = make_assignment(&load->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
-            list_add_tail(statements_list, &assignment->entry);
+            list_add_tail(v->initializer.instrs, &assignment->entry);
+
+            if (modifiers & HLSL_STORAGE_STATIC)
+                list_move_tail(&hlsl_ctx.static_initializers, v->initializer.instrs);
+            else
+                list_move_tail(statements_list, v->initializer.instrs);
+            d3dcompiler_free(v->initializer.instrs);
         }
         d3dcompiler_free(v);
     }
@@ -1514,6 +1517,10 @@ hlsl_prog:                /* empty */
                         | hlsl_prog declaration_statement
                             {
                                 TRACE("Declaration statement parsed.\n");
+
+                                if (!list_empty($2))
+                                    FIXME("Uniform initializer.\n");
+                                free_instr_list($2);
                             }
                         | hlsl_prog preproc_directive
                             {
@@ -2961,6 +2968,7 @@ HRESULT parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
     list_init(&hlsl_ctx.scopes);
     list_init(&hlsl_ctx.types);
     init_functions_tree(&hlsl_ctx.functions);
+    list_init(&hlsl_ctx.static_initializers);
 
     push_scope(&hlsl_ctx);
     hlsl_ctx.globals = hlsl_ctx.cur_scope;
@@ -2983,6 +2991,8 @@ HRESULT parse_hlsl(enum shader_type type, DWORD major, DWORD minor,
         hlsl_report_message(entry_func->loc, HLSL_LEVEL_ERROR,
                 "entry point \"%s\" is missing a return value semantic", entry_func->func->name);
     }
+
+    list_move_head(entry_func->body, &hlsl_ctx.static_initializers);
 
     /* Index 0 means unused; index 1 means function entry, so start at 2. */
     index_instructions(entry_func->body, 2);

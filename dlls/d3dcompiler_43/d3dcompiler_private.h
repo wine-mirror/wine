@@ -979,6 +979,8 @@ struct hlsl_parse_ctx
         struct hlsl_type *sampler[HLSL_SAMPLER_DIM_MAX + 1];
         struct hlsl_type *Void;
     } builtin_types;
+
+    struct list static_initializers;
 };
 
 extern struct hlsl_parse_ctx hlsl_ctx DECLSPEC_HIDDEN;
