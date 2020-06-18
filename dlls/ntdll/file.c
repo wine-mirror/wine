@@ -22,79 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
 #include <assert.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_LINUX_MAJOR_H
-# include <linux/major.h>
-#endif
-#ifdef HAVE_SYS_STATVFS_H
-# include <sys/statvfs.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_SYSCALL_H
-# include <sys/syscall.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-#ifdef HAVE_SYS_FILIO_H
-# include <sys/filio.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef MAJOR_IN_MKDEV
-# include <sys/mkdev.h>
-#elif defined(MAJOR_IN_SYSMACROS)
-# include <sys/sysmacros.h>
-#endif
-#ifdef HAVE_UTIME_H
-# include <utime.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-/* Work around a conflict with Solaris' system list defined in sys/list.h. */
-#define list SYSLIST
-#define list_next SYSLIST_NEXT
-#define list_prev SYSLIST_PREV
-#define list_head SYSLIST_HEAD
-#define list_tail SYSLIST_TAIL
-#define list_move_tail SYSLIST_MOVE_TAIL
-#define list_remove SYSLIST_REMOVE
-# include <sys/vfs.h>
-#undef list
-#undef list_next
-#undef list_prev
-#undef list_head
-#undef list_tail
-#undef list_move_tail
-#undef list_remove
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-# include <valgrind/memcheck.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -169,89 +97,6 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
 {
     return unix_funcs->NtCreateFile( handle, access, attr, io, alloc_size, attributes,
                                      sharing, disposition, options, ea_buffer, ea_length );
-}
-
-/***********************************************************************
- *                  Asynchronous file I/O                              *
- */
-
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
-
-struct async_fileio
-{
-    async_callback_t    *callback; /* must be the first field */
-    struct async_fileio *next;
-    HANDLE               handle;
-};
-
-struct async_fileio_read
-{
-    struct async_fileio io;
-    char*               buffer;
-    unsigned int        already;
-    unsigned int        count;
-    BOOL                avail_mode;
-};
-
-struct async_fileio_write
-{
-    struct async_fileio io;
-    const char         *buffer;
-    unsigned int        already;
-    unsigned int        count;
-};
-
-struct async_irp
-{
-    struct async_fileio io;
-    void               *buffer;   /* buffer for output */
-    ULONG               size;     /* size of buffer */
-};
-
-static struct async_fileio *fileio_freelist;
-
-static void release_fileio( struct async_fileio *io )
-{
-    for (;;)
-    {
-        struct async_fileio *next = fileio_freelist;
-        io->next = next;
-        if (InterlockedCompareExchangePointer( (void **)&fileio_freelist, io, next ) == next) return;
-    }
-}
-
-static struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle )
-{
-    /* first free remaining previous fileinfos */
-
-    struct async_fileio *io = InterlockedExchangePointer( (void **)&fileio_freelist, NULL );
-
-    while (io)
-    {
-        struct async_fileio *next = io->next;
-        RtlFreeHeap( GetProcessHeap(), 0, io );
-        io = next;
-    }
-
-    if ((io = RtlAllocateHeap( GetProcessHeap(), 0, size )))
-    {
-        io->callback = callback;
-        io->handle   = handle;
-    }
-    return io;
-}
-
-static async_data_t server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
-                                  PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
-{
-    async_data_t async;
-    async.handle      = wine_server_obj_handle( handle );
-    async.user        = wine_server_client_ptr( user );
-    async.iosb        = wine_server_client_ptr( io );
-    async.event       = wine_server_obj_handle( event );
-    async.apc         = wine_server_client_ptr( apc );
-    async.apc_context = wine_server_client_ptr( apc_context );
-    return async;
 }
 
 
@@ -409,101 +254,6 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
 }
 
 
-struct read_changes_fileio
-{
-    struct async_fileio io;
-    void               *buffer;
-    ULONG               buffer_size;
-    ULONG               data_size;
-    char                data[1];
-};
-
-static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
-{
-    struct read_changes_fileio *fileio = user;
-    int size = 0;
-
-    if (status == STATUS_ALERTED)
-    {
-        SERVER_START_REQ( read_change )
-        {
-            req->handle = wine_server_obj_handle( fileio->io.handle );
-            wine_server_set_reply( req, fileio->data, fileio->data_size );
-            status = wine_server_call( req );
-            size = wine_server_reply_size( reply );
-        }
-        SERVER_END_REQ;
-
-        if (status == STATUS_SUCCESS && fileio->buffer)
-        {
-            FILE_NOTIFY_INFORMATION *pfni = fileio->buffer;
-            int i, left = fileio->buffer_size;
-            DWORD *last_entry_offset = NULL;
-            struct filesystem_event *event = (struct filesystem_event*)fileio->data;
-
-            while (size && left >= sizeof(*pfni))
-            {
-                DWORD len = (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR);
-
-                /* convert to an NT style path */
-                for (i = 0; i < event->len; i++)
-                    if (event->name[i] == '/') event->name[i] = '\\';
-
-                pfni->Action = event->action;
-                pfni->FileNameLength = ntdll_umbstowcs( event->name, event->len, pfni->FileName, len );
-                last_entry_offset = &pfni->NextEntryOffset;
-
-                if (pfni->FileNameLength == len) break;
-
-                i = offsetof(FILE_NOTIFY_INFORMATION, FileName[pfni->FileNameLength]);
-                pfni->FileNameLength *= sizeof(WCHAR);
-                pfni->NextEntryOffset = i;
-                pfni = (FILE_NOTIFY_INFORMATION*)((char*)pfni + i);
-                left -= i;
-
-                i = (offsetof(struct filesystem_event, name[event->len])
-                     + sizeof(int)-1) / sizeof(int) * sizeof(int);
-                event = (struct filesystem_event*)((char*)event + i);
-                size -= i;
-            }
-
-            if (size)
-            {
-                status = STATUS_NOTIFY_ENUM_DIR;
-                size = 0;
-            }
-            else
-            {
-                if (last_entry_offset) *last_entry_offset = 0;
-                size = fileio->buffer_size - left;
-            }
-        }
-        else
-        {
-            status = STATUS_NOTIFY_ENUM_DIR;
-            size = 0;
-        }
-    }
-
-    if (status != STATUS_PENDING)
-    {
-        iosb->u.Status = status;
-        iosb->Information = size;
-        release_fileio( &fileio->io );
-    }
-    return status;
-}
-
-#define FILE_NOTIFY_ALL        (  \
- FILE_NOTIFY_CHANGE_FILE_NAME   | \
- FILE_NOTIFY_CHANGE_DIR_NAME    | \
- FILE_NOTIFY_CHANGE_ATTRIBUTES  | \
- FILE_NOTIFY_CHANGE_SIZE        | \
- FILE_NOTIFY_CHANGE_LAST_WRITE  | \
- FILE_NOTIFY_CHANGE_LAST_ACCESS | \
- FILE_NOTIFY_CHANGE_CREATION    | \
- FILE_NOTIFY_CHANGE_SECURITY   )
-
 /******************************************************************************
  *  NtNotifyChangeDirectoryFile [NTDLL.@]
  */
@@ -511,37 +261,10 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
                                              void *apc_context, PIO_STATUS_BLOCK iosb, void *buffer,
                                              ULONG buffer_size, ULONG filter, BOOLEAN subtree )
 {
-    struct read_changes_fileio *fileio;
-    NTSTATUS status;
-    ULONG size = max( 4096, buffer_size );
-
-    TRACE( "%p %p %p %p %p %p %u %u %d\n",
-           handle, event, apc, apc_context, iosb, buffer, buffer_size, filter, subtree );
-
-    if (!iosb) return STATUS_ACCESS_VIOLATION;
-    if (filter == 0 || (filter & ~FILE_NOTIFY_ALL)) return STATUS_INVALID_PARAMETER;
-
-    fileio = (struct read_changes_fileio *)alloc_fileio( offsetof(struct read_changes_fileio, data[size]),
-                                                         read_changes_apc, handle );
-    if (!fileio) return STATUS_NO_MEMORY;
-
-    fileio->buffer      = buffer;
-    fileio->buffer_size = buffer_size;
-    fileio->data_size   = size;
-
-    SERVER_START_REQ( read_directory_changes )
-    {
-        req->filter    = filter;
-        req->want_data = (buffer != NULL);
-        req->subtree   = subtree;
-        req->async     = server_async( handle, &fileio->io, event, apc, apc_context, iosb );
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
-    return status;
+    return unix_funcs->NtNotifyChangeDirectoryFile( handle, event, apc, apc_context, iosb,
+                                                    buffer, buffer_size, filter, subtree );
 }
+
 
 /******************************************************************************
  *  NtSetVolumeInformationFile		[NTDLL.@]

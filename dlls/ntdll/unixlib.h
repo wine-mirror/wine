@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 55
+#define NTDLL_UNIXLIB_VERSION 56
 
 struct unix_funcs
 {
@@ -114,6 +114,10 @@ struct unix_funcs
                                                 ULONG_PTR zero_bits, SIZE_T commit_size,
                                                 const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                                 SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect );
+    NTSTATUS      (WINAPI *NtNotifyChangeDirectoryFile)( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
+                                                         void *apc_context, IO_STATUS_BLOCK *iosb,
+                                                         void *buffer, ULONG buffer_size,
+                                                         ULONG filter, BOOLEAN subtree );
     NTSTATUS      (WINAPI *NtOpenEvent)( HANDLE *handle, ACCESS_MASK access,
                                          const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenFile)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,

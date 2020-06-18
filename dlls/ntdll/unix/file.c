@@ -4453,6 +4453,15 @@ struct async_fileio_write
     unsigned int        count;
 };
 
+struct async_fileio_read_changes
+{
+    struct async_fileio io;
+    void               *buffer;
+    ULONG               buffer_size;
+    ULONG               data_size;
+    char                data[1];
+};
+
 struct async_irp
 {
     struct async_fileio io;
@@ -5727,6 +5736,132 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
 
     if (needs_close) close( fd );
     return ret;
+}
+
+
+static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
+{
+    struct async_fileio_read_changes *fileio = user;
+    int size = 0;
+
+    if (status == STATUS_ALERTED)
+    {
+        SERVER_START_REQ( read_change )
+        {
+            req->handle = wine_server_obj_handle( fileio->io.handle );
+            wine_server_set_reply( req, fileio->data, fileio->data_size );
+            status = wine_server_call( req );
+            size = wine_server_reply_size( reply );
+        }
+        SERVER_END_REQ;
+
+        if (status == STATUS_SUCCESS && fileio->buffer)
+        {
+            FILE_NOTIFY_INFORMATION *pfni = fileio->buffer;
+            int i, left = fileio->buffer_size;
+            DWORD *last_entry_offset = NULL;
+            struct filesystem_event *event = (struct filesystem_event*)fileio->data;
+
+            while (size && left >= sizeof(*pfni))
+            {
+                DWORD len = (left - offsetof(FILE_NOTIFY_INFORMATION, FileName)) / sizeof(WCHAR);
+
+                /* convert to an NT style path */
+                for (i = 0; i < event->len; i++)
+                    if (event->name[i] == '/') event->name[i] = '\\';
+
+                pfni->Action = event->action;
+                pfni->FileNameLength = ntdll_umbstowcs( event->name, event->len, pfni->FileName, len );
+                last_entry_offset = &pfni->NextEntryOffset;
+
+                if (pfni->FileNameLength == len) break;
+
+                i = offsetof(FILE_NOTIFY_INFORMATION, FileName[pfni->FileNameLength]);
+                pfni->FileNameLength *= sizeof(WCHAR);
+                pfni->NextEntryOffset = i;
+                pfni = (FILE_NOTIFY_INFORMATION*)((char*)pfni + i);
+                left -= i;
+
+                i = (offsetof(struct filesystem_event, name[event->len])
+                     + sizeof(int)-1) / sizeof(int) * sizeof(int);
+                event = (struct filesystem_event*)((char*)event + i);
+                size -= i;
+            }
+
+            if (size)
+            {
+                status = STATUS_NOTIFY_ENUM_DIR;
+                size = 0;
+            }
+            else
+            {
+                if (last_entry_offset) *last_entry_offset = 0;
+                size = fileio->buffer_size - left;
+            }
+        }
+        else
+        {
+            status = STATUS_NOTIFY_ENUM_DIR;
+            size = 0;
+        }
+    }
+
+    if (status != STATUS_PENDING)
+    {
+        iosb->u.Status = status;
+        iosb->Information = size;
+        release_fileio( &fileio->io );
+    }
+    return status;
+}
+
+#define FILE_NOTIFY_ALL        (  \
+ FILE_NOTIFY_CHANGE_FILE_NAME   | \
+ FILE_NOTIFY_CHANGE_DIR_NAME    | \
+ FILE_NOTIFY_CHANGE_ATTRIBUTES  | \
+ FILE_NOTIFY_CHANGE_SIZE        | \
+ FILE_NOTIFY_CHANGE_LAST_WRITE  | \
+ FILE_NOTIFY_CHANGE_LAST_ACCESS | \
+ FILE_NOTIFY_CHANGE_CREATION    | \
+ FILE_NOTIFY_CHANGE_SECURITY   )
+
+/******************************************************************************
+ *              NtNotifyChangeDirectoryFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
+                                             void *apc_context, IO_STATUS_BLOCK *iosb, void *buffer,
+                                             ULONG buffer_size, ULONG filter, BOOLEAN subtree )
+{
+    struct async_fileio_read_changes *fileio;
+    NTSTATUS status;
+    ULONG size = max( 4096, buffer_size );
+
+    TRACE( "%p %p %p %p %p %p %u %u %d\n",
+           handle, event, apc, apc_context, iosb, buffer, buffer_size, filter, subtree );
+
+    if (!iosb) return STATUS_ACCESS_VIOLATION;
+    if (filter == 0 || (filter & ~FILE_NOTIFY_ALL)) return STATUS_INVALID_PARAMETER;
+
+    fileio = (struct async_fileio_read_changes *)alloc_fileio(
+        offsetof(struct async_fileio_read_changes, data[size]), read_changes_apc, handle );
+    if (!fileio) return STATUS_NO_MEMORY;
+
+    fileio->buffer      = buffer;
+    fileio->buffer_size = buffer_size;
+    fileio->data_size   = size;
+
+    SERVER_START_REQ( read_directory_changes )
+    {
+        req->filter    = filter;
+        req->want_data = (buffer != NULL);
+        req->subtree   = subtree;
+        req->async     = server_async( handle, &fileio->io, event, apc, apc_context, iosb );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+    return status;
 }
 
 
