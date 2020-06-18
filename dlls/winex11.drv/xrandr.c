@@ -948,7 +948,7 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
         if (!output_info->crtc || !crtc_info->mode)
             detached = TRUE;
 
-        /* Ignore mirroring output slaves because mirrored monitors are under the same adapter */
+        /* Ignore mirroring output replicas because mirrored monitors are under the same adapter */
         mirrored = FALSE;
         if (!detached)
         {
@@ -970,7 +970,7 @@ static BOOL xrandr14_get_adapters( ULONG_PTR gpu_id, struct x11drv_adapter **new
                     continue;
 
                 /* Some outputs may have the same coordinates, aka mirrored. Choose the output with
-                 * the lowest value as primary and the rest will then be slaves in a mirroring set */
+                 * the lowest value as primary and the rest will then be replicas in a mirroring set */
                 if (crtc_info->x == enum_crtc_info->x &&
                     crtc_info->y == enum_crtc_info->y &&
                     crtc_info->width == enum_crtc_info->width &&
@@ -1079,7 +1079,7 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
             goto done;
     }
 
-    /* Inactive but attached monitor, no need to check for mirrored/slave monitors */
+    /* Inactive but attached monitor, no need to check for mirrored/replica monitors */
     if (!output_info->crtc || !crtc_info->mode)
     {
         lstrcpyW( monitors[monitor_count].name, generic_nonpnp_monitorW );
