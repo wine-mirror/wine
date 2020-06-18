@@ -25,15 +25,6 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-#ifdef HAVE_SYS_TIMES_H
-#include <sys/times.h>
-#endif
-#ifdef HAVE_SYS_SYSCALL_H
-#include <sys/syscall.h>
-#endif
 
 #define NONAMELESSUNION
 #include "ntstatus.h"
@@ -66,72 +57,6 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": peb_lock") }
 };
 static RTL_CRITICAL_SECTION peb_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-#ifdef __linux__
-
-#ifdef HAVE_ELF_H
-# include <elf.h>
-#endif
-#ifdef HAVE_LINK_H
-# include <link.h>
-#endif
-#ifdef HAVE_SYS_AUXV_H
-# include <sys/auxv.h>
-#endif
-#ifndef HAVE_GETAUXVAL
-static unsigned long getauxval( unsigned long id )
-{
-    extern char **__wine_main_environ;
-    char **ptr = __wine_main_environ;
-    ElfW(auxv_t) *auxv;
-
-    while (*ptr) ptr++;
-    while (!*ptr) ptr++;
-    for (auxv = (ElfW(auxv_t) *)ptr; auxv->a_type; auxv++)
-        if (auxv->a_type == id) return auxv->a_un.a_val;
-    return 0;
-}
-#endif
-
-static ULONG_PTR get_image_addr(void)
-{
-    ULONG_PTR size, num, phdr_addr = getauxval( AT_PHDR );
-    ElfW(Phdr) *phdr;
-
-    if (!phdr_addr) return 0;
-    phdr = (ElfW(Phdr) *)phdr_addr;
-    size = getauxval( AT_PHENT );
-    num = getauxval( AT_PHNUM );
-    while (num--)
-    {
-        if (phdr->p_type == PT_PHDR) return phdr_addr - phdr->p_offset;
-        phdr = (ElfW(Phdr) *)((char *)phdr + size);
-    }
-    return 0;
-}
-
-#elif defined(__APPLE__)
-#include <mach/mach.h>
-#include <mach/mach_error.h>
-
-static ULONG_PTR get_image_addr(void)
-{
-    ULONG_PTR ret = 0;
-#ifdef TASK_DYLD_INFO
-    struct task_dyld_info dyld_info;
-    mach_msg_type_number_t size = TASK_DYLD_INFO_COUNT;
-    if (task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&dyld_info, &size) == KERN_SUCCESS)
-        ret = dyld_info.all_image_info_addr;
-#endif
-    return ret;
-}
-
-#else
-static ULONG_PTR get_image_addr(void)
-{
-    return 0;
-}
-#endif
 
 
 /***********************************************************************
@@ -204,7 +129,6 @@ TEB *thread_init( SIZE_T *info_size, BOOL *suspend )
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
-    *(ULONG_PTR *)peb->Reserved = get_image_addr();
 
     /*
      * Starting with Vista, the first user to log on has session id 1.

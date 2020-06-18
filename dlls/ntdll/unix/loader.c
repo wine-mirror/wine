@@ -33,6 +33,15 @@
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
+#ifdef HAVE_ELF_H
+# include <elf.h>
+#endif
+#ifdef HAVE_LINK_H
+# include <link.h>
+#endif
+#ifdef HAVE_SYS_AUXV_H
+# include <sys/auxv.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -53,6 +62,8 @@
 # undef LoadResource
 # undef GetCurrentThread
 # include <pthread.h>
+# include <mach/mach.h>
+# include <mach/mach_error.h>
 # include <mach-o/getsect.h>
 # include <crt_externs.h>
 # include <spawn.h>
@@ -826,6 +837,35 @@ static HMODULE load_ntdll(void)
     module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
     map_so_dll( nt, module );
     return module;
+}
+
+
+/***********************************************************************
+ *           get_image_address
+ */
+ULONG_PTR get_image_address(void)
+{
+#ifdef HAVE_GETAUXVAL
+    ULONG_PTR size, num, phdr_addr = getauxval( AT_PHDR );
+    ElfW(Phdr) *phdr;
+
+    if (!phdr_addr) return 0;
+    phdr = (ElfW(Phdr) *)phdr_addr;
+    size = getauxval( AT_PHENT );
+    num = getauxval( AT_PHNUM );
+    while (num--)
+    {
+        if (phdr->p_type == PT_PHDR) return phdr_addr - phdr->p_offset;
+        phdr = (ElfW(Phdr) *)((char *)phdr + size);
+    }
+#elif defined(__APPLE__) && defined(TASK_DYLD_INFO)
+    struct task_dyld_info dyld_info;
+    mach_msg_type_number_t size = TASK_DYLD_INFO_COUNT;
+
+    if (task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&dyld_info, &size) == KERN_SUCCESS)
+        return dyld_info.all_image_info_addr;
+#endif
+    return 0;
 }
 
 

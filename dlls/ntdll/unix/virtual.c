@@ -2587,6 +2587,7 @@ TEB *virtual_alloc_first_teb(void)
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&teb, 0, &teb_size, MEM_COMMIT, PAGE_READWRITE );
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&peb, 0, &peb_size, MEM_COMMIT, PAGE_READWRITE );
     init_teb( teb, peb );
+    *(ULONG_PTR *)peb->Reserved = get_image_address();
     use_locks = TRUE;
     return teb;
 }
