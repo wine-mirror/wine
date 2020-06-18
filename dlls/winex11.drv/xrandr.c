@@ -756,9 +756,11 @@ static void get_vulkan_device_uuid( GUID *uuid, const XRRProviderInfo *provider_
     {
         for (output_idx = 0; output_idx < provider_info->noutputs; ++output_idx)
         {
+            X11DRV_expect_error( gdi_display, XRandRErrorHandler, NULL );
             vr = pvkGetRandROutputDisplayEXT( vk_physical_devices[device_idx], gdi_display,
                                               provider_info->outputs[output_idx], &vk_display );
-            if (vr != VK_SUCCESS || vk_display == VK_NULL_HANDLE)
+            XSync( gdi_display, FALSE );
+            if (X11DRV_check_error() || vr != VK_SUCCESS || vk_display == VK_NULL_HANDLE)
                 continue;
 
             memset( &id, 0, sizeof(id) );
