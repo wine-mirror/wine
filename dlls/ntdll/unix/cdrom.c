@@ -2029,7 +2029,7 @@ static NTSTATUS CDROM_GetAddress(int fd, SCSI_ADDRESS* address)
 
     address->PortNumber = portnum; /* primary=0 secondary=1 for ide */
     address->PathId = busid;       /* always 0 for ide */
-    address->TargetId = targetid;  /* master=0 slave=1 for ide */
+    address->TargetId = targetid;  /* device id 0/1 for ide */
     address->Lun = lun;
     return STATUS_SUCCESS;
 }
