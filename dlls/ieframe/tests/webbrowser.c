@@ -2220,6 +2220,25 @@ static void test_EnumVerbs(IWebBrowser2 *wb)
     IEnumOLEVERB_Release(enum_verbs);
 }
 
+static void test_Persist(IWebBrowser2 *wb, int version)
+{
+    IPersist *persist;
+    GUID guid;
+    HRESULT hr;
+
+    hr = IWebBrowser2_QueryInterface(wb, &IID_IPersist, (void **)&persist);
+    ok(hr == S_OK, "QueryInterface(IID_IPersist failed: %08x\n", hr);
+
+    hr = IPersist_GetClassID(persist, &guid);
+    ok(hr == S_OK, "GetClassID failed: %08x\n", hr);
+    if (version == 1)
+        ok(IsEqualGUID(&guid, &CLSID_WebBrowser_V1), "got wrong CLSID: %s\n", wine_dbgstr_guid(&guid));
+    else
+        ok(IsEqualGUID(&guid, &CLSID_WebBrowser), "got wrong CLSID: %s\n", wine_dbgstr_guid(&guid));
+
+    IPersist_Release(persist);
+}
+
 static void test_ie_funcs(IWebBrowser2 *wb)
 {
     IDispatch *disp;
@@ -3741,6 +3760,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_olecmd(webbrowser, FALSE);
     test_Navigate2(webbrowser, L"about:blank");
     test_QueryStatusWB(webbrowser, TRUE);
+    test_Persist(webbrowser, 2);
 
     if(do_download) {
         IHTMLDocument2 *doc, *doc2;
@@ -3849,6 +3869,7 @@ static void test_WebBrowserV1(void)
     test_ready_state(READYSTATE_UNINITIALIZED, BUSY_FAIL);
     test_ClassInfo(wb);
     test_EnumVerbs(wb);
+    test_Persist(wb, 1);
 
     ref = IWebBrowser2_Release(wb);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
