@@ -6792,6 +6792,97 @@ static void test_hdc_caching(void)
     DeleteObject(hbm);
 }
 
+static void test_gdi_interop(void)
+{
+    GpBitmap *bitmap;
+    GpGraphics *graphics;
+    GpMatrix *transform;
+    GpBrush *brush;
+    GpStatus stat;
+    HDC hdc;
+    HBRUSH hbrush, holdbrush;
+    ARGB color;
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateMatrix(&transform);
+    expect(Ok, stat);
+
+    stat = GdipSetMatrixElements(transform, 1.0, 0.0, 0.0, 1.0, 50.0, 50.0);
+    expect(Ok, stat);
+
+    /* GDI+: Set world transform. Should not matter to GDI. */
+    stat = GdipSetWorldTransform(graphics, transform);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &hdc);
+    expect(Ok, stat);
+
+    hbrush = CreateSolidBrush(0xff0000);
+
+    holdbrush = SelectObject(hdc, hbrush);
+
+    /* GDI: Draw a rectangle at physical coords (5, 5) to (12, 10). */
+    Rectangle(hdc, 5, 5, 12, 10);
+
+    holdbrush = SelectObject(hdc, holdbrush);
+
+    /* GDI: Set view port origin. Should not matter to GDI+. */
+    SetViewportOrgEx(hdc, 20, 20, NULL);
+
+    GdipReleaseDC(graphics, hdc);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    /* GDI+: Draw a rectangle at physical coords (85, 85) to (88, 95). */
+    stat = GdipFillRectangleI(graphics, brush, 35, 35, 3, 10);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &hdc);
+    expect(Ok, stat);
+
+    holdbrush = SelectObject(hdc, hbrush);
+
+    /* GDI: Draw a rectangle at physical coords (25, 25) to (30, 34).
+       Updated view port origin should still be in effect. */
+    Rectangle(hdc, 5, 5, 10, 14);
+
+    SelectObject(hdc, holdbrush);
+
+    DeleteObject(hbrush);
+    stat = GdipReleaseDC(graphics, hdc);
+    expect(Ok, stat);
+
+    stat = GdipDeleteMatrix(transform);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap, 6, 6, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 26, 26, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 86, 86, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -6885,6 +6976,7 @@ START_TEST(graphics)
     test_GdipGraphicsSetAbort();
     test_cliphrgn_transform();
     test_hdc_caching();
+    test_gdi_interop();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
