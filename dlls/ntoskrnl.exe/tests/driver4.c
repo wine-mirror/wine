@@ -167,21 +167,41 @@ struct socket_context
 {
 };
 
+#define TEST_BUFFER_LENGTH 256
+
 static void test_wsk_listen_socket(void)
 {
+    static const char test_receive_string[] = "Client test string 1.";
     const WSK_PROVIDER_LISTEN_DISPATCH *tcp_dispatch, *udp_dispatch;
+    static const char test_send_string[] = "Server test string 1.";
     static const WSK_CLIENT_LISTEN_DISPATCH client_listen_dispatch;
     const WSK_PROVIDER_CONNECTION_DISPATCH *accept_dispatch;
     WSK_SOCKET *tcp_socket, *udp_socket, *accept_socket;
     struct socket_context context;
+    WSK_BUF wsk_buf1, wsk_buf2;
+    void *buffer1, *buffer2;
     struct sockaddr_in addr;
     LARGE_INTEGER timeout;
+    MDL *mdl1, *mdl2;
     NTSTATUS status;
     KEVENT event;
     IRP *irp;
 
     irp = IoAllocateIrp(1, FALSE);
     KeInitializeEvent(&event, SynchronizationEvent, FALSE);
+
+    buffer1 = ExAllocatePool(NonPagedPool, TEST_BUFFER_LENGTH);
+    mdl1 = IoAllocateMdl(buffer1, TEST_BUFFER_LENGTH, FALSE, FALSE, NULL);
+    MmBuildMdlForNonPagedPool(mdl1);
+    buffer2 = ExAllocatePool(NonPagedPool, TEST_BUFFER_LENGTH);
+    mdl2 = IoAllocateMdl(buffer2, TEST_BUFFER_LENGTH, FALSE, FALSE, NULL);
+    MmBuildMdlForNonPagedPool(mdl2);
+
+    wsk_buf1.Mdl = mdl1;
+    wsk_buf1.Offset = 0;
+    wsk_buf1.Length = TEST_BUFFER_LENGTH;
+    wsk_buf2 = wsk_buf1;
+    wsk_buf2.Mdl = mdl2;
 
     status = provider_npi.Dispatch->WskSocket(NULL, AF_INET, SOCK_STREAM, IPPROTO_TCP,
             WSK_FLAG_LISTEN_SOCKET, &context, &client_listen_dispatch, NULL, NULL, NULL, NULL);
@@ -283,6 +303,32 @@ static void test_wsk_listen_socket(void)
         accept_socket = (WSK_SOCKET *)wsk_irp->IoStatus.Information;
         accept_dispatch = accept_socket->Dispatch;
 
+        IoReuseIrp(irp, STATUS_UNSUCCESSFUL);
+        IoSetCompletionRoutine(irp, irp_completion_routine, &event, TRUE, TRUE, TRUE);
+        status = accept_dispatch->WskReceive(accept_socket, &wsk_buf2, 0, irp);
+        ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+
+        IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+        IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+        strcpy(buffer1, test_send_string);
+        /* Setting Length in WSK_BUF greater than MDL allocation size BSODs Windows.
+         * wsk_buf1.Length = TEST_BUFFER_LENGTH * 2; */
+        status = accept_dispatch->WskSend(accept_socket, &wsk_buf1, 0, wsk_irp);
+        ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+
+        status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, &timeout);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+        ok(wsk_irp->IoStatus.Information == TEST_BUFFER_LENGTH, "Got unexpected status %#x.\n",
+                wsk_irp->IoStatus.Status);
+
+        status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, &timeout);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        ok(irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", irp->IoStatus.Status);
+        ok(irp->IoStatus.Information == sizeof(test_receive_string), "Got unexpected Information %#lx.\n",
+                irp->IoStatus.Information);
+        ok(!strcmp(buffer2, test_receive_string), "Received unexpected data.\n");
+
         IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
         IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
         status = accept_dispatch->Basic.WskCloseSocket(accept_socket, wsk_irp);
@@ -317,6 +363,11 @@ static void test_wsk_listen_socket(void)
     ok(irp->IoStatus.Status == STATUS_CANCELLED, "Got unexpected status %#x.\n", irp->IoStatus.Status);
     ok(!irp->IoStatus.Information, "Got unexpected Information %#lx.\n", irp->IoStatus.Information);
     IoFreeIrp(irp);
+
+    IoFreeMdl(mdl1);
+    IoFreeMdl(mdl2);
+    ExFreePool(buffer1);
+    ExFreePool(buffer2);
 }
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)

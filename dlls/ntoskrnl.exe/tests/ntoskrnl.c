@@ -516,8 +516,10 @@ static void test_driver3(void)
 
 static DWORD WINAPI wsk_test_thread(void *parameter)
 {
+    static const char test_send_string[] = "Client test string 1.";
     static const WORD version = MAKEWORD(2, 2);
     struct sockaddr_in addr;
+    char buffer[256];
     int ret, err;
     WSADATA data;
     SOCKET s;
@@ -540,6 +542,13 @@ static DWORD WINAPI wsk_test_thread(void *parameter)
         ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
     }
     ok(!ret, "Error connecting, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    ret = send(s, test_send_string, sizeof(test_send_string), 0);
+    ok(ret == sizeof(test_send_string), "Got unexpected ret %d.\n", ret);
+
+    ret = recv(s, buffer, sizeof(buffer), 0);
+    ok(ret == sizeof(buffer), "Got unexpected ret %d.\n", ret);
+    ok(!strcmp(buffer, "Server test string 1."), "Received unexpected data.\n");
 
     closesocket(s);
     return TRUE;
