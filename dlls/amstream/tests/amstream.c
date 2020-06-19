@@ -3863,6 +3863,186 @@ void test_audiostreamsample_completion_status(void)
     CloseHandle(event);
 }
 
+static void test_audiostreamsample_get_sample_times(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    static const BYTE test_data[8] = { 0 };
+    IAudioStreamSample *stream_sample;
+    IMediaFilter *graph_media_filter;
+    IAudioMediaStream *audio_stream;
+    STREAM_TIME filter_start_time;
+    IMemInputPin *mem_input_pin;
+    IMediaStreamFilter *filter;
+    IMediaSample *media_sample;
+    struct testfilter source;
+    STREAM_TIME current_time;
+    struct testclock clock;
+    IAudioData *audio_data;
+    STREAM_TIME start_time;
+    STREAM_TIME end_time;
+    IGraphBuilder *graph;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected non-null filter.\n");
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IAudioMediaStream, (void **)&audio_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IMemInputPin, (void **)&mem_input_pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(graph != NULL, "Expected non-NULL graph.\n");
+    hr = IGraphBuilder_QueryInterface(graph, &IID_IMediaFilter, (void **)&graph_media_filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testfilter_init(&source);
+    hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = CoCreateInstance(&CLSID_AMAudioData, NULL, CLSCTX_INPROC_SERVER, &IID_IAudioData, (void **)&audio_data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAudioMediaStream_CreateSample(audio_stream, audio_data, 0, &stream_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAudioData_SetBuffer(audio_data, 5, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testclock_init(&clock);
+
+    clock.time = 12345678;
+
+    current_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
+
+    IMediaFilter_SetSyncSource(graph_media_filter, &clock.IReferenceClock_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    current_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(current_time == 0, "Got current time %s.\n", wine_dbgstr_longlong(current_time));
+
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &audio_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &filter_start_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.get_time_hr = E_FAIL;
+
+    current_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(current_time == 0xdeadbeefddf15da1 + filter_start_time, "Expected current time %s, got %s.\n",
+            wine_dbgstr_longlong(0xdeadbeefddf15da1 + filter_start_time), wine_dbgstr_longlong(current_time));
+
+    clock.get_time_hr = S_OK;
+
+    current_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(current_time == filter_start_time, "Expected current time %s, got %s.\n",
+            wine_dbgstr_longlong(filter_start_time), wine_dbgstr_longlong(current_time));
+
+    clock.time = 23456789;
+
+    current_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, NULL, NULL, &current_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(current_time == filter_start_time + 11111111, "Expected current time %s, got %s.\n",
+            wine_dbgstr_longlong(filter_start_time + 11111111), wine_dbgstr_longlong(current_time));
+
+    start_time = 0xdeadbeefdeadbeef;
+    end_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(start_time == 0, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
+    ok(end_time == 0, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+
+    media_sample = audiostream_allocate_sample(&source, test_data, 8);
+    start_time = 12345678;
+    end_time = 23456789;
+    hr = IMediaSample_SetTime(media_sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemInputPin_Receive(mem_input_pin, media_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaSample_Release(media_sample);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    start_time = 0xdeadbeefdeadbeef;
+    end_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(start_time == 12345678, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
+    ok(end_time == 12347946, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+
+    media_sample = audiostream_allocate_sample(&source, test_data, 6);
+    start_time = 12345678;
+    end_time = 23456789;
+    hr = IMediaSample_SetTime(media_sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemInputPin_Receive(mem_input_pin, media_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMediaSample_Release(media_sample);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    start_time = 0xdeadbeefdeadbeef;
+    end_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(start_time == 12347946, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
+    ok(end_time == 12346585, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+
+    hr = IPin_EndOfStream(pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAudioStreamSample_Update(stream_sample, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    start_time = 0xdeadbeefdeadbeef;
+    end_time = 0xdeadbeefdeadbeef;
+    hr = IAudioStreamSample_GetSampleTimes(stream_sample, &start_time, &end_time, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(start_time == 12346585, "Got start time %s.\n", wine_dbgstr_longlong(start_time));
+    ok(end_time == 12348399, "Got end time %s.\n", wine_dbgstr_longlong(end_time));
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IGraphBuilder_Disconnect(graph, pin);
+    IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
+
+    ref = IAudioStreamSample_Release(stream_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAudioData_Release(audio_data);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMediaFilter_Release(graph_media_filter);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IMemInputPin_Release(mem_input_pin);
+    IAudioMediaStream_Release(audio_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_ddrawstream_initialize(void)
 {
     IDirectDrawMediaStream *ddraw_stream;
@@ -4522,6 +4702,7 @@ START_TEST(amstream)
 
     test_audiostreamsample_update();
     test_audiostreamsample_completion_status();
+    test_audiostreamsample_get_sample_times();
 
     test_ddrawstream_initialize();
 
