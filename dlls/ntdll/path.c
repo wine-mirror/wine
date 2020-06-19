@@ -986,24 +986,15 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
     if (path[0] != '/')  /* relative path name */
     {
         WCHAR *tmp;
+        NTSTATUS status;
 
-        path++;
-        lenA--;
         if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, (lenA + 1) * sizeof(WCHAR) )))
             return STATUS_NO_MEMORY;
         lenW = ntdll_umbstowcs( path, lenA, tmp, lenA );
         tmp[lenW] = 0;
-        lenW = RtlGetFullPathName_U( tmp, 0, NULL, NULL );
-        if (!lenW || !(nt->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, lenW )))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, tmp );
-            return STATUS_NO_MEMORY;
-        }
-        lenW = RtlGetFullPathName_U( tmp, lenW, nt->Buffer, NULL );
-        nt->Length = lenW;
-        nt->MaximumLength = lenW + sizeof(WCHAR);
+        status = RtlDosPathNameToNtPathName_U_WithStatus( tmp, nt, NULL, NULL );
         RtlFreeHeap( GetProcessHeap(), 0, tmp );
-        return STATUS_SUCCESS;
+        return status;
     }
     return unix_funcs->unix_to_nt_file_name( name, nt );
 }
