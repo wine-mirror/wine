@@ -467,18 +467,100 @@ static NTSTATUS WINAPI wsk_get_remote_address(WSK_SOCKET *socket, SOCKADDR *remo
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static void WINAPI send_receive_callback(TP_CALLBACK_INSTANCE *instance, void *socket_, TP_WAIT *wait,
+        TP_WAIT_RESULT wait_result)
+{
+    struct wsk_socket_internal *socket = socket_;
+    struct wsk_pending_io *io;
+    DWORD length, flags;
+
+    TRACE("instance %p, socket %p, wait %p, wait_result %#x.\n", instance, socket, wait, wait_result);
+
+    lock_socket(socket);
+    io = find_pending_io(socket, wait);
+
+    if (WSAGetOverlappedResult(socket->s, &io->ovr, &length, FALSE, &flags))
+        dispatch_pending_io(io, STATUS_SUCCESS, length);
+    else
+        dispatch_pending_io(io, io->ovr.Internal, 0);
+
+    unlock_socket(socket);
+}
+
+static NTSTATUS WINAPI do_send_receive(WSK_SOCKET *socket, WSK_BUF *wsk_buf, ULONG flags, IRP *irp, BOOL is_send)
+{
+    struct wsk_socket_internal *s = wsk_socket_internal_from_wsk_socket(socket);
+    struct wsk_pending_io *io;
+    DWORD wsa_flags;
+    WSABUF wsa_buf;
+    DWORD length;
+    int error;
+
+    TRACE("socket %p, buffer %p, flags %#x, irp %p, is_send %#x.\n",
+            socket, wsk_buf, flags, irp, is_send);
+
+    if (!irp)
+        return STATUS_INVALID_PARAMETER;
+
+    if (!wsk_buf->Mdl && wsk_buf->Length)
+        return STATUS_INVALID_PARAMETER;
+
+    if (wsk_buf->Mdl && wsk_buf->Mdl->Next)
+    {
+        FIXME("Chained MDLs are not supported.\n");
+        irp->IoStatus.Information = 0;
+        dispatch_irp(irp, STATUS_UNSUCCESSFUL);
+        return STATUS_PENDING;
+    }
+
+    if (flags)
+        FIXME("flags %#x not implemented.\n", flags);
+
+    lock_socket(s);
+    if (!(io = allocate_pending_io(s, send_receive_callback, irp)))
+    {
+        irp->IoStatus.Information = 0;
+        dispatch_irp(irp, STATUS_UNSUCCESSFUL);
+        unlock_socket(s);
+        return STATUS_PENDING;
+    }
+
+    wsa_buf.len = wsk_buf->Length;
+    wsa_buf.buf = wsk_buf->Mdl ? (CHAR *)wsk_buf->Mdl->StartVa
+            + wsk_buf->Mdl->ByteOffset + wsk_buf->Offset : NULL;
+
+    wsa_flags = 0;
+
+    if (!(is_send ? WSASend(s->s, &wsa_buf, 1, &length, wsa_flags, &io->ovr, NULL)
+            : WSARecv(s->s, &wsa_buf, 1, &length, &wsa_flags, &io->ovr, NULL)))
+    {
+        dispatch_pending_io(io, STATUS_SUCCESS, length);
+    }
+    else if ((error = WSAGetLastError()) == WSA_IO_PENDING)
+    {
+        SetThreadpoolWait(io->tp_wait, io->ovr.hEvent, NULL);
+    }
+    else
+    {
+        dispatch_pending_io(io, sock_error_to_ntstatus(error), 0);
+    }
+    unlock_socket(s);
+
+    return STATUS_PENDING;
+}
+
 static NTSTATUS WINAPI wsk_send(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
 {
-    FIXME("socket %p, buffer %p, flags %#x, irp %p stub.\n", socket, buffer, flags, irp);
+    TRACE("socket %p, buffer %p, flags %#x, irp %p.\n", socket, buffer, flags, irp);
 
-    return STATUS_NOT_IMPLEMENTED;
+    return do_send_receive(socket, buffer, flags, irp, TRUE);
 }
 
 static NTSTATUS WINAPI wsk_receive(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
 {
-    FIXME("socket %p, buffer %p, flags %#x, irp %p stub.\n", socket, buffer, flags, irp);
+    TRACE("socket %p, buffer %p, flags %#x, irp %p.\n", socket, buffer, flags, irp);
 
-    return STATUS_NOT_IMPLEMENTED;
+    return do_send_receive(socket, buffer, flags, irp, FALSE);
 }
 
 static NTSTATUS WINAPI wsk_disconnect(WSK_SOCKET *socket, WSK_BUF *buffer, ULONG flags, IRP *irp)
