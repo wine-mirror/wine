@@ -952,21 +952,22 @@ HRESULT ddraw_stream_create(IUnknown *outer, void **out)
     return S_OK;
 }
 
-typedef struct {
+struct ddraw_sample
+{
     IDirectDrawStreamSample IDirectDrawStreamSample_iface;
     LONG ref;
     IMediaStream *parent;
     IDirectDrawSurface *surface;
     RECT rect;
-} IDirectDrawStreamSampleImpl;
+};
 
-static inline IDirectDrawStreamSampleImpl *impl_from_IDirectDrawStreamSample(IDirectDrawStreamSample *iface)
+static inline struct ddraw_sample *impl_from_IDirectDrawStreamSample(IDirectDrawStreamSample *iface)
 {
-    return CONTAINING_RECORD(iface, IDirectDrawStreamSampleImpl, IDirectDrawStreamSample_iface);
+    return CONTAINING_RECORD(iface, struct ddraw_sample, IDirectDrawStreamSample_iface);
 }
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_QueryInterface(IDirectDrawStreamSample *iface,
+static HRESULT WINAPI ddraw_sample_QueryInterface(IDirectDrawStreamSample *iface,
         REFIID riid, void **ret_iface)
 {
     TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ret_iface);
@@ -986,43 +987,43 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_QueryInterface(IDirectDrawStre
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectDrawStreamSampleImpl_AddRef(IDirectDrawStreamSample *iface)
+static ULONG WINAPI ddraw_sample_AddRef(IDirectDrawStreamSample *iface)
 {
-    IDirectDrawStreamSampleImpl *This = impl_from_IDirectDrawStreamSample(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
+    ULONG ref = InterlockedIncrement(&sample->ref);
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     return ref;
 }
 
-static ULONG WINAPI IDirectDrawStreamSampleImpl_Release(IDirectDrawStreamSample *iface)
+static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
 {
-    IDirectDrawStreamSampleImpl *This = impl_from_IDirectDrawStreamSample(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
+    ULONG ref = InterlockedDecrement(&sample->ref);
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
     if (!ref)
     {
-        if (This->surface)
-            IDirectDrawSurface_Release(This->surface);
-        IMediaStream_Release(This->parent);
-        HeapFree(GetProcessHeap(), 0, This);
+        if (sample->surface)
+            IDirectDrawSurface_Release(sample->surface);
+        IMediaStream_Release(sample->parent);
+        HeapFree(GetProcessHeap(), 0, sample);
     }
 
     return ref;
 }
 
 /*** IStreamSample methods ***/
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetMediaStream(IDirectDrawStreamSample *iface, IMediaStream **media_stream)
+static HRESULT WINAPI ddraw_sample_GetMediaStream(IDirectDrawStreamSample *iface, IMediaStream **media_stream)
 {
     FIXME("(%p)->(%p): stub\n", iface, media_stream);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetSampleTimes(IDirectDrawStreamSample *iface, STREAM_TIME *start_time,
+static HRESULT WINAPI ddraw_sample_GetSampleTimes(IDirectDrawStreamSample *iface, STREAM_TIME *start_time,
                                                                  STREAM_TIME *end_time, STREAM_TIME *current_time)
 {
     FIXME("(%p)->(%p,%p,%p): stub\n", iface, start_time, end_time, current_time);
@@ -1030,7 +1031,7 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetSampleTimes(IDirectDrawStre
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetSampleTimes(IDirectDrawStreamSample *iface, const STREAM_TIME *start_time,
+static HRESULT WINAPI ddraw_sample_SetSampleTimes(IDirectDrawStreamSample *iface, const STREAM_TIME *start_time,
                                                                  const STREAM_TIME *end_time)
 {
     FIXME("(%p)->(%p,%p): stub\n", iface, start_time, end_time);
@@ -1038,7 +1039,7 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetSampleTimes(IDirectDrawStre
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_Update(IDirectDrawStreamSample *iface, DWORD flags, HANDLE event,
+static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface, DWORD flags, HANDLE event,
                                                          PAPCFUNC func_APC, DWORD APC_data)
 {
     FIXME("(%p)->(%x,%p,%p,%u): stub\n", iface, flags, event, func_APC, APC_data);
@@ -1046,7 +1047,7 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_Update(IDirectDrawStreamSample
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_CompletionStatus(IDirectDrawStreamSample *iface, DWORD flags, DWORD milliseconds)
+static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *iface, DWORD flags, DWORD milliseconds)
 {
     FIXME("(%p)->(%x,%u): stub\n", iface, flags, milliseconds);
 
@@ -1054,27 +1055,27 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_CompletionStatus(IDirectDrawSt
 }
 
 /*** IDirectDrawStreamSample methods ***/
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_GetSurface(IDirectDrawStreamSample *iface, IDirectDrawSurface **ddraw_surface,
+static HRESULT WINAPI ddraw_sample_GetSurface(IDirectDrawStreamSample *iface, IDirectDrawSurface **ddraw_surface,
                                                              RECT *rect)
 {
-    IDirectDrawStreamSampleImpl *This = impl_from_IDirectDrawStreamSample(iface);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
 
     TRACE("(%p)->(%p,%p)\n", iface, ddraw_surface, rect);
 
     if (ddraw_surface)
     {
-        *ddraw_surface = This->surface;
+        *ddraw_surface = sample->surface;
         if (*ddraw_surface)
             IDirectDrawSurface_AddRef(*ddraw_surface);
     }
 
     if (rect)
-        *rect = This->rect;
+        *rect = sample->rect;
 
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetRect(IDirectDrawStreamSample *iface, const RECT *rect)
+static HRESULT WINAPI ddraw_sample_SetRect(IDirectDrawStreamSample *iface, const RECT *rect)
 {
     FIXME("(%p)->(%p): stub\n", iface, rect);
 
@@ -1084,24 +1085,24 @@ static HRESULT WINAPI IDirectDrawStreamSampleImpl_SetRect(IDirectDrawStreamSampl
 static const struct IDirectDrawStreamSampleVtbl DirectDrawStreamSample_Vtbl =
 {
     /*** IUnknown methods ***/
-    IDirectDrawStreamSampleImpl_QueryInterface,
-    IDirectDrawStreamSampleImpl_AddRef,
-    IDirectDrawStreamSampleImpl_Release,
+    ddraw_sample_QueryInterface,
+    ddraw_sample_AddRef,
+    ddraw_sample_Release,
     /*** IStreamSample methods ***/
-    IDirectDrawStreamSampleImpl_GetMediaStream,
-    IDirectDrawStreamSampleImpl_GetSampleTimes,
-    IDirectDrawStreamSampleImpl_SetSampleTimes,
-    IDirectDrawStreamSampleImpl_Update,
-    IDirectDrawStreamSampleImpl_CompletionStatus,
+    ddraw_sample_GetMediaStream,
+    ddraw_sample_GetSampleTimes,
+    ddraw_sample_SetSampleTimes,
+    ddraw_sample_Update,
+    ddraw_sample_CompletionStatus,
     /*** IDirectDrawStreamSample methods ***/
-    IDirectDrawStreamSampleImpl_GetSurface,
-    IDirectDrawStreamSampleImpl_SetRect
+    ddraw_sample_GetSurface,
+    ddraw_sample_SetRect
 };
 
 static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectDrawSurface *surface,
     const RECT *rect, IDirectDrawStreamSample **ddraw_stream_sample)
 {
-    IDirectDrawStreamSampleImpl *object;
+    struct ddraw_sample *object;
     HRESULT hr;
 
     TRACE("(%p)\n", ddraw_stream_sample);
