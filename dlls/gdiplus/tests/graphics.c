@@ -6870,7 +6870,7 @@ static void test_gdi_interop(void)
 
     stat = GdipBitmapGetPixel(bitmap, 26, 26, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipBitmapGetPixel(bitmap, 86, 86, &color);
     expect(Ok, stat);
