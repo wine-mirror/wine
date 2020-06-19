@@ -1375,7 +1375,6 @@ static NTSTATUS tp_new_worker_thread( struct threadpool *pool )
     {
         InterlockedIncrement( &pool->refcount );
         pool->num_workers++;
-        pool->num_busy_workers++;
         NtClose( thread );
     }
     return status;
@@ -2137,6 +2136,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
 
 static void tp_object_prio_queue( struct threadpool_object *object )
 {
+    ++object->pool->num_busy_workers;
     list_add_tail( &object->pool->pools[object->priority], &object->pool_entry );
 }
 
@@ -2330,7 +2330,6 @@ static void CALLBACK threadpool_worker_proc( void *param )
     TRACE( "starting worker thread for pool %p\n", pool );
 
     RtlEnterCriticalSection( &pool->cs );
-    pool->num_busy_workers--;
     for (;;)
     {
         while ((ptr = threadpool_get_next_item( pool )))
@@ -2360,7 +2359,6 @@ static void CALLBACK threadpool_worker_proc( void *param )
             /* Leave critical section and do the actual callback. */
             object->num_associated_callbacks++;
             object->num_running_callbacks++;
-            pool->num_busy_workers++;
             RtlLeaveCriticalSection( &pool->cs );
 
             /* Initialize threadpool instance struct. */
@@ -2466,6 +2464,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
 
         skip_cleanup:
             RtlEnterCriticalSection( &pool->cs );
+            assert(pool->num_busy_workers);
             pool->num_busy_workers--;
 
             /* Simple callbacks are automatically shutdown after execution. */
