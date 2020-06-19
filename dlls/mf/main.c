@@ -1291,12 +1291,18 @@ static const struct activate_funcs evr_activate_funcs =
 
 HRESULT WINAPI MFCreateVideoRendererActivate(HWND hwnd, IMFActivate **activate)
 {
+    HRESULT hr;
+
     TRACE("%p, %p.\n", hwnd, activate);
 
     if (!activate)
         return E_POINTER;
 
-    return create_activation_object(hwnd, &evr_activate_funcs, activate);
+    hr = create_activation_object(hwnd, &evr_activate_funcs, activate);
+    if (SUCCEEDED(hr))
+        IMFActivate_SetUINT64(*activate, &MF_ACTIVATE_VIDEO_WINDOW, (ULONG_PTR)hwnd);
+
+    return hr;
 }
 
 struct simple_type_handler

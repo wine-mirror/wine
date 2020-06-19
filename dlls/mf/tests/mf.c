@@ -3228,7 +3228,8 @@ static void test_evr(void)
 {
     IMFMediaSink *sink, *sink2;
     IMFActivate *activate;
-    DWORD flags;
+    DWORD flags, count;
+    UINT64 value;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -3239,6 +3240,14 @@ static void test_evr(void)
 
     hr = MFCreateVideoRendererActivate(NULL, &activate);
     ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
+
+    hr = IMFActivate_GetCount(activate, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &value);
+    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+    ok(!value, "Unexpected value.\n");
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
 todo_wine
