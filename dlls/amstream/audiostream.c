@@ -56,6 +56,7 @@ struct audio_stream
     AM_MEDIA_TYPE mt;
     WAVEFORMATEX format;
     FILTER_STATE state;
+    REFERENCE_TIME segment_start;
     BOOL eos;
     BOOL flushing;
     struct list receive_queue;
@@ -1158,9 +1159,18 @@ static HRESULT WINAPI audio_sink_EndFlush(IPin *iface)
 
 static HRESULT WINAPI audio_sink_NewSegment(IPin *iface, REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
 {
-    FIXME("iface %p, start %s, stop %s, rate %0.16e, stub!\n",
-            iface, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
-    return E_NOTIMPL;
+    struct audio_stream *stream = impl_from_IPin(iface);
+
+    TRACE("stream %p, start %s, stop %s, rate %0.16e\n",
+            stream, wine_dbgstr_longlong(start), wine_dbgstr_longlong(stop), rate);
+
+    EnterCriticalSection(&stream->cs);
+
+    stream->segment_start = start;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static const IPinVtbl audio_sink_vtbl =
@@ -1291,7 +1301,7 @@ static HRESULT WINAPI audio_meminput_Receive(IMemInputPin *iface, IMediaSample *
     receive->length = IMediaSample_GetActualDataLength(sample);
     receive->pointer = pointer;
     receive->sample = sample;
-    receive->start_time = start_time;
+    receive->start_time = start_time + stream->segment_start;
     IMediaSample_AddRef(receive->sample);
     list_add_tail(&stream->receive_queue, &receive->entry);
 
