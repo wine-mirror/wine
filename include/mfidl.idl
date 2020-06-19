@@ -934,6 +934,19 @@ interface IMFQualityAdviseLimits : IUnknown
     HRESULT GetMinimumQualityLevel([out] MF_QUALITY_LEVEL *level);
 }
 
+[
+    object,
+    uuid(245bf8e9-0755-40f7-88a5-ae0f18d55e17),
+    local
+]
+interface IMFTrackedSample : IUnknown
+{
+    HRESULT SetAllocator(
+        [in] IMFAsyncCallback *sample_allocator,
+        [in, unique] IUnknown *state
+    );
+}
+
 typedef struct _MFT_REGISTRATION_INFO
 {
     CLSID clsid;

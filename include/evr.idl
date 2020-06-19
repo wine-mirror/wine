@@ -198,4 +198,25 @@ interface IMFVideoMixerControl2 : IMFVideoMixerControl
     );
 }
 
+[
+    object,
+    uuid(56c294d0-753e-4260-8d61-a3d8820b1d54),
+    local
+]
+interface IMFDesiredSample : IUnknown
+{
+    HRESULT GetDesiredSampleTimeAndDuration(
+        [out] LONGLONG *sample_time,
+        [out] LONGLONG *sample_duration
+    );
+
+    void SetDesiredSampleTimeAndDuration(
+        [in] LONGLONG sample_time,
+        [in] LONGLONG sample_duration
+    );
+
+    void Clear();
+}
+
 cpp_quote("HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj);")
+cpp_quote("HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sample);")

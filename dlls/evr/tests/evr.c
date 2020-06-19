@@ -29,6 +29,36 @@
 
 static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
 
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device = NULL;
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = focus_window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+
+    return device;
+}
+
 static IBaseFilter *create_evr(void)
 {
     IBaseFilter *filter = NULL;
@@ -485,6 +515,117 @@ static void test_default_mixer(void)
     IMFTransform_Release(transform);
 }
 
+static void test_surface_sample(void)
+{
+    IDirect3DSurface9 *backbuffer = NULL;
+    IMFMediaBuffer *buffer, *buffer2;
+    IDirect3DSwapChain9 *swapchain;
+    IDirect3DDevice9 *device;
+    DWORD count, length;
+    IMFSample *sample;
+    LONGLONG duration;
+    IDirect3D9 *d3d;
+    IUnknown *unk;
+    HWND window;
+    HRESULT hr;
+    BYTE *data;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get the implicit swapchain (%08x)\n", hr);
+
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
+    ok(backbuffer != NULL, "The back buffer is NULL\n");
+
+    IDirect3DSwapChain9_Release(swapchain);
+
+    hr = MFCreateVideoSampleFromSurface((IUnknown *)backbuffer, &sample);
+todo_wine
+    ok(hr == S_OK, "Failed to create surface sample, hr %#x.\n", hr);
+    if (FAILED(hr)) goto done;
+
+    hr = IMFSample_QueryInterface(sample, &IID_IMFTrackedSample, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFSample_GetCount(sample, &count);
+    ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count.\n");
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count.\n");
+
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(!length, "Unexpected length %u.\n", length);
+
+    hr = IMFSample_GetSampleDuration(sample, &duration);
+    ok(hr == MF_E_NO_SAMPLE_DURATION, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleTime(sample, &duration);
+    ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(!length, "Unexpected length %u.\n", length);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(count == 2, "Unexpected attribute count.\n");
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer2);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_CopyToBuffer(sample, buffer);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_RemoveAllBuffers(sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetBufferCount(sample, &count);
+    ok(hr == S_OK, "Failed to get buffer count, hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count.\n");
+
+    IMFMediaBuffer_Release(buffer);
+
+    IMFSample_Release(sample);
+
+done:
+    if (backbuffer)
+        IDirect3DSurface9_Release(backbuffer);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -495,6 +636,7 @@ START_TEST(evr)
     test_find_pin();
     test_pin_info();
     test_default_mixer();
+    test_surface_sample();
 
     CoUninitialize();
 }

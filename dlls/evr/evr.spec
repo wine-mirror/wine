@@ -19,7 +19,7 @@
 @ stub MFCreateVideoPresenter2
 @ stub MFCreateVideoPresenter
 @ stub MFCreateVideoSampleAllocator
-@ stub MFCreateVideoSampleFromSurface
+@ stdcall MFCreateVideoSampleFromSurface(ptr ptr)
 @ stub MFGetPlaneSize
 @ stub MFGetStrideForBitmapInfoHeader
 @ stub MFGetUncompressedVideoFormat
