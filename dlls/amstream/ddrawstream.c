@@ -377,6 +377,9 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMedi
 
     TRACE("(%p)->(%p)\n", iface, ddraw);
 
+    if (!ddraw)
+        return E_POINTER;
+
     *ddraw = NULL;
     if (!This->ddraw)
     {
