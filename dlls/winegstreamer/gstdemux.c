@@ -416,8 +416,8 @@ static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
         /* Clear some fields that shouldn't prevent us from connecting. */
         for (i = 0; i < gst_caps_get_size(caps); ++i)
         {
-            gst_structure_remove_field(gst_caps_get_structure(caps, i), "framerate");
-            gst_structure_remove_field(gst_caps_get_structure(caps, i), "pixel-aspect-ratio");
+            gst_structure_remove_fields(gst_caps_get_structure(caps, i),
+                    "framerate", "pixel-aspect-ratio", "colorimetry", "chroma-site", NULL);
         }
     }
     return caps;
