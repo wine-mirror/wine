@@ -279,7 +279,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
         return hr;
     }
 
-    if (height > 0)
+    if (height > 0 && bitmap_header->biCompression == BI_RGB)
     {
         BYTE *dst = (BYTE *)locked_rect.pBits + (height * locked_rect.Pitch);
         const BYTE *src = data;
@@ -297,6 +297,8 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     {
         BYTE *dst = locked_rect.pBits;
         const BYTE *src = data;
+
+        height = abs(height);
 
         TRACE("Source pitch %u does not match dest pitch %u; copying manually.\n",
                 src_pitch, locked_rect.Pitch);
