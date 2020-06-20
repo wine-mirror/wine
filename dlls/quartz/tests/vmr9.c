@@ -696,7 +696,7 @@ static void test_media_types(void)
     VIDEOINFOHEADER vih =
     {
         {0}, {0}, 0, 0, 0,
-        {sizeof(BITMAPINFOHEADER), 32, 24, 1, 0, BI_RGB}
+        {sizeof(BITMAPINFOHEADER), 32, 24, 1, 0, 0xdeadbeef}
     };
     IEnumMediaTypes *enummt;
     unsigned int i;

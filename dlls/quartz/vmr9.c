@@ -338,8 +338,6 @@ static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const
             && !IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo2))
         return S_FALSE;
 
-    if (get_bitmap_header(mt)->biCompression != BI_RGB)
-        return S_FALSE;
     return S_OK;
 }
 
