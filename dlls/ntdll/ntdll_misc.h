@@ -40,19 +40,11 @@
 
 #define MAX_NT_PATH_LENGTH 277
 
-#define MAX_DOS_DRIVES 26
-
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__) || defined(__aarch64__)
 static const UINT_PTR page_size = 0x1000;
 #else
 extern UINT_PTR page_size DECLSPEC_HIDDEN;
 #endif
-
-struct drive_info
-{
-    dev_t dev;
-    ino_t ino;
-};
 
 extern NTSTATUS close_handle( HANDLE ) DECLSPEC_HIDDEN;
 
@@ -114,7 +106,6 @@ extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 /* file I/O */
 extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
 extern void init_directories(void) DECLSPEC_HIDDEN;
-extern unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] ) DECLSPEC_HIDDEN;
 
 /* virtual memory */
 extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
