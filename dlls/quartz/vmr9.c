@@ -428,11 +428,14 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
             case 32: info.Format = D3DFMT_X8R8G8B8; break;
             default:
                 FIXME("Unhandled bit depth %u.\n", filter->bmiheader.biBitCount);
+                free(filter->surfaces);
                 return E_INVALIDARG;
         }
 
         info.dwFlags = VMR9AllocFlag_TextureSurface;
-        return initialize_device(filter, &info, count);
+        if (FAILED(hr = initialize_device(filter, &info, count)))
+            free(filter->surfaces);
+        return hr;
     }
 
     for (i = 0; i < ARRAY_SIZE(formats); ++i)
@@ -457,6 +460,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
         }
     }
 
+    free(filter->surfaces);
     return hr;
 }
 
