@@ -2381,16 +2381,37 @@ static void test_BcryptDeriveKeyCapi(void)
     }
 
     ret = pBCryptDeriveKeyCapi(NULL, NULL, NULL, 0, 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER || ret == STATUS_INVALID_HANDLE /* win7 */, "got %08x\n", ret);
 
     ret = pBCryptDeriveKeyCapi(hash, NULL, NULL, 0, 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER || !ret /* win7 */, "got %08x\n", ret);
+
+    ret = pBCryptDestroyHash(hash);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0);
+    ok(!ret, "got %08x\n", ret);
 
     ret = pBCryptDeriveKeyCapi(hash, NULL, key, 0, 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER || !ret /* win7 */, "got %08x\n", ret);
 
+    ret = pBCryptDestroyHash(hash);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0);
+    ok(!ret, "got %08x\n", ret);
+
+    memset(key, 0, sizeof(key));
     ret = pBCryptDeriveKeyCapi(hash, NULL, key, 41, 0);
-    ok(ret == STATUS_INVALID_PARAMETER, "got %08x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER || !ret /* win7 */, "got %08x\n", ret);
+    if (!ret)
+        ok(!memcmp(key, expect, sizeof(expect) - 1), "wrong key data\n");
+
+    ret = pBCryptDestroyHash(hash);
+    ok(!ret, "got %08x\n", ret);
+
+    ret = pBCryptCreateHash(alg, &hash, NULL, 0, NULL, 0, 0);
+    ok(!ret, "got %08x\n", ret);
 
     memset(key, 0, sizeof(key));
     ret = pBCryptDeriveKeyCapi(hash, NULL, key, 20, 0);
