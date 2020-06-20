@@ -261,7 +261,11 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     width = bitmap_header->biWidth;
     height = bitmap_header->biHeight;
     depth = bitmap_header->biBitCount;
-    src_pitch = ((width * depth / 8) + 3) & ~3;
+    if (bitmap_header->biCompression == mmioFOURCC('N','V','1','2')
+            || bitmap_header->biCompression == mmioFOURCC('Y','V','1','2'))
+        src_pitch = width;
+    else /* packed YUV (UYVY or YUY2) or RGB */
+        src_pitch = ((width * depth / 8) + 3) & ~3;
 
     info.rtStart = start_time;
     info.rtEnd = end_time;
