@@ -211,8 +211,8 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
+    unsigned int data_size, width, depth, src_pitch;
     const BITMAPINFOHEADER *bitmap_header;
-    unsigned int data_size, width, depth;
     REFERENCE_TIME start_time, end_time;
     VMR9PresentationInfo info = {};
     D3DLOCKED_RECT locked_rect;
@@ -261,6 +261,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     width = bitmap_header->biWidth;
     height = bitmap_header->biHeight;
     depth = bitmap_header->biBitCount;
+    src_pitch = ((width * depth / 8) + 3) & ~3;
 
     info.rtStart = start_time;
     info.rtEnd = end_time;
@@ -285,21 +286,21 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
         {
             dst -= locked_rect.Pitch;
             memcpy(dst, src, width * depth / 8);
-            src += width * depth / 8;
+            src += src_pitch;
         }
     }
-    else if (locked_rect.Pitch != width * depth / 8)
+    else if (locked_rect.Pitch != src_pitch)
     {
         BYTE *dst = locked_rect.pBits;
         const BYTE *src = data;
 
         TRACE("Source pitch %u does not match dest pitch %u; copying manually.\n",
-                width * depth / 8, locked_rect.Pitch);
+                src_pitch, locked_rect.Pitch);
 
         while (height--)
         {
             memcpy(dst, src, width * depth / 8);
-            src += width * depth / 8;
+            src += src_pitch;
             dst += locked_rect.Pitch;
         }
     }
