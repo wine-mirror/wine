@@ -744,6 +744,21 @@ typedef struct _FILE_PIPE_LOCAL_INFORMATION {
 #define FILE_PIPE_CONNECTED_STATE           0x00000003
 #define FILE_PIPE_CLOSING_STATE             0x00000004
 
+typedef struct _FILE_OBJECTID_BUFFER
+{
+    BYTE ObjectId[16];
+    union
+    {
+        struct
+        {
+            BYTE BirthVolumeId[16];
+            BYTE BirthObjectId[16];
+            BYTE DomainId[16];
+        } DUMMYSTRUCTNAME;
+        BYTE ExtendedInfo[48];
+    } DUMMYUNIONNAME;
+} FILE_OBJECTID_BUFFER, *PFILE_OBJECTID_BUFFER;
+
 typedef struct _FILE_OBJECTID_INFORMATION {
     LONGLONG FileReference;
     UCHAR ObjectId[16];

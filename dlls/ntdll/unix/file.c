@@ -5666,6 +5666,29 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
         }
         break;
     }
+
+    case FSCTL_GET_OBJECT_ID:
+    {
+        FILE_OBJECTID_BUFFER *info = out_buffer;
+        int fd, needs_close;
+        struct stat st;
+
+        io->Information = 0;
+        if (out_size >= sizeof(*info))
+        {
+            status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
+            if (status) break;
+            fstat( fd, &st );
+            if (needs_close) close( fd );
+            memset( info, 0, sizeof(*info) );
+            memcpy( info->ObjectId, &st.st_dev, sizeof(st.st_dev) );
+            memcpy( info->ObjectId + 8, &st.st_ino, sizeof(st.st_ino) );
+            io->Information = sizeof(*info);
+        }
+        else status = STATUS_BUFFER_TOO_SMALL;
+        break;
+    }
+
     case FSCTL_SET_SPARSE:
         TRACE("FSCTL_SET_SPARSE: Ignoring request\n");
         io->Information = 0;
