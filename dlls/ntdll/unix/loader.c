@@ -1024,7 +1024,6 @@ static struct unix_funcs unix_funcs =
     exec_process,
     wine_server_call,
     server_send_fd,
-    server_get_unix_fd,
     server_fd_to_handle,
     server_handle_to_fd,
     server_release_fd,

@@ -101,9 +101,6 @@ extern void CDECL virtual_release_address_space(void) DECLSPEC_HIDDEN;
 extern void CDECL virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
 
 extern void CDECL server_send_fd( int fd ) DECLSPEC_HIDDEN;
-extern int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
-                                     int *needs_close, enum server_fd_type *type,
-                                     unsigned int *options ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL server_fd_to_handle( int fd, unsigned int access, unsigned int attributes,
                                            HANDLE *handle ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, int *unix_fd,
@@ -155,6 +152,8 @@ extern unsigned int server_wait( const select_op_t *select_op, data_size_t size,
                                  const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call,
                                               apc_result_t *result ) DECLSPEC_HIDDEN;
+extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
+                               int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;
 extern void server_init_process(void) DECLSPEC_HIDDEN;
 extern size_t server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
 extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;

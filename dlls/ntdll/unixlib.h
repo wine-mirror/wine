@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 56
+#define NTDLL_UNIXLIB_VERSION 57
 
 struct unix_funcs
 {
@@ -310,8 +310,6 @@ struct unix_funcs
     /* server functions */
     unsigned int  (CDECL *server_call)( void *req_ptr );
     void          (CDECL *server_send_fd)( int fd );
-    int           (CDECL *server_get_unix_fd)( HANDLE handle, unsigned int wanted_access, int *unix_fd,
-                                               int *needs_close, enum server_fd_type *type, unsigned int *options );
     NTSTATUS      (CDECL *server_fd_to_handle)( int fd, unsigned int access, unsigned int attributes,
                                                 HANDLE *handle );
     NTSTATUS      (CDECL *server_handle_to_fd)( HANDLE handle, unsigned int access, int *unix_fd,

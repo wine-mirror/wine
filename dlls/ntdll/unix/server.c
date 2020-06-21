@@ -999,8 +999,8 @@ static int remove_fd_from_cache( HANDLE handle )
  *
  * The returned unix_fd should be closed iff needs_close is non-zero.
  */
-int CDECL server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
-                              int *needs_close, enum server_fd_type *type, unsigned int *options )
+int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
+                        int *needs_close, enum server_fd_type *type, unsigned int *options )
 {
     sigset_t sigset;
     obj_handle_t fd_handle;
