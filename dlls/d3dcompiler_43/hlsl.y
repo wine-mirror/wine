@@ -777,7 +777,6 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
     struct hlsl_type *type;
     struct parse_variable_def *v, *v_next;
     struct hlsl_ir_var *var;
-    struct hlsl_ir_node *assignment;
     BOOL ret, local = TRUE;
     struct list *statements_list = d3dcompiler_alloc(sizeof(*statements_list));
 
@@ -892,9 +891,8 @@ static struct list *declare_vars(struct hlsl_type *basic_type, DWORD modifiers, 
 
             load = new_var_load(var, var->loc);
             list_add_tail(v->initializer.instrs, &load->node.entry);
-            assignment = make_assignment(&load->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
+            add_assignment(v->initializer.instrs, &load->node, ASSIGN_OP_ASSIGN, v->initializer.args[0]);
             d3dcompiler_free(v->initializer.args);
-            list_add_tail(v->initializer.instrs, &assignment->entry);
 
             if (modifiers & HLSL_STORAGE_STATIC)
                 list_move_tail(&hlsl_ctx.static_initializers, v->initializer.instrs);
@@ -2722,24 +2720,24 @@ conditional_expr:         logicor_expr
                                 FIXME("ternary operator\n");
                             }
 
-assignment_expr:          conditional_expr
-                            {
-                                $$ = $1;
-                            }
-                        | unary_expr assign_op assignment_expr
-                            {
-                                struct hlsl_ir_node *instr;
+assignment_expr:
 
-                                if (node_from_list($1)->data_type->modifiers & HLSL_MODIFIER_CONST)
-                                {
-                                    hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "l-value is const");
-                                    YYABORT;
-                                }
-                                if (!(instr = make_assignment(node_from_list($1), $2, node_from_list($3))))
-                                    YYABORT;
-                                instr->loc = get_location(&@2);
-                                $$ = append_binop($3, $1, instr);
-                            }
+      conditional_expr
+    | unary_expr assign_op assignment_expr
+        {
+            struct hlsl_ir_node *lhs = node_from_list($1), *rhs = node_from_list($3);
+
+            if (lhs->data_type->modifiers & HLSL_MODIFIER_CONST)
+            {
+                hlsl_report_message(get_location(&@2), HLSL_LEVEL_ERROR, "l-value is const");
+                YYABORT;
+            }
+            list_move_tail($3, $1);
+            d3dcompiler_free($1);
+            if (!add_assignment($3, lhs, $2, rhs))
+                YYABORT;
+            $$ = $3;
+        }
 
 assign_op:                '='
                             {

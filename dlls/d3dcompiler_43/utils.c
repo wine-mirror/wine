@@ -1443,8 +1443,8 @@ static BOOL invert_swizzle(unsigned int *swizzle, unsigned int *writemask, unsig
     return TRUE;
 }
 
-struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign_op assign_op,
-        struct hlsl_ir_node *rhs)
+struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lhs,
+        enum parse_assign_op assign_op, struct hlsl_ir_node *rhs)
 {
     struct hlsl_ir_assignment *assign = d3dcompiler_alloc(sizeof(*assign));
     struct hlsl_type *lhs_type;
@@ -1524,6 +1524,7 @@ struct hlsl_ir_node *make_assignment(struct hlsl_ir_node *lhs, enum parse_assign
         rhs = expr;
     }
     assign->rhs = rhs;
+    list_add_tail(instrs, &assign->node.entry);
 
     return &assign->node;
 }
