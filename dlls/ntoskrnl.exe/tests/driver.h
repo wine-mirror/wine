@@ -55,3 +55,5 @@ static inline char *drv_strrchr( const char *str, char ch )
     do { if (*str == ch) ret = (char *)(ULONG_PTR)str; } while (*str++);
     return ret;
 }
+
+#define SERVER_LISTEN_PORT 9374

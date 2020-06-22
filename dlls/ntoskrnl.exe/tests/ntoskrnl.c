@@ -532,7 +532,7 @@ static DWORD WINAPI wsk_test_thread(void *parameter)
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(12345);
+    addr.sin_port = htons(SERVER_LISTEN_PORT);
     addr.sin_addr.s_addr = htonl(0x7f000001);
 
     ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
