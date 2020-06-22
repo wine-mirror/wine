@@ -57,3 +57,4 @@ static inline char *drv_strrchr( const char *str, char ch )
 }
 
 #define SERVER_LISTEN_PORT 9374
+#define CLIENT_LISTEN_PORT 9375

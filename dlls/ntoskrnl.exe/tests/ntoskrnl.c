@@ -518,39 +518,58 @@ static DWORD WINAPI wsk_test_thread(void *parameter)
 {
     static const char test_send_string[] = "Client test string 1.";
     static const WORD version = MAKEWORD(2, 2);
+    SOCKET s_listen, s_accept, s_connect;
     struct sockaddr_in addr;
     char buffer[256];
     int ret, err;
     WSADATA data;
-    SOCKET s;
+    int opt_val;
 
     ret = WSAStartup(version, &data);
     ok(!ret, "WSAStartup() failed, ret %u.\n", ret);
 
-    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ok(s != INVALID_SOCKET, "Error creating socket, WSAGetLastError() %u.\n", WSAGetLastError());
+    s_connect = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(s_connect != INVALID_SOCKET, "Error creating socket, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    s_listen = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(s_listen != INVALID_SOCKET, "Error creating socket, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    opt_val = 1;
+    setsockopt(s_listen, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt_val, sizeof(opt_val));
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(SERVER_LISTEN_PORT);
+    addr.sin_port = htons(CLIENT_LISTEN_PORT);
     addr.sin_addr.s_addr = htonl(0x7f000001);
+    ret = bind(s_listen, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "Got unexpected ret %d, WSAGetLastError() %u.\n", ret, WSAGetLastError());
 
-    ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+    ret = listen(s_listen, SOMAXCONN);
+    ok(!ret, "Got unexpected ret %d, WSAGetLastError() %u.\n", ret, WSAGetLastError());
+
+    addr.sin_port = htons(SERVER_LISTEN_PORT);
+
+    ret = connect(s_connect, (struct sockaddr *)&addr, sizeof(addr));
     while (ret && ((err = WSAGetLastError()) == WSAECONNREFUSED || err == WSAECONNABORTED))
     {
         SwitchToThread();
-        ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+        ret = connect(s_connect, (struct sockaddr *)&addr, sizeof(addr));
     }
     ok(!ret, "Error connecting, WSAGetLastError() %u.\n", WSAGetLastError());
 
-    ret = send(s, test_send_string, sizeof(test_send_string), 0);
+    ret = send(s_connect, test_send_string, sizeof(test_send_string), 0);
     ok(ret == sizeof(test_send_string), "Got unexpected ret %d.\n", ret);
 
-    ret = recv(s, buffer, sizeof(buffer), 0);
+    ret = recv(s_connect, buffer, sizeof(buffer), 0);
     ok(ret == sizeof(buffer), "Got unexpected ret %d.\n", ret);
     ok(!strcmp(buffer, "Server test string 1."), "Received unexpected data.\n");
 
-    closesocket(s);
+    s_accept = accept(s_listen, NULL, NULL);
+    ok(s_accept != INVALID_SOCKET, "Error creating socket, WSAGetLastError() %u.\n", WSAGetLastError());
+
+    closesocket(s_accept);
+    closesocket(s_connect);
+    closesocket(s_listen);
     return TRUE;
 }
 
