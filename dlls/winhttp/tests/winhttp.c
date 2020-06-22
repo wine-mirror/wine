@@ -3099,6 +3099,7 @@ static void test_websocket(int port)
 {
     HINTERNET session, connection, request, socket;
     DWORD size, len, count, status, index, error;
+    DWORD_PTR ctx;
     WCHAR header[32];
     char buf[128];
     BOOL ret;
@@ -3244,10 +3245,28 @@ static void test_websocket(int port)
 
     /* Send/Receive on websock */
 
-    WinHttpCloseHandle(request);
-    WinHttpCloseHandle(socket);
-    WinHttpCloseHandle(connection);
-    WinHttpCloseHandle(session);
+    ret = WinHttpCloseHandle(connection);
+    ok(ret, "got %u\n", GetLastError());
+
+    /* request handle is still valid */
+    size = sizeof(ctx);
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &ctx, &size);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = WinHttpCloseHandle(socket);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &ctx, &size);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = WinHttpCloseHandle(session);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = WinHttpQueryOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &ctx, &size);
+    ok(ret, "got %u\n", GetLastError());
+
+    ret = WinHttpCloseHandle(request);
+    ok(ret, "got %u\n", GetLastError());
 }
 
 static void test_not_modified(int port)

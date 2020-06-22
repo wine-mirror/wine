@@ -51,7 +51,6 @@ struct object_header
     WINHTTP_STATUS_CALLBACK callback;
     DWORD notify_mask;
     struct list entry;
-    struct list children;
 };
 
 struct hostdata

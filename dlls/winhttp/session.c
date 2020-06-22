@@ -246,7 +246,6 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->hdr.flags = flags;
     session->hdr.refs = 1;
     session->hdr.redirect_policy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
-    list_init( &session->hdr.children );
     session->resolve_timeout = DEFAULT_RESOLVE_TIMEOUT;
     session->connect_timeout = DEFAULT_CONNECT_TIMEOUT;
     session->send_timeout = DEFAULT_SEND_TIMEOUT;
@@ -552,11 +551,9 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     connect->hdr.notify_mask = session->hdr.notify_mask;
     connect->hdr.context = session->hdr.context;
     connect->hdr.redirect_policy = session->hdr.redirect_policy;
-    list_init( &connect->hdr.children );
 
     addref_object( &session->hdr );
     connect->session = session;
-    list_add_head( &session->hdr.children, &connect->hdr.entry );
 
     if (!(connect->hostname = strdupW( server ))) goto end;
     connect->hostport = port;
@@ -1121,12 +1118,10 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->hdr.notify_mask = connect->hdr.notify_mask;
     request->hdr.context = connect->hdr.context;
     request->hdr.redirect_policy = connect->hdr.redirect_policy;
-    list_init( &request->hdr.children );
     list_init( &request->task_queue );
 
     addref_object( &connect->hdr );
     request->connect = connect;
-    list_add_head( &connect->hdr.children, &request->hdr.entry );
 
     request->resolve_timeout = connect->session->resolve_timeout;
     request->connect_timeout = connect->session->connect_timeout;

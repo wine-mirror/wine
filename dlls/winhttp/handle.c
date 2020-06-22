@@ -79,7 +79,6 @@ void release_object( struct object_header *hdr )
         send_callback( hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, &hdr->handle, sizeof(HINTERNET) );
 
         TRACE("destroying object %p\n", hdr);
-        if (hdr->type != WINHTTP_HANDLE_TYPE_SESSION) list_remove( &hdr->entry );
         hdr->vtbl->destroy( hdr );
     }
 }
@@ -89,7 +88,6 @@ HINTERNET alloc_handle( struct object_header *hdr )
     struct object_header **p;
     ULONG_PTR handle, num;
 
-    list_init( &hdr->children );
     hdr->handle = NULL;
 
     EnterCriticalSection( &handle_cs );
@@ -123,7 +121,7 @@ BOOL free_handle( HINTERNET hinternet )
 {
     BOOL ret = FALSE;
     ULONG_PTR handle = (ULONG_PTR)hinternet;
-    struct object_header *hdr = NULL, *child, *next;
+    struct object_header *hdr = NULL;
 
     EnterCriticalSection( &handle_cs );
 
@@ -141,15 +139,7 @@ BOOL free_handle( HINTERNET hinternet )
 
     LeaveCriticalSection( &handle_cs );
 
-    if (hdr)
-    {
-        LIST_FOR_EACH_ENTRY_SAFE( child, next, &hdr->children, struct object_header, entry )
-        {
-            TRACE("freeing child handle %p for parent handle 0x%lx\n", child->handle, handle + 1);
-            free_handle( child->handle );
-        }
-        release_object( hdr );
-    }
+    if (hdr) release_object( hdr );
 
     EnterCriticalSection( &handle_cs );
     if (next_handle > handle && !handles[handle]) next_handle = handle;

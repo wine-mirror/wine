@@ -3102,11 +3102,9 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     socket->hdr.vtbl = &socket_vtbl;
     socket->hdr.refs = 1;
     socket->hdr.context = context;
-    list_init( &socket->hdr.children );
 
     addref_object( &request->hdr );
     socket->request = request;
-    list_add_head( &request->hdr.children, &socket->hdr.entry );
 
     if ((hsocket = alloc_handle( &socket->hdr ))) socket->hdr.handle = hsocket;
 
