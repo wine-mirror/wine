@@ -608,6 +608,34 @@ static struct hlsl_ir_constant *new_uint_constant(unsigned int n, const struct s
     return c;
 }
 
+struct hlsl_ir_node *new_unary_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node *arg, struct source_location loc)
+{
+    struct hlsl_ir_expr *expr;
+
+    if (!(expr = d3dcompiler_alloc(sizeof(*expr))))
+        return NULL;
+    init_node(&expr->node, HLSL_IR_EXPR, arg->data_type, loc);
+    expr->op = op;
+    expr->operands[0] = arg;
+    return &expr->node;
+}
+
+struct hlsl_ir_node *new_binary_expr(enum hlsl_ir_expr_op op,
+        struct hlsl_ir_node *arg1, struct hlsl_ir_node *arg2)
+{
+    struct hlsl_ir_expr *expr;
+
+    assert(compare_hlsl_types(arg1->data_type, arg2->data_type));
+
+    if (!(expr = d3dcompiler_alloc(sizeof(*expr))))
+        return NULL;
+    init_node(&expr->node, HLSL_IR_EXPR, arg1->data_type, arg1->loc);
+    expr->op = op;
+    expr->operands[0] = arg1;
+    expr->operands[1] = arg2;
+    return &expr->node;
+}
+
 static struct hlsl_ir_load *new_var_load(struct hlsl_ir_var *var, const struct source_location loc)
 {
     struct hlsl_ir_load *load = d3dcompiler_alloc(sizeof(*load));
@@ -636,7 +664,7 @@ static struct hlsl_ir_load *add_load(struct list *instrs, struct hlsl_ir_node *v
         var = src->var;
         if (src->offset)
         {
-            if (!(add = new_binary_expr(HLSL_IR_BINOP_ADD, src->offset, offset, loc)))
+            if (!(add = new_binary_expr(HLSL_IR_BINOP_ADD, src->offset, offset)))
                 return NULL;
             list_add_tail(instrs, &add->entry);
             offset = add;
@@ -712,7 +740,7 @@ static struct hlsl_ir_load *add_array_load(struct list *instrs, struct hlsl_ir_n
     if (!(c = new_uint_constant(data_type->reg_size * 4, loc)))
         return NULL;
     list_add_tail(instrs, &c->node.entry);
-    if (!(mul = new_binary_expr(HLSL_IR_BINOP_MUL, index, &c->node, loc)))
+    if (!(mul = new_binary_expr(HLSL_IR_BINOP_MUL, index, &c->node)))
         return NULL;
     list_add_tail(instrs, &mul->entry);
     index = mul;
@@ -1196,10 +1224,10 @@ static struct list *append_unop(struct list *list, struct hlsl_ir_node *node)
 static struct list *add_binary_expr(struct list *list1, struct list *list2,
         enum hlsl_ir_expr_op op, struct source_location loc)
 {
-    struct hlsl_ir_node *arg1 = node_from_list(list1), *arg2 = node_from_list(list2);
+    struct hlsl_ir_node *args[3] = {node_from_list(list1), node_from_list(list2)};
     list_move_tail(list1, list2);
     d3dcompiler_free(list2);
-    list_add_tail(list1, &new_binary_expr(op, arg1, arg2, loc)->entry);
+    add_expr(list1, op, args, &loc);
     return list1;
 }
 

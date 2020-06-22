@@ -1328,7 +1328,7 @@ struct hlsl_ir_node *add_implicit_conversion(struct list *instrs, struct hlsl_ir
     return &cast->node;
 }
 
-struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **operands,
+struct hlsl_ir_expr *add_expr(struct list *instrs, enum hlsl_ir_expr_op op, struct hlsl_ir_node *operands[3],
         struct source_location *loc)
 {
     struct hlsl_ir_expr *expr;
@@ -1372,6 +1372,7 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
     expr->operands[0] = operands[0];
     expr->operands[1] = operands[1];
     expr->operands[2] = operands[2];
+    list_add_tail(instrs, &expr->node.entry);
 
     return expr;
 }
@@ -1519,7 +1520,7 @@ struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lh
         struct hlsl_ir_node *expr;
 
         TRACE("Adding an expression for the compound assignment.\n");
-        expr = new_binary_expr(op, lhs, rhs, lhs->loc);
+        expr = new_binary_expr(op, lhs, rhs);
         list_add_after(&rhs->entry, &expr->entry);
         rhs = expr;
     }
