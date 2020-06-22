@@ -16,18 +16,143 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "d3d9.h"
-#include "dxva2api.h"
 #include "physicalmonitorenumerationapi.h"
 #include "lowlevelmonitorconfigurationapi.h"
 #include "highlevelmonitorconfigurationapi.h"
+#include "initguid.h"
+#include "dxva2api.h"
 
 #include "wine/debug.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxva2);
+
+struct device_manager
+{
+    IDirect3DDeviceManager9 IDirect3DDeviceManager9_iface;
+    LONG refcount;
+
+    UINT token;
+};
+
+static struct device_manager *impl_from_IDirect3DDeviceManager9(IDirect3DDeviceManager9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct device_manager, IDirect3DDeviceManager9_iface);
+}
+
+static HRESULT WINAPI device_manager_QueryInterface(IDirect3DDeviceManager9 *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(&IID_IDirect3DDeviceManager9, riid) ||
+            IsEqualIID(&IID_IUnknown, riid))
+    {
+        *obj = iface;
+        IDirect3DDeviceManager9_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI device_manager_AddRef(IDirect3DDeviceManager9 *iface)
+{
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    ULONG refcount = InterlockedIncrement(&manager->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI device_manager_Release(IDirect3DDeviceManager9 *iface)
+{
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    ULONG refcount = InterlockedDecrement(&manager->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        heap_free(manager);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI device_manager_ResetDevice(IDirect3DDeviceManager9 *iface, IDirect3DDevice9 *device,
+        UINT token)
+{
+    FIXME("%p, %p, %#x.\n", iface, device, token);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_OpenDeviceHandle(IDirect3DDeviceManager9 *iface, HANDLE *hdevice)
+{
+    FIXME("%p, %p.\n", iface, hdevice);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_CloseDeviceHandle(IDirect3DDeviceManager9 *iface, HANDLE hdevice)
+{
+    FIXME("%p, %p.\n", iface, hdevice);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_TestDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice)
+{
+    FIXME("%p, %p.\n", iface, hdevice);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_LockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice,
+        IDirect3DDevice9 **device, BOOL block)
+{
+    FIXME("%p, %p, %p, %d.\n", iface, hdevice, device, block);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_UnlockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice, BOOL savestate)
+{
+    FIXME("%p, %p, %d.\n", iface, hdevice, savestate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_GetVideoService(IDirect3DDeviceManager9 *iface, HANDLE hdevice, REFIID riid,
+        void **obj)
+{
+    FIXME("%p, %p, %s, %p.\n", iface, hdevice, debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IDirect3DDeviceManager9Vtbl device_manager_vtbl =
+{
+    device_manager_QueryInterface,
+    device_manager_AddRef,
+    device_manager_Release,
+    device_manager_ResetDevice,
+    device_manager_OpenDeviceHandle,
+    device_manager_CloseDeviceHandle,
+    device_manager_TestDevice,
+    device_manager_LockDevice,
+    device_manager_UnlockDevice,
+    device_manager_GetVideoService,
+};
 
 BOOL WINAPI CapabilitiesRequestAndCapabilitiesReply( HMONITOR monitor, LPSTR buffer, DWORD length )
 {
@@ -37,11 +162,25 @@ BOOL WINAPI CapabilitiesRequestAndCapabilitiesReply( HMONITOR monitor, LPSTR buf
     return FALSE;
 }
 
-HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9( UINT *resetToken, IDirect3DDeviceManager9 **dxvManager )
+HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9(UINT *token, IDirect3DDeviceManager9 **manager)
 {
-    FIXME("(%p, %p): stub\n", resetToken, dxvManager);
+    struct device_manager *object;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", token, manager);
+
+    *manager = NULL;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IDirect3DDeviceManager9_iface.lpVtbl = &device_manager_vtbl;
+    object->refcount = 1;
+    object->token = GetTickCount();
+
+    *token = object->token;
+    *manager = &object->IDirect3DDeviceManager9_iface;
+
+    return S_OK;
 }
 
 HRESULT WINAPI DXVA2CreateVideoService( IDirect3DDevice9 *device, REFIID riid, void **ppv )

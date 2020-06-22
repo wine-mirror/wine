@@ -1,4 +1,6 @@
-MODULE = dxva2.dll
+MODULE    = dxva2.dll
+IMPORTS   = uuid
+IMPORTLIB = dxva2
 
 EXTRADLLFLAGS = -mno-cygwin
 
