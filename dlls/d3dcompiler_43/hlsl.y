@@ -562,7 +562,8 @@ static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs
     return new_assignment(lhs, NULL, rhs, 0, rhs->loc);
 }
 
-static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *return_value, struct source_location loc)
+static struct hlsl_ir_jump *add_return(struct list *instrs,
+        struct hlsl_ir_node *return_value, struct source_location loc)
 {
     struct hlsl_type *return_type = hlsl_ctx.cur_function->return_type;
     struct hlsl_ir_jump *jump;
@@ -591,6 +592,7 @@ static struct hlsl_ir_jump *new_return(struct hlsl_ir_node *return_value, struct
     }
     init_node(&jump->node, HLSL_IR_JUMP, NULL, loc);
     jump->type = HLSL_IR_JUMP_RETURN;
+    list_add_tail(instrs, &jump->node.entry);
 
     return jump;
 }
@@ -2162,24 +2164,22 @@ statement:                declaration_statement
                         | selection_statement
                         | loop_statement
 
-jump_statement:           KW_RETURN expr ';'
-                            {
-                                struct hlsl_ir_jump *jump;
-                                if (!(jump = new_return(node_from_list($2), get_location(&@1))))
-                                    YYABORT;
+jump_statement:
 
-                                $$ = $2;
-                                list_add_tail($$, &jump->node.entry);
-                            }
-                        | KW_RETURN ';'
-                            {
-                                struct hlsl_ir_jump *jump;
-                                if (!(jump = new_return(NULL, get_location(&@1))))
-                                    YYABORT;
-                                $$ = d3dcompiler_alloc(sizeof(*$$));
-                                list_init($$);
-                                list_add_tail($$, &jump->node.entry);
-                            }
+      KW_RETURN expr ';'
+        {
+            if (!add_return($2, node_from_list($2), get_location(&@1)))
+                YYABORT;
+            $$ = $2;
+        }
+    | KW_RETURN ';'
+        {
+            if (!($$ = d3dcompiler_alloc(sizeof(*$$))))
+                YYABORT;
+            list_init($$);
+            if (!add_return($$, NULL, get_location(&@1)))
+                YYABORT;
+        }
 
 selection_statement:      KW_IF '(' expr ')' if_body
                             {
