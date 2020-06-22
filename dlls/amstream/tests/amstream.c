@@ -2013,8 +2013,6 @@ static void test_IDirectDrawStreamSample(void)
     DDSURFACEDESC desc = { sizeof(desc) };
     IAMMultiMediaStream *mmstream;
     IDirectDrawSurface7 *surface7;
-    IDirectDraw *ddraw, *ddraw2;
-    IDirectDraw7 *ddraw7;
     HRESULT hr;
     RECT rect;
 
@@ -2039,21 +2037,6 @@ static void test_IDirectDrawStreamSample(void)
     hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (LPVOID*)&ddraw_stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     if (FAILED(hr)) goto error;
-
-    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw2);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(ddraw == ddraw2, "got %p, %p\n", ddraw, ddraw2);
-
-    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirectDraw7, (void **)&ddraw7);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(ddraw7 == pdd7, "Got IDirectDraw instance %p, expected %p.\n", ddraw7, pdd7);
-    IDirectDraw7_Release(ddraw7);
-
-    IDirectDraw_Release(ddraw2);
-    IDirectDraw_Release(ddraw);
 
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -4768,6 +4751,138 @@ static void test_mediastreamfilter_get_current_stream_time(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_ddrawstream_getsetdirectdraw(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IDirectDraw *ddraw, *ddraw2, *ddraw3, *ddraw4;
+    IDirectDrawMediaStream *ddraw_stream;
+    IDirectDrawStreamSample *sample;
+    IDirectDraw7 *ddraw7;
+    IMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirectDraw7, (void **)&ddraw7);
+    ok(hr == DD_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, GetDesktopWindow(), DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw, 1);
+    EXPECT_REF(ddraw7, 1);
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)ddraw7, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine EXPECT_REF(ddraw, 2);
+
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw2 == ddraw, "Expected ddraw %p, got %p.\n", ddraw, ddraw2);
+    todo_wine EXPECT_REF(ddraw, 3);
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw3 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw3);
+    todo_wine EXPECT_REF(ddraw, 4);
+    IDirectDraw_Release(ddraw3);
+    todo_wine EXPECT_REF(ddraw, 3);
+
+    /* The current ddraw is released when SetDirectDraw() is called. */
+    hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw, 2);
+
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(ddraw3 == NULL, "Expected NULL, got %p.\n", ddraw3);
+    if (ddraw3) IDirectDraw_Release(ddraw3);
+
+    hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine EXPECT_REF(ddraw, 3);
+
+    if (hr == S_OK)
+    {
+        hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(ddraw3 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw3);
+        EXPECT_REF(ddraw, 4);
+        IDirectDraw_Release(ddraw3);
+        EXPECT_REF(ddraw, 3);
+
+        hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+         /* SetDirectDraw() doesn't take an extra reference to the ddraw object
+          * if there are samples extant. */
+        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        EXPECT_REF(ddraw, 3);
+
+        hr = DirectDrawCreate(NULL, &ddraw3, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IDirectDraw_SetCooperativeLevel(ddraw3, GetDesktopWindow(), DDSCL_NORMAL);
+        ok(hr == DD_OK, "Got hr %#x.\n", hr);
+        EXPECT_REF(ddraw3, 1);
+
+        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw3);
+        ok(hr == MS_E_SAMPLEALLOC, "Got hr %#x.\n", hr);
+
+        hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw4);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(ddraw4 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw4);
+        EXPECT_REF(ddraw, 4);
+        IDirectDraw_Release(ddraw4);
+        EXPECT_REF(ddraw, 3);
+
+        ref = IDirectDrawStreamSample_Release(sample);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw3);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        EXPECT_REF(ddraw, 2);
+        EXPECT_REF(ddraw3, 2);
+
+        hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw4);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(ddraw4 == ddraw3, "Expected ddraw %p, got %p.\n", ddraw3, ddraw4);
+        EXPECT_REF(ddraw3, 3);
+        IDirectDraw_Release(ddraw4);
+        EXPECT_REF(ddraw3, 2);
+
+        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        EXPECT_REF(ddraw3, 1);
+
+        ref = IDirectDraw_Release(ddraw3);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+    }
+
+    EXPECT_REF(stream, 3);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    EXPECT_REF(stream, 2);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    EXPECT_REF(stream, 1);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDraw7_Release(ddraw7);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IDirectDraw_Release(ddraw2);
+    EXPECT_REF(ddraw, 1);
+    ref = IDirectDraw_Release(ddraw);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(amstream)
 {
     HANDLE file;
@@ -4816,6 +4931,7 @@ START_TEST(amstream)
     test_audiostreamsample_get_sample_times();
 
     test_ddrawstream_initialize();
+    test_ddrawstream_getsetdirectdraw();
 
     test_ammediastream_join_am_multi_media_stream();
 
