@@ -1092,6 +1092,77 @@ static void test_WritePrivateProfileString(void)
     DeleteFileA(path);
 }
 
+static void test_profile_struct(void)
+{
+    static const char expect_data[] = "[s]\r\nkey=616261637573006F\r\n";
+    char buffer[20];
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileStructA("s", "key", buffer, sizeof(buffer), "./winetest.ini");
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_BAD_LENGTH, "got error %u\n", GetLastError());
+
+    ret = WritePrivateProfileStructA("s", "key", (void *)"abacus", sizeof("abacus"), "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+    ok(check_file_data("./winetest.ini", expect_data), "file doesn't match\n");
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileStructA("s", "key", buffer, 6, "./winetest.ini");
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_BAD_LENGTH, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileStructA("s", "key", buffer, 8, "./winetest.ini");
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_BAD_LENGTH, "got error %u\n", GetLastError());
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = GetPrivateProfileStructA("s", "key", buffer, 7, "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "abacus"), "data didn't match\n");
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = GetPrivateProfileStringA("s", "key", "default", buffer, sizeof(buffer), "./winetest.ini");
+    ok(ret == 16, "got size %u\n", ret);
+    ok(!strcmp(buffer, "616261637573006F"), "got %s\n", debugstr_a(buffer));
+
+    ret = WritePrivateProfileStringA("s", "key", "636163747573006F", "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileStructA("s", "key", buffer, 7, "./winetest.ini");
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_DATA, "got error %u\n", GetLastError());
+
+    ret = WritePrivateProfileStringA("s", "key", "6361637475730083", "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = GetPrivateProfileStructA("s", "key", buffer, 7, "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!strcmp(buffer, "cactus"), "data didn't match\n");
+
+    ret = WritePrivateProfileStringA("s", "key", "636163747573008Q", "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileStructA("s", "key", buffer, 7, "./winetest.ini");
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_DATA, "got error %u\n", GetLastError());
+
+    ret = WritePrivateProfileStringA("s", "key", "16361637475730083", "./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetPrivateProfileStructA("s", "key", buffer, 7, "./winetest.ini");
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_BAD_LENGTH, "got error %u\n", GetLastError());
+
+    ret = DeleteFileA("./winetest.ini");
+    ok(ret, "got error %u\n", GetLastError());
+}
+
 START_TEST(profile)
 {
     test_profile_int();
@@ -1119,4 +1190,5 @@ START_TEST(profile)
         "[section2]\r",
         "CR only");
     test_WritePrivateProfileString();
+    test_profile_struct();
 }
