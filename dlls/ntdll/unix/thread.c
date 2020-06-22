@@ -831,6 +831,8 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 {
     NTSTATUS status;
 
+    TRACE("(%p,%d,%p,%x,%p)\n", handle, class, data, length, ret_len);
+
     switch (class)
     {
     case ThreadBasicInformation:
@@ -1063,6 +1065,14 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 #endif
     }
 
+    case ThreadHideFromDebugger:
+        if (length != sizeof(BOOLEAN)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!data) return STATUS_ACCESS_VIOLATION;
+        if (handle != GetCurrentThread()) return STATUS_ACCESS_DENIED;
+        *(BOOLEAN*)data = TRUE;
+        if (ret_len) *ret_len = sizeof(BOOLEAN);
+        return STATUS_SUCCESS;
+
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadImpersonationToken:
@@ -1087,6 +1097,8 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
                                         const void *data, ULONG length )
 {
     NTSTATUS status;
+
+    TRACE("(%p,%d,%p,%x)\n", handle, class, data, length);
 
     switch (class)
     {
@@ -1152,6 +1164,8 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     }
 
     case ThreadHideFromDebugger:
+        if (length) return STATUS_INFO_LENGTH_MISMATCH;
+        if (handle != GetCurrentThread()) return STATUS_INVALID_HANDLE;
         /* pretend the call succeeded to satisfy some code protectors */
         return STATUS_SUCCESS;
 

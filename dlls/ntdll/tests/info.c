@@ -2346,6 +2346,7 @@ static void test_affinity(void)
     DWORD_PTR proc_affinity, thread_affinity;
     THREAD_BASIC_INFORMATION tbi;
     SYSTEM_INFO si;
+    ULONG dummy;
 
     GetSystemInfo(&si);
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
@@ -2450,6 +2451,32 @@ static void test_affinity(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
         "Unexpected thread affinity\n" );
+
+    dummy = 0;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, sizeof(ULONG) );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    dummy = 0;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, 1 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    status = pNtSetInformationThread( (HANDLE)0xdeadbeef, ThreadHideFromDebugger, NULL, 0 );
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status );
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadHideFromDebugger, NULL, 0 );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+    dummy = 0;
+    status = NtQueryInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, sizeof(ULONG), NULL );
+    if (status == STATUS_INVALID_INFO_CLASS)
+        win_skip("ThreadHideFromDebugger not available\n");
+    else
+    {
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+        dummy = 0;
+        status = NtQueryInformationThread( (HANDLE)0xdeadbeef, ThreadHideFromDebugger, &dummy, sizeof(ULONG), NULL );
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+        dummy = 0;
+        status = NtQueryInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, 1, NULL );
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+        if (status == STATUS_SUCCESS) ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
+    }
 }
 
 static void test_NtGetCurrentProcessorNumber(void)
