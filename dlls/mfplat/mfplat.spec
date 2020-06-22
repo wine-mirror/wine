@@ -76,7 +76,7 @@
 @ stub MFCreateVideoMediaType
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeader
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeaderEx
-@ stub MFCreateVideoMediaTypeFromSubtype
+@ stdcall MFCreateVideoMediaTypeFromSubtype(ptr ptr)
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader2
 @ stub MFCreateVideoMediaTypeFromVideoInfoHeader
 @ stdcall MFCreateWaveFormatExFromMFMediaType(ptr ptr ptr long)
