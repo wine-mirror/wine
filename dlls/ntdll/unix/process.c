@@ -589,7 +589,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
 {
     pe_image_info_t pe_info;
     BOOL is_child_64bit;
-    int socketfd[2];
+    int unixdir, socketfd[2];
     char **argv;
     HANDLE handle;
 
@@ -615,6 +615,8 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
         return status;
     }
 
+    unixdir = get_unix_curdir( NtCurrentTeb()->Peb->ProcessParameters );
+
     if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
 #ifdef SO_PASSCRED
     else
@@ -637,6 +639,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
     if (!status)
     {
         if (!(argv = build_argv( cmdline, 2 ))) return STATUS_NO_MEMORY;
+        fchdir( unixdir );
         do
         {
             status = exec_wineloader( argv, socketfd[0], is_child_64bit,
