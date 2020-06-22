@@ -33,13 +33,58 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxva2);
 
+enum device_handle_flags
+{
+    HANDLE_FLAG_OPEN = 0x1,
+    HANDLE_FLAG_INVALID = 0x2,
+};
+
+struct device_handle
+{
+    unsigned int flags;
+};
+
 struct device_manager
 {
     IDirect3DDeviceManager9 IDirect3DDeviceManager9_iface;
     LONG refcount;
 
+    IDirect3DDevice9 *device;
     UINT token;
+
+    struct device_handle *handles;
+    size_t count;
+    size_t capacity;
+
+    CRITICAL_SECTION cs;
 };
+
+static BOOL dxva_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
 
 static struct device_manager *impl_from_IDirect3DDeviceManager9(IDirect3DDeviceManager9 *iface)
 {
@@ -82,6 +127,10 @@ static ULONG WINAPI device_manager_Release(IDirect3DDeviceManager9 *iface)
 
     if (!refcount)
     {
+        if (manager->device)
+            IDirect3DDevice9_Release(manager->device);
+        DeleteCriticalSection(&manager->cs);
+        heap_free(manager->handles);
         heap_free(manager);
     }
 
@@ -91,30 +140,122 @@ static ULONG WINAPI device_manager_Release(IDirect3DDeviceManager9 *iface)
 static HRESULT WINAPI device_manager_ResetDevice(IDirect3DDeviceManager9 *iface, IDirect3DDevice9 *device,
         UINT token)
 {
-    FIXME("%p, %p, %#x.\n", iface, device, token);
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %#x.\n", iface, device, token);
+
+    if (token != manager->token)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&manager->cs);
+    if (manager->device)
+    {
+        for (i = 0; i < manager->count; ++i)
+            manager->handles[i].flags |= HANDLE_FLAG_INVALID;
+        IDirect3DDevice9_Release(manager->device);
+    }
+    manager->device = device;
+    IDirect3DDevice9_AddRef(manager->device);
+    LeaveCriticalSection(&manager->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI device_manager_OpenDeviceHandle(IDirect3DDeviceManager9 *iface, HANDLE *hdevice)
 {
-    FIXME("%p, %p.\n", iface, hdevice);
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    HRESULT hr = S_OK;
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, hdevice);
+
+    *hdevice = NULL;
+
+    EnterCriticalSection(&manager->cs);
+    if (!manager->device)
+        hr = DXVA2_E_NOT_INITIALIZED;
+    else
+    {
+        for (i = 0; i < manager->count; ++i)
+        {
+            if (!(manager->handles[i].flags & HANDLE_FLAG_OPEN))
+            {
+                manager->handles[i].flags |= HANDLE_FLAG_OPEN;
+                *hdevice = ULongToHandle(i + 1);
+                break;
+            }
+        }
+
+        if (dxva_array_reserve((void **)&manager->handles, &manager->capacity, manager->count + 1,
+                sizeof(*manager->handles)))
+        {
+            *hdevice = ULongToHandle(manager->count + 1);
+            manager->handles[manager->count].flags |= HANDLE_FLAG_OPEN;
+            manager->count++;
+        }
+        else
+            hr = E_OUTOFMEMORY;
+    }
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
+}
+
+static HRESULT device_manager_get_handle_index(struct device_manager *manager, HANDLE hdevice, size_t *idx)
+{
+    if (hdevice > ULongToHandle(manager->count))
+        return E_HANDLE;
+    *idx = (ULONG_PTR)hdevice - 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI device_manager_CloseDeviceHandle(IDirect3DDeviceManager9 *iface, HANDLE hdevice)
 {
-    FIXME("%p, %p.\n", iface, hdevice);
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    HRESULT hr;
+    size_t idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, hdevice);
+
+    EnterCriticalSection(&manager->cs);
+    if (SUCCEEDED(hr = device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        if (manager->handles[idx].flags & HANDLE_FLAG_OPEN)
+        {
+            manager->handles[idx].flags = 0;
+            if (idx == manager->count - 1)
+                manager->count--;
+        }
+        else
+            hr = E_HANDLE;
+    }
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI device_manager_TestDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice)
 {
-    FIXME("%p, %p.\n", iface, hdevice);
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    HRESULT hr;
+    size_t idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, hdevice);
+
+    EnterCriticalSection(&manager->cs);
+    if (SUCCEEDED(hr = device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        unsigned int flags = manager->handles[idx].flags;
+
+        if (flags & HANDLE_FLAG_INVALID)
+            hr = DXVA2_E_NEW_VIDEO_DEVICE;
+        else if (!(flags & HANDLE_FLAG_OPEN))
+            hr = E_HANDLE;
+    }
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI device_manager_LockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice,
@@ -176,6 +317,7 @@ HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9(UINT *token, IDirect3DDeviceMan
     object->IDirect3DDeviceManager9_iface.lpVtbl = &device_manager_vtbl;
     object->refcount = 1;
     object->token = GetTickCount();
+    InitializeCriticalSection(&object->cs);
 
     *token = object->token;
     *manager = &object->IDirect3DDeviceManager9_iface;

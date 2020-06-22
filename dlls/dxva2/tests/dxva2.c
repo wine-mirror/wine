@@ -84,23 +84,19 @@ static void test_device_manager(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-todo_wine
     ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
     /* Invalid token. */
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token + 1);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     refcount = get_refcount((IUnknown *)device);
 
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     refcount2 = get_refcount((IUnknown *)device);
@@ -108,40 +104,32 @@ todo_wine
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(handle != handle1, "Unexpected handle.\n");
-}
+
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Already closed. */
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
-todo_wine
     ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle1);
-todo_wine
     ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
 
     handle = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
@@ -153,7 +141,6 @@ todo_wine
 
     device2 = create_device(d3d, window);
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device2, token);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
@@ -162,7 +149,6 @@ todo_wine
     ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle);
-todo_wine
     ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
 
     IDirect3DDevice9_Release(device);
