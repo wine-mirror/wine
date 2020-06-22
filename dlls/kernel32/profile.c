@@ -856,16 +856,26 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
  * Returns all keys of a section.
  * If return_values is TRUE, also include the corresponding values.
  */
-static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
+static INT PROFILE_GetSection( const WCHAR *filename, LPCWSTR section_name,
 			       LPWSTR buffer, UINT len, BOOL return_values )
 {
+    PROFILESECTION *section;
     PROFILEKEY *key;
 
     if(!buffer) return 0;
 
     TRACE("%s,%p,%u\n", debugstr_w(section_name), buffer, len);
 
-    while (section)
+    EnterCriticalSection( &PROFILE_CritSect );
+
+    if (!PROFILE_Open( filename, FALSE ))
+    {
+        LeaveCriticalSection( &PROFILE_CritSect );
+        buffer[0] = 0;
+        return 0;
+    }
+
+    for (section = CurProfile->section; section; section = section->next)
     {
         if (!strcmpiW( section->name, section_name ))
         {
@@ -889,6 +899,9 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
                 }
             }
             *buffer = '\0';
+
+            LeaveCriticalSection( &PROFILE_CritSect );
+
             if (len <= 1)
                 /*If either lpszSection or lpszKey is NULL and the supplied
                   destination buffer is too small to hold all the strings,
@@ -901,9 +914,11 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
             }
             return oldlen - len;
         }
-        section = section->next;
     }
     buffer[0] = buffer[1] = '\0';
+
+    LeaveCriticalSection( &PROFILE_CritSect );
+
     return 0;
 }
 
@@ -1039,6 +1054,16 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
     if (!buffer || !len) return 0;
     if (!def_val) def_val = emptyW;
     if (!section) return GetPrivateProfileSectionNamesW( buffer, len, filename );
+    if (!entry)
+    {
+        ret = PROFILE_GetSection( filename, section, buffer, len, FALSE );
+        if (!buffer[0])
+        {
+            PROFILE_CopyEntry( buffer, def_val, len );
+            ret = strlenW( buffer );
+        }
+        return ret;
+    }
 
     /* strip any trailing ' ' of def_val. */
     p = def_val + strlenW(def_val) - 1;
@@ -1059,22 +1084,10 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 
     if (PROFILE_Open( filename, FALSE ))
     {
-        if (entry)
-        {
-            PROFILEKEY *key = PROFILE_Find( &CurProfile->section, section, entry, FALSE, FALSE );
-            PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val, len );
-            TRACE("-> %s\n", debugstr_w( buffer ));
-            ret = strlenW( buffer );
-        }
-        else
-        {
-            ret = PROFILE_GetSection( CurProfile->section, section, buffer, len, FALSE );
-            if (!buffer[0])
-            {
-                PROFILE_CopyEntry( buffer, def_val, len );
-                ret = strlenW( buffer );
-            }
-        }
+        PROFILEKEY *key = PROFILE_Find( &CurProfile->section, section, entry, FALSE, FALSE );
+        PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val, len );
+        TRACE("-> %s\n", debugstr_w( buffer ));
+        ret = strlenW( buffer );
     }
     else
     {
@@ -1229,8 +1242,6 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 				      DWORD len, LPCWSTR filename )
 {
-    int ret = 0;
-
     if (!section || !buffer)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -1239,14 +1250,7 @@ INT WINAPI GetPrivateProfileSectionW( LPCWSTR section, LPWSTR buffer,
 
     TRACE("(%s, %p, %d, %s)\n", debugstr_w(section), buffer, len, debugstr_w(filename));
 
-    RtlEnterCriticalSection( &PROFILE_CritSect );
-
-    if (PROFILE_Open( filename, FALSE ))
-        ret = PROFILE_GetSection(CurProfile->section, section, buffer, len, TRUE);
-
-    RtlLeaveCriticalSection( &PROFILE_CritSect );
-
-    return ret;
+    return PROFILE_GetSection( filename, section, buffer, len, TRUE );
 }
 
 /***********************************************************************
