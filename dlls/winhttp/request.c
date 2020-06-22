@@ -3106,6 +3106,8 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     socket->hdr.type = WINHTTP_HANDLE_TYPE_SOCKET;
     socket->hdr.vtbl = &socket_vtbl;
     socket->hdr.refs = 1;
+    socket->hdr.callback = request->hdr.callback;
+    socket->hdr.notify_mask = request->hdr.notify_mask;
     socket->hdr.context = context;
 
     addref_object( &request->hdr );
