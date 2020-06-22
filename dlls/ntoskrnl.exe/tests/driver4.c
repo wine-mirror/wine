@@ -265,19 +265,25 @@ static void test_wsk_listen_socket(void)
     ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
     ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
 
-    IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
-    IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
-    wsk_irp->IoStatus.Status = 0xdeadbeef;
-    wsk_irp->IoStatus.Information = 0xdeadbeef;
-    status = tcp_dispatch->WskBind(tcp_socket, (SOCKADDR *)&addr, 0, wsk_irp);
-    ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
-    status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
-    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
-    ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS, "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
-    ok(!wsk_irp->IoStatus.Information, "Got unexpected Information %#lx.\n",
-            wsk_irp->IoStatus.Information);
+    do
+    {
+        IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
+        IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
+        wsk_irp->IoStatus.Status = 0xdeadbeef;
+        wsk_irp->IoStatus.Information = 0xdeadbeef;
+        status = tcp_dispatch->WskBind(tcp_socket, (SOCKADDR *)&addr, 0, wsk_irp);
+        ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
+        status = KeWaitForSingleObject(&irp_complete_event, Executive, KernelMode, FALSE, NULL);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+        ok(wsk_irp->IoStatus.Status == STATUS_SUCCESS
+                || wsk_irp->IoStatus.Status == STATUS_ADDRESS_ALREADY_ASSOCIATED,
+                "Got unexpected status %#x.\n", wsk_irp->IoStatus.Status);
+        ok(!wsk_irp->IoStatus.Information, "Got unexpected Information %#lx.\n",
+                wsk_irp->IoStatus.Information);
+    }
+    while (wsk_irp->IoStatus.Status == STATUS_ADDRESS_ALREADY_ASSOCIATED);
 
-    timeout.QuadPart = -1000 * 10000;
+    timeout.QuadPart = -2000 * 10000;
 
     IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
     IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
