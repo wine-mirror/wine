@@ -3106,7 +3106,7 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     addref_object( &request->hdr );
     socket->request = request;
 
-    if ((hsocket = alloc_handle( &socket->hdr ))) socket->hdr.handle = hsocket;
+    hsocket = alloc_handle( &socket->hdr );
 
     release_object( &socket->hdr );
     release_object( &request->hdr );
