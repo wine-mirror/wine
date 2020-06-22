@@ -419,7 +419,6 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     {
         switch (filter->bmiheader.biBitCount)
         {
-            case 16: info.Format = D3DFMT_R5G6B5; break;
             case 24: info.Format = D3DFMT_R8G8B8; break;
             case 32: info.Format = D3DFMT_X8R8G8B8; break;
             default:
