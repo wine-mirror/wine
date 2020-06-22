@@ -165,7 +165,7 @@ typedef enum _RTL_GENERIC_COMPARE_RESULTS {
 
 typedef RTL_GENERIC_COMPARE_RESULTS (WINAPI *PRTL_AVL_COMPARE_ROUTINE)(struct _RTL_AVL_TABLE *, void *, void *);
 
-typedef void (WINAPI *PRTL_AVL_ALLOCATE_ROUTINE)(struct _RTL_AVL_TABLE *, LONG);
+typedef void * (WINAPI *PRTL_AVL_ALLOCATE_ROUTINE)(struct _RTL_AVL_TABLE *, LONG);
 
 typedef void (WINAPI *PRTL_AVL_FREE_ROUTINE )(struct _RTL_AVL_TABLE *, void *buffer);
 
