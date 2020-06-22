@@ -59,6 +59,7 @@ struct wsk_pending_io
 {
     OVERLAPPED ovr;
     TP_WAIT *tp_wait;
+    void *callback;
     IRP *irp;
 };
 
@@ -159,27 +160,41 @@ static struct wsk_pending_io *allocate_pending_io(struct wsk_socket_internal *so
         PTP_WAIT_CALLBACK socket_async_callback, IRP *irp)
 {
     struct wsk_pending_io *io = socket->pending_io;
-    unsigned int i;
+    unsigned int i, io_index;
 
+    io_index = ~0u;
     for (i = 0; i < ARRAY_SIZE(socket->pending_io); ++i)
+    {
         if (!io[i].irp)
-            break;
+        {
+            if (io[i].callback == socket_async_callback)
+            {
+                io[i].irp = irp;
+                return &io[i];
+            }
 
-    if (i == ARRAY_SIZE(socket->pending_io))
+            if (io_index == ~0u)
+                io_index = i;
+        }
+    }
+
+    if (io_index == ~0u)
     {
         FIXME("Pending io requests count exceeds limit.\n");
         return NULL;
     }
 
-    io[i].irp = irp;
+    io[io_index].irp = irp;
 
-    if (io[i].tp_wait)
-        return &io[i];
+    if (io[io_index].tp_wait)
+        CloseThreadpoolWait(io[io_index].tp_wait);
+    else
+        io[io_index].ovr.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 
-    io[i].ovr.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    io[i].tp_wait = CreateThreadpoolWait(socket_async_callback, socket, NULL);
+    io[io_index].tp_wait = CreateThreadpoolWait(socket_async_callback, socket, NULL);
+    io[io_index].callback = socket_async_callback;
 
-    return &io[i];
+    return &io[io_index];
 }
 
 static struct wsk_pending_io *find_pending_io(struct wsk_socket_internal *socket, TP_WAIT *tp_wait)
