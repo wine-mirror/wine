@@ -417,10 +417,8 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image
             /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
             info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
-#elif defined(__arm__)
-            info->cpu = CPU_ARM;
-#elif defined(__aarch64__)
-            info->cpu = CPU_ARM64;
+#else
+            info->cpu = client_cpu;
 #endif
             *handle = 0;
             return STATUS_SUCCESS;

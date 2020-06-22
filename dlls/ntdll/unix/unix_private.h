@@ -28,6 +28,16 @@
 #define InterlockedCompareExchange64(dest,xchg,cmp) RtlInterlockedCompareExchange64(dest,xchg,cmp)
 #endif
 
+#ifdef __i386__
+static const enum cpu_type client_cpu = CPU_x86;
+#elif defined(__x86_64__)
+static const enum cpu_type client_cpu = CPU_x86_64;
+#elif defined(__arm__)
+static const enum cpu_type client_cpu = CPU_ARM;
+#elif defined(__aarch64__)
+static const enum cpu_type client_cpu = CPU_ARM64;
+#endif
+
 struct debug_info
 {
     unsigned int str_pos;       /* current position in strings buffer */

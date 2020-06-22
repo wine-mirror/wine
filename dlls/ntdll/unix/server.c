@@ -100,18 +100,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 #define SOCKETNAME "socket"        /* name of the socket file */
 #define LOCKNAME   "lock"          /* name of the lock file */
 
-#ifdef __i386__
-static const enum cpu_type client_cpu = CPU_x86;
-#elif defined(__x86_64__)
-static const enum cpu_type client_cpu = CPU_x86_64;
-#elif defined(__arm__)
-static const enum cpu_type client_cpu = CPU_ARM;
-#elif defined(__aarch64__)
-static const enum cpu_type client_cpu = CPU_ARM64;
-#else
-#error Unsupported CPU
-#endif
-
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static const char *server_dir;
