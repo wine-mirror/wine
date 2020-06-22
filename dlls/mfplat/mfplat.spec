@@ -52,7 +52,7 @@
 @ stdcall MFCreateMFByteStreamOnStream(ptr ptr)
 @ stdcall MFCreateMFByteStreamOnStreamEx(ptr ptr)
 @ stdcall MFCreateMFByteStreamWrapper(ptr ptr)
-@ stub MFCreateMFVideoFormatFromMFMediaType
+@ stdcall MFCreateMFVideoFormatFromMFMediaType(ptr ptr ptr)
 @ stdcall MFCreateMediaBufferFromMediaType(ptr int64 long long ptr)
 @ stub MFCreateMediaBufferWrapper
 @ stdcall MFCreateMediaEvent(long ptr long ptr ptr)

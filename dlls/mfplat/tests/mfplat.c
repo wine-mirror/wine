@@ -5262,6 +5262,25 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
     IMFMediaType_Release(mediatype);
 }
 
+static void test_MFCreateMFVideoFormatFromMFMediaType(void)
+{
+    MFVIDEOFORMAT *video_format;
+    IMFMediaType *media_type;
+    UINT32 size;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = MFCreateMFVideoFormatFromMFMediaType(media_type, &video_format, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!video_format, "Unexpected format.\n");
+    ok(video_format->dwSize == size && size == sizeof(*video_format), "Unexpected size %u.\n", size);
+    CoTaskMemFree(video_format);
+
+    IMFMediaType_Release(media_type);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -5317,6 +5336,7 @@ START_TEST(mfplat)
     test_MFCreate2DMediaBuffer();
     test_MFCreateMediaBufferFromMediaType();
     test_MFInitMediaTypeFromWaveFormatEx();
+    test_MFCreateMFVideoFormatFromMFMediaType();
 
     CoUninitialize();
 }

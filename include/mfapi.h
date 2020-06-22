@@ -509,6 +509,7 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
 HRESULT WINAPI MFCreateMediaEvent(MediaEventType type, REFGUID extended_type, HRESULT status,
                                   const PROPVARIANT *value, IMFMediaEvent **event);
 HRESULT WINAPI MFCreateMediaType(IMFMediaType **type);
+HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MFVIDEOFORMAT **video_format, UINT32 *size);
 HRESULT WINAPI MFCreateSample(IMFSample **sample);
 HRESULT WINAPI MFCreateVideoMediaTypeFromSubtype(const GUID *subtype, IMFVideoMediaType **media_type);
 HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer);
