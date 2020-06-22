@@ -1592,7 +1592,8 @@ static DWORD open_connection( struct request *request )
 
         TRACE("connecting to %s:%u\n", debugstr_w(addressW), port);
 
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
+        len = lstrlenW( addressW ) + 1;
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, len );
 
         if ((ret = netconn_create( host, &connect->sockaddr, request->connect_timeout, &netconn )))
         {
