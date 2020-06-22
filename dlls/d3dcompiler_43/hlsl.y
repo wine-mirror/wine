@@ -1193,12 +1193,14 @@ static struct list *append_unop(struct list *list, struct hlsl_ir_node *node)
     return list;
 }
 
-static struct list *append_binop(struct list *first, struct list *second, struct hlsl_ir_node *node)
+static struct list *add_binary_expr(struct list *list1, struct list *list2,
+        enum hlsl_ir_expr_op op, struct source_location loc)
 {
-    list_move_tail(first, second);
-    d3dcompiler_free(second);
-    list_add_tail(first, &node->entry);
-    return first;
+    struct hlsl_ir_node *arg1 = node_from_list(list1), *arg2 = node_from_list(list2);
+    list_move_tail(list1, list2);
+    d3dcompiler_free(list2);
+    list_add_tail(list1, &new_binary_expr(op, arg1, arg2, loc)->entry);
+    return list1;
 }
 
 static struct list *make_list(struct hlsl_ir_node *node)
@@ -2578,40 +2580,33 @@ unary_op:                 '+'
                                 $$ = UNARY_OP_BITNOT;
                             }
 
-mul_expr:                 unary_expr
-                            {
-                                $$ = $1;
-                            }
-                        | mul_expr '*' unary_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MUL,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | mul_expr '/' unary_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_DIV,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | mul_expr '%' unary_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_MOD,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
+mul_expr:
 
-add_expr:                 mul_expr
-                            {
-                                $$ = $1;
-                            }
-                        | add_expr '+' mul_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_ADD,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | add_expr '-' mul_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_SUB,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
+      unary_expr
+    | mul_expr '*' unary_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_MUL, get_location(&@2));
+        }
+    | mul_expr '/' unary_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_DIV, get_location(&@2));
+        }
+    | mul_expr '%' unary_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_MOD, get_location(&@2));
+        }
+
+add_expr:
+
+      mul_expr
+    | add_expr '+' mul_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_ADD, get_location(&@2));
+        }
+    | add_expr '-' mul_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_SUB, get_location(&@2));
+        }
 
 shift_expr:               add_expr
                             {
@@ -2626,45 +2621,37 @@ shift_expr:               add_expr
                                 FIXME("Right shift\n");
                             }
 
-relational_expr:          shift_expr
-                            {
-                                $$ = $1;
-                            }
-                        | relational_expr '<' shift_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LESS,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | relational_expr '>' shift_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GREATER,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | relational_expr OP_LE shift_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_LEQUAL,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | relational_expr OP_GE shift_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_GEQUAL,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
+relational_expr:
 
-equality_expr:            relational_expr
-                            {
-                                $$ = $1;
-                            }
-                        | equality_expr OP_EQ relational_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_EQUAL,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
-                        | equality_expr OP_NE relational_expr
-                            {
-                                $$ = append_binop($1, $3, new_binary_expr(HLSL_IR_BINOP_NEQUAL,
-                                        node_from_list($1), node_from_list($3), get_location(&@2)));
-                            }
+      shift_expr
+    | relational_expr '<' shift_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_LESS, get_location(&@2));
+        }
+    | relational_expr '>' shift_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_GREATER, get_location(&@2));
+        }
+    | relational_expr OP_LE shift_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_LEQUAL, get_location(&@2));
+        }
+    | relational_expr OP_GE shift_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_GEQUAL, get_location(&@2));
+        }
+
+equality_expr:
+
+      relational_expr
+    | equality_expr OP_EQ relational_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_EQUAL, get_location(&@2));
+        }
+    | equality_expr OP_NE relational_expr
+        {
+            $$ = add_binary_expr($1, $3, HLSL_IR_BINOP_NEQUAL, get_location(&@2));
+        }
 
 bitand_expr:              equality_expr
                             {
