@@ -1059,6 +1059,8 @@ static inline void init_node(struct hlsl_ir_node *node, enum hlsl_ir_node_type t
 
 struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lhs,
         enum parse_assign_op assign_op, struct hlsl_ir_node *rhs) DECLSPEC_HIDDEN;
+struct hlsl_ir_node *add_implicit_conversion(struct list *instrs, struct hlsl_ir_node *node, struct hlsl_type *type,
+        struct source_location *loc) DECLSPEC_HIDDEN;
 
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
@@ -1077,8 +1079,6 @@ struct hlsl_ir_expr *new_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node **ope
         struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_ir_expr *new_cast(struct hlsl_ir_node *node, struct hlsl_type *type,
 	struct source_location *loc) DECLSPEC_HIDDEN;
-struct hlsl_ir_node *implicit_conversion(struct hlsl_ir_node *node, struct hlsl_type *type,
-        struct source_location *loc) DECLSPEC_HIDDEN;
 void push_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL pop_scope(struct hlsl_parse_ctx *ctx) DECLSPEC_HIDDEN;
 void init_functions_tree(struct wine_rb_tree *funcs) DECLSPEC_HIDDEN;

@@ -572,7 +572,7 @@ static struct hlsl_ir_jump *add_return(struct list *instrs,
     {
         struct hlsl_ir_assignment *assignment;
 
-        if (!(return_value = implicit_conversion(return_value, return_type, &loc)))
+        if (!(return_value = add_implicit_conversion(instrs, return_value, return_type, &loc)))
             return NULL;
 
         if (!(assignment = make_simple_assignment(hlsl_ctx.cur_function->return_var, return_value)))
@@ -2474,7 +2474,7 @@ postfix_expr:             primary_expr
                     continue;
                 }
 
-                if (!(arg = implicit_conversion(arg,
+                if (!(arg = add_implicit_conversion($4.instrs, arg,
                         hlsl_ctx.builtin_types.vector[$2->base_type][width - 1], &arg->loc)))
                     continue;
 
