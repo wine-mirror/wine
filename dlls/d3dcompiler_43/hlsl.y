@@ -557,7 +557,7 @@ static struct hlsl_ir_assignment *new_assignment(struct hlsl_ir_var *var, struct
     return assign;
 }
 
-static struct hlsl_ir_assignment *make_simple_assignment(struct hlsl_ir_var *lhs, struct hlsl_ir_node *rhs)
+static struct hlsl_ir_assignment *new_simple_assignment(struct hlsl_ir_var *lhs, struct hlsl_ir_node *rhs)
 {
     return new_assignment(lhs, NULL, rhs, 0, rhs->loc);
 }
@@ -575,7 +575,7 @@ static struct hlsl_ir_jump *add_return(struct list *instrs,
         if (!(return_value = add_implicit_conversion(instrs, return_value, return_type, &loc)))
             return NULL;
 
-        if (!(assignment = make_simple_assignment(hlsl_ctx.cur_function->return_var, return_value)))
+        if (!(assignment = new_simple_assignment(hlsl_ctx.cur_function->return_var, return_value)))
             return NULL;
         list_add_after(&return_value->entry, &assignment->node.entry);
     }
@@ -681,7 +681,7 @@ static struct hlsl_ir_load *add_load(struct list *instrs, struct hlsl_ir_node *v
 
         TRACE("Synthesized variable %p for %s node.\n", var, debug_node_type(var_node->type));
 
-        if (!(assign = make_simple_assignment(var, var_node)))
+        if (!(assign = new_simple_assignment(var, var_node)))
             return NULL;
 
         list_add_tail(instrs, &assign->node.entry);
