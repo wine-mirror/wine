@@ -3113,7 +3113,10 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     addref_object( &request->hdr );
     socket->request = request;
 
-    hsocket = alloc_handle( &socket->hdr );
+    if ((hsocket = alloc_handle( &socket->hdr )))
+    {
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, &hsocket, sizeof(hsocket) );
+    }
 
     release_object( &socket->hdr );
     release_object( &request->hdr );
