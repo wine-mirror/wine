@@ -101,14 +101,13 @@ static const char hex[16] = "0123456789ABCDEF";
  * Copy the content of an entry into a buffer, removing quotes, and possibly
  * translating environment variables.
  */
-static void PROFILE_CopyEntry( LPWSTR buffer, LPCWSTR value, int len,
-                               BOOL strip_quote )
+static void PROFILE_CopyEntry( LPWSTR buffer, LPCWSTR value, int len )
 {
     WCHAR quote = '\0';
 
     if(!buffer) return;
 
-    if (strip_quote && ((*value == '\'') || (*value == '\"')))
+    if (*value == '\'' || *value == '\"')
     {
         if (value[1] && (value[strlenW(value)-1] == *value)) quote = *value++;
     }
@@ -877,14 +876,14 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
                 if (!*key->name && !key->value) continue;  /* Skip empty lines */
                 if (IS_ENTRY_COMMENT(key->name)) continue;  /* Skip comments */
                 if (!return_values && !key->value) continue;  /* Skip lines w.o. '=' */
-                PROFILE_CopyEntry( buffer, key->name, len - 1, 0 );
+                lstrcpynW( buffer, key->name, len - 1 );
                 len -= strlenW(buffer) + 1;
                 buffer += strlenW(buffer) + 1;
 		if (len < 2)
 		    break;
 		if (return_values && key->value) {
 			buffer[-1] = '=';
-			PROFILE_CopyEntry ( buffer, key->value, len - 1, 0 );
+                    lstrcpynW( buffer, key->value, len - 1 );
 			len -= strlenW(buffer) + 1;
 			buffer += strlenW(buffer) + 1;
                 }
@@ -1063,7 +1062,7 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
         if (entry)
         {
             PROFILEKEY *key = PROFILE_Find( &CurProfile->section, section, entry, FALSE, FALSE );
-            PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val, len, TRUE );
+            PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val, len );
             TRACE("-> %s\n", debugstr_w( buffer ));
             ret = strlenW( buffer );
         }
@@ -1072,7 +1071,7 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
             ret = PROFILE_GetSection( CurProfile->section, section, buffer, len, FALSE );
             if (!buffer[0])
             {
-                PROFILE_CopyEntry( buffer, def_val, len, TRUE );
+                PROFILE_CopyEntry( buffer, def_val, len );
                 ret = strlenW( buffer );
             }
         }
