@@ -134,10 +134,8 @@ static void test_device_manager(void)
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&processor_service);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IDirectXVideoProcessorService_Release(processor_service);
+    IDirectXVideoProcessorService_Release(processor_service);
 
     device2 = create_device(d3d, window);
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device2, token);
@@ -145,7 +143,6 @@ todo_wine
 
     hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
             (void **)&processor_service);
-todo_wine
     ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle);
