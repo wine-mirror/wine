@@ -429,30 +429,31 @@ RtlDeleteSecurityObject( PSECURITY_DESCRIPTOR *ObjectDescriptor )
 /******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
-PVOID WINAPI RtlInitializeGenericTable(PVOID pTable, PVOID arg2, PVOID arg3, PVOID arg4, PVOID arg5)
+void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COMPARE_ROUTINE compare,
+                                      PRTL_GENERIC_ALLOCATE_ROUTINE allocate, PRTL_GENERIC_FREE_ROUTINE free,
+                                      void *context)
 {
-  FIXME("(%p,%p,%p,%p,%p) stub!\n", pTable, arg2, arg3, arg4, arg5);
-  return NULL;
+    FIXME("(%p, %p, %p, %p, %p) stub!\n", table, compare, allocate, free, context);
 }
 
 /******************************************************************************
  *  RtlEnumerateGenericTableWithoutSplaying           [NTDLL.@]
  */
-PVOID RtlEnumerateGenericTableWithoutSplaying(PVOID pTable, PVOID *RestartKey)
+void * RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, void *previous)
 {
     static int warn_once;
 
     if (!warn_once++)
-        FIXME("(%p,%p) stub!\n", pTable, RestartKey);
+        FIXME("(%p, %p) stub!\n", table, previous);
     return NULL;
 }
 
 /******************************************************************************
  *  RtlNumberGenericTableElements           [NTDLL.@]
  */
-ULONG RtlNumberGenericTableElements(PVOID pTable)
+ULONG RtlNumberGenericTableElements(RTL_GENERIC_TABLE *table)
 {
-    FIXME("(%p) stub!\n", pTable);
+    FIXME("(%p) stub!\n", table);
     return 0;
 }
 
