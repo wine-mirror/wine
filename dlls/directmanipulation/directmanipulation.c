@@ -540,7 +540,7 @@ static HRESULT WINAPI viewport_SetViewportRect(IDirectManipulationViewport2 *ifa
 {
     struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
     FIXME("%p, %p\n", This, viewport);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI viewport_ZoomToRect(IDirectManipulationViewport2 *iface, const float left,
