@@ -937,15 +937,15 @@ static HRESULT WINAPI DirectManipulation_CreateInstance(IClassFactory *iface, IU
 
 struct directcompositor
 {
-    IDirectManipulationCompositor IDirectManipulationCompositor_iface;
+    IDirectManipulationCompositor2 IDirectManipulationCompositor2_iface;
     IDirectManipulationFrameInfoProvider IDirectManipulationFrameInfoProvider_iface;
     IDirectManipulationUpdateManager *manager;
     LONG ref;
 };
 
-static inline struct directcompositor *impl_from_IDirectManipulationCompositor(IDirectManipulationCompositor *iface)
+static inline struct directcompositor *impl_from_IDirectManipulationCompositor2(IDirectManipulationCompositor2 *iface)
 {
-    return CONTAINING_RECORD(iface, struct directcompositor, IDirectManipulationCompositor_iface);
+    return CONTAINING_RECORD(iface, struct directcompositor, IDirectManipulationCompositor2_iface);
 }
 
 static inline struct directcompositor *impl_from_IDirectManipulationFrameInfoProvider(IDirectManipulationFrameInfoProvider *iface)
@@ -953,12 +953,13 @@ static inline struct directcompositor *impl_from_IDirectManipulationFrameInfoPro
     return CONTAINING_RECORD(iface, struct directcompositor, IDirectManipulationFrameInfoProvider_iface);
 }
 
-static HRESULT WINAPI compositor_QueryInterface(IDirectManipulationCompositor *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI compositor_QueryInterface(IDirectManipulationCompositor2 *iface, REFIID riid, void **ppv)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IDirectManipulationCompositor))
+        IsEqualGUID(riid, &IID_IDirectManipulationCompositor) ||
+        IsEqualGUID(riid, &IID_IDirectManipulationCompositor2))
     {
         IUnknown_AddRef(iface);
         *ppv = iface;
@@ -975,9 +976,9 @@ static HRESULT WINAPI compositor_QueryInterface(IDirectManipulationCompositor *i
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI compositor_AddRef(IDirectManipulationCompositor *iface)
+static ULONG WINAPI compositor_AddRef(IDirectManipulationCompositor2 *iface)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
@@ -985,9 +986,9 @@ static ULONG WINAPI compositor_AddRef(IDirectManipulationCompositor *iface)
     return ref;
 }
 
-static ULONG WINAPI compositor_Release(IDirectManipulationCompositor *iface)
+static ULONG WINAPI compositor_Release(IDirectManipulationCompositor2 *iface)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%u\n", This, ref);
@@ -1001,24 +1002,24 @@ static ULONG WINAPI compositor_Release(IDirectManipulationCompositor *iface)
     return ref;
 }
 
-static HRESULT WINAPI compositor_AddContent(IDirectManipulationCompositor *iface, IDirectManipulationContent *content,
+static HRESULT WINAPI compositor_AddContent(IDirectManipulationCompositor2 *iface, IDirectManipulationContent *content,
                 IUnknown *device, IUnknown *parent, IUnknown *child)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
     FIXME("%p, %p, %p, %p, %p\n", This, content, device, parent, child);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI compositor_RemoveContent(IDirectManipulationCompositor *iface, IDirectManipulationContent *content)
+static HRESULT WINAPI compositor_RemoveContent(IDirectManipulationCompositor2 *iface, IDirectManipulationContent *content)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
     FIXME("%p, %p\n", This, content);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI compositor_SetUpdateManager(IDirectManipulationCompositor *iface, IDirectManipulationUpdateManager *manager)
+static HRESULT WINAPI compositor_SetUpdateManager(IDirectManipulationCompositor2 *iface, IDirectManipulationUpdateManager *manager)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
     TRACE("%p, %p\n", This, manager);
 
     if(!manager)
@@ -1029,14 +1030,22 @@ static HRESULT WINAPI compositor_SetUpdateManager(IDirectManipulationCompositor 
     return S_OK;
 }
 
-static HRESULT WINAPI compositor_Flush(IDirectManipulationCompositor *iface)
+static HRESULT WINAPI compositor_Flush(IDirectManipulationCompositor2 *iface)
 {
-    struct directcompositor *This = impl_from_IDirectManipulationCompositor(iface);
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
 
-static const struct IDirectManipulationCompositorVtbl compositorVtbl =
+static HRESULT WINAPI compositor_AddContentWithCrossProcessChaining(IDirectManipulationCompositor2 *iface,
+                IDirectManipulationPrimaryContent *content, IUnknown *device, IUnknown *parentvisual, IUnknown *childvisual)
+{
+    struct directcompositor *This = impl_from_IDirectManipulationCompositor2(iface);
+    FIXME("%p %p %p %p %p\n", This, content, device, parentvisual, childvisual);
+    return E_NOTIMPL;
+}
+
+static const struct IDirectManipulationCompositor2Vtbl compositorVtbl =
 {
     compositor_QueryInterface,
     compositor_AddRef,
@@ -1044,25 +1053,26 @@ static const struct IDirectManipulationCompositorVtbl compositorVtbl =
     compositor_AddContent,
     compositor_RemoveContent,
     compositor_SetUpdateManager,
-    compositor_Flush
+    compositor_Flush,
+    compositor_AddContentWithCrossProcessChaining
 };
 
 static HRESULT WINAPI provider_QueryInterface(IDirectManipulationFrameInfoProvider *iface, REFIID riid, void **ppv)
 {
     struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
-    return IDirectManipulationCompositor_QueryInterface(&This->IDirectManipulationCompositor_iface, riid, ppv);
+    return IDirectManipulationCompositor2_QueryInterface(&This->IDirectManipulationCompositor2_iface, riid, ppv);
 }
 
 static ULONG WINAPI provider_AddRef(IDirectManipulationFrameInfoProvider *iface)
 {
     struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
-    return IDirectManipulationCompositor_AddRef(&This->IDirectManipulationCompositor_iface);
+    return IDirectManipulationCompositor2_AddRef(&This->IDirectManipulationCompositor2_iface);
 }
 
 static ULONG WINAPI provider_Release(IDirectManipulationFrameInfoProvider *iface)
 {
     struct directcompositor *This = impl_from_IDirectManipulationFrameInfoProvider(iface);
-    return IDirectManipulationCompositor_Release(&This->IDirectManipulationCompositor_iface);
+    return IDirectManipulationCompositor2_Release(&This->IDirectManipulationCompositor2_iface);
 }
 
 static HRESULT WINAPI provider_GetNextFrameInfo(IDirectManipulationFrameInfoProvider *iface, ULONGLONG *time,
@@ -1094,12 +1104,12 @@ static HRESULT WINAPI DirectCompositor_CreateInstance(IClassFactory *iface, IUnk
     if (!object)
         return E_OUTOFMEMORY;
 
-    object->IDirectManipulationCompositor_iface.lpVtbl = &compositorVtbl;
+    object->IDirectManipulationCompositor2_iface.lpVtbl = &compositorVtbl;
     object->IDirectManipulationFrameInfoProvider_iface.lpVtbl = &providerVtbl;
     object->ref = 1;
 
-    ret = compositor_QueryInterface(&object->IDirectManipulationCompositor_iface, riid, ppv);
-    compositor_Release(&object->IDirectManipulationCompositor_iface);
+    ret = compositor_QueryInterface(&object->IDirectManipulationCompositor2_iface, riid, ppv);
+    compositor_Release(&object->IDirectManipulationCompositor2_iface);
 
     return ret;
 }

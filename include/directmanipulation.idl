@@ -371,6 +371,18 @@ interface IDirectManipulationPrimaryContent : IUnknown
 }
 
 [
+    local,
+    object,
+    uuid(d38c7822-f1cb-43cb-b4b9-ac0c767a412e),
+    pointer_default(unique)
+]
+interface IDirectManipulationCompositor2 : IDirectManipulationCompositor
+{
+    HRESULT AddContentWithCrossProcessChaining([in] IDirectManipulationPrimaryContent *content, [in] IUnknown *device,
+                                               [in] IUnknown *parentVisual, [in] IUnknown *childVisual);
+}
+
+[
     uuid(9fbedf98-f6d8-4e3b-b488-fa66dbf5e9f3),
     version(1.0)
 ]
@@ -400,6 +412,7 @@ library DirectManipulation
     coclass DCompManipulationCompositor
     {
         [default] interface IDirectManipulationCompositor;
+        interface IDirectManipulationCompositor2;
         interface IDirectManipulationFrameInfoProvider;
     }
 

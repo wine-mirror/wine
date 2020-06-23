@@ -44,5 +44,6 @@ coclass DirectManipulationSharedManager
 coclass DCompManipulationCompositor
 {
     [default] interface IDirectManipulationCompositor;
+    interface IDirectManipulationCompositor2;
     interface IDirectManipulationFrameInfoProvider;
 }
