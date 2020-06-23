@@ -106,15 +106,6 @@ extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler );
 
-/***********************************************************************
- *           has_fpux
- */
-static inline int has_fpux(void)
-{
-    return (cpu_info.FeatureSet & CPU_FEATURE_FXSR);
-}
-
-
 /*******************************************************************
  *         is_valid_frame
  */
@@ -304,7 +295,6 @@ static inline void save_fpux( CONTEXT *context )
     char buffer[sizeof(XMM_SAVE_AREA32) + 16];
     XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
 
-    if (!has_fpux()) return;
     context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
     __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
     memcpy( context->ExtendedRegisters, state, sizeof(*state) );

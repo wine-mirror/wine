@@ -2468,7 +2468,7 @@ ULONG_PTR get_system_affinity_mask(void)
 /***********************************************************************
  *           virtual_get_system_info
  */
-void CDECL virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
+void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 {
 #ifdef HAVE_SYSINFO
     struct sysinfo sinfo;

@@ -102,10 +102,10 @@ int __cdecl __wine_dbg_output( const char *str )
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-TEB *thread_init( SIZE_T *info_size, BOOL *suspend )
+TEB *thread_init( SIZE_T *info_size )
 {
-    TEB *teb = unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy, info_size, suspend, &server_cpus,
-                                           &is_wow64, &server_start_time );
+    ULONG_PTR val;
+    TEB *teb = unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy, info_size );
 
     peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
@@ -137,7 +137,8 @@ TEB *thread_init( SIZE_T *info_size, BOOL *suspend )
     peb->SessionId = 1;
 
     unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
-    fill_cpu_info();
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessWow64Information, &val, sizeof(val), NULL );
+    is_wow64 = !!val;
     return teb;
 }
 

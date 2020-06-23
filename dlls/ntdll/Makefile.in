@@ -59,6 +59,7 @@ C_SRCS = \
 	unix/signal_i386.c \
 	unix/signal_x86_64.c \
 	unix/sync.c \
+	unix/system.c \
 	unix/tape.c \
 	unix/thread.c \
 	unix/virtual.c \
