@@ -51,6 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msscript);
 
 struct ScriptControl;
 typedef struct ConnectionPoint ConnectionPoint;
+typedef struct ScriptHost ScriptHost;
 
 struct ConnectionPoint {
     IConnectionPoint IConnectionPoint_iface;
@@ -68,9 +69,11 @@ struct named_item {
 typedef struct {
     IScriptModule IScriptModule_iface;
     LONG ref;
+
+    ScriptHost *host;
 } ScriptModule;
 
-typedef struct ScriptHost {
+struct ScriptHost {
     IActiveScriptSite IActiveScriptSite_iface;
     IActiveScriptSiteWindow IActiveScriptSiteWindow_iface;
     IServiceProvider IServiceProvider_iface;
@@ -83,9 +86,8 @@ typedef struct ScriptHost {
     CLSID clsid;
 
     unsigned int module_count;
-
     struct list named_items;
-} ScriptHost;
+};
 
 struct ScriptControl {
     IScriptControl IScriptControl_iface;
@@ -355,25 +357,6 @@ static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
     return ref;
 }
 
-static void release_script_engine(ScriptHost *host)
-{
-    if (host->script) {
-        IActiveScript_Close(host->script);
-        IActiveScript_Release(host->script);
-    }
-
-    if (host->parse)
-        IActiveScriptParse_Release(host->parse);
-    if (host->script_dispatch)
-        IDispatch_Release(host->script_dispatch);
-
-    host->script_dispatch = NULL;
-    host->parse = NULL;
-    host->script = NULL;
-
-    IActiveScriptSite_Release(&host->IActiveScriptSite_iface);
-}
-
 static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 {
     ScriptHost *This = impl_from_IActiveScriptSite(iface);
@@ -572,6 +555,26 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     ServiceProvider_QueryService
 };
 
+static void detach_script_host(ScriptHost *host)
+{
+    if (--host->module_count)
+        return;
+
+    if (host->script) {
+        IActiveScript_Close(host->script);
+        IActiveScript_Release(host->script);
+    }
+
+    if (host->parse)
+        IActiveScriptParse_Release(host->parse);
+    if (host->script_dispatch)
+        IDispatch_Release(host->script_dispatch);
+
+    host->script_dispatch = NULL;
+    host->parse = NULL;
+    host->script = NULL;
+}
+
 static HRESULT WINAPI ScriptModule_QueryInterface(IScriptModule *iface, REFIID riid, void **ppv)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
@@ -610,7 +613,11 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if (!ref)
+    {
+        detach_script_host(This->host);
+        IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -756,7 +763,7 @@ static const IScriptModuleVtbl ScriptModuleVtbl = {
     ScriptModule_Run
 };
 
-static ScriptModule *create_module(void)
+static ScriptModule *create_module(ScriptHost *host)
 {
     ScriptModule *module;
 
@@ -764,6 +771,8 @@ static ScriptModule *create_module(void)
 
     module->IScriptModule_iface.lpVtbl = &ScriptModuleVtbl;
     module->ref = 1;
+    module->host = host;
+    IActiveScriptSite_AddRef(&host->IActiveScriptSite_iface);
     return module;
 }
 
@@ -992,7 +1001,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
     return S_OK;
 
 failed:
-    release_script_engine(host);
+    detach_script_host(host);
     return hr;
 }
 
@@ -1072,7 +1081,7 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
         if (This->host)
         {
             release_modules(This);
-            release_script_engine(This->host);
+            IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         }
         heap_free(This);
     }
@@ -1164,6 +1173,7 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
     CLSID clsid;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(language));
 
@@ -1171,25 +1181,32 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
         return CTL_E_INVALIDPROPERTYVALUE;
 
     if (This->host) {
-        release_script_engine(This->host);
+        release_modules(This);
         This->host = NULL;
-    }
-
-    /* Alloc global module */
-    This->modules = heap_alloc_zero(sizeof(*This->modules));
-    if (!This->modules) return E_OUTOFMEMORY;
-
-    This->modules[0] = create_module();
-    if (!This->modules[0]) {
-        heap_free(This->modules);
-        This->modules = NULL;
-        return E_OUTOFMEMORY;
     }
 
     if (!language)
         return S_OK;
 
-    return init_script_host(&clsid, &This->host);
+    hres = init_script_host(&clsid, &This->host);
+    if (FAILED(hres))
+        return hres;
+
+    /* Alloc global module */
+    This->modules = heap_alloc_zero(sizeof(*This->modules));
+    if (This->modules) {
+        This->modules[0] = create_module(This->host);
+        if (!This->modules[0]) {
+            heap_free(This->modules);
+            This->modules = NULL;
+            hres = E_OUTOFMEMORY;
+        }
+    }
+    if (FAILED(hres)) {
+        This->host = NULL;
+        detach_script_host(This->host);
+    }
+    return hres;
 }
 
 static HRESULT WINAPI ScriptControl_get_State(IScriptControl *iface, ScriptControlStates *p)
