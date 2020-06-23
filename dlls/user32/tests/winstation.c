@@ -118,9 +118,10 @@ static void test_handles(void)
     HANDLE hthread;
     DWORD id, flags, le;
     ATOM atom;
-    char buffer[20];
+    char buffer[29], default_name[29] = "";
     DWORD size;
     BOOL ret;
+    TOKEN_STATISTICS token_stats;
 
     /* win stations */
 
@@ -215,7 +216,6 @@ static void test_handles(void)
     SetLastError( 0xdeadbeef );
     w2 = OpenWindowStationA( "", TRUE, WINSTA_ALL_ACCESS );
     ok( !w2, "open station succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
@@ -225,14 +225,28 @@ static void test_handles(void)
     memset( buffer, 0, sizeof(buffer) );
     ret = GetUserObjectInformationA( w2, UOI_NAME, buffer, sizeof(buffer), &size );
     ok( ret, "GetUserObjectInformationA failed with error %u\n", GetLastError() );
-    todo_wine ok( !memcmp(buffer, "Service-0x0-", 12), "unexpected window station name '%s'\n", buffer );
-    todo_wine ok( buffer[strlen(buffer) - 1] == '$', "unexpected window station name '%s'\n", buffer );
+    /* Get the logon session LUID */
+    ret = GetTokenInformation( GetCurrentProcessToken(), TokenStatistics, &token_stats, sizeof(token_stats), NULL );
+    if (ret)
+        sprintf( default_name, "Service-0x%x-%x$", token_stats.AuthenticationId.HighPart,
+                 token_stats.AuthenticationId.LowPart );
+    if (*default_name)
+        ok( !strcmp( buffer, default_name ), "unexpected window station name '%s' expected '%s'\n", buffer, default_name );
 
     SetLastError( 0xdeadbeef );
     w3 = OpenWindowStationA( "", TRUE, WINSTA_ALL_ACCESS );
-    todo_wine
     ok( w3 != 0, "open station failed err %u\n", GetLastError() );
     CloseWindowStation( w3 );
+    CloseWindowStation( w2 );
+
+    w2 = CreateWindowStationA( NULL, 0, WINSTA_ALL_ACCESS, NULL );
+    ok( w2 != 0, "create station failed err %u\n", GetLastError() );
+
+    memset( buffer, 0, sizeof(buffer) );
+    ret = GetUserObjectInformationA( w2, UOI_NAME, buffer, sizeof(buffer), &size );
+    ok( ret, "GetUserObjectInformationA failed with error %u\n", GetLastError() );
+    if (*default_name)
+        ok( !strcmp( buffer, default_name ), "unexpected window station name '%s' expected '%s'\n", buffer, default_name );
     CloseWindowStation( w2 );
 
     SetLastError( 0xdeadbeef );
