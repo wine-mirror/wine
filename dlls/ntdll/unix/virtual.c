@@ -2498,11 +2498,12 @@ void CDECL virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 /***********************************************************************
  *           virtual_create_builtin_view
  */
-NTSTATUS CDECL virtual_create_builtin_view( void *module )
+NTSTATUS virtual_create_builtin_view( void *module )
 {
     NTSTATUS status;
     sigset_t sigset;
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
+    IMAGE_DOS_HEADER *dos = module;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
     SIZE_T size = nt->OptionalHeader.SizeOfImage;
     IMAGE_SECTION_HEADER *sec;
     struct file_view *view;
@@ -2511,7 +2512,7 @@ NTSTATUS CDECL virtual_create_builtin_view( void *module )
 
     size = ROUND_SIZE( module, size );
     base = ROUND_ADDR( module, page_mask );
-    server_enter_uninterrupted_section( &csVirtual, &sigset );
+    if (use_locks) server_enter_uninterrupted_section( &csVirtual, &sigset );
     status = create_view( &view, base, size, SEC_IMAGE | SEC_FILE | VPROT_SYSTEM |
                           VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
     if (!status)
@@ -2533,7 +2534,7 @@ NTSTATUS CDECL virtual_create_builtin_view( void *module )
         }
         VIRTUAL_DEBUG_DUMP_VIEW( view );
     }
-    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    if (use_locks) server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
 }
 

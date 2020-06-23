@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 57
+#define NTDLL_UNIXLIB_VERSION 58
 
 struct unix_funcs
 {
@@ -277,7 +277,6 @@ struct unix_funcs
     NTSTATUS      (CDECL *fast_RtlWakeConditionVariable)( RTL_CONDITION_VARIABLE *variable, int count );
 
     /* environment functions */
-    void          (CDECL *get_main_args)( int *argc, char **argv[], char **envp[] );
     NTSTATUS      (CDECL *get_initial_environment)( WCHAR **wargv[], WCHAR *env, SIZE_T *size );
     void          (CDECL *get_initial_directory)( UNICODE_STRING *dir );
     void          (CDECL *get_paths)( const char **builddir, const char **datadir, const char **configdir );
@@ -289,12 +288,10 @@ struct unix_funcs
     void          (CDECL *get_host_version)( const char **sysname, const char **release );
 
     /* virtual memory functions */
-    NTSTATUS      (CDECL *map_so_dll)( const IMAGE_NT_HEADERS *nt_descr, HMODULE module );
     NTSTATUS      (CDECL *virtual_map_section)( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64, SIZE_T commit_size,
                                                 const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
                                                 ULONG protect, pe_image_info_t *image_info );
     void          (CDECL *virtual_get_system_info)( SYSTEM_BASIC_INFORMATION *info );
-    NTSTATUS      (CDECL *virtual_create_builtin_view)( void *module );
     NTSTATUS      (CDECL *virtual_alloc_thread_stack)( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size );
     ssize_t       (CDECL *virtual_locked_recvmsg)( int fd, struct msghdr *hdr, int flags );
     void          (CDECL *virtual_release_address_space)(void);
@@ -322,6 +319,12 @@ struct unix_funcs
                                                  UINT disposition, BOOLEAN check_case );
     NTSTATUS      (CDECL *unix_to_nt_file_name)( const ANSI_STRING *name, UNICODE_STRING *nt );
     void          (CDECL *set_show_dot_files)( BOOL enable );
+
+    /* loader functions */
+    NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );
+    NTSTATUS      (CDECL *load_builtin_dll)( const char *so_name, void **module );
+    NTSTATUS      (CDECL *unload_builtin_dll)( void *module );
+    void          (CDECL *init_builtin_dll)( void *module );
 
     /* debugging functions */
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );

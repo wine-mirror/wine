@@ -30,6 +30,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
+#ifdef HAVE_LINK_H
+# include <link.h>
+#endif
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
@@ -82,10 +85,11 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "unix_private.h"
+#include "wine/list.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 extern IMAGE_NT_HEADERS __wine_spec_nt_header;
 
@@ -121,6 +125,26 @@ static SIZE_T dll_path_maxlen;
 const char *data_dir = NULL;
 const char *build_dir = NULL;
 const char *config_dir = NULL;
+HMODULE ntdll_module = NULL;
+
+struct builtin_module
+{
+    struct list    entry;
+    void          *handle;
+    void          *module;
+};
+
+static struct list builtin_modules = LIST_INIT( builtin_modules );
+
+static NTSTATUS add_builtin_module( void *module, void *handle )
+{
+    struct builtin_module *builtin;
+    if (!(builtin = malloc( sizeof(*builtin) ))) return STATUS_NO_MEMORY;
+    builtin->handle = handle;
+    builtin->module = module;
+    list_add_tail( &builtin_modules, &builtin->entry );
+    return STATUS_SUCCESS;
+}
 
 static inline void *get_rva( const IMAGE_NT_HEADERS *nt, ULONG_PTR addr )
 {
@@ -569,7 +593,7 @@ void start_server( BOOL debug )
  *
  * Map a builtin dll in memory and fixup RVAs.
  */
-static NTSTATUS CDECL map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
+static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
 {
     static const char builtin_signature[32] = "Wine builtin DLL";
     IMAGE_DATA_DIRECTORY *dir;
@@ -762,7 +786,7 @@ static ULONG_PTR find_pe_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *e
     return find_named_export( module, exports, (char *)name->Name );
 }
 
-static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt, HMODULE ntdll_module )
+static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt )
 {
     const IMAGE_EXPORT_DIRECTORY *ntdll_exports = get_export_dir( ntdll_module );
     const IMAGE_IMPORT_DESCRIPTOR *descr;
@@ -813,29 +837,224 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt, HMODULE ntdll_modul
 #undef GET_FUNC
 }
 
+
+static void *callback_module;
+
+/***********************************************************************
+ *           load_builtin_callback
+ *
+ * Load a library in memory; callback function for wine_dll_register
+ */
+static void load_builtin_callback( void *module, const char *filename )
+{
+    callback_module = module;
+}
+
+/***********************************************************************
+ *           dlopen_dll
+ */
+static NTSTATUS dlopen_dll( const char *so_name, void **ret_module )
+{
+    struct builtin_module *builtin;
+    void *module, *handle;
+    const IMAGE_NT_HEADERS *nt;
+
+    callback_module = (void *)1;
+    handle = dlopen( so_name, RTLD_NOW );
+    if (!handle)
+    {
+        WARN( "failed to load .so lib %s: %s\n", debugstr_a(so_name), dlerror() );
+        return STATUS_INVALID_IMAGE_FORMAT;
+    }
+    if (callback_module != (void *)1)  /* callback was called */
+    {
+        if (!callback_module) return STATUS_NO_MEMORY;
+        WARN( "got old-style builtin library %s, constructors won't work\n", debugstr_a(so_name) );
+        module = callback_module;
+        LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+            if (builtin->module == module) goto already_loaded;
+    }
+    else if ((nt = dlsym( handle, "__wine_spec_nt_header" )))
+    {
+        module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+        LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+            if (builtin->module == module) goto already_loaded;
+        if (map_so_dll( nt, module ))
+        {
+            dlclose( handle );
+            return STATUS_NO_MEMORY;
+        }
+    }
+    else  /* already loaded .so */
+    {
+        WARN( "%s already loaded?\n", debugstr_a(so_name));
+        LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+            if (builtin->handle == handle) goto already_loaded;
+        return STATUS_INVALID_IMAGE_FORMAT;
+    }
+
+    if (add_builtin_module( module, handle ))
+    {
+        dlclose( handle );
+        return STATUS_NO_MEMORY;
+    }
+    virtual_create_builtin_view( module );
+    *ret_module = module;
+    return STATUS_SUCCESS;
+
+already_loaded:
+    *ret_module = builtin->module;
+    dlclose( handle );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           load_so_dll
+ */
+static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
+{
+    static const WCHAR soW[] = {'.','s','o',0};
+    ANSI_STRING unix_name;
+    NTSTATUS status;
+    DWORD len;
+
+    if (nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN, FALSE )) return STATUS_DLL_NOT_FOUND;
+
+    /* remove .so extension from Windows name */
+    len = nt_name->Length / sizeof(WCHAR);
+    if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) nt_name->Length -= 3 * sizeof(WCHAR);
+
+    status = dlopen_dll( unix_name.Buffer, module );
+    RtlFreeAnsiString( &unix_name );
+    return status;
+}
+
+
+/***********************************************************************
+ *           load_builtin_dll
+ */
+static NTSTATUS CDECL load_builtin_dll( const char *so_name, void **module )
+{
+    return dlopen_dll( so_name, module );
+}
+
+
+/***********************************************************************
+ *           unload_builtin_dll
+ */
+static NTSTATUS CDECL unload_builtin_dll( void *module )
+{
+    struct builtin_module *builtin;
+
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        list_remove( &builtin->entry );
+        if (builtin->handle) dlclose( builtin->handle );
+        free( builtin );
+        return STATUS_SUCCESS;
+    }
+    return STATUS_INVALID_PARAMETER;
+}
+
+
+#ifdef __FreeBSD__
+/* The PT_LOAD segments are sorted in increasing order, and the first
+ * starts at the beginning of the ELF file. By parsing the file, we can
+ * find that first PT_LOAD segment, from which we can find the base
+ * address it wanted, and knowing mapbase where the binary was actually
+ * loaded, use them to work out the relocbase offset. */
+static BOOL get_relocbase(caddr_t mapbase, caddr_t *relocbase)
+{
+    Elf_Half i;
+#ifdef _WIN64
+    const Elf64_Ehdr *elf_header = (Elf64_Ehdr*) mapbase;
+#else
+    const Elf32_Ehdr *elf_header = (Elf32_Ehdr*) mapbase;
+#endif
+    const Elf_Phdr *prog_header = (const Elf_Phdr *)(mapbase + elf_header->e_phoff);
+
+    for (i = 0; i < elf_header->e_phnum; i++)
+    {
+         if (prog_header->p_type == PT_LOAD)
+         {
+             caddr_t desired_base = (caddr_t)((prog_header->p_vaddr / prog_header->p_align) * prog_header->p_align);
+             *relocbase = (caddr_t) (mapbase - desired_base);
+             return TRUE;
+         }
+         prog_header++;
+    }
+    return FALSE;
+}
+#endif
+
+/*************************************************************************
+ *              init_builtin_dll
+ */
+static void CDECL init_builtin_dll( void *module )
+{
+#ifdef HAVE_DLINFO
+    struct builtin_module *builtin;
+    struct link_map *map;
+    void (*init_func)(int, char **, char **) = NULL;
+    void (**init_array)(int, char **, char **) = NULL;
+    ULONG_PTR i, init_arraysz = 0;
+#ifdef _WIN64
+    const Elf64_Dyn *dyn;
+#else
+    const Elf32_Dyn *dyn;
+#endif
+
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        if (!builtin->handle) break;
+        if (!dlinfo( builtin->handle, RTLD_DI_LINKMAP, &map )) goto found;
+        break;
+    }
+    return;
+
+found:
+    for (dyn = map->l_ld; dyn->d_tag; dyn++)
+    {
+        caddr_t relocbase = (caddr_t)map->l_addr;
+
+#ifdef __FreeBSD__
+        /* On older FreeBSD versions, l_addr was the absolute load address, now it's the relocation offset. */
+        if (!dlsym(RTLD_DEFAULT, "_rtld_version_laddr_offset"))
+            if (!get_relocbase(map->l_addr, &relocbase)) return;
+#endif
+        switch (dyn->d_tag)
+        {
+        case 0x60009990: init_array = (void *)(relocbase + dyn->d_un.d_val); break;
+        case 0x60009991: init_arraysz = dyn->d_un.d_val; break;
+        case 0x60009992: init_func = (void *)(relocbase + dyn->d_un.d_val); break;
+        }
+    }
+
+    TRACE( "%p: got init_func %p init_array %p %lu\n", module, init_func, init_array, init_arraysz );
+
+    if (init_func) init_func( main_argc, main_argv, main_envp );
+
+    if (init_array)
+        for (i = 0; i < init_arraysz / sizeof(*init_array); i++)
+            init_array[i]( main_argc, main_argv, main_envp );
+#endif
+}
+
+
 /***********************************************************************
  *           load_ntdll
  */
 static HMODULE load_ntdll(void)
 {
-    const IMAGE_NT_HEADERS *nt;
-    HMODULE module;
-    Dl_info info;
-    char *name;
-    void *handle;
+    void *module;
+    char *name = build_path( dll_dir, "ntdll.dll.so" );
+    NTSTATUS status = dlopen_dll( name, &module );
 
-    name = build_path( dll_dir, "ntdll.dll.so" );
-    if (!dladdr( load_ntdll, &info )) fatal_error( "cannot get path to ntdll.so\n" );
-    name = malloc( strlen(info.dli_fname) + 5 );
-    strcpy( name, info.dli_fname );
-    strcpy( name + strlen(info.dli_fname) - 3, ".dll.so" );
-    if (!(handle = dlopen( name, RTLD_NOW ))) fatal_error( "failed to load %s: %s\n", name, dlerror() );
-    if (!(nt = dlsym( handle, "__wine_spec_nt_header" )))
-        fatal_error( "NT header not found in %s (too old?)\n", name );
-    dll_dir = realpath_dirname( name );
+    if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
-    module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
-    map_so_dll( nt, module );
     return module;
 }
 
@@ -1000,7 +1219,6 @@ static struct unix_funcs unix_funcs =
     fast_RtlSleepConditionVariableSRW,
     fast_RtlSleepConditionVariableCS,
     fast_RtlWakeConditionVariable,
-    get_main_args,
     get_initial_environment,
     get_initial_directory,
     get_paths,
@@ -1010,10 +1228,8 @@ static struct unix_funcs unix_funcs =
     get_version,
     get_build_id,
     get_host_version,
-    map_so_dll,
     virtual_map_section,
     virtual_get_system_info,
-    virtual_create_builtin_view,
     virtual_alloc_thread_stack,
     virtual_locked_recvmsg,
     virtual_release_address_space,
@@ -1031,6 +1247,10 @@ static struct unix_funcs unix_funcs =
     nt_to_unix_file_name,
     unix_to_nt_file_name,
     set_show_dot_files,
+    load_so_dll,
+    load_builtin_dll,
+    unload_builtin_dll,
+    init_builtin_dll,
     __wine_dbg_get_channel_flags,
     __wine_dbg_strdup,
     __wine_dbg_output,
@@ -1266,8 +1486,6 @@ static void check_command_line( int argc, char *argv[] )
  */
 void __wine_main( int argc, char *argv[], char *envp[] )
 {
-    HMODULE module;
-
     init_paths( argc, argv, envp );
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
@@ -1294,10 +1512,11 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 
     virtual_init();
 
-    module = load_ntdll();
-    fixup_ntdll_imports( &__wine_spec_nt_header, module );
+    ntdll_module = load_ntdll();
+    fixup_ntdll_imports( &__wine_spec_nt_header );
 
     init_environment( argc, argv, envp );
+    wine_dll_set_callback( load_builtin_callback );
 
 #ifdef __APPLE__
     apple_main_thread();
@@ -1329,9 +1548,11 @@ NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void 
 #endif
     init_paths( __wine_main_argc, __wine_main_argv, envp );
 
+    ntdll_module = module;
     map_so_dll( nt, module );
-    fixup_ntdll_imports( &__wine_spec_nt_header, module );
+    fixup_ntdll_imports( &__wine_spec_nt_header );
     init_environment( __wine_main_argc, __wine_main_argv, envp );
+    wine_dll_set_callback( load_builtin_callback );
     *(struct unix_funcs **)ptr_out = &unix_funcs;
     wine_mmap_enum_reserved_areas( add_area, NULL, 0 );
     return STATUS_SUCCESS;

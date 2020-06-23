@@ -67,9 +67,9 @@ extern WCHAR **__wine_main_wargv;
 
 USHORT *uctable = NULL, *lctable = NULL;
 
-static int main_argc;
-static char **main_argv;
-static char **main_envp;
+int main_argc = 0;
+char **main_argv = NULL;
+char **main_envp = NULL;
 static WCHAR **main_wargv;
 
 static CPTABLEINFO unix_table;
@@ -799,19 +799,6 @@ void init_environment( int argc, char *argv[], char *envp[] )
     __wine_main_argv = main_argv = argv;
     __wine_main_wargv = main_wargv = build_wargv( argv );
     __wine_main_environ = main_envp = envp;
-}
-
-
-/*************************************************************************
- *		get_main_args
- *
- * Return the initial arguments.
- */
-void CDECL get_main_args( int *argc, char **argv[], char **envp[] )
-{
-    *argc  = main_argc;
-    *argv  = main_argv;
-    *envp  = main_envp;
 }
 
 

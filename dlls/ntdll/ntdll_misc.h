@@ -74,10 +74,6 @@ extern void init_user_process_params( SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status ) DECLSPEC_HIDDEN;
 
-extern int __wine_main_argc;
-extern char **__wine_main_argv;
-extern WCHAR **__wine_main_wargv;
-
 /* server support */
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *data_dir DECLSPEC_HIDDEN;
@@ -107,9 +103,6 @@ extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
 extern void init_directories(void) DECLSPEC_HIDDEN;
 
-/* virtual memory */
-extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
-                                            SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 
 /* locale */

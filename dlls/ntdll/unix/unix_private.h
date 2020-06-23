@@ -95,7 +95,6 @@ void CDECL mmap_remove_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg), void *arg,
                                      int top_down ) DECLSPEC_HIDDEN;
-extern void CDECL get_main_args( int *argc, char **argv[], char **envp[] ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
 extern void CDECL get_initial_directory( UNICODE_STRING *dir ) DECLSPEC_HIDDEN;
 extern void CDECL get_unix_codepage( CPTABLEINFO *table ) DECLSPEC_HIDDEN;
@@ -104,7 +103,6 @@ extern NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsig
                                            const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr, ULONG alloc_type,
                                            ULONG protect, pe_image_info_t *image_info ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL virtual_create_builtin_view( void *module ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size, SIZE_T *pthread_size ) DECLSPEC_HIDDEN;
 extern ssize_t CDECL virtual_locked_recvmsg( int fd, struct msghdr *hdr, int flags ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_release_address_space(void) DECLSPEC_HIDDEN;
@@ -132,8 +130,12 @@ extern void CDECL set_show_dot_files( BOOL enable ) DECLSPEC_HIDDEN;
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
+extern HMODULE ntdll_module DECLSPEC_HIDDEN;
 extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;
+extern int main_argc DECLSPEC_HIDDEN;
+extern char **main_argv DECLSPEC_HIDDEN;
+extern char **main_envp DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern HANDLE keyed_event DECLSPEC_HIDDEN;
@@ -181,6 +183,7 @@ extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct o
 
 extern void virtual_init(void) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_system_affinity_mask(void) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_create_builtin_view( void *module ) DECLSPEC_HIDDEN;
 extern TEB *virtual_alloc_first_teb(void) DECLSPEC_HIDDEN;
 extern NTSTATUS virtual_alloc_teb( TEB **ret_teb ) DECLSPEC_HIDDEN;
 extern void virtual_free_teb( TEB *teb ) DECLSPEC_HIDDEN;
