@@ -2297,180 +2297,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
 }
 
 
-/* check if the library is the correct architecture */
-/* only returns false for a valid library of the wrong arch */
-static int check_library_arch( int fd )
-{
-#ifdef __APPLE__
-    struct  /* Mach-O header */
-    {
-        unsigned int magic;
-        unsigned int cputype;
-    } header;
-
-    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
-    if (header.magic != 0xfeedface) return 1;
-    if (sizeof(void *) == sizeof(int)) return !(header.cputype >> 24);
-    else return (header.cputype >> 24) == 1; /* CPU_ARCH_ABI64 */
-#else
-    struct  /* ELF header */
-    {
-        unsigned char magic[4];
-        unsigned char class;
-        unsigned char data;
-        unsigned char version;
-    } header;
-
-    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
-    if (memcmp( header.magic, "\177ELF", 4 )) return 1;
-    if (header.version != 1 /* EV_CURRENT */) return 1;
-#ifdef WORDS_BIGENDIAN
-    if (header.data != 2 /* ELFDATA2MSB */) return 1;
-#else
-    if (header.data != 1 /* ELFDATA2LSB */) return 1;
-#endif
-    if (sizeof(void *) == sizeof(int)) return header.class == 1; /* ELFCLASS32 */
-    else return header.class == 2; /* ELFCLASS64 */
-#endif
-}
-
-static inline char *prepend( char *buffer, const char *str, size_t len )
-{
-    return memcpy( buffer - len, str, len );
-}
-
-/***********************************************************************
- *           open_builtin_file
- */
-static NTSTATUS open_builtin_file( char *name, WINE_MODREF **pwm, void **module,
-                                   pe_image_info_t *image_info, struct file_id *id )
-{
-    ANSI_STRING strA;
-    UNICODE_STRING nt_name;
-    NTSTATUS status;
-    int fd;
-
-    nt_name.Buffer = NULL;
-    RtlInitString( &strA, name );
-    if ((status = wine_unix_to_nt_file_name( &strA, &nt_name ))) return status;
-
-    status = open_dll_file( &nt_name, pwm, module, image_info, id );
-    RtlFreeUnicodeString( &nt_name );
-
-    /* ignore non-builtins */
-    if (!status && !*pwm && !(image_info->image_flags & IMAGE_FLAGS_WineBuiltin))
-    {
-        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_a(name) );
-        NtUnmapViewOfSection( NtCurrentProcess(), *module );
-        *module = NULL;
-        status = STATUS_DLL_NOT_FOUND;
-    }
-
-    if (status != STATUS_DLL_NOT_FOUND) return status;
-
-    /* try .so file */
-
-    strcat( name, ".so" );
-    if ((fd = open( name, O_RDONLY )) != -1)
-    {
-        if (check_library_arch( fd ))
-        {
-            NtUnmapViewOfSection( NtCurrentProcess(), *module );
-            *module = NULL;
-            if (!unix_funcs->load_builtin_dll( name, module ))
-            {
-                memset( id, 0, sizeof(*id) );
-                memset( image_info, 0, sizeof(*image_info) );
-                image_info->image_flags = IMAGE_FLAGS_WineBuiltin;
-                status = STATUS_SUCCESS;
-            }
-            else
-            {
-                ERR( "failed to load .so lib %s\n", debugstr_a(name) );
-                status = STATUS_PROCEDURE_NOT_FOUND;
-            }
-        }
-        else status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-        close( fd );
-    }
-    return status;
-}
-
-
-/***********************************************************************
- *           find_builtin_dll
- */
-static NTSTATUS find_builtin_dll( const WCHAR *name, WINE_MODREF **pwm, void **module,
-                                  pe_image_info_t *image_info, struct file_id *id )
-{
-    unsigned int i, pos, len, namelen, maxlen = 0;
-    char *ptr, *file;
-    NTSTATUS status = STATUS_DLL_NOT_FOUND;
-    BOOL found_image = FALSE;
-    const char **dll_paths;
-    SIZE_T dll_path_maxlen;
-
-    unix_funcs->get_dll_path( &dll_paths, &dll_path_maxlen );
-
-    len = wcslen( name );
-    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
-    maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof(".so");
-
-    if (!(file = RtlAllocateHeap( GetProcessHeap(), 0, maxlen ))) return STATUS_NO_MEMORY;
-
-    pos = maxlen - len - sizeof(".so");
-    /* we don't want to depend on the current codepage here */
-    for (i = 0; i < len; i++)
-    {
-        if (name[i] > 127) goto done;
-        file[pos + i] = (char)name[i];
-        if (file[pos + i] >= 'A' && file[pos + i] <= 'Z') file[pos + i] += 'a' - 'A';
-    }
-    file[--pos] = '/';
-
-    if (build_dir)
-    {
-        /* try as a dll */
-        ptr = file + pos;
-        namelen = len + 1;
-        file[pos + len + 1] = 0;
-        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".dll", 4 )) namelen -= 4;
-        ptr = prepend( ptr, ptr, namelen );
-        ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
-        ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_file( ptr, pwm, module, image_info, id );
-        if (status != STATUS_DLL_NOT_FOUND) goto done;
-
-        /* now as a program */
-        ptr = file + pos;
-        namelen = len + 1;
-        file[pos + len + 1] = 0;
-        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".exe", 4 )) namelen -= 4;
-        ptr = prepend( ptr, ptr, namelen );
-        ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
-        ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_file( ptr, pwm, module, image_info, id );
-        if (status != STATUS_DLL_NOT_FOUND) goto done;
-    }
-
-    for (i = 0; dll_paths[i]; i++)
-    {
-        file[pos + len + 1] = 0;
-        ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_file( ptr, pwm, module, image_info, id );
-        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
-        else if (status != STATUS_DLL_NOT_FOUND) goto done;
-    }
-
-    if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    WARN( "cannot find builtin library for %s\n", debugstr_w(name) );
-
-done:
-    RtlFreeHeap( GetProcessHeap(), 0, file );
-    return status;
-}
-
-
 /***********************************************************************
  *           load_so_dll
  */
@@ -2515,7 +2341,6 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
     NTSTATUS status;
     void *module = NULL;
     pe_image_info_t image_info;
-    struct file_id id;
 
     /* Fix the name in case we have a full path and extension */
     name = nt_name->Buffer;
@@ -2526,20 +2351,21 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_na
 
     if (!module_ptr) module_ptr = &module;
 
-    status = find_builtin_dll( name, pwm, module_ptr, &image_info, &id );
+    status = unix_funcs->load_builtin_dll( name, module_ptr, &image_info );
     if (status) return status;
 
-    if (*pwm)
+    if ((*pwm = get_modref( *module_ptr )))  /* already loaded */
     {
         if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
         TRACE( "Found %s for %s at %p, count=%d\n",
                debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(name),
                (*pwm)->ldr.DllBase, (*pwm)->ldr.LoadCount);
+        *module_ptr = NULL;
         return STATUS_SUCCESS;
     }
 
     TRACE( "loading %s from %s\n", debugstr_w(name), debugstr_us(nt_name) );
-    status = build_module( load_path, nt_name, module_ptr, &image_info, &id, flags, pwm );
+    status = build_module( load_path, nt_name, module_ptr, &image_info, NULL, flags, pwm );
     if (status && *module_ptr) unix_funcs->unload_builtin_dll( *module_ptr );
     return status;
 }

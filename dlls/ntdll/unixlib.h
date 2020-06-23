@@ -28,7 +28,7 @@ struct ldt_copy;
 struct msghdr;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 58
+#define NTDLL_UNIXLIB_VERSION 59
 
 struct unix_funcs
 {
@@ -322,7 +322,8 @@ struct unix_funcs
 
     /* loader functions */
     NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );
-    NTSTATUS      (CDECL *load_builtin_dll)( const char *so_name, void **module );
+    NTSTATUS      (CDECL *load_builtin_dll)( const WCHAR *name, void **module,
+                                             pe_image_info_t *image_info );
     NTSTATUS      (CDECL *unload_builtin_dll)( void *module );
     void          (CDECL *init_builtin_dll)( void *module );
 

@@ -83,6 +83,7 @@
 #include "winnt.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winioctl.h"
 #include "winternl.h"
 #include "unix_private.h"
 #include "wine/list.h"
@@ -127,21 +128,29 @@ const char *build_dir = NULL;
 const char *config_dir = NULL;
 HMODULE ntdll_module = NULL;
 
+struct file_id
+{
+    BYTE ObjectId[16];
+};
+
 struct builtin_module
 {
     struct list    entry;
+    struct file_id id;
     void          *handle;
     void          *module;
 };
 
 static struct list builtin_modules = LIST_INIT( builtin_modules );
 
-static NTSTATUS add_builtin_module( void *module, void *handle )
+static NTSTATUS add_builtin_module( void *module, void *handle, const FILE_OBJECTID_BUFFER *id )
 {
     struct builtin_module *builtin;
     if (!(builtin = malloc( sizeof(*builtin) ))) return STATUS_NO_MEMORY;
     builtin->handle = handle;
     builtin->module = module;
+    if (id) memcpy( &builtin->id, id->ObjectId, sizeof(builtin->id) );
+    else memset( &builtin->id, 0, sizeof(builtin->id) );
     list_add_tail( &builtin_modules, &builtin->entry );
     return STATUS_SUCCESS;
 }
@@ -893,7 +902,7 @@ static NTSTATUS dlopen_dll( const char *so_name, void **ret_module )
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
-    if (add_builtin_module( module, handle ))
+    if (add_builtin_module( module, handle, NULL ))
     {
         dlclose( handle );
         return STATUS_NO_MEMORY;
@@ -931,12 +940,251 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 }
 
 
+/* check if the library is the correct architecture */
+/* only returns false for a valid library of the wrong arch */
+static int check_library_arch( int fd )
+{
+#ifdef __APPLE__
+    struct  /* Mach-O header */
+    {
+        unsigned int magic;
+        unsigned int cputype;
+    } header;
+
+    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
+    if (header.magic != 0xfeedface) return 1;
+    if (sizeof(void *) == sizeof(int)) return !(header.cputype >> 24);
+    else return (header.cputype >> 24) == 1; /* CPU_ARCH_ABI64 */
+#else
+    struct  /* ELF header */
+    {
+        unsigned char magic[4];
+        unsigned char class;
+        unsigned char data;
+        unsigned char version;
+    } header;
+
+    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
+    if (memcmp( header.magic, "\177ELF", 4 )) return 1;
+    if (header.version != 1 /* EV_CURRENT */) return 1;
+#ifdef WORDS_BIGENDIAN
+    if (header.data != 2 /* ELFDATA2MSB */) return 1;
+#else
+    if (header.data != 1 /* ELFDATA2LSB */) return 1;
+#endif
+    if (sizeof(void *) == sizeof(int)) return header.class == 1; /* ELFCLASS32 */
+    else return header.class == 2; /* ELFCLASS64 */
+#endif
+}
+
+static inline char *prepend( char *buffer, const char *str, size_t len )
+{
+    return memcpy( buffer - len, str, len );
+}
+
+/***********************************************************************
+ *	open_dll_file
+ *
+ * Open a file for a new dll. Helper for find_dll_file.
+ */
+static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, void **module, pe_image_info_t *image_info )
+{
+    struct builtin_module *builtin;
+    FILE_BASIC_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER size;
+    FILE_OBJECTID_BUFFER id;
+    SIZE_T len = 0;
+    NTSTATUS status;
+    HANDLE handle, mapping;
+
+    InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if ((status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                              FILE_SHARE_READ | FILE_SHARE_DELETE,
+                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
+    {
+        if (status != STATUS_OBJECT_PATH_NOT_FOUND &&
+            status != STATUS_OBJECT_NAME_NOT_FOUND &&
+            !NtQueryAttributesFile( &attr, &info ))
+        {
+            /* if the file exists but failed to open, report the error */
+            return status;
+        }
+        /* otherwise continue searching */
+        return STATUS_DLL_NOT_FOUND;
+    }
+
+    if (!NtFsControlFile( handle, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, &id, sizeof(id) ))
+    {
+        LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+        {
+            if (!memcmp( &builtin->id, id.ObjectId, sizeof(builtin->id) ))
+            {
+                TRACE( "%s is the same file as existing module %p\n", debugstr_w( nt_name->Buffer ),
+                       builtin->module );
+                NtClose( handle );
+                NtUnmapViewOfSection( NtCurrentProcess(), *module );
+                *module = builtin->module;
+                return STATUS_SUCCESS;
+            }
+        }
+    }
+    else memset( id.ObjectId, 0, sizeof(id.ObjectId) );
+
+    size.QuadPart = 0;
+    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
+    NtClose( handle );
+    if (status) return status;
+
+    if (*module)
+    {
+        NtUnmapViewOfSection( NtCurrentProcess(), *module );
+        *module = NULL;
+    }
+    status = virtual_map_section( mapping, module, 0, 0, NULL, &len, 0, PAGE_EXECUTE_READ, image_info );
+    if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
+    NtClose( mapping );
+    if (status) return status;
+
+    /* ignore non-builtins */
+    if (!(image_info->image_flags & IMAGE_FLAGS_WineBuiltin))
+    {
+        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_us(nt_name) );
+        status = STATUS_DLL_NOT_FOUND;
+    }
+    else if (image_info->cpu != client_cpu)
+    {
+        TRACE( "%s is for CPU %u, continuing search\n", debugstr_us(nt_name), image_info->cpu );
+        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    }
+
+    if (!status) status = add_builtin_module( *module, NULL, &id );
+
+    if (status)
+    {
+        NtUnmapViewOfSection( NtCurrentProcess(), *module );
+        *module = NULL;
+    }
+    return status;
+}
+
+
+/***********************************************************************
+ *           open_builtin_file
+ */
+static NTSTATUS open_builtin_file( char *name, void **module, pe_image_info_t *image_info )
+{
+    ANSI_STRING strA;
+    UNICODE_STRING nt_name;
+    NTSTATUS status;
+    int fd;
+
+    nt_name.Buffer = NULL;
+    RtlInitAnsiString( &strA, name );
+    if ((status = unix_to_nt_file_name( &strA, &nt_name ))) return status;
+
+    status = open_dll_file( &nt_name, module, image_info );
+    RtlFreeUnicodeString( &nt_name );
+
+    if (status != STATUS_DLL_NOT_FOUND) return status;
+
+    /* try .so file */
+
+    strcat( name, ".so" );
+    if ((fd = open( name, O_RDONLY )) != -1)
+    {
+        if (check_library_arch( fd ))
+        {
+            NtUnmapViewOfSection( NtCurrentProcess(), *module );
+            *module = NULL;
+            if (!dlopen_dll( name, module ))
+            {
+                memset( image_info, 0, sizeof(*image_info) );
+                image_info->image_flags = IMAGE_FLAGS_WineBuiltin;
+                status = STATUS_SUCCESS;
+            }
+            else
+            {
+                ERR( "failed to load .so lib %s\n", debugstr_a(name) );
+                status = STATUS_PROCEDURE_NOT_FOUND;
+            }
+        }
+        else status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+        close( fd );
+    }
+    return status;
+}
+
+
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS CDECL load_builtin_dll( const char *so_name, void **module )
+static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, pe_image_info_t *image_info )
 {
-    return dlopen_dll( so_name, module );
+    unsigned int i, pos, len, namelen, maxlen = 0;
+    char *ptr, *file;
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    BOOL found_image = FALSE;
+
+    len = wcslen( name );
+    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
+    maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof(".so");
+
+    if (!(file = malloc( maxlen ))) return STATUS_NO_MEMORY;
+
+    pos = maxlen - len - sizeof(".so");
+    /* we don't want to depend on the current codepage here */
+    for (i = 0; i < len; i++)
+    {
+        if (name[i] > 127) goto done;
+        file[pos + i] = (char)name[i];
+        if (file[pos + i] >= 'A' && file[pos + i] <= 'Z') file[pos + i] += 'a' - 'A';
+    }
+    file[--pos] = '/';
+
+    if (build_dir)
+    {
+        /* try as a dll */
+        ptr = file + pos;
+        namelen = len + 1;
+        file[pos + len + 1] = 0;
+        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".dll", 4 )) namelen -= 4;
+        ptr = prepend( ptr, ptr, namelen );
+        ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
+        ptr = prepend( ptr, build_dir, strlen(build_dir) );
+        status = open_builtin_file( ptr, module, image_info );
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
+
+        /* now as a program */
+        ptr = file + pos;
+        namelen = len + 1;
+        file[pos + len + 1] = 0;
+        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".exe", 4 )) namelen -= 4;
+        ptr = prepend( ptr, ptr, namelen );
+        ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
+        ptr = prepend( ptr, build_dir, strlen(build_dir) );
+        status = open_builtin_file( ptr, module, image_info );
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
+    }
+
+    for (i = 0; dll_paths[i]; i++)
+    {
+        file[pos + len + 1] = 0;
+        ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
+        status = open_builtin_file( ptr, module, image_info );
+        if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
+        else if (status != STATUS_DLL_NOT_FOUND) goto done;
+    }
+
+    if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    WARN( "cannot find builtin library for %s\n", debugstr_w(name) );
+
+done:
+    free( file );
+    return status;
 }
 
 
