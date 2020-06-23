@@ -2050,13 +2050,13 @@ static void test_IDirectDrawStreamSample(void)
     if (0)
     {
         hr = IDirectDrawStreamSample_GetMediaStream(sample, NULL);
-        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+        ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     }
 
     hr = IDirectDrawStreamSample_GetMediaStream(sample, &stream2);
-    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok(stream2 == stream, "Expected stream %p, got %p.\n", stream, stream2);
-    if (hr == S_OK) IMediaStream_Release(stream2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(stream2 == stream, "Expected stream %p, got %p.\n", stream, stream2);
+    IMediaStream_Release(stream2);
 
     hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface7, (void **)&surface7);
     ok(hr == S_OK, "got 0x%08x\n", hr);

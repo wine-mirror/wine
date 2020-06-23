@@ -1023,9 +1023,17 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
 /*** IStreamSample methods ***/
 static HRESULT WINAPI ddraw_sample_GetMediaStream(IDirectDrawStreamSample *iface, IMediaStream **media_stream)
 {
-    FIXME("(%p)->(%p): stub\n", iface, media_stream);
+    struct ddraw_sample *sample = impl_from_IDirectDrawStreamSample(iface);
 
-    return E_NOTIMPL;
+    TRACE("sample %p, media_stream %p.\n", sample, media_stream);
+
+    if (!media_stream)
+        return E_POINTER;
+
+    IAMMediaStream_AddRef(&sample->parent->IAMMediaStream_iface);
+    *media_stream = (IMediaStream *)&sample->parent->IAMMediaStream_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_sample_GetSampleTimes(IDirectDrawStreamSample *iface, STREAM_TIME *start_time,
