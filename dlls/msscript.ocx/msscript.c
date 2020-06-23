@@ -82,6 +82,8 @@ typedef struct ScriptHost {
     SCRIPTSTATE script_state;
     CLSID clsid;
 
+    unsigned int module_count;
+
     struct list named_items;
 } ScriptHost;
 
@@ -111,7 +113,6 @@ struct ScriptControl {
     DWORD view_sink_flags;
 
     /* modules */
-    unsigned int module_count;
     ScriptModule **modules;
     IScriptModuleCollection IScriptModuleCollection_iface;
 
@@ -770,10 +771,9 @@ static void release_modules(ScriptControl *control)
 {
     unsigned int i;
 
-    for (i = 0; i < control->module_count; i++)
+    for (i = 0; i < control->host->module_count; i++)
         IScriptModule_Release(&control->modules[i]->IScriptModule_iface);
 
-    control->module_count = 0;
     heap_free(control->modules);
 }
 
@@ -896,8 +896,9 @@ static HRESULT WINAPI ScriptModuleCollection_get_Count(IScriptModuleCollection *
     TRACE("(%p)->(%p)\n", This, plCount);
 
     if (!plCount) return E_POINTER;
+    if (!This->host) return E_FAIL;
 
-    *plCount = This->module_count;
+    *plCount = This->host->module_count;
     return S_OK;
 }
 
@@ -945,6 +946,7 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
     host->parse = NULL;
     host->script_dispatch = NULL;
     host->clsid = *clsid;
+    host->module_count = 1;
     list_init(&host->named_items);
 
     hr = CoCreateInstance(&host->clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -1068,8 +1070,10 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
         if (This->site)
             IOleClientSite_Release(This->site);
         if (This->host)
+        {
+            release_modules(This);
             release_script_engine(This->host);
-        release_modules(This);
+        }
         heap_free(This);
     }
 
@@ -1159,7 +1163,6 @@ static HRESULT WINAPI ScriptControl_get_Language(IScriptControl *iface, BSTR *p)
 static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR language)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    ScriptModule **modules;
     CLSID clsid;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(language));
@@ -1167,24 +1170,21 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
     if (language && FAILED(CLSIDFromProgID(language, &clsid)))
         return CTL_E_INVALIDPROPERTYVALUE;
 
-    /* Alloc new global module */
-    modules = heap_alloc_zero(sizeof(*modules));
-    if (!modules) return E_OUTOFMEMORY;
-
-    modules[0] = create_module();
-    if (!modules[0]) {
-        heap_free(modules);
-        return E_OUTOFMEMORY;
-    }
-
     if (This->host) {
         release_script_engine(This->host);
         This->host = NULL;
     }
 
-    release_modules(This);
-    This->modules = modules;
-    This->module_count = 1;
+    /* Alloc global module */
+    This->modules = heap_alloc_zero(sizeof(*This->modules));
+    if (!This->modules) return E_OUTOFMEMORY;
+
+    This->modules[0] = create_module();
+    if (!This->modules[0]) {
+        heap_free(This->modules);
+        This->modules = NULL;
+        return E_OUTOFMEMORY;
+    }
 
     if (!language)
         return S_OK;
@@ -1332,7 +1332,7 @@ static HRESULT WINAPI ScriptControl_get_Modules(IScriptControl *iface, IScriptMo
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if (!This->module_count) return E_FAIL;
+    if (!This->host) return E_FAIL;
 
     *p = &This->IScriptModuleCollection_iface;
     IScriptControl_AddRef(iface);

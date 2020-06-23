@@ -2414,7 +2414,16 @@ static void test_IScriptControl_get_Modules(void)
     ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
     ok(count == 1, "count is not 1, got %d.\n", count);
 
+    hr = IScriptControl_put_Language(sc, NULL);
+    ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+
+    hr = IScriptModuleCollection_get_Count(mods, &count);
+    ok(hr == E_FAIL, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
+
     IScriptModuleCollection_Release(mods);
+    hr = IScriptControl_get_Modules(sc, &mods);
+    ok(hr == E_FAIL, "IScriptControl_get_Modules returned: 0x%08x.\n", hr);
+
     IScriptControl_Release(sc);
 
     /* custom script engine */
