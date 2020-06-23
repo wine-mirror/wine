@@ -1848,97 +1848,6 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
 }
 
 
-/*************************************************************************
- *		is_16bit_builtin
- */
-static BOOL is_16bit_builtin( HMODULE module )
-{
-    const IMAGE_EXPORT_DIRECTORY *exports;
-    DWORD exp_size;
-
-    if (!(exports = RtlImageDirectoryEntryToData( module, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
-        return FALSE;
-
-    return find_named_export( module, exports, exp_size, "__wine_spec_dos_header", -1, NULL ) != NULL;
-}
-
-
-/*************************************************************************
- *		build_so_dll_module
- *
- * Build the module for a .so builtin library.
- */
-static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRING *nt_name,
-                                     HMODULE module, DWORD flags, WINE_MODREF **pwm )
-{
-    IMAGE_NT_HEADERS *nt;
-    WINE_MODREF *wm;
-    NTSTATUS status;
-
-    if (!(nt = RtlImageNtHeader( module ))) return STATUS_INVALID_IMAGE_FORMAT;
-
-    if (!(wm = alloc_module( module, nt_name, TRUE ))) return STATUS_NO_MEMORY;
-
-    unix_funcs->virtual_create_builtin_view( module );
-
-    if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
-        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
-         nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
-         is_16bit_builtin( module )))
-    {
-        if ((status = fixup_imports( wm, load_path )))
-        {
-            /* the module has only been inserted in the load & memory order lists */
-            RemoveEntryList(&wm->ldr.InLoadOrderLinks);
-            RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
-            /* FIXME: free the modref */
-            return status;
-        }
-    }
-
-    TRACE( "loaded %s %p %p\n", debugstr_us(nt_name), wm, module );
-
-    /* send the DLL load event */
-
-    SERVER_START_REQ( load_dll )
-    {
-        req->base       = wine_server_client_ptr( module );
-        req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
-        req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = wine_server_client_ptr( &wm->ldr.FullDllName.Buffer );
-        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    /* setup relay debugging entry points */
-    if (TRACE_ON(relay)) RELAY_SetupDLL( module );
-
-    *pwm = wm;
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
- *           load_builtin_callback
- *
- * Load a library in memory; callback function for wine_dll_register
- */
-static void load_builtin_callback( void *module, const char *filename )
-{
-    if (!module)
-    {
-        ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
-        builtin_load_info->status = STATUS_NO_MEMORY;
-        return;
-    }
-    builtin_load_info->status = build_so_dll_module( builtin_load_info->load_path,
-                                                     builtin_load_info->filename, module,
-                                                     0, &builtin_load_info->wm );
-}
-
-
 /***********************************************************************
  *           set_security_cookie
  *
@@ -2061,6 +1970,132 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
 
     return STATUS_SUCCESS;
 }
+
+
+/*************************************************************************
+ *		build_module
+ *
+ * Build the module data for a mapped dll.
+ */
+static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, void **module,
+                              const pe_image_info_t *image_info, const struct file_id *id,
+                              DWORD flags, WINE_MODREF **pwm )
+{
+    IMAGE_NT_HEADERS *nt;
+    WINE_MODREF *wm;
+    NTSTATUS status;
+
+    if (!(nt = RtlImageNtHeader( *module ))) return STATUS_INVALID_IMAGE_FORMAT;
+
+    if ((status = perform_relocations( *module, nt, image_info->map_size ))) return status;
+
+    /* create the MODREF */
+
+    if (!(wm = alloc_module( *module, nt_name, (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) )))
+        return STATUS_NO_MEMORY;
+
+    if (id) wm->id = *id;
+    if (image_info->loader_flags) wm->ldr.Flags |= LDR_COR_IMAGE;
+    if (image_info->image_flags & IMAGE_FLAGS_ComPlusILOnly) wm->ldr.Flags |= LDR_COR_ILONLY;
+
+    set_security_cookie( *module, image_info->map_size );
+
+    /* fixup imports */
+
+    if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
+        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
+         nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE))
+    {
+        if (wm->ldr.Flags & LDR_COR_ILONLY)
+            status = fixup_imports_ilonly( wm, load_path, &wm->ldr.EntryPoint );
+        else
+            status = fixup_imports( wm, load_path );
+        if (status != STATUS_SUCCESS)
+        {
+            /* the module has only be inserted in the load & memory order lists */
+            RemoveEntryList(&wm->ldr.InLoadOrderLinks);
+            RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
+
+            /* FIXME: there are several more dangling references
+             * left. Including dlls loaded by this dll before the
+             * failed one. Unrolling is rather difficult with the
+             * current structure and we can leave them lying
+             * around with no problems, so we don't care.
+             * As these might reference our wm, we don't free it.
+             */
+            *module = NULL;
+            return status;
+        }
+    }
+
+    TRACE( "loaded %s %p %p\n", debugstr_us(nt_name), wm, module );
+
+    /* send DLL load event */
+
+    SERVER_START_REQ( load_dll )
+    {
+        req->base       = wine_server_client_ptr( *module );
+        req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
+        req->dbg_size   = nt->FileHeader.NumberOfSymbols;
+        req->name       = wine_server_client_ptr( &wm->ldr.FullDllName.Buffer );
+        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin)
+    {
+        if (TRACE_ON(relay)) RELAY_SetupDLL( *module );
+    }
+    else
+    {
+        if ((wm->ldr.Flags & LDR_IMAGE_IS_DLL) && TRACE_ON(snoop)) SNOOP_SetupDLL( *module );
+    }
+
+    TRACE_(loaddll)( "Loaded %s at %p: %s\n", debugstr_w(wm->ldr.FullDllName.Buffer), *module,
+                     (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) ? "builtin" : "native" );
+
+    wm->ldr.LoadCount = 1;
+    *pwm = wm;
+    *module = NULL;
+    return STATUS_SUCCESS;
+}
+
+
+/*************************************************************************
+ *		build_so_dll_module
+ *
+ * Build the module for a .so builtin library.
+ */
+static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRING *nt_name,
+                                     void *module, DWORD flags, WINE_MODREF **pwm )
+{
+    pe_image_info_t image_info = { 0 };
+
+    image_info.image_flags = IMAGE_FLAGS_WineBuiltin;
+    unix_funcs->virtual_create_builtin_view( module );
+    return build_module( load_path, nt_name, &module, &image_info, NULL, flags, pwm );
+}
+
+
+/***********************************************************************
+ *           load_builtin_callback
+ *
+ * Load a library in memory; callback function for wine_dll_register
+ */
+static void load_builtin_callback( void *module, const char *filename )
+{
+    if (!module)
+    {
+        ERR("could not map image for %s\n", debugstr_us(builtin_load_info->filename) );
+        builtin_load_info->status = STATUS_NO_MEMORY;
+        return;
+    }
+    builtin_load_info->status = build_so_dll_module( builtin_load_info->load_path,
+                                                     builtin_load_info->filename, module,
+                                                     0, &builtin_load_info->wm );
+}
+
 
 #ifdef _WIN64
 /* convert PE header to 64-bit when loading a 32-bit IL-only module into a 64-bit process */
@@ -2396,84 +2431,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
                                  const pe_image_info_t *image_info, const struct file_id *id,
                                  DWORD flags, WINE_MODREF** pwm )
 {
-    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( *module );
-    WINE_MODREF *wm;
-    NTSTATUS status;
-    const char *dll_type = (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) ? "PE builtin" : "native";
-
-    TRACE("Trying %s dll %s\n", dll_type, debugstr_us(nt_name) );
-
-    /* perform base relocation, if necessary */
-
-    if ((status = perform_relocations( *module, nt, image_info->map_size ))) return status;
-
-    /* create the MODREF */
-
-    if (!(wm = alloc_module( *module, nt_name, (image_info->image_flags & IMAGE_FLAGS_WineBuiltin) )))
-        return STATUS_NO_MEMORY;
-
-    wm->id = *id;
-    if (image_info->loader_flags) wm->ldr.Flags |= LDR_COR_IMAGE;
-    if (image_info->image_flags & IMAGE_FLAGS_ComPlusILOnly) wm->ldr.Flags |= LDR_COR_ILONLY;
-
-    set_security_cookie( *module, image_info->map_size );
-
-    /* fixup imports */
-
-    if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
-        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
-         nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE))
-    {
-        if (wm->ldr.Flags & LDR_COR_ILONLY)
-            status = fixup_imports_ilonly( wm, load_path, &wm->ldr.EntryPoint );
-        else
-            status = fixup_imports( wm, load_path );
-        if (status != STATUS_SUCCESS)
-        {
-            /* the module has only be inserted in the load & memory order lists */
-            RemoveEntryList(&wm->ldr.InLoadOrderLinks);
-            RemoveEntryList(&wm->ldr.InMemoryOrderLinks);
-
-            /* FIXME: there are several more dangling references
-             * left. Including dlls loaded by this dll before the
-             * failed one. Unrolling is rather difficult with the
-             * current structure and we can leave them lying
-             * around with no problems, so we don't care.
-             * As these might reference our wm, we don't free it.
-             */
-            *module = NULL;
-            return status;
-        }
-    }
-
-    /* send DLL load event */
-
-    SERVER_START_REQ( load_dll )
-    {
-        req->base       = wine_server_client_ptr( *module );
-        req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
-        req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = wine_server_client_ptr( &wm->ldr.FullDllName.Buffer );
-        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin)
-    {
-        if (TRACE_ON(relay)) RELAY_SetupDLL( *module );
-    }
-    else
-    {
-        if ((wm->ldr.Flags & LDR_IMAGE_IS_DLL) && TRACE_ON(snoop)) SNOOP_SetupDLL( *module );
-    }
-
-    TRACE_(loaddll)( "Loaded %s at %p: %s\n", debugstr_w(wm->ldr.FullDllName.Buffer), *module, dll_type );
-
-    wm->ldr.LoadCount = 1;
-    *pwm = wm;
-    *module = NULL;
-    return STATUS_SUCCESS;
+    return build_module( load_path, nt_name, module, image_info, id, flags, pwm );
 }
 
 
