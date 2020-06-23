@@ -38,6 +38,7 @@ struct media_type
     struct attributes attributes;
     IMFMediaType IMFMediaType_iface;
     IMFVideoMediaType IMFVideoMediaType_iface;
+    MFVIDEOFORMAT *video_format;
 };
 
 struct stream_desc
@@ -648,6 +649,7 @@ static ULONG WINAPI video_mediatype_Release(IMFVideoMediaType *iface)
     if (!refcount)
     {
         clear_attributes_object(&media_type->attributes);
+        CoTaskMemFree(media_type->video_format);
         heap_free(media_type);
     }
 
@@ -971,9 +973,17 @@ static HRESULT WINAPI video_mediatype_FreeRepresentation(IMFVideoMediaType *ifac
 
 static const MFVIDEOFORMAT * WINAPI video_mediatype_GetVideoFormat(IMFVideoMediaType *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_type *media_type = impl_from_IMFVideoMediaType(iface);
+    unsigned int size;
+    HRESULT hr;
 
-    return NULL;
+    TRACE("%p.\n", iface);
+
+    CoTaskMemFree(media_type->video_format);
+    if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType((IMFMediaType *)iface, &media_type->video_format, &size)))
+        WARN("Failed to create format description, hr %#x.\n", hr);
+
+    return media_type->video_format;
 }
 
 static HRESULT WINAPI video_mediatype_GetVideoRepresentation(IMFVideoMediaType *iface, GUID representation,
