@@ -80,6 +80,30 @@ static HANDLE get_winstations_dir_handle(void)
     return handle;
 }
 
+static BOOL WINAPI winstation_default_name_once( INIT_ONCE *once, void *param, void **context )
+{
+    static const WCHAR fmt[] = {'S','e','r','v','i','c','e','-','0','x','%','x','-','%','x','$',0};
+    WCHAR *name = (WCHAR *)param;
+    TOKEN_STATISTICS stats;
+    BOOL ret;
+
+    ret = GetTokenInformation( GetCurrentProcessToken(), TokenStatistics, &stats, sizeof(stats), NULL );
+    if (ret)
+        sprintfW( name, fmt, stats.AuthenticationId.HighPart, stats.AuthenticationId.LowPart );
+
+    return ret;
+}
+
+static const WCHAR *get_winstation_default_name( void )
+{
+    static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
+    static WCHAR name[29];
+    BOOL ret;
+
+    ret = InitOnceExecuteOnce( &once, winstation_default_name_once, name, NULL );
+    return ret ? name : NULL;
+}
+
 /***********************************************************************
  *              CreateWindowStationA  (USER32.@)
  */
@@ -112,6 +136,11 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD flags, ACCESS_MASK acce
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
+    }
+    if (!len)
+    {
+        name = get_winstation_default_name();
+        len = strlenW( name );
     }
     SERVER_START_REQ( create_winstation )
     {
@@ -159,6 +188,11 @@ HWINSTA WINAPI OpenWindowStationW( LPCWSTR name, BOOL inherit, ACCESS_MASK acces
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
+    }
+    if (!len)
+    {
+        name = get_winstation_default_name();
+        len = strlenW( name );
     }
     SERVER_START_REQ( open_winstation )
     {
