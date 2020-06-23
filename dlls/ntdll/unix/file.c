@@ -5720,7 +5720,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
     if (ret == STATUS_ACCESS_DENIED)
         ret = server_get_unix_fd( handle, FILE_APPEND_DATA, &fd, &needs_close, &type, NULL );
 
-    if (!ret && (type == FD_TYPE_FILE || type == FD_TYPE_DIR))
+    if (!ret && (type == FD_TYPE_FILE || type == FD_TYPE_DIR || type == FD_TYPE_CHAR))
     {
         if (fsync(fd)) ret = errno_to_status( errno );
         io->u.Status    = ret;
