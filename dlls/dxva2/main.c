@@ -101,6 +101,7 @@ static HRESULT WINAPI device_manager_processor_service_QueryInterface(IDirectXVi
         REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IDirectXVideoProcessorService) ||
+            IsEqualIID(riid, &IID_IDirectXVideoAccelerationService) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
@@ -401,16 +402,9 @@ static HRESULT WINAPI device_manager_GetVideoService(IDirect3DDeviceManager9 *if
             hr = DXVA2_E_NEW_VIDEO_DEVICE;
         else if (!(flags & HANDLE_FLAG_OPEN))
             hr = E_HANDLE;
-        else if (IsEqualIID(riid, &IID_IDirectXVideoProcessorService))
-        {
-            *obj = &manager->IDirectXVideoProcessorService_iface;
-            IUnknown_AddRef((IUnknown *)*obj);
-        }
         else
-        {
-            WARN("Unsupported service %s.\n", debugstr_guid(riid));
-            hr = E_UNEXPECTED;
-        }
+            hr = IDirectXVideoProcessorService_QueryInterface(&manager->IDirectXVideoProcessorService_iface,
+                    riid, obj);
     }
     LeaveCriticalSection(&manager->cs);
 
@@ -462,11 +456,31 @@ HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9(UINT *token, IDirect3DDeviceMan
     return S_OK;
 }
 
-HRESULT WINAPI DXVA2CreateVideoService( IDirect3DDevice9 *device, REFIID riid, void **ppv )
+HRESULT WINAPI DXVA2CreateVideoService(IDirect3DDevice9 *device, REFIID riid, void **obj)
 {
-    FIXME("(%p, %s, %p): stub\n", device, debugstr_guid(riid), ppv);
+    IDirect3DDeviceManager9 *manager;
+    HANDLE handle;
+    HRESULT hr;
+    UINT token;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", device, debugstr_guid(riid), obj);
+
+    if (FAILED(hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager)))
+        return hr;
+
+    if (FAILED(hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token)))
+        goto done;
+
+    if (FAILED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle)))
+        goto done;
+
+    hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, riid, obj);
+    IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+
+done:
+    IDirect3DDeviceManager9_Release(manager);
+
+    return hr;
 }
 
 BOOL WINAPI DegaussMonitor( HMONITOR monitor )

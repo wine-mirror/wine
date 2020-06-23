@@ -62,8 +62,10 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window)
 static void test_device_manager(void)
 {
     IDirectXVideoProcessorService *processor_service;
-    IDirect3DDevice9 *device, *device2;
+    IDirectXVideoAccelerationService *accel_service;
+    IDirect3DDevice9 *device, *device2, *device3;
     IDirect3DDeviceManager9 *manager;
+    IDirect3DSurface9 *surface;
     int refcount, refcount2;
     HANDLE handle, handle1;
     IDirect3D9 *d3d;
@@ -147,6 +149,46 @@ static void test_device_manager(void)
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle);
     ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
+
+    /* Acceleration service. */
+    hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoAccelerationService, (void **)&accel_service);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 1, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL);
+todo_wine
+    ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IDirect3DSurface9_Release(surface);
+
+    IDirectXVideoAccelerationService_Release(accel_service);
+
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoAccelerationService,
+            (void **)&accel_service);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoAccelerationService_CreateSurface(accel_service, 64, 64, 1, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL);
+todo_wine
+    ok(hr == S_OK, "Failed to create a surface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DSurface9_GetDevice(surface, &device3);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(device2 == device3, "Unexpected device.\n");
+        IDirect3DDevice9_Release(device3);
+
+        IDirect3DSurface9_Release(surface);
+    }
+
+    IDirectXVideoAccelerationService_Release(accel_service);
 
     IDirect3DDevice9_Release(device);
     IDirect3DDevice9_Release(device2);
