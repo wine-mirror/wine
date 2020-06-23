@@ -35,6 +35,13 @@
 
 #define KSHARED_USER_DATA_PAGE_SIZE 0x1000
 
+#define CR0_PE 0x00000001 /* Protected Mode */
+#define CR0_ET 0x00000010 /* Extension Type */
+#define CR0_NE 0x00000020 /* Numeric Error */
+#define CR0_WP 0x00010000 /* Write Protect */
+#define CR0_AM 0x00040000 /* Alignment Mask */
+#define CR0_PG 0x80000000 /* Paging */
+
 enum instr_op
 {
     INSTR_OP_MOV,
@@ -350,7 +357,7 @@ static DWORD emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
                 TRACE( "mov cr%u,%s at 0x%08x\n", reg, reg_names[instr[2] & 7], context->Eip );
                 switch (reg)
                 {
-                case 0: *data = 0x10; break; /* FIXME: set more bits ? */
+                case 0: *data = CR0_PE|CR0_ET|CR0_NE|CR0_WP|CR0_AM|CR0_PG; break;
                 case 2: *data = 0; break;
                 case 3: *data = 0; break;
                 case 4: *data = 0; break;
