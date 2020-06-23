@@ -1207,7 +1207,7 @@ static int copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *fl
         fileDest = &flTo->feFiles[0];
     }
 
-    if (op->req->fFlags & FOF_MULTIDESTFILES)
+    if (op->req->fFlags & FOF_MULTIDESTFILES && flTo->dwNumFiles > 1)
     {
         if (flFrom->bAnyFromWildcard)
             return ERROR_CANCELLED;

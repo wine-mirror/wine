@@ -1816,6 +1816,15 @@ static void test_copy(void)
     CreateDirectoryA("one", NULL);
     CreateDirectoryA("two", NULL);
 
+    /* Test with FOF_MULTIDESTFILES with a wildcard in pFrom and single output directory. */
+    shfo.pFrom = "a*.txt\0";
+    shfo.pTo = "one\0";
+    shfo.fFlags |= FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI | FOF_MULTIDESTFILES;
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+    ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("one\\ab.txt"), "Expected file to exist\n");
+
     /* pFrom has a glob, pTo has more than one dest */
     shfo.pFrom = "a*.txt\0";
     shfo.pTo = "one\0two\0";
