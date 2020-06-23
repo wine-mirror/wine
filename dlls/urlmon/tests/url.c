@@ -157,10 +157,9 @@ static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
 static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
-static const WCHAR wszWineHQSite[] =
-    {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
-static const WCHAR wszWineHQIP[] =
-    {'4','.','1','5','.','1','8','4','.','7','7',0};
+#define WINEHQ_IP "4.4.81.124"
+static const WCHAR wszWineHQSite[] = L"www.winehq.org";
+static const WCHAR wszWineHQIP[] = L"" WINEHQ_IP;
 static const CHAR wszIndexHtmlA[] = "index.html";
 static const WCHAR cache_fileW[] = {'c',':','\\','c','a','c','h','e','.','h','t','m',0};
 static const CHAR dwl_htmlA[] = "dwl.html";
@@ -2870,7 +2869,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
         url_a = "its:test.chm::/blank.html";
         break;
     case HTTPS_TEST:
-        url_a = (flags & BINDTEST_INVALID_CN) ? "https://4.15.184.77/favicon.ico" : "https://test.winehq.org/tests/hello.html";
+        url_a = (flags & BINDTEST_INVALID_CN) ? "https://" WINEHQ_IP "/favicon.ico" : "https://test.winehq.org/tests/hello.html";
         break;
     case FTP_TEST:
         url_a = "ftp://ftp.winehq.org/welcome%2emsg";
