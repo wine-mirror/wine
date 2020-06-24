@@ -424,7 +424,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
             default:
                 FIXME("Unhandled bit depth %u.\n", filter->bmiheader.biBitCount);
                 free(filter->surfaces);
-                return E_INVALIDARG;
+                return VFW_E_TYPE_NOT_ACCEPTED;
         }
 
         info.dwFlags = VMR9AllocFlag_TextureSurface;
@@ -456,7 +456,7 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
     }
 
     free(filter->surfaces);
-    return hr;
+    return VFW_E_TYPE_NOT_ACCEPTED;
 }
 
 static void vmr_start_stream(struct strmbase_renderer *iface)

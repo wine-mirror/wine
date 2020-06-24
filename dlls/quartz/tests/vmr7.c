@@ -1366,12 +1366,8 @@ static void test_connect_pin(void)
 
     vih.bmiHeader.biBitCount = 16;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
-        IFilterGraph2_Disconnect(graph, pin);
-    }
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+
     vih.bmiHeader.biBitCount = 32;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
     if (hr == VFW_E_TYPE_NOT_ACCEPTED) /* w7u */

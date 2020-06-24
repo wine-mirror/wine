@@ -1618,20 +1618,10 @@ static void test_connect_pin(void)
 
     req_mt.subtype = MEDIASUBTYPE_RGB8;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
-        IFilterGraph2_Disconnect(graph, pin);
-    }
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.subtype = MEDIASUBTYPE_WAVE;
     hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-    if (hr == S_OK)
-    {
-        IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
-        IFilterGraph2_Disconnect(graph, pin);
-    }
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     req_mt.subtype = MEDIASUBTYPE_RGB32;
 
     peer = (IPin *)0xdeadbeef;
