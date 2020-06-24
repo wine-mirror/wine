@@ -214,10 +214,19 @@ struct request
     } creds[TARGET_MAX][SCHEME_MAX];
 };
 
+enum socket_state
+{
+    SOCKET_STATE_OPEN     = 0,
+    SOCKET_STATE_SHUTDOWN = 1,
+    SOCKET_STATE_CLOSED   = 2,
+};
+
 struct socket
 {
     struct object_header hdr;
     struct request *request;
+    enum socket_state state;
+    struct queue send_q;
 };
 
 struct task_header
@@ -263,6 +272,14 @@ struct write_data
     const void *buffer;
     DWORD to_write;
     DWORD *written;
+};
+
+struct socket_send
+{
+    struct task_header hdr;
+    WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
+    const void *buf;
+    DWORD len;
 };
 
 struct object_header *addref_object( struct object_header * ) DECLSPEC_HIDDEN;
