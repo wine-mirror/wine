@@ -1203,8 +1203,8 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
         }
     }
     if (FAILED(hres)) {
-        This->host = NULL;
         detach_script_host(This->host);
+        This->host = NULL;
     }
     return hres;
 }
