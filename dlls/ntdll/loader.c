@@ -3469,6 +3469,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, void **entry, ULONG_PTR unknow
         if ((status = alloc_thread_tls()) != STATUS_SUCCESS)
             NtTerminateThread( GetCurrentThread(), status );
         thread_attach();
+        if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_ATTACH );
     }
 
     RtlLeaveCriticalSection( &loader_section );
