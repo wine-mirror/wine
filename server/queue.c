@@ -1596,13 +1596,58 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
     return 1;
 }
 
+/* get the foreground thread for a desktop and a window receiving input */
+static struct thread *get_foreground_thread( struct desktop *desktop, user_handle_t window )
+{
+    /* if desktop has no foreground process, assume the receiving window is */
+    if (desktop->foreground_input) return get_window_thread( desktop->foreground_input->focus );
+    if (window) return get_window_thread( window );
+    return NULL;
+}
+
+struct rawinput_message
+{
+    struct thread           *foreground;
+    struct desktop          *desktop;
+    struct hw_msg_source     source;
+    unsigned int             time;
+    struct hardware_msg_data data;
+};
+
+/* check if process is supposed to receive a WM_INPUT message and eventually queue it */
+static int queue_rawinput_message( struct process* process, void *arg )
+{
+    const struct rawinput_message* raw_msg = arg;
+    const struct rawinput_device *device = NULL;
+    struct message *msg;
+
+    if (raw_msg->data.rawinput.type == RIM_TYPEMOUSE)
+        device = process->rawinput_mouse;
+    else if (raw_msg->data.rawinput.type == RIM_TYPEKEYBOARD)
+        device = process->rawinput_kbd;
+    if (!device) return 0;
+
+    if (!(msg = alloc_hardware_message( raw_msg->data.info, raw_msg->source, raw_msg->time )))
+        return 0;
+
+    msg->win    = device->target;
+    msg->msg    = WM_INPUT;
+    msg->wparam = RIM_INPUT;
+    msg->lparam = 0;
+    memcpy( msg->data, &raw_msg->data, sizeof(raw_msg->data) );
+
+    queue_hardware_message( raw_msg->desktop, msg, 1 );
+    return 0;
+}
+
 /* queue a hardware message for a mouse event */
 static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
                                 unsigned int origin, struct msg_queue *sender )
 {
-    const struct rawinput_device *device;
     struct hardware_msg_data *msg_data;
+    struct rawinput_message raw_msg;
     struct message *msg;
+    struct thread *foreground;
     unsigned int i, time, flags;
     struct hw_msg_source source = { IMDT_MOUSE, origin };
     int wait = 0, x, y;
@@ -1651,23 +1696,23 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         y = desktop->cursor.y;
     }
 
-    if ((device = current->process->rawinput_mouse))
+    if ((foreground = get_foreground_thread( desktop, win )))
     {
-        if (!(msg = alloc_hardware_message( input->mouse.info, source, time ))) return 0;
-        msg_data = msg->data;
+        raw_msg.foreground = foreground;
+        raw_msg.desktop    = desktop;
+        raw_msg.source     = source;
+        raw_msg.time       = time;
 
-        msg->win       = device->target;
-        msg->msg       = WM_INPUT;
-        msg->wparam    = RIM_INPUT;
-        msg->lparam    = 0;
-
+        msg_data = &raw_msg.data;
+        msg_data->info                = input->mouse.info;
         msg_data->flags               = flags;
         msg_data->rawinput.type       = RIM_TYPEMOUSE;
         msg_data->rawinput.mouse.x    = x - desktop->cursor.x;
         msg_data->rawinput.mouse.y    = y - desktop->cursor.y;
         msg_data->rawinput.mouse.data = input->mouse.data;
 
-        queue_hardware_message( desktop, msg, 0 );
+        queue_rawinput_message( foreground->process, &raw_msg );
+        release_object( foreground );
     }
 
     for (i = 0; i < ARRAY_SIZE( messages ); i++)
@@ -1704,9 +1749,10 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
                                    unsigned int origin, struct msg_queue *sender )
 {
     struct hw_msg_source source = { IMDT_KEYBOARD, origin };
-    const struct rawinput_device *device;
     struct hardware_msg_data *msg_data;
+    struct rawinput_message raw_msg;
     struct message *msg;
+    struct thread *foreground;
     unsigned char vkey = input->kbd.vkey;
     unsigned int message_code, time;
     int wait;
@@ -1777,22 +1823,23 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         break;
     }
 
-    if ((device = current->process->rawinput_kbd))
+    if ((foreground = get_foreground_thread( desktop, win )))
     {
-        if (!(msg = alloc_hardware_message( input->kbd.info, source, time ))) return 0;
-        msg_data = msg->data;
+        raw_msg.foreground = foreground;
+        raw_msg.desktop    = desktop;
+        raw_msg.source     = source;
+        raw_msg.time       = time;
 
-        msg->win       = device->target;
-        msg->msg       = WM_INPUT;
-        msg->wparam    = RIM_INPUT;
-
+        msg_data = &raw_msg.data;
+        msg_data->info                 = input->kbd.info;
         msg_data->flags                = input->kbd.flags;
         msg_data->rawinput.type        = RIM_TYPEKEYBOARD;
         msg_data->rawinput.kbd.message = message_code;
         msg_data->rawinput.kbd.vkey    = vkey;
         msg_data->rawinput.kbd.scan    = input->kbd.scan;
 
-        queue_hardware_message( desktop, msg, 0 );
+        queue_rawinput_message( foreground->process, &raw_msg );
+        release_object( foreground );
     }
 
     if (!(msg = alloc_hardware_message( input->kbd.info, source, time ))) return 0;

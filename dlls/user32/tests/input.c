@@ -1885,7 +1885,7 @@ struct rawinput_test rawinput_tests[] =
     /* cross-process foreground tests */
     { TRUE,  TRUE,  0,               FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
     { TRUE,  TRUE,  RIDEV_INPUTSINK, FALSE,  TRUE, FALSE, /* todos: */ FALSE,  TRUE, FALSE },
-    { TRUE,  TRUE,  0,               FALSE, FALSE, FALSE, /* todos: */ FALSE,  TRUE,  TRUE },
+    { TRUE,  TRUE,  0,               FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
 
     /* multi-process rawinput tests */
     { TRUE,  TRUE,  0,               FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
