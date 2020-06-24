@@ -1290,12 +1290,12 @@ static void set_input_key_state( unsigned char *keystate, unsigned char key, int
 
 /* update the input key state for a keyboard message */
 static void update_input_key_state( struct desktop *desktop, unsigned char *keystate,
-                                    const struct message *msg )
+                                    unsigned int msg, lparam_t wparam )
 {
     unsigned char key;
     int down = 0;
 
-    switch (msg->msg)
+    switch (msg)
     {
     case WM_LBUTTONDOWN:
         down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
@@ -1319,8 +1319,8 @@ static void update_input_key_state( struct desktop *desktop, unsigned char *keys
         down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_XBUTTONUP:
-        if (msg->wparam >> 16 == XBUTTON1) set_input_key_state( keystate, VK_XBUTTON1, down );
-        else if (msg->wparam >> 16 == XBUTTON2) set_input_key_state( keystate, VK_XBUTTON2, down );
+        if (wparam >> 16 == XBUTTON1) set_input_key_state( keystate, VK_XBUTTON1, down );
+        else if (wparam >> 16 == XBUTTON2) set_input_key_state( keystate, VK_XBUTTON2, down );
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
@@ -1328,7 +1328,7 @@ static void update_input_key_state( struct desktop *desktop, unsigned char *keys
         /* fall through */
     case WM_KEYUP:
     case WM_SYSKEYUP:
-        key = (unsigned char)msg->wparam;
+        key = (unsigned char)wparam;
         set_input_key_state( keystate, key, down );
         switch(key)
         {
@@ -1382,7 +1382,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
         }
         if (clr_bit) clear_queue_bits( queue, clr_bit );
 
-        update_input_key_state( input->desktop, input->keystate, msg );
+        update_input_key_state( input->desktop, input->keystate, msg->msg, msg->wparam );
         list_remove( &msg->entry );
         free_message( msg );
     }
@@ -1501,7 +1501,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     struct thread_input *input;
     unsigned int msg_code;
 
-    update_input_key_state( desktop, desktop->keystate, msg );
+    update_input_key_state( desktop, desktop->keystate, msg->msg, msg->wparam );
     last_input_time = get_tick_count();
     if (msg->msg != WM_MOUSEMOVE) always_queue = 1;
 
@@ -1536,7 +1536,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     win = find_hardware_message_window( desktop, input, msg, &msg_code, &thread );
     if (!win || !thread)
     {
-        if (input) update_input_key_state( input->desktop, input->keystate, msg );
+        if (input) update_input_key_state( input->desktop, input->keystate, msg->msg, msg->wparam );
         free_message( msg );
         return;
     }
@@ -1973,7 +1973,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         if (!win || !win_thread)
         {
             /* no window at all, remove it */
-            update_input_key_state( input->desktop, input->keystate, msg );
+            update_input_key_state( input->desktop, input->keystate, msg->msg, msg->wparam );
             list_remove( &msg->entry );
             free_message( msg );
             continue;
@@ -1989,7 +1989,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
             else
             {
                 /* for another thread input, drop it */
-                update_input_key_state( input->desktop, input->keystate, msg );
+                update_input_key_state( input->desktop, input->keystate, msg->msg, msg->wparam );
                 list_remove( &msg->entry );
                 free_message( msg );
             }
