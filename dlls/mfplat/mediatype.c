@@ -23,6 +23,7 @@
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
+#include "dxva2api.h"
 
 #include "wine/debug.h"
 
@@ -2745,6 +2746,39 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
         format->surfaceInfo.PaletteEntries = palette_size / sizeof(*format->surfaceInfo.Palette);
         IMFMediaType_GetBlob(media_type, &MF_MT_PALETTE, (UINT8 *)format->surfaceInfo.Palette, palette_size, NULL);
     }
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFConvertColorInfoToDXVA (mfplat.@)
+ */
+HRESULT WINAPI MFConvertColorInfoToDXVA(DWORD *dxva_info, const MFVIDEOFORMAT *format)
+{
+    struct
+    {
+        UINT SampleFormat           : 8;
+        UINT VideoChromaSubsampling : 4;
+        UINT NominalRange           : 3;
+        UINT VideoTransferMatrix    : 3;
+        UINT VideoLighting          : 4;
+        UINT VideoPrimaries         : 5;
+        UINT VideoTransferFunction  : 5;
+    } *dxva_format = (void *)dxva_info;
+
+    TRACE("%p, %p.\n", dxva_info, format);
+
+    if (format->videoInfo.InterlaceMode == MFVideoInterlace_MixedInterlaceOrProgressive)
+        dxva_format->SampleFormat = DXVA2_SampleFieldInterleavedEvenFirst;
+    else
+        dxva_format->SampleFormat = format->videoInfo.InterlaceMode;
+
+    dxva_format->VideoChromaSubsampling = format->videoInfo.SourceChromaSubsampling;
+    dxva_format->NominalRange = format->videoInfo.NominalRange;
+    dxva_format->VideoTransferMatrix = format->videoInfo.TransferMatrix;
+    dxva_format->VideoLighting = format->videoInfo.SourceLighting;
+    dxva_format->VideoPrimaries = format->videoInfo.ColorPrimaries;
+    dxva_format->VideoTransferFunction = format->videoInfo.TransferFunction;
 
     return S_OK;
 }

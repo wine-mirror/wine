@@ -34,7 +34,7 @@
 @ stdcall MFCompareFullToPartialMediaType(ptr ptr)
 @ stub MFCompareSockaddrAddresses
 @ stub MFConvertColorInfoFromDXVA
-@ stub MFConvertColorInfoToDXVA
+@ stdcall MFConvertColorInfoToDXVA(ptr ptr)
 @ stub MFConvertFromFP16Array
 @ stub MFConvertToFP16Array
 @ stdcall MFCopyImage(ptr long ptr long long long)
