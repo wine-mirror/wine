@@ -221,6 +221,23 @@ enum socket_state
     SOCKET_STATE_CLOSED   = 2,
 };
 
+/* rfc6455 */
+enum socket_opcode
+{
+    SOCKET_OPCODE_CONTINUE  = 0x00,
+    SOCKET_OPCODE_TEXT      = 0x01,
+    SOCKET_OPCODE_BINARY    = 0x02,
+    SOCKET_OPCODE_RESERVED3 = 0x03,
+    SOCKET_OPCODE_RESERVED4 = 0x04,
+    SOCKET_OPCODE_RESERVED5 = 0x05,
+    SOCKET_OPCODE_RESERVED6 = 0x06,
+    SOCKET_OPCODE_RESERVED7 = 0x07,
+    SOCKET_OPCODE_CLOSE     = 0x08,
+    SOCKET_OPCODE_PING      = 0x09,
+    SOCKET_OPCODE_PONG      = 0x0a,
+    SOCKET_OPCODE_INVALID   = 0xff,
+};
+
 struct socket
 {
     struct object_header hdr;
@@ -228,7 +245,7 @@ struct socket
     enum socket_state state;
     struct queue send_q;
     struct queue recv_q;
-    WINHTTP_WEB_SOCKET_BUFFER_TYPE buf_type;
+    enum socket_opcode opcode;
     DWORD read_size;
     USHORT status;
     char reason[128];

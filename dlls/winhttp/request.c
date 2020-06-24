@@ -3156,33 +3156,16 @@ static DWORD send_bytes( struct netconn *netconn, char *bytes, int len )
     return (count == len) ? ERROR_SUCCESS : ERROR_INTERNAL_ERROR;
 }
 
-/* rfc6455 */
-enum opcode
-{
-    OPCODE_CONTINUE  = 0x00,
-    OPCODE_TEXT      = 0x01,
-    OPCODE_BINARY    = 0x02,
-    OPCODE_RESERVED3 = 0x03,
-    OPCODE_RESERVED4 = 0x04,
-    OPCODE_RESERVED5 = 0x05,
-    OPCODE_RESERVED6 = 0x06,
-    OPCODE_RESERVED7 = 0x07,
-    OPCODE_CLOSE     = 0x08,
-    OPCODE_PING      = 0x09,
-    OPCODE_PONG      = 0x0a,
-    OPCODE_INVALID   = 0xff,
-};
-
-static enum opcode map_buffer_type( WINHTTP_WEB_SOCKET_BUFFER_TYPE type )
+static enum socket_opcode map_buffer_type( WINHTTP_WEB_SOCKET_BUFFER_TYPE type )
 {
     switch (type)
     {
-    case WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE:   return OPCODE_TEXT;
-    case WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE: return OPCODE_BINARY;
-    case WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE:          return OPCODE_CLOSE;
+    case WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE:   return SOCKET_OPCODE_TEXT;
+    case WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE: return SOCKET_OPCODE_BINARY;
+    case WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE:          return SOCKET_OPCODE_CLOSE;
     default:
         FIXME("buffer type %u not supported\n", type);
-        return OPCODE_INVALID;
+        return SOCKET_OPCODE_INVALID;
     }
 }
 
@@ -3194,10 +3177,10 @@ static DWORD send_frame( struct netconn *netconn, WINHTTP_WEB_SOCKET_BUFFER_TYPE
                          DWORD buflen, BOOL final )
 {
     DWORD i = 0, j, ret, offset = 2, len = buflen;
-    enum opcode opcode = map_buffer_type( type );
+    enum socket_opcode opcode = map_buffer_type( type );
     char hdr[14], byte, *mask;
 
-    if (opcode == OPCODE_CLOSE) len += sizeof(status);
+    if (opcode == SOCKET_OPCODE_CLOSE) len += sizeof(status);
 
     hdr[0] = final ? (char)FIN_BIT : 0;
     hdr[0] |= opcode;
@@ -3224,7 +3207,7 @@ static DWORD send_frame( struct netconn *netconn, WINHTTP_WEB_SOCKET_BUFFER_TYPE
     RtlGenRandom( mask, 4 );
     if ((ret = send_bytes( netconn, hdr, offset + 4 ))) return ret;
 
-    if (opcode == OPCODE_CLOSE) /* prepend status code */
+    if (opcode == SOCKET_OPCODE_CLOSE) /* prepend status code */
     {
         byte = (status >> 8) ^ mask[i++ % 4];
         if ((ret = send_bytes( netconn, &byte, 1 ))) return ret;
@@ -3331,34 +3314,39 @@ static DWORD receive_bytes( struct netconn *netconn, char *buf, DWORD len, DWORD
     return ERROR_SUCCESS;
 }
 
-static WINHTTP_WEB_SOCKET_BUFFER_TYPE map_opcode( enum opcode opcode )
+static WINHTTP_WEB_SOCKET_BUFFER_TYPE map_opcode( enum socket_opcode opcode, BOOL fragment )
 {
     switch (opcode)
     {
-    case OPCODE_TEXT:   return WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
-    case OPCODE_BINARY: return WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE;
-    case OPCODE_CLOSE:  return WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE;
+    case SOCKET_OPCODE_TEXT:
+        if (fragment) return WINHTTP_WEB_SOCKET_UTF8_FRAGMENT_BUFFER_TYPE;
+        return WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
+
+    case SOCKET_OPCODE_BINARY:
+        if (fragment) return WINHTTP_WEB_SOCKET_BINARY_FRAGMENT_BUFFER_TYPE;
+        return WINHTTP_WEB_SOCKET_BINARY_MESSAGE_BUFFER_TYPE;
+
+    case SOCKET_OPCODE_CLOSE:
+        return WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE;
+
     default:
-        ERR("opcode %u not handled\n", opcode);
+        FIXME("opcode %u not handled\n", opcode);
         return ~0u;
     }
 }
 
-static DWORD receive_frame( struct netconn *netconn, DWORD *ret_len, WINHTTP_WEB_SOCKET_BUFFER_TYPE *ret_type )
+static DWORD receive_frame( struct netconn *netconn, DWORD *ret_len, enum socket_opcode *opcode )
 {
-    WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     DWORD ret, len, count;
-    enum opcode opcode;
     char hdr[2];
 
     if ((ret = receive_bytes( netconn, hdr, sizeof(hdr), &count ))) return ret;
-    if (count != sizeof(hdr) || (hdr[0] & RESERVED_BIT) || (hdr[1] & MASK_BIT))
+    if (count != sizeof(hdr) || (hdr[0] & RESERVED_BIT) || (hdr[1] & MASK_BIT) ||
+        (map_opcode( hdr[0] & 0xf, FALSE ) == ~0u))
     {
         return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
     }
-
-    opcode = hdr[0] & 0xf;
-    type = map_opcode( opcode );
+    *opcode = hdr[0] & 0xf;
 
     len = hdr[1] & ~MASK_BIT;
     if (len == 126)
@@ -3378,7 +3366,6 @@ static DWORD receive_frame( struct netconn *netconn, DWORD *ret_len, WINHTTP_WEB
     }
 
     *ret_len = len;
-    *ret_type = type;
     return ERROR_SUCCESS;
 }
 
@@ -3387,7 +3374,7 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
 {
     DWORD count, ret = ERROR_SUCCESS;
 
-    if (!socket->read_size) ret = receive_frame( socket->request->netconn, &socket->read_size, &socket->buf_type );
+    if (!socket->read_size) ret = receive_frame( socket->request->netconn, &socket->read_size, &socket->opcode );
     if (!ret) ret = receive_bytes( socket->request->netconn, buf, min(len, socket->read_size), &count );
     if (!ret)
     {
@@ -3395,7 +3382,7 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
         if (!async)
         {
             *ret_len = count;
-            *ret_type = socket->buf_type;
+            *ret_type = map_opcode( socket->opcode, socket->read_size != 0 );
         }
     }
 
@@ -3405,7 +3392,7 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
         {
             WINHTTP_WEB_SOCKET_STATUS status;
             status.dwBytesTransferred = count;
-            status.eBufferType        = socket->buf_type;
+            status.eBufferType        = map_opcode( socket->opcode, socket->read_size != 0 );
             send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_READ_COMPLETE, &status, sizeof(status) );
         }
         else
@@ -3558,8 +3545,8 @@ static DWORD socket_close( struct socket *socket, USHORT status, const void *rea
         socket->state = SOCKET_STATE_SHUTDOWN;
     }
 
-    if ((ret = receive_frame( netconn, &count, &socket->buf_type ))) goto done;
-    if (socket->buf_type != WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE || (count && count > sizeof(socket->reason)))
+    if ((ret = receive_frame( netconn, &count, &socket->opcode ))) goto done;
+    if (socket->opcode != SOCKET_OPCODE_CLOSE || (count && count > sizeof(socket->reason)))
     {
         ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
         goto done;
