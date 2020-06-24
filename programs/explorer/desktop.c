@@ -732,7 +732,7 @@ static const WCHAR *get_default_desktop_name(void)
     /* @@ Wine registry key: HKCU\Software\Wine\Explorer */
     if (!RegOpenKeyW( HKEY_CURRENT_USER, explorer_keyW, &hkey ))
     {
-        if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size )) ret = buffer;
+        if (!RegQueryValueExW( hkey, desktopW, 0, NULL, (LPBYTE)buffer, &size ) && *buffer) ret = buffer;
         RegCloseKey( hkey );
     }
     return ret;
@@ -974,7 +974,7 @@ void manage_desktop( WCHAR *arg )
 
     /* parse the desktop option */
     /* the option is of the form /desktop=name[,widthxheight[,driver]] */
-    if (*arg == '=' || *arg == ',')
+    if ((arg[0] == '=' || arg[0] == ',') && arg[1] && arg[1] != ',')
     {
         arg++;
         name = arg;

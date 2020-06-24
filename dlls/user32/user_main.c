@@ -196,7 +196,8 @@ static const WCHAR *get_default_desktop(void)
             len = sizeof(buffer);
             if (!RegQueryValueExW( appkey, desktopW, 0, NULL, (LPBYTE)buffer, &len )) ret = buffer;
             RegCloseKey( appkey );
-            if (ret) return ret;
+            if (ret && *ret) return ret;
+            ret = NULL;
         }
     }
 
@@ -209,7 +210,7 @@ static const WCHAR *get_default_desktop(void)
         len = sizeof(buffer);
         if (!RegQueryValueExW( appkey, desktopW, 0, NULL, (LPBYTE)buffer, &len )) ret = buffer;
         RegCloseKey( appkey );
-        if (ret) return ret;
+        if (ret && *ret) return ret;
     }
     return defaultW;
 }
