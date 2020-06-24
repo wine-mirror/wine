@@ -296,9 +296,7 @@ static void test_handles(void)
 
     SetLastError( 0xdeadbeef );
     d2 = CreateDesktopA( "", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
-    todo_wine
     ok( !d2, "create empty desktop succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );

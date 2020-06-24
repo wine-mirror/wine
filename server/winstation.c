@@ -513,6 +513,11 @@ DECL_HANDLER(create_desktop)
     struct unicode_str name = get_req_unicode_str();
 
     reply->handle = 0;
+    if (!name.len)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
     if ((winstation = get_process_winstation( current->process, WINSTA_CREATEDESKTOP )))
     {
         if ((desktop = create_desktop( &name, req->attributes, req->flags, winstation )))
