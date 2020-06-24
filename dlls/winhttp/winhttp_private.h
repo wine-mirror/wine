@@ -227,6 +227,9 @@ struct socket
     struct request *request;
     enum socket_state state;
     struct queue send_q;
+    struct queue recv_q;
+    WINHTTP_WEB_SOCKET_BUFFER_TYPE buf_type;
+    DWORD read_size;
 };
 
 struct task_header
@@ -279,6 +282,13 @@ struct socket_send
     struct task_header hdr;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     const void *buf;
+    DWORD len;
+};
+
+struct socket_receive
+{
+    struct task_header hdr;
+    void *buf;
     DWORD len;
 };
 
