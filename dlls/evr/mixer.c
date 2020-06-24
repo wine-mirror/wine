@@ -21,6 +21,7 @@
 #include "wine/debug.h"
 #include "evr.h"
 #include "d3d9.h"
+#include "dxva2api.h"
 #include "mfapi.h"
 #include "mferror.h"
 
@@ -47,6 +48,9 @@ struct video_mixer
     struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
     unsigned int input_ids[MAX_MIXER_INPUT_STREAMS];
     unsigned int input_count;
+
+    IDirect3DDeviceManager9 *device_manager;
+
     CRITICAL_SECTION cs;
 };
 
@@ -151,6 +155,8 @@ static ULONG WINAPI video_mixer_transform_Release(IMFTransform *iface)
             if (mixer->inputs[i].attributes)
                 IMFAttributes_Release(mixer->inputs[i].attributes);
         }
+        if (mixer->device_manager)
+            IDirect3DDeviceManager9_Release(mixer->device_manager);
         DeleteCriticalSection(&mixer->cs);
         free(mixer);
     }
@@ -444,9 +450,32 @@ static HRESULT WINAPI video_mixer_transform_ProcessEvent(IMFTransform *iface, DW
 
 static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("%p, %u, %#lx.\n", iface, message, param);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %#lx.\n", iface, message, param);
+
+    switch (message)
+    {
+        case MFT_MESSAGE_SET_D3D_MANAGER:
+
+            EnterCriticalSection(&mixer->cs);
+
+            if (mixer->device_manager)
+                IDirect3DDeviceManager9_Release(mixer->device_manager);
+            mixer->device_manager = NULL;
+            if (param)
+                hr = IUnknown_QueryInterface((IUnknown *)param, &IID_IDirect3DDeviceManager9, (void **)&mixer->device_manager);
+
+            LeaveCriticalSection(&mixer->cs);
+
+            break;
+        default:
+            WARN("Message not handled %d.\n", message);
+            hr = E_NOTIMPL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
