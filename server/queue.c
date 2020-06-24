@@ -384,7 +384,14 @@ static int update_desktop_cursor_pos( struct desktop *desktop, int x, int y )
 static void set_cursor_pos( struct desktop *desktop, int x, int y )
 {
     static const struct hw_msg_source source = { IMDT_UNAVAILABLE, IMO_SYSTEM };
+    const struct rawinput_device *device;
     struct message *msg;
+
+    if ((device = current->process->rawinput_mouse) && (device->flags & RIDEV_NOLEGACY))
+    {
+        update_desktop_cursor_pos( desktop, x, y );
+        return;
+    }
 
     if (!(msg = alloc_hardware_message( 0, source, get_tick_count() ))) return;
 
@@ -1352,6 +1359,30 @@ static void update_input_key_state( struct desktop *desktop, unsigned char *keys
     }
 }
 
+/* update the desktop key state according to a mouse message flags */
+static void update_desktop_mouse_state( struct desktop *desktop, unsigned int flags,
+                                        int x, int y, lparam_t wparam )
+{
+    if (flags & MOUSEEVENTF_MOVE)
+        update_desktop_cursor_pos( desktop, x, y );
+    if (flags & MOUSEEVENTF_LEFTDOWN)
+        update_input_key_state( desktop, desktop->keystate, WM_LBUTTONDOWN, wparam );
+    if (flags & MOUSEEVENTF_LEFTUP)
+        update_input_key_state( desktop, desktop->keystate, WM_LBUTTONUP, wparam );
+    if (flags & MOUSEEVENTF_RIGHTDOWN)
+        update_input_key_state( desktop, desktop->keystate, WM_RBUTTONDOWN, wparam );
+    if (flags & MOUSEEVENTF_RIGHTUP)
+        update_input_key_state( desktop, desktop->keystate, WM_RBUTTONUP, wparam );
+    if (flags & MOUSEEVENTF_MIDDLEDOWN)
+        update_input_key_state( desktop, desktop->keystate, WM_MBUTTONDOWN, wparam );
+    if (flags & MOUSEEVENTF_MIDDLEUP)
+        update_input_key_state( desktop, desktop->keystate, WM_MBUTTONUP, wparam );
+    if (flags & MOUSEEVENTF_XDOWN)
+        update_input_key_state( desktop, desktop->keystate, WM_XBUTTONDOWN, wparam );
+    if (flags & MOUSEEVENTF_XUP)
+        update_input_key_state( desktop, desktop->keystate, WM_XBUTTONUP, wparam );
+}
+
 /* release the hardware message currently being processed by the given thread */
 static void release_hardware_message( struct msg_queue *queue, unsigned int hw_id,
                                       int remove )
@@ -1650,6 +1681,7 @@ static int queue_rawinput_message( struct process* process, void *arg )
 static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
                                 unsigned int origin, struct msg_queue *sender )
 {
+    const struct rawinput_device *device;
     struct hardware_msg_data *msg_data;
     struct rawinput_message raw_msg;
     struct message *msg;
@@ -1721,6 +1753,12 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         release_object( foreground );
     }
 
+    if ((device = current->process->rawinput_mouse) && (device->flags & RIDEV_NOLEGACY))
+    {
+        update_desktop_mouse_state( desktop, flags, x, y, input->mouse.data << 16 );
+        return 0;
+    }
+
     for (i = 0; i < ARRAY_SIZE( messages ); i++)
     {
         if (!messages[i]) continue;
@@ -1755,6 +1793,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
                                    unsigned int origin, struct msg_queue *sender )
 {
     struct hw_msg_source source = { IMDT_KEYBOARD, origin };
+    const struct rawinput_device *device;
     struct hardware_msg_data *msg_data;
     struct rawinput_message raw_msg;
     struct message *msg;
@@ -1846,6 +1885,12 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
         queue_rawinput_message( foreground->process, &raw_msg );
         release_object( foreground );
+    }
+
+    if ((device = current->process->rawinput_kbd) && (device->flags & RIDEV_NOLEGACY))
+    {
+        update_input_key_state( desktop, desktop->keystate, message_code, vkey );
+        return 0;
     }
 
     if (!(msg = alloc_hardware_message( input->kbd.info, source, time ))) return 0;
