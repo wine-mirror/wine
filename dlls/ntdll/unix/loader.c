@@ -120,13 +120,13 @@ static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;
-static const char **dll_paths;
 static SIZE_T dll_path_maxlen;
 
 const char *home_dir = NULL;
 const char *data_dir = NULL;
 const char *build_dir = NULL;
 const char *config_dir = NULL;
+const char **dll_paths = NULL;
 const char *user_name = NULL;
 HMODULE ntdll_module = NULL;
 
@@ -397,31 +397,6 @@ void CDECL get_host_version( const char **sysname, const char **release )
     if (sysname) *sysname = "";
     if (release) *release = "";
 #endif
-}
-
-
-/*************************************************************************
- *		get_paths
- *
- * Return the various configuration paths.
- */
-static void CDECL get_paths( const char **builddir, const char **datadir, const char **configdir )
-{
-    *builddir  = build_dir;
-    *datadir   = data_dir;
-    *configdir = config_dir;
-}
-
-
-/*************************************************************************
- *		get_dll_path
- *
- * Return the various configuration paths.
- */
-static void CDECL get_dll_path( const char ***paths, SIZE_T *maxlen )
-{
-    *paths = dll_paths;
-    *maxlen = dll_path_maxlen;
 }
 
 
@@ -1491,9 +1466,8 @@ static struct unix_funcs unix_funcs =
     fast_RtlSleepConditionVariableCS,
     fast_RtlWakeConditionVariable,
     get_initial_environment,
+    get_dynamic_environment,
     get_initial_directory,
-    get_paths,
-    get_dll_path,
     get_unix_codepage,
     get_locales,
     get_version,

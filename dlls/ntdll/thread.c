@@ -136,7 +136,6 @@ TEB *thread_init( SIZE_T *info_size )
      */
     peb->SessionId = 1;
 
-    unix_funcs->get_paths( &build_dir, &data_dir, &config_dir );
     NtQueryInformationProcess( GetCurrentProcess(), ProcessWow64Information, &val, sizeof(val), NULL );
     is_wow64 = !!val;
     return teb;

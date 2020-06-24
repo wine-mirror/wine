@@ -61,24 +61,6 @@ static inline SIZE_T get_env_length( const WCHAR *env )
 
 
 /***********************************************************************
- *           is_special_env_var
- *
- * Check if an environment variable needs to be handled specially when
- * passed through the Unix environment (i.e. prefixed with "WINE").
- */
-static inline BOOL is_special_env_var( const char *var )
-{
-    return (!strncmp( var, "PATH=", sizeof("PATH=")-1 ) ||
-            !strncmp( var, "PWD=", sizeof("PWD=")-1 ) ||
-            !strncmp( var, "HOME=", sizeof("HOME=")-1 ) ||
-            !strncmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
-            !strncmp( var, "TMP=", sizeof("TMP=")-1 ) ||
-            !strncmp( var, "QT_", sizeof("QT_")-1 ) ||
-            !strncmp( var, "VK_", sizeof("VK_")-1 ));
-}
-
-
-/***********************************************************************
  *           set_env_var
  */
 static void set_env_var( WCHAR **env, const WCHAR *name, const WCHAR *val )
@@ -86,8 +68,12 @@ static void set_env_var( WCHAR **env, const WCHAR *name, const WCHAR *val )
     UNICODE_STRING nameW, valW;
 
     RtlInitUnicodeString( &nameW, name );
-    RtlInitUnicodeString( &valW, val );
-    RtlSetEnvironmentVariable( env, &nameW, &valW );
+    if (val)
+    {
+        RtlInitUnicodeString( &valW, val );
+        RtlSetEnvironmentVariable( env, &nameW, &valW );
+    }
+    else RtlSetEnvironmentVariable( env, &nameW, NULL );
 }
 
 
@@ -322,24 +308,6 @@ static void set_additional_environment( WCHAR **env )
 }
 
 
-/* set an environment variable for one of the wine path variables */
-static void set_wine_path_variable( WCHAR **env, const WCHAR *name, const char *unix_path )
-{
-    UNICODE_STRING nt_name, var_name;
-    ANSI_STRING unix_name;
-
-    RtlInitUnicodeString( &var_name, name );
-    if (unix_path)
-    {
-        RtlInitAnsiString( &unix_name, unix_path );
-        if (wine_unix_to_nt_file_name( &unix_name, &nt_name )) return;
-        RtlSetEnvironmentVariable( env, &var_name, &nt_name );
-        RtlFreeUnicodeString( &nt_name );
-    }
-    else RtlSetEnvironmentVariable( env, &var_name, NULL );
-}
-
-
 /***********************************************************************
  *           set_wow64_environment
  *
@@ -366,12 +334,6 @@ static void set_wow64_environment( WCHAR **env )
     static const WCHAR commonfilesW[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s',0};
     static const WCHAR commonfiles86W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s','(','x','8','6',')',0};
     static const WCHAR commonw6432W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','W','6','4','3','2',0};
-    static const WCHAR winedlldirW[] = {'W','I','N','E','D','L','L','D','I','R','%','u',0};
-    static const WCHAR winehomedirW[] = {'W','I','N','E','H','O','M','E','D','I','R',0};
-    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
-    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
-    static const WCHAR wineusernameW[] = {'W','I','N','E','U','S','E','R','N','A','M','E',0};
-    static const WCHAR wineconfigdirW[] = {'W','I','N','E','C','O','N','F','I','G','D','I','R',0};
 
     WCHAR buf[256];
     UNICODE_STRING arch_strW = { sizeof(archW) - sizeof(WCHAR), sizeof(archW), archW };
@@ -379,47 +341,23 @@ static void set_wow64_environment( WCHAR **env )
     UNICODE_STRING valW = { 0, sizeof(buf), buf };
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    const char *p;
-    const char *home = getenv( "HOME" );
-    const char *name = getenv( "USER" );
-    const char **dll_paths;
-    SIZE_T dll_path_maxlen;
-    WCHAR *val;
     HANDLE hkey;
-    DWORD i;
+    SIZE_T size = 1024;
+    WCHAR *ptr, *val, *p;
 
-    if (!home || !name)
+    for (;;)
     {
-        struct passwd *pwd = getpwuid( getuid() );
-        if (pwd)
-        {
-            if (!home) home = pwd->pw_dir;
-            if (!name) name = pwd->pw_name;
-        }
+        if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) break;
+        if (!unix_funcs->get_dynamic_environment( ptr, &size )) break;
+        RtlFreeHeap( GetProcessHeap(), 0, ptr );
     }
-
-    /* set the Wine paths */
-
-    set_wine_path_variable( env, winedatadirW, data_dir );
-    set_wine_path_variable( env, winehomedirW, home );
-    set_wine_path_variable( env, winebuilddirW, build_dir );
-    set_wine_path_variable( env, wineconfigdirW, config_dir );
-    unix_funcs->get_dll_path( &dll_paths, &dll_path_maxlen );
-    for (i = 0; dll_paths[i]; i++)
+    for (p = ptr; *p; p += wcslen(p) + 1)
     {
-        NTDLL_swprintf( buf, winedlldirW, i );
-        set_wine_path_variable( env, buf, dll_paths[i] );
+        if ((val = wcschr( p, '=' ))) *val++ = 0;
+        set_env_var( env, p, val );
+        if (val) p = val;
     }
-    NTDLL_swprintf( buf, winedlldirW, i );
-    set_wine_path_variable( env, buf, NULL );
-
-    /* set user name */
-
-    if (!name) name = "wine";
-    if ((p = strrchr( name, '/' ))) name = p + 1;
-    if ((p = strrchr( name, '\\' ))) name = p + 1;
-    ntdll_umbstowcs( name, strlen(name) + 1, buf, ARRAY_SIZE(buf) );
-    set_env_var( env, wineusernameW, buf );
+    RtlFreeHeap( GetProcessHeap(), 0, ptr );
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
@@ -497,73 +435,6 @@ static WCHAR *build_initial_environment( WCHAR **wargv[] )
     first_prefix_start = set_registry_environment( &ptr, TRUE );
     set_additional_environment( &ptr );
     return ptr;
-}
-
-
-/***********************************************************************
- *           build_envp
- *
- * Build the environment of a new child process.
- */
-char **build_envp( const WCHAR *envW )
-{
-    static const char * const unix_vars[] = { "PATH", "TEMP", "TMP", "HOME" };
-    char **envp;
-    char *env, *p;
-    int count = 1, length, lenW;
-    unsigned int i;
-
-    lenW = get_env_length( envW );
-    if (!(env = RtlAllocateHeap( GetProcessHeap(), 0, lenW * 3 ))) return NULL;
-    length = ntdll_wcstoumbs( envW, lenW, env, lenW * 3, FALSE );
-
-    for (p = env; *p; p += strlen(p) + 1, count++)
-        if (is_special_env_var( p )) length += 4; /* prefix it with "WINE" */
-
-    for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
-    {
-        if (!(p = getenv(unix_vars[i]))) continue;
-        length += strlen(unix_vars[i]) + strlen(p) + 2;
-        count++;
-    }
-
-    if ((envp = RtlAllocateHeap( GetProcessHeap(), 0, count * sizeof(*envp) + length )))
-    {
-        char **envptr = envp;
-        char *dst = (char *)(envp + count);
-
-        /* some variables must not be modified, so we get them directly from the unix env */
-        for (i = 0; i < ARRAY_SIZE( unix_vars ); i++)
-        {
-            if (!(p = getenv( unix_vars[i] ))) continue;
-            *envptr++ = strcpy( dst, unix_vars[i] );
-            strcat( dst, "=" );
-            strcat( dst, p );
-            dst += strlen(dst) + 1;
-        }
-
-        /* now put the Windows environment strings */
-        for (p = env; *p; p += strlen(p) + 1)
-        {
-            if (*p == '=') continue;  /* skip drive curdirs, this crashes some unix apps */
-            if (!strncmp( p, "WINEPRELOADRESERVE=", sizeof("WINEPRELOADRESERVE=")-1 )) continue;
-            if (!strncmp( p, "WINELOADERNOEXEC=", sizeof("WINELOADERNOEXEC=")-1 )) continue;
-            if (!strncmp( p, "WINESERVERSOCKET=", sizeof("WINESERVERSOCKET=")-1 )) continue;
-            if (is_special_env_var( p ))  /* prefix it with "WINE" */
-            {
-                *envptr++ = strcpy( dst, "WINE" );
-                strcat( dst, p );
-            }
-            else
-            {
-                *envptr++ = strcpy( dst, p );
-            }
-            dst += strlen(dst) + 1;
-        }
-        *envptr = 0;
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, env );
-    return envp;
 }
 
 

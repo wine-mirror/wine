@@ -841,6 +841,88 @@ NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *siz
 }
 
 
+/* append a variable to the environment */
+static void append_env( WCHAR *env, SIZE_T *pos, const char *name, const WCHAR *value )
+{
+    SIZE_T i = *pos;
+
+    while (*name) env[i++] = (unsigned char)*name++;
+    if (value)
+    {
+        env[i++] = '=';
+        while (*value) env[i++] = *value++;
+    }
+    env[i++] = 0;
+    *pos = i;
+}
+
+/* set an environment variable for one of the wine path variables */
+static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char *path )
+{
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+
+    if (!path) append_env( env, pos, name, NULL );
+    else
+    {
+        RtlInitAnsiString( &unix_name, path );
+        if (unix_to_nt_file_name( &unix_name, &nt_name )) return;
+        append_env( env, pos, name, nt_name.Buffer );
+        RtlFreeUnicodeString( &nt_name );
+    }
+}
+
+
+/*************************************************************************
+ *		get_dynamic_environment
+ *
+ * Get the environment variables that can differ between processes.
+ */
+NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
+{
+    SIZE_T alloc, pos = 0;
+    WCHAR *buffer;
+    DWORD i;
+    WCHAR buf[256];
+    char dlldir[22];
+    NTSTATUS status = STATUS_SUCCESS;
+
+    alloc = 20 * 6;  /* 6 variable names */
+    if (data_dir) alloc += strlen( data_dir ) + 9;
+    if (home_dir) alloc += strlen( home_dir ) + 9;
+    if (build_dir) alloc += strlen( build_dir ) + 9;
+    if (config_dir) alloc += strlen( config_dir ) + 9;
+    if (user_name) alloc += strlen( user_name );
+    for (i = 0; dll_paths[i]; i++) alloc += 20 + strlen( dll_paths[i] ) + 9;
+
+    if (!(buffer = malloc( alloc * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+    pos = 0;
+    add_path_var( buffer, &pos, "WINEDATADIR", data_dir );
+    add_path_var( buffer, &pos, "WINEHOMEDIR", home_dir );
+    add_path_var( buffer, &pos, "WINEBUILDDIR", build_dir );
+    add_path_var( buffer, &pos, "WINECONFIGDIR", config_dir );
+    for (i = 0; dll_paths[i]; i++)
+    {
+        sprintf( dlldir, "WINEDLLDIR%u", i );
+        add_path_var( buffer, &pos, dlldir, dll_paths[i] );
+    }
+    sprintf( dlldir, "WINEDLLDIR%u", i );
+    append_env( buffer, &pos, dlldir, NULL );
+    ntdll_umbstowcs( user_name, strlen(user_name) + 1, buf, ARRAY_SIZE(buf) );
+    append_env( buffer, &pos, "WINEUSERNAME", buf );
+    assert( pos <= alloc );
+
+    if (pos < *size)
+    {
+        memcpy( env, buffer, pos * sizeof(WCHAR) );
+        env[pos] = 0;
+    }
+    else status = STATUS_BUFFER_TOO_SMALL;
+    *size = pos + 1;
+    return status;
+}
+
+
 /*************************************************************************
  *		get_initial_directory
  *

@@ -96,6 +96,7 @@ int  CDECL mmap_is_in_reserved_area( void *addr, SIZE_T size ) DECLSPEC_HIDDEN;
 int  CDECL mmap_enum_reserved_areas( int (CDECL *enum_func)(void *base, SIZE_T size, void *arg), void *arg,
                                      int top_down ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
 extern void CDECL get_initial_directory( UNICODE_STRING *dir ) DECLSPEC_HIDDEN;
 extern void CDECL get_unix_codepage( CPTABLEINFO *table ) DECLSPEC_HIDDEN;
 extern void CDECL get_locales( WCHAR *sys, WCHAR *user ) DECLSPEC_HIDDEN;
@@ -129,6 +130,7 @@ extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
 extern const char *user_name DECLSPEC_HIDDEN;
+extern const char **dll_paths DECLSPEC_HIDDEN;
 extern HMODULE ntdll_module DECLSPEC_HIDDEN;
 extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;

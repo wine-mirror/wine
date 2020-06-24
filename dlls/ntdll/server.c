@@ -36,10 +36,6 @@
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
-const char *build_dir = NULL;
-const char *data_dir = NULL;
-const char *config_dir = NULL;
-
 BOOL is_wow64 = FALSE;
 
 /***********************************************************************
