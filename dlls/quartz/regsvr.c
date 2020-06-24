@@ -189,7 +189,7 @@ static struct regsvr_filter const filter_list[] = {
     {   &CLSID_VideoRendererDefault,
         &CLSID_LegacyAmFilterCategory,
         L"Video Renderer",
-        0x800000,
+        0x800001,
         {   {   REG_PINFLAG_B_RENDERER,
                 {   { &MEDIATYPE_Video, &GUID_NULL },
                     { NULL }
