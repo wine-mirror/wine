@@ -46,20 +46,12 @@ struct _WSK_CLIENT
 
 struct listen_socket_callback_context
 {
+    SOCKADDR *local_address;
     SOCKADDR *remote_address;
     const void *client_dispatch;
     void *client_context;
     char addr_buffer[2 * (sizeof(SOCKADDR) + 16)];
     SOCKET acceptor;
-};
-
-struct connect_socket_callback_context
-{
-    struct wsk_socket_internal *socket;
-    SOCKADDR *remote_address;
-    const void *client_dispatch;
-    void *client_context;
-    IRP *pending_irp;
 };
 
 #define MAX_PENDING_IO 10
@@ -96,6 +88,7 @@ struct wsk_socket_internal
 };
 
 static LPFN_ACCEPTEX pAcceptEx;
+static LPFN_GETACCEPTEXSOCKADDRS pGetAcceptExSockaddrs;
 static LPFN_CONNECTEX pConnectEx;
 
 static const WSK_PROVIDER_CONNECTION_DISPATCH wsk_provider_connection_dispatch;
@@ -319,6 +312,8 @@ static void create_accept_socket(struct wsk_socket_internal *socket, struct wsk_
 {
     struct listen_socket_callback_context *context
             = &socket->callback_context.listen_socket_callback_context;
+    INT local_address_len, remote_address_len;
+    SOCKADDR *local_address, *remote_address;
     struct wsk_socket_internal *accept_socket;
 
     if (!(accept_socket = heap_alloc_zero(sizeof(*accept_socket))))
@@ -338,7 +333,17 @@ static void create_accept_socket(struct wsk_socket_internal *socket, struct wsk_
         accept_socket->protocol = socket->protocol;
         accept_socket->flags = WSK_FLAG_CONNECTION_SOCKET;
         socket_init(accept_socket);
-        /* TODO: fill local and remote addresses. */
+
+        pGetAcceptExSockaddrs(context->addr_buffer, 0, sizeof(SOCKADDR) + 16, sizeof(SOCKADDR) + 16,
+                &local_address, &local_address_len, &remote_address, &remote_address_len);
+
+        if (context->local_address)
+            memcpy(context->local_address, local_address,
+                    min(sizeof(*context->local_address), local_address_len));
+
+        if (context->remote_address)
+            memcpy(context->remote_address, remote_address,
+                    min(sizeof(*context->remote_address), remote_address_len));
 
         dispatch_pending_io(io, STATUS_SUCCESS, (ULONG_PTR)&accept_socket->wsk_socket);
     }
@@ -373,6 +378,7 @@ static void WINAPI accept_callback(TP_CALLBACK_INSTANCE *instance, void *socket_
 
 static BOOL WINAPI init_accept_functions(INIT_ONCE *once, void *param, void **context)
 {
+    GUID get_acceptex_guid = WSAID_GETACCEPTEXSOCKADDRS;
     GUID acceptex_guid = WSAID_ACCEPTEX;
     SOCKET s = (SOCKET)param;
     DWORD size;
@@ -383,6 +389,14 @@ static BOOL WINAPI init_accept_functions(INIT_ONCE *once, void *param, void **co
         ERR("Could not get AcceptEx address, error %u.\n", WSAGetLastError());
         return FALSE;
     }
+
+    if (WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &get_acceptex_guid, sizeof(get_acceptex_guid),
+            &pGetAcceptExSockaddrs, sizeof(pGetAcceptExSockaddrs), &size, NULL, NULL))
+    {
+        ERR("Could not get AcceptEx address, error %u.\n", WSAGetLastError());
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -430,6 +444,7 @@ static NTSTATUS WINAPI wsk_accept(WSK_SOCKET *listen_socket, ULONG flags, void *
         return STATUS_PENDING;
     }
 
+    context->local_address = local_address;
     context->remote_address = remote_address;
     context->client_dispatch = accept_socket_dispatch;
     context->client_context = accept_socket_context;

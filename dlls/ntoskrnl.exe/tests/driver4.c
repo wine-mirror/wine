@@ -177,10 +177,10 @@ static void test_wsk_listen_socket(void)
     static const WSK_CLIENT_LISTEN_DISPATCH client_listen_dispatch;
     const WSK_PROVIDER_CONNECTION_DISPATCH *accept_dispatch;
     WSK_SOCKET *tcp_socket, *udp_socket, *accept_socket;
+    struct sockaddr_in addr, local_addr, remote_addr;
     struct socket_context context;
     WSK_BUF wsk_buf1, wsk_buf2;
     void *buffer1, *buffer2;
-    struct sockaddr_in addr;
     LARGE_INTEGER timeout;
     MDL *mdl1, *mdl2;
     NTSTATUS status;
@@ -287,7 +287,10 @@ static void test_wsk_listen_socket(void)
 
     IoReuseIrp(wsk_irp, STATUS_UNSUCCESSFUL);
     IoSetCompletionRoutine(wsk_irp, irp_completion_routine, &irp_complete_event, TRUE, TRUE, TRUE);
-    status = tcp_dispatch->WskAccept(tcp_socket, 0, NULL, NULL, NULL, NULL, wsk_irp);
+    memset(&local_addr, 0, sizeof(local_addr));
+    memset(&remote_addr, 0, sizeof(remote_addr));
+    status = tcp_dispatch->WskAccept(tcp_socket, 0, NULL, NULL,
+            (SOCKADDR *)&local_addr, (SOCKADDR *)&remote_addr, wsk_irp);
     ok(status == STATUS_PENDING, "Got unexpected status %#x.\n", status);
 
     if (0)
@@ -306,6 +309,17 @@ static void test_wsk_listen_socket(void)
 
     if (status == STATUS_SUCCESS && wsk_irp->IoStatus.Status == STATUS_SUCCESS)
     {
+        ok(local_addr.sin_family == AF_INET, "Got unexpected sin_family %u.\n", local_addr.sin_family);
+        ok(local_addr.sin_port == htons(SERVER_LISTEN_PORT), "Got unexpected sin_port %u.\n",
+                ntohs(local_addr.sin_port));
+        ok(local_addr.sin_addr.s_addr == htonl(0x7f000001), "Got unexpected sin_addr %#x.\n",
+                ntohl(local_addr.sin_addr.s_addr));
+
+        ok(remote_addr.sin_family == AF_INET, "Got unexpected sin_family %u.\n", remote_addr.sin_family);
+        ok(remote_addr.sin_port, "Got zero sin_port.\n");
+        ok(remote_addr.sin_addr.s_addr == htonl(0x7f000001), "Got unexpected sin_addr %#x.\n",
+                ntohl(remote_addr.sin_addr.s_addr));
+
         accept_socket = (WSK_SOCKET *)wsk_irp->IoStatus.Information;
         accept_dispatch = accept_socket->Dispatch;
 
