@@ -3540,10 +3540,105 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
     return ret;
 }
 
+static DWORD socket_close( struct socket *socket, USHORT status, const void *reason, DWORD len, BOOL async )
+{
+    struct netconn *netconn = socket->request->netconn;
+    DWORD ret, count;
+
+    while (socket->read_size) /* drain any pending data */
+    {
+        char buf[1024];
+        if ((ret = receive_bytes( netconn, buf, min(socket->read_size, sizeof(buf)), &count ))) goto done;
+        socket->read_size -= count;
+    }
+
+    if (socket->state < SOCKET_STATE_SHUTDOWN)
+    {
+        if ((ret = send_frame( netconn, WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE, status, reason, len, TRUE ))) goto done;
+        socket->state = SOCKET_STATE_SHUTDOWN;
+    }
+
+    if ((ret = receive_frame( netconn, &count, &socket->buf_type ))) goto done;
+    if (socket->buf_type != WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE || (count && count > sizeof(socket->reason)))
+    {
+        ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        goto done;
+    }
+
+    if ((ret = receive_bytes( netconn, (char *)&socket->status, sizeof(socket->status), &count ))) goto done;
+    if (count != sizeof(socket->status))
+    {
+        ret = ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        goto done;
+    }
+    socket->status = RtlUshortByteSwap( socket->status );
+    ret = receive_bytes( netconn, socket->reason, sizeof(socket->reason), &socket->reason_len );
+
+done:
+    if (async)
+    {
+        if (!ret) send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NULL, 0 );
+        else
+        {
+            WINHTTP_WEB_SOCKET_ASYNC_RESULT result;
+            result.AsyncResult.dwResult = API_READ_DATA; /* FIXME */
+            result.AsyncResult.dwError  = ret;
+            result.Operation = WINHTTP_WEB_SOCKET_CLOSE_OPERATION;
+            send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
+        }
+    }
+
+    if (!ret) socket->state = SOCKET_STATE_CLOSED;
+    return ret;
+}
+
+static void task_socket_close( struct task_header *task )
+{
+    struct socket *socket = (struct socket *)task->object;
+    struct socket_shutdown *s = (struct socket_shutdown *)task;
+
+    socket_close( socket, s->status, s->reason, s->len, TRUE );
+}
+
 DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reason, DWORD len )
 {
-    FIXME("%p, %u, %p, %u\n", hsocket, status, reason, len);
-    return ERROR_INVALID_PARAMETER;
+    struct socket *socket;
+    DWORD ret;
+
+    TRACE("%p, %u, %p, %u\n", hsocket, status, reason, len);
+
+    if (len && !reason) return ERROR_INVALID_PARAMETER;
+
+    if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    {
+        release_object( &socket->hdr );
+        return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
+    }
+    if (socket->state >= SOCKET_STATE_CLOSED)
+    {
+        release_object( &socket->hdr );
+        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+    }
+
+    if (socket->request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
+    {
+        struct socket_shutdown *s;
+
+        if (!(s = heap_alloc( sizeof(*s) ))) return FALSE;
+        s->hdr.object = &socket->hdr;
+        s->hdr.proc   = task_socket_close;
+        s->status     = status;
+        s->reason     = reason;
+        s->len        = len;
+
+        addref_object( &socket->hdr );
+        ret = queue_task( &socket->hdr, &socket->recv_q, (struct task_header *)s );
+    }
+    else ret = socket_close( socket, status, reason, len, FALSE );
+
+    release_object( &socket->hdr );
+    return ret;
 }
 
 DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status, void *reason, DWORD len,

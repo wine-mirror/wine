@@ -230,6 +230,9 @@ struct socket
     struct queue recv_q;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE buf_type;
     DWORD read_size;
+    USHORT status;
+    char reason[128];
+    DWORD reason_len;
 };
 
 struct task_header
