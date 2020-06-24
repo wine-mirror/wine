@@ -123,9 +123,11 @@ static const char *dll_dir;
 static const char **dll_paths;
 static SIZE_T dll_path_maxlen;
 
+const char *home_dir = NULL;
 const char *data_dir = NULL;
 const char *build_dir = NULL;
 const char *config_dir = NULL;
+const char *user_name = NULL;
 HMODULE ntdll_module = NULL;
 
 struct file_id
@@ -285,6 +287,29 @@ static void set_dll_path(void)
 }
 
 
+static void set_home_dir(void)
+{
+    const char *home = getenv( "HOME" );
+    const char *name = getenv( "USER" );
+    const char *p;
+
+    if (!home || !name)
+    {
+        struct passwd *pwd = getpwuid( getuid() );
+        if (pwd)
+        {
+            if (!home) home = pwd->pw_dir;
+            if (!name) name = pwd->pw_name;
+        }
+        if (!name) name = "wine";
+    }
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    home_dir = strdup( home );
+    user_name = strdup( name );
+}
+
+
 static void set_config_dir(void)
 {
     char *p, *dir;
@@ -299,15 +324,9 @@ static void set_config_dir(void)
     }
     else
     {
-        const char *home = getenv( "HOME" );
-        if (!home)
-        {
-            struct passwd *pwd = getpwuid( getuid() );
-            if (pwd) home = pwd->pw_dir;
-        }
-        if (!home) fatal_error( "could not determine your home directory\n" );
-        if (home[0] != '/') fatal_error( "your home directory %s is not an absolute path\n", home );
-        config_dir = build_path( home, ".wine" );
+        if (!home_dir) fatal_error( "could not determine your home directory\n" );
+        if (home_dir[0] != '/') fatal_error( "the home directory %s is not an absolute path\n", home_dir );
+        config_dir = build_path( home_dir, ".wine" );
     }
 }
 
@@ -334,6 +353,7 @@ static void init_paths( int argc, char *argv[], char *envp[] )
     }
 
     set_dll_path();
+    set_home_dir();
     set_config_dir();
 }
 

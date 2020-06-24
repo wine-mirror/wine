@@ -124,9 +124,11 @@ extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_ST
 extern NTSTATUS CDECL unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt ) DECLSPEC_HIDDEN;
 extern void CDECL set_show_dot_files( BOOL enable ) DECLSPEC_HIDDEN;
 
+extern const char *home_dir DECLSPEC_HIDDEN;
 extern const char *data_dir DECLSPEC_HIDDEN;
 extern const char *build_dir DECLSPEC_HIDDEN;
 extern const char *config_dir DECLSPEC_HIDDEN;
+extern const char *user_name DECLSPEC_HIDDEN;
 extern HMODULE ntdll_module DECLSPEC_HIDDEN;
 extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;
