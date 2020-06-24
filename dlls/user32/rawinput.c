@@ -291,6 +291,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(RAWINPUTDEVICE *devices, U
 
     for (i = 0; i < device_count; ++i)
     {
+        if ((devices[i].dwFlags & RIDEV_INPUTSINK) &&
+            (devices[i].hwndTarget == NULL))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
         if ((devices[i].dwFlags & RIDEV_REMOVE) &&
             (devices[i].hwndTarget != NULL))
         {
@@ -306,7 +313,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(RAWINPUTDEVICE *devices, U
         TRACE("device %u: page %#x, usage %#x, flags %#x, target %p.\n",
                 i, devices[i].usUsagePage, devices[i].usUsage,
                 devices[i].dwFlags, devices[i].hwndTarget);
-        if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY))
+        if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK))
             FIXME("Unhandled flags %#x for device %u.\n", devices[i].dwFlags, i);
 
         d[i].usage_page = devices[i].usUsagePage;

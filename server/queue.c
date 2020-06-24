@@ -1656,7 +1656,10 @@ static int queue_rawinput_message( struct process* process, void *arg )
 {
     const struct rawinput_message* raw_msg = arg;
     const struct rawinput_device *device = NULL;
+    struct desktop *target_desktop = NULL;
+    struct thread *target_thread = NULL;
     struct message *msg;
+    int wparam = RIM_INPUT;
 
     if (raw_msg->data.rawinput.type == RIM_TYPEMOUSE)
         device = process->rawinput_mouse;
@@ -1664,16 +1667,29 @@ static int queue_rawinput_message( struct process* process, void *arg )
         device = process->rawinput_kbd;
     if (!device) return 0;
 
+    if (process != raw_msg->foreground->process)
+    {
+        if (!(device->flags & RIDEV_INPUTSINK)) goto done;
+        if (!(target_thread = get_window_thread( device->target ))) goto done;
+        if (!(target_desktop = get_thread_desktop( target_thread, 0 ))) goto done;
+        if (target_desktop != raw_msg->desktop) goto done;
+        wparam = RIM_INPUTSINK;
+    }
+
     if (!(msg = alloc_hardware_message( raw_msg->data.info, raw_msg->source, raw_msg->time )))
-        return 0;
+        goto done;
 
     msg->win    = device->target;
     msg->msg    = WM_INPUT;
-    msg->wparam = RIM_INPUT;
+    msg->wparam = wparam;
     msg->lparam = 0;
     memcpy( msg->data, &raw_msg->data, sizeof(raw_msg->data) );
 
     queue_hardware_message( raw_msg->desktop, msg, 1 );
+
+done:
+    if (target_thread) release_object( target_thread );
+    if (target_desktop) release_object( target_desktop );
     return 0;
 }
 
@@ -1749,7 +1765,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         msg_data->rawinput.mouse.y    = y - desktop->cursor.y;
         msg_data->rawinput.mouse.data = input->mouse.data;
 
-        queue_rawinput_message( foreground->process, &raw_msg );
+        enum_processes( queue_rawinput_message, &raw_msg );
         release_object( foreground );
     }
 
@@ -1883,7 +1899,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         msg_data->rawinput.kbd.vkey    = vkey;
         msg_data->rawinput.kbd.scan    = input->kbd.scan;
 
-        queue_rawinput_message( foreground->process, &raw_msg );
+        enum_processes( queue_rawinput_message, &raw_msg );
         release_object( foreground );
     }
 
