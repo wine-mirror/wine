@@ -1202,6 +1202,9 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
             hres = E_OUTOFMEMORY;
         }
     }
+    else
+        hres = E_OUTOFMEMORY;
+
     if (FAILED(hres)) {
         detach_script_host(This->host);
         This->host = NULL;
