@@ -366,6 +366,20 @@ static struct message *alloc_hardware_message( lparam_t info, struct hw_msg_sour
     return msg;
 }
 
+static int update_desktop_cursor_pos( struct desktop *desktop, int x, int y )
+{
+    int updated;
+
+    x = max( min( x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
+    y = max( min( y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
+    updated = (desktop->cursor.x != x || desktop->cursor.y != y);
+    desktop->cursor.x = x;
+    desktop->cursor.y = y;
+    desktop->cursor.last_change = get_tick_count();
+
+    return updated;
+}
+
 /* set the cursor position and queue the corresponding mouse message */
 static void set_cursor_pos( struct desktop *desktop, int x, int y )
 {
@@ -1500,15 +1514,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     }
     else if (msg->msg != WM_INPUT)
     {
-        if (msg->msg == WM_MOUSEMOVE)
-        {
-            int x = max( min( msg->x, desktop->cursor.clip.right - 1 ), desktop->cursor.clip.left );
-            int y = max( min( msg->y, desktop->cursor.clip.bottom - 1 ), desktop->cursor.clip.top );
-            if (desktop->cursor.x != x || desktop->cursor.y != y) always_queue = 1;
-            desktop->cursor.x = x;
-            desktop->cursor.y = y;
-            desktop->cursor.last_change = get_tick_count();
-        }
+        if (msg->msg == WM_MOUSEMOVE && update_desktop_cursor_pos( desktop, msg->x, msg->y )) always_queue = 1;
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
         if (desktop->keystate[VK_MBUTTON] & 0x80)  msg->wparam |= MK_MBUTTON;
         if (desktop->keystate[VK_RBUTTON] & 0x80)  msg->wparam |= MK_RBUTTON;
