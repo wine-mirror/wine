@@ -417,17 +417,35 @@ static HRESULT allocate_surfaces(struct quartz_vmr *filter, const AM_MEDIA_TYPE 
 
     if (!is_vmr9(filter))
     {
-        switch (filter->bmiheader.biBitCount)
+        switch (filter->bmiheader.biCompression)
         {
-            case 24: info.Format = D3DFMT_R8G8B8; break;
-            case 32: info.Format = D3DFMT_X8R8G8B8; break;
-            default:
-                FIXME("Unhandled bit depth %u.\n", filter->bmiheader.biBitCount);
-                free(filter->surfaces);
-                return VFW_E_TYPE_NOT_ACCEPTED;
-        }
+        case BI_RGB:
+            switch (filter->bmiheader.biBitCount)
+            {
+                case 24: info.Format = D3DFMT_R8G8B8; break;
+                case 32: info.Format = D3DFMT_X8R8G8B8; break;
+                default:
+                    FIXME("Unhandled bit depth %u.\n", filter->bmiheader.biBitCount);
+                    free(filter->surfaces);
+                    return VFW_E_TYPE_NOT_ACCEPTED;
+            }
 
-        info.dwFlags = VMR9AllocFlag_TextureSurface;
+            info.dwFlags = VMR9AllocFlag_TextureSurface;
+            break;
+
+        case mmioFOURCC('N','V','1','2'):
+        case mmioFOURCC('U','Y','V','Y'):
+        case mmioFOURCC('Y','U','Y','2'):
+        case mmioFOURCC('Y','V','1','2'):
+            info.Format = filter->bmiheader.biCompression;
+            info.dwFlags = VMR9AllocFlag_OffscreenSurface;
+            break;
+
+        default:
+            WARN("Unhandled video compression %#x.\n", filter->bmiheader.biCompression);
+            free(filter->surfaces);
+            return VFW_E_TYPE_NOT_ACCEPTED;
+        }
         if (FAILED(hr = initialize_device(filter, &info, count)))
             free(filter->surfaces);
         return hr;
