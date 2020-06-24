@@ -175,12 +175,12 @@ static const WCHAR *get_default_desktop(void)
                                           'A','p','p','D','e','f','a','u','l','t','s',0};
     static WCHAR buffer[MAX_PATH + ARRAY_SIZE(explorerW)];
     WCHAR *p, *appname = buffer;
-    const WCHAR *ret = defaultW;
+    const WCHAR *ret = NULL;
     DWORD len;
     HKEY tmpkey, appkey;
 
     len = (GetModuleFileNameW( 0, buffer, MAX_PATH ));
-    if (!len || len >= MAX_PATH) return ret;
+    if (!len || len >= MAX_PATH) return defaultW;
     if ((p = strrchrW( appname, '/' ))) appname = p + 1;
     if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
     p = appname + strlenW(appname);
@@ -196,8 +196,7 @@ static const WCHAR *get_default_desktop(void)
             len = sizeof(buffer);
             if (!RegQueryValueExW( appkey, desktopW, 0, NULL, (LPBYTE)buffer, &len )) ret = buffer;
             RegCloseKey( appkey );
-            if (ret && strcmpiW( ret, defaultW )) return ret;
-            ret = defaultW;
+            if (ret) return ret;
         }
     }
 
@@ -210,8 +209,9 @@ static const WCHAR *get_default_desktop(void)
         len = sizeof(buffer);
         if (!RegQueryValueExW( appkey, desktopW, 0, NULL, (LPBYTE)buffer, &len )) ret = buffer;
         RegCloseKey( appkey );
+        if (ret) return ret;
     }
-    return ret;
+    return defaultW;
 }
 
 
