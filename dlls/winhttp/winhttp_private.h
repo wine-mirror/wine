@@ -292,6 +292,14 @@ struct socket_receive
     DWORD len;
 };
 
+struct socket_shutdown
+{
+    struct task_header hdr;
+    USHORT status;
+    const void *reason;
+    DWORD len;
+};
+
 struct object_header *addref_object( struct object_header * ) DECLSPEC_HIDDEN;
 struct object_header *grab_object( HINTERNET ) DECLSPEC_HIDDEN;
 void release_object( struct object_header * ) DECLSPEC_HIDDEN;
