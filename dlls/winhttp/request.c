@@ -3642,10 +3642,38 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
 }
 
 DWORD WINAPI WinHttpWebSocketQueryCloseStatus( HINTERNET hsocket, USHORT *status, void *reason, DWORD len,
-                                               DWORD *consumed )
+                                               DWORD *ret_len )
 {
-    FIXME("%p, %p, %p, %u, %p\n", hsocket, status, reason, len, consumed);
-    return ERROR_INVALID_PARAMETER;
+    struct socket *socket;
+    DWORD ret;
+
+    TRACE("%p, %p, %p, %u, %p\n", hsocket, status, reason, len, ret_len);
+
+    if (!status || (len && !reason) || !ret_len) return ERROR_INVALID_PARAMETER;
+
+    if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
+    if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
+    {
+        release_object( &socket->hdr );
+        return ERROR_WINHTTP_INCORRECT_HANDLE_TYPE;
+    }
+    if (socket->state < SOCKET_STATE_CLOSED)
+    {
+        release_object( &socket->hdr );
+        return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+    }
+
+    *status = socket->status;
+    *ret_len = socket->reason_len;
+    if (socket->reason_len > len) ret = ERROR_INSUFFICIENT_BUFFER;
+    else
+    {
+        memcpy( reason, socket->reason, socket->reason_len );
+        ret = ERROR_SUCCESS;
+    }
+
+    release_object( &socket->hdr );
+    return ret;
 }
 
 enum request_state
