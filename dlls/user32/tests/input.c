@@ -286,7 +286,7 @@ static BOOL TestASet( HWND hWnd, int nrkev, const KEV kevdwn[], const KEV kevup[
     BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
     if (!us_kbd)
     {
-        win_skip( "skipping test with inconsistent results on non-us keyboard\n" );
+        skip( "skipping test with inconsistent results on non-us keyboard\n" );
         return TRUE;
     }
 
@@ -1193,7 +1193,7 @@ static void test_Input_unicode(void)
     BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
     if (!us_kbd)
     {
-        win_skip( "skipping test with inconsistent results on non-us keyboard\n" );
+        skip( "skipping test with inconsistent results on non-us keyboard\n" );
         return;
     }
 
