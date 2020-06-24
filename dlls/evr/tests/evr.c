@@ -19,15 +19,19 @@
  */
 
 #define COBJMACROS
+
 #include "dshow.h"
 #include "wine/test.h"
 #include "d3d9.h"
 #include "evr.h"
+#include "mferror.h"
+#include "mfapi.h"
 #include "initguid.h"
 #include "dxva2api.h"
-#include "mferror.h"
 
 static const WCHAR sink_id[] = {'E','V','R',' ','I','n','p','u','t','0',0};
+
+static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype, IMFVideoMediaType **video_type);
 
 static HWND create_window(void)
 {
@@ -626,9 +630,118 @@ done:
     DestroyWindow(window);
 }
 
+static void test_default_mixer_type_negotiation(void)
+{
+    IDirect3DDeviceManager9 *manager;
+    IMFVideoMediaType *video_type;
+    IMFMediaType *media_type;
+    IDirect3DDevice9 *device;
+    IMFTransform *transform;
+    IDirect3D9 *d3d;
+    HWND window;
+    HRESULT hr;
+    UINT token;
+
+    if (!pMFCreateVideoMediaTypeFromSubtype)
+    {
+        win_skip("Skipping mixer types tests.\n");
+        return;
+    }
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    /* Now try with device manager. */
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Now manager is not initialized. */
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* And now type description is incomplete. */
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+    IMFMediaType_Release(media_type);
+
+    hr = pMFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB32, &video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Partially initialized type. */
+    hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, 0);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    /* Only required data - frame size and uncompressed marker. */
+    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoMediaType_SetUINT32(video_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(transform, 0, (IMFMediaType *)video_type, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(media_type != (IMFMediaType *)video_type, "Unexpected pointer.\n");
+        IMFMediaType_Release(media_type);
+    }
+
+    IMFVideoMediaType_Release(video_type);
+
+    IDirect3DDeviceManager9_Release(manager);
+
+    IDirect3DDevice9_Release(device);
+
+done:
+    IMFTransform_Release(transform);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
+
+    pMFCreateVideoMediaTypeFromSubtype = (void *)GetProcAddress(GetModuleHandleA("mfplat.dll"), "MFCreateVideoMediaTypeFromSubtype");
 
     test_aggregation();
     test_interfaces();
@@ -636,6 +749,7 @@ START_TEST(evr)
     test_find_pin();
     test_pin_info();
     test_default_mixer();
+    test_default_mixer_type_negotiation();
     test_surface_sample();
 
     CoUninitialize();
