@@ -37,8 +37,10 @@
 #include "dispex.h"
 #include "objsafe.h"
 #include "mshtml.h"
+#include "xmlparser.h"
 #include "initguid.h"
 #include "asptlb.h"
+#include "shlwapi.h"
 
 #include "wine/heap.h"
 #include "wine/test.h"
@@ -699,6 +701,36 @@ static void _expect_list_len(IXMLDOMNodeList *list, LONG len, int line)
 
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
+
+#define EXPECT_PARSE_ERROR(doc, hr_exp, hr_todo) _expect_parse_error(doc, hr_exp, hr_todo, __LINE__)
+static void _expect_parse_error(IXMLDOMDocument *doc, HRESULT hr_exp, BOOL hr_todo, int line)
+{
+    IXMLDOMParseError *error;
+    HRESULT hr;
+    LONG code;
+
+    error = NULL;
+    hr = IXMLDOMDocument_get_parseError(doc, &error);
+    ok_(__FILE__,line)(hr == S_OK, "got 0x%08x\n", hr);
+    ok_(__FILE__,line)(!!error, "got NULL parseError\n");
+
+    code = 0xdeadbeef;
+    hr = IXMLDOMParseError_get_errorCode(error, &code);
+    if (FAILED(hr_exp))
+    {
+        ok_(__FILE__,line)(hr == S_OK, "got 0x%08x\n", hr);
+        ok_(__FILE__,line)(FAILED(code), "expected failure HRESULT\n");
+        todo_wine_if(hr_todo)
+        ok_(__FILE__,line)(hr_exp == code, "expected 0x%08x, got 0x%08x\n", hr_exp, code);
+    }
+    else
+    {
+        ok_(__FILE__,line)(hr == S_FALSE, "got 0x%08x\n", hr);
+        ok_(__FILE__,line)(SUCCEEDED(code), "expected successful HRESULT\n");
+    }
+
+    IXMLDOMParseError_Release(error);
+}
 
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
@@ -10242,6 +10274,7 @@ static void test_load(void)
     IXMLDOMNodeList *list;
     IXMLDOMDocument *doc;
     BSTR bstr1, bstr2;
+    IStream *stream;
     VARIANT_BOOL b;
     VARIANT src;
     HRESULT hr;
@@ -10419,6 +10452,29 @@ static void test_load(void)
     ok(b == VARIANT_FALSE, "got %d\n", b);
 
     VariantClear(&src);
+
+    /* test istream with empty content */
+    stream = SHCreateMemStream((const BYTE*)nocontent, strlen(nocontent));
+    V_VT(&src) = VT_UNKNOWN;
+    V_UNKNOWN(&src) = (IUnknown*)stream;
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    todo_wine ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+    EXPECT_PARSE_ERROR(doc, XML_E_INVALIDATROOTLEVEL, TRUE);
+    VariantClear(&src);
+
+    /* test istream with valid xml */
+    stream = SHCreateMemStream((const BYTE*)complete4A, strlen(complete4A));
+    V_VT(&src) = VT_UNKNOWN;
+    V_UNKNOWN(&src) = (IUnknown*)stream;
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+    EXPECT_PARSE_ERROR(doc, S_OK, FALSE);
+    VariantClear(&src);
+
     IXMLDOMDocument_Release(doc);
 
     free_bstrs();

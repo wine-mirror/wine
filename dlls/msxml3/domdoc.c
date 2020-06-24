@@ -2276,7 +2276,7 @@ static HRESULT WINAPI domdoc_load(
 
         if (hr == S_OK)
         {
-            hr = domdoc_load_from_stream(This, stream);
+            hr = This->error = domdoc_load_from_stream(This, stream);
             if (hr == S_OK)
                 *isSuccessful = VARIANT_TRUE;
             ISequentialStream_Release(stream);
