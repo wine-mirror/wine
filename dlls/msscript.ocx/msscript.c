@@ -1182,6 +1182,7 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
 
     if (This->host) {
         release_modules(This);
+        IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         This->host = NULL;
     }
 
