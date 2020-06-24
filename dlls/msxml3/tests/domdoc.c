@@ -2181,6 +2181,7 @@ static void test_persiststream(void)
     IXMLDOMDocument *doc;
     ULARGE_INTEGER size;
     IPersist *persist;
+    IStream *istream;
     HRESULT hr;
     CLSID clsid;
 
@@ -2214,6 +2215,21 @@ static void test_persiststream(void)
     ok(IsEqualGUID(&clsid, &CLSID_DOMDocument2), "wrong clsid %s\n", wine_dbgstr_guid(&clsid));
 
     IPersistStream_Release(stream);
+
+    /* test Load */
+    istream = SHCreateMemStream((const BYTE*)complete4A, strlen(complete4A));
+    hr = IPersistStreamInit_Load(streaminit, istream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IStream_Release(istream);
+    EXPECT_PARSE_ERROR(doc, S_OK, FALSE);
+
+    istream = SHCreateMemStream((const BYTE*)"", 0);
+    hr = IPersistStreamInit_Load(streaminit, istream);
+    todo_wine ok(hr == XML_E_MISSINGROOT, "got 0x%08x\n", hr);
+    ok(FAILED(hr), "got success\n");
+    IStream_Release(istream);
+    EXPECT_PARSE_ERROR(doc, XML_E_MISSINGROOT, TRUE);
+
     IPersistStreamInit_Release(streaminit);
     IXMLDOMDocument_Release(doc);
 }
