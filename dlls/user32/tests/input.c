@@ -50,6 +50,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "ddk/hidsdi.h"
@@ -59,6 +60,8 @@
 /* globals */
 static HWND hWndTest;
 static LONG timetag = 0x10000000;
+
+#define DESKTOP_ALL_ACCESS 0x01ff
 
 static struct {
     LONG last_key_down;
@@ -1891,6 +1894,11 @@ struct rawinput_test rawinput_tests[] =
 
     { TRUE,  TRUE,  RIDEV_EXINPUTSINK, FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
     { TRUE,  TRUE,  RIDEV_EXINPUTSINK, FALSE,  TRUE, FALSE, /* todos: */ FALSE,  TRUE, FALSE },
+
+    /* cross-desktop foreground tests */
+    { TRUE,  FALSE, 0,               FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  TRUE,  0,               FALSE,  TRUE,  TRUE, /* todos: */ FALSE, FALSE, FALSE },
+    { TRUE,  TRUE,  RIDEV_INPUTSINK, FALSE, FALSE, FALSE, /* todos: */ FALSE, FALSE, FALSE },
 };
 
 static void rawinput_test_process(void)
@@ -1927,6 +1935,7 @@ static void rawinput_test_process(void)
         case 11:
         case 12:
         case 13:
+        case 16:
             GetCursorPos(&pt);
 
             hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
@@ -1960,6 +1969,9 @@ static void rawinput_test_process(void)
             rawinput_test_received_raw = FALSE;
             rawinput_test_received_rawfg = FALSE;
 
+            /* fallthrough */
+        case 14:
+        case 15:
             if (i != 8) mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
             empty_message_queue();
             break;
@@ -1998,19 +2010,87 @@ static void rawinput_test_process(void)
 
 struct rawinput_test_thread_params
 {
+    HDESK desk;
     HANDLE ready;
     HANDLE start;
     HANDLE done;
 };
 
+static DWORD WINAPI rawinput_test_desk_thread(void *arg)
+{
+    struct rawinput_test_thread_params *params = arg;
+    RAWINPUTDEVICE raw_devices[1];
+    DWORD ret;
+    POINT pt;
+    HWND hwnd = NULL;
+    MSG msg;
+    int i;
+
+    ok( SetThreadDesktop( params->desk ), "SetThreadDesktop failed\n" );
+
+    for (i = 14; i < ARRAY_SIZE(rawinput_tests); ++i)
+    {
+        WaitForSingleObject(params->ready, INFINITE);
+        ResetEvent(params->ready);
+
+        switch (i)
+        {
+        case 14:
+        case 15:
+        case 16:
+            GetCursorPos(&pt);
+
+            hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
+                                 pt.x - 50, pt.y - 50, 100, 100, 0, NULL, NULL, NULL);
+            ok(hwnd != 0, "CreateWindow failed\n");
+            SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)rawinput_wndproc);
+            empty_message_queue();
+
+            /* FIXME: Try to workaround X11/Win32 focus inconsistencies and
+             * make the window visible and foreground as hard as possible. */
+            ShowWindow(hwnd, SW_SHOW);
+            SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+            SetForegroundWindow(hwnd);
+            UpdateWindow(hwnd);
+            empty_message_queue();
+
+            raw_devices[0].usUsagePage = 0x01;
+            raw_devices[0].usUsage = 0x02;
+            raw_devices[0].dwFlags = rawinput_tests[i].register_flags;
+            raw_devices[0].hwndTarget = rawinput_tests[i].register_window ? hwnd : 0;
+
+            rawinput_test_received_legacy = FALSE;
+            rawinput_test_received_raw = FALSE;
+            rawinput_test_received_rawfg = FALSE;
+
+            SetLastError(0xdeadbeef);
+            ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+            ok(ret, "%d: RegisterRawInputDevices failed\n", i);
+            ok(GetLastError() == 0xdeadbeef, "%d: RegisterRawInputDevices returned %08x\n", i, GetLastError());
+            break;
+        }
+
+        SetEvent(params->start);
+
+        while (MsgWaitForMultipleObjects(1, &params->done, FALSE, INFINITE, QS_ALLINPUT) != WAIT_OBJECT_0)
+            while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+        ResetEvent(params->done);
+        if (hwnd) DestroyWindow(hwnd);
+    }
+
+    return 0;
+}
+
 static DWORD WINAPI rawinput_test_thread(void *arg)
 {
     struct rawinput_test_thread_params *params = arg;
+    HANDLE thread;
     POINT pt;
     HWND hwnd = NULL;
     int i;
 
-    for (i = 0; i < ARRAY_SIZE(rawinput_tests); ++i)
+    for (i = 0; i < 14; ++i)
     {
         WaitForSingleObject(params->ready, INFINITE);
         ResetEvent(params->ready);
@@ -2046,6 +2126,11 @@ static DWORD WINAPI rawinput_test_thread(void *arg)
         if (hwnd) DestroyWindow(hwnd);
     }
 
+    thread = CreateThread(NULL, 0, rawinput_test_desk_thread, params, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
     return 0;
 }
 
@@ -2062,6 +2147,9 @@ static void test_rawinput(const char* argv0)
     BOOL skipped;
     char path[MAX_PATH];
     int i;
+
+    params.desk = CreateDesktopA( "rawinput_test_desktop", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok( params.desk != NULL, "CreateDesktopA failed, last error: %u\n", GetLastError() );
 
     params.ready = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(params.ready != NULL, "CreateEvent failed\n");
@@ -2103,7 +2191,8 @@ static void test_rawinput(const char* argv0)
         hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
                              pt.x - 50, pt.y - 50, 100, 100, 0, NULL, NULL, NULL);
         ok(hwnd != 0, "CreateWindow failed\n");
-        SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)rawinput_wndproc);
+        if (i != 14 && i != 15 && i != 16)
+            SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)rawinput_wndproc);
         empty_message_queue();
 
         /* FIXME: Try to workaround X11/Win32 focus inconsistencies and
@@ -2135,13 +2224,29 @@ static void test_rawinput(const char* argv0)
                 ok(!skipped, "%d: RegisterRawInputDevices failed: %u\n", i, GetLastError());
         }
 
-        SetEvent(process_ready);
-        WaitForSingleObject(process_start, INFINITE);
-        ResetEvent(process_start);
-
         SetEvent(params.ready);
         WaitForSingleObject(params.start, INFINITE);
         ResetEvent(params.start);
+
+        /* we need the main window to be over the other thread window, as although
+         * it is in another desktop, it will receive the messages directly otherwise */
+        switch (i)
+        {
+        case 14:
+        case 15:
+            SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
+            SetForegroundWindow(hwnd);
+            empty_message_queue();
+
+            rawinput_test_received_legacy = FALSE;
+            rawinput_test_received_raw = FALSE;
+            rawinput_test_received_rawfg = FALSE;
+            break;
+        }
+
+        SetEvent(process_ready);
+        WaitForSingleObject(process_start, INFINITE);
+        ResetEvent(process_start);
 
         if (i <= 3 || i == 8) mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
         empty_message_queue();
@@ -2192,6 +2297,8 @@ static void test_rawinput(const char* argv0)
     CloseHandle(params.start);
     CloseHandle(params.ready);
     CloseHandle(thread);
+
+    CloseDesktop(params.desk);
 }
 
 static void test_key_map(void)
