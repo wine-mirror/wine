@@ -172,32 +172,6 @@ static COORD get_largest_console_window_size( HANDLE handle )
     return c;
 }
 
-/* helper function to replace OpenConsoleW */
-HANDLE open_console( BOOL output, DWORD access, SECURITY_ATTRIBUTES *sa, DWORD creation )
-{
-    HANDLE ret;
-
-    if (creation != OPEN_EXISTING)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return INVALID_HANDLE_VALUE;
-    }
-
-    SERVER_START_REQ( open_console )
-    {
-        req->from       = wine_server_obj_handle( ULongToHandle( output ));
-        req->access     = access;
-        req->attributes = sa && sa->bInheritHandle ? OBJ_INHERIT : 0;
-        req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
-        wine_server_call_err( req );
-        ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    if (ret) ret = console_handle_map( ret );
-    return ret;
-}
-
-
 /******************************************************************
  *	AttachConsole   (kernelbase.@)
  */

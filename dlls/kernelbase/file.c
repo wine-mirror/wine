@@ -744,13 +744,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
            (sharing & FILE_SHARE_DELETE) ? "FILE_SHARE_DELETE " : "",
            creation, attributes);
 
-    /* Open a console for CONIN$ or CONOUT$ */
-
-    if (!wcsicmp( filename, L"CONIN$" ))
-        return open_console( FALSE, access, sa, creation ? OPEN_EXISTING : 0 );
-    if (!wcsicmp( filename, L"CONOUT$" ))
-        return open_console( TRUE, access, sa, creation ? OPEN_EXISTING : 0 );
-
     if (!wcsncmp( filename, L"\\\\.\\", 4 ))
     {
         if ((filename[4] && filename[5] == ':' && !filename[6]) ||
@@ -770,24 +763,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
         }
     }
     else dosdev = RtlIsDosDeviceName_U( filename );
-
-    if (dosdev)
-    {
-        if (LOWORD(dosdev) == 3 * sizeof(WCHAR) &&
-            !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CON", 3 ))
-        {
-            switch (access & (GENERIC_READ|GENERIC_WRITE))
-            {
-            case GENERIC_READ:
-                return open_console( FALSE, access, sa, OPEN_EXISTING );
-            case GENERIC_WRITE:
-                return open_console( TRUE, access, sa, OPEN_EXISTING );
-            default:
-                SetLastError( ERROR_FILE_NOT_FOUND );
-                return INVALID_HANDLE_VALUE;
-            }
-        }
-    }
 
     if (creation < CREATE_NEW || creation > TRUNCATE_EXISTING)
     {
@@ -853,6 +828,12 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     }
     else
     {
+        if (dosdev &&
+            ((LOWORD(dosdev) == 3 * sizeof(WCHAR) && !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CON", 3 )) ||
+             (LOWORD(dosdev) == 6 * sizeof(WCHAR) && !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CONIN$", 6 )) ||
+             (LOWORD(dosdev) == 7 * sizeof(WCHAR) && !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CONOUT$", 7 ))))
+            ret = console_handle_map( ret );
+
         if ((creation == CREATE_ALWAYS && io.Information == FILE_OVERWRITTEN) ||
             (creation == OPEN_ALWAYS && io.Information == FILE_OPENED))
             SetLastError( ERROR_ALREADY_EXISTS );

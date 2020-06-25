@@ -35,8 +35,6 @@ extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 
-extern HANDLE open_console( BOOL output, DWORD access, SECURITY_ATTRIBUTES *sa, DWORD creation ) DECLSPEC_HIDDEN;
-
 static inline BOOL is_console_handle(HANDLE h)
 {
     return h != INVALID_HANDLE_VALUE && ((UINT_PTR)h & 3) == 3;
