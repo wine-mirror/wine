@@ -987,6 +987,7 @@ enable_api_ms_win_core_memory_l1_1_1
 enable_api_ms_win_core_memory_l1_1_2
 enable_api_ms_win_core_memory_l1_1_4
 enable_api_ms_win_core_misc_l1_1_0
+enable_api_ms_win_core_namedpipe_ansi_l1_1_0
 enable_api_ms_win_core_namedpipe_l1_1_0
 enable_api_ms_win_core_namedpipe_l1_2_0
 enable_api_ms_win_core_namespace_l1_1_0
@@ -20317,6 +20318,7 @@ wine_fn_config_makefile dlls/api-ms-win-core-memory-l1-1-1 enable_api_ms_win_cor
 wine_fn_config_makefile dlls/api-ms-win-core-memory-l1-1-2 enable_api_ms_win_core_memory_l1_1_2
 wine_fn_config_makefile dlls/api-ms-win-core-memory-l1-1-4 enable_api_ms_win_core_memory_l1_1_4
 wine_fn_config_makefile dlls/api-ms-win-core-misc-l1-1-0 enable_api_ms_win_core_misc_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-core-namedpipe-ansi-l1-1-0 enable_api_ms_win_core_namedpipe_ansi_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-namedpipe-l1-1-0 enable_api_ms_win_core_namedpipe_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-namedpipe-l1-2-0 enable_api_ms_win_core_namedpipe_l1_2_0
 wine_fn_config_makefile dlls/api-ms-win-core-namespace-l1-1-0 enable_api_ms_win_core_namespace_l1_1_0
