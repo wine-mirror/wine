@@ -23,6 +23,7 @@
 #include <stdarg.h>
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -220,6 +221,110 @@ static void find_devices(void)
 
     LeaveCriticalSection(&rawinput_devices_cs);
 }
+
+
+BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_msg_data *msg_data)
+{
+    rawinput->header.dwType = msg_data->rawinput.type;
+    if (msg_data->rawinput.type == RIM_TYPEMOUSE)
+    {
+        static const unsigned int button_flags[] =
+        {
+            0,                              /* MOUSEEVENTF_MOVE */
+            RI_MOUSE_LEFT_BUTTON_DOWN,      /* MOUSEEVENTF_LEFTDOWN */
+            RI_MOUSE_LEFT_BUTTON_UP,        /* MOUSEEVENTF_LEFTUP */
+            RI_MOUSE_RIGHT_BUTTON_DOWN,     /* MOUSEEVENTF_RIGHTDOWN */
+            RI_MOUSE_RIGHT_BUTTON_UP,       /* MOUSEEVENTF_RIGHTUP */
+            RI_MOUSE_MIDDLE_BUTTON_DOWN,    /* MOUSEEVENTF_MIDDLEDOWN */
+            RI_MOUSE_MIDDLE_BUTTON_UP,      /* MOUSEEVENTF_MIDDLEUP */
+        };
+        unsigned int i;
+
+        rawinput->header.dwSize  = FIELD_OFFSET(RAWINPUT, data) + sizeof(RAWMOUSE);
+        rawinput->header.hDevice = WINE_MOUSE_HANDLE;
+        rawinput->header.wParam  = 0;
+
+        rawinput->data.mouse.usFlags           = MOUSE_MOVE_RELATIVE;
+        rawinput->data.mouse.u.s.usButtonFlags = 0;
+        rawinput->data.mouse.u.s.usButtonData  = 0;
+        for (i = 1; i < ARRAY_SIZE(button_flags); ++i)
+        {
+            if (msg_data->flags & (1 << i))
+                rawinput->data.mouse.u.s.usButtonFlags |= button_flags[i];
+        }
+        if (msg_data->flags & MOUSEEVENTF_WHEEL)
+        {
+            rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_WHEEL;
+            rawinput->data.mouse.u.s.usButtonData   = msg_data->rawinput.mouse.data;
+        }
+        if (msg_data->flags & MOUSEEVENTF_HWHEEL)
+        {
+            rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_HORIZONTAL_WHEEL;
+            rawinput->data.mouse.u.s.usButtonData   = msg_data->rawinput.mouse.data;
+        }
+        if (msg_data->flags & MOUSEEVENTF_XDOWN)
+        {
+            if (msg_data->rawinput.mouse.data == XBUTTON1)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_4_DOWN;
+            else if (msg_data->rawinput.mouse.data == XBUTTON2)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_5_DOWN;
+        }
+        if (msg_data->flags & MOUSEEVENTF_XUP)
+        {
+            if (msg_data->rawinput.mouse.data == XBUTTON1)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_4_UP;
+            else if (msg_data->rawinput.mouse.data == XBUTTON2)
+                rawinput->data.mouse.u.s.usButtonFlags |= RI_MOUSE_BUTTON_5_UP;
+        }
+
+        rawinput->data.mouse.ulRawButtons       = 0;
+        rawinput->data.mouse.lLastX             = msg_data->rawinput.mouse.x;
+        rawinput->data.mouse.lLastY             = msg_data->rawinput.mouse.y;
+        rawinput->data.mouse.ulExtraInformation = msg_data->info;
+    }
+    else if (msg_data->rawinput.type == RIM_TYPEKEYBOARD)
+    {
+        rawinput->header.dwSize  = FIELD_OFFSET(RAWINPUT, data) + sizeof(RAWKEYBOARD);
+        rawinput->header.hDevice = WINE_KEYBOARD_HANDLE;
+        rawinput->header.wParam  = 0;
+
+        rawinput->data.keyboard.MakeCode = msg_data->rawinput.kbd.scan;
+        rawinput->data.keyboard.Flags    = msg_data->flags & KEYEVENTF_KEYUP ? RI_KEY_BREAK : RI_KEY_MAKE;
+        if (msg_data->flags & KEYEVENTF_EXTENDEDKEY) rawinput->data.keyboard.Flags |= RI_KEY_E0;
+        rawinput->data.keyboard.Reserved = 0;
+
+        switch (msg_data->rawinput.kbd.vkey)
+        {
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+            rawinput->data.keyboard.VKey   = VK_SHIFT;
+            rawinput->data.keyboard.Flags &= ~RI_KEY_E0;
+            break;
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+            rawinput->data.keyboard.VKey = VK_CONTROL;
+            break;
+        case VK_LMENU:
+        case VK_RMENU:
+            rawinput->data.keyboard.VKey = VK_MENU;
+            break;
+        default:
+            rawinput->data.keyboard.VKey = msg_data->rawinput.kbd.vkey;
+            break;
+        }
+
+        rawinput->data.keyboard.Message          = msg_data->rawinput.kbd.message;
+        rawinput->data.keyboard.ExtraInformation = msg_data->info;
+    }
+    else
+    {
+        FIXME("Unhandled rawinput type %#x.\n", msg_data->rawinput.type);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 
 /***********************************************************************
  *              GetRawInputDeviceList   (USER32.@)
