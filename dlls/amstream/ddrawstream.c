@@ -35,6 +35,7 @@ struct ddraw_stream
     IMemInputPin IMemInputPin_iface;
     IPin IPin_iface;
     LONG ref;
+    LONG sample_refs;
 
     IMultiMediaStream* parent;
     MSPID purpose_id;
@@ -396,11 +397,35 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMedi
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetDirectDraw(IDirectDrawMediaStream *iface,
-        IDirectDraw *pDirectDraw)
+        IDirectDraw *ddraw)
 {
-    FIXME("(%p)->(%p) stub!\n", iface, pDirectDraw);
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("stream %p, ddraw %p.\n", stream, ddraw);
+
+    EnterCriticalSection(&stream->cs);
+
+    if (stream->sample_refs)
+    {
+        HRESULT hr = (stream->ddraw == ddraw) ? S_OK : MS_E_SAMPLEALLOC;
+        LeaveCriticalSection(&stream->cs);
+        return hr;
+    }
+
+    if (stream->ddraw)
+        IDirectDraw_Release(stream->ddraw);
+
+    if (ddraw)
+    {
+        IDirectDraw_AddRef(ddraw);
+        stream->ddraw = ddraw;
+    }
+    else
+        stream->ddraw = NULL;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_CreateSample(IDirectDrawMediaStream *iface,
@@ -951,6 +976,7 @@ HRESULT ddraw_stream_create(IUnknown *outer, void **out)
     object->IMemInputPin_iface.lpVtbl = &ddraw_meminput_vtbl;
     object->IPin_iface.lpVtbl = &ddraw_sink_vtbl;
     object->ref = 1;
+    object->sample_refs = 0;
 
     InitializeCriticalSection(&object->cs);
 
@@ -1012,6 +1038,10 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
     ULONG ref = InterlockedDecrement(&sample->ref);
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
+
+    EnterCriticalSection(&sample->parent->cs);
+    InterlockedDecrement(&sample->parent->sample_refs);
+    LeaveCriticalSection(&sample->parent->cs);
 
     if (!ref)
     {
@@ -1130,6 +1160,10 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;
     object->ref = 1;
     object->parent = parent;
+
+    EnterCriticalSection(&parent->cs);
+    InterlockedIncrement(&parent->sample_refs);
+    LeaveCriticalSection(&parent->cs);
 
     if (surface)
     {

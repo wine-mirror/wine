@@ -4798,8 +4798,8 @@ static void test_ddrawstream_getsetdirectdraw(void)
 
     /* The current ddraw is released when SetDirectDraw() is called. */
     hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine EXPECT_REF(ddraw, 2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw, 2);
 
     hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4807,65 +4807,62 @@ static void test_ddrawstream_getsetdirectdraw(void)
     if (ddraw3) IDirectDraw_Release(ddraw3);
 
     hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     EXPECT_REF(ddraw, 3);
 
-    if (hr == S_OK)
-    {
-        hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(ddraw3 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw3);
-        EXPECT_REF(ddraw, 4);
-        IDirectDraw_Release(ddraw3);
-        EXPECT_REF(ddraw, 3);
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw3 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw3);
+    EXPECT_REF(ddraw, 4);
+    IDirectDraw_Release(ddraw3);
+    EXPECT_REF(ddraw, 3);
 
-        hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-         /* SetDirectDraw() doesn't take an extra reference to the ddraw object
-          * if there are samples extant. */
-        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        EXPECT_REF(ddraw, 3);
+     /* SetDirectDraw() doesn't take an extra reference to the ddraw object
+      * if there are samples extant. */
+    hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw, 3);
 
-        hr = DirectDrawCreate(NULL, &ddraw3, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        hr = IDirectDraw_SetCooperativeLevel(ddraw3, GetDesktopWindow(), DDSCL_NORMAL);
-        ok(hr == DD_OK, "Got hr %#x.\n", hr);
-        EXPECT_REF(ddraw3, 1);
+    hr = DirectDrawCreate(NULL, &ddraw3, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IDirectDraw_SetCooperativeLevel(ddraw3, GetDesktopWindow(), DDSCL_NORMAL);
+    ok(hr == DD_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw3, 1);
 
-        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw3);
-        ok(hr == MS_E_SAMPLEALLOC, "Got hr %#x.\n", hr);
+    hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw3);
+    ok(hr == MS_E_SAMPLEALLOC, "Got hr %#x.\n", hr);
 
-        hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw4);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(ddraw4 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw4);
-        EXPECT_REF(ddraw, 4);
-        IDirectDraw_Release(ddraw4);
-        EXPECT_REF(ddraw, 3);
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw4);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw4 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw4);
+    EXPECT_REF(ddraw, 4);
+    IDirectDraw_Release(ddraw4);
+    EXPECT_REF(ddraw, 3);
 
-        ref = IDirectDrawStreamSample_Release(sample);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IDirectDrawStreamSample_Release(sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw3);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        EXPECT_REF(ddraw, 2);
-        EXPECT_REF(ddraw3, 2);
+    hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw3);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw, 2);
+    EXPECT_REF(ddraw3, 2);
 
-        hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw4);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ok(ddraw4 == ddraw3, "Expected ddraw %p, got %p.\n", ddraw3, ddraw4);
-        EXPECT_REF(ddraw3, 3);
-        IDirectDraw_Release(ddraw4);
-        EXPECT_REF(ddraw3, 2);
+    hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw4);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(ddraw4 == ddraw3, "Expected ddraw %p, got %p.\n", ddraw3, ddraw4);
+    EXPECT_REF(ddraw3, 3);
+    IDirectDraw_Release(ddraw4);
+    EXPECT_REF(ddraw3, 2);
 
-        hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, NULL);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        EXPECT_REF(ddraw3, 1);
+    hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(ddraw3, 1);
 
-        ref = IDirectDraw_Release(ddraw3);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
-    }
+    ref = IDirectDraw_Release(ddraw3);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     EXPECT_REF(stream, 3);
     IDirectDrawMediaStream_Release(ddraw_stream);
