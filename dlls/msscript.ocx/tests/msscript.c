@@ -2446,10 +2446,21 @@ static void test_IScriptControl_get_Modules(void)
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
     SysFreeString(str);
 
+    /* The module collection changes and module ref is invalid */
     hr = IScriptModuleCollection_get_Count(mods, &count);
     ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
     ok(count == 1, "count is not 1, got %d.\n", count);
+    hr = IScriptModule_get_Name(mod, &str);
+    todo_wine ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    str = SysAllocString(L"function closed() { }\n");
+    hr = IScriptModule_AddCode(mod, str);
+    todo_wine ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    SysFreeString(str);
+    str = SysAllocString(L"sub closed\nend sub");
+    hr = IScriptModule_AddCode(mod, str);
+    todo_wine ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
     IScriptModule_Release(mod);
+    SysFreeString(str);
 
     hr = IScriptControl_put_Language(sc, NULL);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
@@ -2564,11 +2575,68 @@ static void test_IScriptControl_get_Modules(void)
         SET_EXPECT(Close);
         hr = IScriptControl_put_Language(sc, NULL);
         ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
-        todo_wine CHECK_CALLED(Close);
+        CHECK_CALLED(Close);
         IScriptModuleCollection_Release(mods);
         IActiveScriptSite_Release(site);
         IScriptControl_Release(sc);
         IScriptModule_Release(mod);
+
+        /* Now try holding a module ref while closing the script */
+        hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
+                              &IID_IScriptControl, (void**)&sc);
+        ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
+
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(SetInterfaceSafetyOptions);
+        SET_EXPECT(SetScriptSite);
+        SET_EXPECT(QI_IActiveScriptParse);
+        SET_EXPECT(InitNew);
+        str = SysAllocString(L"testscript");
+        hr = IScriptControl_put_Language(sc, str);
+        ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
+        SysFreeString(str);
+        CHECK_CALLED(CreateInstance);
+        CHECK_CALLED(SetInterfaceSafetyOptions);
+        CHECK_CALLED(SetScriptSite);
+        CHECK_CALLED(QI_IActiveScriptParse);
+        CHECK_CALLED(InitNew);
+
+        hr = IScriptControl_get_Modules(sc, &mods);
+        ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
+
+        SET_EXPECT(AddNamedItem);
+        str = SysAllocString(L"foo");
+        AddNamedItem_expected_name = str;
+        AddNamedItem_expected_flags = SCRIPTITEM_CODEONLY;
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = NULL;
+        hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
+        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+        VariantClear(&var);
+        CHECK_CALLED(AddNamedItem);
+
+        unknown = (IUnknown*)0xdeadbeef;
+        hr = IActiveScriptSite_GetItemInfo(site, str, SCRIPTINFO_IUNKNOWN, &unknown, NULL);
+        ok(hr == TYPE_E_ELEMENTNOTFOUND, "IActiveScriptSite_GetItemInfo returned: 0x%08x.\n", hr);
+        IScriptModuleCollection_Release(mods);
+        IActiveScriptSite_Release(site);
+        IScriptControl_Release(sc);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_item_name = str;
+        parse_flags = SCRIPTTEXT_ISVISIBLE;
+        code_str = SysAllocString(L"code after close");
+        hr = IScriptModule_AddCode(mod, code_str);
+        todo_wine ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        todo_wine CHECK_CALLED(SetScriptState_STARTED);
+        todo_wine CHECK_CALLED(ParseScriptText);
+        SysFreeString(code_str);
+        SysFreeString(str);
+
+        SET_EXPECT(Close);
+        IScriptModule_Release(mod);
+        CHECK_CALLED(Close);
     }
 }
 

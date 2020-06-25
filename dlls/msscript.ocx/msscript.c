@@ -615,6 +615,17 @@ static void detach_script_host(ScriptHost *host)
     host->script = NULL;
 }
 
+static void detach_module(ScriptModule *module)
+{
+    ScriptHost *host = module->host;
+
+    if (host) {
+        module->host = NULL;
+        detach_script_host(host);
+        IActiveScriptSite_Release(&host->IActiveScriptSite_iface);
+    }
+}
+
 static HRESULT WINAPI ScriptModule_QueryInterface(IScriptModule *iface, REFIID riid, void **ppv)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
@@ -654,8 +665,7 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
 
     if (!ref)
     {
-        detach_script_host(This->host);
-        IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
+        detach_module(This);
         SysFreeString(This->name);
         heap_free(This);
     }
@@ -823,12 +833,14 @@ static ScriptModule *create_module(ScriptHost *host, BSTR name)
     return module;
 }
 
-static void release_modules(ScriptControl *control)
+static void release_modules(ScriptControl *control, BOOL force_detach)
 {
-    unsigned int i;
+    unsigned int i, module_count = control->host->module_count;
 
-    for (i = 0; i < control->host->module_count; i++)
+    for (i = 0; i < module_count; i++) {
+        if (force_detach) detach_module(control->modules[i]);
         IScriptModule_Release(&control->modules[i]->IScriptModule_iface);
+    }
 
     heap_free(control->modules);
 }
@@ -1200,7 +1212,7 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
             IOleClientSite_Release(This->site);
         if (This->host)
         {
-            release_modules(This);
+            release_modules(This, FALSE);
             IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         }
         heap_free(This);
@@ -1301,7 +1313,7 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
         return CTL_E_INVALIDPROPERTYVALUE;
 
     if (This->host) {
-        release_modules(This);
+        release_modules(This, TRUE);
         IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
         This->host = NULL;
     }
