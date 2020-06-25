@@ -72,6 +72,7 @@ typedef struct {
 
     BSTR name;
     ScriptHost *host;
+    IDispatch *script_dispatch;
 } ScriptModule;
 
 struct ScriptHost {
@@ -82,7 +83,6 @@ struct ScriptHost {
 
     IActiveScript *script;
     IActiveScriptParse *parse;
-    IDispatch *script_dispatch;
     SCRIPTSTATE script_state;
     CLSID clsid;
 
@@ -225,14 +225,15 @@ static struct named_item *host_get_named_item(ScriptHost *host, const WCHAR *nam
     return NULL;
 }
 
-static HRESULT get_script_dispatch(struct ScriptControl *control, IDispatch **disp)
+static HRESULT get_script_dispatch(ScriptModule *module, IDispatch **disp)
 {
-    if (!control->host->script_dispatch)
+    if (!module->script_dispatch)
     {
-        HRESULT hr = IActiveScript_GetScriptDispatch(control->host->script, NULL, &control->host->script_dispatch);
+        HRESULT hr = IActiveScript_GetScriptDispatch(module->host->script,
+                                                     module->name, &module->script_dispatch);
         if (FAILED(hr)) return hr;
     }
-    *disp = control->host->script_dispatch;
+    *disp = module->script_dispatch;
     return S_OK;
 }
 
@@ -607,10 +608,7 @@ static void detach_script_host(ScriptHost *host)
 
     if (host->parse)
         IActiveScriptParse_Release(host->parse);
-    if (host->script_dispatch)
-        IDispatch_Release(host->script_dispatch);
 
-    host->script_dispatch = NULL;
     host->parse = NULL;
     host->script = NULL;
 }
@@ -667,6 +665,8 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
     {
         detach_module(This);
         SysFreeString(This->name);
+        if (This->script_dispatch)
+            IDispatch_Release(This->script_dispatch);
         heap_free(This);
     }
 
@@ -833,6 +833,7 @@ static ScriptModule *create_module(ScriptHost *host, BSTR name)
         return NULL;
     }
     module->host = host;
+    module->script_dispatch = NULL;
     IActiveScriptSite_AddRef(&host->IActiveScriptSite_iface);
     return module;
 }
@@ -1089,7 +1090,6 @@ static HRESULT init_script_host(const CLSID *clsid, ScriptHost **ret)
     host->ref = 1;
     host->script = NULL;
     host->parse = NULL;
-    host->script_dispatch = NULL;
     host->clsid = *clsid;
     host->module_count = 1;
     list_init(&host->named_items);
@@ -1633,7 +1633,7 @@ static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_na
     hr = start_script(This->host);
     if (FAILED(hr)) return hr;
 
-    hr = get_script_dispatch(This, &disp);
+    hr = get_script_dispatch(This->modules[0], &disp);
     if (FAILED(hr)) return hr;
 
     hr = IDispatch_GetIDsOfNames(disp, &IID_NULL, &procedure_name, 1, LOCALE_USER_DEFAULT, &dispid);
