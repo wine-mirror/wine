@@ -250,6 +250,40 @@ static HRESULT start_script(ScriptHost *host)
     return hr;
 }
 
+static HRESULT add_script_object(ScriptHost *host, BSTR name, IDispatch *object, DWORD flags)
+{
+    struct named_item *item;
+    HRESULT hr;
+
+    if (host_get_named_item(host, name))
+        return E_INVALIDARG;
+
+    item = heap_alloc(sizeof(*item));
+    if (!item)
+        return E_OUTOFMEMORY;
+
+    item->name = SysAllocString(name);
+    if (!item->name)
+    {
+        heap_free(item);
+        return E_OUTOFMEMORY;
+    }
+    IDispatch_AddRef(item->disp = object);
+    list_add_tail(&host->named_items, &item->entry);
+
+    hr = IActiveScript_AddNamedItem(host->script, name, flags);
+    if (FAILED(hr))
+    {
+        list_remove(&item->entry);
+        IDispatch_Release(item->disp);
+        SysFreeString(item->name);
+        heap_free(item);
+        return hr;
+    }
+
+    return hr;
+}
+
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IScriptControl_iface);
@@ -1392,8 +1426,6 @@ static HRESULT WINAPI ScriptControl_AddObject(IScriptControl *iface, BSTR name, 
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
     DWORD flags = SCRIPTITEM_ISVISIBLE | SCRIPTITEM_ISSOURCE;
-    struct named_item *item;
-    HRESULT hr;
 
     TRACE("(%p)->(%s %p %x)\n", This, debugstr_w(name), object, add_members);
 
@@ -1403,30 +1435,9 @@ static HRESULT WINAPI ScriptControl_AddObject(IScriptControl *iface, BSTR name, 
     if (!This->host)
         return E_FAIL;
 
-    if (host_get_named_item(This->host, name))
-        return E_INVALIDARG;
-
-    item = heap_alloc(sizeof(*item));
-    if (!item)
-        return E_OUTOFMEMORY;
-
-    item->name = SysAllocString(name);
-    IDispatch_AddRef(item->disp = object);
-    list_add_tail(&This->host->named_items, &item->entry);
-
     if (add_members)
         flags |= SCRIPTITEM_GLOBALMEMBERS;
-    hr = IActiveScript_AddNamedItem(This->host->script, name, flags);
-    if (FAILED(hr)) {
-        list_remove(&item->entry);
-        IDispatch_Release(item->disp);
-        SysFreeString(item->name);
-        heap_free(item);
-        return hr;
-    }
-
-
-    return hr;
+    return add_script_object(This->host, name, object, flags);
 }
 
 static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
