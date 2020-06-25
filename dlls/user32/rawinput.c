@@ -223,6 +223,15 @@ static void find_devices(void)
 }
 
 
+RAWINPUT *rawinput_thread_data(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    RAWINPUT *rawinput = thread_info->rawinput;
+    if (!rawinput) rawinput = thread_info->rawinput = HeapAlloc( GetProcessHeap(), 0, RAWINPUT_BUFFER_SIZE );
+    return rawinput;
+}
+
+
 BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_msg_data *msg_data)
 {
     rawinput->header.dwType = msg_data->rawinput.type;

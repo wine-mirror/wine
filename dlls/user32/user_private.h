@@ -169,6 +169,10 @@ struct wm_char_mapping_data
     MSG  get_msg;
 };
 
+/* on windows the buffer capacity is quite large as well, enough to */
+/* hold up to 10s of 1kHz mouse rawinput events */
+#define RAWINPUT_BUFFER_SIZE (512*1024)
+
 /* this is the structure stored in TEB->Win32ClientInfo */
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
@@ -192,7 +196,7 @@ struct user_thread_info
     struct user_key_state_info   *key_state;              /* Cache of global key state */
     HWND                          top_window;             /* Desktop window */
     HWND                          msg_window;             /* HWND_MESSAGE parent window */
-    RAWINPUT                     *rawinput;
+    RAWINPUT                     *rawinput;               /* Rawinput buffer */
 };
 
 C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );
@@ -232,6 +236,7 @@ struct tagWND;
 
 struct hardware_msg_data;
 extern BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_msg_data *msg_data);
+extern RAWINPUT *rawinput_thread_data(void);
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;

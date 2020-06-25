@@ -2286,15 +2286,7 @@ static void accept_hardware_message( UINT hw_id, BOOL remove )
 
 static BOOL process_rawinput_message( MSG *msg, const struct hardware_msg_data *msg_data )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
-    RAWINPUT *rawinput = thread_info->rawinput;
-
-    if (!rawinput)
-    {
-        thread_info->rawinput = HeapAlloc( GetProcessHeap(), 0, sizeof(*rawinput) );
-        if (!(rawinput = thread_info->rawinput)) return FALSE;
-    }
-
+    RAWINPUT *rawinput = rawinput_thread_data();
     if (!rawinput_from_hardware_message(rawinput, msg_data))
         return FALSE;
 
