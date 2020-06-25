@@ -673,6 +673,9 @@ static HRESULT dmo_wrapper_cleanup_stream(struct strmbase_filter *iface)
     IMediaObject *dmo;
     DWORD i;
 
+    if (!filter->dmo)
+        return E_FAIL;
+
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 
     for (i = 0; i < filter->source_count; ++i)

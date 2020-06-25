@@ -1995,6 +1995,23 @@ static void test_connect_pin(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_uninitialized(void)
+{
+    IBaseFilter *filter = NULL;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = CoCreateInstance(&CLSID_DMOWrapperFilter, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_Stop(filter);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(dmowrapper)
 {
     DWORD cookie;
@@ -2022,6 +2039,7 @@ START_TEST(dmowrapper)
     test_media_types();
     test_enum_media_types();
     test_connect_pin();
+    test_uninitialized();
 
     CoRevokeClassObject(cookie);
     DMOUnregister(&testdmo_clsid, &DMOCATEGORY_AUDIO_DECODER);
