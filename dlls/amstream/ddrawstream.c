@@ -218,6 +218,13 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
             && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw, (void **)&stream->ddraw)))
         FIXME("Stream object doesn't implement IDirectDraw interface, hr %#x.\n", hr);
 
+    if (!source_object)
+    {
+        if (FAILED(hr = DirectDrawCreate(NULL, &stream->ddraw, NULL)))
+            return hr;
+        IDirectDraw_SetCooperativeLevel(stream->ddraw, NULL, DDSCL_NORMAL);
+    }
+
     return S_OK;
 }
 
@@ -381,13 +388,10 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMedi
     if (!ddraw)
         return E_POINTER;
 
-    *ddraw = NULL;
     if (!stream->ddraw)
     {
-        HRESULT hr = DirectDrawCreate(NULL, &stream->ddraw, NULL);
-        if (FAILED(hr))
-            return hr;
-        IDirectDraw_SetCooperativeLevel(stream->ddraw, NULL, DDSCL_NORMAL);
+        *ddraw = NULL;
+        return S_OK;
     }
 
     IDirectDraw_AddRef(stream->ddraw);

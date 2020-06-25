@@ -4803,8 +4803,7 @@ static void test_ddrawstream_getsetdirectdraw(void)
 
     hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(ddraw3 == NULL, "Expected NULL, got %p.\n", ddraw3);
-    if (ddraw3) IDirectDraw_Release(ddraw3);
+    ok(ddraw3 == NULL, "Expected NULL, got %p.\n", ddraw3);
 
     hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
