@@ -954,10 +954,34 @@ static HRESULT WINAPI ScriptModuleCollection_get_Item(IScriptModuleCollection *i
         IScriptModule **ppmod)
 {
     ScriptControl *This = impl_from_IScriptModuleCollection(iface);
+    ScriptModule *module;
+    unsigned int i;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s %p)\n", This, wine_dbgstr_variant(&index), ppmod);
+    TRACE("(%p)->(%s %p)\n", This, wine_dbgstr_variant(&index), ppmod);
 
-    return E_NOTIMPL;
+    if (!ppmod) return E_POINTER;
+    if (!This->host) return E_FAIL;
+
+    if (V_VT(&index) == VT_BSTR)
+    {
+        module = find_module(This, V_BSTR(&index));
+        if (!module) return CTL_E_ILLEGALFUNCTIONCALL;
+    }
+    else
+    {
+        hr = VariantChangeType(&index, &index, 0, VT_INT);
+        if (FAILED(hr)) return hr;
+
+        i = V_INT(&index) - 1;
+        if (i >= This->host->module_count) return 0x800a0009;
+
+        module = This->modules[i];
+    }
+
+    *ppmod = &module->IScriptModule_iface;
+    IScriptModule_AddRef(*ppmod);
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptModuleCollection_get_Count(IScriptModuleCollection *iface, LONG *plCount)

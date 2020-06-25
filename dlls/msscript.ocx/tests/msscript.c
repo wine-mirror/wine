@@ -2341,9 +2341,9 @@ static void test_IScriptControl_get_Modules(void)
     V_VT(&var) = VT_I4;
     V_I4(&var) = -1;
     hr = IScriptModuleCollection_get_Item(mods, var, NULL);
-    todo_wine ok(hr == E_POINTER, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    todo_wine ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
 
     V_VT(&var) = VT_EMPTY;
     str = SysAllocString(L"foobar");
@@ -2378,34 +2378,69 @@ static void test_IScriptControl_get_Modules(void)
     V_VT(&var) = VT_I4;
     V_I4(&var) = count + 1;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    todo_wine ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == 0x800a0009, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"non-existent module");
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    todo_wine ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
+    ok(hr == CTL_E_ILLEGALFUNCTIONCALL, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
 
     V_VT(&var) = VT_I4;
     V_I4(&var) = 1;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
-    if (hr == S_OK) IScriptModule_Release(mod);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    hr = IScriptModule_get_Name(mod, NULL);
+    todo_wine ok(hr == E_POINTER, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    hr = IScriptModule_get_Name(mod, &str);
+    todo_wine ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    if (hr == S_OK) SysFreeString(str);
+    str = SysAllocString(L"function add(a, b) { return a + b; }\n");
+    hr = IScriptModule_AddCode(mod, str);
+    todo_wine ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    IScriptModule_Release(mod);
+    SysFreeString(str);
 
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(L"some other module");
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
-    if (hr == S_OK) IScriptModule_Release(mod);
+    hr = IScriptModule_get_Name(mod, &str);
+    todo_wine ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    IScriptModule_Release(mod);
+    if (hr == S_OK) SysFreeString(str);
 
     V_VT(&var) = VT_R8;
     V_R8(&var) = 2.0;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
-    if (hr == S_OK) IScriptModule_Release(mod);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
+    hr = IScriptModule_get_Name(mod, &str);
+    todo_wine ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    if (hr == S_OK) SysFreeString(str);
+    str = SysAllocString(L"function sub(a, b) { return a - b; }\n");
+    hr = IScriptModule_AddCode(mod, str);
+    todo_wine ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    IScriptModule_Release(mod);
+    SysFreeString(str);
 
+    /* The 'Global' module is the same as the script control */
+    str = SysAllocString(L"add(10, 5)");
+    hr = IScriptControl_Eval(sc, str, &var);
+    todo_wine ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    todo_wine ok(V_VT(&var) == VT_I4 && V_I4(&var) == 15, "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    SysFreeString(str);
+    str = SysAllocString(L"sub(10, 5)");
+    hr = IScriptControl_Eval(sc, str, &var);
+    ok(FAILED(hr), "IScriptControl_Eval succeeded: 0x%08x.\n", hr);
+    SysFreeString(str);
+
+    /* Grab a module ref and change the language to something valid */
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = 3;
+    hr = IScriptModuleCollection_get_Item(mods, var, &mod);
+    ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
     str = SysAllocString(L"vbscript");
     hr = IScriptControl_put_Language(sc, str);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
@@ -2414,12 +2449,17 @@ static void test_IScriptControl_get_Modules(void)
     hr = IScriptModuleCollection_get_Count(mods, &count);
     ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
     ok(count == 1, "count is not 1, got %d.\n", count);
+    IScriptModule_Release(mod);
 
     hr = IScriptControl_put_Language(sc, NULL);
     ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
     ok(hr == E_FAIL, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 1;
+    hr = IScriptModuleCollection_get_Item(mods, var, &mod);
+    ok(hr == E_FAIL, "IScriptModuleCollection_get_Item returned: 0x%08x.\n", hr);
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = NULL;
     str = SysAllocString(L"module_name");
