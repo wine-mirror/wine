@@ -1073,7 +1073,7 @@ static HRESULT WINAPI audio_sink_QueryId(IPin *iface, WCHAR **id)
 static HRESULT WINAPI audio_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
 {
     TRACE("iface %p, mt %p.\n", iface, mt);
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI audio_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)

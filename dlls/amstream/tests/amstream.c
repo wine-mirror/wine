@@ -1989,7 +1989,7 @@ static void test_media_types(void)
     ok(!memcmp(pmt->pbFormat, &expect_wfx, pmt->cbFormat), "Format blocks didn't match.\n");
 
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     CoTaskMemFree(pmt);
 
