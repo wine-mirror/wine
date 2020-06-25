@@ -29,6 +29,8 @@
 static VOID (WINAPI *pRtlTimeToTimeFields)( const LARGE_INTEGER *liTime, PTIME_FIELDS TimeFields) ;
 static VOID (WINAPI *pRtlTimeFieldsToTime)(  PTIME_FIELDS TimeFields,  PLARGE_INTEGER Time) ;
 static NTSTATUS (WINAPI *pNtQueryPerformanceCounter)( LARGE_INTEGER *counter, LARGE_INTEGER *frequency );
+static NTSTATUS (WINAPI *pNtQuerySystemInformation)( SYSTEM_INFORMATION_CLASS class,
+                                                     void *info, ULONG size, ULONG *ret_size );
 static NTSTATUS (WINAPI *pRtlQueryTimeZoneInformation)( RTL_TIME_ZONE_INFORMATION *);
 static NTSTATUS (WINAPI *pRtlQueryDynamicTimeZoneInformation)( RTL_DYNAMIC_TIME_ZONE_INFORMATION *);
 static BOOL     (WINAPI *pRtlQueryUnbiasedInterruptTime)( ULONGLONG *time );
@@ -122,18 +124,19 @@ static void test_NtQueryPerformanceCounter(void)
 
 static void test_RtlQueryTimeZoneInformation(void)
 {
-    RTL_DYNAMIC_TIME_ZONE_INFORMATION tzinfo;
+    RTL_DYNAMIC_TIME_ZONE_INFORMATION tzinfo, tzinfo2;
     NTSTATUS status;
+    ULONG len;
 
     /* test RtlQueryTimeZoneInformation returns an indirect string,
        e.g. @tzres.dll,-32 (Vista or later) */
     if (!pRtlQueryTimeZoneInformation || !pRtlQueryDynamicTimeZoneInformation)
     {
-        win_skip("Time zone name tests requires Vista or later\n");
+        win_skip("Time zone name tests require Vista or later\n");
         return;
     }
 
-    memset(&tzinfo, 0, sizeof(tzinfo));
+    memset(&tzinfo, 0xcc, sizeof(tzinfo));
     status = pRtlQueryDynamicTimeZoneInformation(&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryDynamicTimeZoneInformation failed, got %08x\n", status);
@@ -144,7 +147,13 @@ static void test_RtlQueryTimeZoneInformation(void)
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
 
-    memset(&tzinfo, 0, sizeof(tzinfo));
+    memset(&tzinfo2, 0xcc, sizeof(tzinfo2));
+    status = pNtQuerySystemInformation( SystemDynamicTimeZoneInformation, &tzinfo2, sizeof(tzinfo2), &len );
+    ok( !status, "NtQuerySystemInformation failed %x\n", status );
+    ok( len == sizeof(tzinfo2), "wrong len %u\n", len );
+    ok( !memcmp( &tzinfo, &tzinfo2, sizeof(tzinfo2) ), "tz data is different\n" );
+
+    memset(&tzinfo, 0xcc, sizeof(tzinfo));
     status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     ok(status == STATUS_SUCCESS,
        "RtlQueryTimeZoneInformation failed, got %08x\n", status);
@@ -154,6 +163,24 @@ static void test_RtlQueryTimeZoneInformation(void)
     ok(tzinfo.DaylightName[0] == '@',
        "daylight time zone name isn't an indirect string, got %s\n",
        wine_dbgstr_w(tzinfo.DaylightName));
+
+    memset(&tzinfo, 0xcc, sizeof(tzinfo));
+    status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
+    ok(status == STATUS_SUCCESS,
+       "RtlQueryTimeZoneInformation failed, got %08x\n", status);
+    ok(tzinfo.StandardName[0] == '@',
+       "standard time zone name isn't an indirect string, got %s\n",
+       wine_dbgstr_w(tzinfo.StandardName));
+    ok(tzinfo.DaylightName[0] == '@',
+       "daylight time zone name isn't an indirect string, got %s\n",
+       wine_dbgstr_w(tzinfo.DaylightName));
+
+    memset(&tzinfo2, 0xcc, sizeof(tzinfo2));
+    status = pNtQuerySystemInformation( SystemTimeZoneInformation, &tzinfo2,
+                                        sizeof(RTL_TIME_ZONE_INFORMATION), &len );
+    ok( !status, "NtQuerySystemInformation failed %x\n", status );
+    ok( len == sizeof(RTL_TIME_ZONE_INFORMATION), "wrong len %u\n", len );
+    ok( !memcmp( &tzinfo, &tzinfo2, sizeof(RTL_TIME_ZONE_INFORMATION) ), "tz data is different\n" );
 }
 
 static ULONGLONG read_ksystem_time(volatile KSYSTEM_TIME *time)
@@ -234,6 +261,7 @@ START_TEST(time)
     pRtlTimeToTimeFields = (void *)GetProcAddress(mod,"RtlTimeToTimeFields");
     pRtlTimeFieldsToTime = (void *)GetProcAddress(mod,"RtlTimeFieldsToTime");
     pNtQueryPerformanceCounter = (void *)GetProcAddress(mod, "NtQueryPerformanceCounter");
+    pNtQuerySystemInformation = (void *)GetProcAddress(mod, "NtQuerySystemInformation");
     pRtlQueryTimeZoneInformation =
         (void *)GetProcAddress(mod, "RtlQueryTimeZoneInformation");
     pRtlQueryDynamicTimeZoneInformation =
