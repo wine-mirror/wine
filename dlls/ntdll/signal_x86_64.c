@@ -222,25 +222,6 @@ struct MSVCRT_JUMP_BUFFER
 #error You must define the signal context functions for your platform
 #endif
 
-struct amd64_thread_data
-{
-    DWORD_PTR dr0;           /* debug registers */
-    DWORD_PTR dr1;
-    DWORD_PTR dr2;
-    DWORD_PTR dr3;
-    DWORD_PTR dr6;
-    DWORD_PTR dr7;
-    void     *exit_frame;    /* exit frame pointer */
-};
-
-C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
-C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x330 );
-
-static inline struct amd64_thread_data *amd64_thread_data(void)
-{
-    return (struct amd64_thread_data *)NtCurrentTeb()->SystemReserved2;
-}
-
 
 /***********************************************************************
  * Definitions for Win32 unwind tables
@@ -524,91 +505,6 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "movdqa %xmm14,0x280(%rcx)\n\t"  /* context->Xmm14 */
                    "movdqa %xmm15,0x290(%rcx)\n\t"  /* context->Xmm15 */
                    "ret" );
-
-/***********************************************************************
- *           set_full_cpu_context
- *
- * Set the new CPU context.
- */
-extern void set_full_cpu_context( const CONTEXT *context );
-__ASM_GLOBAL_FUNC( set_full_cpu_context,
-                   "subq $40,%rsp\n\t"
-                   __ASM_SEH(".seh_stackalloc 0x40\n\t")
-                   __ASM_SEH(".seh_endprologue\n\t")
-                   __ASM_CFI(".cfi_adjust_cfa_offset 40\n\t")
-                   "ldmxcsr 0x34(%rdi)\n\t"         /* context->MxCsr */
-                   "movw 0x38(%rdi),%ax\n\t"        /* context->SegCs */
-                   "movq %rax,8(%rsp)\n\t"
-                   "movw 0x42(%rdi),%ax\n\t"        /* context->SegSs */
-                   "movq %rax,32(%rsp)\n\t"
-                   "movq 0x44(%rdi),%rax\n\t"       /* context->Eflags */
-                   "movq %rax,16(%rsp)\n\t"
-                   "movq 0x80(%rdi),%rcx\n\t"       /* context->Rcx */
-                   "movq 0x88(%rdi),%rdx\n\t"       /* context->Rdx */
-                   "movq 0x90(%rdi),%rbx\n\t"       /* context->Rbx */
-                   "movq 0x98(%rdi),%rax\n\t"       /* context->Rsp */
-                   "movq %rax,24(%rsp)\n\t"
-                   "movq 0xa0(%rdi),%rbp\n\t"       /* context->Rbp */
-                   "movq 0xa8(%rdi),%rsi\n\t"       /* context->Rsi */
-                   "movq 0xb8(%rdi),%r8\n\t"        /* context->R8 */
-                   "movq 0xc0(%rdi),%r9\n\t"        /* context->R9 */
-                   "movq 0xc8(%rdi),%r10\n\t"       /* context->R10 */
-                   "movq 0xd0(%rdi),%r11\n\t"       /* context->R11 */
-                   "movq 0xd8(%rdi),%r12\n\t"       /* context->R12 */
-                   "movq 0xe0(%rdi),%r13\n\t"       /* context->R13 */
-                   "movq 0xe8(%rdi),%r14\n\t"       /* context->R14 */
-                   "movq 0xf0(%rdi),%r15\n\t"       /* context->R15 */
-                   "movq 0xf8(%rdi),%rax\n\t"       /* context->Rip */
-                   "movq %rax,(%rsp)\n\t"
-                   "fxrstor 0x100(%rdi)\n\t"        /* context->FtlSave */
-                   "movdqa 0x1a0(%rdi),%xmm0\n\t"   /* context->Xmm0 */
-                   "movdqa 0x1b0(%rdi),%xmm1\n\t"   /* context->Xmm1 */
-                   "movdqa 0x1c0(%rdi),%xmm2\n\t"   /* context->Xmm2 */
-                   "movdqa 0x1d0(%rdi),%xmm3\n\t"   /* context->Xmm3 */
-                   "movdqa 0x1e0(%rdi),%xmm4\n\t"   /* context->Xmm4 */
-                   "movdqa 0x1f0(%rdi),%xmm5\n\t"   /* context->Xmm5 */
-                   "movdqa 0x200(%rdi),%xmm6\n\t"   /* context->Xmm6 */
-                   "movdqa 0x210(%rdi),%xmm7\n\t"   /* context->Xmm7 */
-                   "movdqa 0x220(%rdi),%xmm8\n\t"   /* context->Xmm8 */
-                   "movdqa 0x230(%rdi),%xmm9\n\t"   /* context->Xmm9 */
-                   "movdqa 0x240(%rdi),%xmm10\n\t"  /* context->Xmm10 */
-                   "movdqa 0x250(%rdi),%xmm11\n\t"  /* context->Xmm11 */
-                   "movdqa 0x260(%rdi),%xmm12\n\t"  /* context->Xmm12 */
-                   "movdqa 0x270(%rdi),%xmm13\n\t"  /* context->Xmm13 */
-                   "movdqa 0x280(%rdi),%xmm14\n\t"  /* context->Xmm14 */
-                   "movdqa 0x290(%rdi),%xmm15\n\t"  /* context->Xmm15 */
-                   "movq 0x78(%rdi),%rax\n\t"       /* context->Rax */
-                   "movq 0xb0(%rdi),%rdi\n\t"       /* context->Rdi */
-                   "iretq" );
-
-
-/***********************************************************************
- *           set_cpu_context
- *
- * Set the new CPU context. Used by NtSetContextThread.
- */
-void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context )
-{
-    DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
-
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        amd64_thread_data()->dr0 = context->Dr0;
-        amd64_thread_data()->dr1 = context->Dr1;
-        amd64_thread_data()->dr2 = context->Dr2;
-        amd64_thread_data()->dr3 = context->Dr3;
-        amd64_thread_data()->dr6 = context->Dr6;
-        amd64_thread_data()->dr7 = context->Dr7;
-    }
-    if (flags & CONTEXT_FULL)
-    {
-        if (!(flags & CONTEXT_CONTROL))
-            FIXME( "setting partial context (%x) not supported\n", flags );
-        else
-            set_full_cpu_context( context );
-    }
-}
-
 
 /******************************************************************************
  *              RtlWow64GetThreadContext  (NTDLL.@)
@@ -1320,7 +1216,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     }
 
     TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
-    set_cpu_context( context );
+    NtSetContextThread( GetCurrentThread(), context );
 }
 
 

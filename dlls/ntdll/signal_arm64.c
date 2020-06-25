@@ -68,20 +68,6 @@ struct MSVCRT_JUMP_BUFFER
     double D[8];
 };
 
-struct arm64_thread_data
-{
-    void     *exit_frame;    /* exit frame pointer */
-    CONTEXT  *context;       /* context to set with SIGUSR2 */
-};
-
-C_ASSERT( sizeof(struct arm64_thread_data) <= sizeof(((TEB *)0)->SystemReserved2) );
-C_ASSERT( offsetof( TEB, SystemReserved2 ) + offsetof( struct arm64_thread_data, exit_frame ) == 0x300 );
-
-static inline struct arm64_thread_data *arm64_thread_data(void)
-{
-    return (struct arm64_thread_data *)NtCurrentTeb()->SystemReserved2;
-}
-
 
 /*******************************************************************
  *         is_valid_frame
@@ -121,18 +107,6 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 8,
                     "mrs x1, NZCV\n\t"
                     "str w1, [x0, #0x4]\n\t"         /* context->Cpsr */
                     "ret" )
-
-/***********************************************************************
- *           set_cpu_context
- *
- * Set the new CPU context.
- */
-static void set_cpu_context( const CONTEXT *context )
-{
-    InterlockedExchangePointer( (void **)&arm64_thread_data()->context, (void *)context );
-    raise( SIGUSR2 );
-}
-
 
 
 /**********************************************************************
@@ -1039,7 +1013,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     }
 
     TRACE( "returning to %lx stack %lx\n", context->Pc, context->Sp );
-    set_cpu_context( context );
+    NtSetContextThread( GetCurrentThread(), context );
 }
 
 /*******************************************************************
