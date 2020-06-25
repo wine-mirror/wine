@@ -1664,19 +1664,8 @@ DECL_HANDLER(open_console)
 {
     struct object      *obj = NULL;
 
-    reply->handle = 0;
-    if (!req->from)
-    {
-        if (current->process->console)
-            obj = grab_object( (struct object*)current->process->console );
-    }
-    else if (req->from == (obj_handle_t)1)
-    {
-        if (current->process->console && current->process->console->active)
-            obj = grab_object( (struct object*)current->process->console->active );
-    }
-    else if ((obj = get_handle_obj( current->process, req->from,
-                                    FILE_READ_PROPERTIES|FILE_WRITE_PROPERTIES, &console_input_ops )))
+    if ((obj = get_handle_obj( current->process, req->from,
+                               FILE_READ_PROPERTIES|FILE_WRITE_PROPERTIES, &console_input_ops )))
     {
         struct console_input *console = (struct console_input *)obj;
         obj = (console->active) ? grab_object( console->active ) : NULL;

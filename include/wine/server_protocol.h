@@ -1902,7 +1902,6 @@ struct open_console_request
 {
     struct request_header __header;
     obj_handle_t from;
-
     unsigned int access;
     unsigned int attributes;
     int          share;
