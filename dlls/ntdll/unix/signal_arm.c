@@ -131,6 +131,15 @@ typedef void (WINAPI *raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
 
 /***********************************************************************
+ *           unwind_builtin_dll
+ */
+NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+{
+    return STATUS_UNSUCCESSFUL;
+}
+
+
+/***********************************************************************
  *           get_trap_code
  *
  * Get the trap code for a signal.

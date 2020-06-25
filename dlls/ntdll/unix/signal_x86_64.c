@@ -261,6 +261,1086 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
 }
 
 
+/***********************************************************************
+ * Definitions for Dwarf unwind tables
+ */
+
+enum dwarf_call_frame_info
+{
+    DW_CFA_advance_loc = 0x40,
+    DW_CFA_offset = 0x80,
+    DW_CFA_restore = 0xc0,
+    DW_CFA_nop = 0x00,
+    DW_CFA_set_loc = 0x01,
+    DW_CFA_advance_loc1 = 0x02,
+    DW_CFA_advance_loc2 = 0x03,
+    DW_CFA_advance_loc4 = 0x04,
+    DW_CFA_offset_extended = 0x05,
+    DW_CFA_restore_extended = 0x06,
+    DW_CFA_undefined = 0x07,
+    DW_CFA_same_value = 0x08,
+    DW_CFA_register = 0x09,
+    DW_CFA_remember_state = 0x0a,
+    DW_CFA_restore_state = 0x0b,
+    DW_CFA_def_cfa = 0x0c,
+    DW_CFA_def_cfa_register = 0x0d,
+    DW_CFA_def_cfa_offset = 0x0e,
+    DW_CFA_def_cfa_expression = 0x0f,
+    DW_CFA_expression = 0x10,
+    DW_CFA_offset_extended_sf = 0x11,
+    DW_CFA_def_cfa_sf = 0x12,
+    DW_CFA_def_cfa_offset_sf = 0x13,
+    DW_CFA_val_offset = 0x14,
+    DW_CFA_val_offset_sf = 0x15,
+    DW_CFA_val_expression = 0x16,
+};
+
+enum dwarf_operation
+{
+    DW_OP_addr                 = 0x03,
+    DW_OP_deref                = 0x06,
+    DW_OP_const1u              = 0x08,
+    DW_OP_const1s              = 0x09,
+    DW_OP_const2u              = 0x0a,
+    DW_OP_const2s              = 0x0b,
+    DW_OP_const4u              = 0x0c,
+    DW_OP_const4s              = 0x0d,
+    DW_OP_const8u              = 0x0e,
+    DW_OP_const8s              = 0x0f,
+    DW_OP_constu               = 0x10,
+    DW_OP_consts               = 0x11,
+    DW_OP_dup                  = 0x12,
+    DW_OP_drop                 = 0x13,
+    DW_OP_over                 = 0x14,
+    DW_OP_pick                 = 0x15,
+    DW_OP_swap                 = 0x16,
+    DW_OP_rot                  = 0x17,
+    DW_OP_xderef               = 0x18,
+    DW_OP_abs                  = 0x19,
+    DW_OP_and                  = 0x1a,
+    DW_OP_div                  = 0x1b,
+    DW_OP_minus                = 0x1c,
+    DW_OP_mod                  = 0x1d,
+    DW_OP_mul                  = 0x1e,
+    DW_OP_neg                  = 0x1f,
+    DW_OP_not                  = 0x20,
+    DW_OP_or                   = 0x21,
+    DW_OP_plus                 = 0x22,
+    DW_OP_plus_uconst          = 0x23,
+    DW_OP_shl                  = 0x24,
+    DW_OP_shr                  = 0x25,
+    DW_OP_shra                 = 0x26,
+    DW_OP_xor                  = 0x27,
+    DW_OP_bra                  = 0x28,
+    DW_OP_eq                   = 0x29,
+    DW_OP_ge                   = 0x2a,
+    DW_OP_gt                   = 0x2b,
+    DW_OP_le                   = 0x2c,
+    DW_OP_lt                   = 0x2d,
+    DW_OP_ne                   = 0x2e,
+    DW_OP_skip                 = 0x2f,
+    DW_OP_lit0                 = 0x30,
+    DW_OP_lit1                 = 0x31,
+    DW_OP_lit2                 = 0x32,
+    DW_OP_lit3                 = 0x33,
+    DW_OP_lit4                 = 0x34,
+    DW_OP_lit5                 = 0x35,
+    DW_OP_lit6                 = 0x36,
+    DW_OP_lit7                 = 0x37,
+    DW_OP_lit8                 = 0x38,
+    DW_OP_lit9                 = 0x39,
+    DW_OP_lit10                = 0x3a,
+    DW_OP_lit11                = 0x3b,
+    DW_OP_lit12                = 0x3c,
+    DW_OP_lit13                = 0x3d,
+    DW_OP_lit14                = 0x3e,
+    DW_OP_lit15                = 0x3f,
+    DW_OP_lit16                = 0x40,
+    DW_OP_lit17                = 0x41,
+    DW_OP_lit18                = 0x42,
+    DW_OP_lit19                = 0x43,
+    DW_OP_lit20                = 0x44,
+    DW_OP_lit21                = 0x45,
+    DW_OP_lit22                = 0x46,
+    DW_OP_lit23                = 0x47,
+    DW_OP_lit24                = 0x48,
+    DW_OP_lit25                = 0x49,
+    DW_OP_lit26                = 0x4a,
+    DW_OP_lit27                = 0x4b,
+    DW_OP_lit28                = 0x4c,
+    DW_OP_lit29                = 0x4d,
+    DW_OP_lit30                = 0x4e,
+    DW_OP_lit31                = 0x4f,
+    DW_OP_reg0                 = 0x50,
+    DW_OP_reg1                 = 0x51,
+    DW_OP_reg2                 = 0x52,
+    DW_OP_reg3                 = 0x53,
+    DW_OP_reg4                 = 0x54,
+    DW_OP_reg5                 = 0x55,
+    DW_OP_reg6                 = 0x56,
+    DW_OP_reg7                 = 0x57,
+    DW_OP_reg8                 = 0x58,
+    DW_OP_reg9                 = 0x59,
+    DW_OP_reg10                = 0x5a,
+    DW_OP_reg11                = 0x5b,
+    DW_OP_reg12                = 0x5c,
+    DW_OP_reg13                = 0x5d,
+    DW_OP_reg14                = 0x5e,
+    DW_OP_reg15                = 0x5f,
+    DW_OP_reg16                = 0x60,
+    DW_OP_reg17                = 0x61,
+    DW_OP_reg18                = 0x62,
+    DW_OP_reg19                = 0x63,
+    DW_OP_reg20                = 0x64,
+    DW_OP_reg21                = 0x65,
+    DW_OP_reg22                = 0x66,
+    DW_OP_reg23                = 0x67,
+    DW_OP_reg24                = 0x68,
+    DW_OP_reg25                = 0x69,
+    DW_OP_reg26                = 0x6a,
+    DW_OP_reg27                = 0x6b,
+    DW_OP_reg28                = 0x6c,
+    DW_OP_reg29                = 0x6d,
+    DW_OP_reg30                = 0x6e,
+    DW_OP_reg31                = 0x6f,
+    DW_OP_breg0                = 0x70,
+    DW_OP_breg1                = 0x71,
+    DW_OP_breg2                = 0x72,
+    DW_OP_breg3                = 0x73,
+    DW_OP_breg4                = 0x74,
+    DW_OP_breg5                = 0x75,
+    DW_OP_breg6                = 0x76,
+    DW_OP_breg7                = 0x77,
+    DW_OP_breg8                = 0x78,
+    DW_OP_breg9                = 0x79,
+    DW_OP_breg10               = 0x7a,
+    DW_OP_breg11               = 0x7b,
+    DW_OP_breg12               = 0x7c,
+    DW_OP_breg13               = 0x7d,
+    DW_OP_breg14               = 0x7e,
+    DW_OP_breg15               = 0x7f,
+    DW_OP_breg16               = 0x80,
+    DW_OP_breg17               = 0x81,
+    DW_OP_breg18               = 0x82,
+    DW_OP_breg19               = 0x83,
+    DW_OP_breg20               = 0x84,
+    DW_OP_breg21               = 0x85,
+    DW_OP_breg22               = 0x86,
+    DW_OP_breg23               = 0x87,
+    DW_OP_breg24               = 0x88,
+    DW_OP_breg25               = 0x89,
+    DW_OP_breg26               = 0x8a,
+    DW_OP_breg27               = 0x8b,
+    DW_OP_breg28               = 0x8c,
+    DW_OP_breg29               = 0x8d,
+    DW_OP_breg30               = 0x8e,
+    DW_OP_breg31               = 0x8f,
+    DW_OP_regx                 = 0x90,
+    DW_OP_fbreg                = 0x91,
+    DW_OP_bregx                = 0x92,
+    DW_OP_piece                = 0x93,
+    DW_OP_deref_size           = 0x94,
+    DW_OP_xderef_size          = 0x95,
+    DW_OP_nop                  = 0x96,
+    DW_OP_push_object_address  = 0x97,
+    DW_OP_call2                = 0x98,
+    DW_OP_call4                = 0x99,
+    DW_OP_call_ref             = 0x9a,
+    DW_OP_form_tls_address     = 0x9b,
+    DW_OP_call_frame_cfa       = 0x9c,
+    DW_OP_bit_piece            = 0x9d,
+    DW_OP_lo_user              = 0xe0,
+    DW_OP_hi_user              = 0xff,
+    DW_OP_GNU_push_tls_address = 0xe0,
+    DW_OP_GNU_uninit           = 0xf0,
+    DW_OP_GNU_encoded_addr     = 0xf1,
+};
+
+#define DW_EH_PE_native   0x00
+#define DW_EH_PE_leb128   0x01
+#define DW_EH_PE_data2    0x02
+#define DW_EH_PE_data4    0x03
+#define DW_EH_PE_data8    0x04
+#define DW_EH_PE_signed   0x08
+#define DW_EH_PE_abs      0x00
+#define DW_EH_PE_pcrel    0x10
+#define DW_EH_PE_textrel  0x20
+#define DW_EH_PE_datarel  0x30
+#define DW_EH_PE_funcrel  0x40
+#define DW_EH_PE_aligned  0x50
+#define DW_EH_PE_indirect 0x80
+#define DW_EH_PE_omit     0xff
+
+struct dwarf_eh_bases
+{
+    void *tbase;
+    void *dbase;
+    void *func;
+};
+
+struct dwarf_cie
+{
+    unsigned int  length;
+    int           id;
+    unsigned char version;
+    unsigned char augmentation[1];
+};
+
+struct dwarf_fde
+{
+    unsigned int length;
+    unsigned int cie_offset;
+};
+
+extern const struct dwarf_fde *_Unwind_Find_FDE (void *, struct dwarf_eh_bases *);
+
+static unsigned char dwarf_get_u1( const unsigned char **p )
+{
+    return *(*p)++;
+}
+
+static unsigned short dwarf_get_u2( const unsigned char **p )
+{
+    unsigned int ret = (*p)[0] | ((*p)[1] << 8);
+    (*p) += 2;
+    return ret;
+}
+
+static unsigned int dwarf_get_u4( const unsigned char **p )
+{
+    unsigned int ret = (*p)[0] | ((*p)[1] << 8) | ((*p)[2] << 16) | ((*p)[3] << 24);
+    (*p) += 4;
+    return ret;
+}
+
+static ULONG64 dwarf_get_u8( const unsigned char **p )
+{
+    ULONG64 low  = dwarf_get_u4( p );
+    ULONG64 high = dwarf_get_u4( p );
+    return low | (high << 32);
+}
+
+static ULONG_PTR dwarf_get_uleb128( const unsigned char **p )
+{
+    ULONG_PTR ret = 0;
+    unsigned int shift = 0;
+    unsigned char byte;
+
+    do
+    {
+        byte = **p;
+        ret |= (ULONG_PTR)(byte & 0x7f) << shift;
+        shift += 7;
+        (*p)++;
+    } while (byte & 0x80);
+    return ret;
+}
+
+static LONG_PTR dwarf_get_sleb128( const unsigned char **p )
+{
+    ULONG_PTR ret = 0;
+    unsigned int shift = 0;
+    unsigned char byte;
+
+    do
+    {
+        byte = **p;
+        ret |= (ULONG_PTR)(byte & 0x7f) << shift;
+        shift += 7;
+        (*p)++;
+    } while (byte & 0x80);
+
+    if ((shift < 8 * sizeof(ret)) && (byte & 0x40)) ret |= -((ULONG_PTR)1 << shift);
+    return ret;
+}
+
+static ULONG_PTR dwarf_get_ptr( const unsigned char **p, unsigned char encoding )
+{
+    ULONG_PTR base;
+
+    if (encoding == DW_EH_PE_omit) return 0;
+
+    switch (encoding & 0xf0)
+    {
+    case DW_EH_PE_abs:
+        base = 0;
+        break;
+    case DW_EH_PE_pcrel:
+        base = (ULONG_PTR)*p;
+        break;
+    default:
+        FIXME( "unsupported encoding %02x\n", encoding );
+        return 0;
+    }
+
+    switch (encoding & 0x0f)
+    {
+    case DW_EH_PE_native:
+        return base + dwarf_get_u8( p );
+    case DW_EH_PE_leb128:
+        return base + dwarf_get_uleb128( p );
+    case DW_EH_PE_data2:
+        return base + dwarf_get_u2( p );
+    case DW_EH_PE_data4:
+        return base + dwarf_get_u4( p );
+    case DW_EH_PE_data8:
+        return base + dwarf_get_u8( p );
+    case DW_EH_PE_signed|DW_EH_PE_leb128:
+        return base + dwarf_get_sleb128( p );
+    case DW_EH_PE_signed|DW_EH_PE_data2:
+        return base + (signed short)dwarf_get_u2( p );
+    case DW_EH_PE_signed|DW_EH_PE_data4:
+        return base + (signed int)dwarf_get_u4( p );
+    case DW_EH_PE_signed|DW_EH_PE_data8:
+        return base + (LONG64)dwarf_get_u8( p );
+    default:
+        FIXME( "unsupported encoding %02x\n", encoding );
+        return 0;
+    }
+}
+
+enum reg_rule
+{
+    RULE_UNSET,          /* not set at all */
+    RULE_UNDEFINED,      /* undefined value */
+    RULE_SAME,           /* same value as previous frame */
+    RULE_CFA_OFFSET,     /* stored at cfa offset */
+    RULE_OTHER_REG,      /* stored in other register */
+    RULE_EXPRESSION,     /* address specified by expression */
+    RULE_VAL_EXPRESSION  /* value specified by expression */
+};
+
+#define NB_FRAME_REGS 41
+#define MAX_SAVED_STATES 16
+
+struct frame_state
+{
+    ULONG_PTR     cfa_offset;
+    unsigned char cfa_reg;
+    enum reg_rule cfa_rule;
+    enum reg_rule rules[NB_FRAME_REGS];
+    ULONG64       regs[NB_FRAME_REGS];
+};
+
+struct frame_info
+{
+    ULONG_PTR     ip;
+    ULONG_PTR     code_align;
+    LONG_PTR      data_align;
+    unsigned char retaddr_reg;
+    unsigned char fde_encoding;
+    unsigned char signal_frame;
+    unsigned char state_sp;
+    struct frame_state state;
+    struct frame_state *state_stack;
+};
+
+static const char *dwarf_reg_names[NB_FRAME_REGS] =
+{
+/*  0-7  */ "%rax", "%rdx", "%rcx", "%rbx", "%rsi", "%rdi", "%rbp", "%rsp",
+/*  8-16 */ "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "%rip",
+/* 17-24 */ "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7",
+/* 25-32 */ "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14", "%xmm15",
+/* 33-40 */ "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7"
+};
+
+static BOOL valid_reg( ULONG_PTR reg )
+{
+    if (reg >= NB_FRAME_REGS) FIXME( "unsupported reg %lx\n", reg );
+    return (reg < NB_FRAME_REGS);
+}
+
+static void execute_cfa_instructions( const unsigned char *ptr, const unsigned char *end,
+                                      ULONG_PTR last_ip, struct frame_info *info )
+{
+    while (ptr < end && info->ip < last_ip + info->signal_frame)
+    {
+        enum dwarf_call_frame_info op = *ptr++;
+
+        if (op & 0xc0)
+        {
+            switch (op & 0xc0)
+            {
+            case DW_CFA_advance_loc:
+            {
+                ULONG_PTR offset = (op & 0x3f) * info->code_align;
+                TRACE( "%lx: DW_CFA_advance_loc %lu\n", info->ip, offset );
+                info->ip += offset;
+                break;
+            }
+            case DW_CFA_offset:
+            {
+                ULONG_PTR reg = op & 0x3f;
+                LONG_PTR offset = dwarf_get_uleb128( &ptr ) * info->data_align;
+                if (!valid_reg( reg )) break;
+                TRACE( "%lx: DW_CFA_offset %s, %ld\n", info->ip, dwarf_reg_names[reg], offset );
+                info->state.regs[reg]  = offset;
+                info->state.rules[reg] = RULE_CFA_OFFSET;
+                break;
+            }
+            case DW_CFA_restore:
+            {
+                ULONG_PTR reg = op & 0x3f;
+                if (!valid_reg( reg )) break;
+                TRACE( "%lx: DW_CFA_restore %s\n", info->ip, dwarf_reg_names[reg] );
+                info->state.rules[reg] = RULE_UNSET;
+                break;
+            }
+            }
+        }
+        else switch (op)
+        {
+        case DW_CFA_nop:
+            break;
+        case DW_CFA_set_loc:
+        {
+            ULONG_PTR loc = dwarf_get_ptr( &ptr, info->fde_encoding );
+            TRACE( "%lx: DW_CFA_set_loc %lx\n", info->ip, loc );
+            info->ip = loc;
+            break;
+        }
+        case DW_CFA_advance_loc1:
+        {
+            ULONG_PTR offset = *ptr++ * info->code_align;
+            TRACE( "%lx: DW_CFA_advance_loc1 %lu\n", info->ip, offset );
+            info->ip += offset;
+            break;
+        }
+        case DW_CFA_advance_loc2:
+        {
+            ULONG_PTR offset = dwarf_get_u2( &ptr ) * info->code_align;
+            TRACE( "%lx: DW_CFA_advance_loc2 %lu\n", info->ip, offset );
+            info->ip += offset;
+            break;
+        }
+        case DW_CFA_advance_loc4:
+        {
+            ULONG_PTR offset = dwarf_get_u4( &ptr ) * info->code_align;
+            TRACE( "%lx: DW_CFA_advance_loc4 %lu\n", info->ip, offset );
+            info->ip += offset;
+            break;
+        }
+        case DW_CFA_offset_extended:
+        case DW_CFA_offset_extended_sf:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            LONG_PTR offset = (op == DW_CFA_offset_extended) ? dwarf_get_uleb128( &ptr ) * info->data_align
+                                                             : dwarf_get_sleb128( &ptr ) * info->data_align;
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_offset_extended %s, %ld\n", info->ip, dwarf_reg_names[reg], offset );
+            info->state.regs[reg]  = offset;
+            info->state.rules[reg] = RULE_CFA_OFFSET;
+            break;
+        }
+        case DW_CFA_restore_extended:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_restore_extended %s\n", info->ip, dwarf_reg_names[reg] );
+            info->state.rules[reg] = RULE_UNSET;
+            break;
+        }
+        case DW_CFA_undefined:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_undefined %s\n", info->ip, dwarf_reg_names[reg] );
+            info->state.rules[reg] = RULE_UNDEFINED;
+            break;
+        }
+        case DW_CFA_same_value:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_same_value %s\n", info->ip, dwarf_reg_names[reg] );
+            info->state.regs[reg]  = reg;
+            info->state.rules[reg] = RULE_SAME;
+            break;
+        }
+        case DW_CFA_register:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            ULONG_PTR reg2 = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg ) || !valid_reg( reg2 )) break;
+            TRACE( "%lx: DW_CFA_register %s == %s\n", info->ip, dwarf_reg_names[reg], dwarf_reg_names[reg2] );
+            info->state.regs[reg]  = reg2;
+            info->state.rules[reg] = RULE_OTHER_REG;
+            break;
+        }
+        case DW_CFA_remember_state:
+            TRACE( "%lx: DW_CFA_remember_state\n", info->ip );
+            if (info->state_sp >= MAX_SAVED_STATES)
+                FIXME( "%lx: DW_CFA_remember_state too many nested saves\n", info->ip );
+            else
+                info->state_stack[info->state_sp++] = info->state;
+            break;
+        case DW_CFA_restore_state:
+            TRACE( "%lx: DW_CFA_restore_state\n", info->ip );
+            if (!info->state_sp)
+                FIXME( "%lx: DW_CFA_restore_state without corresponding save\n", info->ip );
+            else
+                info->state = info->state_stack[--info->state_sp];
+            break;
+        case DW_CFA_def_cfa:
+        case DW_CFA_def_cfa_sf:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            ULONG_PTR offset = (op == DW_CFA_def_cfa) ? dwarf_get_uleb128( &ptr )
+                                                      : dwarf_get_sleb128( &ptr ) * info->data_align;
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_def_cfa %s, %lu\n", info->ip, dwarf_reg_names[reg], offset );
+            info->state.cfa_reg    = reg;
+            info->state.cfa_offset = offset;
+            info->state.cfa_rule   = RULE_CFA_OFFSET;
+            break;
+        }
+        case DW_CFA_def_cfa_register:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_def_cfa_register %s\n", info->ip, dwarf_reg_names[reg] );
+            info->state.cfa_reg = reg;
+            info->state.cfa_rule = RULE_CFA_OFFSET;
+            break;
+        }
+        case DW_CFA_def_cfa_offset:
+        case DW_CFA_def_cfa_offset_sf:
+        {
+            ULONG_PTR offset = (op == DW_CFA_def_cfa_offset) ? dwarf_get_uleb128( &ptr )
+                                                             : dwarf_get_sleb128( &ptr ) * info->data_align;
+            TRACE( "%lx: DW_CFA_def_cfa_offset %lu\n", info->ip, offset );
+            info->state.cfa_offset = offset;
+            info->state.cfa_rule = RULE_CFA_OFFSET;
+            break;
+        }
+        case DW_CFA_def_cfa_expression:
+        {
+            ULONG_PTR expr = (ULONG_PTR)ptr;
+            ULONG_PTR len = dwarf_get_uleb128( &ptr );
+            TRACE( "%lx: DW_CFA_def_cfa_expression %lx-%lx\n", info->ip, expr, expr+len );
+            info->state.cfa_offset = expr;
+            info->state.cfa_rule = RULE_VAL_EXPRESSION;
+            ptr += len;
+            break;
+        }
+        case DW_CFA_expression:
+        case DW_CFA_val_expression:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            ULONG_PTR expr = (ULONG_PTR)ptr;
+            ULONG_PTR len = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_%sexpression %s %lx-%lx\n",
+                   info->ip, (op == DW_CFA_expression) ? "" : "val_", dwarf_reg_names[reg], expr, expr+len );
+            info->state.regs[reg]  = expr;
+            info->state.rules[reg] = (op == DW_CFA_expression) ? RULE_EXPRESSION : RULE_VAL_EXPRESSION;
+            ptr += len;
+            break;
+        }
+        default:
+            FIXME( "%lx: unknown CFA opcode %02x\n", info->ip, op );
+            break;
+        }
+    }
+}
+
+/* retrieve a context register from its dwarf number */
+static void *get_context_reg( CONTEXT *context, ULONG_PTR dw_reg )
+{
+    switch (dw_reg)
+    {
+    case 0:  return &context->Rax;
+    case 1:  return &context->Rdx;
+    case 2:  return &context->Rcx;
+    case 3:  return &context->Rbx;
+    case 4:  return &context->Rsi;
+    case 5:  return &context->Rdi;
+    case 6:  return &context->Rbp;
+    case 7:  return &context->Rsp;
+    case 8:  return &context->R8;
+    case 9:  return &context->R9;
+    case 10: return &context->R10;
+    case 11: return &context->R11;
+    case 12: return &context->R12;
+    case 13: return &context->R13;
+    case 14: return &context->R14;
+    case 15: return &context->R15;
+    case 16: return &context->Rip;
+    case 17: return &context->u.s.Xmm0;
+    case 18: return &context->u.s.Xmm1;
+    case 19: return &context->u.s.Xmm2;
+    case 20: return &context->u.s.Xmm3;
+    case 21: return &context->u.s.Xmm4;
+    case 22: return &context->u.s.Xmm5;
+    case 23: return &context->u.s.Xmm6;
+    case 24: return &context->u.s.Xmm7;
+    case 25: return &context->u.s.Xmm8;
+    case 26: return &context->u.s.Xmm9;
+    case 27: return &context->u.s.Xmm10;
+    case 28: return &context->u.s.Xmm11;
+    case 29: return &context->u.s.Xmm12;
+    case 30: return &context->u.s.Xmm13;
+    case 31: return &context->u.s.Xmm14;
+    case 32: return &context->u.s.Xmm15;
+    case 33: return &context->u.s.Legacy[0];
+    case 34: return &context->u.s.Legacy[1];
+    case 35: return &context->u.s.Legacy[2];
+    case 36: return &context->u.s.Legacy[3];
+    case 37: return &context->u.s.Legacy[4];
+    case 38: return &context->u.s.Legacy[5];
+    case 39: return &context->u.s.Legacy[6];
+    case 40: return &context->u.s.Legacy[7];
+    default: return NULL;
+    }
+}
+
+/* set a context register from its dwarf number */
+static void set_context_reg( CONTEXT *context, ULONG_PTR dw_reg, void *val )
+{
+    switch (dw_reg)
+    {
+    case 0:  context->Rax = *(ULONG64 *)val; break;
+    case 1:  context->Rdx = *(ULONG64 *)val; break;
+    case 2:  context->Rcx = *(ULONG64 *)val; break;
+    case 3:  context->Rbx = *(ULONG64 *)val; break;
+    case 4:  context->Rsi = *(ULONG64 *)val; break;
+    case 5:  context->Rdi = *(ULONG64 *)val; break;
+    case 6:  context->Rbp = *(ULONG64 *)val; break;
+    case 7:  context->Rsp = *(ULONG64 *)val; break;
+    case 8:  context->R8  = *(ULONG64 *)val; break;
+    case 9:  context->R9  = *(ULONG64 *)val; break;
+    case 10: context->R10 = *(ULONG64 *)val; break;
+    case 11: context->R11 = *(ULONG64 *)val; break;
+    case 12: context->R12 = *(ULONG64 *)val; break;
+    case 13: context->R13 = *(ULONG64 *)val; break;
+    case 14: context->R14 = *(ULONG64 *)val; break;
+    case 15: context->R15 = *(ULONG64 *)val; break;
+    case 16: context->Rip = *(ULONG64 *)val; break;
+    case 17: memcpy( &context->u.s.Xmm0, val, sizeof(M128A) ); break;
+    case 18: memcpy( &context->u.s.Xmm1, val, sizeof(M128A) ); break;
+    case 19: memcpy( &context->u.s.Xmm2, val, sizeof(M128A) ); break;
+    case 20: memcpy( &context->u.s.Xmm3, val, sizeof(M128A) ); break;
+    case 21: memcpy( &context->u.s.Xmm4, val, sizeof(M128A) ); break;
+    case 22: memcpy( &context->u.s.Xmm5, val, sizeof(M128A) ); break;
+    case 23: memcpy( &context->u.s.Xmm6, val, sizeof(M128A) ); break;
+    case 24: memcpy( &context->u.s.Xmm7, val, sizeof(M128A) ); break;
+    case 25: memcpy( &context->u.s.Xmm8, val, sizeof(M128A) ); break;
+    case 26: memcpy( &context->u.s.Xmm9, val, sizeof(M128A) ); break;
+    case 27: memcpy( &context->u.s.Xmm10, val, sizeof(M128A) ); break;
+    case 28: memcpy( &context->u.s.Xmm11, val, sizeof(M128A) ); break;
+    case 29: memcpy( &context->u.s.Xmm12, val, sizeof(M128A) ); break;
+    case 30: memcpy( &context->u.s.Xmm13, val, sizeof(M128A) ); break;
+    case 31: memcpy( &context->u.s.Xmm14, val, sizeof(M128A) ); break;
+    case 32: memcpy( &context->u.s.Xmm15, val, sizeof(M128A) ); break;
+    case 33: memcpy( &context->u.s.Legacy[0], val, sizeof(M128A) ); break;
+    case 34: memcpy( &context->u.s.Legacy[1], val, sizeof(M128A) ); break;
+    case 35: memcpy( &context->u.s.Legacy[2], val, sizeof(M128A) ); break;
+    case 36: memcpy( &context->u.s.Legacy[3], val, sizeof(M128A) ); break;
+    case 37: memcpy( &context->u.s.Legacy[4], val, sizeof(M128A) ); break;
+    case 38: memcpy( &context->u.s.Legacy[5], val, sizeof(M128A) ); break;
+    case 39: memcpy( &context->u.s.Legacy[6], val, sizeof(M128A) ); break;
+    case 40: memcpy( &context->u.s.Legacy[7], val, sizeof(M128A) ); break;
+    }
+}
+
+static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context )
+{
+    ULONG_PTR reg, tmp, stack[64];
+    int sp = -1;
+    ULONG_PTR len = dwarf_get_uleb128(&p);
+    const unsigned char *end = p + len;
+
+    while (p < end)
+    {
+        unsigned char opcode = dwarf_get_u1(&p);
+
+        if (opcode >= DW_OP_lit0 && opcode <= DW_OP_lit31)
+            stack[++sp] = opcode - DW_OP_lit0;
+        else if (opcode >= DW_OP_reg0 && opcode <= DW_OP_reg31)
+            stack[++sp] = *(ULONG_PTR *)get_context_reg( context, opcode - DW_OP_reg0 );
+        else if (opcode >= DW_OP_breg0 && opcode <= DW_OP_breg31)
+            stack[++sp] = *(ULONG_PTR *)get_context_reg( context, opcode - DW_OP_breg0 ) + dwarf_get_sleb128(&p);
+        else switch (opcode)
+        {
+        case DW_OP_nop:         break;
+        case DW_OP_addr:        stack[++sp] = dwarf_get_u8(&p); break;
+        case DW_OP_const1u:     stack[++sp] = dwarf_get_u1(&p); break;
+        case DW_OP_const1s:     stack[++sp] = (signed char)dwarf_get_u1(&p); break;
+        case DW_OP_const2u:     stack[++sp] = dwarf_get_u2(&p); break;
+        case DW_OP_const2s:     stack[++sp] = (short)dwarf_get_u2(&p); break;
+        case DW_OP_const4u:     stack[++sp] = dwarf_get_u4(&p); break;
+        case DW_OP_const4s:     stack[++sp] = (signed int)dwarf_get_u4(&p); break;
+        case DW_OP_const8u:     stack[++sp] = dwarf_get_u8(&p); break;
+        case DW_OP_const8s:     stack[++sp] = (LONG_PTR)dwarf_get_u8(&p); break;
+        case DW_OP_constu:      stack[++sp] = dwarf_get_uleb128(&p); break;
+        case DW_OP_consts:      stack[++sp] = dwarf_get_sleb128(&p); break;
+        case DW_OP_deref:       stack[sp] = *(ULONG_PTR *)stack[sp]; break;
+        case DW_OP_dup:         stack[sp + 1] = stack[sp]; sp++; break;
+        case DW_OP_drop:        sp--; break;
+        case DW_OP_over:        stack[sp + 1] = stack[sp - 1]; sp++; break;
+        case DW_OP_pick:        stack[sp + 1] = stack[sp - dwarf_get_u1(&p)]; sp++; break;
+        case DW_OP_swap:        tmp = stack[sp]; stack[sp] = stack[sp-1]; stack[sp-1] = tmp; break;
+        case DW_OP_rot:         tmp = stack[sp]; stack[sp] = stack[sp-1]; stack[sp-1] = stack[sp-2]; stack[sp-2] = tmp; break;
+        case DW_OP_abs:         stack[sp] = labs(stack[sp]); break;
+        case DW_OP_neg:         stack[sp] = -stack[sp]; break;
+        case DW_OP_not:         stack[sp] = ~stack[sp]; break;
+        case DW_OP_and:         stack[sp-1] &= stack[sp]; sp--; break;
+        case DW_OP_or:          stack[sp-1] |= stack[sp]; sp--; break;
+        case DW_OP_minus:       stack[sp-1] -= stack[sp]; sp--; break;
+        case DW_OP_mul:         stack[sp-1] *= stack[sp]; sp--; break;
+        case DW_OP_plus:        stack[sp-1] += stack[sp]; sp--; break;
+        case DW_OP_xor:         stack[sp-1] ^= stack[sp]; sp--; break;
+        case DW_OP_shl:         stack[sp-1] <<= stack[sp]; sp--; break;
+        case DW_OP_shr:         stack[sp-1] >>= stack[sp]; sp--; break;
+        case DW_OP_plus_uconst: stack[sp] += dwarf_get_uleb128(&p); break;
+        case DW_OP_shra:        stack[sp-1] = (LONG_PTR)stack[sp-1] / (1 << stack[sp]); sp--; break;
+        case DW_OP_div:         stack[sp-1] = (LONG_PTR)stack[sp-1] / (LONG_PTR)stack[sp]; sp--; break;
+        case DW_OP_mod:         stack[sp-1] = (LONG_PTR)stack[sp-1] % (LONG_PTR)stack[sp]; sp--; break;
+        case DW_OP_ge:          stack[sp-1] = ((LONG_PTR)stack[sp-1] >= (LONG_PTR)stack[sp]); sp--; break;
+        case DW_OP_gt:          stack[sp-1] = ((LONG_PTR)stack[sp-1] >  (LONG_PTR)stack[sp]); sp--; break;
+        case DW_OP_le:          stack[sp-1] = ((LONG_PTR)stack[sp-1] <= (LONG_PTR)stack[sp]); sp--; break;
+        case DW_OP_lt:          stack[sp-1] = ((LONG_PTR)stack[sp-1] <  (LONG_PTR)stack[sp]); sp--; break;
+        case DW_OP_eq:          stack[sp-1] = (stack[sp-1] == stack[sp]); sp--; break;
+        case DW_OP_ne:          stack[sp-1] = (stack[sp-1] != stack[sp]); sp--; break;
+        case DW_OP_skip:        tmp = (short)dwarf_get_u2(&p); p += tmp; break;
+        case DW_OP_bra:         tmp = (short)dwarf_get_u2(&p); if (!stack[sp--]) p += tmp; break;
+        case DW_OP_GNU_encoded_addr: tmp = *p++; stack[++sp] = dwarf_get_ptr( &p, tmp ); break;
+        case DW_OP_regx:        stack[++sp] = *(ULONG_PTR *)get_context_reg( context, dwarf_get_uleb128(&p) ); break;
+        case DW_OP_bregx:
+            reg = dwarf_get_uleb128(&p);
+            tmp = dwarf_get_sleb128(&p);
+            stack[++sp] = *(ULONG_PTR *)get_context_reg( context, reg ) + tmp;
+            break;
+        case DW_OP_deref_size:
+            switch (*p++)
+            {
+            case 1: stack[sp] = *(unsigned char *)stack[sp]; break;
+            case 2: stack[sp] = *(unsigned short *)stack[sp]; break;
+            case 4: stack[sp] = *(unsigned int *)stack[sp]; break;
+            case 8: stack[sp] = *(ULONG_PTR *)stack[sp]; break;
+            }
+            break;
+        default:
+            FIXME( "unhandled opcode %02x\n", opcode );
+        }
+    }
+    return stack[sp];
+}
+
+/* apply the computed frame info to the actual context */
+static void apply_frame_state( CONTEXT *context, struct frame_state *state )
+{
+    unsigned int i;
+    ULONG_PTR cfa, value;
+    CONTEXT new_context = *context;
+
+    switch (state->cfa_rule)
+    {
+    case RULE_EXPRESSION:
+        cfa = *(ULONG_PTR *)eval_expression( (const unsigned char *)state->cfa_offset, context );
+        break;
+    case RULE_VAL_EXPRESSION:
+        cfa = eval_expression( (const unsigned char *)state->cfa_offset, context );
+        break;
+    default:
+        cfa = *(ULONG_PTR *)get_context_reg( context, state->cfa_reg ) + state->cfa_offset;
+        break;
+    }
+    if (!cfa) return;
+
+    for (i = 0; i < NB_FRAME_REGS; i++)
+    {
+        switch (state->rules[i])
+        {
+        case RULE_UNSET:
+        case RULE_UNDEFINED:
+        case RULE_SAME:
+            break;
+        case RULE_CFA_OFFSET:
+            set_context_reg( &new_context, i, (char *)cfa + state->regs[i] );
+            break;
+        case RULE_OTHER_REG:
+            set_context_reg( &new_context, i, get_context_reg( context, state->regs[i] ));
+            break;
+        case RULE_EXPRESSION:
+            value = eval_expression( (const unsigned char *)state->regs[i], context );
+            set_context_reg( &new_context, i, (void *)value );
+            break;
+        case RULE_VAL_EXPRESSION:
+            value = eval_expression( (const unsigned char *)state->regs[i], context );
+            set_context_reg( &new_context, i, &value );
+            break;
+        }
+    }
+    new_context.Rsp = cfa;
+    *context = new_context;
+}
+
+
+/***********************************************************************
+ *           dwarf_virtual_unwind
+ *
+ * Equivalent of RtlVirtualUnwind for builtin modules.
+ */
+static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *context,
+                                      const struct dwarf_fde *fde, const struct dwarf_eh_bases *bases,
+                                      PEXCEPTION_ROUTINE *handler, void **handler_data )
+{
+    const struct dwarf_cie *cie;
+    const unsigned char *ptr, *augmentation, *end;
+    ULONG_PTR len, code_end;
+    struct frame_info info;
+    struct frame_state state_stack[MAX_SAVED_STATES];
+    int aug_z_format = 0;
+    unsigned char lsda_encoding = DW_EH_PE_omit;
+
+    memset( &info, 0, sizeof(info) );
+    info.state_stack = state_stack;
+    info.ip = (ULONG_PTR)bases->func;
+    *handler = NULL;
+
+    cie = (const struct dwarf_cie *)((const char *)&fde->cie_offset - fde->cie_offset);
+
+    /* parse the CIE first */
+
+    if (cie->version != 1 && cie->version != 3)
+    {
+        FIXME( "unknown CIE version %u at %p\n", cie->version, cie );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    ptr = cie->augmentation + strlen((const char *)cie->augmentation) + 1;
+
+    info.code_align = dwarf_get_uleb128( &ptr );
+    info.data_align = dwarf_get_sleb128( &ptr );
+    if (cie->version == 1)
+        info.retaddr_reg = *ptr++;
+    else
+        info.retaddr_reg = dwarf_get_uleb128( &ptr );
+    info.state.cfa_rule = RULE_CFA_OFFSET;
+
+    TRACE( "function %lx base %p cie %p len %x id %x version %x aug '%s' code_align %lu data_align %ld retaddr %s\n",
+           ip, bases->func, cie, cie->length, cie->id, cie->version, cie->augmentation,
+           info.code_align, info.data_align, dwarf_reg_names[info.retaddr_reg] );
+
+    end = NULL;
+    for (augmentation = cie->augmentation; *augmentation; augmentation++)
+    {
+        switch (*augmentation)
+        {
+        case 'z':
+            len = dwarf_get_uleb128( &ptr );
+            end = ptr + len;
+            aug_z_format = 1;
+            continue;
+        case 'L':
+            lsda_encoding = *ptr++;
+            continue;
+        case 'P':
+        {
+            unsigned char encoding = *ptr++;
+            *handler = (void *)dwarf_get_ptr( &ptr, encoding );
+            continue;
+        }
+        case 'R':
+            info.fde_encoding = *ptr++;
+            continue;
+        case 'S':
+            info.signal_frame = 1;
+            continue;
+        }
+        FIXME( "unknown augmentation '%c'\n", *augmentation );
+        if (!end) return STATUS_INVALID_DISPOSITION;  /* cannot continue */
+        break;
+    }
+    if (end) ptr = end;
+
+    end = (const unsigned char *)(&cie->length + 1) + cie->length;
+    execute_cfa_instructions( ptr, end, ip, &info );
+
+    ptr = (const unsigned char *)(fde + 1);
+    info.ip = dwarf_get_ptr( &ptr, info.fde_encoding );  /* fde code start */
+    code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f );  /* fde code length */
+
+    if (aug_z_format)  /* get length of augmentation data */
+    {
+        len = dwarf_get_uleb128( &ptr );
+        end = ptr + len;
+    }
+    else end = NULL;
+
+    *handler_data = (void *)dwarf_get_ptr( &ptr, lsda_encoding );
+    if (end) ptr = end;
+
+    end = (const unsigned char *)(&fde->length + 1) + fde->length;
+    TRACE( "fde %p len %x personality %p lsda %p code %lx-%lx\n",
+           fde, fde->length, *handler, *handler_data, info.ip, code_end );
+    execute_cfa_instructions( ptr, end, ip, &info );
+    *frame = context->Rsp;
+    apply_frame_state( context, &info.state );
+
+    TRACE( "next function rip=%016lx\n", context->Rip );
+    TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+           context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE( "  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+           context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE( "   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+           context->R8, context->R9, context->R10, context->R11 );
+    TRACE( "  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+           context->R12, context->R13, context->R14, context->R15 );
+
+    return STATUS_SUCCESS;
+}
+
+
+#ifdef HAVE_LIBUNWIND
+/***********************************************************************
+ *           libunwind_virtual_unwind
+ *
+ * Equivalent of RtlVirtualUnwind for builtin modules.
+ */
+static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *context,
+                                          PEXCEPTION_ROUTINE *handler, void **handler_data )
+{
+    unw_context_t unw_context;
+    unw_cursor_t cursor;
+    unw_proc_info_t info;
+    int rc;
+
+#ifdef __APPLE__
+    rc = unw_getcontext( &unw_context );
+    if (rc == UNW_ESUCCESS)
+        rc = unw_init_local( &cursor, &unw_context );
+    if (rc == UNW_ESUCCESS)
+    {
+        unw_set_reg( &cursor, UNW_REG_IP,     context->Rip );
+        unw_set_reg( &cursor, UNW_REG_SP,     context->Rsp );
+        unw_set_reg( &cursor, UNW_X86_64_RAX, context->Rax );
+        unw_set_reg( &cursor, UNW_X86_64_RDX, context->Rdx );
+        unw_set_reg( &cursor, UNW_X86_64_RCX, context->Rcx );
+        unw_set_reg( &cursor, UNW_X86_64_RBX, context->Rbx );
+        unw_set_reg( &cursor, UNW_X86_64_RSI, context->Rsi );
+        unw_set_reg( &cursor, UNW_X86_64_RDI, context->Rdi );
+        unw_set_reg( &cursor, UNW_X86_64_RBP, context->Rbp );
+        unw_set_reg( &cursor, UNW_X86_64_R8,  context->R8 );
+        unw_set_reg( &cursor, UNW_X86_64_R9,  context->R9 );
+        unw_set_reg( &cursor, UNW_X86_64_R10, context->R10 );
+        unw_set_reg( &cursor, UNW_X86_64_R11, context->R11 );
+        unw_set_reg( &cursor, UNW_X86_64_R12, context->R12 );
+        unw_set_reg( &cursor, UNW_X86_64_R13, context->R13 );
+        unw_set_reg( &cursor, UNW_X86_64_R14, context->R14 );
+        unw_set_reg( &cursor, UNW_X86_64_R15, context->R15 );
+    }
+#else
+    RAX_sig(&unw_context) = context->Rax;
+    RCX_sig(&unw_context) = context->Rcx;
+    RDX_sig(&unw_context) = context->Rdx;
+    RBX_sig(&unw_context) = context->Rbx;
+    RSP_sig(&unw_context) = context->Rsp;
+    RBP_sig(&unw_context) = context->Rbp;
+    RSI_sig(&unw_context) = context->Rsi;
+    RDI_sig(&unw_context) = context->Rdi;
+    R8_sig(&unw_context)  = context->R8;
+    R9_sig(&unw_context)  = context->R9;
+    R10_sig(&unw_context) = context->R10;
+    R11_sig(&unw_context) = context->R11;
+    R12_sig(&unw_context) = context->R12;
+    R13_sig(&unw_context) = context->R13;
+    R14_sig(&unw_context) = context->R14;
+    R15_sig(&unw_context) = context->R15;
+    RIP_sig(&unw_context) = context->Rip;
+    CS_sig(&unw_context)  = context->SegCs;
+    FS_sig(&unw_context)  = context->SegFs;
+    GS_sig(&unw_context)  = context->SegGs;
+    EFL_sig(&unw_context) = context->EFlags;
+    rc = unw_init_local( &cursor, &unw_context );
+#endif
+    if (rc != UNW_ESUCCESS)
+    {
+        WARN( "setup failed: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+
+    *handler = NULL;
+    *frame = context->Rsp;
+
+    rc = unw_get_proc_info(&cursor, &info);
+    if (rc != UNW_ESUCCESS && rc != UNW_ENOINFO)
+    {
+        WARN( "failed to get info: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    if (rc == UNW_ENOINFO || ip < info.start_ip || ip > info.end_ip || info.end_ip == info.start_ip + 1)
+        return STATUS_UNSUCCESSFUL;
+
+    TRACE( "ip %#lx function %#lx-%#lx personality %#lx lsda %#lx fde %#lx\n",
+           ip, (unsigned long)info.start_ip, (unsigned long)info.end_ip, (unsigned long)info.handler,
+           (unsigned long)info.lsda, (unsigned long)info.unwind_info );
+
+    if (!(rc = unw_step( &cursor )))
+    {
+        WARN( "last frame\n" );
+        return STATUS_UNSUCCESSFUL;
+    }
+    if (rc < 0)
+    {
+        WARN( "failed to unwind: %d\n", rc );
+        return STATUS_INVALID_DISPOSITION;
+    }
+
+    unw_get_reg( &cursor, UNW_REG_IP,     (unw_word_t *)&context->Rip );
+    unw_get_reg( &cursor, UNW_REG_SP,     (unw_word_t *)&context->Rsp );
+    unw_get_reg( &cursor, UNW_X86_64_RAX, (unw_word_t *)&context->Rax );
+    unw_get_reg( &cursor, UNW_X86_64_RDX, (unw_word_t *)&context->Rdx );
+    unw_get_reg( &cursor, UNW_X86_64_RCX, (unw_word_t *)&context->Rcx );
+    unw_get_reg( &cursor, UNW_X86_64_RBX, (unw_word_t *)&context->Rbx );
+    unw_get_reg( &cursor, UNW_X86_64_RSI, (unw_word_t *)&context->Rsi );
+    unw_get_reg( &cursor, UNW_X86_64_RDI, (unw_word_t *)&context->Rdi );
+    unw_get_reg( &cursor, UNW_X86_64_RBP, (unw_word_t *)&context->Rbp );
+    unw_get_reg( &cursor, UNW_X86_64_R8,  (unw_word_t *)&context->R8 );
+    unw_get_reg( &cursor, UNW_X86_64_R9,  (unw_word_t *)&context->R9 );
+    unw_get_reg( &cursor, UNW_X86_64_R10, (unw_word_t *)&context->R10 );
+    unw_get_reg( &cursor, UNW_X86_64_R11, (unw_word_t *)&context->R11 );
+    unw_get_reg( &cursor, UNW_X86_64_R12, (unw_word_t *)&context->R12 );
+    unw_get_reg( &cursor, UNW_X86_64_R13, (unw_word_t *)&context->R13 );
+    unw_get_reg( &cursor, UNW_X86_64_R14, (unw_word_t *)&context->R14 );
+    unw_get_reg( &cursor, UNW_X86_64_R15, (unw_word_t *)&context->R15 );
+    *handler = (void*)info.handler;
+    *handler_data = (void*)info.lsda;
+
+    TRACE( "next function rip=%016lx\n", context->Rip );
+    TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+           context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE( "  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+           context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE( "   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+           context->R8, context->R9, context->R10, context->R11 );
+    TRACE( "  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+           context->R12, context->R13, context->R14, context->R15 );
+
+    return STATUS_SUCCESS;
+}
+#endif
+
+
+/***********************************************************************
+ *           unwind_builtin_dll
+ */
+NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+{
+    struct dwarf_eh_bases bases;
+    const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context->Rip - 1), &bases );
+
+    if (fde)
+        return dwarf_virtual_unwind( context->Rip, &dispatch->EstablisherFrame, context, fde,
+                                     &bases, &dispatch->LanguageHandler, &dispatch->HandlerData );
+#ifdef HAVE_LIBUNWIND
+    return libunwind_virtual_unwind( context->Rip, &dispatch->EstablisherFrame, context,
+                                     &dispatch->LanguageHandler, &dispatch->HandlerData );
+#endif
+    return STATUS_UNSUCCESSFUL;
+}
+
+
 static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontext )
 {
     RAX_sig(sigcontext) = context->Rax;

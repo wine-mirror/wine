@@ -517,6 +517,15 @@ static inline void set_gs( WORD val ) { __asm__( "mov %0,%%gs" :: "r" (val)); }
 
 
 /***********************************************************************
+ *           unwind_builtin_dll
+ */
+NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+{
+    return STATUS_UNSUCCESSFUL;
+}
+
+
+/***********************************************************************
  *           is_gdt_sel
  */
 static inline int is_gdt_sel( WORD sel )

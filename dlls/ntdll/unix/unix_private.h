@@ -119,6 +119,8 @@ extern TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_co
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status ) DECLSPEC_HIDDEN;
+extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
+                                          CONTEXT *context ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
                                             UINT disposition, BOOLEAN check_case ) DECLSPEC_HIDDEN;

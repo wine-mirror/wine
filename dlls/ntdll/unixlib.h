@@ -26,9 +26,10 @@
 
 struct ldt_copy;
 struct msghdr;
+struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 61
+#define NTDLL_UNIXLIB_VERSION 62
 
 struct unix_funcs
 {
@@ -330,6 +331,8 @@ struct unix_funcs
                                              pe_image_info_t *image_info );
     NTSTATUS      (CDECL *unload_builtin_dll)( void *module );
     void          (CDECL *init_builtin_dll)( void *module );
+    NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
+                                               CONTEXT *context );
 
     /* debugging functions */
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );
