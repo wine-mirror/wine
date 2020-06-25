@@ -85,6 +85,7 @@ static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEP
 static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
 static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
 static UINT (WINAPI *pGetRawInputDeviceInfoA) (HANDLE, UINT, void *, UINT *);
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 #define MAXKEYEVENTS 12
 #define MAXKEYMESSAGES MAXKEYEVENTS /* assuming a key event generates one
@@ -147,6 +148,7 @@ static BYTE InputKeyStateTable[256];
 static BYTE AsyncKeyStateTable[256];
 static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
                          or a WM_KEYUP message */
+static BOOL is_wow64;
 
 static void init_function_pointers(void)
 {
@@ -162,7 +164,13 @@ static void init_function_pointers(void)
     GET_PROC(GetRawInputDeviceList);
     GET_PROC(GetRawInputDeviceInfoW);
     GET_PROC(GetRawInputDeviceInfoA);
+
+    hdll = GetModuleHandleA("kernel32");
+    GET_PROC(IsWow64Process);
 #undef GET_PROC
+
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 ))
+        is_wow64 = FALSE;
 }
 
 static int KbdMessage( KEV kev, WPARAM *pwParam, LPARAM *plParam )
@@ -1815,6 +1823,244 @@ static void test_RegisterRawInputDevices(void)
     SetLastError(0xdeadbeef);
     res = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
     ok(res == TRUE, "RegisterRawInputDevices succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08x\n", GetLastError());
+
+    DestroyWindow(hwnd);
+}
+
+static int rawinputbuffer_wndproc_count;
+
+#ifdef _WIN64
+typedef RAWINPUT RAWINPUT64;
+#else
+typedef struct
+{
+    RAWINPUTHEADER header;
+    char pad[8];
+    union {
+        RAWMOUSE    mouse;
+        RAWKEYBOARD keyboard;
+        RAWHID      hid;
+    } data;
+} RAWINPUT64;
+#endif
+
+static int rawinput_buffer_mouse_x(void *buffer, size_t index)
+{
+    if (is_wow64) return ((RAWINPUT64 *)buffer)[index].data.mouse.lLastX;
+    return ((RAWINPUT *)buffer)[index].data.mouse.lLastX;
+}
+
+static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    RAWINPUT ri;
+    char buffer[16 * sizeof(RAWINPUT64)];
+    UINT size, count, rawinput_size, iteration = rawinputbuffer_wndproc_count++;
+    MSG message;
+
+    if (is_wow64) rawinput_size = sizeof(RAWINPUT64);
+    else rawinput_size = sizeof(RAWINPUT);
+
+    if (msg == WM_INPUT)
+    {
+        count = GetRawInputBuffer(NULL, NULL, sizeof(RAWINPUTHEADER));
+        todo_wine
+        ok(count == ~0U, "GetRawInputBuffer succeeded\n");
+
+        size = sizeof(buffer);
+        count = GetRawInputBuffer(NULL, &size, sizeof(RAWINPUTHEADER));
+        ok(count == 0, "GetRawInputBuffer returned %u\n", count);
+        todo_wine
+        ok(size == rawinput_size, "GetRawInputBuffer returned unexpected size: %u\n", size);
+
+        size = sizeof(buffer);
+        memset(buffer, 0, sizeof(buffer));
+        count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+        todo_wine
+        ok(count == 3, "GetRawInputBuffer returned %u\n", count);
+        ok(size == sizeof(buffer), "GetRawInputBuffer returned unexpected size: %u\n", size);
+        todo_wine
+        ok(rawinput_buffer_mouse_x(buffer, 0) == 2, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 0));
+        todo_wine
+        ok(rawinput_buffer_mouse_x(buffer, 1) == 3, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 1));
+        todo_wine
+        ok(rawinput_buffer_mouse_x(buffer, 2) == 4, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 2));
+
+        /* the first event should be removed by the next GetRawInputBuffer call
+         * and the others should do another round through the message loop but not more */
+        if (iteration == 0)
+        {
+            mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
+            mouse_event(MOUSEEVENTF_MOVE, 6, 0, 0, 0);
+            mouse_event(MOUSEEVENTF_MOVE, 2, 0, 0, 0);
+            mouse_event(MOUSEEVENTF_MOVE, 3, 0, 0, 0);
+            mouse_event(MOUSEEVENTF_MOVE, 4, 0, 0, 0);
+
+            /* even though rawinput_size is the minimum required size,
+             * it needs one more byte to return success */
+            size = rawinput_size + 1;
+            memset(buffer, 0, sizeof(buffer));
+            count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+            todo_wine
+            ok(count == 1, "GetRawInputBuffer returned %u\n", count);
+            todo_wine
+            ok(rawinput_buffer_mouse_x(buffer, 0) == 5, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 0));
+
+            /* peek the messages now, they should still arrive in the correct order */
+            while (PeekMessageA(&message, 0, WM_INPUT, WM_INPUT, PM_REMOVE)) DispatchMessageA(&message);
+        }
+
+        /* reading the message data now should fail on the second iteration, the data
+         * from the first message has been overwritten. */
+        size = sizeof(ri);
+        memset(&ri, 0, sizeof(ri));
+        count = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER));
+        if (iteration == 1)
+        {
+            ok(count == sizeof(ri), "GetRawInputData failed\n");
+            todo_wine
+            ok(ri.data.mouse.lLastX == 6, "Unexpected rawinput data: %d\n", ri.data.mouse.lLastX);
+        }
+        else
+        {
+            todo_wine
+            ok(count == ~0U, "GetRawInputData succeeded\n");
+        }
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static void test_GetRawInputBuffer(void)
+{
+    RAWINPUTDEVICE raw_devices[1];
+    char buffer[16 * sizeof(RAWINPUT64)];
+    UINT size, count, rawinput_size;
+    HWND hwnd;
+    BOOL ret;
+
+    if (is_wow64) rawinput_size = sizeof(RAWINPUT64);
+    else rawinput_size = sizeof(RAWINPUT);
+
+    hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
+                         100, 100, 100, 100, 0, NULL, NULL, NULL);
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)rawinputbuffer_wndproc);
+    ok(hwnd != 0, "CreateWindow failed\n");
+    empty_message_queue();
+
+    raw_devices[0].usUsagePage = 0x01;
+    raw_devices[0].usUsage = 0x02;
+    raw_devices[0].dwFlags = RIDEV_INPUTSINK;
+    raw_devices[0].hwndTarget = hwnd;
+
+    SetLastError(0xdeadbeef);
+    ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+    ok(ret, "RegisterRawInputDevices failed\n");
+    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    count = GetRawInputBuffer(NULL, NULL, sizeof(RAWINPUTHEADER));
+    todo_wine
+    ok(count == ~0U, "GetRawInputBuffer succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRawInputBuffer returned %08x\n", GetLastError());
+
+    size = sizeof(buffer);
+    count = GetRawInputBuffer(NULL, &size, sizeof(RAWINPUTHEADER));
+    ok(count == 0U, "GetRawInputBuffer returned %u\n", count);
+    todo_wine
+    ok(size == 0U, "GetRawInputBuffer returned unexpected size: %u\n", size);
+
+    size = 0;
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    ok(count == 0U, "GetRawInputBuffer returned %u\n", count);
+    ok(size == 0U, "GetRawInputBuffer returned unexpected size: %u\n", size);
+
+    SetLastError(0xdeadbeef);
+    size = sizeof(buffer);
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, 0);
+    todo_wine
+    ok(count == ~0U, "GetRawInputBuffer succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRawInputBuffer returned %08x\n", GetLastError());
+
+    size = sizeof(buffer);
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    ok(count == 0U, "GetRawInputBuffer returned %u\n", count);
+    todo_wine
+    ok(size == 0U, "GetRawInputBuffer returned unexpected size: %u\n", size);
+
+    mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
+
+    SetLastError(0xdeadbeef);
+    size = 0;
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    todo_wine
+    ok(count == ~0U, "GetRawInputBuffer succeeded\n");
+    todo_wine
+    ok(size == rawinput_size, "GetRawInputBuffer returned unexpected size: %u\n", size);
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetRawInputBuffer returned %08x\n", GetLastError());
+
+    size = 0;
+    count = GetRawInputBuffer(NULL, &size, sizeof(RAWINPUTHEADER));
+    ok(count == 0, "GetRawInputBuffer returned %u\n", count);
+    todo_wine
+    ok(size == rawinput_size, "GetRawInputBuffer returned unexpected size: %u\n", size);
+
+    SetLastError(0xdeadbeef);
+    size = sizeof(buffer);
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, 0);
+    todo_wine
+    ok(count == ~0U, "GetRawInputBuffer succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRawInputBuffer returned %08x\n", GetLastError());
+
+    size = sizeof(buffer);
+    memset(buffer, 0, sizeof(buffer));
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    todo_wine
+    ok(count == 1U, "GetRawInputBuffer returned %u\n", count);
+    ok(size == sizeof(buffer), "GetRawInputBuffer returned unexpected size: %u\n", size);
+    todo_wine
+    ok(rawinput_buffer_mouse_x(buffer, 0) == 5, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 0));
+
+
+    /* NOTE: calling with size == rawinput_size returns an error, */
+    /* BUT it fills the buffer nonetheless and empties the internal buffer (!!) */
+    mouse_event(MOUSEEVENTF_MOVE, 5, 0, 0, 0);
+
+    SetLastError(0xdeadbeef);
+    size = rawinput_size;
+    memset(buffer, 0, sizeof(buffer));
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    todo_wine
+    ok(count == ~0U, "GetRawInputBuffer succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetRawInputBuffer returned %08x\n", GetLastError());
+    todo_wine
+    ok(rawinput_buffer_mouse_x(buffer, 0) == 5, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 0));
+
+    size = sizeof(buffer);
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    ok(count == 0U, "GetRawInputBuffer returned %u\n", count);
+
+
+    rawinputbuffer_wndproc_count = 0;
+    mouse_event(MOUSEEVENTF_MOVE, 1, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_MOVE, 2, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_MOVE, 3, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_MOVE, 4, 0, 0, 0);
+    empty_message_queue();
+    todo_wine
+    ok(rawinputbuffer_wndproc_count == 2, "Spurious WM_INPUT messages\n");
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = 0;
+
+    SetLastError(0xdeadbeef);
+    ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+    ok(ret, "RegisterRawInputDevices failed\n");
     ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08x\n", GetLastError());
 
     DestroyWindow(hwnd);
@@ -3522,6 +3768,7 @@ START_TEST(input)
     test_GetKeyState();
     test_OemKeyScan();
     test_GetRawInputData();
+    test_GetRawInputBuffer();
     test_RegisterRawInputDevices();
     test_rawinput(argv[0]);
 
