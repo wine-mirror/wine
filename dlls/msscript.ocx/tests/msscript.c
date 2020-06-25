@@ -2391,10 +2391,11 @@ static void test_IScriptControl_get_Modules(void)
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
     ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
     hr = IScriptModule_get_Name(mod, NULL);
-    todo_wine ok(hr == E_POINTER, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
     hr = IScriptModule_get_Name(mod, &str);
-    todo_wine ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
-    if (hr == S_OK) SysFreeString(str);
+    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(str, L"Global"), "got %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
     str = SysAllocString(L"function add(a, b) { return a + b; }\n");
     hr = IScriptModule_AddCode(mod, str);
     todo_wine ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
@@ -2408,17 +2409,19 @@ static void test_IScriptControl_get_Modules(void)
     ok(V_VT(&var) == VT_BSTR, "var type not BSTR, got %d.\n", V_VT(&var));
     VariantClear(&var);
     hr = IScriptModule_get_Name(mod, &str);
-    todo_wine ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(str, L"some other Module"), "got %s.\n", wine_dbgstr_w(str));
     IScriptModule_Release(mod);
-    if (hr == S_OK) SysFreeString(str);
+    SysFreeString(str);
 
     V_VT(&var) = VT_R8;
     V_R8(&var) = 2.0;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
     ok(hr == S_OK, "IScriptModuleCollection_get_Item failed: 0x%08x.\n", hr);
     hr = IScriptModule_get_Name(mod, &str);
-    todo_wine ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
-    if (hr == S_OK) SysFreeString(str);
+    ok(hr == S_OK, "IScriptModule_get_Name failed: 0x%08x.\n", hr);
+    ok(!lstrcmpW(str, L"foobar"), "got %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
     str = SysAllocString(L"function sub(a, b) { return a - b; }\n");
     hr = IScriptModule_AddCode(mod, str);
     todo_wine ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
@@ -2451,7 +2454,7 @@ static void test_IScriptControl_get_Modules(void)
     ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
     ok(count == 1, "count is not 1, got %d.\n", count);
     hr = IScriptModule_get_Name(mod, &str);
-    todo_wine ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
     str = SysAllocString(L"function closed() { }\n");
     hr = IScriptModule_AddCode(mod, str);
     todo_wine ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);

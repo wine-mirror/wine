@@ -738,9 +738,13 @@ static HRESULT WINAPI ScriptModule_get_Name(IScriptModule *iface, BSTR *pbstrNam
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
 
-    FIXME("(%p)->(%p)\n", This, pbstrName);
+    TRACE("(%p)->(%p)\n", This, pbstrName);
 
-    return E_NOTIMPL;
+    if (!pbstrName) return E_POINTER;
+    if (!This->host) return E_FAIL;
+
+    *pbstrName = SysAllocString(This->name ? This->name : L"Global");
+    return *pbstrName ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI ScriptModule_get_CodeObject(IScriptModule *iface, IDispatch **ppdispObject)
