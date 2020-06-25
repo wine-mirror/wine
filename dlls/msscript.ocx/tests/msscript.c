@@ -2398,7 +2398,7 @@ static void test_IScriptControl_get_Modules(void)
     SysFreeString(str);
     str = SysAllocString(L"function add(a, b) { return a + b; }\n");
     hr = IScriptModule_AddCode(mod, str);
-    todo_wine ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
@@ -2424,15 +2424,15 @@ static void test_IScriptControl_get_Modules(void)
     SysFreeString(str);
     str = SysAllocString(L"function sub(a, b) { return a - b; }\n");
     hr = IScriptModule_AddCode(mod, str);
-    todo_wine ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == S_OK, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
     /* The 'Global' module is the same as the script control */
     str = SysAllocString(L"add(10, 5)");
     hr = IScriptControl_Eval(sc, str, &var);
-    todo_wine ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
-    todo_wine ok(V_VT(&var) == VT_I4 && V_I4(&var) == 15, "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
+    ok(hr == S_OK, "IScriptControl_Eval failed: 0x%08x.\n", hr);
+    ok(V_VT(&var) == VT_I4 && V_I4(&var) == 15, "V_VT(var) = %d, V_I4(var) = %d.\n", V_VT(&var), V_I4(&var));
     SysFreeString(str);
     str = SysAllocString(L"sub(10, 5)");
     hr = IScriptControl_Eval(sc, str, &var);
@@ -2457,11 +2457,11 @@ static void test_IScriptControl_get_Modules(void)
     ok(hr == E_FAIL, "IScriptModule_get_Name returned: 0x%08x.\n", hr);
     str = SysAllocString(L"function closed() { }\n");
     hr = IScriptModule_AddCode(mod, str);
-    todo_wine ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
     SysFreeString(str);
     str = SysAllocString(L"sub closed\nend sub");
     hr = IScriptModule_AddCode(mod, str);
-    todo_wine ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
+    ok(hr == E_FAIL, "IScriptModule_AddCode failed: 0x%08x.\n", hr);
     IScriptModule_Release(mod);
     SysFreeString(str);
 
@@ -2568,9 +2568,9 @@ static void test_IScriptControl_get_Modules(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"some code");
         hr = IScriptModule_AddCode(mod, code_str);
-        todo_wine ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
-        todo_wine CHECK_CALLED(SetScriptState_STARTED);
-        todo_wine CHECK_CALLED(ParseScriptText);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
         SysFreeString(code_str);
         SysFreeString(str);
 
@@ -2631,9 +2631,9 @@ static void test_IScriptControl_get_Modules(void)
         parse_flags = SCRIPTTEXT_ISVISIBLE;
         code_str = SysAllocString(L"code after close");
         hr = IScriptModule_AddCode(mod, code_str);
-        todo_wine ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
-        todo_wine CHECK_CALLED(SetScriptState_STARTED);
-        todo_wine CHECK_CALLED(ParseScriptText);
+        ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        CHECK_CALLED(SetScriptState_STARTED);
+        CHECK_CALLED(ParseScriptText);
         SysFreeString(code_str);
         SysFreeString(str);
 

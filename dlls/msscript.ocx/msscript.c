@@ -291,15 +291,15 @@ static HRESULT add_script_object(ScriptHost *host, BSTR name, IDispatch *object,
     return hr;
 }
 
-static HRESULT parse_script_text(ScriptHost *host, BSTR script_text, DWORD flag, VARIANT *res)
+static HRESULT parse_script_text(ScriptModule *module, BSTR script_text, DWORD flag, VARIANT *res)
 {
     EXCEPINFO excepinfo;
     HRESULT hr;
 
-    hr = start_script(host);
+    hr = start_script(module->host);
     if (FAILED(hr)) return hr;
 
-    hr = IActiveScriptParse_ParseScriptText(host->parse, script_text, NULL,
+    hr = IActiveScriptParse_ParseScriptText(module->host->parse, script_text, module->name,
                                             NULL, NULL, 0, 1, flag, res, &excepinfo);
     /* FIXME: more error handling */
     return hr;
@@ -783,27 +783,39 @@ static HRESULT WINAPI ScriptModule_AddCode(IScriptModule *iface, BSTR code)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(code));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(code));
 
-    return E_NOTIMPL;
+    if (!This->host)
+        return E_FAIL;
+
+    return parse_script_text(This, code, SCRIPTTEXT_ISVISIBLE, NULL);
 }
 
 static HRESULT WINAPI ScriptModule_Eval(IScriptModule *iface, BSTR expression, VARIANT *res)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
 
-    FIXME("(%p)->(%s, %p)\n", This, debugstr_w(expression), res);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_w(expression), res);
 
-    return E_NOTIMPL;
+    if (!res)
+        return E_POINTER;
+    V_VT(res) = VT_EMPTY;
+    if (!This->host)
+        return E_FAIL;
+
+    return parse_script_text(This, expression, SCRIPTTEXT_ISEXPRESSION, res);
 }
 
 static HRESULT WINAPI ScriptModule_ExecuteStatement(IScriptModule *iface, BSTR statement)
 {
     ScriptModule *This = impl_from_IScriptModule(iface);
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(statement));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(statement));
 
-    return E_NOTIMPL;
+    if (!This->host)
+        return E_FAIL;
+
+    return parse_script_text(This, statement, 0, NULL);
 }
 
 static HRESULT WINAPI ScriptModule_Run(IScriptModule *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
@@ -1578,7 +1590,7 @@ static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
     if (!This->host)
         return E_FAIL;
 
-    return parse_script_text(This->host, code, SCRIPTTEXT_ISVISIBLE, NULL);
+    return parse_script_text(This->modules[0], code, SCRIPTTEXT_ISVISIBLE, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression, VARIANT *res)
@@ -1593,7 +1605,7 @@ static HRESULT WINAPI ScriptControl_Eval(IScriptControl *iface, BSTR expression,
     if (!This->host)
         return E_FAIL;
 
-    return parse_script_text(This->host, expression, SCRIPTTEXT_ISEXPRESSION, res);
+    return parse_script_text(This->modules[0], expression, SCRIPTTEXT_ISEXPRESSION, res);
 }
 
 static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR statement)
@@ -1605,7 +1617,7 @@ static HRESULT WINAPI ScriptControl_ExecuteStatement(IScriptControl *iface, BSTR
     if (!This->host)
         return E_FAIL;
 
-    return parse_script_text(This->host, statement, 0, NULL);
+    return parse_script_text(This->modules[0], statement, 0, NULL);
 }
 
 static HRESULT WINAPI ScriptControl_Run(IScriptControl *iface, BSTR procedure_name, SAFEARRAY **parameters, VARIANT *res)
