@@ -542,6 +542,10 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
 
 HRESULT video_renderer_default_create(IUnknown *outer, IUnknown **out)
 {
-    /* TODO: Attempt to use the VMR-7 renderer instead when possible */
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = vmr7_create(outer, out)))
+        return hr;
+
     return video_renderer_create(outer, out);
 }
