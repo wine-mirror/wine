@@ -276,6 +276,7 @@ SOURCES = \
 	evntprov.h \
 	evntrace.h \
 	evr.idl \
+	evr9.idl \
 	excpt.h \
 	exdisp.idl \
 	exdispid.h \
