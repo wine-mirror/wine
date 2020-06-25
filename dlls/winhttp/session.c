@@ -2029,6 +2029,113 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 }
 
 /***********************************************************************
+ *          WinHttpCreateProxyResolver (winhttp.@)
+ */
+DWORD WINAPI WinHttpCreateProxyResolver( HINTERNET hsession, HINTERNET *hresolver )
+{
+    FIXME("%p, %p\n", hsession, hresolver);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpFreeProxyResult (winhttp.@)
+ */
+void WINAPI WinHttpFreeProxyResult( WINHTTP_PROXY_RESULT *result )
+{
+    FIXME("%p\n", result);
+}
+
+/***********************************************************************
+ *          WinHttpFreeProxyResultEx (winhttp.@)
+ */
+void WINAPI WinHttpFreeProxyResultEx( WINHTTP_PROXY_RESULT_EX *result )
+{
+    FIXME("%p\n", result);
+}
+
+/***********************************************************************
+ *          WinHttpFreeProxySettings (winhttp.@)
+ */
+void WINAPI WinHttpFreeProxySettings( WINHTTP_PROXY_SETTINGS *settings )
+{
+    FIXME("%p\n", settings);
+}
+
+/***********************************************************************
+ *          WinHttpGetProxyForUrlEx (winhttp.@)
+ */
+DWORD WINAPI WinHttpGetProxyForUrlEx( HINTERNET hresolver, const WCHAR *url, WINHTTP_AUTOPROXY_OPTIONS *options,
+                                      DWORD_PTR ctx )
+{
+    FIXME("%p, %s, %p, %lx\n", hresolver, debugstr_w(url), options, ctx);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpGetProxyForUrlEx2 (winhttp.@)
+ */
+DWORD WINAPI WinHttpGetProxyForUrlEx2( HINTERNET hresolver, const WCHAR *url, WINHTTP_AUTOPROXY_OPTIONS *options,
+                                       DWORD selection_len, BYTE *selection, DWORD_PTR ctx )
+{
+    FIXME("%p, %s, %p, %u, %p, %lx\n", hresolver, debugstr_w(url), options, selection_len, selection, ctx);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpGetProxyResult (winhttp.@)
+ */
+DWORD WINAPI WinHttpGetProxyResult( HINTERNET hresolver, WINHTTP_PROXY_RESULT *result )
+{
+    FIXME("%p, %p\n", hresolver, result);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpGetProxyResultEx (winhttp.@)
+ */
+DWORD WINAPI WinHttpGetProxyResultEx( HINTERNET hresolver, WINHTTP_PROXY_RESULT_EX *result )
+{
+    FIXME("%p, %p\n", hresolver, result);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpGetProxySettingsVersion (winhttp.@)
+ */
+DWORD WINAPI WinHttpGetProxySettingsVersion( HINTERNET hsession, DWORD *version )
+{
+    FIXME("%p, %p\n", hsession, version);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpReadProxySettings (winhttp.@)
+ */
+DWORD WINAPI WinHttpReadProxySettings( HINTERNET hsession, const WCHAR *connection, BOOL use_defaults,
+                                       BOOL set_autodiscover, DWORD *version, BOOL *defaults_returned,
+                                       WINHTTP_PROXY_SETTINGS *settings)
+{
+    FIXME("%p, %s, %d, %d, %p, %p, %p\n", hsession, debugstr_w(connection), use_defaults, set_autodiscover,
+          version, defaults_returned, settings);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
+ *          WinHttpResetAutoProxy (winhttp.@)
+ */
+DWORD WINAPI WinHttpResetAutoProxy( HINTERNET hsession, DWORD flags )
+{
+    FIXME("%p, %08x\n", hsession, flags);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+DWORD WINAPI WinHttpWriteProxySettings( HINTERNET hsession, BOOL force, WINHTTP_PROXY_SETTINGS *settings )
+{
+    FIXME("%p, %d, %p\n", hsession, force, settings);
+    return ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR;
+}
+
+/***********************************************************************
  *          WinHttpSetStatusCallback (winhttp.@)
  */
 WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHTTP_STATUS_CALLBACK callback,
