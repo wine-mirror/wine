@@ -4776,7 +4776,7 @@ static void test_ddrawstream_getsetdirectdraw(void)
 
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, (IUnknown *)ddraw7, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine EXPECT_REF(ddraw, 2);
+    EXPECT_REF(ddraw, 2);
 
     hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4787,19 +4787,19 @@ static void test_ddrawstream_getsetdirectdraw(void)
     hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ddraw2 == ddraw, "Expected ddraw %p, got %p.\n", ddraw, ddraw2);
-    todo_wine EXPECT_REF(ddraw, 3);
+    EXPECT_REF(ddraw, 3);
 
     hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ddraw3 == ddraw2, "Expected ddraw %p, got %p.\n", ddraw2, ddraw3);
-    todo_wine EXPECT_REF(ddraw, 4);
+    EXPECT_REF(ddraw, 4);
     IDirectDraw_Release(ddraw3);
-    todo_wine EXPECT_REF(ddraw, 3);
+    EXPECT_REF(ddraw, 3);
 
     /* The current ddraw is released when SetDirectDraw() is called. */
     hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, NULL);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    EXPECT_REF(ddraw, 2);
+    todo_wine EXPECT_REF(ddraw, 2);
 
     hr = IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw3);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4808,7 +4808,7 @@ static void test_ddrawstream_getsetdirectdraw(void)
 
     hr = IDirectDrawMediaStream_SetDirectDraw(ddraw_stream, ddraw2);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine EXPECT_REF(ddraw, 3);
+    EXPECT_REF(ddraw, 3);
 
     if (hr == S_OK)
     {

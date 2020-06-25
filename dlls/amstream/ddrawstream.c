@@ -39,7 +39,7 @@ struct ddraw_stream
     IMultiMediaStream* parent;
     MSPID purpose_id;
     STREAM_TYPE stream_type;
-    IDirectDraw7 *ddraw;
+    IDirectDraw *ddraw;
     CRITICAL_SECTION cs;
     IMediaStreamFilter *filter;
 
@@ -107,17 +107,17 @@ static ULONG WINAPI ddraw_IAMMediaStream_AddRef(IAMMediaStream *iface)
 
 static ULONG WINAPI ddraw_IAMMediaStream_Release(IAMMediaStream *iface)
 {
-    struct ddraw_stream *This = impl_from_IAMMediaStream(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct ddraw_stream *stream = impl_from_IAMMediaStream(iface);
+    ULONG ref = InterlockedDecrement(&stream->ref);
 
-    TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
+    TRACE("%p decreasing refcount to %u.\n", stream, ref);
 
     if (!ref)
     {
-        DeleteCriticalSection(&This->cs);
-        if (This->ddraw)
-            IDirectDraw7_Release(This->ddraw);
-        HeapFree(GetProcessHeap(), 0, This);
+        DeleteCriticalSection(&stream->cs);
+        if (stream->ddraw)
+            IDirectDraw_Release(stream->ddraw);
+        HeapFree(GetProcessHeap(), 0, stream);
     }
 
     return ref;
@@ -214,8 +214,8 @@ static HRESULT WINAPI ddraw_IAMMediaStream_Initialize(IAMMediaStream *iface, IUn
     stream->stream_type = stream_type;
 
     if (source_object
-            && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw7, (void **)&stream->ddraw)))
-        FIXME("Stream object doesn't implement IDirectDraw7 interface, hr %#x.\n", hr);
+            && FAILED(hr = IUnknown_QueryInterface(source_object, &IID_IDirectDraw, (void **)&stream->ddraw)))
+        FIXME("Stream object doesn't implement IDirectDraw interface, hr %#x.\n", hr);
 
     return S_OK;
 }
@@ -373,23 +373,26 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetDirectDraw(IDirectDrawMediaStream *iface,
         IDirectDraw **ddraw)
 {
-    struct ddraw_stream *This = impl_from_IDirectDrawMediaStream(iface);
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
 
-    TRACE("(%p)->(%p)\n", iface, ddraw);
+    TRACE("stream %p, ddraw %p.\n", stream, ddraw);
 
     if (!ddraw)
         return E_POINTER;
 
     *ddraw = NULL;
-    if (!This->ddraw)
+    if (!stream->ddraw)
     {
-        HRESULT hr = DirectDrawCreateEx(NULL, (void**)&This->ddraw, &IID_IDirectDraw7, NULL);
+        HRESULT hr = DirectDrawCreate(NULL, &stream->ddraw, NULL);
         if (FAILED(hr))
             return hr;
-        IDirectDraw7_SetCooperativeLevel(This->ddraw, NULL, DDSCL_NORMAL);
+        IDirectDraw_SetCooperativeLevel(stream->ddraw, NULL, DDSCL_NORMAL);
     }
 
-    return IDirectDraw7_QueryInterface(This->ddraw, &IID_IDirectDraw, (void**)ddraw);
+    IDirectDraw_AddRef(stream->ddraw);
+    *ddraw = stream->ddraw;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetDirectDraw(IDirectDrawMediaStream *iface,
