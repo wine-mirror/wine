@@ -2606,6 +2606,7 @@ static void test_basic_video(void)
     UINT count;
     ULONG ref;
     IPin *pin;
+    RECT rect;
 
     IBaseFilter_QueryInterface(filter, &IID_IBasicVideo, (void **)&video);
     IBaseFilter_FindPin(filter, L"In", &pin);
@@ -2721,6 +2722,23 @@ static void test_basic_video(void)
 
     test_basic_video_source(video);
     test_basic_video_destination(video);
+
+    hr = IFilterGraph2_Disconnect(graph, &source.source.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    vih.bmiHeader.biWidth = 16;
+    vih.bmiHeader.biHeight = 16;
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_source_position(video, 0, 0, 16, 16);
+
+    SetRect(&rect, 0, 0, 0, 0);
+    AdjustWindowRectEx(&rect, WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW, FALSE, 0);
+    check_destination_position(video, 0, 0, max(16, GetSystemMetrics(SM_CXMIN) - (rect.right - rect.left)),
+            max(16, GetSystemMetrics(SM_CYMIN) - (rect.bottom - rect.top)));
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);

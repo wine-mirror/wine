@@ -225,12 +225,13 @@ static HRESULT video_renderer_connect(struct strmbase_renderer *iface, const AM_
     filter->VideoWidth = bitmap_header->biWidth;
     filter->VideoHeight = abs(bitmap_header->biHeight);
     SetRect(&rect, 0, 0, filter->VideoWidth, filter->VideoHeight);
-    filter->window.src = filter->window.dst = rect;
+    filter->window.src = rect;
 
     AdjustWindowRectEx(&rect, GetWindowLongW(window, GWL_STYLE), FALSE,
             GetWindowLongW(window, GWL_EXSTYLE));
     SetWindowPos(window, NULL, 0, 0, rect.right - rect.left, rect.bottom - rect.top,
             SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    GetClientRect(window, &filter->window.dst);
 
     return S_OK;
 }
