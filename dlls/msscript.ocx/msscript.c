@@ -291,6 +291,20 @@ static HRESULT add_script_object(ScriptHost *host, BSTR name, IDispatch *object,
     return hr;
 }
 
+static HRESULT parse_script_text(ScriptHost *host, BSTR script_text, DWORD flag, VARIANT *res)
+{
+    EXCEPINFO excepinfo;
+    HRESULT hr;
+
+    hr = start_script(host);
+    if (FAILED(hr)) return hr;
+
+    hr = IActiveScriptParse_ParseScriptText(host->parse, script_text, NULL,
+                                            NULL, NULL, 0, 1, flag, res, &excepinfo);
+    /* FIXME: more error handling */
+    return hr;
+}
+
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IScriptControl_iface);
@@ -1553,20 +1567,6 @@ static HRESULT WINAPI ScriptControl_Reset(IScriptControl *iface)
 
     clear_named_items(This->host);
     return set_script_state(This->host, SCRIPTSTATE_INITIALIZED);
-}
-
-static HRESULT parse_script_text(ScriptHost *host, BSTR script_text, DWORD flag, VARIANT *res)
-{
-    EXCEPINFO excepinfo;
-    HRESULT hr;
-
-    hr = start_script(host);
-    if (FAILED(hr)) return hr;
-
-    hr = IActiveScriptParse_ParseScriptText(host->parse, script_text, NULL,
-                                            NULL, NULL, 0, 1, flag, res, &excepinfo);
-    /* FIXME: more error handling */
-    return hr;
 }
 
 static HRESULT WINAPI ScriptControl_AddCode(IScriptControl *iface, BSTR code)
