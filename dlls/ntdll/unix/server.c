@@ -679,7 +679,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
     {
         LARGE_INTEGER now;
 
-        RtlQueryPerformanceCounter(&now);
+        NtQueryPerformanceCounter( &now, NULL );
         abs_timeout -= now.QuadPart;
     }
 

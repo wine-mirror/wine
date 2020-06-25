@@ -1450,6 +1450,7 @@ static struct unix_funcs unix_funcs =
     NtWriteVirtualMemory,
     NtYieldExecution,
     DbgUiIssueRemoteBreakin,
+    RtlGetSystemTimePrecise,
     RtlWaitOnAddress,
     RtlWakeAddressAll,
     RtlWakeAddressSingle,

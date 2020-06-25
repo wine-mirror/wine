@@ -32,9 +32,6 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -399,27 +396,7 @@ NTSTATUS WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
  */
 LONGLONG WINAPI RtlGetSystemTimePrecise( void )
 {
-    LONGLONG time;
-
-#ifdef HAVE_CLOCK_GETTIME
-    struct timespec ts;
-
-    if (!clock_gettime( CLOCK_REALTIME, &ts ))
-    {
-        time = ts.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-        time += (ts.tv_nsec + 50) / 100;
-    }
-    else
-#endif
-    {
-        struct timeval now;
-
-        gettimeofday( &now, 0 );
-        time = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-        time += now.tv_usec * 10;
-    }
-
-    return time;
+    return unix_funcs->RtlGetSystemTimePrecise();
 }
 
 /******************************************************************************
