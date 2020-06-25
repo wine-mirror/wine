@@ -3884,6 +3884,16 @@ struct handle_info
 #define SET_CURSOR_NOCLIP 0x10
 
 
+/* Batch read rawinput message data */
+@REQ(get_rawinput_buffer)
+    data_size_t rawinput_size; /* size of RAWINPUT structure */
+    data_size_t buffer_size;   /* size of output buffer */
+@REPLY
+    data_size_t next_size; /* minimum size to get next message data */
+    unsigned int count;
+    VARARG(data,bytes);
+@END
+
 /* Modify the list of registered rawinput devices */
 @REQ(update_rawinput_devices)
     VARARG(devices,rawinput_devices);

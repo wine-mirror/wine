@@ -404,6 +404,7 @@ DECL_HANDLER(set_window_layered_info);
 DECL_HANDLER(alloc_user_handle);
 DECL_HANDLER(free_user_handle);
 DECL_HANDLER(set_cursor);
+DECL_HANDLER(get_rawinput_buffer);
 DECL_HANDLER(update_rawinput_devices);
 DECL_HANDLER(create_job);
 DECL_HANDLER(open_job);
@@ -706,6 +707,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_alloc_user_handle,
     (req_handler)req_free_user_handle,
     (req_handler)req_set_cursor,
+    (req_handler)req_get_rawinput_buffer,
     (req_handler)req_update_rawinput_devices,
     (req_handler)req_create_job,
     (req_handler)req_open_job,
@@ -2418,6 +2420,12 @@ C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_y) == 28 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, last_change) == 48 );
 C_ASSERT( sizeof(struct set_cursor_reply) == 56 );
+C_ASSERT( FIELD_OFFSET(struct get_rawinput_buffer_request, rawinput_size) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_rawinput_buffer_request, buffer_size) == 16 );
+C_ASSERT( sizeof(struct get_rawinput_buffer_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_rawinput_buffer_reply, next_size) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_rawinput_buffer_reply, count) == 12 );
+C_ASSERT( sizeof(struct get_rawinput_buffer_reply) == 16 );
 C_ASSERT( sizeof(struct update_rawinput_devices_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_job_request, access) == 12 );
 C_ASSERT( sizeof(struct create_job_request) == 16 );

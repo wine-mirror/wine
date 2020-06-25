@@ -4528,6 +4528,19 @@ static void dump_set_cursor_reply( const struct set_cursor_reply *req )
     fprintf( stderr, ", last_change=%08x", req->last_change );
 }
 
+static void dump_get_rawinput_buffer_request( const struct get_rawinput_buffer_request *req )
+{
+    fprintf( stderr, " rawinput_size=%u", req->rawinput_size );
+    fprintf( stderr, ", buffer_size=%u", req->buffer_size );
+}
+
+static void dump_get_rawinput_buffer_reply( const struct get_rawinput_buffer_reply *req )
+{
+    fprintf( stderr, " next_size=%u", req->next_size );
+    fprintf( stderr, ", count=%08x", req->count );
+    dump_varargs_bytes( ", data=", cur_size );
+}
+
 static void dump_update_rawinput_devices_request( const struct update_rawinput_devices_request *req )
 {
     dump_varargs_rawinput_devices( " devices=", cur_size );
@@ -4895,6 +4908,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_request,
     (dump_func)dump_free_user_handle_request,
     (dump_func)dump_set_cursor_request,
+    (dump_func)dump_get_rawinput_buffer_request,
     (dump_func)dump_update_rawinput_devices_request,
     (dump_func)dump_create_job_request,
     (dump_func)dump_open_job_request,
@@ -5194,6 +5208,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_reply,
     NULL,
     (dump_func)dump_set_cursor_reply,
+    (dump_func)dump_get_rawinput_buffer_reply,
     NULL,
     (dump_func)dump_create_job_reply,
     (dump_func)dump_open_job_reply,
@@ -5493,6 +5508,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "alloc_user_handle",
     "free_user_handle",
     "set_cursor",
+    "get_rawinput_buffer",
     "update_rawinput_devices",
     "create_job",
     "open_job",

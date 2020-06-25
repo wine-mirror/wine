@@ -196,7 +196,7 @@ struct user_thread_info
     struct user_key_state_info   *key_state;              /* Cache of global key state */
     HWND                          top_window;             /* Desktop window */
     HWND                          msg_window;             /* HWND_MESSAGE parent window */
-    RAWINPUT                     *rawinput;               /* Rawinput buffer */
+    RAWINPUT                     *rawinput;
 };
 
 C_ASSERT( sizeof(struct user_thread_info) <= sizeof(((TEB *)0)->Win32ClientInfo) );

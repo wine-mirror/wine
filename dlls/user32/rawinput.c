@@ -491,14 +491,101 @@ UINT WINAPI GetRawInputData(HRAWINPUT rawinput, UINT command, void *data, UINT *
     return s;
 }
 
+#ifdef _WIN64
+typedef RAWINPUT RAWINPUT64;
+#else
+typedef struct
+{
+    RAWINPUTHEADER header;
+    char pad[8];
+    union {
+        RAWMOUSE    mouse;
+        RAWKEYBOARD keyboard;
+        RAWHID      hid;
+    } data;
+} RAWINPUT64;
+#endif
+
 /***********************************************************************
  *              GetRawInputBuffer   (USER32.@)
  */
 UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size, UINT header_size)
 {
-    FIXME("data %p, data_size %p, header_size %u stub!\n", data, data_size, header_size);
+    struct hardware_msg_data *msg_data;
+    RAWINPUT *rawinput;
+    UINT count = 0, rawinput_size, next_size, overhead;
+    BOOL is_wow64;
+    int i;
 
-    return 0;
+    if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+        rawinput_size = sizeof(RAWINPUT64);
+    else
+        rawinput_size = sizeof(RAWINPUT);
+    overhead = rawinput_size - sizeof(RAWINPUT);
+
+    if (header_size != sizeof(RAWINPUTHEADER))
+    {
+        WARN("Invalid structure size %u.\n", header_size);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return ~0U;
+    }
+
+    if (!data_size)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return ~0U;
+    }
+
+    if (!data)
+    {
+        TRACE("data %p, data_size %p (%u), header_size %u\n", data, data_size, *data_size, header_size);
+        SERVER_START_REQ( get_rawinput_buffer )
+        {
+            req->rawinput_size = rawinput_size;
+            req->buffer_size = 0;
+            if (wine_server_call( req )) return ~0U;
+            *data_size = reply->next_size;
+        }
+        SERVER_END_REQ;
+        return 0;
+    }
+
+    if (!(rawinput = rawinput_thread_data())) return ~0U;
+
+    msg_data = (struct hardware_msg_data *)NEXTRAWINPUTBLOCK(rawinput);
+    SERVER_START_REQ( get_rawinput_buffer )
+    {
+        req->rawinput_size = rawinput_size;
+        req->buffer_size = *data_size;
+        wine_server_set_reply( req, msg_data, RAWINPUT_BUFFER_SIZE - rawinput->header.dwSize );
+        if (wine_server_call( req )) return ~0U;
+        next_size = reply->next_size;
+        count = reply->count;
+    }
+    SERVER_END_REQ;
+
+    for (i = 0; i < count; ++i)
+    {
+        rawinput_from_hardware_message(data, msg_data);
+        if (overhead) memmove((char *)&data->data + overhead, &data->data,
+                              data->header.dwSize - sizeof(RAWINPUTHEADER));
+        data->header.dwSize += overhead;
+        data = NEXTRAWINPUTBLOCK(data);
+        msg_data++;
+    }
+
+    if (count == 0 && next_size == 0) *data_size = 0;
+    else if (next_size == 0) next_size = rawinput_size;
+
+    if (next_size && *data_size <= next_size)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        *data_size = next_size;
+        count = ~0U;
+    }
+
+    if (count) TRACE("data %p, data_size %p (%u), header_size %u, count %u\n", data, data_size, *data_size, header_size, count);
+    return count;
 }
 
 /***********************************************************************

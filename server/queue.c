@@ -3226,6 +3226,46 @@ DECL_HANDLER(set_cursor)
     reply->last_change = input->desktop->cursor.last_change;
 }
 
+DECL_HANDLER(get_rawinput_buffer)
+{
+    struct thread_input *input = current->queue->input;
+    data_size_t size = 0, next_size = 0;
+    struct list *ptr;
+    char *buf, *cur;
+    int count = 0;
+
+    if (!req->buffer_size) buf = NULL;
+    else if (!(buf = mem_alloc( get_reply_max_size() )))
+        return;
+
+    cur = buf;
+    ptr = list_head( &input->msg_list );
+    while (ptr)
+    {
+        struct message *msg = LIST_ENTRY( ptr, struct message, entry );
+        struct hardware_msg_data *data = msg->data;
+
+        ptr = list_next( &input->msg_list, ptr );
+        if (msg->msg != WM_INPUT) continue;
+
+        next_size = req->rawinput_size;
+        if (size + next_size > req->buffer_size) break;
+        if (cur + sizeof(*data) > buf + get_reply_max_size()) break;
+
+        memcpy(cur, data, sizeof(*data));
+        list_remove( &msg->entry );
+        free_message( msg );
+
+        size += next_size;
+        cur += sizeof(*data);
+        count++;
+    }
+
+    reply->next_size = next_size;
+    reply->count = count;
+    set_reply_data_ptr( buf, cur - buf );
+}
+
 DECL_HANDLER(update_rawinput_devices)
 {
     const struct rawinput_device *devices = get_req_data();
