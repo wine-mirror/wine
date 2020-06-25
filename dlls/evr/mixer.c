@@ -48,6 +48,7 @@ struct video_mixer
     IMFVideoMixerControl2 IMFVideoMixerControl2_iface;
     IMFGetService IMFGetService_iface;
     IMFVideoMixerBitmap IMFVideoMixerBitmap_iface;
+    IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     LONG refcount;
 
     struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
@@ -87,6 +88,11 @@ static struct video_mixer *impl_from_IMFGetService(IMFGetService *iface)
 static struct video_mixer *impl_from_IMFVideoMixerBitmap(IMFVideoMixerBitmap *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoMixerBitmap_iface);
+}
+
+static struct video_mixer *impl_from_IMFVideoPositionMapper(IMFVideoPositionMapper *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoPositionMapper_iface);
 }
 
 static int video_mixer_compare_input_id(const void *a, const void *b)
@@ -141,6 +147,10 @@ static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, 
     else if (IsEqualIID(riid, &IID_IMFVideoMixerBitmap))
     {
         *obj = &mixer->IMFVideoMixerBitmap_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoPositionMapper))
+    {
+        *obj = &mixer->IMFVideoPositionMapper_iface;
     }
     else
     {
@@ -858,6 +868,40 @@ static const IMFVideoMixerBitmapVtbl video_mixer_bitmap_vtbl =
     video_mixer_bitmap_GetAlphaBitmapParameters,
 };
 
+static HRESULT WINAPI video_mixer_position_mapper_QueryInterface(IMFVideoPositionMapper *iface, REFIID riid, void **obj)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoPositionMapper(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, obj);
+}
+
+static ULONG WINAPI video_mixer_position_mapper_AddRef(IMFVideoPositionMapper *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoPositionMapper(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_position_mapper_Release(IMFVideoPositionMapper *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoPositionMapper(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_position_mapper_MapOutputCoordinateToInputStream(IMFVideoPositionMapper *iface,
+        float x_out, float y_out, DWORD output_stream, DWORD input_stream, float *x_in, float *y_in)
+{
+    FIXME("%p, %f, %f, %u, %u, %p, %p.\n", iface, x_out, y_out, output_stream, input_stream, x_in, y_in);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoPositionMapperVtbl video_mixer_position_mapper_vtbl =
+{
+    video_mixer_position_mapper_QueryInterface,
+    video_mixer_position_mapper_AddRef,
+    video_mixer_position_mapper_Release,
+    video_mixer_position_mapper_MapOutputCoordinateToInputStream,
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -886,6 +930,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFVideoMixerControl2_iface.lpVtbl = &video_mixer_control_vtbl;
     object->IMFGetService_iface.lpVtbl = &video_mixer_getservice_vtbl;
     object->IMFVideoMixerBitmap_iface.lpVtbl = &video_mixer_bitmap_vtbl;
+    object->IMFVideoPositionMapper_iface.lpVtbl = &video_mixer_position_mapper_vtbl;
     object->refcount = 1;
     object->input_count = 1;
     video_mixer_init_input(&object->inputs[0]);
