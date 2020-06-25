@@ -681,6 +681,14 @@ select case 1  :
 end select
 Call ok(x, "wrong case")
 
+select case 0
+    case 1
+    case else
+       'empty else with comment test
+end select
+
+select case 0 : case 1 : case else : end select
+
 if false then
 Sub testsub
     x = true

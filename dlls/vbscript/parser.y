@@ -301,7 +301,7 @@ Else_opt
 
 CaseClausules
     : /* empty */                          { $$ = NULL; }
-    | tCASE tELSE StSep StatementsNl       { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
+    | tCASE tELSE StSep StatementsNl_opt   { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
     | tCASE ExpressionList StSep StatementsNl_opt CaseClausules
                                            { $$ = new_case_clausule(ctx, $2, $4, $5); }
 
