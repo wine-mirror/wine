@@ -21,6 +21,7 @@
 
 #include "wine/test.h"
 #include <windows.h>
+#include <winternl.h>
 #include <stdio.h>
 
 static BOOL (WINAPI *pGetConsoleInputExeNameA)(DWORD, LPSTR);
@@ -1226,36 +1227,47 @@ static void test_OpenConsoleW(void)
 
 static void test_CreateFileW(void)
 {
-    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
-    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
-
     static const struct
     {
-        LPCWSTR name;
+        BOOL input;
         DWORD access;
         BOOL inherit;
         DWORD creation;
         DWORD gle;
         BOOL is_broken;
     } cf_table[] = {
-        {coninW,   0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
-        {coninW,   0,                            FALSE,      OPEN_ALWAYS,       0,                              FALSE},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        0,                              FALSE},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     0,                              FALSE},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       0,                              FALSE},
-        {conoutW,  0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
-        {conoutW,  0,                            FALSE,      OPEN_ALWAYS,       0,                              FALSE},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        0,                              FALSE},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     0,                              FALSE},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {TRUE,   0,                            FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {TRUE,   GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {TRUE,   0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {TRUE,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        0,                              FALSE},
+        {TRUE,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     0,                              FALSE},
+        {TRUE,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {FALSE,  0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {FALSE,  0,                            FALSE,      OPEN_ALWAYS,       0,                              FALSE},
+        {FALSE,  GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER,        TRUE},
+        {FALSE,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        0,                              FALSE},
+        {FALSE,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     0,                              FALSE},
+        {FALSE,  GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       0,                              FALSE},
         /* TRUNCATE_EXISTING is forbidden starting with Windows 8 */
+    };
+
+    static const UINT nt_disposition[5] =
+    {
+        FILE_CREATE,        /* CREATE_NEW */
+        FILE_OVERWRITE_IF,  /* CREATE_ALWAYS */
+        FILE_OPEN,          /* OPEN_EXISTING */
+        FILE_OPEN_IF,       /* OPEN_ALWAYS */
+        FILE_OVERWRITE      /* TRUNCATE_EXISTING */
     };
 
     int index;
     HANDLE ret;
     SECURITY_ATTRIBUTES sa;
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+    BOOL skip_nt = FALSE;
 
     for (index = 0; index < ARRAY_SIZE(cf_table); index++)
     {
@@ -1265,7 +1277,7 @@ static void test_CreateFileW(void)
         sa.lpSecurityDescriptor = NULL;
         sa.bInheritHandle = cf_table[index].inherit;
 
-        ret = CreateFileW(cf_table[index].name, cf_table[index].access,
+        ret = CreateFileW(cf_table[index].input ? L"CONIN$" : L"CONOUT$", cf_table[index].access,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, &sa,
                           cf_table[index].creation, FILE_ATTRIBUTE_NORMAL, NULL);
         if (ret == INVALID_HANDLE_VALUE)
@@ -1282,6 +1294,51 @@ static void test_CreateFileW(void)
                "Expected CreateFileW to succeed for index %d\n", index);
             CloseHandle(ret);
         }
+
+        if (skip_nt) continue;
+
+        SetLastError(0xdeadbeef);
+
+        sa.nLength = sizeof(sa);
+        sa.lpSecurityDescriptor = NULL;
+        sa.bInheritHandle = cf_table[index].inherit;
+
+        ret = CreateFileW(cf_table[index].input ? L"\\??\\CONIN$" : L"\\??\\CONOUT$", cf_table[index].access,
+                          FILE_SHARE_READ|FILE_SHARE_WRITE, &sa,
+                          cf_table[index].creation, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (!index && ret == INVALID_HANDLE_VALUE)
+        {
+            todo_wine
+            win_skip("Skipping NT path tests, not supported on this Windows version\n");
+            skip_nt = TRUE;
+            continue;
+        }
+        if (cf_table[index].gle)
+            ok(ret == INVALID_HANDLE_VALUE && GetLastError() == cf_table[index].gle,
+               "CreateFileW to returned %p %u for index %d\n", ret, GetLastError(), index);
+        else
+            ok(ret != INVALID_HANDLE_VALUE && (!cf_table[index].gle || broken(cf_table[index].is_broken) /* Win7 */),
+               "CreateFileW to returned %p %u for index %d\n", ret, GetLastError(), index);
+        if (ret != INVALID_HANDLE_VALUE) CloseHandle(ret);
+
+        if (cf_table[index].gle) continue;
+
+        RtlInitUnicodeString(&string, cf_table[index].input
+                             ? L"\\Device\\ConDrv\\CurrentIn" : L"\\Device\\ConDrv\\CurrentOut");
+        attr.ObjectName = &string;
+        status = NtCreateFile(&ret, cf_table[index].access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &iosb, NULL,
+                              FILE_ATTRIBUTE_NORMAL, 0, nt_disposition[cf_table[index].creation - CREATE_NEW],
+                              FILE_NON_DIRECTORY_FILE, NULL, 0);
+        ok(!status, "NtCreateFile failed %x for %u\n", status, index);
+        CloseHandle(ret);
+
+        RtlInitUnicodeString(&string, cf_table[index].input ? L"\\??\\CONIN$" : L"\\??\\CONOUT$");
+        attr.ObjectName = &string;
+        status = NtCreateFile(&ret, cf_table[index].access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &iosb, NULL,
+                              FILE_ATTRIBUTE_NORMAL, 0, nt_disposition[cf_table[index].creation - CREATE_NEW],
+                              FILE_NON_DIRECTORY_FILE, NULL, 0);
+        ok(!status, "NtCreateFile failed %x for %u\n", status, index);
+        CloseHandle(ret);
     }
 }
 
@@ -3142,6 +3199,39 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
     ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
 }
 
+static void test_FreeConsole(void)
+{
+    HANDLE handle;
+    BOOL ret;
+
+    ret = FreeConsole();
+    ok(ret, "FreeConsole failed: %u\n", GetLastError());
+
+    handle = CreateFileA("CONOUT$", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    todo_wine
+    ok(handle == INVALID_HANDLE_VALUE &&
+       (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED /* winxp */)),
+       "CreateFileA failed: %u\n", GetLastError());
+
+    handle = CreateFileA("CONIN$", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    todo_wine
+    ok(handle == INVALID_HANDLE_VALUE &&
+       (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED /* winxp */)),
+       "CreateFileA failed: %u\n", GetLastError());
+
+    handle = CreateFileA("CON", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    todo_wine
+    ok(handle == INVALID_HANDLE_VALUE &&
+       (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_ACCESS_DENIED /* winxp */)),
+       "CreateFileA failed: %u\n", GetLastError());
+
+    handle = CreateFileA("CON", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    todo_wine
+    ok(handle == INVALID_HANDLE_VALUE &&
+       (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_FILE_NOT_FOUND /* winxp */)),
+       "CreateFileA failed: %u\n", GetLastError());
+}
+
 static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
 {
     BOOL ret;
@@ -3447,4 +3537,5 @@ START_TEST(console)
     test_GetConsoleScreenBufferInfoEx(hConOut);
     test_SetConsoleScreenBufferInfoEx(hConOut);
     test_AttachConsole(hConOut);
+    test_FreeConsole();
 }
