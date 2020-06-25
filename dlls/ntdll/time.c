@@ -228,44 +228,6 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
         return TRUE;
 }
 
-/***********************************************************************
- *       TIME_GetBias [internal]
- *
- * Helper function calculates delta local time from UTC. 
- *
- * PARAMS
- *   utc [I] The current utc time.
- *   pdaylight [I] Local daylight.
- *
- * RETURNS
- *   The bias for the current timezone.
- */
-static LONG TIME_GetBias(void)
-{
-    static time_t last_utc;
-    static LONG last_bias;
-    LONG ret;
-    time_t utc;
-
-    utc = time( NULL );
-
-    RtlEnterCriticalSection( &TIME_tz_section );
-    if (utc != last_utc)
-    {
-        RTL_DYNAMIC_TIME_ZONE_INFORMATION tzi;
-        int is_dst = init_tz_info( &tzi );
-
-	last_utc = utc;
-        last_bias = tzi.Bias;
-        last_bias += is_dst ? tzi.DaylightBias : tzi.StandardBias;
-        last_bias *= SECSPERMIN;
-    }
-
-    ret = last_bias;
-
-    RtlLeaveCriticalSection( &TIME_tz_section );
-    return ret;
-}
 
 /******************************************************************************
  *        RtlLocalTimeToSystemTime [NTDLL.@]
@@ -283,12 +245,12 @@ static LONG TIME_GetBias(void)
 NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
                                           PLARGE_INTEGER SystemTime)
 {
-    LONG bias;
+    SYSTEM_TIMEOFDAY_INFORMATION info;
 
     TRACE("(%p, %p)\n", LocalTime, SystemTime);
 
-    bias = TIME_GetBias();
-    SystemTime->QuadPart = LocalTime->QuadPart + bias * (LONGLONG)TICKSPERSEC;
+    NtQuerySystemInformation( SystemTimeOfDayInformation, &info, sizeof(info), NULL );
+    SystemTime->QuadPart = LocalTime->QuadPart + info.TimeZoneBias.QuadPart;
     return STATUS_SUCCESS;
 }
 
@@ -308,12 +270,12 @@ NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
 NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
                                           PLARGE_INTEGER LocalTime )
 {
-    LONG bias;
+    SYSTEM_TIMEOFDAY_INFORMATION info;
 
     TRACE("(%p, %p)\n", SystemTime, LocalTime);
 
-    bias = TIME_GetBias();
-    LocalTime->QuadPart = SystemTime->QuadPart - bias * (LONGLONG)TICKSPERSEC;
+    NtQuerySystemInformation( SystemTimeOfDayInformation, &info, sizeof(info), NULL );
+    LocalTime->QuadPart = SystemTime->QuadPart - info.TimeZoneBias.QuadPart;
     return STATUS_SUCCESS;
 }
 

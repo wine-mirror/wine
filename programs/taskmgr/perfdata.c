@@ -199,7 +199,7 @@ void PerfDataRefresh(void)
         /*  CurrentValue = NewValue - OldValue */
         dbIdleTime = Li2Double(SysPerfInfo.IdleTime) - Li2Double(liOldIdleTime);
         dbKernelTime = CurrentKernelTime - OldKernelTime;
-        dbSystemTime = Li2Double(SysTimeInfo.liKeSystemTime) - Li2Double(liOldSystemTime);
+        dbSystemTime = Li2Double(SysTimeInfo.SystemTime) - Li2Double(liOldSystemTime);
 
         /*  CurrentCpuIdle = IdleTime / SystemTime */
         dbIdleTime = dbIdleTime / dbSystemTime;
@@ -212,7 +212,7 @@ void PerfDataRefresh(void)
 
     /* Store new CPU's idle and system time */
     liOldIdleTime = SysPerfInfo.IdleTime;
-    liOldSystemTime = SysTimeInfo.liKeSystemTime;
+    liOldSystemTime = SysTimeInfo.SystemTime;
     OldKernelTime = CurrentKernelTime;
 
     /* Determine the process count

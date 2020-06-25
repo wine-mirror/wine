@@ -1482,10 +1482,10 @@ typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
 
 typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
 #ifdef __WINESRC__
-    LARGE_INTEGER liKeBootTime;
-    LARGE_INTEGER liKeSystemTime;
-    LARGE_INTEGER liExpTimeZoneBias;
-    ULONG uCurrentTimeZoneId;
+    LARGE_INTEGER BootTime;
+    LARGE_INTEGER SystemTime;
+    LARGE_INTEGER TimeZoneBias;
+    ULONG TimeZoneId;
     ULONG Reserved;
     ULONGLONG BootTimeBias;
     ULONGLONG SleepTimeBias;

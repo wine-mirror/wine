@@ -3275,7 +3275,7 @@ static WCHAR *get_lastbootuptime(void)
     if (!(ret = heap_alloc( 26 * sizeof(WCHAR) ))) return NULL;
 
     NtQuerySystemInformation( SystemTimeOfDayInformation, &ti, sizeof(ti), NULL );
-    RtlTimeToTimeFields( &ti.liKeBootTime, &tf );
+    RtlTimeToTimeFields( &ti.BootTime, &tf );
     swprintf( ret, 26, L"%04u%02u%02u%02u%02u%02u.%06u+000", tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute,
               tf.Second, tf.Milliseconds * 1000 );
     return ret;
