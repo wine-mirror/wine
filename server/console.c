@@ -75,6 +75,8 @@ struct console_input
 static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
 static struct fd *console_input_get_fd( struct object *obj );
+static struct object *console_input_open_file( struct object *obj, unsigned int access,
+                                               unsigned int sharing, unsigned int options );
 
 static const struct object_ops console_input_ops =
 {
@@ -93,7 +95,7 @@ static const struct object_ops console_input_ops =
     no_lookup_name,                   /* lookup_name */
     no_link_name,                     /* link_name */
     NULL,                             /* unlink_name */
-    no_open_file,                     /* open_file */
+    console_input_open_file,          /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     console_input_destroy             /* destroy */
@@ -1204,6 +1206,12 @@ static void console_input_destroy( struct object *obj )
     free( console_in->history );
 }
 
+static struct object *console_input_open_file( struct object *obj, unsigned int access,
+                                               unsigned int sharing, unsigned int options )
+{
+    return grab_object( obj );
+}
+
 static void screen_buffer_dump( struct object *obj, int verbose )
 {
     struct screen_buffer *screen_buffer = (struct screen_buffer *)obj;
@@ -1484,6 +1492,18 @@ static void console_device_dump( struct object *obj, int verbose )
 static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
 {
     static const WCHAR consoleW[]     = {'C','o','n','s','o','l','e'};
+    static const WCHAR current_inW[]  = {'C','u','r','r','e','n','t','I','n'};
+
+    if (name->len == sizeof(current_inW) && !memcmp( name->str, current_inW, name->len ))
+    {
+        if (!current->process->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return NULL;
+        }
+        name->len = 0;
+        return grab_object( current->process->console );
+    }
 
     if (name->len == sizeof(consoleW) && !memcmp( name->str, consoleW, name->len ))
     {
