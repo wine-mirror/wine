@@ -77,6 +77,11 @@ static void test_RtlDetermineDosPathNameType_U(void)
         { "//?foo", 1 },
         { "\\\\?", 7 },
         { "//?", 7 },
+        { "CONIN$", 5 },
+        { "CONOUT$", 5 },
+        { "CONERR$", 5 },
+        { "\\\\.\\CONIN$", 6 },
+        { "\\\\.\\CONOUT$", 6 },
         { NULL, 0 }
     };
 
@@ -143,6 +148,15 @@ static void test_RtlIsDosDeviceName_U(void)
         { "CoM4:",         0, 8 },
         { "lpt9:",         0, 8 },
         { "c:\\lpt0.txt",  0, 0 },
+        { "CONIN$",        0, 12, TRUE }, /* fails on winxp */
+        { "CONOUT$",       0, 14, TRUE }, /* fails on winxp */
+        { "CONERR$",       0, 0 },
+        { "CON",           0, 6 },
+        { "PIPE",          0, 0 },
+        { "\\??\\CONIN$",  8, 12, TRUE }, /* fails on winxp */
+        { "\\??\\CONOUT$", 8, 14, TRUE }, /* fails on winxp */
+        { "\\??\\CONERR$", 0, 0 },
+        { "\\??\\CON",     8, 6 },
         { "c:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -329,6 +343,11 @@ static void test_RtlGetFullPathName_U(void)
             { "//?/foo/.",                   "\\\\?\\foo",       "foo"},
             { "//?/foo/..",                  "\\\\?\\",          NULL},
 
+            { "CONIN$",                      "\\\\.\\CONIN$",    NULL,
+                                             "C:\\windows\\CONIN$", "CONIN$"},
+            { "CONOUT$",                     "\\\\.\\CONOUT$",   NULL,
+                                             "C:\\windows\\CONOUT$", "CONOUT$"},
+
             /* RtlGetFullPathName_U() can't understand the global namespace prefix */
             { "\\??\\foo",                   "C:\\??\\foo",      "foo"},
             { 0 }
@@ -409,6 +428,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         const WCHAR *dos;
         const WCHAR *nt;
         int file_offset;    /* offset to file part */
+        const WCHAR *alt_nt;
     }
     tests[] =
     {
@@ -507,6 +527,11 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"\\??\\foo\\bar", L"\\??\\foo\\bar",               8},
         {L"\\??\\foo\\.",   L"\\??\\foo\\.",                 8},
         {L"\\??\\foo\\..",  L"\\??\\foo\\..",                8},
+
+        {L"CONIN$",         L"\\??\\CONIN$",                -1, L"\\??\\C:\\windows\\CONIN$"  /* winxp */ },
+        {L"CONOUT$",        L"\\??\\CONOUT$",               -1, L"\\??\\C:\\windows\\CONOUT$" /* winxp */ },
+        {L"cOnOuT$",        L"\\??\\cOnOuT$",               -1, L"\\??\\C:\\windows\\cOnOuT$" /* winxp */ },
+        {L"CONERR$",        L"\\??\\C:\\windows\\CONERR$",  15},
     };
 
     GetCurrentDirectoryA(sizeof(curdir), curdir);
@@ -555,16 +580,19 @@ static void test_RtlDosPathNameToNtPathName_U(void)
             continue;
         }
 
-        ok(!wcscmp(nameW.Buffer, tests[i].nt), "%s: Expected %s, got %s.\n",
+        ok(!wcscmp(nameW.Buffer, tests[i].nt) || broken(!wcscmp(nameW.Buffer, tests[i].alt_nt)), "%s: Expected %s, got %s.\n",
             debugstr_w(tests[i].dos), debugstr_w(tests[i].nt), debugstr_w(nameW.Buffer));
 
-        if (tests[i].file_offset > 0)
-            ok(file_part == nameW.Buffer + tests[i].file_offset,
-                "%s: Expected file part %s, got %s.\n", debugstr_w(tests[i].dos),
-                debugstr_w(nameW.Buffer + tests[i].file_offset), debugstr_w(file_part));
-        else
-            ok(file_part == NULL, "%s: Expected NULL file part, got %s.\n",
-                debugstr_w(tests[i].dos), debugstr_w(file_part));
+        if (!wcscmp(nameW.Buffer, tests[i].nt))
+        {
+            if (tests[i].file_offset > 0)
+                ok(file_part == nameW.Buffer + tests[i].file_offset,
+                   "%s: Expected file part %s, got %s.\n", debugstr_w(tests[i].dos),
+                   debugstr_w(nameW.Buffer + tests[i].file_offset), debugstr_w(file_part));
+            else
+                ok(file_part == NULL, "%s: Expected NULL file part, got %s.\n",
+                   debugstr_w(tests[i].dos), debugstr_w(file_part));
+        }
 
         RtlFreeUnicodeString(&nameW);
     }

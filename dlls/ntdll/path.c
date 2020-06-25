@@ -80,6 +80,8 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
     static const WCHAR lptW[] = {'L','P','T'};
     static const WCHAR nulW[] = {'N','U','L'};
     static const WCHAR prnW[] = {'P','R','N'};
+    static const WCHAR coninW[]  = {'C','O','N','I','N','$'};
+    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$'};
 
     const WCHAR *start, *end, *p;
 
@@ -124,6 +126,12 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
         if (wcsnicmp( start, comW, 3 ) && wcsnicmp( start, lptW, 3 )) break;
         if (*end <= '0' || *end > '9') break;
         return MAKELONG( 4 * sizeof(WCHAR), (start - dos_name) * sizeof(WCHAR) );
+    case 6:
+        if (wcsnicmp( start, coninW, ARRAY_SIZE(coninW) )) break;
+        return MAKELONG( sizeof(coninW), (start - dos_name) * sizeof(WCHAR) );
+    case 7:
+        if (wcsnicmp( start, conoutW, ARRAY_SIZE(conoutW) )) break;
+        return MAKELONG( sizeof(conoutW), (start - dos_name) * sizeof(WCHAR) );
     default:  /* can't match anything */
         break;
     }
