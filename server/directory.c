@@ -347,11 +347,26 @@ void init_directories(void)
     static const WCHAR link_nulW[]    = {'N','U','L'};
     static const WCHAR link_pipeW[]   = {'P','I','P','E'};
     static const WCHAR link_mailslotW[] = {'M','A','I','L','S','L','O','T'};
+    static const WCHAR link_coninW[]  = {'C','O','N','I','N','$'};
+    static const WCHAR link_conoutW[] = {'C','O','N','O','U','T','$'};
+    static const WCHAR link_conW[]    = {'C','O','N'};
+    static const WCHAR link_currentinW[]  = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
+        '\\','C','u','r','r','e','n','t','I','n'};
+    static const WCHAR link_currentoutW[] = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
+        '\\','C','u','r','r','e','n','t','O','u','t'};
+    static const WCHAR link_consoleW[]    = {'\\','D','e','v','i','c','e','\\','C','o','n','D','r','v',
+        '\\','C','o','n','s','o','l','e'};
     static const struct unicode_str link_dosdev_str = {link_dosdevW, sizeof(link_dosdevW)};
     static const struct unicode_str link_global_str = {link_globalW, sizeof(link_globalW)};
     static const struct unicode_str link_nul_str    = {link_nulW, sizeof(link_nulW)};
     static const struct unicode_str link_pipe_str   = {link_pipeW, sizeof(link_pipeW)};
     static const struct unicode_str link_mailslot_str = {link_mailslotW, sizeof(link_mailslotW)};
+    static const struct unicode_str link_con_str      = {link_conW, sizeof(link_conW)};
+    static const struct unicode_str link_conin_str    = {link_coninW, sizeof(link_coninW)};
+    static const struct unicode_str link_conout_str   = {link_conoutW, sizeof(link_conoutW)};
+    static const struct unicode_str link_currentin_str = {link_currentinW, sizeof(link_currentinW)};
+    static const struct unicode_str link_currentout_str = {link_currentoutW, sizeof(link_currentoutW)};
+    static const struct unicode_str link_console_str  = {link_consoleW, sizeof(link_consoleW)};
 
     /* devices */
     static const WCHAR named_pipeW[] = {'N','a','m','e','d','P','i','p','e'};
@@ -388,6 +403,7 @@ void init_directories(void)
 
     struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel;
     struct object *link_dosdev, *link_global, *link_nul, *link_pipe, *link_mailslot;
+    struct object *link_conin, *link_conout, *link_con;
     struct object *named_pipe_device, *mailslot_device, *null_device, *user_data_mapping, *console_device;
     struct keyed_event *keyed_event;
     unsigned int i;
@@ -422,11 +438,17 @@ void init_directories(void)
     link_nul       = create_obj_symlink( &dir_global->obj, &link_nul_str, 0, null_device, NULL );
     link_pipe      = create_obj_symlink( &dir_global->obj, &link_pipe_str, 0, named_pipe_device, NULL );
     link_mailslot  = create_obj_symlink( &dir_global->obj, &link_mailslot_str, 0, mailslot_device, NULL );
+    link_conin     = create_symlink( &dir_global->obj, &link_conin_str, 0, &link_currentin_str, NULL );
+    link_conout    = create_symlink( &dir_global->obj, &link_conout_str, 0, &link_currentout_str, NULL );
+    link_con       = create_symlink( &dir_global->obj, &link_con_str, 0, &link_console_str, NULL );
     make_object_static( link_dosdev );
     make_object_static( link_global );
     make_object_static( link_nul );
     make_object_static( link_pipe );
     make_object_static( link_mailslot );
+    make_object_static( link_conin );
+    make_object_static( link_conout );
+    make_object_static( link_con );
 
     /* events */
     for (i = 0; i < ARRAY_SIZE( kernel_events ); i++)
