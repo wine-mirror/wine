@@ -3372,10 +3372,11 @@ static DWORD receive_frame( struct netconn *netconn, DWORD *ret_len, enum socket
 static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD *ret_len,
                              WINHTTP_WEB_SOCKET_BUFFER_TYPE *ret_type, BOOL async )
 {
+    struct netconn *netconn = socket->request->netconn;
     DWORD count, ret = ERROR_SUCCESS;
 
-    if (!socket->read_size) ret = receive_frame( socket->request->netconn, &socket->read_size, &socket->opcode );
-    if (!ret) ret = receive_bytes( socket->request->netconn, buf, min(len, socket->read_size), &count );
+    if (!socket->read_size) ret = receive_frame( netconn, &socket->read_size, &socket->opcode );
+    if (!ret) ret = receive_bytes( netconn, buf, min(len, socket->read_size), &count );
     if (!ret)
     {
         socket->read_size -= count;
@@ -3385,7 +3386,6 @@ static DWORD socket_receive( struct socket *socket, void *buf, DWORD len, DWORD 
             *ret_type = map_opcode( socket->opcode, socket->read_size != 0 );
         }
     }
-
     if (async)
     {
         if (!ret)
@@ -3458,9 +3458,13 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
 
 static DWORD socket_shutdown( struct socket *socket, USHORT status, const void *reason, DWORD len, BOOL async )
 {
+    struct netconn *netconn = socket->request->netconn;
     DWORD ret;
 
-    ret = send_frame( socket->request->netconn, WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE, status, reason, len, TRUE );
+    if (!(ret = send_frame( netconn, WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE, status, reason, len, TRUE )))
+    {
+        socket->state = SOCKET_STATE_SHUTDOWN;
+    }
     if (async)
     {
         if (!ret) send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE, NULL, 0 );
@@ -3473,8 +3477,6 @@ static DWORD socket_shutdown( struct socket *socket, USHORT status, const void *
             send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
     }
-
-    if (!ret) socket->state = SOCKET_STATE_SHUTDOWN;
     return ret;
 }
 
@@ -3559,7 +3561,10 @@ static DWORD socket_close( struct socket *socket, USHORT status, const void *rea
         goto done;
     }
     socket->status = RtlUshortByteSwap( socket->status );
-    ret = receive_bytes( netconn, socket->reason, sizeof(socket->reason), &socket->reason_len );
+    if (!(ret = receive_bytes( netconn, socket->reason, sizeof(socket->reason), &socket->reason_len )))
+    {
+        socket->state = SOCKET_STATE_CLOSED;
+    }
 
 done:
     if (async)
@@ -3574,8 +3579,6 @@ done:
             send_callback( &socket->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
     }
-
-    if (!ret) socket->state = SOCKET_STATE_CLOSED;
     return ret;
 }
 
