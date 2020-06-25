@@ -2310,6 +2310,7 @@ static void test_IScriptControl_get_Modules(void)
     IScriptModuleCollection *mods;
     IScriptModule *mod;
     IScriptControl *sc;
+    IUnknown *unknown;
     VARIANT var;
     LONG count;
     HRESULT hr;
@@ -2347,33 +2348,33 @@ static void test_IScriptControl_get_Modules(void)
     V_VT(&var) = VT_EMPTY;
     str = SysAllocString(L"foobar");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    todo_wine ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
     hr = IScriptModuleCollection_Add(mods, str, &var, NULL);
-    todo_wine ok(hr == E_POINTER, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_POINTER, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = NULL;
     hr = IScriptModuleCollection_Add(mods, NULL, &var, &mod);
-    todo_wine ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
-    if (hr == S_OK) IScriptModule_Release(mod);
+    ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+    IScriptModule_Release(mod);
     SysFreeString(str);
 
     str = SysAllocString(L"some other Module");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    todo_wine ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
-    if (hr == S_OK) IScriptModule_Release(mod);
+    ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+    IScriptModule_Release(mod);
     SysFreeString(str);
 
     /* Adding a module with the same name is invalid (case insensitive) */
     str = SysAllocString(L"FooBar");
     hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
-    todo_wine ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
     SysFreeString(str);
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
     ok(hr == S_OK, "IScriptModuleCollection_get_Count failed: 0x%08x.\n", hr);
-    todo_wine ok(count == 3, "count is not 3, got %d.\n", count);
+    ok(count == 3, "count is not 3, got %d.\n", count);
     V_VT(&var) = VT_I4;
     V_I4(&var) = count + 1;
     hr = IScriptModuleCollection_get_Item(mods, var, &mod);
@@ -2419,6 +2420,12 @@ static void test_IScriptControl_get_Modules(void)
 
     hr = IScriptModuleCollection_get_Count(mods, &count);
     ok(hr == E_FAIL, "IScriptModuleCollection_get_Count returned: 0x%08x.\n", hr);
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = NULL;
+    str = SysAllocString(L"module_name");
+    hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
+    ok(hr == E_FAIL, "IScriptModuleCollection_Add returned: 0x%08x.\n", hr);
+    SysFreeString(str);
 
     IScriptModuleCollection_Release(mods);
     hr = IScriptControl_get_Modules(sc, &mods);
@@ -2429,6 +2436,8 @@ static void test_IScriptControl_get_Modules(void)
     /* custom script engine */
     if (have_custom_engine)
     {
+        BSTR code_str;
+
         /* A module collection ref keeps the control alive */
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
@@ -2459,6 +2468,7 @@ static void test_IScriptControl_get_Modules(void)
         IScriptModuleCollection_Release(mods);
         CHECK_CALLED(Close);
 
+        /* Add a module with a non-null object and add some code to it */
         hr = CoCreateInstance(&CLSID_ScriptControl, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
                               &IID_IScriptControl, (void**)&sc);
         ok(hr == S_OK, "Failed to create IScriptControl interface: 0x%08x.\n", hr);
@@ -2481,13 +2491,44 @@ static void test_IScriptControl_get_Modules(void)
         hr = IScriptControl_get_Modules(sc, &mods);
         ok(hr == S_OK, "IScriptControl_get_Modules failed: 0x%08x.\n", hr);
 
+        SET_EXPECT(AddNamedItem);
+        str = SysAllocString(L"modname");
+        AddNamedItem_expected_name = str;
+        AddNamedItem_expected_flags = 0;
+        V_VT(&var) = VT_DISPATCH;
+        V_DISPATCH(&var) = &testdisp;
+        hr = IScriptModuleCollection_Add(mods, str, &var, &mod);
+        ok(hr == S_OK, "IScriptModuleCollection_Add failed: 0x%08x.\n", hr);
+        VariantClear(&var);
+        CHECK_CALLED(AddNamedItem);
+
+        unknown = (IUnknown*)0xdeadbeef;
+        hr = IActiveScriptSite_GetItemInfo(site, str, SCRIPTINFO_IUNKNOWN, &unknown, NULL);
+        ok(hr == S_OK, "IActiveScriptSite_GetItemInfo failed: 0x%08x.\n", hr);
+        ok(unknown == (IUnknown*)&testdisp, "Unexpected IUnknown for the item: %p.\n", unknown);
+        IUnknown_Release(unknown);
+
+        SET_EXPECT(SetScriptState_STARTED);
+        SET_EXPECT(ParseScriptText);
+        parse_item_name = str;
+        parse_flags = SCRIPTTEXT_ISVISIBLE;
+        code_str = SysAllocString(L"some code");
+        hr = IScriptModule_AddCode(mod, code_str);
+        todo_wine ok(hr == S_OK, "IScriptControl_AddCode failed: 0x%08x.\n", hr);
+        todo_wine CHECK_CALLED(SetScriptState_STARTED);
+        todo_wine CHECK_CALLED(ParseScriptText);
+        SysFreeString(code_str);
+        SysFreeString(str);
+
+        /* Keep the module ref before changing the language */
         SET_EXPECT(Close);
         hr = IScriptControl_put_Language(sc, NULL);
         ok(hr == S_OK, "IScriptControl_put_Language failed: 0x%08x.\n", hr);
-        CHECK_CALLED(Close);
+        todo_wine CHECK_CALLED(Close);
         IScriptModuleCollection_Release(mods);
         IActiveScriptSite_Release(site);
         IScriptControl_Release(sc);
+        IScriptModule_Release(mod);
     }
 }
 

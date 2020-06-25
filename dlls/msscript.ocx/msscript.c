@@ -70,6 +70,7 @@ typedef struct {
     IScriptModule IScriptModule_iface;
     LONG ref;
 
+    BSTR name;
     ScriptHost *host;
 } ScriptModule;
 
@@ -194,6 +195,11 @@ static void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+}
+
+static inline BOOL is_power_of_2(unsigned x)
+{
+    return !(x & (x - 1));
 }
 
 static void clear_named_items(ScriptHost *host)
@@ -650,6 +656,7 @@ static ULONG WINAPI ScriptModule_Release(IScriptModule *iface)
     {
         detach_script_host(This->host);
         IActiveScriptSite_Release(&This->host->IActiveScriptSite_iface);
+        SysFreeString(This->name);
         heap_free(This);
     }
 
@@ -797,7 +804,7 @@ static const IScriptModuleVtbl ScriptModuleVtbl = {
     ScriptModule_Run
 };
 
-static ScriptModule *create_module(ScriptHost *host)
+static ScriptModule *create_module(ScriptHost *host, BSTR name)
 {
     ScriptModule *module;
 
@@ -805,6 +812,12 @@ static ScriptModule *create_module(ScriptHost *host)
 
     module->IScriptModule_iface.lpVtbl = &ScriptModuleVtbl;
     module->ref = 1;
+    module->name = NULL;
+    if (name && !(module->name = SysAllocString(name)))
+    {
+        heap_free(module);
+        return NULL;
+    }
     module->host = host;
     IActiveScriptSite_AddRef(&host->IActiveScriptSite_iface);
     return module;
@@ -818,6 +831,21 @@ static void release_modules(ScriptControl *control)
         IScriptModule_Release(&control->modules[i]->IScriptModule_iface);
 
     heap_free(control->modules);
+}
+
+static ScriptModule *find_module(ScriptControl *control, BSTR name)
+{
+    unsigned int i;
+
+    if (!wcsicmp(name, L"Global"))
+        return control->modules[0];
+
+    for (i = 1; i < control->host->module_count; i++)
+    {
+        if (!wcsicmp(name, control->modules[i]->name))
+            return control->modules[i];
+    }
+    return NULL;
 }
 
 static HRESULT WINAPI ScriptModuleCollection_QueryInterface(IScriptModuleCollection *iface, REFIID riid, void **ppv)
@@ -949,10 +977,44 @@ static HRESULT WINAPI ScriptModuleCollection_Add(IScriptModuleCollection *iface,
         VARIANT *object, IScriptModule **ppmod)
 {
     ScriptControl *This = impl_from_IScriptModuleCollection(iface);
+    ScriptModule *module, **modules;
+    ScriptHost *host = This->host;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s %s %p)\n", This, wine_dbgstr_w(name), wine_dbgstr_variant(object), ppmod);
+    TRACE("(%p)->(%s %s %p)\n", This, wine_dbgstr_w(name), wine_dbgstr_variant(object), ppmod);
 
-    return E_NOTIMPL;
+    if (!ppmod) return E_POINTER;
+    if (!name || V_VT(object) != VT_DISPATCH) return E_INVALIDARG;
+    if (!host) return E_FAIL;
+    if (find_module(This, name)) return E_INVALIDARG;
+
+    /* See if we need to grow the array */
+    if (is_power_of_2(host->module_count))
+    {
+        modules = heap_realloc(This->modules, host->module_count * 2 * sizeof(*This->modules));
+        if (!modules) return E_OUTOFMEMORY;
+        This->modules = modules;
+    }
+
+    if (!(module = create_module(host, name)))
+        return E_OUTOFMEMORY;
+
+    /* If no object, Windows only calls AddNamedItem without adding a NULL object */
+    if (V_DISPATCH(object))
+        hr = add_script_object(host, name, V_DISPATCH(object), 0);
+    else
+        hr = IActiveScript_AddNamedItem(host->script, name, SCRIPTITEM_CODEONLY);
+
+    if (FAILED(hr))
+    {
+        IScriptModule_Release(&module->IScriptModule_iface);
+        return hr;
+    }
+    This->modules[host->module_count++] = module;
+
+    *ppmod = &module->IScriptModule_iface;
+    IScriptModule_AddRef(*ppmod);
+    return S_OK;
 }
 
 static const IScriptModuleCollectionVtbl ScriptModuleCollectionVtbl = {
@@ -1230,7 +1292,7 @@ static HRESULT WINAPI ScriptControl_put_Language(IScriptControl *iface, BSTR lan
     /* Alloc global module */
     This->modules = heap_alloc_zero(sizeof(*This->modules));
     if (This->modules) {
-        This->modules[0] = create_module(This->host);
+        This->modules[0] = create_module(This->host, NULL);
         if (!This->modules[0]) {
             heap_free(This->modules);
             This->modules = NULL;
