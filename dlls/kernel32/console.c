@@ -227,39 +227,21 @@ BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
  */
 HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creation)
 {
-    HANDLE      output = INVALID_HANDLE_VALUE;
-    HANDLE      ret;
+    SECURITY_ATTRIBUTES sa;
 
     TRACE("(%s, 0x%08x, %d, %u)\n", debugstr_w(name), access, inherit, creation);
 
-    if (name)
+    if (!name || (strcmpiW( coninW, name ) && strcmpiW( conoutW, name )) || creation != OPEN_EXISTING)
     {
-        if (strcmpiW(coninW, name) == 0)
-            output = (HANDLE) FALSE;
-        else if (strcmpiW(conoutW, name) == 0)
-            output = (HANDLE) TRUE;
-    }
-
-    if (output == INVALID_HANDLE_VALUE || creation != OPEN_EXISTING)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;
     }
 
-    SERVER_START_REQ( open_console )
-    {
-        req->from       = wine_server_obj_handle( output );
-        req->access     = access;
-        req->attributes = inherit ? OBJ_INHERIT : 0;
-        req->share      = FILE_SHARE_READ | FILE_SHARE_WRITE;
-        wine_server_call_err( req );
-        ret = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-    if (ret)
-        ret = console_handle_map(ret);
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = inherit;
 
-    return ret;
+    return CreateFileW( name, access, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, creation, 0, NULL );
 }
 
 /******************************************************************
