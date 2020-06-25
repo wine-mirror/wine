@@ -459,7 +459,7 @@ UINT WINAPI GetRawInputData(HRAWINPUT rawinput, UINT command, void *data, UINT *
     TRACE("rawinput %p, command %#x, data %p, data_size %p, header_size %u.\n",
             rawinput, command, data, data_size, header_size);
 
-    if (!ri)
+    if (!ri || !ri->header.dwSize)
         return ~0U;
 
     if (header_size != sizeof(RAWINPUTHEADER))
@@ -488,6 +488,7 @@ UINT WINAPI GetRawInputData(HRAWINPUT rawinput, UINT command, void *data, UINT *
 
     if (*data_size < s) return ~0U;
     memcpy(data, ri, s);
+    ri->header.dwSize = 0;
     return s;
 }
 

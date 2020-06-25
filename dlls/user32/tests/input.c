@@ -1913,10 +1913,7 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
             ok(ri.data.mouse.lLastX == 6, "Unexpected rawinput data: %d\n", ri.data.mouse.lLastX);
         }
         else
-        {
-            todo_wine
             ok(count == ~0U, "GetRawInputData succeeded\n");
-        }
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
