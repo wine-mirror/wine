@@ -1278,15 +1278,14 @@ static HRESULT WINAPI HTMLIFrameElement2_put_width(IHTMLIFrameElement2 *iface, V
     HTMLIFrame *This = impl_from_IHTMLIFrameElement2(iface);
     nsAString nsstr;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    if(V_VT(&v) != VT_BSTR) {
-        FIXME("Unsupported %s\n", debugstr_variant(&v));
-        return E_NOTIMPL;
-    }
+    hres = variant_to_nsstr(&v, FALSE, &nsstr);
+    if(FAILED(hres))
+        return hres;
 
-    nsAString_InitDepend(&nsstr, V_BSTR(&v));
     nsres = nsIDOMHTMLIFrameElement_SetWidth(This->framebase.nsiframe, &nsstr);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {

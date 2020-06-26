@@ -8264,6 +8264,12 @@ static void test_iframe_elem(IHTMLElement *elem)
     test_iframe_width(elem, L"70%");
     test_framebase_src(elem, L"about:blank");
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 110;
+    hres = IHTMLIFrameElement2_put_width(iframe2, v);
+    ok(hres == S_OK, "put_height failed: %08x\n", hres);
+    test_iframe_width(elem, L"110");
+
     str = SysAllocString(L"text/html");
     V_VT(&errv) = VT_ERROR;
     disp = NULL;
