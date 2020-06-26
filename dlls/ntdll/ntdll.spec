@@ -1508,7 +1508,7 @@
 @ cdecl iswspace(long) NTDLL_iswspace
 @ cdecl iswxdigit(long) NTDLL_iswxdigit
 @ cdecl isxdigit(long) NTDLL_isxdigit
-@ cdecl labs(long) NTDLL_labs
+@ cdecl labs(long) NTDLL_abs
 @ cdecl log(double) NTDLL_log
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
 @ cdecl memchr(ptr long long) NTDLL_memchr

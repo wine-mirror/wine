@@ -1331,6 +1331,19 @@ ULONG_PTR get_image_address(void)
 }
 
 
+/* math function wrappers */
+static double CDECL ntdll_atan( double d )  { return atan( d ); }
+static double CDECL ntdll_ceil( double d )  { return ceil( d ); }
+static double CDECL ntdll_cos( double d )   { return cos( d ); }
+static double CDECL ntdll_fabs( double d )  { return fabs( d ); }
+static double CDECL ntdll_floor( double d ) { return floor( d ); }
+static double CDECL ntdll_log( double d )   { return log( d ); }
+static double CDECL ntdll_pow( double x, double y ) { return pow( x, y ); }
+static double CDECL ntdll_sin( double d )   { return sin( d ); }
+static double CDECL ntdll_sqrt( double d )  { return sqrt( d ); }
+static double CDECL ntdll_tan( double d )   { return tan( d ); }
+
+
 /***********************************************************************
  *           unix_funcs
  */
@@ -1466,6 +1479,16 @@ static struct unix_funcs unix_funcs =
     fast_RtlSleepConditionVariableSRW,
     fast_RtlSleepConditionVariableCS,
     fast_RtlWakeConditionVariable,
+    ntdll_atan,
+    ntdll_ceil,
+    ntdll_cos,
+    ntdll_fabs,
+    ntdll_floor,
+    ntdll_log,
+    ntdll_pow,
+    ntdll_sin,
+    ntdll_sqrt,
+    ntdll_tan,
     get_initial_environment,
     get_dynamic_environment,
     get_initial_directory,
