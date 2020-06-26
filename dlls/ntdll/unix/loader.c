@@ -931,7 +931,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     NTSTATUS status;
     DWORD len;
 
-    if (nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN, FALSE )) return STATUS_DLL_NOT_FOUND;
+    if (nt_to_unix_file_name( nt_name, &unix_name, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
 
     /* remove .so extension from Windows name */
     len = nt_name->Length / sizeof(WCHAR);

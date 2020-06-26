@@ -3248,10 +3248,9 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_S
     char *unix_name;
     int name_len, unix_len;
     NTSTATUS status;
-    BOOLEAN check_case = !(attr->Attributes & OBJ_CASE_INSENSITIVE);
 
     if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
-        return nt_to_unix_file_name( attr->ObjectName, unix_name_ret, disposition, check_case );
+        return nt_to_unix_file_name( attr->ObjectName, unix_name_ret, disposition );
 
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
@@ -3280,7 +3279,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_S
             if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
             {
                 status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1,
-                                           disposition, check_case );
+                                           disposition, FALSE );
                 if (fchdir( old_cwd ) == -1) chdir( "/" );
             }
             else status = STATUS_ACCESS_DENIED;
@@ -3317,7 +3316,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_S
  * returned, but the unix name is still filled in properly.
  */
 NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
-                                     UINT disposition, BOOLEAN check_case )
+                                     UINT disposition )
 {
     static const WCHAR unixW[] = {'u','n','i','x'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
@@ -3328,6 +3327,7 @@ NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *u
     char *unix_name;
     int pos, ret, name_len, unix_len, prefix_len;
     WCHAR prefix[MAX_DIR_ENTRY_LEN + 1];
+    BOOLEAN check_case = FALSE;
     BOOLEAN is_unix = FALSE;
 
     name     = nameW->Buffer;

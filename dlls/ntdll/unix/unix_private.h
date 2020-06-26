@@ -125,7 +125,7 @@ extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT
                                           CONTEXT *context ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS CDECL nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
-                                            UINT disposition, BOOLEAN check_case ) DECLSPEC_HIDDEN;
+                                            UINT disposition ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt ) DECLSPEC_HIDDEN;
 extern void CDECL set_show_dot_files( BOOL enable ) DECLSPEC_HIDDEN;
 

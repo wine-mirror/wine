@@ -111,9 +111,9 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH NtQueryDirectoryFile( HANDLE handle, HANDLE ev
  * returned, but the unix name is still filled in properly.
  */
 NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
-                                          UINT disposition, BOOLEAN check_case )
+                                          UINT disposition )
 {
-    return unix_funcs->nt_to_unix_file_name( nameW, unix_name_ret, disposition, check_case );
+    return unix_funcs->nt_to_unix_file_name( nameW, unix_name_ret, disposition );
 }
 
 
