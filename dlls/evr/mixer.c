@@ -797,7 +797,19 @@ static ULONG WINAPI video_mixer_getservice_Release(IMFGetService *iface)
 
 static HRESULT WINAPI video_mixer_getservice_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
-    FIXME("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(service, &MR_VIDEO_MIXER_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMFVideoMixerBitmap) ||
+                IsEqualIID(riid, &IID_IMFVideoProcessor) ||
+                IsEqualIID(riid, &IID_IMFVideoPositionMapper))
+        {
+            return IMFGetService_QueryInterface(iface, riid, obj);
+        }
+    }
+
+    FIXME("Unsupported service %s, riid %s.\n", debugstr_guid(service), debugstr_guid(riid));
 
     return E_NOTIMPL;
 }
