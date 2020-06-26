@@ -82,6 +82,7 @@ struct thread
     affinity_t             affinity;      /* affinity mask */
     int                    priority;      /* priority level */
     int                    suspend;       /* suspend count */
+    int                    dbg_hidden;    /* hidden from debugger */
     obj_handle_t           desktop;       /* desktop handle */
     int                    desktop_users; /* number of objects using the thread desktop */
     timeout_t              creation_time; /* Thread creation time */

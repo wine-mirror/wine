@@ -1415,7 +1415,7 @@ static void dump_set_process_info_request( const struct set_process_info_request
 static void dump_get_thread_info_request( const struct get_thread_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", tid_in=%04x", req->tid_in );
+    fprintf( stderr, ", access=%08x", req->access );
 }
 
 static void dump_get_thread_info_reply( const struct get_thread_info_reply *req )
@@ -1429,6 +1429,7 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, ", priority=%d", req->priority );
     fprintf( stderr, ", last=%d", req->last );
     fprintf( stderr, ", suspend_count=%d", req->suspend_count );
+    fprintf( stderr, ", dbg_hidden=%d", req->dbg_hidden );
     fprintf( stderr, ", desc_len=%u", req->desc_len );
     dump_varargs_unicode_str( ", desc=", cur_size );
 }

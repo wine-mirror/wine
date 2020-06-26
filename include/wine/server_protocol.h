@@ -1005,7 +1005,7 @@ struct get_thread_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    thread_id_t  tid_in;
+    unsigned int access;
     char __pad_20[4];
 };
 struct get_thread_info_reply
@@ -1020,9 +1020,9 @@ struct get_thread_info_reply
     int          priority;
     int          last;
     int          suspend_count;
+    int          dbg_hidden;
     data_size_t  desc_len;
     /* VARARG(desc,unicode_str); */
-    char __pad_60[4];
 };
 
 
@@ -1064,6 +1064,7 @@ struct set_thread_info_reply
 #define SET_THREAD_INFO_TOKEN       0x04
 #define SET_THREAD_INFO_ENTRYPOINT  0x08
 #define SET_THREAD_INFO_DESCRIPTION 0x10
+#define SET_THREAD_INFO_DBG_HIDDEN  0x20
 
 
 
@@ -6702,7 +6703,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 611
+#define SERVER_PROTOCOL_VERSION 612
 
 /* ### protocol_version end ### */
 

@@ -945,7 +945,7 @@ struct rawinput_device
 /* Retrieve information about a thread */
 @REQ(get_thread_info)
     obj_handle_t handle;        /* thread handle */
-    thread_id_t  tid_in;        /* thread id (optional) */
+    unsigned int access;        /* required access rights */
 @REPLY
     process_id_t pid;           /* server process id */
     thread_id_t  tid;           /* server thread id */
@@ -956,6 +956,7 @@ struct rawinput_device
     int          priority;      /* thread priority level */
     int          last;          /* last thread in process */
     int          suspend_count; /* thread suspend count */
+    int          dbg_hidden;    /* thread hidden from debugger */
     data_size_t  desc_len;      /* description length in bytes */
     VARARG(desc,unicode_str);   /* description string */
 @END
@@ -987,6 +988,7 @@ struct rawinput_device
 #define SET_THREAD_INFO_TOKEN       0x04
 #define SET_THREAD_INFO_ENTRYPOINT  0x08
 #define SET_THREAD_INFO_DESCRIPTION 0x10
+#define SET_THREAD_INFO_DBG_HIDDEN  0x20
 
 
 /* Retrieve information about a module */

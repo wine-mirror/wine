@@ -2498,18 +2498,15 @@ static void test_HideFromDebugger(void)
 
     dummy = 0;
     status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
-    todo_wine
     ok( status == STATUS_SUCCESS || status == STATUS_INVALID_INFO_CLASS,
         "Expected STATUS_SUCCESS, got %08x\n", status );
     if (status == STATUS_SUCCESS) ok( dummy == 0, "Expected dummy == 0, got %08x\n", dummy );
 
     status = pNtSetInformationThread( thread, ThreadHideFromDebugger, NULL, 0 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
 
     dummy = 0;
     status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
-    todo_wine
     ok( status == STATUS_SUCCESS || status == STATUS_INVALID_INFO_CLASS,
         "Expected STATUS_SUCCESS, got %08x\n", status );
     if (status == STATUS_SUCCESS) ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
