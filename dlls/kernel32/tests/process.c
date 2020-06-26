@@ -3828,7 +3828,7 @@ void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
     }
     else
     {
-        status = NtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &pbi_size);
+        status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &pbi_size);
         ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
         parent_id = pbi.InheritedFromUniqueProcessId;
 
