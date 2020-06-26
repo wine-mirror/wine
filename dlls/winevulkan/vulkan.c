@@ -298,7 +298,7 @@ static void wine_vk_device_free(struct VkDevice_T *device)
     heap_free(device);
 }
 
-static BOOL wine_vk_init(void)
+static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
     HDC hdc;
 
@@ -306,14 +306,18 @@ static BOOL wine_vk_init(void)
     vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
     ReleaseDC(0, hdc);
     if (!vk_funcs)
-    {
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
-        return FALSE;
-    }
-
-    p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
+    else
+        p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
 
     return TRUE;
+}
+
+static void wine_vk_init_once(void)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
 }
 
 /* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.
@@ -645,6 +649,10 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
 
+    wine_vk_init_once();
+    if (!vk_funcs)
+        return VK_ERROR_INITIALIZATION_FAILED;
+
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
@@ -771,6 +779,10 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
         return VK_ERROR_LAYER_NOT_PRESENT;
     }
 
+    wine_vk_init_once();
+    if (!vk_funcs)
+        return VK_ERROR_INITIALIZATION_FAILED;
+
     res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
     if (res != VK_SUCCESS)
         return res;
@@ -838,6 +850,8 @@ VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
     VkResult res;
 
     TRACE("%p\n", version);
+
+    wine_vk_init_once();
 
     if (p_vkEnumerateInstanceVersion)
     {
@@ -1269,13 +1283,14 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinst);
-            return wine_vk_init();
+            break;
     }
     return TRUE;
 }
 
 static const struct vulkan_func vk_global_dispatch_table[] =
 {
+    /* These functions must call wine_vk_init_once() before accessing vk_funcs. */
     {"vkCreateInstance", &wine_vkCreateInstance},
     {"vkEnumerateInstanceExtensionProperties", &wine_vkEnumerateInstanceExtensionProperties},
     {"vkEnumerateInstanceLayerProperties", &wine_vkEnumerateInstanceLayerProperties},
