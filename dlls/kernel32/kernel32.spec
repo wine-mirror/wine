@@ -999,6 +999,7 @@
 @ stdcall -import IsValidNLSVersion(long wstr ptr)
 # @ stub IsValidUILanguage
 @ stdcall -import IsWow64Process(ptr ptr)
+@ stdcall -import IsWow64Process2(ptr ptr ptr)
 @ stdcall -import K32EmptyWorkingSet(long)
 @ stdcall -import K32EnumDeviceDrivers(ptr long ptr)
 @ stdcall -import K32EnumPageFilesA(ptr ptr)

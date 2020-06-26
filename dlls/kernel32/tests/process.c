@@ -66,6 +66,7 @@ static HINSTANCE hkernel32, hntdll;
 static void   (WINAPI *pGetNativeSystemInfo)(LPSYSTEM_INFO);
 static BOOL   (WINAPI *pGetSystemRegistryQuota)(PDWORD, PDWORD);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
+static BOOL   (WINAPI *pIsWow64Process2)(HANDLE, USHORT *, USHORT *);
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
 static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 static BOOL   (WINAPI *pQueryFullProcessImageNameA)(HANDLE hProcess, DWORD dwFlags, LPSTR lpExeName, PDWORD lpdwSize);
@@ -249,6 +250,7 @@ static BOOL init(void)
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
     pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");
     pIsWow64Process = (void *) GetProcAddress(hkernel32, "IsWow64Process");
+    pIsWow64Process2 = (void *) GetProcAddress(hkernel32, "IsWow64Process2");
     pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
     pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
     pQueryFullProcessImageNameA = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameA");
@@ -2166,6 +2168,103 @@ static void test_IsWow64Process(void)
     }
 }
 
+static void test_IsWow64Process2(void)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si;
+    BOOL ret, is_wow64;
+    USHORT machine, native_machine;
+    static char cmdline[] = "C:\\Program Files\\Internet Explorer\\iexplore.exe";
+    static char cmdline_wow64[] = "C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe";
+#ifdef __i386__
+    USHORT expect_native = IMAGE_FILE_MACHINE_I386;
+#elif defined __x86_64__
+    USHORT expect_native = IMAGE_FILE_MACHINE_AMD64;
+#elif defined __arm__
+    USHORT expect_native = IMAGE_FILE_MACHINE_ARM;
+#elif defined __aarch64__
+    USHORT expect_native = IMAGE_FILE_MACHINE_ARM;
+#else
+    USHORT expect_native = 0;
+#endif
+
+    if (!pIsWow64Process2)
+    {
+        skip("IsWow64Process2 is not available\n");
+        return;
+    }
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(cmdline_wow64, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    if (ret)
+    {
+        SetLastError(0xdeadbeef);
+        machine = native_machine = 0xdead;
+        ret = pIsWow64Process2(pi.hProcess, &machine, &native_machine);
+        ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+
+#if defined(__i386__) || defined(__x86_64__)
+        ok(machine == IMAGE_FILE_MACHINE_I386, "got %#x\n", machine);
+        expect_native = IMAGE_FILE_MACHINE_AMD64;
+#else
+        skip("not supported architecture\n");
+#endif
+        ok(native_machine == expect_native, "got %#x\n", native_machine);
+
+        ret = TerminateProcess(pi.hProcess, 0);
+        ok(ret, "TerminateProcess error\n");
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(cmdline, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pIsWow64Process(pi.hProcess, &is_wow64);
+    ok(ret, "IsWow64Process error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    machine = native_machine = 0xdead;
+    ret = pIsWow64Process2(pi.hProcess, &machine, &native_machine);
+    ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+
+    ok(machine == IMAGE_FILE_MACHINE_UNKNOWN, "got %#x\n", machine);
+    ok(native_machine == expect_native, "got %#x\n", native_machine);
+
+    ret = TerminateProcess(pi.hProcess, 0);
+    ok(ret, "TerminateProcess error\n");
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    SetLastError(0xdeadbeef);
+    ret = pIsWow64Process(GetCurrentProcess(), &is_wow64);
+    ok(ret, "IsWow64Process error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    machine = native_machine = 0xdead;
+    ret = pIsWow64Process2(GetCurrentProcess(), &machine, &native_machine);
+    ok(ret, "IsWow64Process2 error %u\n", GetLastError());
+
+    if (is_wow64)
+    {
+        ok(machine == IMAGE_FILE_MACHINE_I386, "got %#x\n", machine);
+        ok(native_machine == expect_native, "got %#x\n", native_machine);
+    }
+    else
+    {
+        ok(machine == IMAGE_FILE_MACHINE_UNKNOWN, "got %#x\n", machine);
+        ok(native_machine == expect_native, "got %#x\n", native_machine);
+    }
+}
+
 static void test_SystemInfo(void)
 {
     SYSTEM_INFO si, nsi;
@@ -4065,6 +4164,7 @@ START_TEST(process)
     test_QueryFullProcessImageNameW();
     test_Handles();
     test_IsWow64Process();
+    test_IsWow64Process2();
     test_SystemInfo();
     test_RegistryQuota();
     test_DuplicateHandle();

@@ -884,7 +884,7 @@
 @ stdcall IsValidSid(ptr)
 @ stdcall IsWellKnownSid(ptr long)
 @ stdcall IsWow64Process(ptr ptr)
-# @ stub IsWow64Process2
+@ stdcall IsWow64Process2(ptr ptr ptr)
 @ stdcall K32EmptyWorkingSet(long)
 @ stdcall K32EnumDeviceDrivers(ptr long ptr)
 @ stdcall K32EnumPageFilesA(ptr ptr)
