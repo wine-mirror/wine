@@ -188,6 +188,25 @@ static HRESULT WINAPI device_manager_processor_service_GetProcAmpRange(
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI device_manager_processor_service_GetFilterPropertyRange(
+        IDirectXVideoProcessorService *iface, REFGUID deviceguid, const DXVA2_VideoDesc *video_desc,
+        D3DFORMAT rt_format, UINT filter_setting, DXVA2_ValueRange *range)
+{
+    FIXME("%p, %s, %p, %d, %d, %p.\n", iface, debugstr_guid(deviceguid), video_desc, rt_format, filter_setting, range);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI device_manager_processor_service_CreateVideoProcessor(IDirectXVideoProcessorService *iface,
+        REFGUID deviceguid, const DXVA2_VideoDesc *video_desc, D3DFORMAT rt_format, UINT max_substreams,
+        IDirectXVideoProcessor **processor)
+{
+    FIXME("%p, %s, %p, %d, %u, %p.\n", iface, debugstr_guid(deviceguid), video_desc, rt_format, max_substreams,
+            processor);
+
+    return E_NOTIMPL;
+}
+
 static const IDirectXVideoProcessorServiceVtbl device_manager_processor_service_vtbl =
 {
     device_manager_processor_service_QueryInterface,
@@ -200,6 +219,8 @@ static const IDirectXVideoProcessorServiceVtbl device_manager_processor_service_
     device_manager_processor_service_GetVideoProcessorSubStreamFormats,
     device_manager_processor_service_GetVideoProcessorCaps,
     device_manager_processor_service_GetProcAmpRange,
+    device_manager_processor_service_GetFilterPropertyRange,
+    device_manager_processor_service_CreateVideoProcessor,
 };
 
 static HRESULT WINAPI device_manager_QueryInterface(IDirect3DDeviceManager9 *iface, REFIID riid, void **obj)
