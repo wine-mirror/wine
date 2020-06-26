@@ -802,6 +802,17 @@ void init_environment( int argc, char *argv[], char *envp[] )
 }
 
 
+static const char overrides_help_message[] =
+    "Syntax:\n"
+    "  WINEDLLOVERRIDES=\"entry;entry;entry...\"\n"
+    "    where each entry is of the form:\n"
+    "        module[,module...]={native|builtin}[,{b|n}]\n"
+    "\n"
+    "    Only the first letter of the override (native or builtin)\n"
+    "    is significant.\n\n"
+    "Example:\n"
+    "  WINEDLLOVERRIDES=\"comdlg32=n,b;shell32,shlwapi=b\"\n";
+
 /*************************************************************************
  *		get_initial_environment
  *
@@ -822,6 +833,11 @@ NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *siz
         {
             if (is_special_env_var( str + 4 )) str += 4;
             else if (!strncmp( str, "WINEPRELOADRESERVE=", 19 )) continue;  /* skip it */
+            else if (!strcmp( str, "WINEDLLOVERRIDES=help" ))
+            {
+                MESSAGE( overrides_help_message );
+                exit(0);
+            }
         }
         else if (is_special_env_var( str )) continue;  /* skip it */
 
@@ -842,7 +858,21 @@ NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *siz
 
 
 /* append a variable to the environment */
-static void append_env( WCHAR *env, SIZE_T *pos, const char *name, const WCHAR *value )
+static void append_envA( WCHAR *env, SIZE_T *pos, const char *name, const char *value )
+{
+    SIZE_T i = *pos;
+
+    while (*name) env[i++] = (unsigned char)*name++;
+    if (value)
+    {
+        env[i++] = '=';
+        i += ntdll_umbstowcs( value, strlen(value), env + i, strlen(value) );
+    }
+    env[i++] = 0;
+    *pos = i;
+}
+
+static void append_envW( WCHAR *env, SIZE_T *pos, const char *name, const WCHAR *value )
 {
     SIZE_T i = *pos;
 
@@ -862,12 +892,12 @@ static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char 
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;
 
-    if (!path) append_env( env, pos, name, NULL );
+    if (!path) append_envW( env, pos, name, NULL );
     else
     {
         RtlInitAnsiString( &unix_name, path );
         if (unix_to_nt_file_name( &unix_name, &nt_name )) return;
-        append_env( env, pos, name, nt_name.Buffer );
+        append_envW( env, pos, name, nt_name.Buffer );
         RtlFreeUnicodeString( &nt_name );
     }
 }
@@ -880,19 +910,20 @@ static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char 
  */
 NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
 {
+    const char *overrides = getenv( "WINEDLLOVERRIDES" );
     SIZE_T alloc, pos = 0;
     WCHAR *buffer;
     DWORD i;
-    WCHAR buf[256];
     char dlldir[22];
     NTSTATUS status = STATUS_SUCCESS;
 
-    alloc = 20 * 6;  /* 6 variable names */
+    alloc = 20 * 7;  /* 7 variable names */
     if (data_dir) alloc += strlen( data_dir ) + 9;
     if (home_dir) alloc += strlen( home_dir ) + 9;
     if (build_dir) alloc += strlen( build_dir ) + 9;
     if (config_dir) alloc += strlen( config_dir ) + 9;
     if (user_name) alloc += strlen( user_name );
+    if (overrides) alloc += strlen( overrides );
     for (i = 0; dll_paths[i]; i++) alloc += 20 + strlen( dll_paths[i] ) + 9;
 
     if (!(buffer = malloc( alloc * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
@@ -907,9 +938,9 @@ NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
         add_path_var( buffer, &pos, dlldir, dll_paths[i] );
     }
     sprintf( dlldir, "WINEDLLDIR%u", i );
-    append_env( buffer, &pos, dlldir, NULL );
-    ntdll_umbstowcs( user_name, strlen(user_name) + 1, buf, ARRAY_SIZE(buf) );
-    append_env( buffer, &pos, "WINEUSERNAME", buf );
+    append_envW( buffer, &pos, dlldir, NULL );
+    append_envA( buffer, &pos, "WINEUSERNAME", user_name );
+    append_envA( buffer, &pos, "WINEDLLOVERRIDES", overrides );
     assert( pos <= alloc );
 
     if (pos < *size)

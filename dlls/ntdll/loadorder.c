@@ -27,6 +27,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
@@ -181,7 +183,7 @@ static void add_load_order( const module_loadorder_t *plo )
         if(!env_list.order)
         {
             MESSAGE("Virtual memory exhausted\n");
-            exit(1);
+            NtTerminateProcess( GetCurrentProcess(), 1 );
         }
     }
     env_list.order[i].loadorder  = plo->loadorder;
@@ -225,29 +227,28 @@ static void add_load_order_set( WCHAR *entry )
  */
 static void init_load_order(void)
 {
-    const char *order = getenv( "WINEDLLOVERRIDES" );
-    UNICODE_STRING strW;
-    WCHAR *entry, *next;
+    static const WCHAR winedlloverridesW[] = {'W','I','N','E','D','L','L','O','V','E','R','R','I','D','E','S',0};
+    WCHAR *entry, *next, *order;
+    SIZE_T len = 1024;
+    NTSTATUS status;
 
     init_done = TRUE;
-    if (!order) return;
 
-    if (!strcmp( order, "help" ))
+    for (;;)
     {
-        MESSAGE( "Syntax:\n"
-                 "  WINEDLLOVERRIDES=\"entry;entry;entry...\"\n"
-                 "    where each entry is of the form:\n"
-                 "        module[,module...]={native|builtin}[,{b|n}]\n"
-                 "\n"
-                 "    Only the first letter of the override (native or builtin)\n"
-                 "    is significant.\n\n"
-                 "Example:\n"
-                 "  WINEDLLOVERRIDES=\"comdlg32=n,b;shell32,shlwapi=b\"\n" );
-        exit(0);
+        order = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        status = RtlQueryEnvironmentVariable( NULL, winedlloverridesW, wcslen(winedlloverridesW),
+                                              order, len - 1, &len );
+        if (!status)
+        {
+            order[len] = 0;
+            break;
+        }
+        RtlFreeHeap( GetProcessHeap(), 0, order );
+        if (status != STATUS_BUFFER_TOO_SMALL) return;
     }
 
-    RtlCreateUnicodeStringFromAsciiz( &strW, order );
-    entry = strW.Buffer;
+    entry = order;
     while (*entry)
     {
         while (*entry == ';') entry++;
@@ -263,8 +264,7 @@ static void init_load_order(void)
     if (env_list.count)
         qsort(env_list.order, env_list.count, sizeof(env_list.order[0]), cmp_sort_func);
 
-    /* Note: we don't free the Unicode string because the
-     * stored module names point inside it */
+    /* note: we don't free the string because the stored module names point inside it */
 }
 
 
