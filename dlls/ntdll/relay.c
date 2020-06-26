@@ -395,7 +395,7 @@ DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigne
 }
 
 extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx );
-__ASM_GLOBAL_FUNC( relay_call,
+__ASM_STDCALL_FUNC( relay_call, 8,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
@@ -414,7 +414,7 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "pushl %esi\n\t"
                    "pushl 12(%ebp)\n\t"
                    "pushl 8(%ebp)\n\t"
-                   "call " __ASM_NAME("relay_trace_entry") "\n\t"
+                   "call " __ASM_STDCALL("relay_trace_entry",16) "\n\t"
                    /* copy the arguments*/
                    "movzwl -16(%ebp),%ecx\n\t"  /* number of args */
                    "jecxz 1f\n\t"
@@ -441,7 +441,7 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "pushl 16(%ebp)\n\t"
                    "pushl 12(%ebp)\n\t"
                    "pushl 8(%ebp)\n\t"
-                   "call " __ASM_NAME("relay_trace_exit") "\n\t"
+                   "call " __ASM_STDCALL("relay_trace_exit",20) "\n\t"
                    /* restore return value and return */
                    "leal -12(%ebp),%esp\n\t"
                    "movl %esi,%eax\n\t"

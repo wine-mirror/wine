@@ -439,7 +439,7 @@ void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COM
 /******************************************************************************
  *  RtlEnumerateGenericTableWithoutSplaying           [NTDLL.@]
  */
-void * RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, void *previous)
+void * WINAPI RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, void *previous)
 {
     static int warn_once;
 
@@ -451,7 +451,7 @@ void * RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, void *p
 /******************************************************************************
  *  RtlNumberGenericTableElements           [NTDLL.@]
  */
-ULONG RtlNumberGenericTableElements(RTL_GENERIC_TABLE *table)
+ULONG WINAPI RtlNumberGenericTableElements(RTL_GENERIC_TABLE *table)
 {
     FIXME("(%p) stub!\n", table);
     return 0;

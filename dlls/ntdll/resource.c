@@ -367,7 +367,7 @@ __ASM_STDCALL_FUNC( LdrAccessResource, 16,
     "pushl 16(%ebp)\n\t"
     "pushl 12(%ebp)\n\t"
     "pushl 8(%ebp)\n\t"
-    "call " __ASM_NAME("access_resource") "\n\t"
+    "call " __ASM_STDCALL("access_resource",16) "\n\t"
     "leave\n\t"
     "ret $16"
 )
