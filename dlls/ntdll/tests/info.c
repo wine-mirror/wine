@@ -2346,7 +2346,6 @@ static void test_affinity(void)
     DWORD_PTR proc_affinity, thread_affinity;
     THREAD_BASIC_INFORMATION tbi;
     SYSTEM_INFO si;
-    ULONG dummy;
 
     GetSystemInfo(&si);
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
@@ -2451,6 +2450,20 @@ static void test_affinity(void)
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( tbi.AffinityMask == (1 << si.dwNumberOfProcessors) - 1,
         "Unexpected thread affinity\n" );
+}
+
+static DWORD WINAPI hide_from_debugger_thread(void *arg)
+{
+    HANDLE stop_event = arg;
+    WaitForSingleObject( stop_event, INFINITE );
+    return 0;
+}
+
+static void test_HideFromDebugger(void)
+{
+    NTSTATUS status;
+    HANDLE thread, stop_event;
+    ULONG dummy;
 
     dummy = 0;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, sizeof(ULONG) );
@@ -2477,6 +2490,34 @@ static void test_affinity(void)
         ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
         if (status == STATUS_SUCCESS) ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
     }
+
+    stop_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    ok( stop_event != NULL, "CreateEvent failed\n" );
+    thread = CreateThread( NULL, 0, hide_from_debugger_thread, stop_event, 0, NULL );
+    ok( thread != INVALID_HANDLE_VALUE, "CreateThread failed with %d\n", GetLastError() );
+
+    dummy = 0;
+    status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
+    todo_wine
+    ok( status == STATUS_SUCCESS || status == STATUS_INVALID_INFO_CLASS,
+        "Expected STATUS_SUCCESS, got %08x\n", status );
+    if (status == STATUS_SUCCESS) ok( dummy == 0, "Expected dummy == 0, got %08x\n", dummy );
+
+    status = pNtSetInformationThread( thread, ThreadHideFromDebugger, NULL, 0 );
+    todo_wine
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+
+    dummy = 0;
+    status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
+    todo_wine
+    ok( status == STATUS_SUCCESS || status == STATUS_INVALID_INFO_CLASS,
+        "Expected STATUS_SUCCESS, got %08x\n", status );
+    if (status == STATUS_SUCCESS) ok( dummy == 1, "Expected dummy == 1, got %08x\n", dummy );
+
+    SetEvent( stop_event );
+    WaitForSingleObject( thread, INFINITE );
+    CloseHandle( thread );
+    CloseHandle( stop_event );
 }
 
 static void test_NtGetCurrentProcessorNumber(void)
@@ -2846,6 +2887,9 @@ START_TEST(info)
 
     trace("Starting test_affinity()\n");
     test_affinity();
+
+    trace("Starting test_HideFromDebugger()\n");
+    test_HideFromDebugger();
 
     trace("Starting test_NtGetCurrentProcessorNumber()\n");
     test_NtGetCurrentProcessorNumber();
