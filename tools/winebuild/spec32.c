@@ -576,7 +576,7 @@ void output_exports( DLLSPEC *spec )
             else output( "\tjmp *__imp_%s\n", asm_name( get_link_name( odp )));
             break;
         case CPU_x86_64:
-            output( "\t.byte 0x48\n" );  /* hotpatch prolog */
+            output( "\t.byte 0x48,0x8d,0xa4,0x24,0x00,0x00,0x00,0x00\n" );  /* hotpatch prolog */
             output( "\tjmp *__imp_%s(%%rip)\n", asm_name( get_link_name( odp )));
             break;
         default:
