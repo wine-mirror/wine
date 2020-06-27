@@ -854,6 +854,8 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     NTSTATUS status = STATUS_SUCCESS;
     HANDLE handles[2];
 
+    context.handle  = NULL;
+    context.irp     = NULL;
     context.in_size = 4096;
     context.in_buff = NULL;
 
