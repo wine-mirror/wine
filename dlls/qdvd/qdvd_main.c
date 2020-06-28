@@ -21,9 +21,13 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#include "oleidl.h"
+#include "rpcproxy.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qdvd);
+
+static HINSTANCE qdvd_instance;
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
@@ -31,7 +35,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
         return FALSE; /* prefer native version */
 
     if (reason == DLL_PROCESS_ATTACH)
+    {
+        qdvd_instance = instance;
         DisableThreadLibraryCalls(instance);
+    }
     return TRUE;
 }
 
@@ -39,6 +46,16 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
     FIXME("clsid %s, iid %s, out %p, stub!\n", debugstr_guid(clsid), debugstr_guid(iid), out);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources(qdvd_instance);
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources(qdvd_instance);
 }
 
 HRESULT WINAPI DllCanUnloadNow(void)

@@ -4,3 +4,6 @@ EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	qdvd_main.c
+
+IDL_SRCS = \
+	qdvd_classes.idl
