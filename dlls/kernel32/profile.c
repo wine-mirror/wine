@@ -503,11 +503,12 @@ static BOOL PROFILE_DeleteSection( PROFILESECTION **section, LPCWSTR name )
             *section = to_del->next;
             to_del->next = NULL;
             PROFILE_Free( to_del );
+            CurProfile->changed = TRUE;
             return TRUE;
         }
         section = &(*section)->next;
     }
-    return FALSE;
+    return TRUE;
 }
 
 
@@ -971,15 +972,7 @@ static INT PROFILE_GetSectionNames( LPWSTR buffer, UINT len )
 static BOOL PROFILE_SetString( LPCWSTR section_name, LPCWSTR key_name,
                                LPCWSTR value, BOOL create_always )
 {
-    if (!key_name)  /* Delete a whole section */
-    {
-        TRACE("(%s)\n", debugstr_w(section_name));
-        CurProfile->changed |= PROFILE_DeleteSection( &CurProfile->section,
-                                                      section_name );
-        return TRUE;         /* Even if PROFILE_DeleteSection() has failed,
-                                this is not an error on application's level.*/
-    }
-    else if (!value)  /* Delete a key */
+    if (!value)  /* Delete a key */
     {
         TRACE("(%s,%s)\n", debugstr_w(section_name), debugstr_w(key_name) );
         CurProfile->changed |= PROFILE_DeleteKey( &CurProfile->section,
@@ -1335,12 +1328,13 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
     }
     else if (PROFILE_Open( filename, TRUE ))
     {
-        if (!section) {
+        if (!section)
             SetLastError(ERROR_FILE_NOT_FOUND);
-        } else {
+        else if (!entry)
+            ret = PROFILE_DeleteSection( &CurProfile->section, section );
+        else
             ret = PROFILE_SetString( section, entry, string, FALSE);
-            if (ret) ret = PROFILE_FlushFile();
-        }
+        if (ret) ret = PROFILE_FlushFile();
     }
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
@@ -1393,8 +1387,9 @@ BOOL WINAPI WritePrivateProfileSectionW( LPCWSTR section,
         }
     }
     else if (PROFILE_Open( filename, TRUE )) {
-        if (!string) {/* delete the named section*/
-	    ret = PROFILE_SetString(section,NULL,NULL, FALSE);
+        if (!string)
+        {
+            ret = PROFILE_DeleteSection( &CurProfile->section, section );
         } else {
 	    PROFILE_DeleteAllKeys(section);
 	    ret = TRUE;
