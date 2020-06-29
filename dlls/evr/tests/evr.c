@@ -413,21 +413,21 @@ static void test_default_mixer(void)
     hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFVideoProcessor_GetBackgroundColor(processor, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     color = 1;
     hr = IMFVideoProcessor_GetBackgroundColor(processor, &color);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!color, "Unexpected color %#x.\n", color);
-}
+
     hr = IMFVideoProcessor_SetBackgroundColor(processor, 0x00121212);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetBackgroundColor(processor, &color);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(color == 0x121212, "Unexpected color %#x.\n", color);
-}
+
     hr = IMFVideoProcessor_GetFilteringRange(processor, DXVA2_DetailFilterChromaLevel, &range);
 todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);

@@ -67,6 +67,8 @@ struct video_mixer
     unsigned int input_count;
     struct output_stream output;
 
+    COLORREF bkgnd_color;
+
     IDirect3DDeviceManager9 *device_manager;
 
     CRITICAL_SECTION cs;
@@ -1187,16 +1189,31 @@ static HRESULT WINAPI video_mixer_processor_SetFilteringValue(IMFVideoProcessor 
 
 static HRESULT WINAPI video_mixer_processor_GetBackgroundColor(IMFVideoProcessor *iface, COLORREF *color)
 {
-    FIXME("%p, %p.\n", iface, color);
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, color);
+
+    if (!color)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+    *color = mixer->bkgnd_color;
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_mixer_processor_SetBackgroundColor(IMFVideoProcessor *iface, COLORREF color)
 {
-    FIXME("%p, %#x.\n", iface, color);
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, color);
+
+    EnterCriticalSection(&mixer->cs);
+    mixer->bkgnd_color = color;
+    LeaveCriticalSection(&mixer->cs);
+
+    return S_OK;
 }
 
 static const IMFVideoProcessorVtbl video_mixer_processor_vtbl =
