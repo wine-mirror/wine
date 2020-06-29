@@ -726,7 +726,7 @@ static HRESULT WINAPI HTMLDocument_get_bgColor(IHTMLDocument2 *iface, VARIANT *p
     nsres = nsIDOMHTMLDocument_GetBgColor(This->doc_node->nsdoc, &nsstr);
     hres = return_nsstr_variant(nsres, &nsstr, NSSTR_COLOR, p);
     if(hres == S_OK && V_VT(p) == VT_BSTR && !V_BSTR(p)) {
-        TRACE("default #ffffff");
+        TRACE("default #ffffff\n");
         if(!(V_BSTR(p) = SysAllocString(L"#ffffff")))
             hres = E_OUTOFMEMORY;
     }
