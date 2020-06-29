@@ -305,7 +305,7 @@ void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file
     DoMessageBoxW(assertion_failed, text);
   }
   else
-    _cwprintf(format_console, str, file, line);
+    MSVCRT_fwprintf(MSVCRT_stderr, format_console, str, file, line);
 
   MSVCRT_raise(MSVCRT_SIGABRT);
   MSVCRT__exit(3);

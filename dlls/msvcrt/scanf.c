@@ -35,8 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-extern MSVCRT_FILE MSVCRT__iob[];
-
 /* helper function for *scanf.  Returns the value of character c in the
  * given base, or -1 if the given character is not a digit of the base.
  */
