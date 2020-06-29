@@ -45,7 +45,6 @@ static PEB_LDR_DATA ldr;
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static RTL_BITMAP fls_bitmap;
-static int nb_threads = 1;
 
 struct ldt_copy *__wine_ldt_copy = NULL;
 
@@ -105,7 +104,7 @@ int __cdecl __wine_dbg_output( const char *str )
 TEB *thread_init( SIZE_T *info_size )
 {
     ULONG_PTR val;
-    TEB *teb = unix_funcs->init_threading( &nb_threads, &__wine_ldt_copy, info_size );
+    TEB *teb = unix_funcs->init_threading( &__wine_ldt_copy, info_size );
 
     peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
@@ -147,6 +146,8 @@ TEB *thread_init( SIZE_T *info_size )
  */
 void WINAPI RtlExitUserThread( ULONG status )
 {
+    ULONG last;
+
     if (status)  /* send the exit code to the server (0 is already the default) */
     {
         SERVER_START_REQ( terminate_thread )
@@ -158,12 +159,12 @@ void WINAPI RtlExitUserThread( ULONG status )
         SERVER_END_REQ;
     }
 
-    if (InterlockedDecrement( &nb_threads ) <= 0)
+    NtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread, &last, sizeof(last), NULL );
+    if (last)
     {
         LdrShutdownProcess();
         unix_funcs->exit_process( status );
     }
-
     LdrShutdownThread();
     RtlFreeThreadActivationContextStack();
     for (;;) unix_funcs->exit_thread( status );

@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 #define PTHREAD_STACK_MIN 16384
 #endif
 
-static int *nb_threads;
+static int nb_threads = 1;
 
 static inline int get_unix_exit_code( NTSTATUS status )
 {
@@ -86,7 +86,7 @@ static void pthread_exit_wrapper( int status )
 /***********************************************************************
  *           init_threading
  */
-TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZE_T *size )
+TEB * CDECL init_threading( struct ldt_copy **ldt_copy, SIZE_T *size )
 {
     TEB *teb;
     BOOL suspend;
@@ -95,7 +95,6 @@ TEB * CDECL init_threading( int *nb_threads_ptr, struct ldt_copy **ldt_copy, SIZ
     extern struct ldt_copy __wine_ldt_copy;
     *ldt_copy = &__wine_ldt_copy;
 #endif
-    nb_threads = nb_threads_ptr;
 
     teb = virtual_alloc_first_teb();
 
@@ -290,10 +289,10 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
                            (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
     pthread_attr_setguardsize( &pthread_attr, 0 );
     pthread_attr_setscope( &pthread_attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
-    InterlockedIncrement( nb_threads );
+    InterlockedIncrement( &nb_threads );
     if (pthread_create( &pthread_id, &pthread_attr, (void * (*)(void *))start_thread, teb ))
     {
-        InterlockedDecrement( nb_threads );
+        InterlockedDecrement( &nb_threads );
         virtual_free_teb( teb );
         status = STATUS_NO_MEMORY;
     }
@@ -319,7 +318,7 @@ done:
 void abort_thread( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (InterlockedDecrement( nb_threads ) <= 0) abort_process( status );
+    if (InterlockedDecrement( &nb_threads ) <= 0) abort_process( status );
     signal_exit_thread( status, pthread_exit_wrapper );
 }
 
@@ -987,6 +986,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadAmILastThread:
     {
+        if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
         SERVER_START_REQ( get_thread_info )
         {
             req->handle = wine_server_obj_handle( handle );
@@ -994,9 +994,9 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
             {
-                BOOLEAN last = reply->last;
-                if (data) memcpy( data, &last, min( length, sizeof(last) ));
-                if (ret_len) *ret_len = min( length, sizeof(last) );
+                ULONG last = reply->last;
+                if (data) memcpy( data, &last, sizeof(last) );
+                if (ret_len) *ret_len = sizeof(last);
             }
         }
         SERVER_END_REQ;

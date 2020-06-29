@@ -2670,6 +2670,36 @@ static void test_thread_lookup(void)
        "NtOpenThread returned %#x\n", status);
 }
 
+static void test_thread_info(void)
+{
+    NTSTATUS status;
+    ULONG len, data;
+
+    len = 0xdeadbeef;
+    data = 0xcccccccc;
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread,
+                                        &data, sizeof(data), &len );
+    ok( !status, "failed %x\n", status );
+    ok( data == 0 || data == 1, "wrong data %x\n", data );
+    ok( len == sizeof(data), "wrong len %u\n", len );
+
+    len = 0xdeadbeef;
+    data = 0xcccccccc;
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread,
+                                        &data, sizeof(data) - 1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "failed %x\n", status );
+    ok( data == 0xcccccccc, "wrong data %x\n", data );
+    ok( len == 0xdeadbeef, "wrong len %u\n", len );
+
+    len = 0xdeadbeef;
+    data = 0xcccccccc;
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread,
+                                        &data, sizeof(data) + 1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "failed %x\n", status );
+    ok( data == 0xcccccccc, "wrong data %x\n", data );
+    ok( len == 0xdeadbeef, "wrong len %u\n", len );
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -2827,4 +2857,5 @@ START_TEST(info)
     test_query_data_alignment();
 
     test_thread_lookup();
+    test_thread_info();
 }
