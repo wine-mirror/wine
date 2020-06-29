@@ -5144,6 +5144,7 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     IHTMLRectCollection *rects;
     IHTMLRect *rect, *rect2;
     IHTMLElement2 *elem2;
+    VARIANT v, index;
     LONG l;
     HRESULT hres;
 
@@ -5184,6 +5185,19 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     ok(hres == S_OK, "getClientRects failed: %08x\n", hres);
 
     test_disp((IUnknown*)rects, &IID_IHTMLRectCollection, NULL, L"[object]");
+
+    hres = IHTMLRectCollection_get_length(rects, &l);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(l == 1, "length = %u\n", l);
+
+    V_VT(&index) = VT_I4;
+    V_I4(&index) = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLRectCollection_item(rects, &index, &v);
+    ok(hres == S_OK, "item failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    test_disp((IUnknown*)V_DISPATCH(&v), &IID_IHTMLRect, NULL, L"[object]");
+    VariantClear(&v);
 
     IHTMLRectCollection_Release(rects);
     IHTMLElement2_Release(elem2);

@@ -671,8 +671,34 @@ static HRESULT WINAPI HTMLRectCollection_get__newEnum(IHTMLRectCollection *iface
 static HRESULT WINAPI HTMLRectCollection_item(IHTMLRectCollection *iface, VARIANT *index, VARIANT *result)
 {
     HTMLRectCollection *This = impl_from_IHTMLRectCollection(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(index), result);
-    return E_NOTIMPL;
+    nsIDOMClientRect *nsrect;
+    IHTMLRect *rect;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(index), result);
+
+    if(V_VT(index) != VT_I4 || V_I4(index) < 0) {
+        FIXME("Unsupported for %s index\n", debugstr_variant(index));
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMClientRectList_Item(This->rect_list, V_I4(index), &nsrect);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+    if(!nsrect) {
+        V_VT(result) = VT_NULL;
+        return S_OK;
+    }
+
+    hres = create_html_rect(nsrect, &rect);
+    nsIDOMClientRect_Release(nsrect);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(result) = VT_DISPATCH;
+    V_DISPATCH(result) = (IDispatch *)rect;
+    return S_OK;
 }
 
 static const IHTMLRectCollectionVtbl HTMLRectCollectionVtbl = {
