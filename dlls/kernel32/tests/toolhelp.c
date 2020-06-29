@@ -227,7 +227,6 @@ static DWORD WINAPI get_id_thread(void* curr_pid)
         /* Reset data */
         thread_traversed[i] = 0;
     }
-    todo_wine
     ok(found == FALSE, "The thread order is not strictly consistent\n");
 
     /* Determine the order by NtQuerySystemInformation function */
@@ -282,7 +281,6 @@ static DWORD WINAPI get_id_thread(void* curr_pid)
             break;
         }
     }
-    todo_wine
     ok(found == FALSE, "wrong order in NtQuerySystemInformation function\n");
 
     SetEvent(ev);
@@ -303,7 +301,6 @@ static void test_main_thread(DWORD curr_pid, DWORD main_tid)
 
     /* Check that the main thread id is first one in this thread. */
     tid = get_id_thread(ULongToPtr(curr_pid));
-    todo_wine
     ok(tid == main_tid, "The first thread id returned is not the main thread id\n");
 
     /* Check that the main thread id is first one in other thread. */
@@ -312,7 +309,6 @@ static void test_main_thread(DWORD curr_pid, DWORD main_tid)
     ok(error == WAIT_OBJECT_0, "Thread did not complete within timelimit\n");
 
     ok(GetExitCodeThread(thread, &tid), "Could not retrieve exit code\n");
-    todo_wine
     ok(tid == main_tid, "The first thread id returned is not the main thread id\n");
 }
 
