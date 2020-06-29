@@ -1037,6 +1037,8 @@ struct get_thread_times_reply
     struct reply_header __header;
     timeout_t    creation_time;
     timeout_t    exit_time;
+    int          unix_pid;
+    int          unix_tid;
 };
 
 
@@ -6700,7 +6702,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 609
+#define SERVER_PROTOCOL_VERSION 610
 
 /* ### protocol_version end ### */
 

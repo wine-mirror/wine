@@ -967,6 +967,8 @@ struct rawinput_device
 @REPLY
     timeout_t    creation_time; /* thread creation time */
     timeout_t    exit_time;     /* thread exit time */
+    int          unix_pid;      /* thread native pid */
+    int          unix_tid;      /* thread native pid */
 @END
 
 
