@@ -955,6 +955,21 @@ NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
 
 
 /*************************************************************************
+ *		get_initial_console
+ *
+ * Return the initial console handles.
+ */
+void CDECL get_initial_console( HANDLE *handle, HANDLE *std_in, HANDLE *std_out, HANDLE *std_err )
+{
+    *handle = *std_in = *std_out = *std_err = 0;
+    if (isatty(0) || isatty(1) || isatty(2)) *handle = (HANDLE)2; /* see kernel32/kernel_private.h */
+    if (!isatty(0)) server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, std_in );
+    if (!isatty(1)) server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_out );
+    if (!isatty(2)) server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, std_err );
+}
+
+
+/*************************************************************************
  *		get_initial_directory
  *
  * Get the current directory at startup.

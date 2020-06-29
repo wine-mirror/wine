@@ -1491,6 +1491,7 @@ static struct unix_funcs unix_funcs =
     ntdll_tan,
     get_initial_environment,
     get_dynamic_environment,
+    get_initial_console,
     get_initial_directory,
     get_unix_codepage,
     get_locales,

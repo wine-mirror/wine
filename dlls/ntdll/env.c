@@ -1286,14 +1286,8 @@ void init_user_process_params( SIZE_T data_size )
         RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
 
-        if (isatty(0) || isatty(1) || isatty(2))
-            params->ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
-        if (!isatty(0))
-            wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params->hStdInput );
-        if (!isatty(1))
-            wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdOutput );
-        if (!isatty(2))
-            wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params->hStdError );
+        unix_funcs->get_initial_console( &params->ConsoleHandle, &params->hStdInput,
+                                         &params->hStdOutput, &params->hStdError );
         params->wShowWindow = 1; /* SW_SHOWNORMAL */
 
         run_wineboot( &params->Environment );
