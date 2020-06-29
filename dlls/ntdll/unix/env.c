@@ -66,6 +66,7 @@ extern char **__wine_main_environ;
 extern WCHAR **__wine_main_wargv;
 
 USHORT *uctable = NULL, *lctable = NULL;
+SIZE_T startup_info_size = 0;
 
 int main_argc = 0;
 char **main_argv = NULL;
@@ -900,6 +901,32 @@ static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char 
         append_envW( env, pos, name, nt_name.Buffer );
         RtlFreeUnicodeString( &nt_name );
     }
+}
+
+
+/*************************************************************************
+ *		get_startup_info
+ *
+ * Get the startup information from the server.
+ */
+NTSTATUS CDECL get_startup_info( startup_info_t *info, SIZE_T *total_size, SIZE_T *info_size )
+{
+    NTSTATUS status;
+
+    if (*total_size < startup_info_size)
+    {
+        *total_size = startup_info_size;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    SERVER_START_REQ( get_startup_info )
+    {
+        wine_server_set_reply( req, info, *total_size );
+        status = wine_server_call( req );
+        *total_size = wine_server_reply_size( reply );
+        *info_size = reply->info_size;
+    }
+    SERVER_END_REQ;
+    return status;
 }
 
 

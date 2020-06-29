@@ -591,6 +591,8 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
     char **argv;
     HANDLE handle;
 
+    if (startup_info_size) return status;  /* started from another Win32 process */
+
     switch (status)
     {
     case STATUS_CONFLICTING_ADDRESSES:

@@ -90,7 +90,6 @@ TEB * CDECL init_threading( SIZE_T *size )
 {
     TEB *teb;
     BOOL suspend;
-    SIZE_T info_size;
 
     teb = virtual_alloc_first_teb();
 
@@ -99,14 +98,14 @@ TEB * CDECL init_threading( SIZE_T *size )
     signal_init_thread( teb );
     dbg_init();
     server_init_process();
-    info_size = server_init_thread( teb->Peb, &suspend );
+    startup_info_size = server_init_thread( teb->Peb, &suspend );
     virtual_map_user_shared_data();
     virtual_create_builtin_view( ntdll_module );
     init_cpu_info();
     init_files();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
 
-    if (size) *size = info_size;
+    if (size) *size = startup_info_size;
     return teb;
 }
 
