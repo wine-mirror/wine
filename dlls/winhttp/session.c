@@ -578,7 +578,7 @@ static void request_destroy( struct object_header *hdr )
 
     TRACE("%p\n", request);
 
-    if (request->queue.pool) CloseThreadpool( request->queue.pool );
+    stop_queue( &request->queue );
     release_object( &request->connect->hdr );
 
     if (request->cred_handle_initialized) FreeCredentialsHandle( &request->cred_handle );

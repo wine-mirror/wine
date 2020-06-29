@@ -138,6 +138,14 @@ static DWORD start_queue( struct queue *queue )
     return ERROR_SUCCESS;
 }
 
+void stop_queue( struct queue *queue )
+{
+    if (!queue->pool) return;
+    CloseThreadpool( queue->pool );
+    queue->pool = NULL;
+    TRACE("stopped %p\n", queue);
+}
+
 static DWORD queue_task( struct queue *queue, PTP_WORK_CALLBACK task, void *ctx )
 {
     TP_WORK *work;
@@ -3037,8 +3045,8 @@ static void socket_destroy( struct object_header *hdr )
 
     TRACE("%p\n", socket);
 
-    if (socket->send_q.pool) CloseThreadpool( socket->send_q.pool );
-    if (socket->recv_q.pool) CloseThreadpool( socket->recv_q.pool );
+    stop_queue( &socket->send_q );
+    stop_queue( &socket->recv_q );
 
     release_object( &socket->request->hdr );
     heap_free( socket );
@@ -3526,6 +3534,7 @@ static DWORD socket_shutdown( struct socket *socket, USHORT status, const void *
     struct netconn *netconn = socket->request->netconn;
     DWORD ret;
 
+    stop_queue( &socket->send_q );
     if (!(ret = send_frame( netconn, SOCKET_OPCODE_CLOSE, status, reason, len, TRUE )))
     {
         socket->state = SOCKET_STATE_SHUTDOWN;
@@ -3609,6 +3618,7 @@ static DWORD socket_close( struct socket *socket, USHORT status, const void *rea
 
     if (socket->state < SOCKET_STATE_SHUTDOWN)
     {
+        stop_queue( &socket->send_q );
         if ((ret = send_frame( netconn, SOCKET_OPCODE_CLOSE, status, reason, len, TRUE ))) goto done;
         socket->state = SOCKET_STATE_SHUTDOWN;
     }

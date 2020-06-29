@@ -317,6 +317,7 @@ BOOL free_handle( HINTERNET ) DECLSPEC_HIDDEN;
 
 void send_callback( struct object_header *, DWORD, LPVOID, DWORD ) DECLSPEC_HIDDEN;
 void close_connection( struct request * ) DECLSPEC_HIDDEN;
+void stop_queue( struct queue * ) DECLSPEC_HIDDEN;
 
 void netconn_close( struct netconn * ) DECLSPEC_HIDDEN;
 DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, struct netconn ** ) DECLSPEC_HIDDEN;
