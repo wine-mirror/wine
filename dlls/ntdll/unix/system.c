@@ -2155,6 +2155,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             {
                 int     i, j;
 
+                get_thread_times(unix_pid, -1, &spi->KernelTime, &spi->UserTime);
+
                 /* set thread info */
                 i = j = 0;
                 while (ret == STATUS_SUCCESS)
