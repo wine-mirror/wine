@@ -4170,7 +4170,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarBaseColor(IHTMLStyle3 *iface, VARI
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarBaseColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4184,7 +4184,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarFaceColor(IHTMLStyle3 *iface, VARI
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarFaceColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4198,7 +4198,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbar3dLightColor(IHTMLStyle3 *iface, V
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbar3dLightColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4212,7 +4212,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarShadowColor(IHTMLStyle3 *iface, VA
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarShadowColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4226,7 +4226,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarHighlightColor(IHTMLStyle3 *iface,
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarHighlightColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4240,7 +4240,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarDarkShadowColor(IHTMLStyle3 *iface
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarDarkShadowColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4254,7 +4254,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarArrowColor(IHTMLStyle3 *iface, VAR
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarArrowColor(IHTMLStyle3 *iface, VARIANT *p)
@@ -4268,7 +4268,7 @@ static HRESULT WINAPI HTMLStyle3_put_scrollbarTrackColor(IHTMLStyle3 *iface, VAR
 {
     HTMLStyle *This = impl_from_IHTMLStyle3(iface);
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle3_get_scrollbarTrackColor(IHTMLStyle3 *iface, VARIANT *p)
