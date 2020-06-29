@@ -24,8 +24,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define COBJMACROS
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -49,18 +47,7 @@
 #include <unistd.h>
 #endif
 
-#include "windef.h"
-#include "winbase.h"
-#include "wtypes.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "dshow.h"
-#include "vfwmsgs.h"
-#include "amvideo.h"
-#include "wine/debug.h"
-
-#include "qcap_main.h"
-#include "capture.h"
+#include "qcap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 

@@ -18,29 +18,7 @@
  *
  */
 
-#define COBJMACROS
-
-#include "config.h"
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
-#include "wtypes.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "dshow.h"
-
-#include "qcap_main.h"
-#include "wine/debug.h"
-
-#include "capture.h"
-#include "uuids.h"
-#include "vfwmsgs.h"
-#include "amvideo.h"
-#include "strmif.h"
-#include "ddraw.h"
-#include "ocidl.h"
-#include "oleauto.h"
+#include "qcap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 

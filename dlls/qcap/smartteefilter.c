@@ -18,20 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "wtypes.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "dshow.h"
-
-#include "qcap_main.h"
-
-#include "wine/debug.h"
+#include "qcap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 

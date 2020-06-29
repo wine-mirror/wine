@@ -19,28 +19,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "config.h"
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdarg.h>
-
-#define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winerror.h"
-#include "objbase.h"
-#include "uuids.h"
-#include "strmif.h"
+#include "qcap_private.h"
 #include "rpcproxy.h"
-
-#include "qcap_main.h"
-
-#include "wine/unicode.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
