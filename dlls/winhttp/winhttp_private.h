@@ -157,12 +157,8 @@ struct authinfo
 
 struct queue
 {
-    struct object_header *object;
-    CRITICAL_SECTION cs;
-    BOOL proc_running;
-    HANDLE wait;
-    HANDLE cancel;
-    struct list tasks;
+    TP_POOL *pool;
+    TP_CALLBACK_ENVIRON env;
 };
 
 enum request_flags
@@ -252,16 +248,9 @@ struct socket
     DWORD reason_len;
 };
 
-struct task_header
-{
-    struct list entry;
-    struct object_header *object;
-    void (*proc)( struct task_header * );
-};
-
 struct send_request
 {
-    struct task_header hdr;
+    struct request *request;
     WCHAR *headers;
     DWORD headers_len;
     void *optional;
@@ -272,18 +261,18 @@ struct send_request
 
 struct receive_response
 {
-    struct task_header hdr;
+    struct request *request;
 };
 
 struct query_data
 {
-    struct task_header hdr;
+    struct request *request;
     DWORD *available;
 };
 
 struct read_data
 {
-    struct task_header hdr;
+    struct request *request;
     void *buffer;
     DWORD to_read;
     DWORD *read;
@@ -291,7 +280,7 @@ struct read_data
 
 struct write_data
 {
-    struct task_header hdr;
+    struct request *request;
     const void *buffer;
     DWORD to_write;
     DWORD *written;
@@ -299,7 +288,7 @@ struct write_data
 
 struct socket_send
 {
-    struct task_header hdr;
+    struct socket *socket;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type;
     const void *buf;
     DWORD len;
@@ -307,14 +296,14 @@ struct socket_send
 
 struct socket_receive
 {
-    struct task_header hdr;
+    struct socket *socket;
     void *buf;
     DWORD len;
 };
 
 struct socket_shutdown
 {
-    struct task_header hdr;
+    struct socket *socket;
     USHORT status;
     const void *reason;
     DWORD len;

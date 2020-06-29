@@ -578,13 +578,7 @@ static void request_destroy( struct object_header *hdr )
 
     TRACE("%p\n", request);
 
-    if (request->queue.proc_running)
-    {
-        /* Signal to the task proc to quit. It will call this again when it does. */
-        request->queue.proc_running = FALSE;
-        SetEvent( request->queue.cancel );
-        return;
-    }
+    if (request->queue.pool) CloseThreadpool( request->queue.pool );
     release_object( &request->connect->hdr );
 
     if (request->cred_handle_initialized) FreeCredentialsHandle( &request->cred_handle );
@@ -614,8 +608,6 @@ static void request_destroy( struct object_header *hdr )
         }
     }
 
-    request->queue.cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection( &request->queue.cs );
     heap_free( request );
 }
 
@@ -1120,8 +1112,6 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->hdr.notify_mask = connect->hdr.notify_mask;
     request->hdr.context = connect->hdr.context;
     request->hdr.redirect_policy = connect->hdr.redirect_policy;
-    InitializeCriticalSection( &request->queue.cs );
-    request->queue.cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": request.queue.cs");
 
     addref_object( &connect->hdr );
     request->connect = connect;
