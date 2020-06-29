@@ -329,7 +329,7 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     thread->affinity = process->affinity;
     if (!current) current = thread;
 
-    list_add_head( &thread_list, &thread->entry );
+    list_add_tail( &thread_list, &thread->entry );
 
     if (sd && !set_sd_defaults_from_token( &thread->obj, sd,
                                            OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
