@@ -1461,9 +1461,6 @@ void server_init_process(void)
  */
 void CDECL server_init_process_done( void *relay )
 {
-#ifdef __i386__
-    extern struct ldt_copy __wine_ldt_copy;
-#endif
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
     void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;

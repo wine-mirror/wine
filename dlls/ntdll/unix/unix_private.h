@@ -73,7 +73,6 @@ extern void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) DECLSPEC_HIDDEN;
 extern void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) DECLSPEC_HIDDEN;
-
 extern NTSTATUS CDECL fast_RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit, int timeout ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL fast_RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL fast_RtlDeleteCriticalSection( RTL_CRITICAL_SECTION *crit ) DECLSPEC_HIDDEN;
@@ -117,7 +116,7 @@ extern NTSTATUS CDECL server_handle_to_fd( HANDLE handle, unsigned int access, i
                                            unsigned int *options ) DECLSPEC_HIDDEN;
 extern void CDECL server_release_fd( HANDLE handle, int unix_fd ) DECLSPEC_HIDDEN;
 extern void CDECL server_init_process_done( void *relay ) DECLSPEC_HIDDEN;
-extern TEB * CDECL init_threading( struct ldt_copy **ldt_copy, SIZE_T *size ) DECLSPEC_HIDDEN;
+extern TEB * CDECL init_threading( SIZE_T *size ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status ) DECLSPEC_HIDDEN;
@@ -149,6 +148,9 @@ extern sigset_t server_block_set DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_size DECLSPEC_HIDDEN;
 extern SIZE_T signal_stack_mask DECLSPEC_HIDDEN;
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
+#ifdef __i386__
+extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
+#endif
 
 extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
 extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen ) DECLSPEC_HIDDEN;

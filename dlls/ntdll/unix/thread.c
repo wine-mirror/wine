@@ -86,15 +86,11 @@ static void pthread_exit_wrapper( int status )
 /***********************************************************************
  *           init_threading
  */
-TEB * CDECL init_threading( struct ldt_copy **ldt_copy, SIZE_T *size )
+TEB * CDECL init_threading( SIZE_T *size )
 {
     TEB *teb;
     BOOL suspend;
     SIZE_T info_size;
-#ifdef __i386__
-    extern struct ldt_copy __wine_ldt_copy;
-    *ldt_copy = &__wine_ldt_copy;
-#endif
 
     teb = virtual_alloc_first_teb();
 

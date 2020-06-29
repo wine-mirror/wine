@@ -838,6 +838,13 @@ static void fixup_ntdll_imports( const IMAGE_NT_HEADERS *nt )
     GET_FUNC( LdrInitializeThunk );
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_set_unix_funcs );
+#ifdef __i386__
+    {
+        struct ldt_copy **p__wine_ldt_copy;
+        GET_FUNC( __wine_ldt_copy );
+        *p__wine_ldt_copy = &__wine_ldt_copy;
+    }
+#endif
 #undef GET_FUNC
 }
 

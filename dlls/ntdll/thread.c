@@ -46,8 +46,6 @@ static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static RTL_BITMAP fls_bitmap;
 
-struct ldt_copy *__wine_ldt_copy = NULL;
-
 static RTL_CRITICAL_SECTION peb_lock;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -104,7 +102,7 @@ int __cdecl __wine_dbg_output( const char *str )
 TEB *thread_init( SIZE_T *info_size )
 {
     ULONG_PTR val;
-    TEB *teb = unix_funcs->init_threading( &__wine_ldt_copy, info_size );
+    TEB *teb = unix_funcs->init_threading( info_size );
 
     peb = teb->Peb;
     peb->FastPebLock        = &peb_lock;
