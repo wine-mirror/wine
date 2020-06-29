@@ -1,7 +1,7 @@
 /*
  * WSK (Winsock Kernel) driver library.
  *
- * Copyright 2020 Paul Gofman <pgofman@codeweavers.com> for Codeweavers
+ * Copyright 2020 Paul Gofman <pgofman@codeweavers.com> for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
