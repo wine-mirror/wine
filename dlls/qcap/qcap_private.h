@@ -40,23 +40,29 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
-typedef struct _Capture Capture;
+struct video_capture_device
+{
+    const struct video_capture_device_ops *ops;
+};
 
-Capture *qcap_driver_init(struct strmbase_source *pin, USHORT card) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_destroy(Capture *device) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_check_format(Capture *device, const AM_MEDIA_TYPE *mt) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_set_format(Capture *device, AM_MEDIA_TYPE *mt) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_get_caps(Capture *device, LONG index, AM_MEDIA_TYPE **mt,
-        VIDEO_STREAM_CONFIG_CAPS *vscc) DECLSPEC_HIDDEN;
-LONG qcap_driver_get_caps_count(Capture *device) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_get_format(const Capture *device, AM_MEDIA_TYPE **mt) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_get_prop_range(Capture *device, VideoProcAmpProperty property,
-        LONG *min, LONG *max, LONG *step, LONG *default_value, LONG *flags) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_get_prop(Capture *device, VideoProcAmpProperty property, LONG *value, LONG *flags) DECLSPEC_HIDDEN;
-HRESULT qcap_driver_set_prop(Capture *device, VideoProcAmpProperty property, LONG value, LONG flags) DECLSPEC_HIDDEN;
-void qcap_driver_init_stream(Capture *device) DECLSPEC_HIDDEN;
-void qcap_driver_start_stream(Capture *device) DECLSPEC_HIDDEN;
-void qcap_driver_stop_stream(Capture *device) DECLSPEC_HIDDEN;
-void qcap_driver_cleanup_stream(Capture *device) DECLSPEC_HIDDEN;
+struct video_capture_device_ops
+{
+    void (*destroy)(struct video_capture_device *device);
+    HRESULT (*check_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
+    HRESULT (*set_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
+    HRESULT (*get_format)(struct video_capture_device *device, AM_MEDIA_TYPE **mt);
+    HRESULT (*get_caps)(struct video_capture_device *device, LONG index, AM_MEDIA_TYPE **mt, VIDEO_STREAM_CONFIG_CAPS *caps);
+    LONG (*get_caps_count)(struct video_capture_device *device);
+    HRESULT (*get_prop_range)(struct video_capture_device *device, VideoProcAmpProperty property,
+            LONG *min, LONG *max, LONG *step, LONG *default_value, LONG *flags);
+    HRESULT (*get_prop)(struct video_capture_device *device, VideoProcAmpProperty property, LONG *value, LONG *flags);
+    HRESULT (*set_prop)(struct video_capture_device *device, VideoProcAmpProperty property, LONG value, LONG flags);
+    void (*init_stream)(struct video_capture_device *device);
+    void (*start_stream)(struct video_capture_device *device);
+    void (*stop_stream)(struct video_capture_device *device);
+    void (*cleanup_stream)(struct video_capture_device *device);
+};
+
+struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHORT card);
 
 #endif
