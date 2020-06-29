@@ -98,9 +98,11 @@ struct v4l_device
 
     struct strmbase_source *pin;
     int fd, mmap;
-    FILTER_STATE state;
 
-    HANDLE thread, run_event;
+    HANDLE thread;
+    FILTER_STATE state;
+    CONDITION_VARIABLE state_cv;
+    CRITICAL_SECTION state_cs;
 };
 
 static inline struct v4l_device *v4l_device(struct video_capture_device *iface)
@@ -123,6 +125,8 @@ static void v4l_device_destroy(struct video_capture_device *iface)
 {
     struct v4l_device *device = v4l_device(iface);
 
+    device->state_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&device->state_cs);
     if (device->fd != -1)
         video_close(device->fd);
     if (device->caps_count)
@@ -320,19 +324,18 @@ static void reverse_image(struct v4l_device *device, LPBYTE output, const BYTE *
     }
 }
 
-static DWORD WINAPI ReadThread(LPVOID lParam)
+static DWORD WINAPI ReadThread(void *arg)
 {
-    struct v4l_device *capBox = lParam;
+    struct v4l_device *device = arg;
     HRESULT hr;
     IMediaSample *pSample = NULL;
-    ULONG framecount = 0;
     unsigned char *pTarget, *image_data;
     unsigned int image_size;
     UINT width, height, depth;
 
-    width = capBox->current_caps->video_info.bmiHeader.biWidth;
-    height = capBox->current_caps->video_info.bmiHeader.biHeight;
-    depth = capBox->current_caps->video_info.bmiHeader.biBitCount / 8;
+    width = device->current_caps->video_info.bmiHeader.biWidth;
+    height = device->current_caps->video_info.bmiHeader.biHeight;
+    depth = device->current_caps->video_info.bmiHeader.biBitCount / 8;
     image_size = width * height * depth;
     if (!(image_data = heap_alloc(image_size)))
     {
@@ -340,12 +343,22 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         return 0;
     }
 
-    while (capBox->state != State_Stopped)
+    for (;;)
     {
-        if (capBox->state == State_Paused)
-            WaitForSingleObject(capBox->run_event, INFINITE);
+        EnterCriticalSection(&device->state_cs);
 
-        hr = BaseOutputPinImpl_GetDeliveryBuffer(capBox->pin, &pSample, NULL, NULL, 0);
+        while (device->state == State_Paused)
+            SleepConditionVariableCS(&device->state_cv, &device->state_cs, INFINITE);
+
+        if (device->state == State_Stopped)
+        {
+            LeaveCriticalSection(&device->state_cs);
+            break;
+        }
+
+        LeaveCriticalSection(&device->state_cs);
+
+        hr = BaseOutputPinImpl_GetDeliveryBuffer(device->pin, &pSample, NULL, NULL, 0);
         if (SUCCEEDED(hr))
         {
             int len;
@@ -358,7 +371,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
 
             IMediaSample_GetPointer(pSample, &pTarget);
 
-            while (video_read(capBox->fd, image_data, image_size) == -1)
+            while (video_read(device->fd, image_data, image_size) == -1)
             {
                 if (errno != EAGAIN)
                 {
@@ -367,11 +380,11 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
                 }
             }
 
-            reverse_image(capBox, pTarget, image_data);
-            hr = IMemInputPin_Receive(capBox->pin->pMemInputPin, pSample);
-            TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
+            reverse_image(device, pTarget, image_data);
+            hr = IMemInputPin_Receive(device->pin->pMemInputPin, pSample);
             IMediaSample_Release(pSample);
         }
+
         if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
         {
             TRACE("Return %x, stop IFilterGraph\n", hr);
@@ -412,15 +425,17 @@ static void v4l_device_init_stream(struct video_capture_device *iface)
 static void v4l_device_start_stream(struct video_capture_device *iface)
 {
     struct v4l_device *device = v4l_device(iface);
+    EnterCriticalSection(&device->state_cs);
     device->state = State_Running;
-    SetEvent(device->run_event);
+    LeaveCriticalSection(&device->state_cs);
 }
 
 static void v4l_device_stop_stream(struct video_capture_device *iface)
 {
     struct v4l_device *device = v4l_device(iface);
+    EnterCriticalSection(&device->state_cs);
     device->state = State_Paused;
-    ResetEvent(device->run_event);
+    LeaveCriticalSection(&device->state_cs);
 }
 
 static void v4l_device_cleanup_stream(struct video_capture_device *iface)
@@ -428,7 +443,10 @@ static void v4l_device_cleanup_stream(struct video_capture_device *iface)
     struct v4l_device *device = v4l_device(iface);
     HRESULT hr;
 
+    EnterCriticalSection(&device->state_cs);
     device->state = State_Stopped;
+    LeaveCriticalSection(&device->state_cs);
+    WakeConditionVariable(&device->state_cv);
     WaitForSingleObject(device->thread, INFINITE);
     CloseHandle(device->thread);
     device->thread = NULL;
@@ -656,7 +674,9 @@ struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHO
     device->d.ops = &v4l_device_ops;
     device->pin = pin;
     device->state = State_Stopped;
-    device->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    InitializeConditionVariable(&device->state_cv);
+    InitializeCriticalSection(&device->state_cs);
+    device->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": v4l_device.state_cs");
 
     TRACE("Format: %d bpp - %dx%d.\n", device->current_caps->video_info.bmiHeader.biBitCount,
             device->current_caps->video_info.bmiHeader.biWidth,
