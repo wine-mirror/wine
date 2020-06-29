@@ -152,6 +152,16 @@ void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 #endif
 
 /* string functions */
+void * __cdecl NTDLL_memchr( const void *ptr, int c, size_t n );
+char * __cdecl NTDLL_strcat( char *dst, const char *src );
+char * __cdecl NTDLL_strchr( const char *str, int c );
+int    __cdecl NTDLL_strcmp( const char *str1, const char *str2 );
+char * __cdecl NTDLL_strcpy( char *dst, const char *src );
+size_t __cdecl NTDLL_strlen( const char *str );
+char * __cdecl NTDLL_strrchr( const char *str, int c );
+LONG   __cdecl NTDLL_strtol( const char *s, char **end, int base );
+ULONG  __cdecl NTDLL_strtoul( const char *s, char **end, int base );
+int    __cdecl NTDLL_atoi( const char *nptr );
 int    __cdecl NTDLL_tolower( int c );
 int    __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
 int    __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 );
@@ -179,6 +189,16 @@ ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
 int    WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... );
 int    WINAPIV _snwprintf_s( WCHAR *str, SIZE_T size, SIZE_T len, const WCHAR *format, ... );
 
+#define memchr(p,c,n) NTDLL_memchr(p,c,n)
+#define strcat(d,s) NTDLL_strcat(d,s)
+#define strchr(s,c) NTDLL_strchr(s,c)
+#define strcmp(s1,s2) NTDLL_strcmp(s1,s2)
+#define strcpy(d,s) NTDLL_strcpy(d,s)
+#define strlen(s) NTDLL_strlen(s)
+#define strrchr(s,c) NTDLL_strrchr(s,c)
+#define strtol(s,e,b) NTDLL_strtol(s,e,b)
+#define strtoul(s,e,b) NTDLL_strtoul(s,e,b)
+#define atoi(s) NTDLL_atoi(s)
 #define wcsicmp(s1,s2) NTDLL__wcsicmp(s1,s2)
 #define wcsnicmp(s1,s2,n) NTDLL__wcsnicmp(s1,s2,n)
 #define towupper(c) NTDLL_towupper(c)
