@@ -28242,7 +28242,7 @@ interface IMarkupServices2 : IMarkupServices
         [in] IMarkupPointer *pPointerFinish,
         [in] IMarkupPointer *pPointerTarget,
         [in, out] IMarkupPointer *pPointerStatus,
-        [out] IHTMLElement **ppElemFailBotton,
+        [out] IHTMLElement **ppElemFailBottom,
         [out] IHTMLElement **ppElemFailTop);
 
     HRESULT SaveSegmentsToClipboard(
