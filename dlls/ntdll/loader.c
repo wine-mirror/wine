@@ -3975,14 +3975,14 @@ void __wine_process_init(void)
     if ((status = load_builtin_dll( params->DllPath.Buffer, &nt_name, NULL, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
-        exit(1);
+        NtTerminateProcess( GetCurrentProcess(), status );
     }
     RtlInitAnsiString( &func_name, "__wine_start_process" );
     if ((status = LdrGetProcedureAddress( wm->ldr.DllBase, &func_name,
                                           0, (void **)&kernel32_start_process )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not find __wine_start_process in kernel32.dll, status %x\n", status );
-        exit(1);
+        NtTerminateProcess( GetCurrentProcess(), status );
     }
 
     init_locale( wm->ldr.DllBase );

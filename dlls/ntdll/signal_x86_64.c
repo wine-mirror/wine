@@ -23,15 +23,8 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <assert.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -85,143 +78,6 @@ struct MSVCRT_JUMP_BUFFER
     M128A   Xmm14;
     M128A   Xmm15;
 };
-
-/***********************************************************************
- * signal context platform-specific definitions
- */
-#ifdef linux
-
-#define RAX_sig(context)     ((context)->uc_mcontext.gregs[REG_RAX])
-#define RBX_sig(context)     ((context)->uc_mcontext.gregs[REG_RBX])
-#define RCX_sig(context)     ((context)->uc_mcontext.gregs[REG_RCX])
-#define RDX_sig(context)     ((context)->uc_mcontext.gregs[REG_RDX])
-#define RSI_sig(context)     ((context)->uc_mcontext.gregs[REG_RSI])
-#define RDI_sig(context)     ((context)->uc_mcontext.gregs[REG_RDI])
-#define RBP_sig(context)     ((context)->uc_mcontext.gregs[REG_RBP])
-#define R8_sig(context)      ((context)->uc_mcontext.gregs[REG_R8])
-#define R9_sig(context)      ((context)->uc_mcontext.gregs[REG_R9])
-#define R10_sig(context)     ((context)->uc_mcontext.gregs[REG_R10])
-#define R11_sig(context)     ((context)->uc_mcontext.gregs[REG_R11])
-#define R12_sig(context)     ((context)->uc_mcontext.gregs[REG_R12])
-#define R13_sig(context)     ((context)->uc_mcontext.gregs[REG_R13])
-#define R14_sig(context)     ((context)->uc_mcontext.gregs[REG_R14])
-#define R15_sig(context)     ((context)->uc_mcontext.gregs[REG_R15])
-
-#define CS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 0))
-#define GS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 1))
-#define FS_sig(context)      (*((WORD *)&(context)->uc_mcontext.gregs[REG_CSGSFS] + 2))
-
-#define RSP_sig(context)     ((context)->uc_mcontext.gregs[REG_RSP])
-#define RIP_sig(context)     ((context)->uc_mcontext.gregs[REG_RIP])
-#define EFL_sig(context)     ((context)->uc_mcontext.gregs[REG_EFL])
-#define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
-#define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
-
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
-
-#elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
-
-#define RAX_sig(context)     ((context)->uc_mcontext.mc_rax)
-#define RBX_sig(context)     ((context)->uc_mcontext.mc_rbx)
-#define RCX_sig(context)     ((context)->uc_mcontext.mc_rcx)
-#define RDX_sig(context)     ((context)->uc_mcontext.mc_rdx)
-#define RSI_sig(context)     ((context)->uc_mcontext.mc_rsi)
-#define RDI_sig(context)     ((context)->uc_mcontext.mc_rdi)
-#define RBP_sig(context)     ((context)->uc_mcontext.mc_rbp)
-#define R8_sig(context)      ((context)->uc_mcontext.mc_r8)
-#define R9_sig(context)      ((context)->uc_mcontext.mc_r9)
-#define R10_sig(context)     ((context)->uc_mcontext.mc_r10)
-#define R11_sig(context)     ((context)->uc_mcontext.mc_r11)
-#define R12_sig(context)     ((context)->uc_mcontext.mc_r12)
-#define R13_sig(context)     ((context)->uc_mcontext.mc_r13)
-#define R14_sig(context)     ((context)->uc_mcontext.mc_r14)
-#define R15_sig(context)     ((context)->uc_mcontext.mc_r15)
-
-#define CS_sig(context)      ((context)->uc_mcontext.mc_cs)
-#define DS_sig(context)      ((context)->uc_mcontext.mc_ds)
-#define ES_sig(context)      ((context)->uc_mcontext.mc_es)
-#define FS_sig(context)      ((context)->uc_mcontext.mc_fs)
-#define GS_sig(context)      ((context)->uc_mcontext.mc_gs)
-#define SS_sig(context)      ((context)->uc_mcontext.mc_ss)
-
-#define EFL_sig(context)     ((context)->uc_mcontext.mc_rflags)
-
-#define RIP_sig(context)     ((context)->uc_mcontext.mc_rip)
-#define RSP_sig(context)     ((context)->uc_mcontext.mc_rsp)
-#define TRAP_sig(context)    ((context)->uc_mcontext.mc_trapno)
-#define ERROR_sig(context)   ((context)->uc_mcontext.mc_err)
-
-#define FPU_sig(context)   ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.mc_fpstate))
-
-#elif defined(__NetBSD__)
-
-#define RAX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RAX])
-#define RBX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RBX])
-#define RCX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RCX])
-#define RDX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RDX])
-#define RSI_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RSI])
-#define RDI_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RDI])
-#define RBP_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RBP])
-#define R8_sig(context)     ((context)->uc_mcontext.__gregs[_REG_R8])
-#define R9_sig(context)     ((context)->uc_mcontext.__gregs[_REG_R9])
-#define R10_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R10])
-#define R11_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R11])
-#define R12_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R12])
-#define R13_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R13])
-#define R14_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R14])
-#define R15_sig(context)    ((context)->uc_mcontext.__gregs[_REG_R15])
-
-#define CS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_CS])
-#define DS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_DS])
-#define ES_sig(context)     ((context)->uc_mcontext.__gregs[_REG_ES])
-#define FS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_FS])
-#define GS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_GS])
-#define SS_sig(context)     ((context)->uc_mcontext.__gregs[_REG_SS])
-
-#define EFL_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RFL])
-
-#define RIP_sig(context)    (*((unsigned long*)&(context)->uc_mcontext.__gregs[_REG_RIP]))
-#define RSP_sig(context)    (*((unsigned long*)&(context)->uc_mcontext.__gregs[_REG_URSP]))
-
-#define TRAP_sig(context)   ((context)->uc_mcontext.__gregs[_REG_TRAPNO])
-#define ERROR_sig(context)  ((context)->uc_mcontext.__gregs[_REG_ERR])
-
-#define FPU_sig(context)   ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.__fpregs))
-#elif defined (__APPLE__)
-#define RAX_sig(context)     ((context)->uc_mcontext->__ss.__rax)
-#define RBX_sig(context)     ((context)->uc_mcontext->__ss.__rbx)
-#define RCX_sig(context)     ((context)->uc_mcontext->__ss.__rcx)
-#define RDX_sig(context)     ((context)->uc_mcontext->__ss.__rdx)
-#define RSI_sig(context)     ((context)->uc_mcontext->__ss.__rsi)
-#define RDI_sig(context)     ((context)->uc_mcontext->__ss.__rdi)
-#define RBP_sig(context)     ((context)->uc_mcontext->__ss.__rbp)
-#define R8_sig(context)      ((context)->uc_mcontext->__ss.__r8)
-#define R9_sig(context)      ((context)->uc_mcontext->__ss.__r9)
-#define R10_sig(context)     ((context)->uc_mcontext->__ss.__r10)
-#define R11_sig(context)     ((context)->uc_mcontext->__ss.__r11)
-#define R12_sig(context)     ((context)->uc_mcontext->__ss.__r12)
-#define R13_sig(context)     ((context)->uc_mcontext->__ss.__r13)
-#define R14_sig(context)     ((context)->uc_mcontext->__ss.__r14)
-#define R15_sig(context)     ((context)->uc_mcontext->__ss.__r15)
-
-#define CS_sig(context)      ((context)->uc_mcontext->__ss.__cs)
-#define FS_sig(context)      ((context)->uc_mcontext->__ss.__fs)
-#define GS_sig(context)      ((context)->uc_mcontext->__ss.__gs)
-
-#define EFL_sig(context)     ((context)->uc_mcontext->__ss.__rflags)
-
-#define RIP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->__ss.__rip))
-#define RSP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext->__ss.__rsp))
-
-#define TRAP_sig(context)    ((context)->uc_mcontext->__es.__trapno)
-#define ERROR_sig(context)   ((context)->uc_mcontext->__es.__err)
-
-#define FPU_sig(context)     ((XMM_SAVE_AREA32 *)&(context)->uc_mcontext->__fs.__fpu_fcw)
-
-#else
-#error You must define the signal context functions for your platform
-#endif
-
 
 /***********************************************************************
  * Definitions for Win32 unwind tables
