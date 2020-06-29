@@ -2412,6 +2412,7 @@ static void dump_next_thread_reply( const struct next_thread_reply *req )
     fprintf( stderr, ", tid=%04x", req->tid );
     fprintf( stderr, ", base_pri=%d", req->base_pri );
     fprintf( stderr, ", delta_pri=%d", req->delta_pri );
+    fprintf( stderr, ", unix_tid=%d", req->unix_tid );
 }
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )

@@ -150,6 +150,7 @@ static int snapshot_next_thread( struct snapshot *snapshot, struct next_thread_r
     reply->tid       = get_thread_id( ptr->thread );
     reply->base_pri  = ptr->priority;
     reply->delta_pri = 0;  /* FIXME */
+    reply->unix_tid  = ptr->thread->unix_tid;
     return 1;
 }
 

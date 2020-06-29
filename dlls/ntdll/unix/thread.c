@@ -824,7 +824,7 @@ static void wow64_context_to_server( context_t *to, const WOW64_CONTEXT *from )
 #endif /* __x86_64__ */
 
 #ifdef linux
-static BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
+BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
 {
     unsigned long clocks_per_sec = sysconf( _SC_CLK_TCK );
     unsigned long usr, sys;
@@ -869,7 +869,7 @@ static BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_t
     return FALSE;
 }
 #else
-static BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
+BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
 {
     static int once;
     if (!once++) FIXME("not implemented on this platform\n");

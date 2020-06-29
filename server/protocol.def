@@ -1913,6 +1913,7 @@ enum char_info_mode
     thread_id_t  tid;           /* thread id */
     int          base_pri;      /* base priority */
     int          delta_pri;     /* delta priority */
+    int          unix_tid;      /* thread native pid */
 @END
 
 

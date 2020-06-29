@@ -2101,6 +2101,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         len = 0;
         while (ret == STATUS_SUCCESS)
         {
+            int unix_pid = -1;
             SERVER_START_REQ( next_process )
             {
                 req->handle = wine_server_obj_handle( handle );
@@ -2108,6 +2109,8 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 wine_server_set_reply( req, procname, sizeof(procname) - sizeof(WCHAR) );
                 if (!(ret = wine_server_call( req )))
                 {
+                    unix_pid = reply->unix_pid;
+
                     /* Make sure procname is 0 terminated */
                     procname[wine_server_reply_size(reply) / sizeof(WCHAR)] = 0;
 
@@ -2156,31 +2159,38 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 i = j = 0;
                 while (ret == STATUS_SUCCESS)
                 {
+                    int unix_tid, pid, tid, base_pri, delta_pri;
                     SERVER_START_REQ( next_thread )
                     {
                         req->handle = wine_server_obj_handle( handle );
                         req->reset = (j == 0);
                         if (!(ret = wine_server_call( req )))
                         {
+                            unix_tid = reply->unix_tid;
+                            pid = reply->pid;
+                            tid = reply->tid;
+                            base_pri = reply->base_pri;
+                            delta_pri = reply->delta_pri;
                             j++;
-                            if (UlongToHandle(reply->pid) == spi->UniqueProcessId)
-                            {
-                                /* ftKernelTime, ftUserTime, ftCreateTime;
-                                 * dwTickCount, dwStartAddress
-                                 */
-
-                                memset(&spi->ti[i], 0, sizeof(spi->ti));
-
-                                spi->ti[i].CreateTime.QuadPart = 0xdeadbeef;
-                                spi->ti[i].ClientId.UniqueProcess = UlongToHandle(reply->pid);
-                                spi->ti[i].ClientId.UniqueThread  = UlongToHandle(reply->tid);
-                                spi->ti[i].dwCurrentPriority = reply->base_pri + reply->delta_pri;
-                                spi->ti[i].dwBasePriority = reply->base_pri;
-                                i++;
-                            }
                         }
                     }
                     SERVER_END_REQ;
+
+                    if (!ret)
+                    {
+                        if (UlongToHandle(pid) == spi->UniqueProcessId)
+                        {
+                            memset(&spi->ti[i], 0, sizeof(spi->ti));
+
+                            spi->ti[i].CreateTime.QuadPart = 0xdeadbeef;
+                            spi->ti[i].ClientId.UniqueProcess = UlongToHandle(pid);
+                            spi->ti[i].ClientId.UniqueThread  = UlongToHandle(tid);
+                            spi->ti[i].dwCurrentPriority = base_pri + delta_pri;
+                            spi->ti[i].dwBasePriority = base_pri;
+                            get_thread_times(unix_pid, unix_tid, &spi->ti[i].KernelTime, &spi->ti[i].UserTime);
+                            i++;
+                        }
+                    }
                 }
                 if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
 

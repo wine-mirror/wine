@@ -1362,6 +1362,7 @@ C_ASSERT( FIELD_OFFSET(struct next_thread_reply, pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct next_thread_reply, tid) == 16 );
 C_ASSERT( FIELD_OFFSET(struct next_thread_reply, base_pri) == 20 );
 C_ASSERT( FIELD_OFFSET(struct next_thread_reply, delta_pri) == 24 );
+C_ASSERT( FIELD_OFFSET(struct next_thread_reply, unix_tid) == 28 );
 C_ASSERT( sizeof(struct next_thread_reply) == 32 );
 C_ASSERT( FIELD_OFFSET(struct wait_debug_event_request, get_handle) == 12 );
 C_ASSERT( sizeof(struct wait_debug_event_request) == 16 );
