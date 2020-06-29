@@ -360,7 +360,7 @@ NTSTATUS CDECL DECLSPEC_HIDDEN __regs_NtGetContextThread( DWORD edi, DWORD esi, 
     {
         context->Ebp    = ebp;
         context->Esp    = (DWORD)&retaddr;
-        context->Eip    = *(&edi - 1);
+        context->Eip    = (DWORD)NtGetContextThread + 12;
         context->EFlags = eflags;
     }
     return unix_funcs->NtGetContextThread( handle, context );
