@@ -1678,7 +1678,7 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
     return status;
 }
 
-enum mountmgr_fs_type get_mountmgr_fs_type(enum fs_type fs_type)
+static enum mountmgr_fs_type get_mountmgr_fs_type(enum fs_type fs_type)
 {
     switch (fs_type)
     {
