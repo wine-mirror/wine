@@ -904,17 +904,10 @@ static HRESULT WINAPI HTMLDocument_get_cookie(IHTMLDocument2 *iface, BSTR *p)
 
     size = 0;
     bret = InternetGetCookieExW(This->window->url, NULL, NULL, &size, 0, NULL);
-    if(!bret) {
-        switch(GetLastError()) {
-        case ERROR_INSUFFICIENT_BUFFER:
-            break;
-        case ERROR_NO_MORE_ITEMS:
-            *p = NULL;
-            return S_OK;
-        default:
-            FIXME("InternetGetCookieExW failed: %u\n", GetLastError());
-            return HRESULT_FROM_WIN32(GetLastError());
-        }
+    if(!bret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+        WARN("InternetGetCookieExW failed: %u\n", GetLastError());
+        *p = NULL;
+        return S_OK;
     }
 
     if(!size) {

@@ -7276,6 +7276,11 @@ static void test_defaults(IHTMLDocument2 *doc)
     test_default_selection(doc);
     test_doc_title(doc, L"");
     test_dom_implementation(doc);
+
+    str = (BSTR)0xdeadbeef;
+    hres = IHTMLDocument2_get_cookie(doc, &str);
+    ok(hres == S_OK, "get_cookie failed: %08x\n", hres);
+    ok(!str, "cookie = %s\n", wine_dbgstr_w(str));
 }
 
 #define test_button_name(a,b) _test_button_name(__LINE__,a,b)
