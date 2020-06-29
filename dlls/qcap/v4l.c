@@ -212,15 +212,11 @@ static HRESULT v4l_device_set_format(struct video_capture_device *iface, const A
     return S_OK;
 }
 
-static HRESULT v4l_device_get_format(struct video_capture_device *iface, AM_MEDIA_TYPE **mt)
+static HRESULT v4l_device_get_format(struct video_capture_device *iface, AM_MEDIA_TYPE *mt)
 {
     struct v4l_device *device = v4l_device(iface);
 
-    *mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-    if (!*mt)
-        return E_OUTOFMEMORY;
-
-    return CopyMediaType(*mt, &device->current_caps->media_type);
+    return CopyMediaType(mt, &device->current_caps->media_type);
 }
 
 static __u32 v4l2_cid_from_qcap_property(VideoProcAmpProperty property)

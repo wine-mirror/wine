@@ -223,16 +223,18 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     return hr;
 }
 
-static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE **pmt)
+static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE **mt)
 {
     VfwCapture *filter = impl_from_IAMStreamConfig(iface);
     HRESULT hr;
 
-    TRACE("filter %p, mt %p.\n", filter, pmt);
+    TRACE("filter %p, mt %p.\n", filter, mt);
 
-    hr = filter->device->ops->get_format(filter->device, pmt);
-    if (SUCCEEDED(hr))
-        strmbase_dump_media_type(*pmt);
+    if (!(*mt = CoTaskMemAlloc(sizeof(**mt))))
+        return E_OUTOFMEMORY;
+
+    if (SUCCEEDED(hr = filter->device->ops->get_format(filter->device, *mt)))
+        strmbase_dump_media_type(*mt);
     return hr;
 }
 
