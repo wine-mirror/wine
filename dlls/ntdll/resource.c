@@ -310,7 +310,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrFindResource_U( HMODULE hmod, const LDR_RES
 }
 
 
-/* don't penalize other platforms stuff needed on i386 for compatibility */
+/* don't penalize other platforms with stuff needed on i386 for compatibility */
 #ifdef __i386__
 NTSTATUS WINAPI DECLSPEC_HIDDEN access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_ENTRY *entry,
                                                  void **ptr, ULONG *size )
