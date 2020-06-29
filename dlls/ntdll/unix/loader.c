@@ -105,10 +105,6 @@ static void (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_func
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
 #endif
 
-extern int __wine_main_argc;
-extern char **__wine_main_argv;
-extern char **__wine_main_environ;
-
 #if defined(linux) || defined(__APPLE__)
 static const BOOL use_preloader = TRUE;
 #else
@@ -1802,39 +1798,6 @@ void __wine_main( int argc, char *argv[], char *envp[] )
     p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
 }
 
-
-static int add_area( void *base, size_t size, void *arg )
-{
-    mmap_add_reserved_area( base, size );
-    return 0;
-}
-
-/***********************************************************************
- *           __wine_init_unix_lib
- *
- * Lib entry point called by ntdll.dll.so if not yet initialized.
- */
-NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, const void *ptr_in, void *ptr_out )
-{
-    const IMAGE_NT_HEADERS *nt = ptr_in;
-
-#ifdef __APPLE__
-    extern char **__wine_get_main_environment(void);
-    char **envp = __wine_get_main_environment();
-#else
-    char **envp = __wine_main_environ;
-#endif
-    init_paths( __wine_main_argc, __wine_main_argv, envp );
-
-    ntdll_module = module;
-    map_so_dll( nt, module );
-    fixup_ntdll_imports( &__wine_spec_nt_header );
-    init_environment( __wine_main_argc, __wine_main_argv, envp );
-    wine_dll_set_callback( load_builtin_callback );
-    *(struct unix_funcs **)ptr_out = &unix_funcs;
-    wine_mmap_enum_reserved_areas( add_area, NULL, 0 );
-    return STATUS_SUCCESS;
-}
 
 BOOL WINAPI DECLSPEC_HIDDEN DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {

@@ -3900,33 +3900,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 
-static NTSTATUS load_ntdll_so( HMODULE module, const IMAGE_NT_HEADERS *nt )
-{
-    NTSTATUS (__cdecl *init_func)( HMODULE module, const void *ptr_in, void *ptr_out );
-    Dl_info info;
-    char *name;
-    void *handle;
-
-    if (!dladdr( load_ntdll_so, &info ))
-    {
-        fprintf( stderr, "cannot get path to ntdll.dll.so\n" );
-        exit(1);
-    }
-    name = strdup( info.dli_fname );
-    strcpy( name + strlen(name) - strlen(".dll.so"), ".so" );
-    if (!(handle = dlopen( name, RTLD_NOW )))
-    {
-        fprintf( stderr, "failed to load %s: %s\n", name, dlerror() );
-        exit(1);
-    }
-    if (!(init_func = dlsym( handle, "__wine_init_unix_lib" )))
-    {
-        fprintf( stderr, "init func not found in %s\n", name );
-        exit(1);
-    }
-    return init_func( module, nt, &unix_funcs );
-}
-
 /***********************************************************************
  *           __wine_process_init
  */
@@ -3948,13 +3921,9 @@ void __wine_process_init(void)
     HMODULE ntdll_module = (HMODULE)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
     INITIAL_TEB stack;
     SIZE_T info_size;
-    TEB *teb;
-    PEB *peb;
+    TEB *teb = thread_init( &info_size );
+    PEB *peb = teb->Peb;
 
-    if (!unix_funcs) load_ntdll_so( ntdll_module, &__wine_spec_nt_header );
-
-    teb = thread_init( &info_size );
-    peb = teb->Peb;
     peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
     peb->LoaderLock = &loader_section;
 
