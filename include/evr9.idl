@@ -62,7 +62,7 @@ interface IMFVideoMixerBitmap : IUnknown
 
 [
     object,
-    uuid(6AB0000C-FECE-4d1f-A2AC-A9573530656E),
+    uuid(6ab0000c-fece-4d1f-a2ac-a9573530656e),
     pointer_default(unique)
 ]
 interface IMFVideoProcessor : IUnknown

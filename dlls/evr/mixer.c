@@ -49,6 +49,7 @@ struct video_mixer
     IMFGetService IMFGetService_iface;
     IMFVideoMixerBitmap IMFVideoMixerBitmap_iface;
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
+    IMFVideoProcessor IMFVideoProcessor_iface;
     LONG refcount;
 
     struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
@@ -93,6 +94,11 @@ static struct video_mixer *impl_from_IMFVideoMixerBitmap(IMFVideoMixerBitmap *if
 static struct video_mixer *impl_from_IMFVideoPositionMapper(IMFVideoPositionMapper *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoPositionMapper_iface);
+}
+
+static struct video_mixer *impl_from_IMFVideoProcessor(IMFVideoProcessor *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFVideoProcessor_iface);
 }
 
 static int video_mixer_compare_input_id(const void *a, const void *b)
@@ -151,6 +157,10 @@ static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, 
     else if (IsEqualIID(riid, &IID_IMFVideoPositionMapper))
     {
         *obj = &mixer->IMFVideoPositionMapper_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoProcessor))
+    {
+        *obj = &mixer->IMFVideoProcessor_iface;
     }
     else
     {
@@ -914,6 +924,129 @@ static const IMFVideoPositionMapperVtbl video_mixer_position_mapper_vtbl =
     video_mixer_position_mapper_MapOutputCoordinateToInputStream,
 };
 
+static HRESULT WINAPI video_mixer_processor_QueryInterface(IMFVideoProcessor *iface, REFIID riid, void **obj)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, obj);
+}
+
+static ULONG WINAPI video_mixer_processor_AddRef(IMFVideoProcessor *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_processor_Release(IMFVideoProcessor *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_processor_GetAvailableVideoProcessorModes(IMFVideoProcessor *iface, UINT *count,
+        GUID **modes)
+{
+    FIXME("%p, %p, %p.\n", iface, count, modes);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetVideoProcessorCaps(IMFVideoProcessor *iface, GUID *mode,
+        DXVA2_VideoProcessorCaps *caps)
+{
+    FIXME("%p, %s, %p.\n", iface, debugstr_guid(mode), caps);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetVideoProcessorMode(IMFVideoProcessor *iface, GUID *mode)
+{
+    FIXME("%p, %p.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_SetVideoProcessorMode(IMFVideoProcessor *iface, GUID *mode)
+{
+    FIXME("%p, %s.\n", iface, debugstr_guid(mode));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetProcAmpRange(IMFVideoProcessor *iface, DWORD prop, DXVA2_ValueRange *range)
+{
+    FIXME("%p, %#x, %p.\n", iface, prop, range);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetProcAmpValues(IMFVideoProcessor *iface, DWORD flags, DXVA2_ProcAmpValues *values)
+{
+    FIXME("%p, %#x, %p.\n", iface, flags, values);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_SetProcAmpValues(IMFVideoProcessor *iface, DWORD flags, DXVA2_ProcAmpValues *values)
+{
+    FIXME("%p, %#x, %p.\n", iface, flags, values);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetFilteringRange(IMFVideoProcessor *iface, DWORD prop, DXVA2_ValueRange *range)
+{
+    FIXME("%p, %#x, %p.\n", iface, prop, range);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetFilteringValue(IMFVideoProcessor *iface, DWORD prop, DXVA2_Fixed32 *value)
+{
+    FIXME("%p, %#x, %p.\n", iface, prop, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_SetFilteringValue(IMFVideoProcessor *iface, DWORD prop, DXVA2_Fixed32 *value)
+{
+    FIXME("%p, %#x, %p.\n", iface, prop, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_GetBackgroundColor(IMFVideoProcessor *iface, COLORREF *color)
+{
+    FIXME("%p, %p.\n", iface, color);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_processor_SetBackgroundColor(IMFVideoProcessor *iface, COLORREF color)
+{
+    FIXME("%p, %#x.\n", iface, color);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoProcessorVtbl video_mixer_processor_vtbl =
+{
+    video_mixer_processor_QueryInterface,
+    video_mixer_processor_AddRef,
+    video_mixer_processor_Release,
+    video_mixer_processor_GetAvailableVideoProcessorModes,
+    video_mixer_processor_GetVideoProcessorCaps,
+    video_mixer_processor_GetVideoProcessorMode,
+    video_mixer_processor_SetVideoProcessorMode,
+    video_mixer_processor_GetProcAmpRange,
+    video_mixer_processor_GetProcAmpValues,
+    video_mixer_processor_SetProcAmpValues,
+    video_mixer_processor_GetFilteringRange,
+    video_mixer_processor_GetFilteringValue,
+    video_mixer_processor_SetFilteringValue,
+    video_mixer_processor_GetBackgroundColor,
+    video_mixer_processor_SetBackgroundColor,
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -943,6 +1076,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFGetService_iface.lpVtbl = &video_mixer_getservice_vtbl;
     object->IMFVideoMixerBitmap_iface.lpVtbl = &video_mixer_bitmap_vtbl;
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_mixer_position_mapper_vtbl;
+    object->IMFVideoProcessor_iface.lpVtbl = &video_mixer_processor_vtbl;
     object->refcount = 1;
     object->input_count = 1;
     video_mixer_init_input(&object->inputs[0]);

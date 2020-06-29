@@ -405,10 +405,8 @@ static void test_default_mixer(void)
     IUnknown_Release(unk);
 
     hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+    IUnknown_Release(unk);
 
     hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoPositionMapper, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -425,10 +423,8 @@ todo_wine
     IUnknown_Release(unk);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+    IUnknown_Release(unk);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoMixerControl, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
