@@ -3463,7 +3463,7 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
 
     TRACE("%p, %u, %p, %u\n", hsocket, status, reason, len);
 
-    if (len && !reason) return ERROR_INVALID_PARAMETER;
+    if ((len && !reason) || len > sizeof(socket->reason)) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
     if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
@@ -3484,7 +3484,7 @@ DWORD WINAPI WinHttpWebSocketShutdown( HINTERNET hsocket, USHORT status, void *r
         if (!(s = heap_alloc( sizeof(*s) ))) return FALSE;
         s->socket = socket;
         s->status = status;
-        s->reason = reason;
+        memcpy( s->reason, reason, len );
         s->len    = len;
 
         addref_object( &socket->hdr );
@@ -3569,7 +3569,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
 
     TRACE("%p, %u, %p, %u\n", hsocket, status, reason, len);
 
-    if (len && !reason) return ERROR_INVALID_PARAMETER;
+    if ((len && !reason) || len > sizeof(socket->reason)) return ERROR_INVALID_PARAMETER;
 
     if (!(socket = (struct socket *)grab_object( hsocket ))) return ERROR_INVALID_HANDLE;
     if (socket->hdr.type != WINHTTP_HANDLE_TYPE_SOCKET)
@@ -3590,7 +3590,7 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
         if (!(s = heap_alloc( sizeof(*s) ))) return FALSE;
         s->socket = socket;
         s->status = status;
-        s->reason = reason;
+        memcpy( s->reason, reason, len );
         s->len    = len;
 
         addref_object( &socket->hdr );

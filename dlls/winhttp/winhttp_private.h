@@ -244,7 +244,7 @@ struct socket
     enum socket_opcode opcode;
     DWORD read_size;
     USHORT status;
-    char reason[128];
+    char reason[123];
     DWORD reason_len;
 };
 
@@ -305,7 +305,7 @@ struct socket_shutdown
 {
     struct socket *socket;
     USHORT status;
-    const void *reason;
+    char reason[123];
     DWORD len;
 };
 

@@ -3356,11 +3356,17 @@ static void test_websocket(int port)
     error = pWinHttpWebSocketShutdown(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, NULL, 1);
     ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
 
+    error = pWinHttpWebSocketShutdown(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, buf, sizeof(buf));
+    ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
     error = pWinHttpWebSocketShutdown(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, (void *)"success",
                                       sizeof("success"));
     ok(!error, "got %u\n", error);
 
     error = pWinHttpWebSocketClose(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, NULL, 1);
+    ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
+
+    error = pWinHttpWebSocketClose(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, buf, sizeof(buf));
     ok(error == ERROR_INVALID_PARAMETER, "got %u\n", error);
 
     error = pWinHttpWebSocketClose(socket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, (void *)"success2",
