@@ -308,7 +308,7 @@ static BOOL append_conditional_break(struct list *cond_list)
         return FALSE;
     }
     init_node(&iff->node, HLSL_IR_IF, NULL, condition->loc);
-    iff->condition = not;
+    hlsl_src_from_node(&iff->condition, not);
     list_add_tail(cond_list, &iff->node.entry);
 
     if (!(iff->then_instrs = d3dcompiler_alloc(sizeof(*iff->then_instrs))))
@@ -421,7 +421,7 @@ static struct hlsl_ir_swizzle *new_swizzle(DWORD s, unsigned int components,
         return NULL;
     init_node(&swizzle->node, HLSL_IR_SWIZZLE,
             new_hlsl_type(NULL, HLSL_CLASS_VECTOR, val->data_type->base_type, components, 1), *loc);
-    swizzle->val = val;
+    hlsl_src_from_node(&swizzle->val, val);
     swizzle->swizzle = s;
     return swizzle;
 }
@@ -551,8 +551,8 @@ static struct hlsl_ir_assignment *new_assignment(struct hlsl_ir_var *var, struct
 
     init_node(&assign->node, HLSL_IR_ASSIGNMENT, NULL, loc);
     assign->lhs.var = var;
-    assign->lhs.offset = offset;
-    assign->rhs = rhs;
+    hlsl_src_from_node(&assign->lhs.offset, offset);
+    hlsl_src_from_node(&assign->rhs, rhs);
     assign->writemask = writemask;
     return assign;
 }
@@ -616,7 +616,7 @@ struct hlsl_ir_node *new_unary_expr(enum hlsl_ir_expr_op op, struct hlsl_ir_node
         return NULL;
     init_node(&expr->node, HLSL_IR_EXPR, arg->data_type, loc);
     expr->op = op;
-    expr->operands[0] = arg;
+    hlsl_src_from_node(&expr->operands[0], arg);
     return &expr->node;
 }
 
@@ -631,8 +631,8 @@ struct hlsl_ir_node *new_binary_expr(enum hlsl_ir_expr_op op,
         return NULL;
     init_node(&expr->node, HLSL_IR_EXPR, arg1->data_type, arg1->loc);
     expr->op = op;
-    expr->operands[0] = arg1;
-    expr->operands[1] = arg2;
+    hlsl_src_from_node(&expr->operands[0], arg1);
+    hlsl_src_from_node(&expr->operands[1], arg2);
     return &expr->node;
 }
 
@@ -662,9 +662,9 @@ static struct hlsl_ir_load *add_load(struct list *instrs, struct hlsl_ir_node *v
         const struct hlsl_deref *src = &load_from_node(var_node)->src;
 
         var = src->var;
-        if (src->offset)
+        if (src->offset.node)
         {
-            if (!(add = new_binary_expr(HLSL_IR_BINOP_ADD, src->offset, offset)))
+            if (!(add = new_binary_expr(HLSL_IR_BINOP_ADD, src->offset.node, offset)))
                 return NULL;
             list_add_tail(instrs, &add->entry);
             offset = add;
@@ -691,7 +691,7 @@ static struct hlsl_ir_load *add_load(struct list *instrs, struct hlsl_ir_node *v
         return NULL;
     init_node(&load->node, HLSL_IR_LOAD, data_type, loc);
     load->src.var = var;
-    load->src.offset = offset;
+    hlsl_src_from_node(&load->src.offset, offset);
     list_add_tail(instrs, &load->node.entry);
     return load;
 }
@@ -2212,16 +2212,18 @@ jump_statement:
 selection_statement:      KW_IF '(' expr ')' if_body
                             {
                                 struct hlsl_ir_if *instr = d3dcompiler_alloc(sizeof(*instr));
+                                struct hlsl_ir_node *condition = node_from_list($3);
+
                                 if (!instr)
                                 {
                                     ERR("Out of memory\n");
                                     YYABORT;
                                 }
                                 init_node(&instr->node, HLSL_IR_IF, NULL, get_location(&@1));
-                                instr->condition = node_from_list($3);
+                                hlsl_src_from_node(&instr->condition, condition);
                                 instr->then_instrs = $5.then_instrs;
                                 instr->else_instrs = $5.else_instrs;
-                                if (instr->condition->data_type->dimx > 1 || instr->condition->data_type->dimy > 1)
+                                if (condition->data_type->dimx > 1 || condition->data_type->dimy > 1)
                                 {
                                     hlsl_report_message(instr->node.loc, HLSL_LEVEL_ERROR,
                                             "if condition requires a scalar");
@@ -2883,19 +2885,18 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             var = assignment->lhs.var;
             if (!var->first_write)
                 var->first_write = loop_first ? min(instr->index, loop_first) : instr->index;
-            assignment->rhs->last_read = instr->index;
-            if (assignment->lhs.offset)
-                assignment->lhs.offset->last_read = instr->index;
+            assignment->rhs.node->last_read = instr->index;
+            if (assignment->lhs.offset.node)
+                assignment->lhs.offset.node->last_read = instr->index;
             break;
         }
         case HLSL_IR_EXPR:
         {
             struct hlsl_ir_expr *expr = expr_from_node(instr);
-            expr->operands[0]->last_read = instr->index;
-            if (expr->operands[1])
-                expr->operands[1]->last_read = instr->index;
-            if (expr->operands[2])
-                expr->operands[2]->last_read = instr->index;
+            unsigned int i;
+
+            for (i = 0; i < ARRAY_SIZE(expr->operands) && expr->operands[i].node; ++i)
+                expr->operands[i].node->last_read = instr->index;
             break;
         }
         case HLSL_IR_IF:
@@ -2904,7 +2905,7 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             compute_liveness_recurse(iff->then_instrs, loop_first, loop_last);
             if (iff->else_instrs)
                 compute_liveness_recurse(iff->else_instrs, loop_first, loop_last);
-            iff->condition->last_read = instr->index;
+            iff->condition.node->last_read = instr->index;
             break;
         }
         case HLSL_IR_LOAD:
@@ -2912,8 +2913,8 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
             struct hlsl_ir_load *load = load_from_node(instr);
             var = load->src.var;
             var->last_read = loop_last ? max(instr->index, loop_last) : instr->index;
-            if (load->src.offset)
-                load->src.offset->last_read = instr->index;
+            if (load->src.offset.node)
+                load->src.offset.node->last_read = instr->index;
             break;
         }
         case HLSL_IR_LOOP:
@@ -2926,7 +2927,7 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
         case HLSL_IR_SWIZZLE:
         {
             struct hlsl_ir_swizzle *swizzle = swizzle_from_node(instr);
-            swizzle->val->last_read = instr->index;
+            swizzle->val.node->last_read = instr->index;
             break;
         }
         case HLSL_IR_CONSTANT:

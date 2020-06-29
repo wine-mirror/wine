@@ -1369,9 +1369,8 @@ struct hlsl_ir_expr *add_expr(struct list *instrs, enum hlsl_ir_expr_op op, stru
         return NULL;
     init_node(&expr->node, HLSL_IR_EXPR, type, *loc);
     expr->op = op;
-    expr->operands[0] = operands[0];
-    expr->operands[1] = operands[1];
-    expr->operands[2] = operands[2];
+    for (i = 0; i <= 2; ++i)
+        hlsl_src_from_node(&expr->operands[i], operands[i]);
     list_add_tail(instrs, &expr->node.entry);
 
     return expr;
@@ -1485,11 +1484,12 @@ struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lh
             if (lhs->data_type->type == HLSL_CLASS_MATRIX)
                 FIXME("Assignments with writemasks and matrices on lhs are not supported yet.\n");
 
-            lhs_inner = swizzle->val;
+            lhs_inner = swizzle->val.node;
+            hlsl_src_remove(&swizzle->val);
             list_remove(&lhs->entry);
 
             list_add_after(&rhs->entry, &lhs->entry);
-            swizzle->val = rhs;
+            hlsl_src_from_node(&swizzle->val, rhs);
             if (!invert_swizzle(&swizzle->swizzle, &writemask, &width))
             {
                 hlsl_report_message(lhs->loc, HLSL_LEVEL_ERROR, "invalid writemask");
@@ -1513,7 +1513,8 @@ struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lh
 
     init_node(&assign->node, HLSL_IR_ASSIGNMENT, lhs_type, lhs->loc);
     assign->writemask = writemask;
-    assign->lhs = load_from_node(lhs)->src;
+    assign->lhs.var = load_from_node(lhs)->src.var;
+    hlsl_src_from_node(&assign->lhs.offset, load_from_node(lhs)->src.offset.node);
     if (assign_op != ASSIGN_OP_ASSIGN)
     {
         enum hlsl_ir_expr_op op = op_from_assignment(assign_op);
@@ -1524,7 +1525,7 @@ struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lh
         list_add_after(&rhs->entry, &expr->entry);
         rhs = expr;
     }
-    assign->rhs = rhs;
+    hlsl_src_from_node(&assign->rhs, rhs);
     list_add_tail(instrs, &assign->node.entry);
 
     return &assign->node;
@@ -1787,12 +1788,12 @@ static void debug_dump_instr_list(const struct list *list)
     }
 }
 
-static void debug_dump_src(const struct hlsl_ir_node *node)
+static void debug_dump_src(const struct hlsl_src *src)
 {
-    if (node->index)
-        wine_dbg_printf("@%u", node->index);
+    if (src->node->index)
+        wine_dbg_printf("@%u", src->node->index);
     else
-        wine_dbg_printf("%p", node);
+        wine_dbg_printf("%p", src->node);
 }
 
 static void debug_dump_ir_var(const struct hlsl_ir_var *var)
@@ -1806,15 +1807,15 @@ static void debug_dump_ir_var(const struct hlsl_ir_var *var)
 
 static void debug_dump_deref(const struct hlsl_deref *deref)
 {
-    if (deref->offset)
+    if (deref->offset.node)
         /* Print the variable's type for convenience. */
         wine_dbg_printf("(%s %s)", debug_hlsl_type(deref->var->data_type), deref->var->name);
     else
         wine_dbg_printf("%s", deref->var->name);
-    if (deref->offset)
+    if (deref->offset.node)
     {
         wine_dbg_printf("[");
-        debug_dump_src(deref->offset);
+        debug_dump_src(&deref->offset);
         wine_dbg_printf("]");
     }
 }
@@ -1942,9 +1943,9 @@ static void debug_dump_ir_expr(const struct hlsl_ir_expr *expr)
     unsigned int i;
 
     wine_dbg_printf("%s (", debug_expr_op(expr));
-    for (i = 0; i < 3 && expr->operands[i]; ++i)
+    for (i = 0; i < 3 && expr->operands[i].node; ++i)
     {
-        debug_dump_src(expr->operands[i]);
+        debug_dump_src(&expr->operands[i]);
         wine_dbg_printf(" ");
     }
     wine_dbg_printf(")");
@@ -1976,7 +1977,7 @@ static void debug_dump_ir_assignment(const struct hlsl_ir_assignment *assign)
     if (assign->writemask != BWRITERSP_WRITEMASK_ALL)
         wine_dbg_printf("%s", debug_writemask(assign->writemask));
     wine_dbg_printf(" ");
-    debug_dump_src(assign->rhs);
+    debug_dump_src(&assign->rhs);
     wine_dbg_printf(")");
 }
 
@@ -1984,9 +1985,9 @@ static void debug_dump_ir_swizzle(const struct hlsl_ir_swizzle *swizzle)
 {
     unsigned int i;
 
-    debug_dump_src(swizzle->val);
+    debug_dump_src(&swizzle->val);
     wine_dbg_printf(".");
-    if (swizzle->val->data_type->dimy > 1)
+    if (swizzle->val.node->data_type->dimy > 1)
     {
         for (i = 0; i < swizzle->node.data_type->dimx; ++i)
             wine_dbg_printf("_m%u%u", (swizzle->swizzle >> i * 8) & 0xf, (swizzle->swizzle >> (i * 8 + 4)) & 0xf);
@@ -2022,7 +2023,7 @@ static void debug_dump_ir_jump(const struct hlsl_ir_jump *jump)
 static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
 {
     wine_dbg_printf("if (");
-    debug_dump_src(if_node->condition);
+    debug_dump_src(&if_node->condition);
     wine_dbg_printf(")\n{\n");
     debug_dump_instr_list(if_node->then_instrs);
     wine_dbg_printf("}\n");
@@ -2135,21 +2136,29 @@ static void free_ir_constant(struct hlsl_ir_constant *constant)
 
 static void free_ir_load(struct hlsl_ir_load *load)
 {
+    hlsl_src_remove(&load->src.offset);
     d3dcompiler_free(load);
 }
 
 static void free_ir_swizzle(struct hlsl_ir_swizzle *swizzle)
 {
+    hlsl_src_remove(&swizzle->val);
     d3dcompiler_free(swizzle);
 }
 
 static void free_ir_expr(struct hlsl_ir_expr *expr)
 {
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(expr->operands); ++i)
+        hlsl_src_remove(&expr->operands[i]);
     d3dcompiler_free(expr);
 }
 
 static void free_ir_assignment(struct hlsl_ir_assignment *assignment)
 {
+    hlsl_src_remove(&assignment->rhs);
+    hlsl_src_remove(&assignment->lhs.offset);
     d3dcompiler_free(assignment);
 }
 
@@ -2157,6 +2166,7 @@ static void free_ir_if(struct hlsl_ir_if *if_node)
 {
     free_instr_list(if_node->then_instrs);
     free_instr_list(if_node->else_instrs);
+    hlsl_src_remove(&if_node->condition);
     d3dcompiler_free(if_node);
 }
 

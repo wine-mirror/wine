@@ -662,6 +662,8 @@ struct hlsl_ir_node
     enum hlsl_ir_node_type type;
     struct hlsl_type *data_type;
 
+    struct list uses;
+
     struct source_location loc;
 
     /* Liveness ranges. "index" is the index of this instruction. Since this is
@@ -669,6 +671,12 @@ struct hlsl_ir_node
      * true even for loops, since currently we can't have a reference to a
      * value generated in an earlier iteration of the loop. */
     unsigned int index, last_read;
+};
+
+struct hlsl_src
+{
+    struct hlsl_ir_node *node;
+    struct list entry;
 };
 
 #define HLSL_STORAGE_EXTERN          0x00000001
@@ -733,7 +741,7 @@ struct hlsl_ir_function_decl
 struct hlsl_ir_if
 {
     struct hlsl_ir_node node;
-    struct hlsl_ir_node *condition;
+    struct hlsl_src condition;
     struct list *then_instrs;
     struct list *else_instrs;
 };
@@ -817,7 +825,7 @@ struct hlsl_ir_expr
 {
     struct hlsl_ir_node node;
     enum hlsl_ir_expr_op op;
-    struct hlsl_ir_node *operands[3];
+    struct hlsl_src operands[3];
 };
 
 enum hlsl_ir_jump_type
@@ -837,14 +845,14 @@ struct hlsl_ir_jump
 struct hlsl_ir_swizzle
 {
     struct hlsl_ir_node node;
-    struct hlsl_ir_node *val;
+    struct hlsl_src val;
     DWORD swizzle;
 };
 
 struct hlsl_deref
 {
     struct hlsl_ir_var *var;
-    struct hlsl_ir_node *offset;
+    struct hlsl_src offset;
 };
 
 struct hlsl_ir_load
@@ -857,7 +865,7 @@ struct hlsl_ir_assignment
 {
     struct hlsl_ir_node node;
     struct hlsl_deref lhs;
-    struct hlsl_ir_node *rhs;
+    struct hlsl_src rhs;
     unsigned char writemask;
 };
 
@@ -1055,6 +1063,21 @@ static inline void init_node(struct hlsl_ir_node *node, enum hlsl_ir_node_type t
     node->type = type;
     node->data_type = data_type;
     node->loc = loc;
+    list_init(&node->uses);
+}
+
+static inline void hlsl_src_from_node(struct hlsl_src *src, struct hlsl_ir_node *node)
+{
+    src->node = node;
+    if (node)
+        list_add_tail(&node->uses, &src->entry);
+}
+
+static inline void hlsl_src_remove(struct hlsl_src *src)
+{
+    if (src->node)
+        list_remove(&src->entry);
+    src->node = NULL;
 }
 
 struct hlsl_ir_node *add_assignment(struct list *instrs, struct hlsl_ir_node *lhs,
