@@ -1507,7 +1507,6 @@ static struct unix_funcs unix_funcs =
     virtual_locked_recvmsg,
     virtual_release_address_space,
     virtual_set_large_address_space,
-    init_threading,
     exit_thread,
     exit_process,
     exec_process,
@@ -1532,6 +1531,29 @@ static struct unix_funcs unix_funcs =
 };
 
 
+/***********************************************************************
+ *           start_main_thread
+ */
+static void start_main_thread(void)
+{
+    BOOL suspend;
+    TEB *teb = virtual_alloc_first_teb();
+
+    signal_init_threading();
+    signal_alloc_thread( teb );
+    signal_init_thread( teb );
+    dbg_init();
+    server_init_process();
+    startup_info_size = server_init_thread( teb->Peb, &suspend );
+    virtual_map_user_shared_data();
+    virtual_create_builtin_view( ntdll_module );
+    init_cpu_info();
+    init_files();
+    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
+    p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+}
+
+
 #ifdef __APPLE__
 struct apple_stack_info
 {
@@ -1541,7 +1563,7 @@ struct apple_stack_info
 
 static void *apple_wine_thread( void *arg )
 {
-    p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    start_main_thread();
     return NULL;
 }
 
@@ -1795,7 +1817,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 #ifdef __APPLE__
     apple_main_thread();
 #endif
-    p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
+    start_main_thread();
 }
 
 

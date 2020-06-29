@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 68
+#define NTDLL_UNIXLIB_VERSION 69
 
 struct unix_funcs
 {
@@ -319,7 +319,6 @@ struct unix_funcs
     void          (CDECL *virtual_set_large_address_space)(void);
 
     /* thread/process functions */
-    TEB *         (CDECL *init_threading)( SIZE_T *size );
     void          (CDECL *exit_thread)( int status );
     void          (CDECL *exit_process)( int status );
     NTSTATUS      (CDECL *exec_process)( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status );

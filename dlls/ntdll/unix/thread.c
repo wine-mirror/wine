@@ -83,33 +83,6 @@ static void pthread_exit_wrapper( int status )
 }
 
 
-/***********************************************************************
- *           init_threading
- */
-TEB * CDECL init_threading( SIZE_T *size )
-{
-    TEB *teb;
-    BOOL suspend;
-
-    teb = virtual_alloc_first_teb();
-
-    signal_init_threading();
-    signal_alloc_thread( teb );
-    signal_init_thread( teb );
-    dbg_init();
-    server_init_process();
-    startup_info_size = server_init_thread( teb->Peb, &suspend );
-    virtual_map_user_shared_data();
-    virtual_create_builtin_view( ntdll_module );
-    init_cpu_info();
-    init_files();
-    NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
-
-    if (size) *size = startup_info_size;
-    return teb;
-}
-
-
 /* info passed to a starting thread */
 struct startup_info
 {

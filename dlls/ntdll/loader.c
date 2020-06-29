@@ -153,6 +153,20 @@ static CRITICAL_SECTION_DEBUG dlldir_critsect_debug =
 };
 static CRITICAL_SECTION dlldir_section = { &dlldir_critsect_debug, -1, 0, 0, 0, 0 };
 
+static RTL_CRITICAL_SECTION peb_lock;
+static RTL_CRITICAL_SECTION_DEBUG peb_critsect_debug =
+{
+    0, 0, &peb_lock,
+    { &peb_critsect_debug.ProcessLocksList, &peb_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": peb_lock") }
+};
+static RTL_CRITICAL_SECTION peb_lock = { &peb_critsect_debug, -1, 0, 0, 0, 0 };
+
+static PEB_LDR_DATA ldr = { sizeof(ldr), TRUE };
+static RTL_BITMAP tls_bitmap;
+static RTL_BITMAP tls_expansion_bitmap;
+static RTL_BITMAP fls_bitmap;
+
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
 static WINE_MODREF *last_failed_modref;
@@ -3920,12 +3934,37 @@ void __wine_process_init(void)
     UNICODE_STRING nt_name;
     HMODULE ntdll_module = (HMODULE)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
     INITIAL_TEB stack;
-    SIZE_T info_size;
-    TEB *teb = thread_init( &info_size );
+    ULONG_PTR val;
+    TEB *teb = NtCurrentTeb();
     PEB *peb = teb->Peb;
 
-    peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
-    peb->LoaderLock = &loader_section;
+    peb->LdrData            = &ldr;
+    peb->FastPebLock        = &peb_lock;
+    peb->TlsBitmap          = &tls_bitmap;
+    peb->TlsExpansionBitmap = &tls_expansion_bitmap;
+    peb->FlsBitmap          = &fls_bitmap;
+    peb->LoaderLock         = &loader_section;
+    peb->OSMajorVersion     = 5;
+    peb->OSMinorVersion     = 1;
+    peb->OSBuildNumber      = 0xA28;
+    peb->OSPlatformId       = VER_PLATFORM_WIN32_NT;
+    peb->SessionId          = 1;
+    peb->ProcessHeap        = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
+
+    InitializeListHead( &peb->FlsListHead );
+    RtlInitializeBitMap( &tls_bitmap, peb->TlsBitmapBits, sizeof(peb->TlsBitmapBits) * 8 );
+    RtlInitializeBitMap( &tls_expansion_bitmap, peb->TlsExpansionBitmapBits,
+                         sizeof(peb->TlsExpansionBitmapBits) * 8 );
+    RtlInitializeBitMap( &fls_bitmap, peb->FlsBitmapBits, sizeof(peb->FlsBitmapBits) * 8 );
+    RtlSetBits( peb->TlsBitmap, 0, 1 ); /* TLS index 0 is reserved and should be initialized to NULL. */
+    RtlSetBits( peb->FlsBitmap, 0, 1 );
+
+    InitializeListHead( &ldr.InLoadOrderModuleList );
+    InitializeListHead( &ldr.InMemoryOrderModuleList );
+    InitializeListHead( &ldr.InInitializationOrderModuleList );
+
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessWow64Information, &val, sizeof(val), NULL );
+    is_wow64 = !!val;
 
     init_unix_codepage();
     init_directories();
