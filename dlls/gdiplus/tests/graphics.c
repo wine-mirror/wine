@@ -6792,7 +6792,7 @@ static void test_hdc_caching(void)
     DeleteObject(hbm);
 }
 
-static void test_gdi_interop(void)
+static void test_gdi_interop_bitmap(void)
 {
     GpBitmap *bitmap;
     GpGraphics *graphics;
@@ -6881,6 +6881,141 @@ static void test_gdi_interop(void)
 
     stat = GdipDisposeImage((GpImage*)bitmap);
     expect(Ok, stat);
+}
+
+static void test_gdi_interop_hdc(void)
+{
+    BITMAPINFO bmi;
+    GpBrush *brush;
+    GpGraphics *graphics;
+    GpMatrix *transform;
+    GpStatus stat;
+    HBITMAP hbm;
+    HBRUSH hbrush, holdbrush;
+    HDC gdi_hdc;
+    HDC src_hdc;
+    ULONG *bits;
+    XFORM xform = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+
+    src_hdc = CreateCompatibleDC(0);
+    ok(src_hdc != NULL, "CreateCompatibleDC failed\n");
+
+    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+    bmi.bmiHeader.biHeight = -100;
+    bmi.bmiHeader.biWidth = 100;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biClrUsed = 0;
+    bmi.bmiHeader.biClrImportant = 0;
+
+    hbm = CreateDIBSection(src_hdc, &bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hbm != NULL, "CreateDIBSection failed\n");
+
+    SelectObject(src_hdc, hbm);
+
+    SetGraphicsMode(src_hdc, GM_ADVANCED);
+
+    xform.eDx = 10.0;
+    xform.eDy = 10.0;
+    SetWorldTransform(src_hdc, &xform);
+
+    stat = GdipCreateFromHDC(src_hdc, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateMatrix(&transform);
+    expect(Ok, stat);
+
+    stat = GdipSetMatrixElements(transform, 1.0, 0.0, 0.0, 1.0, 40.0, 40.0);
+    expect(Ok, stat);
+
+    /* GDI+: Set world transform. Should not matter to GDI. */
+    stat = GdipSetWorldTransform(graphics, transform);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &gdi_hdc);
+    expect(Ok, stat);
+    ok( gdi_hdc == src_hdc, "wrong dc\n" );
+
+    /* GDI: Set GDI transform back to (0, 0).
+       Should not matter to GDI+. */
+    xform.eDx = 0.0;
+    xform.eDy = 0.0;
+    SetWorldTransform(gdi_hdc, &xform);
+
+    hbrush = CreateSolidBrush(0xff00aa);
+
+    holdbrush = SelectObject(gdi_hdc, hbrush);
+
+    /* GDI: Draw a rectangle at physical coords (5, 5) to (12, 10). */
+    Rectangle(gdi_hdc, 5, 5, 12, 10);
+
+    holdbrush = SelectObject(gdi_hdc, holdbrush);
+
+    /* GDI: Set GDI transform to translate (+20, +20).
+       Should not matter to GDI+. */
+    xform.eDx = 20.0;
+    xform.eDy = 20.0;
+    SetWorldTransform(gdi_hdc, &xform);
+
+    GdipReleaseDC(graphics, gdi_hdc);
+
+    /* GDI world transform should still be intact, even when back
+       in GDI+ mode. */
+    stat = GetWorldTransform(src_hdc, &xform);
+    expect(TRUE, stat);
+    expect(20.0, xform.eDx);
+    expect(20.0, xform.eDy);
+
+    stat = GdipCreateSolidFill((ARGB)0xffaa00ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    /* GDI+: Draw a rectangle at physical coords (85, 85) to (88, 95).
+       The fact that the GDI world transform has been updated should
+       not influence the GDI+ world transform. GDI+ should still apply
+       the world transform from the when HDC backed graphics object was
+       instantiated. */
+    stat = GdipFillRectangleI(graphics, brush, 35, 35, 3, 10);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &gdi_hdc);
+    expect(Ok, stat);
+
+    holdbrush = SelectObject(gdi_hdc, hbrush);
+
+    /* GDI: Draw a rectangle at physical coords (25, 25) to (30, 34).
+       Updated transform should still be in effect. */
+    Rectangle(gdi_hdc, 5, 5, 10, 14);
+
+    SelectObject(gdi_hdc, holdbrush);
+
+    stat = GdipReleaseDC(graphics, gdi_hdc);
+    expect(Ok, stat);
+
+    GdipDeleteGraphics(graphics);
+    stat = GdipDeleteMatrix(transform);
+    expect(Ok, stat);
+
+    holdbrush = SelectObject(src_hdc, hbrush);
+
+    /* GDI: Draw a rectangle at physical coords (35, 35) to (40, 38).
+       Updated transform should still be in effect on src_hdc. */
+    Rectangle(gdi_hdc, 15, 15, 20, 18);
+
+    SelectObject(gdi_hdc, holdbrush);
+
+    DeleteObject(hbrush);
+
+    expect(0x00aa00ff, bits[6 * 100 + 6]);
+    expect(0x00aa00ff, bits[26 * 100 + 26]);
+    expect(0x00aa00ff, bits[36 * 100 + 36]);
+    todo_wine expect(0xffaa00ff, bits[86 * 100 + 86]);
+
+    DeleteDC(src_hdc);
+    DeleteObject(hbm);
 }
 
 START_TEST(graphics)
@@ -6976,7 +7111,8 @@ START_TEST(graphics)
     test_GdipGraphicsSetAbort();
     test_cliphrgn_transform();
     test_hdc_caching();
-    test_gdi_interop();
+    test_gdi_interop_bitmap();
+    test_gdi_interop_hdc();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
