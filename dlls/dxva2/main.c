@@ -42,6 +42,7 @@ enum device_handle_flags
 struct device_handle
 {
     unsigned int flags;
+    IDirect3DStateBlock9 *state_block;
 };
 
 struct device_manager
@@ -57,7 +58,10 @@ struct device_manager
     size_t count;
     size_t capacity;
 
+    HANDLE locking_handle;
+
     CRITICAL_SECTION cs;
+    CONDITION_VARIABLE lock;
 };
 
 static BOOL dxva_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
@@ -254,6 +258,7 @@ static ULONG WINAPI device_manager_Release(IDirect3DDeviceManager9 *iface)
 {
     struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
     ULONG refcount = InterlockedDecrement(&manager->refcount);
+    size_t i;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
@@ -262,6 +267,11 @@ static ULONG WINAPI device_manager_Release(IDirect3DDeviceManager9 *iface)
         if (manager->device)
             IDirect3DDevice9_Release(manager->device);
         DeleteCriticalSection(&manager->cs);
+        for (i = 0; i < manager->count; ++i)
+        {
+            if (manager->handles[i].state_block)
+                IDirect3DStateBlock9_Release(manager->handles[i].state_block);
+        }
         heap_free(manager->handles);
         heap_free(manager);
     }
@@ -284,12 +294,20 @@ static HRESULT WINAPI device_manager_ResetDevice(IDirect3DDeviceManager9 *iface,
     if (manager->device)
     {
         for (i = 0; i < manager->count; ++i)
+        {
+            if (manager->handles[i].state_block)
+                IDirect3DStateBlock9_Release(manager->handles[i].state_block);
+            manager->handles[i].state_block = NULL;
             manager->handles[i].flags |= HANDLE_FLAG_INVALID;
+        }
+        manager->locking_handle = NULL;
         IDirect3DDevice9_Release(manager->device);
     }
     manager->device = device;
     IDirect3DDevice9_AddRef(manager->device);
     LeaveCriticalSection(&manager->cs);
+
+    WakeAllConditionVariable(&manager->lock);
 
     return S_OK;
 }
@@ -324,6 +342,7 @@ static HRESULT WINAPI device_manager_OpenDeviceHandle(IDirect3DDeviceManager9 *i
         {
             *hdevice = ULongToHandle(manager->count + 1);
             manager->handles[manager->count].flags |= HANDLE_FLAG_OPEN;
+            manager->handles[manager->count].state_block = NULL;
             manager->count++;
         }
         else
@@ -355,14 +374,21 @@ static HRESULT WINAPI device_manager_CloseDeviceHandle(IDirect3DDeviceManager9 *
     {
         if (manager->handles[idx].flags & HANDLE_FLAG_OPEN)
         {
+            if (manager->locking_handle == hdevice)
+                manager->locking_handle = NULL;
             manager->handles[idx].flags = 0;
             if (idx == manager->count - 1)
                 manager->count--;
+            if (manager->handles[idx].state_block)
+                IDirect3DStateBlock9_Release(manager->handles[idx].state_block);
+            manager->handles[idx].state_block = NULL;
         }
         else
             hr = E_HANDLE;
     }
     LeaveCriticalSection(&manager->cs);
+
+    WakeAllConditionVariable(&manager->lock);
 
     return hr;
 }
@@ -393,16 +419,75 @@ static HRESULT WINAPI device_manager_TestDevice(IDirect3DDeviceManager9 *iface, 
 static HRESULT WINAPI device_manager_LockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice,
         IDirect3DDevice9 **device, BOOL block)
 {
-    FIXME("%p, %p, %p, %d.\n", iface, hdevice, device, block);
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    HRESULT hr;
+    size_t idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %d.\n", iface, hdevice, device, block);
+
+    EnterCriticalSection(&manager->cs);
+    if (!manager->device)
+        hr = DXVA2_E_NOT_INITIALIZED;
+    else if (SUCCEEDED(hr = device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        if (manager->locking_handle && !block)
+            hr = DXVA2_E_VIDEO_DEVICE_LOCKED;
+        else
+        {
+            while (manager->locking_handle && block)
+            {
+                SleepConditionVariableCS(&manager->lock, &manager->cs, INFINITE);
+            }
+
+            if (SUCCEEDED(hr = device_manager_get_handle_index(manager, hdevice, &idx)))
+            {
+                if (manager->handles[idx].flags & HANDLE_FLAG_INVALID)
+                    hr = DXVA2_E_NEW_VIDEO_DEVICE;
+                else
+                {
+                    if (manager->handles[idx].state_block)
+                    {
+                        if (FAILED(IDirect3DStateBlock9_Apply(manager->handles[idx].state_block)))
+                            WARN("Failed to apply state.\n");
+                        IDirect3DStateBlock9_Release(manager->handles[idx].state_block);
+                        manager->handles[idx].state_block = NULL;
+                    }
+                    *device = manager->device;
+                    IDirect3DDevice9_AddRef(*device);
+                    manager->locking_handle = hdevice;
+                }
+            }
+        }
+    }
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI device_manager_UnlockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice, BOOL savestate)
 {
-    FIXME("%p, %p, %d.\n", iface, hdevice, savestate);
+    struct device_manager *manager = impl_from_IDirect3DDeviceManager9(iface);
+    HRESULT hr;
+    size_t idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %d.\n", iface, hdevice, savestate);
+
+    EnterCriticalSection(&manager->cs);
+
+    if (hdevice != manager->locking_handle)
+        hr = E_INVALIDARG;
+    else if (SUCCEEDED(hr = device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        manager->locking_handle = NULL;
+        if (savestate)
+            IDirect3DDevice9_CreateStateBlock(manager->device, D3DSBT_ALL, &manager->handles[idx].state_block);
+    }
+
+    LeaveCriticalSection(&manager->cs);
+
+    WakeAllConditionVariable(&manager->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI device_manager_GetVideoService(IDirect3DDeviceManager9 *iface, HANDLE hdevice, REFIID riid,
@@ -470,6 +555,7 @@ HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9(UINT *token, IDirect3DDeviceMan
     object->refcount = 1;
     object->token = GetTickCount();
     InitializeCriticalSection(&object->cs);
+    InitializeConditionVariable(&object->lock);
 
     *token = object->token;
     *manager = &object->IDirect3DDeviceManager9_iface;

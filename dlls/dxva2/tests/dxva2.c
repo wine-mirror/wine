@@ -72,6 +72,7 @@ static void test_device_manager(void)
     HWND window;
     UINT token;
     HRESULT hr;
+    RECT rect;
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -88,13 +89,15 @@ static void test_device_manager(void)
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
     ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
+    hr = IDirect3DDeviceManager9_LockDevice(manager, 0, &device2, FALSE);
+    ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
     /* Invalid token. */
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token + 1);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
     refcount = get_refcount((IUnknown *)device);
 
     handle1 = NULL;
@@ -140,6 +143,7 @@ static void test_device_manager(void)
     IDirectXVideoProcessorService_Release(processor_service);
 
     device2 = create_device(d3d, window);
+
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device2, token);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -149,6 +153,110 @@ static void test_device_manager(void)
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle);
     ok(hr == DXVA2_E_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Lock/Unlock. */
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device pointer.\n");
+    IDirect3DDevice9_Release(device3);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, (HANDLE)((ULONG_PTR)handle + 100), FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Locked with one handle, unlock with another. */
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device pointer.\n");
+    IDirect3DDevice9_Release(device3);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle1, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Closing unlocks the device. */
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle1, &device3, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device pointer.\n");
+    IDirect3DDevice9_Release(device3);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Open two handles. */
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device pointer.\n");
+    IDirect3DDevice9_Release(device3);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle1, &device3, FALSE);
+    ok(hr == DXVA2_E_VIDEO_DEVICE_LOCKED, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* State saving function. */
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device pointer.\n");
+
+    SetRect(&rect, 50, 60, 70, 80);
+    hr = IDirect3DDevice9_SetScissorRect(device3, &rect);
+    ok(SUCCEEDED(hr), "Failed to set scissor rect, hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    SetRect(&rect, 30, 60, 70, 80);
+    hr = IDirect3DDevice9_SetScissorRect(device3, &rect);
+    ok(SUCCEEDED(hr), "Failed to set scissor rect, hr %#x.\n", hr);
+
+    IDirect3DDevice9_Release(device3);
+
+    hr = IDirect3DDeviceManager9_LockDevice(manager, handle, &device3, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device2 == device3, "Unexpected device pointer.\n");
+
+    hr = IDirect3DDevice9_GetScissorRect(device3, &rect);
+    ok(SUCCEEDED(hr), "Failed to get scissor rect, hr %#x.\n", hr);
+    ok(rect.left == 50 && rect.top == 60 && rect.right == 70 && rect.bottom == 80,
+            "Got unexpected scissor rect %s.\n", wine_dbgstr_rect(&rect));
+
+    IDirect3DDevice9_Release(device3);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(manager, handle, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Acceleration service. */
     hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoAccelerationService, (void **)&accel_service);
