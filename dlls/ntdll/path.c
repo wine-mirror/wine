@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <sys/types.h>
 
@@ -30,7 +27,6 @@
 #include "windef.h"
 #include "winioctl.h"
 #include "wine/debug.h"
-#include "wine/library.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);

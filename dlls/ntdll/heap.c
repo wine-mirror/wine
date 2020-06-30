@@ -19,19 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-#include <valgrind/memcheck.h>
-#else
-#define RUNNING_ON_VALGRIND 0
-#endif
+
+#define RUNNING_ON_VALGRIND 0  /* FIXME */
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

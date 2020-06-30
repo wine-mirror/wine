@@ -1470,7 +1470,7 @@
 @ cdecl _ui64tow(int64 ptr long)
 @ cdecl _ultoa(long ptr long)
 @ cdecl _ultow(long ptr long)
-@ cdecl -norelay _vsnprintf(ptr long str ptr) NTDLL__vsnprintf
+@ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnprintf_s(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr) NTDLL__vsnwprintf
 @ cdecl _vsnwprintf_s(ptr long long wstr ptr)
@@ -1486,7 +1486,7 @@
 @ cdecl atan(double) NTDLL_atan
 @ cdecl atoi(str) NTDLL_atoi
 @ cdecl atol(str) NTDLL_atol
-@ cdecl bsearch(ptr ptr long long ptr) NTDLL_bsearch
+@ cdecl bsearch(ptr ptr long long ptr)
 @ cdecl ceil(double) NTDLL_ceil
 @ cdecl cos(double) NTDLL_cos
 @ cdecl fabs(double) NTDLL_fabs
@@ -1512,12 +1512,12 @@
 @ cdecl log(double) NTDLL_log
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
 @ cdecl memchr(ptr long long) NTDLL_memchr
-@ cdecl memcmp(ptr ptr long) NTDLL_memcmp
-@ cdecl memcpy(ptr ptr long) NTDLL_memcpy
-@ cdecl memmove(ptr ptr long) NTDLL_memmove
-@ cdecl memset(ptr long long) NTDLL_memset
+@ cdecl memcmp(ptr ptr long)
+@ cdecl memcpy(ptr ptr long)
+@ cdecl memmove(ptr ptr long)
+@ cdecl memset(ptr long long)
 @ cdecl pow(double double) NTDLL_pow
-@ cdecl qsort(ptr long long ptr) NTDLL_qsort
+@ cdecl qsort(ptr long long ptr)
 @ cdecl sin(double) NTDLL_sin
 @ varargs sprintf(ptr str) NTDLL_sprintf
 @ varargs sprintf_s(ptr long str)

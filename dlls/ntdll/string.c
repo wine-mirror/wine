@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -83,7 +80,7 @@ void * __cdecl NTDLL_memchr( const void *ptr, int c, size_t n )
 /*********************************************************************
  *                  memcmp   (NTDLL.@)
  */
-int __cdecl NTDLL_memcmp( const void *ptr1, const void *ptr2, size_t n )
+int __cdecl memcmp( const void *ptr1, const void *ptr2, size_t n )
 {
     const unsigned char *p1, *p2;
 
@@ -102,7 +99,7 @@ int __cdecl NTDLL_memcmp( const void *ptr1, const void *ptr2, size_t n )
  * NOTES
  *  Behaves like memmove.
  */
-void * __cdecl NTDLL_memcpy( void *dst, const void *src, size_t n )
+void * __cdecl memcpy( void *dst, const void *src, size_t n )
 {
     volatile unsigned char *d = dst;  /* avoid gcc optimizations */
     const unsigned char *s = src;
@@ -124,7 +121,7 @@ void * __cdecl NTDLL_memcpy( void *dst, const void *src, size_t n )
 /*********************************************************************
  *                  memmove   (NTDLL.@)
  */
-void * __cdecl NTDLL_memmove( void *dst, const void *src, size_t n )
+void * __cdecl memmove( void *dst, const void *src, size_t n )
 {
     volatile unsigned char *d = dst;  /* avoid gcc optimizations */
     const unsigned char *s = src;
@@ -146,7 +143,7 @@ void * __cdecl NTDLL_memmove( void *dst, const void *src, size_t n )
 /*********************************************************************
  *                  memset   (NTDLL.@)
  */
-void * __cdecl NTDLL_memset( void *dst, int c, size_t n )
+void * __cdecl memset( void *dst, int c, size_t n )
 {
     volatile unsigned char *d = dst;  /* avoid gcc optimizations */
     while (n--) *d++ = c;
@@ -729,10 +726,7 @@ ULONG __cdecl NTDLL_strtoul( const char *s, char **end, int base )
  *  - Does not check if radix is in the range of 2 to 36.
  *  - If str is NULL it crashes, as the native function does.
  */
-char * __cdecl _ultoa(
-    ULONG value,         /* [I] Value to be converted */
-    char *str,           /* [O] Destination for the converted value */
-    int radix)           /* [I] Number base for conversion */
+char * __cdecl _ultoa( __msvcrt_ulong value, char *str, int radix )
 {
     char buffer[33];
     char *pos;
@@ -771,10 +765,7 @@ char * __cdecl _ultoa(
  *  - Does not check if radix is in the range of 2 to 36.
  *  - If str is NULL it crashes, as the native function does.
  */
-char * __cdecl _ltoa(
-    LONG value, /* [I] Value to be converted */
-    char *str,  /* [O] Destination for the converted value */
-    int radix)  /* [I] Number base for conversion */
+char * __cdecl _ltoa( __msvcrt_long value, char *str, int radix )
 {
     ULONG val;
     int negative;

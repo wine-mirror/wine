@@ -1558,7 +1558,6 @@ static void start_main_thread(void)
     server_init_process();
     startup_info_size = server_init_thread( teb->Peb, &suspend );
     virtual_map_user_shared_data();
-    virtual_create_builtin_view( ntdll_module );
     init_cpu_info();
     init_files();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );

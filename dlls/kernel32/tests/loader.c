@@ -3901,7 +3901,7 @@ static void test_wow64_redirection(void)
     ok(pWow64RevertWow64FsRedirection(OldValue), "Re-enabling FS redirection failed\n");
 }
 
-static void test_dll_file( const char *name )
+static void test_dll_file( const char *name, BOOL is_todo )
 {
     HMODULE module = GetModuleHandleA( name );
     IMAGE_NT_HEADERS *nt, *nt_file;
@@ -3926,27 +3926,29 @@ static void test_dll_file( const char *name )
     nt_file = pRtlImageNtHeader( ptr );
     ok( nt_file != NULL, "%s: invalid header\n", path );
 #define OK_FIELD(x) ok( nt->x == nt_file->x, "%s:%u: wrong " #x " %x / %x\n", name, i, nt->x, nt_file->x )
-    todo_wine
+    todo_wine_if(is_todo)
     OK_FIELD( FileHeader.NumberOfSections );
-    todo_wine
+    todo_wine_if(is_todo)
     OK_FIELD( OptionalHeader.AddressOfEntryPoint );
     OK_FIELD( OptionalHeader.NumberOfRvaAndSizes );
     for (i = 0; i < nt->OptionalHeader.NumberOfRvaAndSizes; i++)
     {
-        todo_wine_if( i == IMAGE_DIRECTORY_ENTRY_EXPORT ||
-                      (i == IMAGE_DIRECTORY_ENTRY_IMPORT && nt->OptionalHeader.DataDirectory[i].Size) ||
-                      i == IMAGE_DIRECTORY_ENTRY_RESOURCE ||
-                      i == IMAGE_DIRECTORY_ENTRY_BASERELOC )
+        todo_wine_if( is_todo &&
+                      (i == IMAGE_DIRECTORY_ENTRY_EXPORT ||
+                       (i == IMAGE_DIRECTORY_ENTRY_IMPORT && nt->OptionalHeader.DataDirectory[i].Size) ||
+                       i == IMAGE_DIRECTORY_ENTRY_RESOURCE ||
+                       i == IMAGE_DIRECTORY_ENTRY_BASERELOC ))
         OK_FIELD( OptionalHeader.DataDirectory[i].VirtualAddress );
-        todo_wine_if( i == IMAGE_DIRECTORY_ENTRY_EXPORT ||
-                      (i == IMAGE_DIRECTORY_ENTRY_IMPORT && nt->OptionalHeader.DataDirectory[i].Size) ||
-                      i == IMAGE_DIRECTORY_ENTRY_BASERELOC )
+        todo_wine_if( is_todo &&
+                      (i == IMAGE_DIRECTORY_ENTRY_EXPORT ||
+                       (i == IMAGE_DIRECTORY_ENTRY_IMPORT && nt->OptionalHeader.DataDirectory[i].Size) ||
+                       i == IMAGE_DIRECTORY_ENTRY_BASERELOC ))
         OK_FIELD( OptionalHeader.DataDirectory[i].Size );
     }
     sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
     sec_file = (IMAGE_SECTION_HEADER *)((char *)&nt_file->OptionalHeader + nt_file->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
-        todo_wine
+        todo_wine_if(is_todo)
         ok( !memcmp( sec + i, sec_file + i, sizeof(*sec) ), "%s: wrong section %d\n", name, i );
     UnmapViewOfFile( ptr );
 #undef OK_FIELD
@@ -4040,10 +4042,10 @@ START_TEST(loader)
     test_InMemoryOrderModuleList();
     test_LoadPackagedLibrary();
     test_wow64_redirection();
-    test_dll_file( "ntdll.dll" );
-    test_dll_file( "kernel32.dll" );
-    test_dll_file( "advapi32.dll" );
-    test_dll_file( "user32.dll" );
+    test_dll_file( "ntdll.dll", FALSE );
+    test_dll_file( "kernel32.dll", TRUE );
+    test_dll_file( "advapi32.dll", TRUE );
+    test_dll_file( "user32.dll", TRUE );
     /* loader test must be last, it can corrupt the internal loader state on Windows */
     test_Loader();
 }

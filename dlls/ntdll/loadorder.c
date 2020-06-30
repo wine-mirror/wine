@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +61,7 @@ static struct loadorder_list env_list;
  * Sorting and comparing function used in sort and search of loadorder
  * entries.
  */
-static int cmp_sort_func(const void *s1, const void *s2)
+static int __cdecl cmp_sort_func(const void *s1, const void *s2)
 {
     return wcsicmp(((const module_loadorder_t *)s1)->modulename, ((const module_loadorder_t *)s2)->modulename);
 }

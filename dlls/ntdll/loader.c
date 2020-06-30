@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 
@@ -1005,9 +1002,8 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
             if (!new) return -1;
             if (old) memcpy( new, old, tls_module_count * sizeof(*new) );
             teb->ThreadLocalStoragePointer = new;
-#if defined(__APPLE__) && defined(__x86_64__)
-            if (teb->Reserved5[0])
-                ((TEB*)teb->Reserved5[0])->ThreadLocalStoragePointer = new;
+#ifdef __x86_64__  /* macOS-specific hack */
+            if (teb->Reserved5[0]) ((TEB *)teb->Reserved5[0])->ThreadLocalStoragePointer = new;
 #endif
             TRACE( "thread %04lx tls block %p -> %p\n", (ULONG_PTR)teb->ClientId.UniqueThread, old, new );
             /* FIXME: can't free old block here, should be freed at thread exit */
@@ -1251,10 +1247,9 @@ static NTSTATUS alloc_thread_tls(void)
                GetCurrentThreadId(), i, size, dir->SizeOfZeroFill, pointers[i] );
     }
     NtCurrentTeb()->ThreadLocalStoragePointer = pointers;
-#if defined(__APPLE__) && defined(__x86_64__)
-    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
-                      :
-                      : "r" (pointers), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
+#ifdef __x86_64__  /* macOS-specific hack */
+    if (NtCurrentTeb()->Reserved5[0])
+        ((TEB *)NtCurrentTeb()->Reserved5[0])->ThreadLocalStoragePointer = pointers;
 #endif
     return STATUS_SUCCESS;
 }

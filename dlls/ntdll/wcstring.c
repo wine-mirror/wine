@@ -20,8 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -573,10 +571,7 @@ ULONG __cdecl NTDLL_wcstoul(LPCWSTR s, LPWSTR *end, INT base)
  *  Does not check if radix is in the range of 2 to 36.
  *  If str is NULL it just returns NULL.
  */
-LPWSTR __cdecl _ultow(
-    ULONG value,         /* [I] Value to be converted */
-    LPWSTR str,          /* [O] Destination for the converted value */
-    INT radix)           /* [I] Number base for conversion */
+LPWSTR __cdecl _ultow( __msvcrt_ulong value, LPWSTR str, INT radix )
 {
     WCHAR buffer[33];
     PWCHAR pos;
@@ -617,10 +612,7 @@ LPWSTR __cdecl _ultow(
  *  Does not check if radix is in the range of 2 to 36.
  *  If str is NULL it just returns NULL.
  */
-LPWSTR __cdecl _ltow(
-    LONG value, /* [I] Value to be converted */
-    LPWSTR str, /* [O] Destination for the converted value */
-    INT radix)  /* [I] Number base for conversion */
+LPWSTR __cdecl _ltow( __msvcrt_long value, LPWSTR str, INT radix )
 {
     ULONG val;
     int negative;
@@ -819,7 +811,7 @@ LPWSTR __cdecl _i64tow(
  *  No check is made for value overflow, only the lower 32 bits are assigned.
  *  If str is NULL it crashes, as the native function does.
  */
-LONG __cdecl _wtol( LPCWSTR str )
+__msvcrt_long __cdecl _wtol( LPCWSTR str )
 {
     ULONG RunningTotal = 0;
     BOOL bMinus = FALSE;

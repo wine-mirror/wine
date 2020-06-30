@@ -19,14 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS

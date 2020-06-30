@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -580,6 +577,17 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG_PTR pc, ULONG_PTR *base,
 }
 
 #endif  /* __x86_64__ || __arm__ || __aarch64__ */
+
+
+/*************************************************************
+ *            _assert
+ */
+void __cdecl _assert( const char *str, const char *file, unsigned int line )
+{
+    ERR( "%s:%u: Assertion failed %s\n", file, line, debugstr_a(str) );
+    RtlRaiseStatus( EXCEPTION_WINE_ASSERTION );
+}
+
 
 /*************************************************************
  *            __wine_spec_unimplemented_stub

@@ -19,8 +19,6 @@
  */
 
 #define NONAMELESSUNION
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -723,11 +721,6 @@ void init_locale( HMODULE module )
     WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
     LCID system_lcid, user_lcid;
 
-#ifdef __APPLE__
-    const struct norm_table *info;
-    load_norm_table( NormalizationC, &info );
-#endif
-
     kernel32_handle = module;
 
     unix_funcs->get_locales( system_locale, user_locale );
@@ -754,13 +747,7 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
         RtlCustomCPToUnicodeN( &unix_table, dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
     else
         RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
-
-    reslen /= sizeof(WCHAR);
-#ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
-    if (reslen && dst && norm_tables[NormalizationC])
-        reslen = compose_string( norm_tables[NormalizationC], dst, reslen );
-#endif
-    return reslen;
+    return reslen / sizeof(WCHAR);
 }
 
 

@@ -662,7 +662,7 @@ CCHAR WINAPI RtlFindLeastSignificantBit(ULONGLONG ulLong)
  *
  * Internal helper: qsort comparison function for RTL_BITMAP_RUN arrays
  */
-static int NTDLL_RunSortFn(const void *lhs, const void *rhs)
+static int __cdecl NTDLL_RunSortFn(const void *lhs, const void *rhs)
 {
   if (((const RTL_BITMAP_RUN*)lhs)->NumberOfBits > ((const RTL_BITMAP_RUN*)rhs)->NumberOfBits)
     return -1;

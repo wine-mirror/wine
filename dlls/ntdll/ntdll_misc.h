@@ -20,9 +20,7 @@
 #define __WINE_NTDLL_MISC_H
 
 #include <stdarg.h>
-#include <signal.h>
 #include <sys/types.h>
-#include <pthread.h>
 
 #include "windef.h"
 #include "winnt.h"
@@ -129,7 +127,6 @@ struct ntdll_thread_data
     int                reply_fd;      /* fd for receiving server replies */
     int                wait_fd[2];    /* fd for sleeping server requests */
     BOOL               wow64_redir;   /* Wow64 filesystem redirection flag */
-    pthread_t          pthread_id;    /* pthread thread id */
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
@@ -162,7 +159,6 @@ LONG   __cdecl NTDLL_strtol( const char *s, char **end, int base );
 ULONG  __cdecl NTDLL_strtoul( const char *s, char **end, int base );
 int    __cdecl NTDLL_atoi( const char *nptr );
 int    __cdecl NTDLL_tolower( int c );
-int    __cdecl _stricmp( LPCSTR str1, LPCSTR str2 );
 int    __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 );
 int    __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n );
 int    __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 );
@@ -186,7 +182,6 @@ LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim );
 LONG   __cdecl NTDLL_wcstol( LPCWSTR s, LPWSTR *end, INT base );
 ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
 int    WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... );
-int    WINAPIV _snwprintf_s( WCHAR *str, SIZE_T size, SIZE_T len, const WCHAR *format, ... );
 
 #define memchr(p,c,n) NTDLL_memchr(p,c,n)
 #define strcat(d,s) NTDLL_strcat(d,s)

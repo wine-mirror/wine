@@ -1,10 +1,10 @@
-EXTRADEFS = -D_NTSYSTEM_
+EXTRADEFS = -D_NTSYSTEM_ -D_ACRTIMP=
 MODULE    = ntdll.dll
 IMPORTLIB = ntdll
 IMPORTS   = winecrt0
 EXTRAINCL = $(UNWIND_CFLAGS)
 EXTRALIBS = -lwine $(IOKIT_LIBS) $(COREFOUNDATION_LIBS) $(CORESERVICES_LIBS) $(RT_LIBS) $(PTHREAD_LIBS) $(UNWIND_LIBS) $(I386_LIBS)
-EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
+EXTRADLLFLAGS = -mno-cygwin -nodefaultlibs -Wl,--image-base,0x7bc00000
 
 C_SRCS = \
 	actctx.c \

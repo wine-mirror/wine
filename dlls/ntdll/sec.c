@@ -19,25 +19,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "ntdll_misc.h"
 #include "wine/exception.h"
-#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

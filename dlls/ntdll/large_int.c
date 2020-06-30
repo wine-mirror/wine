@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -547,11 +544,11 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
 
 /* those builtin functions use stdcall calling convention, but compilers reference them without stdcall declarations */
 #if defined(__MINGW32__) || defined(_MSC_VER)
-LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b ) asm("_alldiv");
-LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b ) asm("_allmul");
-LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b ) asm("_allrem");
-ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b ) asm("_aulldiv");
-ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b ) asm("_aullrem");
+LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b ) asm(__ASM_NAME("_alldiv"));
+LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b ) asm(__ASM_NAME("_allmul"));
+LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b ) asm(__ASM_NAME("_allrem"));
+ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b ) asm(__ASM_NAME("_aulldiv"));
+ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b ) asm(__ASM_NAME("_aullrem"));
 #endif
 
 static ULONGLONG udivmod(ULONGLONG a, ULONGLONG b, ULONGLONG *rem)

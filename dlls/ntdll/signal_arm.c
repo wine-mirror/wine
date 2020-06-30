@@ -21,9 +21,6 @@
 
 #ifdef __arm__
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdlib.h>
 #include <stdarg.h>
 

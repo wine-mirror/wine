@@ -20,17 +20,11 @@
 
 #ifdef __aarch64__
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT

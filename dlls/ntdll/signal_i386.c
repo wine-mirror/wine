@@ -20,21 +20,12 @@
 
 #ifdef __i386__
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
