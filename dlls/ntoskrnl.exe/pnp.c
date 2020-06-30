@@ -782,9 +782,10 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
 
     if ((broadcast = heap_alloc( len )))
     {
-        broadcast->dbcc_size = len;
+        broadcast->dbcc_size       = len;
         broadcast->dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-        broadcast->dbcc_classguid = iface->interface_class;
+        broadcast->dbcc_reserved   = 0;
+        broadcast->dbcc_classguid  = iface->interface_class;
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
         send_devicechange( enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
         heap_free( broadcast );
