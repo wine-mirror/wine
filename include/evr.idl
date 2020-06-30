@@ -218,6 +218,82 @@ interface IMFDesiredSample : IUnknown
     void Clear();
 }
 
+[
+    object,
+    uuid(a490b1e4-ab84-4d31-a1b2-181e03b1077a),
+]
+interface IMFVideoDisplayControl : IUnknown
+{
+    HRESULT GetNativeVideoSize(
+        [in, out, unique] SIZE *video_size,
+        [in, out, unique] SIZE *aspect_ratio
+    );
+
+    HRESULT GetIdealVideoSize(
+        [in, out, unique] SIZE *min_size,
+        [in, out, unique] SIZE *max_size
+    );
+
+    HRESULT SetVideoPosition(
+        [in, unique] const MFVideoNormalizedRect *source,
+        [in, unique] const RECT *dest
+    );
+
+    HRESULT GetVideoPosition(
+        [out] MFVideoNormalizedRect *source,
+        [out] RECT *dest
+    );
+
+    HRESULT SetAspectRatioMode(
+        [in] DWORD mode
+    );
+
+    HRESULT GetAspectRatioMode(
+        [out] DWORD *mode
+    );
+
+    HRESULT SetVideoWindow(
+        [in] HWND window
+    );
+
+    HRESULT GetVideoWindow(
+        [out] HWND *window
+    );
+
+    HRESULT RepaintVideo();
+
+    HRESULT GetCurrentImage(
+        [in, out] LPBITMAPINFOHEADER header,
+        [out, size_is(, *dib_size)] BYTE **dib,
+        [out] DWORD *dib_size,
+        [in, out, unique] LONGLONG *timestamp
+    );
+
+    HRESULT SetBorderColor(
+        [in] COLORREF color
+    );
+
+    HRESULT GetBorderColor(
+        [out] COLORREF *color
+    );
+
+    HRESULT SetRenderingPrefs(
+        [in] DWORD flags
+    );
+
+    HRESULT GetRenderingPrefs(
+        [out] DWORD *flags
+    );
+
+    HRESULT SetFullscreen(
+        [in] BOOL fullscreen
+    );
+
+    HRESULT GetFullscreen(
+        [out] BOOL *fullscreen
+    );
+}
+
 cpp_quote("DEFINE_GUID(MR_VIDEO_RENDER_SERVICE, 0x1092a86c, 0xab1a, 0x459a, 0xa3, 0x36, 0x83, 0x1f, 0xbc, 0x4d, 0x11, 0xff);")
 cpp_quote("DEFINE_GUID(MR_VIDEO_MIXER_SERVICE, 0x073cd2fc, 0x6cf4, 0x40b7, 0x88, 0x59, 0xe8, 0x95, 0x52, 0xc8, 0x41, 0xf8);")
 cpp_quote("DEFINE_GUID(MR_VIDEO_ACCELERATION_SERVICE, 0xefef5175, 0x5c7d, 0x4ce2, 0xbb, 0xbd, 0x34, 0xff, 0x8b, 0xca, 0x65, 0x54);")
