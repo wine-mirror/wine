@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(evr);
 struct video_presenter
 {
     IMFVideoPresenter IMFVideoPresenter_iface;
+    IMFVideoDeviceID IMFVideoDeviceID_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -47,6 +48,11 @@ static struct video_presenter *impl_from_IUnknown(IUnknown *iface)
 static struct video_presenter *impl_from_IMFVideoPresenter(IMFVideoPresenter *iface)
 {
     return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoPresenter_iface);
+}
+
+static struct video_presenter *impl_from_IMFVideoDeviceID(IMFVideoDeviceID *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoDeviceID_iface);
 }
 
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
@@ -63,6 +69,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
             || IsEqualIID(riid, &IID_IMFVideoPresenter))
     {
         *obj = &presenter->IMFVideoPresenter_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoDeviceID))
+    {
+        *obj = &presenter->IMFVideoDeviceID_iface;
     }
     else
     {
@@ -188,6 +198,44 @@ static const IMFVideoPresenterVtbl video_presenter_vtbl =
     video_presenter_GetCurrentMediaType,
 };
 
+static HRESULT WINAPI video_presenter_device_id_QueryInterface(IMFVideoDeviceID *iface, REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoDeviceID(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_device_id_AddRef(IMFVideoDeviceID *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoDeviceID(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_device_id_Release(IMFVideoDeviceID *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoDeviceID(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_device_id_GetDeviceID(IMFVideoDeviceID *iface, IID *device_id)
+{
+    TRACE("%p, %p.\n", iface, device_id);
+
+    if (!device_id)
+        return E_POINTER;
+
+    memcpy(device_id, &IID_IDirect3DDevice9, sizeof(*device_id));
+
+    return S_OK;
+}
+
+static const IMFVideoDeviceIDVtbl video_presenter_device_id_vtbl =
+{
+    video_presenter_device_id_QueryInterface,
+    video_presenter_device_id_AddRef,
+    video_presenter_device_id_Release,
+    video_presenter_device_id_GetDeviceID,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -208,6 +256,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
         return E_OUTOFMEMORY;
 
     object->IMFVideoPresenter_iface.lpVtbl = &video_presenter_vtbl;
+    object->IMFVideoDeviceID_iface.lpVtbl = &video_presenter_device_id_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;

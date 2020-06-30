@@ -869,15 +869,31 @@ done:
 static void test_default_presenter(void)
 {
     IMFVideoPresenter *presenter;
+    IMFVideoDeviceID *deviceid;
     HRESULT hr;
+    GUID iid;
 
     hr = MFCreateVideoPresenter(NULL, &IID_IMFVideoPresenter, &IID_IMFVideoPresenter, (void **)&presenter);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
     ok(hr == S_OK || broken(hr == E_FAIL) /* WinXP */, "Failed to create default presenter, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IMFVideoPresenter_Release(presenter);
+    if (FAILED(hr))
+        return;
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDeviceID, (void **)&deviceid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDeviceID_GetDeviceID(deviceid, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDeviceID_GetDeviceID(deviceid, &iid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualIID(&iid, &IID_IDirect3DDevice9), "Unexpected id %s.\n", wine_dbgstr_guid(&iid));
+
+    IMFVideoDeviceID_Release(deviceid);
+
+    IMFVideoPresenter_Release(presenter);
 }
 
 START_TEST(evr)
