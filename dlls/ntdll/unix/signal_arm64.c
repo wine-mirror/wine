@@ -149,7 +149,7 @@ static inline struct arm64_thread_data *arm64_thread_data(void)
 NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
 {
 #ifdef HAVE_LIBUNWIND
-    ULONG_PTR ip = context->Rip;
+    ULONG_PTR ip = context->Pc;
     unw_context_t unw_context;
     unw_cursor_t cursor;
     unw_proc_info_t info;
