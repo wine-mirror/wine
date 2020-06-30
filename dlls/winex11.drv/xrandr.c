@@ -1054,7 +1054,7 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
     XRROutputInfo *output_info = NULL, *enum_output_info = NULL;
     XRRCrtcInfo *crtc_info = NULL, *enum_crtc_info;
     INT primary_index = 0, monitor_count = 0, capacity;
-    RECT work_rect, primary_rect;
+    RECT primary_rect;
     BOOL ret = FALSE;
     INT i;
 
@@ -1089,7 +1089,6 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
     /* Active monitors, need to find other monitors with the same coordinates as mirrored */
     else
     {
-        query_work_area( &work_rect );
         primary_rect = get_primary_rect( screen_resources );
 
         for (i = 0; i < screen_resources->noutput; ++i)
@@ -1132,8 +1131,7 @@ static BOOL xrandr14_get_monitors( ULONG_PTR adapter_id, struct x11drv_monitor *
 
                     SetRect( &monitors[monitor_count].rc_monitor, crtc_info->x, crtc_info->y,
                              crtc_info->x + crtc_info->width, crtc_info->y + crtc_info->height );
-                    if (!IntersectRect( &monitors[monitor_count].rc_work, &work_rect, &monitors[monitor_count].rc_monitor ))
-                        monitors[monitor_count].rc_work = monitors[monitor_count].rc_monitor;
+                    monitors[monitor_count].rc_work = get_work_area( &monitors[monitor_count].rc_monitor );
 
                     monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED;
                     if (!IsRectEmpty( &monitors[monitor_count].rc_monitor ))

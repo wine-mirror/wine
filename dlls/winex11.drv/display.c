@@ -259,6 +259,38 @@ RECT get_host_primary_monitor_rect(void)
     return rect;
 }
 
+RECT get_work_area(const RECT *monitor_rect)
+{
+    Atom type;
+    int format;
+    unsigned long count, remaining;
+    long *work_area;
+    RECT work_rect;
+
+    if (!XGetWindowProperty(gdi_display, DefaultRootWindow(gdi_display), x11drv_atom(_NET_WORKAREA),
+                            0, ~0, False, XA_CARDINAL, &type, &format, &count, &remaining,
+                            (unsigned char **)&work_area))
+    {
+        if (type == XA_CARDINAL && format == 32 && count >= 4)
+        {
+            SetRect(&work_rect, work_area[0], work_area[1], work_area[0] + work_area[2],
+                    work_area[1] + work_area[3]);
+
+            if (IntersectRect(&work_rect, &work_rect, monitor_rect))
+            {
+                TRACE("work_rect:%s.\n", wine_dbgstr_rect(&work_rect));
+                XFree(work_area);
+                return work_rect;
+            }
+        }
+        XFree(work_area);
+    }
+
+    WARN("_NET_WORKAREA is not supported, Work areas may be incorrect.\n");
+    TRACE("work_rect:%s.\n", wine_dbgstr_rect(monitor_rect));
+    return *monitor_rect;
+}
+
 void X11DRV_DisplayDevices_SetHandler(const struct x11drv_display_device_handler *new_handler)
 {
     if (new_handler->priority > host_handler.priority)

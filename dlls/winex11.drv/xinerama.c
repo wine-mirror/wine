@@ -54,26 +54,6 @@ static inline MONITORINFOEXW *get_primary(void)
     return &monitors[idx];
 }
 
-void query_work_area( RECT *rc_work )
-{
-    Atom type;
-    int format;
-    unsigned long count, remaining;
-    long *work_area;
-
-    if (!XGetWindowProperty( gdi_display, DefaultRootWindow(gdi_display), x11drv_atom(_NET_WORKAREA), 0,
-                             ~0, False, XA_CARDINAL, &type, &format, &count,
-                             &remaining, (unsigned char **)&work_area ))
-    {
-        if (type == XA_CARDINAL && format == 32 && count >= 4)
-        {
-            SetRect( rc_work, work_area[0], work_area[1],
-                     work_area[0] + work_area[2], work_area[1] + work_area[3] );
-        }
-        XFree( work_area );
-    }
-}
-
 #ifdef SONAME_LIBXINERAMA
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -100,12 +80,9 @@ static int query_screens(void)
 {
     int i, count, event_base, error_base;
     XineramaScreenInfo *screens;
-    RECT rc_work = {0, 0, 0, 0};
 
     if (!monitors)  /* first time around */
         load_xinerama();
-
-    query_work_area( &rc_work );
 
     if (!pXineramaQueryExtension || !pXineramaQueryScreens ||
         !pXineramaQueryExtension( gdi_display, &event_base, &error_base ) ||
@@ -123,8 +100,7 @@ static int query_screens(void)
             monitors[i].rcMonitor.right  = screens[i].x_org + screens[i].width;
             monitors[i].rcMonitor.bottom = screens[i].y_org + screens[i].height;
             monitors[i].dwFlags          = 0;
-            if (!IntersectRect( &monitors[i].rcWork, &rc_work, &monitors[i].rcMonitor ))
-                monitors[i].rcWork = monitors[i].rcMonitor;
+            monitors[i].rcWork           = get_work_area( &monitors[i].rcMonitor );
         }
 
         get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
@@ -298,8 +274,8 @@ void xinerama_init( unsigned int width, unsigned int height )
     SetRect( &rect, 0, 0, width, height );
     if (!query_screens())
     {
-        default_monitor.rcWork = default_monitor.rcMonitor = rect;
-        query_work_area( &default_monitor.rcWork );
+        default_monitor.rcMonitor = rect;
+        default_monitor.rcWork = get_work_area( &default_monitor.rcMonitor );
         nb_monitors = 1;
         monitors = &default_monitor;
     }
