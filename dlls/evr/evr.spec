@@ -17,7 +17,7 @@
 @ stub MFCreateVideoMixerAndPresenter
 @ stub MFCreateVideoOTA
 @ stub MFCreateVideoPresenter2
-@ stub MFCreateVideoPresenter
+@ stdcall MFCreateVideoPresenter(ptr ptr ptr ptr)
 @ stub MFCreateVideoSampleAllocator
 @ stdcall MFCreateVideoSampleFromSurface(ptr ptr)
 @ stub MFGetPlaneSize

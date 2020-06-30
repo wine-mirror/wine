@@ -31,3 +31,10 @@ coclass EnhancedVideoRenderer { interface IBaseFilter; }
     uuid(e474e05a-ab65-4f6a-827c-218b1baaf31f)
 ]
 coclass MFVideoMixer9 { interface IMFTransform; }
+
+[
+    helpstring("MF Video Presenter"),
+    threading(both),
+    uuid(98455561-5136-4d28-ab08-4cee40ea2781)
+]
+coclass MFVideoPresenter9 { interface IMFVideoPresenter; }

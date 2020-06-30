@@ -72,6 +72,7 @@ static const struct object_creation_info object_creation[] =
 {
     { &CLSID_EnhancedVideoRenderer, evr_filter_create },
     { &CLSID_MFVideoMixer9, evr_mixer_create },
+    { &CLSID_MFVideoPresenter9, evr_presenter_create },
 };
 
 static HRESULT WINAPI classfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)

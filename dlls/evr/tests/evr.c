@@ -117,6 +117,7 @@ static IUnknown test_outer = {&outer_vtbl};
 static void test_aggregation(void)
 {
     IBaseFilter *filter, *filter2;
+    IMFVideoPresenter *presenter;
     IUnknown *unk, *unk2;
     HRESULT hr;
     ULONG ref;
@@ -171,6 +172,25 @@ static void test_aggregation(void)
     ref = IUnknown_Release(unk);
     ok(!ref, "Got unexpected refcount %d.\n", ref);
     ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+
+    /* Default presenter. */
+    presenter = (void *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_MFVideoPresenter9, &test_outer, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter,
+            (void **)&presenter);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    ok(!presenter, "Got interface %p.\n", presenter);
+
+    hr = CoCreateInstance(&CLSID_MFVideoPresenter9, &test_outer, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* WinXP */, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+        ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+        ref = get_refcount(unk);
+        ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+        IUnknown_Release(unk);
+    }
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -846,6 +866,20 @@ done:
     DestroyWindow(window);
 }
 
+static void test_default_presenter(void)
+{
+    IMFVideoPresenter *presenter;
+    HRESULT hr;
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IMFVideoPresenter, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* WinXP */, "Failed to create default presenter, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        IMFVideoPresenter_Release(presenter);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -860,6 +894,7 @@ START_TEST(evr)
     test_default_mixer();
     test_default_mixer_type_negotiation();
     test_surface_sample();
+    test_default_presenter();
 
     CoUninitialize();
 }

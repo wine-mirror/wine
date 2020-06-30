@@ -8,6 +8,7 @@ EXTRADLLFLAGS = -mno-cygwin
 C_SRCS = \
 	evr.c \
 	main.c \
-	mixer.c
+	mixer.c \
+	presenter.c
 
 IDL_SRCS = evr_classes.idl
