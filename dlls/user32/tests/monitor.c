@@ -1288,7 +1288,8 @@ static void test_EnumDisplayMonitors(void)
     }
 }
 
-static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
+static void test_QueryDisplayConfig_result(UINT32 flags,
+        UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
 {
     UINT32 i;
     LONG ret;
@@ -1385,6 +1386,24 @@ static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PAT
                 "Expected LUID %08x:%08x, got %08x:%08x\n",
                 pi[i].targetInfo.adapterId.HighPart, pi[i].targetInfo.adapterId.LowPart,
                 mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart);
+        ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cx > 0 &&
+           mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cy > 0,
+                "Expected non-zero height/width, got %ux%u\n",
+                mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cx,
+                mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cy);
+
+        if (flags == QDC_DATABASE_CURRENT)
+            ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx == 0 &&
+               mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy == 0,
+                    "Expected zero height/width, got %ux%u\n",
+                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx,
+                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy);
+        else
+            ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx > 0 &&
+               mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy > 0,
+                    "Expected non-zero height/width, got %ux%u\n",
+                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx,
+                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy);
     }
 }
 
@@ -1393,6 +1412,7 @@ static void test_QueryDisplayConfig(void)
     UINT32 paths, modes;
     DISPLAYCONFIG_PATH_INFO pi[10];
     DISPLAYCONFIG_MODE_INFO mi[20];
+    DISPLAYCONFIG_TOPOLOGY_ID topologyid;
     LONG ret;
 
     ret = pQueryDisplayConfig(QDC_ALL_PATHS, NULL, NULL, NULL, NULL, NULL);
@@ -1435,6 +1455,18 @@ static void test_QueryDisplayConfig(void)
     ret = pQueryDisplayConfig(0, &paths, pi, &modes, mi, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
+    paths = modes = 1;
+    ret = pQueryDisplayConfig(0xFF, &paths, pi, &modes, mi, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 1;
+    ret = pQueryDisplayConfig(QDC_DATABASE_CURRENT, &paths, pi, &modes, mi, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
+    paths = modes = 1;
+    ret = pQueryDisplayConfig(QDC_ALL_PATHS, &paths, pi, &modes, mi, &topologyid);
+    ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
+
     /* Below this point, test functionality that requires a WDDM driver on Windows */
     paths = modes = 1;
     memset(pi, 0xFF, sizeof(pi[0]));
@@ -1458,7 +1490,18 @@ static void test_QueryDisplayConfig(void)
     ok(!ret, "got %d\n", ret);
     ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
     if (!ret && paths > 0 && modes > 0)
-        test_QueryDisplayConfig_result(paths, pi, modes, mi);
+        test_QueryDisplayConfig_result(QDC_ONLY_ACTIVE_PATHS, paths, pi, modes, mi);
+
+    paths = ARRAY_SIZE(pi);
+    modes = ARRAY_SIZE(mi);
+    memset(pi, 0xFF, sizeof(pi));
+    memset(mi, 0xFF, sizeof(mi));
+    topologyid = 0xFF;
+    ret = pQueryDisplayConfig(QDC_DATABASE_CURRENT, &paths, pi, &modes, mi, &topologyid);
+    ok(!ret, "got %d\n", ret);
+    ok(topologyid != 0xFF, "expected topologyid to be set, got %d\n", topologyid);
+    if (!ret && paths > 0 && modes > 0)
+        test_QueryDisplayConfig_result(QDC_DATABASE_CURRENT, paths, pi, modes, mi);
 }
 
 static void test_DisplayConfigGetDeviceInfo(void)
