@@ -1475,10 +1475,10 @@
 @ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _vsnwprintf_s(ptr long long wstr ptr)
 @ cdecl _vswprintf(ptr wstr ptr)
-@ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
-@ cdecl _wcslwr(wstr) NTDLL__wcslwr
-@ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
-@ cdecl _wcsupr(wstr) NTDLL__wcsupr
+@ cdecl _wcsicmp(wstr wstr)
+@ cdecl _wcslwr(wstr)
+@ cdecl _wcsnicmp(wstr wstr long)
+@ cdecl _wcsupr(wstr)
 @ cdecl _wtoi(wstr)
 @ cdecl -ret64 _wtoi64(wstr)
 @ cdecl _wtol(wstr)
@@ -1501,16 +1501,16 @@
 @ cdecl ispunct(long)
 @ cdecl isspace(long)
 @ cdecl isupper(long)
-@ cdecl iswalpha(long) NTDLL_iswalpha
-@ cdecl iswctype(long long) NTDLL_iswctype
-@ cdecl iswdigit(long) NTDLL_iswdigit
-@ cdecl iswlower(long) NTDLL_iswlower
-@ cdecl iswspace(long) NTDLL_iswspace
-@ cdecl iswxdigit(long) NTDLL_iswxdigit
+@ cdecl iswalpha(long)
+@ cdecl iswctype(long long)
+@ cdecl iswdigit(long)
+@ cdecl iswlower(long)
+@ cdecl iswspace(long)
+@ cdecl iswxdigit(long)
 @ cdecl isxdigit(long)
 @ cdecl labs(long) NTDLL_abs
 @ cdecl log(double) NTDLL_log
-@ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
+@ cdecl mbstowcs(ptr str long)
 @ cdecl memchr(ptr long long)
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)
@@ -1544,30 +1544,30 @@
 @ cdecl tan(double) NTDLL_tan
 @ cdecl tolower(long)
 @ cdecl toupper(long)
-@ cdecl towlower(long) NTDLL_towlower
-@ cdecl towupper(long) NTDLL_towupper
+@ cdecl towlower(long)
+@ cdecl towupper(long)
 @ stdcall vDbgPrintEx(long long str ptr)
 @ stdcall vDbgPrintExWithPrefix(str long long str ptr)
 @ cdecl vsprintf(ptr str ptr)
 @ cdecl vsprintf_s(ptr long str ptr)
 @ cdecl vswprintf_s(ptr long wstr ptr)
-@ cdecl wcscat(wstr wstr) NTDLL_wcscat
-@ cdecl wcschr(wstr long) NTDLL_wcschr
-@ cdecl wcscmp(wstr wstr) NTDLL_wcscmp
-@ cdecl wcscpy(ptr wstr) NTDLL_wcscpy
-@ cdecl wcscspn(wstr wstr) NTDLL_wcscspn
-@ cdecl wcslen(wstr) NTDLL_wcslen
-@ cdecl wcsncat(wstr wstr long) NTDLL_wcsncat
-@ cdecl wcsncmp(wstr wstr long) NTDLL_wcsncmp
-@ cdecl wcsncpy(ptr wstr long) NTDLL_wcsncpy
-@ cdecl wcspbrk(wstr wstr) NTDLL_wcspbrk
-@ cdecl wcsrchr(wstr long) NTDLL_wcsrchr
-@ cdecl wcsspn(wstr wstr) NTDLL_wcsspn
-@ cdecl wcsstr(wstr wstr) NTDLL_wcsstr
-@ cdecl wcstok(wstr wstr) NTDLL_wcstok
-@ cdecl wcstol(wstr ptr long) NTDLL_wcstol
-@ cdecl wcstombs(ptr ptr long) NTDLL_wcstombs
-@ cdecl wcstoul(wstr ptr long) NTDLL_wcstoul
+@ cdecl wcscat(wstr wstr)
+@ cdecl wcschr(wstr long)
+@ cdecl wcscmp(wstr wstr)
+@ cdecl wcscpy(ptr wstr)
+@ cdecl wcscspn(wstr wstr)
+@ cdecl wcslen(wstr)
+@ cdecl wcsncat(wstr wstr long)
+@ cdecl wcsncmp(wstr wstr long)
+@ cdecl wcsncpy(ptr wstr long)
+@ cdecl wcspbrk(wstr wstr)
+@ cdecl wcsrchr(wstr long)
+@ cdecl wcsspn(wstr wstr)
+@ cdecl wcsstr(wstr wstr)
+@ cdecl wcstok(wstr wstr)
+@ cdecl wcstol(wstr ptr long)
+@ cdecl wcstombs(ptr ptr long)
+@ cdecl wcstoul(wstr ptr long)
 
 ##################
 # Wine extensions

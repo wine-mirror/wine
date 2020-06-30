@@ -88,7 +88,7 @@ static const unsigned short wctypes[256] =
 /*********************************************************************
  *           _wcsicmp    (NTDLL.@)
  */
-int __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
+int __cdecl _wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 {
     for (;;)
     {
@@ -104,7 +104,7 @@ int __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 )
 /*********************************************************************
  *           _wcslwr    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str )
+LPWSTR __cdecl _wcslwr( LPWSTR str )
 {
     WCHAR *ret = str;
 
@@ -121,7 +121,7 @@ LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str )
 /*********************************************************************
  *           _wcsnicmp    (NTDLL.@)
  */
-int __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n )
+int __cdecl _wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 {
     int ret = 0;
     for ( ; n > 0; n--, str1++, str2++)
@@ -137,7 +137,7 @@ int __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 /*********************************************************************
  *           _wcsupr    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str )
+LPWSTR __cdecl _wcsupr( LPWSTR str )
 {
     WCHAR *ret = str;
 
@@ -154,7 +154,7 @@ LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str )
 /***********************************************************************
  *           wcscpy    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
+LPWSTR __cdecl wcscpy( LPWSTR dst, LPCWSTR src )
 {
     WCHAR *p = dst;
     while ((*p++ = *src++));
@@ -165,7 +165,7 @@ LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
 /***********************************************************************
  *           wcslen    (NTDLL.@)
  */
-size_t __cdecl NTDLL_wcslen( LPCWSTR str )
+size_t __cdecl wcslen( LPCWSTR str )
 {
     const WCHAR *s = str;
     while (*s) s++;
@@ -176,9 +176,9 @@ size_t __cdecl NTDLL_wcslen( LPCWSTR str )
 /***********************************************************************
  *           wcscat    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src )
+LPWSTR __cdecl wcscat( LPWSTR dst, LPCWSTR src )
 {
-    NTDLL_wcscpy( dst + NTDLL_wcslen(dst), src );
+    wcscpy( dst + wcslen(dst), src );
     return dst;
 }
 
@@ -186,7 +186,7 @@ LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src )
 /*********************************************************************
  *           wcschr    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
+LPWSTR __cdecl wcschr( LPCWSTR str, WCHAR ch )
 {
     do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
     return NULL;
@@ -196,7 +196,7 @@ LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch )
 /*********************************************************************
  *           wcscmp    (NTDLL.@)
  */
-int __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
+int __cdecl wcscmp( LPCWSTR str1, LPCWSTR str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
     return *str1 - *str2;
@@ -206,10 +206,10 @@ int __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 )
 /*********************************************************************
  *           wcscspn    (NTDLL.@)
  */
-size_t __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
+size_t __cdecl wcscspn( LPCWSTR str, LPCWSTR reject )
 {
     const WCHAR *ptr;
-    for (ptr = str; *ptr; ptr++) if (NTDLL_wcschr( reject, *ptr )) break;
+    for (ptr = str; *ptr; ptr++) if (wcschr( reject, *ptr )) break;
     return ptr - str;
 }
 
@@ -217,7 +217,7 @@ size_t __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
 /*********************************************************************
  *           wcsncat    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, size_t n )
+LPWSTR __cdecl wcsncat( LPWSTR s1, LPCWSTR s2, size_t n )
 {
     LPWSTR ret = s1;
     while (*s1) s1++;
@@ -230,7 +230,7 @@ LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, size_t n )
 /*********************************************************************
  *           wcsncmp    (NTDLL.@)
  */
-int __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
+int __cdecl wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 {
     if (n <= 0) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -241,7 +241,7 @@ int __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 /*********************************************************************
  *           wcsncpy    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
+LPWSTR __cdecl wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 {
     WCHAR *ret = s1;
     while (n-- > 0) if (!(*s1++ = *s2++)) break;
@@ -253,9 +253,9 @@ LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 /*********************************************************************
  *           wcspbrk    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
+LPWSTR __cdecl wcspbrk( LPCWSTR str, LPCWSTR accept )
 {
-    for ( ; *str; str++) if (NTDLL_wcschr( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
+    for ( ; *str; str++) if (wcschr( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
     return NULL;
 }
 
@@ -263,7 +263,7 @@ LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 /*********************************************************************
  *           wcsrchr    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsrchr( LPCWSTR str, WCHAR ch )
+LPWSTR __cdecl wcsrchr( LPCWSTR str, WCHAR ch )
 {
     WCHAR *ret = NULL;
     do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
@@ -274,10 +274,10 @@ LPWSTR __cdecl NTDLL_wcsrchr( LPCWSTR str, WCHAR ch )
 /*********************************************************************
  *           wcsspn    (NTDLL.@)
  */
-size_t __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
+size_t __cdecl wcsspn( LPCWSTR str, LPCWSTR accept )
 {
     const WCHAR *ptr;
-    for (ptr = str; *ptr; ptr++) if (!NTDLL_wcschr( accept, *ptr )) break;
+    for (ptr = str; *ptr; ptr++) if (!wcschr( accept, *ptr )) break;
     return ptr - str;
 }
 
@@ -285,7 +285,7 @@ size_t __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
 /*********************************************************************
  *           wcsstr    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub )
+LPWSTR __cdecl wcsstr( LPCWSTR str, LPCWSTR sub )
 {
     while (*str)
     {
@@ -301,7 +301,7 @@ LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub )
 /*********************************************************************
  *           wcstok    (NTDLL.@)
  */
-LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim )
+LPWSTR __cdecl wcstok( LPWSTR str, LPCWSTR delim )
 {
     static LPWSTR next = NULL;
     LPWSTR ret;
@@ -309,10 +309,10 @@ LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim )
     if (!str)
         if (!(str = next)) return NULL;
 
-    while (*str && NTDLL_wcschr( delim, *str )) str++;
+    while (*str && wcschr( delim, *str )) str++;
     if (!*str) return NULL;
     ret = str++;
-    while (*str && !NTDLL_wcschr( delim, *str )) str++;
+    while (*str && !wcschr( delim, *str )) str++;
     if (*str) *str++ = 0;
     next = str;
     return ret;
@@ -322,19 +322,19 @@ LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim )
 /*********************************************************************
  *           wcstombs    (NTDLL.@)
  */
-INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
+size_t __cdecl wcstombs( char *dst, const WCHAR *src, size_t n )
 {
     DWORD len;
 
     if (!dst)
     {
-        RtlUnicodeToMultiByteSize( &len, src, NTDLL_wcslen(src) * sizeof(WCHAR) );
+        RtlUnicodeToMultiByteSize( &len, src, wcslen(src) * sizeof(WCHAR) );
         return len;
     }
     else
     {
         if (n <= 0) return 0;
-        RtlUnicodeToMultiByteN( dst, n, &len, src, NTDLL_wcslen(src) * sizeof(WCHAR) );
+        RtlUnicodeToMultiByteN( dst, n, &len, src, wcslen(src) * sizeof(WCHAR) );
         if (len < n) dst[len] = 0;
     }
     return len;
@@ -344,7 +344,7 @@ INT __cdecl NTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT n )
 /*********************************************************************
  *           mbstowcs    (NTDLL.@)
  */
-INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
+size_t __cdecl mbstowcs( WCHAR *dst, const char *src, size_t n )
 {
     DWORD len;
 
@@ -365,7 +365,7 @@ INT __cdecl NTDLL_mbstowcs( LPWSTR dst, LPCSTR src, INT n )
 /*********************************************************************
  *           iswctype    (NTDLL.@)
  */
-INT __cdecl NTDLL_iswctype( WCHAR wc, unsigned short type )
+INT __cdecl iswctype( WCHAR wc, unsigned short type )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & type;
@@ -375,7 +375,7 @@ INT __cdecl NTDLL_iswctype( WCHAR wc, unsigned short type )
 /*********************************************************************
  *           iswalpha    (NTDLL.@)
  */
-INT __cdecl NTDLL_iswalpha( WCHAR wc )
+INT __cdecl iswalpha( WCHAR wc )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & (C1_ALPHA | C1_UPPER | C1_LOWER);
@@ -391,7 +391,7 @@ INT __cdecl NTDLL_iswalpha( WCHAR wc )
  *  TRUE: The unicode char wc is a digit.
  *  FALSE: Otherwise
  */
-INT __cdecl NTDLL_iswdigit( WCHAR wc )
+INT __cdecl iswdigit( WCHAR wc )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & C1_DIGIT;
@@ -407,7 +407,7 @@ INT __cdecl NTDLL_iswdigit( WCHAR wc )
  *  TRUE: The unicode char wc is a lower case letter.
  *  FALSE: Otherwise
  */
-INT __cdecl NTDLL_iswlower( WCHAR wc )
+INT __cdecl iswlower( WCHAR wc )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & C1_LOWER;
@@ -423,7 +423,7 @@ INT __cdecl NTDLL_iswlower( WCHAR wc )
  *  TRUE: The unicode char wc is a white space character.
  *  FALSE: Otherwise
  */
-INT __cdecl NTDLL_iswspace( WCHAR wc )
+INT __cdecl iswspace( WCHAR wc )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & C1_SPACE;
@@ -439,7 +439,7 @@ INT __cdecl NTDLL_iswspace( WCHAR wc )
  *  TRUE: The unicode char wc is an extended digit.
  *  FALSE: Otherwise
  */
-INT __cdecl NTDLL_iswxdigit( WCHAR wc )
+INT __cdecl iswxdigit( WCHAR wc )
 {
     if (wc >= 256) return 0;
     return wctypes[wc] & C1_XDIGIT;
@@ -469,14 +469,14 @@ static int wctoint( WCHAR c )
 /*********************************************************************
  *                  wcstol  (NTDLL.@)
  */
-LONG __cdecl NTDLL_wcstol(LPCWSTR s, LPWSTR *end, INT base)
+__msvcrt_long __cdecl wcstol(LPCWSTR s, LPWSTR *end, INT base)
 {
     BOOL negative = FALSE, empty = TRUE;
     LONG ret = 0;
 
     if (base < 0 || base == 1 || base > 36) return 0;
     if (end) *end = (WCHAR *)s;
-    while (NTDLL_iswspace(*s)) s++;
+    while (iswspace(*s)) s++;
 
     if (*s == '-')
     {
@@ -516,14 +516,14 @@ LONG __cdecl NTDLL_wcstol(LPCWSTR s, LPWSTR *end, INT base)
 /*********************************************************************
  *                  wcstoul  (NTDLL.@)
  */
-ULONG __cdecl NTDLL_wcstoul(LPCWSTR s, LPWSTR *end, INT base)
+__msvcrt_ulong __cdecl wcstoul(LPCWSTR s, LPWSTR *end, INT base)
 {
     BOOL negative = FALSE, empty = TRUE;
     ULONG ret = 0;
 
     if (base < 0 || base == 1 || base > 36) return 0;
     if (end) *end = (WCHAR *)s;
-    while (NTDLL_iswspace(*s)) s++;
+    while (iswspace(*s)) s++;
 
     if (*s == '-')
     {
@@ -816,7 +816,7 @@ __msvcrt_long __cdecl _wtol( LPCWSTR str )
     ULONG RunningTotal = 0;
     BOOL bMinus = FALSE;
 
-    while (NTDLL_iswspace(*str)) str++;
+    while (iswspace(*str)) str++;
 
     if (*str == '+') {
 	str++;
@@ -877,7 +877,7 @@ LONGLONG  __cdecl _wtoi64( LPCWSTR str )
     ULONGLONG RunningTotal = 0;
     BOOL bMinus = FALSE;
 
-    while (NTDLL_iswspace(*str)) str++;
+    while (iswspace(*str)) str++;
 
     if (*str == '+') {
 	str++;

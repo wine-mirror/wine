@@ -147,47 +147,6 @@ void     WINAPI LdrInitializeThunk(CONTEXT*,void**,ULONG_PTR,ULONG_PTR);
 #define InterlockedCompareExchange64(dest,xchg,cmp) RtlInterlockedCompareExchange64(dest,xchg,cmp)
 #endif
 
-/* string functions */
-int    __cdecl NTDLL__wcsicmp( LPCWSTR str1, LPCWSTR str2 );
-int    __cdecl NTDLL__wcsnicmp( LPCWSTR str1, LPCWSTR str2, size_t n );
-int    __cdecl NTDLL_wcscmp( LPCWSTR str1, LPCWSTR str2 );
-int    __cdecl NTDLL_wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n );
-WCHAR  __cdecl NTDLL_towlower( WCHAR ch );
-WCHAR  __cdecl NTDLL_towupper( WCHAR ch );
-LPWSTR __cdecl NTDLL__wcslwr( LPWSTR str );
-LPWSTR __cdecl NTDLL__wcsupr( LPWSTR str );
-LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src );
-LPWSTR __cdecl NTDLL_wcscat( LPWSTR dst, LPCWSTR src );
-LPWSTR __cdecl NTDLL_wcschr( LPCWSTR str, WCHAR ch );
-size_t __cdecl NTDLL_wcslen( LPCWSTR str );
-size_t __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject );
-LPWSTR __cdecl NTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, size_t n );
-LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n );
-LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept );
-LPWSTR __cdecl NTDLL_wcsrchr( LPCWSTR str, WCHAR ch );
-size_t __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept );
-LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub );
-LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim );
-LONG   __cdecl NTDLL_wcstol( LPCWSTR s, LPWSTR *end, INT base );
-ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
-
-#define wcsicmp(s1,s2) NTDLL__wcsicmp(s1,s2)
-#define wcsnicmp(s1,s2,n) NTDLL__wcsnicmp(s1,s2,n)
-#define towupper(c) NTDLL_towupper(c)
-#define wcslwr(s) NTDLL__wcslwr(s)
-#define wcsupr(s) NTDLL__wcsupr(s)
-#define wcscpy(d,s) NTDLL_wcscpy(d,s)
-#define wcscat(d,s) NTDLL_wcscat(d,s)
-#define wcschr(s,c) NTDLL_wcschr(s,c)
-#define wcspbrk(s,a) NTDLL_wcspbrk(s,a)
-#define wcsrchr(s,c) NTDLL_wcsrchr(s,c)
-#define wcstoul(s,e,b) NTDLL_wcstoul(s,e,b)
-#define wcslen(s) NTDLL_wcslen(s)
-#define wcscspn(s,r) NTDLL_wcscspn(s,r)
-#define wcsspn(s,a) NTDLL_wcsspn(s,a)
-#define wcscmp(s1,s2) NTDLL_wcscmp(s1,s2)
-#define wcsncmp(s1,s2,n) NTDLL_wcsncmp(s1,s2,n)
-
 /* convert from straight ASCII to Unicode without depending on the current codepage */
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 {

@@ -1467,7 +1467,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
 /*********************************************************************
  *	towlower   (NTDLL.@)
  */
-WCHAR __cdecl NTDLL_towlower( WCHAR ch )
+WCHAR __cdecl towlower( WCHAR ch )
 {
     if (ch >= 0x100) return ch;
     return casemap( nls_info.LowerCaseTable, ch );
@@ -1477,7 +1477,7 @@ WCHAR __cdecl NTDLL_towlower( WCHAR ch )
 /*********************************************************************
  *           towupper    (NTDLL.@)
  */
-WCHAR __cdecl NTDLL_towupper( WCHAR ch )
+WCHAR __cdecl towupper( WCHAR ch )
 {
     if (nls_info.UpperCaseTable) return casemap( nls_info.UpperCaseTable, ch );
     return casemap_ascii( ch );
