@@ -1,7 +1,7 @@
 /*
  * ntoskrnl.exe testing framework
  *
- * Copyright 2020 Paul Gofman for Codeweavers
+ * Copyright 2020 Paul Gofman for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

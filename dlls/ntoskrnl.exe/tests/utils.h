@@ -4,7 +4,7 @@
  * Copyright 2015 Sebastian Lackner
  * Copyright 2015 Michael Müller
  * Copyright 2015 Christian Costa
- * Copyright 2020 Paul Gofman for Codeweavers
+ * Copyright 2020 Paul Gofman for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
