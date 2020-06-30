@@ -263,10 +263,37 @@ RECT get_work_area(const RECT *monitor_rect)
 {
     Atom type;
     int format;
-    unsigned long count, remaining;
+    unsigned long count, remaining, i;
     long *work_area;
     RECT work_rect;
 
+    /* Try _GTK_WORKAREAS first as _NET_WORKAREA may be incorrect on multi-monitor systems */
+    if (!XGetWindowProperty(gdi_display, DefaultRootWindow(gdi_display),
+                            x11drv_atom(_GTK_WORKAREAS_D0), 0, ~0, False, XA_CARDINAL, &type,
+                            &format, &count, &remaining, (unsigned char **)&work_area))
+    {
+        if (type == XA_CARDINAL && format == 32 && count >= 4)
+        {
+            for (i = 0; i + 3 < count; i += 4)
+            {
+                work_rect.left = work_area[i * 4];
+                work_rect.top = work_area[i * 4 + 1];
+                work_rect.right = work_rect.left + work_area[i * 4 + 2];
+                work_rect.bottom = work_rect.top + work_area[i * 4 + 3];
+
+                if (IntersectRect(&work_rect, &work_rect, monitor_rect))
+                {
+                    TRACE("work_rect:%s.\n", wine_dbgstr_rect(&work_rect));
+                    XFree(work_area);
+                    return work_rect;
+                }
+            }
+        }
+        XFree(work_area);
+    }
+
+    WARN("_GTK_WORKAREAS is not supported, fallback to _NET_WORKAREA. "
+         "Work areas may be incorrect on multi-monitor systems.\n");
     if (!XGetWindowProperty(gdi_display, DefaultRootWindow(gdi_display), x11drv_atom(_NET_WORKAREA),
                             0, ~0, False, XA_CARDINAL, &type, &format, &count, &remaining,
                             (unsigned char **)&work_area))
