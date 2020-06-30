@@ -1417,11 +1417,11 @@
 @ stub ZwWriteRequestData
 @ stdcall -private ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
 @ stdcall -private ZwYieldExecution() NtYieldExecution
-@ cdecl -private -arch=i386 _CIcos() NTDLL__CIcos
-@ cdecl -private -arch=i386 _CIlog() NTDLL__CIlog
-@ cdecl -private -arch=i386 _CIpow() NTDLL__CIpow
-@ cdecl -private -arch=i386 _CIsin() NTDLL__CIsin
-@ cdecl -private -arch=i386 _CIsqrt() NTDLL__CIsqrt
+@ cdecl -private -arch=i386 _CIcos()
+@ cdecl -private -arch=i386 _CIlog()
+@ cdecl -private -arch=i386 _CIpow()
+@ cdecl -private -arch=i386 _CIsin()
+@ cdecl -private -arch=i386 _CIsqrt()
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
 @ cdecl -arch=arm,x86_64 -norelay __chkstk()
 @ cdecl __isascii(long)
@@ -1442,7 +1442,7 @@
 @ stdcall -arch=i386 -ret64 _aullshr(int64 long)
 @ cdecl -arch=i386 -norelay _chkstk()
 @ stub _fltused
-@ cdecl -arch=i386 -ret64 _ftol() NTDLL__ftol
+@ cdecl -arch=i386 -ret64 _ftol()
 @ cdecl _i64toa(int64 ptr long)
 @ cdecl _i64tow(int64 ptr long)
 @ cdecl _itoa(long ptr long)
@@ -1482,15 +1482,15 @@
 @ cdecl _wtoi(wstr)
 @ cdecl -ret64 _wtoi64(wstr)
 @ cdecl _wtol(wstr)
-@ cdecl abs(long) NTDLL_abs
-@ cdecl atan(double) NTDLL_atan
+@ cdecl abs(long)
+@ cdecl atan(double)
 @ cdecl atoi(str)
 @ cdecl atol(str)
 @ cdecl bsearch(ptr ptr long long ptr)
-@ cdecl ceil(double) NTDLL_ceil
-@ cdecl cos(double) NTDLL_cos
-@ cdecl fabs(double) NTDLL_fabs
-@ cdecl floor(double) NTDLL_floor
+@ cdecl ceil(double)
+@ cdecl cos(double)
+@ cdecl fabs(double)
+@ cdecl floor(double)
 @ cdecl isalnum(long)
 @ cdecl isalpha(long)
 @ cdecl iscntrl(long)
@@ -1508,20 +1508,20 @@
 @ cdecl iswspace(long)
 @ cdecl iswxdigit(long)
 @ cdecl isxdigit(long)
-@ cdecl labs(long) NTDLL_abs
-@ cdecl log(double) NTDLL_log
+@ cdecl labs(long) abs
+@ cdecl log(double)
 @ cdecl mbstowcs(ptr str long)
 @ cdecl memchr(ptr long long)
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)
 @ cdecl memmove(ptr ptr long)
 @ cdecl memset(ptr long long)
-@ cdecl pow(double double) NTDLL_pow
+@ cdecl pow(double double)
 @ cdecl qsort(ptr long long ptr)
-@ cdecl sin(double) NTDLL_sin
+@ cdecl sin(double)
 @ varargs sprintf(ptr str) NTDLL_sprintf
 @ varargs sprintf_s(ptr long str)
-@ cdecl sqrt(double) NTDLL_sqrt
+@ cdecl sqrt(double)
 @ varargs sscanf(str str)
 @ cdecl strcat(str str)
 @ cdecl strchr(str long)
@@ -1541,7 +1541,7 @@
 @ cdecl strtoul(str ptr long)
 @ varargs swprintf(ptr wstr) NTDLL_swprintf
 @ varargs swprintf_s(ptr long wstr)
-@ cdecl tan(double) NTDLL_tan
+@ cdecl tan(double)
 @ cdecl tolower(long)
 @ cdecl toupper(long)
 @ cdecl towlower(long)
@@ -1595,9 +1595,9 @@
 @ cdecl __wine_locked_recvmsg(long ptr long)
 
 # Version
-@ cdecl wine_get_version() NTDLL_wine_get_version
-@ cdecl wine_get_build_id() NTDLL_wine_get_build_id
-@ cdecl wine_get_host_version(ptr ptr) NTDLL_wine_get_host_version
+@ cdecl wine_get_version()
+@ cdecl wine_get_build_id()
+@ cdecl wine_get_host_version(ptr ptr)
 
 # Codepages
 @ cdecl __wine_get_unix_codepage()
