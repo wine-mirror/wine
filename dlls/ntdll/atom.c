@@ -106,7 +106,7 @@ static ULONG integral_atom_name(WCHAR* buffer, ULONG len, RTL_ATOM atom)
     WCHAR tmp[16];
     int ret;
 
-    ret = NTDLL_swprintf( tmp, fmt, atom );
+    ret = swprintf( tmp, ARRAY_SIZE(tmp), fmt, atom );
     if (!len) return ret * sizeof(WCHAR);
     if (len <= ret) ret = len - 1;
     memcpy( buffer, tmp, ret * sizeof(WCHAR) );

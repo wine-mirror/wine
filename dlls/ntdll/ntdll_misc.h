@@ -181,7 +181,6 @@ LPWSTR __cdecl NTDLL_wcsstr( LPCWSTR str, LPCWSTR sub );
 LPWSTR __cdecl NTDLL_wcstok( LPWSTR str, LPCWSTR delim );
 LONG   __cdecl NTDLL_wcstol( LPCWSTR s, LPWSTR *end, INT base );
 ULONG  __cdecl NTDLL_wcstoul( LPCWSTR s, LPWSTR *end, INT base );
-int    WINAPIV NTDLL_swprintf( WCHAR *str, const WCHAR *format, ... );
 
 #define memchr(p,c,n) NTDLL_memchr(p,c,n)
 #define strcat(d,s) NTDLL_strcat(d,s)

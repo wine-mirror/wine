@@ -1319,11 +1319,11 @@ NTSTATUS WINAPI RtlIpv4AddressToStringExW(const IN_ADDR *pin, USHORT port, LPWST
 
     TRACE("(%p:0x%x, %d, %p, %p:%d)\n", pin, pin->S_un.S_addr, port, buffer, psize, *psize);
 
-    needed = NTDLL_swprintf(tmp_ip, fmt_ip,
+    needed = swprintf(tmp_ip, ARRAY_SIZE(tmp_ip), fmt_ip,
                       pin->S_un.S_un_b.s_b1, pin->S_un.S_un_b.s_b2,
                       pin->S_un.S_un_b.s_b3, pin->S_un.S_un_b.s_b4);
 
-    if (port) needed += NTDLL_swprintf(tmp_ip + needed, fmt_port, ntohs(port));
+    if (port) needed += swprintf(tmp_ip + needed, ARRAY_SIZE(tmp_ip) - needed, fmt_port, ntohs(port));
 
     if (*psize > needed) {
         *psize = needed + 1;

@@ -1455,7 +1455,7 @@
 @ cdecl _memicmp(str str long)
 @ varargs _snprintf(ptr long str) NTDLL__snprintf
 @ varargs _snprintf_s(ptr long long str)
-@ varargs _snwprintf(ptr long wstr) NTDLL__snwprintf
+@ varargs _snwprintf(ptr long wstr)
 @ varargs _snwprintf_s(ptr long long wstr)
 @ varargs _swprintf(ptr wstr) NTDLL_swprintf
 @ cdecl _splitpath(str ptr ptr ptr ptr)
@@ -1472,9 +1472,9 @@
 @ cdecl _ultow(long ptr long)
 @ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnprintf_s(ptr long str ptr)
-@ cdecl _vsnwprintf(ptr long wstr ptr) NTDLL__vsnwprintf
+@ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _vsnwprintf_s(ptr long long wstr ptr)
-@ cdecl _vswprintf(ptr wstr ptr) NTDLL__vswprintf
+@ cdecl _vswprintf(ptr wstr ptr)
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
@@ -1548,7 +1548,7 @@
 @ cdecl towupper(long) NTDLL_towupper
 @ stdcall vDbgPrintEx(long long str ptr)
 @ stdcall vDbgPrintExWithPrefix(str long long str ptr)
-@ cdecl vsprintf(ptr str ptr) NTDLL_vsprintf
+@ cdecl vsprintf(ptr str ptr)
 @ cdecl vsprintf_s(ptr long str ptr)
 @ cdecl vswprintf_s(ptr long wstr ptr)
 @ cdecl wcscat(wstr wstr) NTDLL_wcscat

@@ -204,6 +204,7 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     static const WCHAR comW[] = {'.','c','o','m',0};
     static const WCHAR pifW[] = {'.','p','i','f',0};
 
+    DWORD len;
     WCHAR *p, *cmdline;
     UNICODE_STRING pathW, cmdW;
 
@@ -226,12 +227,11 @@ NTSTATUS restart_process( RTL_USER_PROCESS_PARAMETERS *params, NTSTATUS status )
     case STATUS_INVALID_IMAGE_WIN_16:
     case STATUS_INVALID_IMAGE_NE_FORMAT:
     case STATUS_INVALID_IMAGE_PROTECT:
-        cmdline = RtlAllocateHeap( GetProcessHeap(), 0,
-                                   (wcslen(system_dir) + wcslen(winevdm) + 16 +
-                                    wcslen(params->ImagePathName.Buffer) +
-                                    wcslen(params->CommandLine.Buffer)) * sizeof(WCHAR));
-        if (!cmdline) return STATUS_NO_MEMORY;
-        NTDLL_swprintf( cmdline, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
+        len = (wcslen(system_dir) + wcslen(winevdm) + 16 + wcslen(params->ImagePathName.Buffer) +
+               wcslen(params->CommandLine.Buffer));
+        if (!(cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        swprintf( cmdline, len, argsW, (is_win64 || is_wow64) ? syswow64_dir : system_dir,
                   winevdm, params->ImagePathName.Buffer, params->CommandLine.Buffer );
         RtlInitUnicodeString( &pathW, winevdm );
         RtlInitUnicodeString( &cmdW, cmdline );
