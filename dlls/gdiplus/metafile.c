@@ -1644,49 +1644,11 @@ GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *
     return Ok;
 }
 
-static void METAFILE_GetFinalGdiTransform(const GpMetafile *metafile, XFORM *result)
-{
-    const GpRectF *rect;
-    const GpPointF *pt;
-
-    /* This transforms metafile device space to output points. */
-    rect = &metafile->src_rect;
-    pt = metafile->playback_points;
-    result->eM11 = (pt[1].X - pt[0].X) / rect->Width;
-    result->eM21 = (pt[2].X - pt[0].X) / rect->Height;
-    result->eDx = pt[0].X - result->eM11 * rect->X - result->eM21 * rect->Y;
-    result->eM12 = (pt[1].Y - pt[0].Y) / rect->Width;
-    result->eM22 = (pt[2].Y - pt[0].Y) / rect->Height;
-    result->eDy = pt[0].Y - result->eM12 * rect->X - result->eM22 * rect->Y;
-}
-
-static GpStatus METAFILE_PlaybackUpdateGdiTransform(GpMetafile *metafile)
-{
-    XFORM combined, final;
-
-    METAFILE_GetFinalGdiTransform(metafile, &final);
-
-    CombineTransform(&combined, &metafile->gdiworldtransform, &final);
-
-    SetGraphicsMode(metafile->playback_dc, GM_ADVANCED);
-    SetWorldTransform(metafile->playback_dc, &combined);
-
-    return Ok;
-}
-
 static GpStatus METAFILE_PlaybackGetDC(GpMetafile *metafile)
 {
     GpStatus stat = Ok;
 
     stat = GdipGetDC(metafile->playback_graphics, &metafile->playback_dc);
-
-    if (stat == Ok)
-    {
-        static const XFORM identity = {1, 0, 0, 1, 0, 0};
-
-        metafile->gdiworldtransform = identity;
-        METAFILE_PlaybackUpdateGdiTransform(metafile);
-    }
 
     return stat;
 }
@@ -2528,71 +2490,22 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         /* regular EMF record */
         if (metafile->playback_dc)
         {
-            switch (recordType)
+            ENHMETARECORD *record = heap_alloc_zero(dataSize + 8);
+
+            if (record)
             {
-            case EMR_SETMAPMODE:
-            case EMR_SAVEDC:
-            case EMR_RESTOREDC:
-            case EMR_SETWINDOWORGEX:
-            case EMR_SETWINDOWEXTEX:
-            case EMR_SETVIEWPORTORGEX:
-            case EMR_SETVIEWPORTEXTEX:
-            case EMR_SCALEVIEWPORTEXTEX:
-            case EMR_SCALEWINDOWEXTEX:
-            case EMR_MODIFYWORLDTRANSFORM:
-                FIXME("not implemented for record type %x\n", recordType);
-                break;
-            case EMR_SETWORLDTRANSFORM:
-            {
-                const XFORM* xform = (void*)data;
-                real_metafile->gdiworldtransform = *xform;
-                METAFILE_PlaybackUpdateGdiTransform(real_metafile);
-                break;
+                record->iType = recordType;
+                record->nSize = dataSize + 8;
+                memcpy(record->dParm, data, dataSize);
+
+                if(PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
+                        record, metafile->handle_count) == 0)
+                    ERR("PlayEnhMetaFileRecord failed\n");
+
+                heap_free(record);
             }
-            case EMR_EXTSELECTCLIPRGN:
-            {
-                DWORD rgndatasize = *(DWORD*)data;
-                DWORD mode = *(DWORD*)(data + 4);
-                const RGNDATA *rgndata = (const RGNDATA*)(data + 8);
-                HRGN hrgn = NULL;
-
-                if (dataSize > 8)
-                {
-                    XFORM final;
-
-                    METAFILE_GetFinalGdiTransform(metafile, &final);
-
-                    hrgn = ExtCreateRegion(&final, rgndatasize, rgndata);
-                }
-
-                ExtSelectClipRgn(metafile->playback_dc, hrgn, mode);
-
-                DeleteObject(hrgn);
-
-                return Ok;
-            }
-            default:
-            {
-                ENHMETARECORD *record = heap_alloc_zero(dataSize + 8);
-
-                if (record)
-                {
-                    record->iType = recordType;
-                    record->nSize = dataSize + 8;
-                    memcpy(record->dParm, data, dataSize);
-
-                    if(PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
-                            record, metafile->handle_count) == 0)
-                        ERR("PlayEnhMetaFileRecord failed\n");
-
-                    heap_free(record);
-                }
-                else
-                    return OutOfMemory;
-
-                break;
-            }
-            }
+            else
+                return OutOfMemory;
         }
     }
     else
@@ -3496,6 +3409,7 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     GpMetafile *real_metafile = (GpMetafile*)metafile; /* whoever made this const was joking */
     GraphicsContainer state;
     GpPath *dst_path;
+    RECT dst_bounds;
 
     TRACE("(%p,%p,%p,%i,%p,%i,%p,%p,%p)\n", graphics, metafile,
         destPoints, count, srcRect, srcUnit, callback, callbackData,
@@ -3585,13 +3499,19 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
             stat = METAFILE_PlaybackUpdateClip(real_metafile);
         }
 
-        if (stat == Ok && (metafile->metafile_type == MetafileTypeEmf ||
-            metafile->metafile_type == MetafileTypeWmfPlaceable ||
-            metafile->metafile_type == MetafileTypeWmf))
+        if (stat == Ok)
+        {
             stat = METAFILE_PlaybackGetDC(real_metafile);
 
+            dst_bounds.left = real_metafile->playback_points[0].X;
+            dst_bounds.right = real_metafile->playback_points[1].X;
+            dst_bounds.top = real_metafile->playback_points[0].Y;
+            dst_bounds.bottom = real_metafile->playback_points[2].Y;
+        }
+
         if (stat == Ok)
-            EnumEnhMetaFile(0, metafile->hemf, enum_metafile_proc, &data, NULL);
+            EnumEnhMetaFile(real_metafile->playback_dc, metafile->hemf, enum_metafile_proc,
+                &data, &dst_bounds);
 
         METAFILE_PlaybackReleaseDC(real_metafile);
 

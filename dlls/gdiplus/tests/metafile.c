@@ -2933,7 +2933,7 @@ static void test_restoredc(void)
 
     stat = GdipBitmapGetPixel(bitmap, 21, 21, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipBitmapGetPixel(bitmap, 41, 41, &color);
     expect(Ok, stat);
@@ -2941,7 +2941,7 @@ static void test_restoredc(void)
 
     stat = GdipBitmapGetPixel(bitmap, 61, 61, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff0000ff, color);
+    expect(0xff0000ff, color);
 
     stat = GdipDeleteGraphics(graphics);
     expect(Ok, stat);
