@@ -2832,6 +2832,127 @@ static void test_fillpath(void)
     expect(GenericError, stat);
 }
 
+static const emfplus_record restoredc_records[] = {
+    { EMR_HEADER },
+    { EMR_CREATEBRUSHINDIRECT },
+    { EMR_SELECTOBJECT },
+
+    { EMR_SAVEDC },
+    { EMR_SETVIEWPORTORGEX },
+    { EMR_SAVEDC },
+    { EMR_SETVIEWPORTORGEX },
+    { EMR_SAVEDC },
+    { EMR_SETVIEWPORTORGEX },
+
+    { EMR_RECTANGLE },
+
+    { EMR_RESTOREDC },
+    { EMR_RECTANGLE },
+
+    { EMR_RESTOREDC },
+    { EMR_RECTANGLE },
+
+    { EMR_SELECTOBJECT },
+    { EMR_DELETEOBJECT },
+    { EMR_EOF },
+    { 0 }
+};
+
+static void test_restoredc(void)
+{
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
+
+    GpBitmap *bitmap;
+    GpGraphics *graphics;
+    GpMetafile *metafile;
+    GpStatus stat;
+    HDC hdc, metafile_dc;
+    HBRUSH hbrush, holdbrush;
+    ARGB color;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfOnly, &frame, MetafileFrameUnitPixel,
+        L"winetest", &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipGetDC(graphics, &metafile_dc);
+    expect(Ok, stat);
+
+    hbrush = CreateSolidBrush(0xff0000);
+    holdbrush = SelectObject(metafile_dc, hbrush);
+
+    SaveDC(metafile_dc);
+    SetViewportOrgEx(metafile_dc, 20, 20, NULL);
+
+    SaveDC(metafile_dc);
+    SetViewportOrgEx(metafile_dc, 40, 40, NULL);
+
+    SaveDC(metafile_dc);
+    SetViewportOrgEx(metafile_dc, 60, 60, NULL);
+
+    Rectangle(metafile_dc, 0, 0, 3, 3);
+    RestoreDC(metafile_dc, -2);
+
+    Rectangle(metafile_dc, 0, 0, 3, 3);
+    RestoreDC(metafile_dc, -1);
+
+    Rectangle(metafile_dc, 0, 0, 3, 3);
+
+    SelectObject(metafile_dc, holdbrush);
+    DeleteObject(hbrush);
+
+    stat = GdipReleaseDC(graphics, metafile_dc);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, restoredc_records, "restoredc metafile", dst_points,
+        &frame, UnitPixel);
+    sync_metafile(&metafile, "restoredc.emf");
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, restoredc_records, "restoredc playback", dst_points,
+        &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 1, 1, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 21, 21, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 41, 41, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 61, 61, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xff0000ff, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2880,6 +3001,7 @@ START_TEST(metafile)
     test_properties();
     test_drawpath();
     test_fillpath();
+    test_restoredc();
 
     GdiplusShutdown(gdiplusToken);
 }
