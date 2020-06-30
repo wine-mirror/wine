@@ -7012,7 +7012,7 @@ static void test_gdi_interop_hdc(void)
     expect(0x00aa00ff, bits[6 * 100 + 6]);
     expect(0x00aa00ff, bits[26 * 100 + 26]);
     expect(0x00aa00ff, bits[36 * 100 + 36]);
-    todo_wine expect(0xffaa00ff, bits[86 * 100 + 86]);
+    expect(0xffaa00ff, bits[86 * 100 + 86]);
 
     DeleteDC(src_hdc);
     DeleteObject(hbm);

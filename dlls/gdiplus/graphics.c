@@ -6789,6 +6789,7 @@ GpStatus gdi_transform_acquire(GpGraphics *graphics)
     if (graphics->gdi_transform_acquire_count == 0 && graphics->hdc)
     {
         graphics->gdi_transform_save = SaveDC(graphics->hdc);
+        ModifyWorldTransform(graphics->hdc, NULL, MWT_IDENTITY);
         SetGraphicsMode(graphics->hdc, GM_COMPATIBLE);
         SetMapMode(graphics->hdc, MM_TEXT);
         SetWindowOrgEx(graphics->hdc, 0, 0, NULL);
