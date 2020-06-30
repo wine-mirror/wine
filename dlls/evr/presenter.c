@@ -35,6 +35,7 @@ struct video_presenter
 {
     IMFVideoPresenter IMFVideoPresenter_iface;
     IMFVideoDeviceID IMFVideoDeviceID_iface;
+    IMFTopologyServiceLookupClient IMFTopologyServiceLookupClient_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -55,6 +56,11 @@ static struct video_presenter *impl_from_IMFVideoDeviceID(IMFVideoDeviceID *ifac
     return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoDeviceID_iface);
 }
 
+static struct video_presenter *impl_from_IMFTopologyServiceLookupClient(IMFTopologyServiceLookupClient *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFTopologyServiceLookupClient_iface);
+}
+
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     struct video_presenter *presenter = impl_from_IUnknown(iface);
@@ -73,6 +79,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IMFVideoDeviceID))
     {
         *obj = &presenter->IMFVideoDeviceID_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFTopologyServiceLookupClient))
+    {
+        *obj = &presenter->IMFTopologyServiceLookupClient_iface;
     }
     else
     {
@@ -236,6 +246,49 @@ static const IMFVideoDeviceIDVtbl video_presenter_device_id_vtbl =
     video_presenter_device_id_GetDeviceID,
 };
 
+static HRESULT WINAPI video_presenter_service_client_QueryInterface(IMFTopologyServiceLookupClient *iface,
+        REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IMFTopologyServiceLookupClient(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_service_client_AddRef(IMFTopologyServiceLookupClient *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFTopologyServiceLookupClient(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_service_client_Release(IMFTopologyServiceLookupClient *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFTopologyServiceLookupClient(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_service_client_InitServicePointers(IMFTopologyServiceLookupClient *iface,
+        IMFTopologyServiceLookup *service_lookup)
+{
+    FIXME("%p, %p.\n", iface, service_lookup);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_service_client_ReleaseServicePointers(IMFTopologyServiceLookupClient *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTopologyServiceLookupClientVtbl video_presenter_service_client_vtbl =
+{
+    video_presenter_service_client_QueryInterface,
+    video_presenter_service_client_AddRef,
+    video_presenter_service_client_Release,
+    video_presenter_service_client_InitServicePointers,
+    video_presenter_service_client_ReleaseServicePointers,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -257,6 +310,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
 
     object->IMFVideoPresenter_iface.lpVtbl = &video_presenter_vtbl;
     object->IMFVideoDeviceID_iface.lpVtbl = &video_presenter_device_id_vtbl;
+    object->IMFTopologyServiceLookupClient_iface.lpVtbl = &video_presenter_service_client_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;

@@ -870,6 +870,7 @@ static void test_default_presenter(void)
 {
     IMFVideoPresenter *presenter;
     IMFVideoDeviceID *deviceid;
+    IUnknown *unk;
     HRESULT hr;
     GUID iid;
 
@@ -892,6 +893,10 @@ static void test_default_presenter(void)
     ok(IsEqualIID(&iid, &IID_IDirect3DDevice9), "Unexpected id %s.\n", wine_dbgstr_guid(&iid));
 
     IMFVideoDeviceID_Release(deviceid);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     IMFVideoPresenter_Release(presenter);
 }
