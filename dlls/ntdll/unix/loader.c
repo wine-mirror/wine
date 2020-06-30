@@ -124,7 +124,7 @@ const char *build_dir = NULL;
 const char *config_dir = NULL;
 const char **dll_paths = NULL;
 const char *user_name = NULL;
-HMODULE ntdll_module = NULL;
+static HMODULE ntdll_module;
 
 struct file_id
 {
@@ -1295,10 +1295,22 @@ found:
  */
 static HMODULE load_ntdll(void)
 {
+    NTSTATUS status;
     void *module;
-    char *name = build_path( dll_dir, "ntdll.dll.so" );
-    NTSTATUS status = dlopen_dll( name, &module );
+    int fd;
+    char *name = build_path( dll_dir, "ntdll.dll" );
 
+    if ((fd = open( name, O_RDONLY )) != -1)
+    {
+        status = virtual_map_ntdll( fd, &module );
+        close( fd );
+    }
+    else
+    {
+        free( name );
+        name = build_path( dll_dir, "ntdll.dll.so" );
+        status = dlopen_dll( name, &module );
+    }
     if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     return module;

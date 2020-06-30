@@ -1956,12 +1956,12 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
 
 
 /*************************************************************************
- *		build_so_dll_module
+ *		build_builtin_module
  *
- * Build the module for a .so builtin library.
+ * Build the module for a builtin library.
  */
-static NTSTATUS build_so_dll_module( const WCHAR *load_path, const UNICODE_STRING *nt_name,
-                                     void *module, DWORD flags, WINE_MODREF **pwm )
+static NTSTATUS build_builtin_module( const WCHAR *load_path, const UNICODE_STRING *nt_name,
+                                      void *module, DWORD flags, WINE_MODREF **pwm )
 {
     NTSTATUS status;
     pe_image_info_t image_info = { 0 };
@@ -2337,7 +2337,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     }
     else
     {
-        if ((status = build_so_dll_module( load_path, &win_name, module, flags, &wm ))) return status;
+        if ((status = build_builtin_module( load_path, &win_name, module, flags, &wm ))) return status;
         TRACE_(loaddll)( "Loaded %s at %p: builtin\n", debugstr_us(nt_name), module );
     }
     *pwm = wm;
@@ -3919,7 +3919,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
  */
 void __wine_process_init(void)
 {
-    extern IMAGE_NT_HEADERS __wine_spec_nt_header;
     static const WCHAR ntdllW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','t','e','m','3','2','\\',
                                    'n','t','d','l','l','.','d','l','l',0};
@@ -3932,7 +3931,7 @@ void __wine_process_init(void)
     NTSTATUS status;
     ANSI_STRING func_name;
     UNICODE_STRING nt_name;
-    HMODULE ntdll_module = (HMODULE)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+    MEMORY_BASIC_INFORMATION meminfo;
     INITIAL_TEB stack;
     ULONG_PTR val;
     TEB *teb = NtCurrentTeb();
@@ -3976,7 +3975,9 @@ void __wine_process_init(void)
 
     /* setup the load callback and create ntdll modref */
     RtlInitUnicodeString( &nt_name, ntdllW );
-    status = build_so_dll_module( params->DllPath.Buffer, &nt_name, ntdll_module, 0, &wm );
+    NtQueryVirtualMemory( GetCurrentProcess(), __wine_process_init, MemoryBasicInformation,
+                          &meminfo, sizeof(meminfo), NULL );
+    status = build_builtin_module( params->DllPath.Buffer, &nt_name, meminfo.AllocationBase, 0, &wm );
     assert( !status );
 
     RtlInitUnicodeString( &nt_name, kernel32W );
