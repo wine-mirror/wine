@@ -895,6 +895,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         SERVER_START_REQ( get_thread_info )
         {
             req->handle = wine_server_obj_handle( handle );
+            req->access = THREAD_QUERY_INFORMATION;
             if (!(status = wine_server_call( req ))) affinity = reply->affinity & affinity_mask;
         }
         SERVER_END_REQ;
@@ -973,6 +974,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         SERVER_START_REQ( get_thread_info )
         {
             req->handle = wine_server_obj_handle( handle );
+            req->access = THREAD_QUERY_INFORMATION;
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
             {
