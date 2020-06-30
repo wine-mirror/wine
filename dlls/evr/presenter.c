@@ -36,6 +36,7 @@ struct video_presenter
     IMFVideoPresenter IMFVideoPresenter_iface;
     IMFVideoDeviceID IMFVideoDeviceID_iface;
     IMFTopologyServiceLookupClient IMFTopologyServiceLookupClient_iface;
+    IMFVideoDisplayControl IMFVideoDisplayControl_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -61,6 +62,11 @@ static struct video_presenter *impl_from_IMFTopologyServiceLookupClient(IMFTopol
     return CONTAINING_RECORD(iface, struct video_presenter, IMFTopologyServiceLookupClient_iface);
 }
 
+static struct video_presenter *impl_from_IMFVideoDisplayControl(IMFVideoDisplayControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoDisplayControl_iface);
+}
+
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     struct video_presenter *presenter = impl_from_IUnknown(iface);
@@ -83,6 +89,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IMFTopologyServiceLookupClient))
     {
         *obj = &presenter->IMFTopologyServiceLookupClient_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoDisplayControl))
+    {
+        *obj = &presenter->IMFVideoDisplayControl_iface;
     }
     else
     {
@@ -289,6 +299,116 @@ static const IMFTopologyServiceLookupClientVtbl video_presenter_service_client_v
     video_presenter_service_client_ReleaseServicePointers,
 };
 
+static HRESULT WINAPI video_presenter_control_QueryInterface(IMFVideoDisplayControl *iface, REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_control_AddRef(IMFVideoDisplayControl *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_control_Release(IMFVideoDisplayControl *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_control_GetNativeVideoSize(IMFVideoDisplayControl *iface, SIZE *video_size,
+        SIZE *aspect_ratio)
+{
+    FIXME("%p, %p, %p.\n", iface, video_size, aspect_ratio);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetIdealVideoSize(IMFVideoDisplayControl *iface, SIZE *min_size,
+        SIZE *max_size)
+{
+    FIXME("%p, %p, %p.\n", iface, min_size, max_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_SetVideoPosition(IMFVideoDisplayControl *iface,
+        const MFVideoNormalizedRect *source, const RECT *dest)
+{
+    FIXME("%p, %p, %p.\n", iface, source, dest);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetVideoPosition(IMFVideoDisplayControl *iface, MFVideoNormalizedRect *source,
+        RECT *dest)
+{
+    FIXME("%p, %p, %p.\n", iface, source, dest);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_SetAspectRatioMode(IMFVideoDisplayControl *iface, DWORD mode)
+{
+    FIXME("%p, %d.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetAspectRatioMode(IMFVideoDisplayControl *iface, DWORD *mode)
+{
+    FIXME("%p, %p.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_SetVideoWindow(IMFVideoDisplayControl *iface, HWND window)
+{
+    FIXME("%p, %p.\n", iface, window);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetVideoWindow(IMFVideoDisplayControl *iface, HWND *window)
+{
+    FIXME("%p, %p.\n", iface, window);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_RepaintVideo(IMFVideoDisplayControl *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_control_GetCurrentImage(IMFVideoDisplayControl *iface, BITMAPINFOHEADER *header,
+        BYTE **dib, DWORD *dib_size, LONGLONG *timestamp)
+{
+    FIXME("%p, %p, %p, %p, %p.\n", iface, header, dib, dib_size, timestamp);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoDisplayControlVtbl video_presenter_control_vtbl =
+{
+    video_presenter_control_QueryInterface,
+    video_presenter_control_AddRef,
+    video_presenter_control_Release,
+    video_presenter_control_GetNativeVideoSize,
+    video_presenter_control_GetIdealVideoSize,
+    video_presenter_control_SetVideoPosition,
+    video_presenter_control_GetVideoPosition,
+    video_presenter_control_SetAspectRatioMode,
+    video_presenter_control_GetAspectRatioMode,
+    video_presenter_control_SetVideoWindow,
+    video_presenter_control_GetVideoWindow,
+    video_presenter_control_RepaintVideo,
+    video_presenter_control_GetCurrentImage,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -311,6 +431,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFVideoPresenter_iface.lpVtbl = &video_presenter_vtbl;
     object->IMFVideoDeviceID_iface.lpVtbl = &video_presenter_device_id_vtbl;
     object->IMFTopologyServiceLookupClient_iface.lpVtbl = &video_presenter_service_client_vtbl;
+    object->IMFVideoDisplayControl_iface.lpVtbl = &video_presenter_control_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
