@@ -233,6 +233,7 @@ typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 struct stack_layout
 {
     CONTEXT           context;
+    ULONG64           unknown[4];
     EXCEPTION_RECORD  rec;
     ULONG64           rsi;
     ULONG64           rdi;
@@ -240,6 +241,8 @@ struct stack_layout
     ULONG64           rip;
     ULONG64           red_zone[16];
 };
+
+C_ASSERT( sizeof(struct stack_layout) == 0x630 ); /* Should match the size in call_user_exception_dispatcher(). */
 
 struct amd64_thread_data
 {
@@ -1843,16 +1846,10 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 }
 
 
-extern void CDECL raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+extern void CDECL raise_func_trampoline( raise_func func );
+
 __ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   __ASM_CFI(".cfi_signal_frame\n\t")
-                   __ASM_CFI(".cfi_def_cfa %rbp,160\n\t")  /* red zone + rip + rbp + rdi + rsi */
-                   __ASM_CFI(".cfi_rel_offset %rip,24\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rbp,16\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rdi,8\n\t")
-                   __ASM_CFI(".cfi_rel_offset %rsi,0\n\t")
-                   "call *%r8\n\t"
-                   "int $3")
+                   "jmpq *%r8\n\t")
 
 /***********************************************************************
  *           setup_exception
@@ -1934,7 +1931,6 @@ static struct stack_layout *setup_exception( ucontext_t *sigcontext )
 
 static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *stack )
 {
-    ULONG64 *rsp_ptr;
     NTSTATUS status;
 
     if (stack->rec.ExceptionCode == EXCEPTION_SINGLE_STEP)
@@ -1962,24 +1958,39 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
         return;
     }
 
-    /* store return address and %rbp without aligning, so that the offset is fixed */
-    rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
-    *(--rsp_ptr) = stack->context.Rip;
-    *(--rsp_ptr) = stack->context.Rbp;
-    *(--rsp_ptr) = stack->context.Rdi;
-    *(--rsp_ptr) = stack->context.Rsi;
-
     /* now modify the sigcontext to return to the raise function */
     RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
-    RCX_sig(sigcontext) = (ULONG_PTR)&stack->rec;
-    RDX_sig(sigcontext) = (ULONG_PTR)&stack->context;
     R8_sig(sigcontext)  = (ULONG_PTR)pKiUserExceptionDispatcher;
-    RBP_sig(sigcontext) = (ULONG_PTR)rsp_ptr;
     RSP_sig(sigcontext) = (ULONG_PTR)stack;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
 }
 
+extern void WINAPI user_exception_dispatcher_trampoline( struct stack_layout *stack,
+        void *pKiUserExceptionDispatcher );
+
+__ASM_GLOBAL_FUNC( user_exception_dispatcher_trampoline,
+                   "movq %rcx,%rsp\n\t"
+                   "movq 0x98(%rsp),%rcx\n\t" /* context->Rsp */
+                   "movq 0xa0(%rsp),%rbp\n\t"
+                   "movq 0xa8(%rsp),%rsi\n\t"
+                   "movq 0xb0(%rsp),%rdi\n\t"
+                   "jmpq *%rdx")
+
+void WINAPI do_call_user_exception_dispatcher(EXCEPTION_RECORD *rec, CONTEXT *context, struct stack_layout *stack)
+{
+    memcpy(&stack->context, context, sizeof(*context));
+    memcpy(&stack->rec, rec, sizeof(*rec));
+
+    user_exception_dispatcher_trampoline( stack, pKiUserExceptionDispatcher );
+}
+
+__ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
+                   "movq 0x98(%rdx),%rsp\n\t" /* context->Rsp */
+                   "and $~0xf,%rsp\n\t"
+                   "sub $0x630,%rsp\n\t" /* sizeof(struct stack_layout) */
+                   "movq %rsp,%r8\n\t"
+                   "jmp " __ASM_NAME("do_call_user_exception_dispatcher") "\n\t")
 
 /***********************************************************************
  *           is_privileged_instr

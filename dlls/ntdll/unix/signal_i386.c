@@ -1588,6 +1588,10 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     stack->context_ptr  = &stack->context;
 }
 
+void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    pKiUserExceptionDispatcher( rec, context );
+}
 
 /**********************************************************************
  *		get_fpu_code

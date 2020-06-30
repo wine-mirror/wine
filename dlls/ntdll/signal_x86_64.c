@@ -530,10 +530,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 }
 
 
-/*******************************************************************
- *		KiUserExceptionDispatcher (NTDLL.@)
- */
-NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     NTSTATUS status;
     DWORD c;
@@ -580,6 +577,28 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
     return NtRaiseException( rec, context, FALSE );
 }
 
+
+/*******************************************************************
+ *		KiUserExceptionDispatcher (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
+                  "mov 0x98(%rsp),%rcx\n\t" /* context->Rsp */
+                  "mov 0xf8(%rsp),%rdx\n\t" /* context->Rip */
+                  "mov %rdx,-0x8(%rcx)\n\t"
+                  "mov %rbp,-0x10(%rcx)\n\t"
+                  "mov %rdi,-0x18(%rcx)\n\t"
+                  "mov %rsi,-0x20(%rcx)\n\t"
+                  "mov %rcx,%rbp\n\t"
+                  "mov %rsp,%rdx\n\t" /* context */
+                  "lea 0x4f0(%rsp),%rcx\n\t" /* rec */
+                  __ASM_CFI(".cfi_signal_frame\n\t")
+                  __ASM_CFI(".cfi_def_cfa %rbp,0\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rip,-0x8\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rbp,-0x10\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rdi,-0x18\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rsi,-0x20\n\t")
+                   "call " __ASM_NAME("dispatch_exception") "\n\t"
+                  "int3")
 
 static ULONG64 get_int_reg( CONTEXT *context, int reg )
 {
