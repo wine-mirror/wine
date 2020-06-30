@@ -1969,12 +1969,13 @@ static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
 
 
 /***********************************************************************
- *           map_image
+ *           map_image_into_view
  *
- * Map an executable (PE format) image into memory.
+ * Map an executable (PE format) image into an existing view.
+ * The csVirtual section must be held by caller.
  */
-static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_down, unsigned short zero_bits_64,
-                           pe_image_info_t *image_info, int shared_fd, BOOL removable, PVOID *addr_ptr )
+static NTSTATUS map_image_into_view( struct file_view *view, int fd, void *orig_base,
+                                     SIZE_T header_size, ULONG image_flags, int shared_fd, BOOL removable )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -1982,54 +1983,30 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_
     IMAGE_SECTION_HEADER *sec;
     IMAGE_DATA_DIRECTORY *imports;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
-    SIZE_T header_size, total_size = image_info->map_size;
     int i;
     off_t pos;
-    sigset_t sigset;
     struct stat st;
-    struct file_view *view = NULL;
-    char *ptr, *header_end, *header_start;
-    char *base = wine_server_get_ptr( image_info->base );
+    char *header_end, *header_start;
+    char *ptr = view->base;
+    SIZE_T total_size = view->size;
 
-    if (total_size != image_info->map_size)  /* truncated */
-    {
-        WARN( "Modules larger than 4Gb (%s) not supported\n", wine_dbgstr_longlong(image_info->map_size) );
-        return STATUS_INVALID_PARAMETER;
-    }
-    if ((ULONG_PTR)base != image_info->base) base = NULL;
-
-    /* zero-map the whole range */
-
-    server_enter_uninterrupted_section( &csVirtual, &sigset );
-
-    if (base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, total_size, top_down, SEC_IMAGE | SEC_FILE |
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits_64 );
-
-    if (status != STATUS_SUCCESS)
-        status = map_view( &view, NULL, total_size, top_down, SEC_IMAGE | SEC_FILE |
-                           VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY, zero_bits_64 );
-
-    if (status != STATUS_SUCCESS) goto error;
-
-    ptr = view->base;
     TRACE_(module)( "mapped PE file at %p-%p\n", ptr, ptr + total_size );
 
     /* map the header */
 
     fstat( fd, &st );
-    header_size = min( image_info->header_size, st.st_size );
-    if ((status = map_pe_header( view->base, header_size, fd, &removable )) != STATUS_SUCCESS) goto error;
+    header_size = min( header_size, st.st_size );
+    if ((status = map_pe_header( view->base, header_size, fd, &removable ))) return status;
 
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     header_end = ptr + ROUND_SIZE( 0, header_size );
     memset( ptr + header_size, 0, header_end - (ptr + header_size) );
-    if ((char *)(nt + 1) > header_end) goto error;
+    if ((char *)(nt + 1) > header_end) return status;
     header_start = (char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader;
-    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( sections )) goto error;
-    if (header_start + sizeof(*sections) * nt->FileHeader.NumberOfSections > header_end) goto error;
+    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( sections )) return status;
+    if (header_start + sizeof(*sections) * nt->FileHeader.NumberOfSections > header_end) return status;
     /* Some applications (e.g. the Steam version of Borderlands) map over the top of the section headers,
      * copying the headers into local memory is necessary to properly load such applications. */
     memcpy(sections, header_start, sizeof(*sections) * nt->FileHeader.NumberOfSections);
@@ -2040,28 +2017,28 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_
 
     /* check for non page-aligned binary */
 
-    if (image_info->image_flags & IMAGE_FLAGS_ImageMappedFlat)
+    if (image_flags & IMAGE_FLAGS_ImageMappedFlat)
     {
         /* unaligned sections, this happens for native subsystem binaries */
         /* in that case Windows simply maps in the whole file */
 
         total_size = min( total_size, ROUND_SIZE( 0, st.st_size ));
         if (map_file_into_view( view, fd, 0, total_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                                removable ) != STATUS_SUCCESS) goto error;
+                                removable ) != STATUS_SUCCESS) return status;
 
         /* check that all sections are loaded at the right offset */
-        if (nt->OptionalHeader.FileAlignment != nt->OptionalHeader.SectionAlignment) goto error;
+        if (nt->OptionalHeader.FileAlignment != nt->OptionalHeader.SectionAlignment) return status;
         for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
         {
             if (sec[i].VirtualAddress != sec[i].PointerToRawData)
-                goto error;  /* Windows refuses to load in that case too */
+                return status;  /* Windows refuses to load in that case too */
         }
 
         /* set the image protections */
         set_vprot( view, ptr, total_size, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
 
         /* no relocations are performed on non page-aligned binaries */
-        goto done;
+        return STATUS_SUCCESS;
     }
 
 
@@ -2088,7 +2065,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_
         {
             WARN_(module)( "Section %.8s too large (%x+%lx/%lx)\n",
                            sec->Name, sec->VirtualAddress, map_size, total_size );
-            goto error;
+            return status;
         }
 
         if ((sec->Characteristics & IMAGE_SCN_MEM_SHARED) &&
@@ -2102,7 +2079,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_
                                     VPROT_COMMITTED | VPROT_READ | VPROT_WRITE, FALSE ) != STATUS_SUCCESS)
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
-                goto error;
+                return status;
             }
 
             /* check if the import directory falls inside this section */
@@ -2140,7 +2117,7 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_
                                 removable ) != STATUS_SUCCESS)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
-            goto error;
+            return status;
         }
 
         if (file_size & page_mask)
@@ -2183,34 +2160,10 @@ static NTSTATUS map_image( HANDLE hmapping, ACCESS_MASK access, int fd, int top_
                  sec->Characteristics, sec->Name );
     }
 
- done:
-
-    SERVER_START_REQ( map_view )
-    {
-        req->mapping = wine_server_obj_handle( hmapping );
-        req->access  = access;
-        req->base    = wine_server_client_ptr( view->base );
-        req->size    = view->size;
-        req->start   = 0;
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (status) goto error;
-
-    VIRTUAL_DEBUG_DUMP_VIEW( view );
-    server_leave_uninterrupted_section( &csVirtual, &sigset );
-
-    *addr_ptr = ptr;
 #ifdef VALGRIND_LOAD_PDB_DEBUGINFO
-    VALGRIND_LOAD_PDB_DEBUGINFO(fd, ptr, total_size, ptr - base);
+    VALGRIND_LOAD_PDB_DEBUGINFO(fd, ptr, total_size, ptr - (char *)orig_base);
 #endif
-    if (ptr != base) return STATUS_IMAGE_NOT_AT_BASE;
     return STATUS_SUCCESS;
-
- error:
-    if (view) delete_view( view );
-    server_leave_uninterrupted_section( &csVirtual, &sigset );
-    return status;
 }
 
 
@@ -2227,7 +2180,9 @@ NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sho
     mem_size_t full_size;
     ACCESS_MASK access;
     SIZE_T size;
+    void *base;
     int unix_handle = -1, needs_close;
+    int shared_fd = -1, shared_needs_close = 0;
     unsigned int vprot, sec_flags;
     struct file_view *view;
     HANDLE shared_file;
@@ -2271,73 +2226,76 @@ NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sho
     SERVER_END_REQ;
     if (res) return res;
 
-    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
-
-    if (sec_flags & SEC_IMAGE)
+    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL )))
     {
-        if (shared_file)
-        {
-            int shared_fd, shared_needs_close;
+        if (shared_file) NtClose( shared_file );
+        return res;
+    }
 
-            if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
-                                           &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, access, unix_handle, alloc_type & MEM_TOP_DOWN, zero_bits_64, image_info,
-                             shared_fd, needs_close, addr_ptr );
-            if (shared_needs_close) close( shared_fd );
-            NtClose( shared_file );
-        }
-        else
-        {
-            res = map_image( handle, access, unix_handle, alloc_type & MEM_TOP_DOWN, zero_bits_64, image_info,
-                             -1, needs_close, addr_ptr );
-        }
+    if (shared_file && ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
+                                                   &shared_fd, &shared_needs_close, NULL, NULL ))))
+    {
+        NtClose( shared_file );
         if (needs_close) close( unix_handle );
-        if (res >= 0) *size_ptr = image_info->map_size;
         return res;
     }
 
     res = STATUS_INVALID_PARAMETER;
-    if (offset.QuadPart >= full_size) goto done;
-    if (*size_ptr)
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+
+    if (sec_flags & SEC_IMAGE)
     {
-        size = *size_ptr;
-        if (size > full_size - offset.QuadPart)
-        {
-            res = STATUS_INVALID_VIEW_SIZE;
-            goto done;
-        }
+        base = wine_server_get_ptr( image_info->base );
+        if ((ULONG_PTR)base != image_info->base) base = NULL;
+        size = image_info->map_size;
+        vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
+
+        if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
+            res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+
+        if (res) res = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+        if (res) goto done;
+
+        res = map_image_into_view( view, unix_handle, base, image_info->header_size,
+                                   image_info->image_flags, shared_fd, needs_close );
     }
     else
     {
-        size = full_size - offset.QuadPart;
-        if (size != full_size - offset.QuadPart)  /* truncated */
+        base = *addr_ptr;
+        if (offset.QuadPart >= full_size) goto done;
+        if (*size_ptr)
         {
-            WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
-                  wine_dbgstr_longlong(full_size) );
-            goto done;
+            size = *size_ptr;
+            if (size > full_size - offset.QuadPart)
+            {
+                res = STATUS_INVALID_VIEW_SIZE;
+                goto done;
+            }
         }
+        else
+        {
+            size = full_size - offset.QuadPart;
+            if (size != full_size - offset.QuadPart)  /* truncated */
+            {
+                WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
+                      wine_dbgstr_longlong(full_size) );
+                goto done;
+            }
+        }
+        if (!(size = ROUND_SIZE( 0, size ))) goto done;  /* wrap-around */
+
+        get_vprot_flags( protect, &vprot, FALSE );
+        vprot |= sec_flags;
+        if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
+        res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+        if (res) goto done;
+
+        TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
+        res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
+        if (res) ERR( "mapping %p %lx %x%08x failed\n",
+                      view->base, size, offset.u.HighPart, offset.u.LowPart );
     }
-    if (!(size = ROUND_SIZE( 0, size ))) goto done;  /* wrap-around */
 
-    /* Reserve a properly aligned area */
-
-    server_enter_uninterrupted_section( &csVirtual, &sigset );
-
-    get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE );
-    vprot |= sec_flags;
-    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-    res = map_view( &view, *addr_ptr, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
-    if (res)
-    {
-        server_leave_uninterrupted_section( &csVirtual, &sigset );
-        goto done;
-    }
-
-    /* Map the file */
-
-    TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
-
-    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
     if (res == STATUS_SUCCESS)
     {
         SERVER_START_REQ( map_view )
@@ -2352,22 +2310,19 @@ NTSTATUS CDECL virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sho
         SERVER_END_REQ;
     }
 
-    if (res == STATUS_SUCCESS)
+    if (res >= 0)
     {
         *addr_ptr = view->base;
         *size_ptr = size;
         VIRTUAL_DEBUG_DUMP_VIEW( view );
     }
-    else
-    {
-        ERR( "mapping %p %lx %x%08x failed\n", view->base, size, offset.u.HighPart, offset.u.LowPart );
-        delete_view( view );
-    }
-
-    server_leave_uninterrupted_section( &csVirtual, &sigset );
+    else delete_view( view );
 
 done:
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     if (needs_close) close( unix_handle );
+    if (shared_needs_close) close( shared_fd );
+    if (shared_file) NtClose( shared_file );
     return res;
 }
 

@@ -1075,7 +1075,11 @@ DECL_HANDLER(map_view)
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
-        if (mapping->flags & SEC_IMAGE) view->image = mapping->image;
+        if (mapping->flags & SEC_IMAGE)
+        {
+            view->image = mapping->image;
+            if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );
+        }
         list_add_tail( &current->process->views, &view->entry );
     }
 
