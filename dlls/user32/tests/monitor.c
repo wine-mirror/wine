@@ -1299,6 +1299,7 @@ static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PAT
 
     for (i = 0; i < paths; i++)
     {
+        todo_wine {
         source_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
         source_name.header.size = sizeof(source_name);
         source_name.header.adapterId = pi[i].sourceInfo.adapterId;
@@ -1307,7 +1308,9 @@ static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PAT
         ret = pDisplayConfigGetDeviceInfo(&source_name.header);
         ok(!ret, "Expected 0, got %d\n", ret);
         ok(source_name.viewGdiDeviceName[0] != '\0', "Expected GDI device name, got empty string\n");
+        }
 
+        todo_wine {
         target_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_NAME;
         target_name.header.size = sizeof(target_name);
         target_name.header.adapterId = pi[i].targetInfo.adapterId;
@@ -1316,7 +1319,9 @@ static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PAT
         ret = pDisplayConfigGetDeviceInfo(&target_name.header);
         ok(!ret, "Expected 0, got %d\n", ret);
         ok(target_name.monitorDevicePath[0] != '\0', "Expected monitor device path, got empty string\n");
+        }
 
+        todo_wine {
         preferred_mode.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_TARGET_PREFERRED_MODE;
         preferred_mode.header.size = sizeof(preferred_mode);
         preferred_mode.header.adapterId = pi[i].targetInfo.adapterId;
@@ -1326,7 +1331,9 @@ static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PAT
         ok(!ret, "Expected 0, got %d\n", ret);
         ok(preferred_mode.width > 0 && preferred_mode.height > 0, "Expected non-zero height/width, got %ux%u\n",
                 preferred_mode.width, preferred_mode.height);
+        }
 
+        todo_wine {
         adapter_name.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADAPTER_NAME;
         adapter_name.header.size = sizeof(adapter_name);
         adapter_name.header.adapterId = pi[i].sourceInfo.adapterId;
@@ -1334,6 +1341,7 @@ static void test_QueryDisplayConfig_result(UINT32 paths, const DISPLAYCONFIG_PAT
         ret = pDisplayConfigGetDeviceInfo(&adapter_name.header);
         ok(!ret, "Expected 0, got %d\n", ret);
         ok(adapter_name.adapterDevicePath[0] != '\0', "Expected adapter device path, got empty string\n");
+        }
 
         /* Check corresponding modes */
         if (pi[i].sourceInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)

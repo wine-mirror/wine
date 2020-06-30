@@ -40,6 +40,7 @@
 #include "winerror.h"
 
 #include "initguid.h"
+#include "d3dkmdt.h"
 #include "devguid.h"
 #include "setupapi.h"
 #include "controls.h"
@@ -248,6 +249,10 @@ static const WCHAR No[] =    {'N','o',0};
 static const WCHAR CSu[] =   {'%','u',0};
 static const WCHAR CSd[] =   {'%','d',0};
 static const WCHAR CSrgb[] = {'%','u',' ','%','u',' ','%','u',0};
+
+DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
+DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
+DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
 
 /* Wine specific monitor properties */
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_MONITOR_STATEFLAGS, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5b, 2);
@@ -4556,6 +4561,129 @@ done:
     return ret;
 }
 
+static DISPLAYCONFIG_ROTATION get_dc_rotation(const DEVMODEW *devmode)
+{
+    if (devmode->dmFields & DM_DISPLAYORIENTATION)
+        return devmode->u1.s2.dmDisplayOrientation + 1;
+    else
+        return DISPLAYCONFIG_ROTATION_IDENTITY;
+}
+
+static DISPLAYCONFIG_SCANLINE_ORDERING get_dc_scanline_ordering(const DEVMODEW *devmode)
+{
+    if (!(devmode->dmFields & DM_DISPLAYFLAGS))
+        return DISPLAYCONFIG_SCANLINE_ORDERING_UNSPECIFIED;
+    else if (devmode->u2.dmDisplayFlags & DM_INTERLACED)
+        return DISPLAYCONFIG_SCANLINE_ORDERING_INTERLACED;
+    else
+        return DISPLAYCONFIG_SCANLINE_ORDERING_PROGRESSIVE;
+}
+
+static DISPLAYCONFIG_PIXELFORMAT get_dc_pixelformat(DWORD dmBitsPerPel)
+{
+    if ((dmBitsPerPel == 8) || (dmBitsPerPel == 16) ||
+        (dmBitsPerPel == 24) || (dmBitsPerPel == 32))
+        return dmBitsPerPel / 8;
+    else
+        return DISPLAYCONFIG_PIXELFORMAT_NONGDI;
+}
+
+static void set_mode_target_info(DISPLAYCONFIG_MODE_INFO *info, const LUID *gpu_luid, UINT32 target_id,
+                                 UINT32 flags, const DEVMODEW *devmode)
+{
+    DISPLAYCONFIG_TARGET_MODE *mode = &(info->u.targetMode);
+
+    info->infoType = DISPLAYCONFIG_MODE_INFO_TYPE_TARGET;
+    info->adapterId = *gpu_luid;
+    info->id = target_id;
+
+    /* FIXME: Populate pixelRate/hSyncFreq/totalSize with real data */
+    mode->targetVideoSignalInfo.pixelRate = devmode->dmDisplayFrequency * devmode->dmPelsWidth * devmode->dmPelsHeight;
+    mode->targetVideoSignalInfo.hSyncFreq.Numerator = devmode->dmDisplayFrequency * devmode->dmPelsWidth;
+    mode->targetVideoSignalInfo.hSyncFreq.Denominator = 1;
+    mode->targetVideoSignalInfo.vSyncFreq.Numerator = devmode->dmDisplayFrequency;
+    mode->targetVideoSignalInfo.vSyncFreq.Denominator = 1;
+    mode->targetVideoSignalInfo.activeSize.cx = devmode->dmPelsWidth;
+    mode->targetVideoSignalInfo.activeSize.cy = devmode->dmPelsHeight;
+    if (flags & QDC_DATABASE_CURRENT)
+    {
+        mode->targetVideoSignalInfo.totalSize.cx = 0;
+        mode->targetVideoSignalInfo.totalSize.cy = 0;
+    }
+    else
+    {
+        mode->targetVideoSignalInfo.totalSize.cx = devmode->dmPelsWidth;
+        mode->targetVideoSignalInfo.totalSize.cy = devmode->dmPelsHeight;
+    }
+    mode->targetVideoSignalInfo.u.videoStandard = D3DKMDT_VSS_OTHER;
+    mode->targetVideoSignalInfo.scanLineOrdering = get_dc_scanline_ordering(devmode);
+}
+
+static void set_path_target_info(DISPLAYCONFIG_PATH_TARGET_INFO *info, const LUID *gpu_luid,
+                                 UINT32 target_id, UINT32 mode_index, const DEVMODEW *devmode)
+{
+    info->adapterId = *gpu_luid;
+    info->id = target_id;
+    info->u.modeInfoIdx = mode_index;
+    info->outputTechnology = DISPLAYCONFIG_OUTPUT_TECHNOLOGY_DISPLAYPORT_EXTERNAL;
+    info->rotation = get_dc_rotation(devmode);
+    info->scaling = DISPLAYCONFIG_SCALING_IDENTITY;
+    info->refreshRate.Numerator = devmode->dmDisplayFrequency;
+    info->refreshRate.Denominator = 1;
+    info->scanLineOrdering = get_dc_scanline_ordering(devmode);
+    info->targetAvailable = TRUE;
+    info->statusFlags = DISPLAYCONFIG_TARGET_IN_USE;
+}
+
+static void set_mode_source_info(DISPLAYCONFIG_MODE_INFO *info, const LUID *gpu_luid,
+                                 UINT32 source_id, const DEVMODEW *devmode)
+{
+    DISPLAYCONFIG_SOURCE_MODE *mode = &(info->u.sourceMode);
+
+    info->infoType = DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE;
+    info->adapterId = *gpu_luid;
+    info->id = source_id;
+
+    mode->width = devmode->dmPelsWidth;
+    mode->height = devmode->dmPelsHeight;
+    mode->pixelFormat = get_dc_pixelformat(devmode->dmBitsPerPel);
+    if (devmode->dmFields & DM_POSITION)
+    {
+        mode->position = devmode->u1.s2.dmPosition;
+    }
+    else
+    {
+        mode->position.x = 0;
+        mode->position.y = 0;
+    }
+}
+
+static void set_path_source_info(DISPLAYCONFIG_PATH_SOURCE_INFO *info, const LUID *gpu_luid,
+                                 UINT32 source_id, UINT32 mode_index)
+{
+    info->adapterId = *gpu_luid;
+    info->id = source_id;
+    info->u.modeInfoIdx = mode_index;
+    info->statusFlags = DISPLAYCONFIG_SOURCE_IN_USE;
+}
+
+static BOOL source_mode_exists(const DISPLAYCONFIG_MODE_INFO *modeinfo, UINT32 num_modes,
+                               UINT32 source_id, UINT32 *found_mode_index)
+{
+    UINT32 i;
+
+    for (i = 0; i < num_modes; i++)
+    {
+        if (modeinfo[i].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE &&
+            modeinfo[i].id == source_id)
+        {
+            *found_mode_index = i;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /***********************************************************************
  *              QueryDisplayConfig (USER32.@)
  */
@@ -4563,7 +4691,17 @@ LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCON
                                UINT32 *numinfoelements, DISPLAYCONFIG_MODE_INFO *modeinfo,
                                DISPLAYCONFIG_TOPOLOGY_ID *topologyid)
 {
-    FIXME("(%08x %p %p %p %p %p)\n", flags, numpathelements, pathinfo, numinfoelements, modeinfo, topologyid);
+    LONG adapter_index, ret;
+    HANDLE mutex;
+    HDEVINFO devinfo;
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    DWORD monitor_index = 0, state_flags, type;
+    UINT32 output_id, source_mode_index, path_index = 0, mode_index = 0;
+    LUID gpu_luid;
+    WCHAR device_name[CCHDEVICENAME];
+    DEVMODEW devmode;
+
+    FIXME("(%08x %p %p %p %p %p): semi-stub\n", flags, numpathelements, pathinfo, numinfoelements, modeinfo, topologyid);
 
     if (!numpathelements || !numinfoelements)
         return ERROR_INVALID_PARAMETER;
@@ -4571,10 +4709,105 @@ LONG WINAPI QueryDisplayConfig(UINT32 flags, UINT32 *numpathelements, DISPLAYCON
     if (!*numpathelements || !*numinfoelements)
         return ERROR_INVALID_PARAMETER;
 
-    if (!flags)
+    if (flags != QDC_ALL_PATHS &&
+        flags != QDC_ONLY_ACTIVE_PATHS &&
+        flags != QDC_DATABASE_CURRENT)
         return ERROR_INVALID_PARAMETER;
 
-    return ERROR_NOT_SUPPORTED;
+    if (((flags == QDC_DATABASE_CURRENT) && !topologyid) ||
+        ((flags != QDC_DATABASE_CURRENT) && topologyid))
+        return ERROR_INVALID_PARAMETER;
+
+    if (flags != QDC_ONLY_ACTIVE_PATHS)
+        FIXME("only returning active paths\n");
+
+    if (topologyid)
+    {
+        FIXME("setting toplogyid to DISPLAYCONFIG_TOPOLOGY_INTERNAL\n");
+        *topologyid = DISPLAYCONFIG_TOPOLOGY_INTERNAL;
+    }
+
+    wait_graphics_driver_ready();
+    mutex = get_display_device_init_mutex();
+
+    /* Iterate through "targets"/monitors.
+     * Each target corresponds to a path, and each path corresponds to one or two unique modes.
+     */
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_MONITOR, DISPLAY, NULL, DIGCF_PRESENT);
+    if (devinfo == INVALID_HANDLE_VALUE)
+    {
+        ret = ERROR_GEN_FAILURE;
+        goto done;
+    }
+
+    ret = ERROR_GEN_FAILURE;
+    while (SetupDiEnumDeviceInfo(devinfo, monitor_index++, &device_data))
+    {
+        /* Only count active monitors */
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_STATEFLAGS,
+                                       &type, (BYTE *)&state_flags, sizeof(state_flags), NULL, 0))
+            goto done;
+        if (!(state_flags & DISPLAY_DEVICE_ACTIVE))
+            continue;
+
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_GPU_LUID,
+                                       &type, (BYTE *)&gpu_luid, sizeof(gpu_luid), NULL, 0))
+            goto done;
+
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &DEVPROPKEY_MONITOR_OUTPUT_ID,
+                                       &type, (BYTE *)&output_id, sizeof(output_id), NULL, 0))
+            goto done;
+
+        if (!SetupDiGetDevicePropertyW(devinfo, &device_data, &WINE_DEVPROPKEY_MONITOR_ADAPTERNAME,
+                                       &type, (BYTE *)device_name, sizeof(device_name), NULL, 0))
+            goto done;
+
+        devmode.dmSize = sizeof(devmode);
+        if (!EnumDisplaySettingsW(device_name, ENUM_CURRENT_SETTINGS, &devmode))
+            goto done;
+
+        /* Extract the adapter index from device_name to use as the source ID */
+        adapter_index = strtolW(device_name + ARRAY_SIZE(ADAPTER_PREFIX), NULL, 10);
+        adapter_index--;
+
+        if (path_index == *numpathelements || mode_index == *numinfoelements)
+        {
+            ret = ERROR_INSUFFICIENT_BUFFER;
+            goto done;
+        }
+
+        pathinfo[path_index].flags = DISPLAYCONFIG_PATH_ACTIVE;
+        set_mode_target_info(&modeinfo[mode_index], &gpu_luid, output_id, flags, &devmode);
+        set_path_target_info(&(pathinfo[path_index].targetInfo), &gpu_luid, output_id, mode_index, &devmode);
+
+        mode_index++;
+        if (mode_index == *numinfoelements)
+        {
+            ret = ERROR_INSUFFICIENT_BUFFER;
+            goto done;
+        }
+
+        /* Multiple targets can be driven by the same source, ensure a mode
+         * hasn't already been added for this source.
+         */
+        if (!source_mode_exists(modeinfo, mode_index, adapter_index, &source_mode_index))
+        {
+            set_mode_source_info(&modeinfo[mode_index], &gpu_luid, adapter_index, &devmode);
+            source_mode_index = mode_index;
+            mode_index++;
+        }
+        set_path_source_info(&(pathinfo[path_index].sourceInfo), &gpu_luid, adapter_index, source_mode_index);
+        path_index++;
+    }
+
+    *numpathelements = path_index;
+    *numinfoelements = mode_index;
+    ret = ERROR_SUCCESS;
+
+done:
+    SetupDiDestroyDeviceInfoList(devinfo);
+    release_display_device_init_mutex(mutex);
+    return ret;
 }
 
 /***********************************************************************
