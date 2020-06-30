@@ -1126,15 +1126,6 @@ static void test_GetDisplayConfigBufferSizes(void)
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
     ok(modes == 100, "got %u\n", modes);
 
-    paths = modes = 0;
-    ret = pGetDisplayConfigBufferSizes(QDC_ALL_PATHS, &paths, &modes);
-    if (!ret)
-        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
-    else
-        ok(ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
-
-    /* Invalid flags, non-zero invalid flags validation is version (or driver?) dependent,
-       it's unreliable to use in tests. */
     ret = pGetDisplayConfigBufferSizes(0, NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
 
@@ -1148,10 +1139,38 @@ static void test_GetDisplayConfigBufferSizes(void)
     ok(ret == ERROR_INVALID_PARAMETER, "got %d\n", ret);
     ok(modes == 100, "got %u\n", modes);
 
+    /* Flag validation on Windows is driver-dependent */
     paths = modes = 100;
     ret = pGetDisplayConfigBufferSizes(0, &paths, &modes);
     ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
     ok((modes == 0 || modes == 100) && paths == 0, "got %u, %u\n", modes, paths);
+
+    paths = modes = 100;
+    ret = pGetDisplayConfigBufferSizes(0xFF, &paths, &modes);
+    ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+    ok((modes == 0 || modes == 100) && paths == 0, "got %u, %u\n", modes, paths);
+
+    /* Test success */
+    paths = modes = 0;
+    ret = pGetDisplayConfigBufferSizes(QDC_ALL_PATHS, &paths, &modes);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
+    else
+        ok(ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+
+    paths = modes = 0;
+    ret = pGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &paths, &modes);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
+    else
+        ok(ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
+
+    paths = modes = 0;
+    ret = pGetDisplayConfigBufferSizes(QDC_DATABASE_CURRENT, &paths, &modes);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
+    else
+        ok(ret == ERROR_NOT_SUPPORTED, "got %d\n", ret);
 }
 
 static BOOL CALLBACK test_EnumDisplayMonitors_normal_cb(HMONITOR monitor, HDC hdc, LPRECT rect,
