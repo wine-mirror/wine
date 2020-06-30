@@ -2659,6 +2659,119 @@ static void test_wow64_context(void)
     pNtTerminateProcess(pi.hProcess, 0);
 }
 
+static BYTE saved_KiUserExceptionDispatcher_bytes[12];
+static void *pKiUserExceptionDispatcher;
+static BOOL hook_called;
+static void *hook_KiUserExceptionDispatcher_rip;
+static void *dbg_except_continue_handler_rip;
+static void *hook_exception_address;
+
+static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    ok(hook_called, "Hook was not called.\n");
+    got_exception = 1;
+    dbg_except_continue_handler_rip = (void *)context->Rip;
+    ++context->Rip;
+    return ExceptionContinueExecution;
+}
+
+void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
+{
+    trace("rec %p, context %p.\n", rec, context);
+    trace("context->Rip %#lx, context->Rsp %#lx, ContextFlags %#lx.\n", sizeof(*context),
+            context->Rip, context->Rsp, context->ContextFlags);
+
+    hook_called = TRUE;
+    /* Broken on Win2008, probably rec offset in stack is different. */
+    ok(rec->ExceptionCode == 0x80000003 || broken(!rec->ExceptionCode),
+            "Got unexpected ExceptionCode %#x.\n", rec->ExceptionCode);
+
+    hook_KiUserExceptionDispatcher_rip = (void *)context->Rip;
+    hook_exception_address = rec->ExceptionAddress;
+    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes, sizeof(saved_KiUserExceptionDispatcher_bytes));
+}
+
+static void test_kiuserexceptiondispatcher(void)
+{
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    static const BYTE except_code[] =
+    {
+        0xcc,  /* int3 */
+        0xc3,  /* ret  */
+    };
+    static BYTE hook_trampoline[] =
+    {
+        0x48, 0x89, 0xe2,           /* mov %rsp,%rdx */
+        0x48, 0x8d, 0x8c, 0x24, 0xf0, 0x04, 0x00, 0x00,
+                                    /* lea 0x4f0(%rsp),%rcx */
+
+        0xff, 0x14, 0x25,
+        /* offset: 14 bytes */
+        0x00, 0x00, 0x00, 0x00,     /* callq *addr */ /* call hook implementation. */
+        0x48, 0x31, 0xc9,           /* xor %rcx, %rcx */
+        0x48, 0x31, 0xd2,           /* xor %rdx, %rdx */
+
+        0xff, 0x24, 0x25,
+        /* offset: 27 bytes */
+        0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
+    };
+    void *phook_KiUserExceptionDispatcher = hook_KiUserExceptionDispatcher;
+    DWORD old_protect1, old_protect2;
+    BYTE *ptr;
+    BOOL ret;
+
+    pKiUserExceptionDispatcher = (void *)GetProcAddress(hntdll, "KiUserExceptionDispatcher");
+    if (!pKiUserExceptionDispatcher)
+    {
+        win_skip("KiUserExceptionDispatcher is not available.\n");
+        return;
+    }
+
+    ok(((ULONG64)&phook_KiUserExceptionDispatcher & 0xffffffff) == ((ULONG64)&phook_KiUserExceptionDispatcher),
+            "Address is too long.\n");
+    ok(((ULONG64)&pKiUserExceptionDispatcher & 0xffffffff) == ((ULONG64)&pKiUserExceptionDispatcher),
+            "Address is too long.\n");
+
+    *(unsigned int *)(hook_trampoline + 14) = (unsigned int)(ULONG_PTR)&phook_KiUserExceptionDispatcher;
+    *(unsigned int *)(hook_trampoline + 27) = (unsigned int)(ULONG_PTR)&pKiUserExceptionDispatcher;
+
+    ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), PAGE_EXECUTE_READWRITE, &old_protect1);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = VirtualProtect(pKiUserExceptionDispatcher, 5, PAGE_EXECUTE_READWRITE, &old_protect2);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    memcpy(saved_KiUserExceptionDispatcher_bytes, pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes));
+    ptr = (BYTE *)pKiUserExceptionDispatcher;
+    /* mov hook_trampoline, %rax */
+    *ptr++ = 0x48;
+    *ptr++ = 0xb8;
+    *(void **)ptr = hook_trampoline;
+    ptr += sizeof(ULONG64);
+    /* jmp *rax */
+    *ptr++ = 0xff;
+    *ptr++ = 0xe0;
+
+    got_exception = 0;
+    run_exception_test(dbg_except_continue_handler, NULL, except_code, ARRAY_SIZE(except_code), PAGE_EXECUTE_READ);
+    ok(got_exception, "Handler was not called.\n");
+    ok(hook_called, "Hook was not called.\n");
+
+    ok(hook_exception_address == code_mem || broken(!hook_exception_address) /* Win2008 */,
+            "Got unexpected exception address %p, expected %p.\n",
+            hook_exception_address, code_mem);
+    todo_wine ok(hook_KiUserExceptionDispatcher_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+            hook_KiUserExceptionDispatcher_rip, code_mem);
+    ok(dbg_except_continue_handler_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+            dbg_except_continue_handler_rip, code_mem);
+
+    ret = VirtualProtect(pKiUserExceptionDispatcher, 5, old_protect2, &old_protect2);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), old_protect1, &old_protect1);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+}
+
 #endif  /* __x86_64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -3638,6 +3751,7 @@ START_TEST(exception)
     test_suspend_thread();
     test_suspend_process();
     test_unload_trace();
+    test_kiuserexceptiondispatcher();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
       test_dynamic_unwind();
