@@ -119,6 +119,7 @@ SOURCES = \
 	d3dcommon.idl \
 	d3dcompiler.h \
 	d3dhal.h \
+	d3dkmdt.h \
 	d3drm.h \
 	d3drmdef.h \
 	d3drmobj.h \
