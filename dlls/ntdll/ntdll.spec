@@ -1424,10 +1424,10 @@
 @ cdecl -private -arch=i386 _CIsqrt() NTDLL__CIsqrt
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
 @ cdecl -arch=arm,x86_64 -norelay __chkstk()
-@ cdecl __isascii(long) NTDLL___isascii
-@ cdecl __iscsym(long) NTDLL___iscsym
-@ cdecl __iscsymf(long) NTDLL___iscsymf
-@ cdecl __toascii(long) NTDLL___toascii
+@ cdecl __isascii(long)
+@ cdecl __iscsym(long)
+@ cdecl __iscsymf(long)
+@ cdecl __toascii(long)
 @ cdecl -arch=i386 -ret64 _alldiv(int64 int64)
 @ cdecl -arch=i386 -norelay _alldvrm(int64 int64)
 @ cdecl -arch=i386 -ret64 _allmul(int64 int64)
@@ -1464,8 +1464,8 @@
 @ cdecl _strlwr(str)
 @ cdecl _strnicmp(str str long)
 @ cdecl _strupr(str)
-@ cdecl _tolower(long) NTDLL__tolower
-@ cdecl _toupper(long) NTDLL__toupper
+@ cdecl _tolower(long)
+@ cdecl _toupper(long)
 @ cdecl _ui64toa(int64 ptr long)
 @ cdecl _ui64tow(int64 ptr long)
 @ cdecl _ultoa(long ptr long)
@@ -1484,34 +1484,34 @@
 @ cdecl _wtol(wstr)
 @ cdecl abs(long) NTDLL_abs
 @ cdecl atan(double) NTDLL_atan
-@ cdecl atoi(str) NTDLL_atoi
-@ cdecl atol(str) NTDLL_atol
+@ cdecl atoi(str)
+@ cdecl atol(str)
 @ cdecl bsearch(ptr ptr long long ptr)
 @ cdecl ceil(double) NTDLL_ceil
 @ cdecl cos(double) NTDLL_cos
 @ cdecl fabs(double) NTDLL_fabs
 @ cdecl floor(double) NTDLL_floor
-@ cdecl isalnum(long) NTDLL_isalnum
-@ cdecl isalpha(long) NTDLL_isalpha
-@ cdecl iscntrl(long) NTDLL_iscntrl
-@ cdecl isdigit(long) NTDLL_isdigit
-@ cdecl isgraph(long) NTDLL_isgraph
-@ cdecl islower(long) NTDLL_islower
-@ cdecl isprint(long) NTDLL_isprint
-@ cdecl ispunct(long) NTDLL_ispunct
-@ cdecl isspace(long) NTDLL_isspace
-@ cdecl isupper(long) NTDLL_isupper
+@ cdecl isalnum(long)
+@ cdecl isalpha(long)
+@ cdecl iscntrl(long)
+@ cdecl isdigit(long)
+@ cdecl isgraph(long)
+@ cdecl islower(long)
+@ cdecl isprint(long)
+@ cdecl ispunct(long)
+@ cdecl isspace(long)
+@ cdecl isupper(long)
 @ cdecl iswalpha(long) NTDLL_iswalpha
 @ cdecl iswctype(long long) NTDLL_iswctype
 @ cdecl iswdigit(long) NTDLL_iswdigit
 @ cdecl iswlower(long) NTDLL_iswlower
 @ cdecl iswspace(long) NTDLL_iswspace
 @ cdecl iswxdigit(long) NTDLL_iswxdigit
-@ cdecl isxdigit(long) NTDLL_isxdigit
+@ cdecl isxdigit(long)
 @ cdecl labs(long) NTDLL_abs
 @ cdecl log(double) NTDLL_log
 @ cdecl mbstowcs(ptr str long) NTDLL_mbstowcs
-@ cdecl memchr(ptr long long) NTDLL_memchr
+@ cdecl memchr(ptr long long)
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)
 @ cdecl memmove(ptr ptr long)
@@ -1522,28 +1522,28 @@
 @ varargs sprintf(ptr str) NTDLL_sprintf
 @ varargs sprintf_s(ptr long str)
 @ cdecl sqrt(double) NTDLL_sqrt
-@ varargs sscanf(str str) NTDLL_sscanf
-@ cdecl strcat(str str) NTDLL_strcat
-@ cdecl strchr(str long) NTDLL_strchr
-@ cdecl strcmp(str str) NTDLL_strcmp
-@ cdecl strcpy(ptr str) NTDLL_strcpy
-@ cdecl strcspn(str str) NTDLL_strcspn
-@ cdecl strlen(str) NTDLL_strlen
-@ cdecl strncat(str str long) NTDLL_strncat
-@ cdecl strncmp(str str long) NTDLL_strncmp
-@ cdecl strncpy(ptr str long) NTDLL_strncpy
-@ cdecl strnlen(ptr long) NTDLL_strnlen
-@ cdecl strpbrk(str str) NTDLL_strpbrk
-@ cdecl strrchr(str long) NTDLL_strrchr
-@ cdecl strspn(str str) NTDLL_strspn
-@ cdecl strstr(str str) NTDLL_strstr
-@ cdecl strtol(str ptr long) NTDLL_strtol
-@ cdecl strtoul(str ptr long) NTDLL_strtoul
+@ varargs sscanf(str str)
+@ cdecl strcat(str str)
+@ cdecl strchr(str long)
+@ cdecl strcmp(str str)
+@ cdecl strcpy(ptr str)
+@ cdecl strcspn(str str)
+@ cdecl strlen(str)
+@ cdecl strncat(str str long)
+@ cdecl strncmp(str str long)
+@ cdecl strncpy(ptr str long)
+@ cdecl strnlen(ptr long)
+@ cdecl strpbrk(str str)
+@ cdecl strrchr(str long)
+@ cdecl strspn(str str)
+@ cdecl strstr(str str)
+@ cdecl strtol(str ptr long)
+@ cdecl strtoul(str ptr long)
 @ varargs swprintf(ptr wstr) NTDLL_swprintf
 @ varargs swprintf_s(ptr long wstr)
 @ cdecl tan(double) NTDLL_tan
-@ cdecl tolower(long) NTDLL_tolower
-@ cdecl toupper(long) NTDLL_toupper
+@ cdecl tolower(long)
+@ cdecl toupper(long)
 @ cdecl towlower(long) NTDLL_towlower
 @ cdecl towupper(long) NTDLL_towupper
 @ stdcall vDbgPrintEx(long long str ptr)
