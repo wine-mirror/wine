@@ -518,13 +518,13 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     /* pixel format tests */
 
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Test %u, frame %u: GetPixelFormat got unexpected hr %#x\n", i, frame_index, hr);
+    ok(hr == E_INVALIDARG, "Test %u, frame %u: GetPixelFormat got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, &pixel_format);
-    todo_wine ok(hr == S_OK, "Test %u, frame %u: GetPixelFormat failed, hr %#x\n", i, frame_index, hr);
+    ok(hr == S_OK, "Test %u, frame %u: GetPixelFormat failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    todo_wine ok(IsEqualGUID(&pixel_format, test_data[i].expected_pixel_format),
-                 "Test %u, frame %u: Expected pixel format %s, got %s\n",
-                 i, frame_index, debugstr_guid(test_data[i].expected_pixel_format), debugstr_guid(&pixel_format));
+    ok(IsEqualGUID(&pixel_format, test_data[i].expected_pixel_format),
+       "Test %u, frame %u: Expected pixel format %s, got %s\n",
+       i, frame_index, debugstr_guid(test_data[i].expected_pixel_format), debugstr_guid(&pixel_format));
 }
 
 static void test_dds_decoder_frame_data(IWICDdsFrameDecode *dds_frame, UINT frame_count, WICDdsParameters *params,
