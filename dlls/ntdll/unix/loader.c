@@ -1830,10 +1830,3 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 #endif
     start_main_thread();
 }
-
-
-BOOL WINAPI DECLSPEC_HIDDEN DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    if (reason == DLL_PROCESS_ATTACH) LdrDisableThreadCalloutsForDll( inst );
-    return TRUE;
-}
