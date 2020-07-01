@@ -342,7 +342,7 @@ static void test_query_process(void)
         ULONG HandleCount;
         DWORD dwUnknown3;
         DWORD dwUnknown4;
-        VM_COUNTERS vmCounters;
+        VM_COUNTERS_EX vmCounters;
         IO_COUNTERS ioCounters;
         SYSTEM_THREAD_INFORMATION ti[1];
     } SYSTEM_PROCESS_INFORMATION_PRIVATE;
@@ -1399,7 +1399,7 @@ static void test_query_process_basic(void)
     ok( pbi.UniqueProcessId > 0, "Expected a ProcessID > 0, got 0\n");
 }
 
-static void dump_vm_counters(const char *header, const VM_COUNTERS *pvi)
+static void dump_vm_counters(const char *header, const VM_COUNTERS_EX *pvi)
 {
     trace("%s:\n", header);
     trace("PeakVirtualSize           : %lu\n", pvi->PeakVirtualSize);
@@ -1419,8 +1419,7 @@ static void test_query_process_vm(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
-    VM_COUNTERS pvi;
-    ULONG old_size = FIELD_OFFSET(VM_COUNTERS,PrivatePageCount);
+    VM_COUNTERS_EX pvi;
     HANDLE process;
     SIZE_T prev_size;
     const SIZE_T alloc_size = 16 * 1024 * 1024;
@@ -1430,24 +1429,19 @@ static void test_query_process_vm(void)
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
         "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08x\n", status);
 
-    status = pNtQueryInformationProcess(NULL, ProcessVmCounters, &pvi, old_size, NULL);
+    status = pNtQueryInformationProcess(NULL, ProcessVmCounters, &pvi, sizeof(VM_COUNTERS), NULL);
     ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status);
-
-    /* Windows XP and W2K3 will report success for a size of 44 AND 48 !
-       Windows W2K will only report success for 44.
-       For now we only care for 44, which is FIELD_OFFSET(VM_COUNTERS,PrivatePageCount))
-    */
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 24, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
-    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, old_size, &ReturnLength);
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(VM_COUNTERS), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
-    ok( old_size == ReturnLength, "Inconsistent length %d\n", ReturnLength);
+    ok( ReturnLength == sizeof(VM_COUNTERS), "Inconsistent length %d\n", ReturnLength);
 
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 46, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    ok( ReturnLength == old_size || ReturnLength == sizeof(pvi), "Inconsistent length %d\n", ReturnLength);
+    ok( ReturnLength == sizeof(VM_COUNTERS) || ReturnLength == sizeof(pvi), "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
     dump_vm_counters("VM counters for GetCurrentProcess", &pvi);
