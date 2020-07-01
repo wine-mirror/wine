@@ -1509,7 +1509,7 @@ static struct unix_funcs unix_funcs =
     get_dynamic_environment,
     get_initial_console,
     get_initial_directory,
-    get_unix_codepage,
+    get_unix_codepage_data,
     get_locales,
     get_version,
     get_build_id,

@@ -687,7 +687,8 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 
 void init_unix_codepage(void)
 {
-    unix_funcs->get_unix_codepage( &unix_table );
+    USHORT *data = unix_funcs->get_unix_codepage_data();
+    if (data) RtlInitCodePageTable( data, &unix_table );
 }
 
 
