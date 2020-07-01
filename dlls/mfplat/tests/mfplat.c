@@ -34,6 +34,7 @@
 #include "mfreadwrite.h"
 #include "propvarutil.h"
 #include "strsafe.h"
+#include "evr.h"
 
 #include "wine/test.h"
 #include "wine/heap.h"
@@ -41,6 +42,7 @@
 #define D3D11_INIT_GUID
 #include "initguid.h"
 #include "d3d11_4.h"
+#include "d3d9.h"
 #include "d3d9types.h"
 #include "ks.h"
 #include "ksmedia.h"
@@ -104,6 +106,38 @@ static HRESULT (WINAPI *pMFCreate2DMediaBuffer)(DWORD width, DWORD height, DWORD
         IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
         DWORD min_alignment, IMFMediaBuffer **buffer);
+static HRESULT (WINAPI *pMFCreateDXSurfaceBuffer)(REFIID riid, IUnknown *surface, BOOL bottom_up, IMFMediaBuffer **buffer);
+
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND focus_window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device = NULL;
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = focus_window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+
+    IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+
+    return device;
+}
 
 static const WCHAR fileschemeW[] = L"file://";
 
@@ -677,6 +711,7 @@ static void init_functions(void)
     X(MFCopyImage);
     X(MFCreate2DMediaBuffer);
     X(MFCreateDXGIDeviceManager);
+    X(MFCreateDXSurfaceBuffer);
     X(MFCreateSourceResolver);
     X(MFCreateMediaBufferFromMediaType);
     X(MFCreateMFByteStreamOnStream);
@@ -5281,6 +5316,155 @@ static void test_MFCreateMFVideoFormatFromMFMediaType(void)
     IMFMediaType_Release(media_type);
 }
 
+static void test_MFCreateDXSurfaceBuffer(void)
+{
+    IDirect3DSurface9 *backbuffer = NULL, *surface;
+    IDirect3DSwapChain9 *swapchain;
+    IDirect3DDevice9 *device;
+    IMF2DBuffer2 *_2dbuffer2;
+    IMFMediaBuffer *buffer;
+    IMF2DBuffer *_2dbuffer;
+    BYTE *data, *data2;
+    IMFGetService *gs;
+    IDirect3D9 *d3d;
+    DWORD length;
+    HWND window;
+    HRESULT hr;
+    LONG pitch;
+    BOOL value;
+
+    if (!pMFCreateDXSurfaceBuffer)
+    {
+        skip("MFCreateDXSurfaceBuffer is not available.\n");
+        return;
+    }
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+    ok(SUCCEEDED(hr), "Failed to get the implicit swapchain (%08x)\n", hr);
+
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
+    ok(backbuffer != NULL, "The back buffer is NULL\n");
+
+    IDirect3DSwapChain9_Release(swapchain);
+
+    hr = pMFCreateDXSurfaceBuffer(&IID_IDirect3DSurface9, (IUnknown *)backbuffer, FALSE, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    /* Surface is accessible. */
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&gs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFGetService_GetService(gs, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(surface == backbuffer, "Unexpected surface pointer.\n");
+    IDirect3DSurface9_Release(surface);
+    IMFGetService_Release(gs);
+
+    length = 0;
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!length, "Unexpected length %u.\n", length);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(!length, "Unexpected length %u.\n", length);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Unlock twice. */
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#x.\n", hr);
+
+    /* Lock twice. */
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data2, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(data == data2, "Unexpected pointer.\n");
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Unlocked. */
+    hr = IMF2DBuffer_GetScanline0AndPitch(_2dbuffer, &data, &pitch);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_GetScanline0AndPitch(_2dbuffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data2, NULL, NULL);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Unlock2D(_2dbuffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Unlock2D(_2dbuffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Unlock2D(_2dbuffer);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_IsContiguousFormat(_2dbuffer, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!value, "Unexpected return value %d.\n", value);
+
+    IMF2DBuffer_Release(_2dbuffer);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer2, (void **)&_2dbuffer2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Read, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(data == data2, "Unexpected scanline pointer.\n");
+    memset(data, 0xab, 4);
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_Write, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(data[0] == 0xab, "Unexpected leading byte.\n");
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    IMF2DBuffer2_Release(_2dbuffer2);
+
+    IMFMediaBuffer_Release(buffer);
+
+done:
+    if (backbuffer)
+        IDirect3DSurface9_Release(backbuffer);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -5337,6 +5521,7 @@ START_TEST(mfplat)
     test_MFCreateMediaBufferFromMediaType();
     test_MFInitMediaTypeFromWaveFormatEx();
     test_MFCreateMFVideoFormatFromMFMediaType();
+    test_MFCreateDXSurfaceBuffer();
 
     CoUninitialize();
 }
