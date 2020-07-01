@@ -798,7 +798,7 @@ static HRESULT WINAPI ddraw_sink_QueryId(IPin *iface, WCHAR **id)
 static HRESULT WINAPI ddraw_sink_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *mt)
 {
     TRACE("iface %p, mt %p.\n", iface, mt);
-    return check_media_type(mt) ? S_OK : S_FALSE;
+    return check_media_type(mt) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED;
 }
 
 static HRESULT WINAPI ddraw_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **enum_media_types)

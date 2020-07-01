@@ -1958,20 +1958,21 @@ static void test_media_types(void)
 
     pmt->majortype = MEDIATYPE_NULL;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Audio;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Stream;
     hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     pmt->majortype = MEDIATYPE_Video;
 
     for (i = 0; i < ARRAY_SIZE(rejected_subtypes); ++i)
     {
         pmt->subtype = *rejected_subtypes[i];
         hr = IPin_QueryAccept(pin, pmt);
-        todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x for subtype %s.\n",
+        todo_wine_if (i < 6)
+            ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x for subtype %s.\n",
                 hr, wine_dbgstr_guid(rejected_subtypes[i]));
     }
 
