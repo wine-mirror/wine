@@ -980,7 +980,6 @@ HRESULT ddraw_stream_create(IUnknown *outer, void **out)
     object->IMemInputPin_iface.lpVtbl = &ddraw_meminput_vtbl;
     object->IPin_iface.lpVtbl = &ddraw_sink_vtbl;
     object->ref = 1;
-    object->sample_refs = 0;
 
     InitializeCriticalSection(&object->cs);
 
@@ -1043,12 +1042,12 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-    EnterCriticalSection(&sample->parent->cs);
-    InterlockedDecrement(&sample->parent->sample_refs);
-    LeaveCriticalSection(&sample->parent->cs);
-
     if (!ref)
     {
+        EnterCriticalSection(&sample->parent->cs);
+        --sample->parent->sample_refs;
+        LeaveCriticalSection(&sample->parent->cs);
+
         if (sample->surface)
             IDirectDrawSurface_Release(sample->surface);
         HeapFree(GetProcessHeap(), 0, sample);
@@ -1166,7 +1165,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->parent = parent;
 
     EnterCriticalSection(&parent->cs);
-    InterlockedIncrement(&parent->sample_refs);
+    ++parent->sample_refs;
     LeaveCriticalSection(&parent->cs);
 
     if (surface)
