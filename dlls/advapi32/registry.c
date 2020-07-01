@@ -508,6 +508,17 @@ LSTATUS WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
 
 
 /******************************************************************************
+ * RegRenameKey [ADVAPI32.@]
+ *
+ */
+LSTATUS WINAPI RegRenameKey( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewName )
+{
+    FIXME("(%p,%s,%s): stub\n", hkey, debugstr_w(lpSubKey), debugstr_w(lpNewName));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
  * RegReplaceKeyA [ADVAPI32.@]
  *
  * See RegReplaceKeyW.

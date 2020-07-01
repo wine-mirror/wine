@@ -676,7 +676,7 @@
 @ stdcall -import RegQueryValueExW(long wstr ptr ptr ptr ptr)
 @ stdcall RegQueryValueW(long wstr ptr ptr)
 @ stub RegRemapPreDefKey
-# @ stub RegRenameKey
+@ stdcall RegRenameKey(long wstr wstr)
 @ stdcall RegReplaceKeyA(long str str str)
 @ stdcall RegReplaceKeyW(long wstr wstr wstr)
 @ stdcall -import RegRestoreKeyA(long str long)
