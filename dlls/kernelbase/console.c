@@ -53,6 +53,8 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static HANDLE console_wait_event;
+
 static WCHAR input_exe[MAX_PATH + 1];
 
 struct ctrl_handler
@@ -345,12 +347,31 @@ BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputCharacterW( HANDLE handle, WCHAR 
     return ret;
 }
 
+HANDLE get_console_wait_handle( HANDLE handle )
+{
+    HANDLE event = 0;
+
+    SERVER_START_REQ( get_console_wait_event )
+    {
+        req->handle = wine_server_obj_handle( console_handle_map( handle ));
+        if (!wine_server_call( req )) event = wine_server_ptr_handle( reply->event );
+    }
+    SERVER_END_REQ;
+    if (event)
+    {
+        if (InterlockedCompareExchangePointer( &console_wait_event, event, 0 )) NtClose( event );
+        handle = console_wait_event;
+    }
+    return handle;
+}
+
 
 /***********************************************************************
  *	FreeConsole   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
 {
+    HANDLE event;
     BOOL ret;
 
     SERVER_START_REQ( free_console )
@@ -358,6 +379,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+    if ((event = InterlockedExchangePointer( &console_wait_event, NULL ))) NtClose( event );
     return ret;
 }
 
