@@ -1946,8 +1946,7 @@ static void test_media_types(void)
         pmt->cbFormat = tests[i].size;
         pmt->pbFormat = tests[i].format;
         hr = IPin_QueryAccept(pin, pmt);
-        todo_wine_if (i != 6)
-            ok(hr == (i == 6) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+        ok(hr == (i == 6) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
     }
 
     pmt->bFixedSizeSamples = FALSE;

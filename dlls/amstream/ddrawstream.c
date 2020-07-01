@@ -634,7 +634,8 @@ static HRESULT WINAPI ddraw_sink_Connect(IPin *iface, IPin *peer, const AM_MEDIA
 
 static BOOL check_media_type(const AM_MEDIA_TYPE *media_type)
 {
-    if (IsEqualGUID(&media_type->majortype, &MEDIATYPE_Video))
+    if (IsEqualGUID(&media_type->majortype, &MEDIATYPE_Video)
+            && IsEqualGUID(&media_type->formattype, &FORMAT_VideoInfo))
     {
         if (IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB1) ||
             IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB4) ||
