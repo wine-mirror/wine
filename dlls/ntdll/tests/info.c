@@ -1462,6 +1462,7 @@ static void test_query_process_vm(void)
     process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
     status = pNtQueryInformationProcess(process, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( pvi.PrivateUsage == pvi.PagefileUsage, "wrong value %lu/%lu\n", pvi.PrivateUsage, pvi.PagefileUsage );
 
     /* Check if we have some return values */
     dump_vm_counters("VM counters for GetCurrentProcessId", &pvi);
@@ -1473,6 +1474,7 @@ static void test_query_process_vm(void)
     /* Check if we have real counters */
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( pvi.PrivateUsage == pvi.PagefileUsage, "wrong value %lu/%lu\n", pvi.PrivateUsage, pvi.PagefileUsage );
     prev_size = pvi.VirtualSize;
     if (winetest_debug > 1)
         dump_vm_counters("VM counters before VirtualAlloc", &pvi);
@@ -1480,6 +1482,7 @@ static void test_query_process_vm(void)
     ok( ptr != NULL, "VirtualAlloc failed, err %u\n", GetLastError());
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( pvi.PrivateUsage == pvi.PagefileUsage, "wrong value %lu/%lu\n", pvi.PrivateUsage, pvi.PagefileUsage );
     if (winetest_debug > 1)
         dump_vm_counters("VM counters after VirtualAlloc", &pvi);
     todo_wine ok( pvi.VirtualSize >= prev_size + alloc_size,
@@ -1488,6 +1491,7 @@ static void test_query_process_vm(void)
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( pvi.PrivateUsage == pvi.PagefileUsage, "wrong value %lu/%lu\n", pvi.PrivateUsage, pvi.PagefileUsage );
     prev_size = pvi.VirtualSize;
     if (winetest_debug > 1)
         dump_vm_counters("VM counters before VirtualAlloc", &pvi);
@@ -1495,6 +1499,7 @@ static void test_query_process_vm(void)
     ok( ptr != NULL, "VirtualAlloc failed, err %u\n", GetLastError());
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( pvi.PrivateUsage == pvi.PagefileUsage, "wrong value %lu/%lu\n", pvi.PrivateUsage, pvi.PagefileUsage );
     if (winetest_debug > 1)
         dump_vm_counters("VM counters after VirtualAlloc(MEM_RESERVE)", &pvi);
     todo_wine ok( pvi.VirtualSize >= prev_size + alloc_size,
@@ -1505,6 +1510,7 @@ static void test_query_process_vm(void)
     ok( ptr != NULL, "VirtualAlloc failed, err %u\n", GetLastError());
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( pvi.PrivateUsage == pvi.PagefileUsage, "wrong value %lu/%lu\n", pvi.PrivateUsage, pvi.PagefileUsage );
     if (winetest_debug > 1)
         dump_vm_counters("VM counters after VirtualAlloc(MEM_COMMIT)", &pvi);
     ok( pvi.VirtualSize == prev_size,

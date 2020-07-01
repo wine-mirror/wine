@@ -1008,7 +1008,7 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 
 #if defined(HAVE_MACH_MACH_H)
 
-static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
 {
 #if defined(MACH_TASK_BASIC_INFO)
     struct mach_task_basic_info info;
@@ -1025,7 +1025,7 @@ static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
 
 #elif defined(linux)
 
-static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
 {
     FILE *f;
     char line[256];
@@ -1056,7 +1056,7 @@ static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
 
 #else
 
-static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+static void fill_VM_COUNTERS( VM_COUNTERS_EX *pvmi )
 {
     /* FIXME : real data */
 }
@@ -1168,7 +1168,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
 
     case ProcessVmCounters:
         {
-            VM_COUNTERS pvmi;
+            VM_COUNTERS_EX pvmi;
 
             /* older Windows versions don't have the PrivateUsage field */
             if (size >= sizeof(VM_COUNTERS))
@@ -1196,6 +1196,8 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                         SERVER_END_REQ;
                         if (ret) break;
                     }
+                    if (size >= sizeof(VM_COUNTERS_EX))
+                        pvmi.PrivateUsage = pvmi.PagefileUsage;
                     len = size;
                     if (len != sizeof(VM_COUNTERS)) len = sizeof(VM_COUNTERS_EX);
                     memcpy(info, &pvmi, min(size, sizeof(pvmi)));
