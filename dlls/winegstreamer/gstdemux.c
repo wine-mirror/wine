@@ -995,7 +995,16 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
 
     if (!strcmp(typename, "video/x-raw"))
     {
-        GstElement *vconv, *flip;
+        GstElement *vconv, *flip, *deinterlace;
+
+        /* DirectShow can express interlaced video, but downstream filters can't
+         * necessarily consume it. In particular, the video renderer can't. */
+        if (!(deinterlace = gst_element_factory_make("deinterlace", NULL)))
+        {
+            ERR("Failed to create deinterlace, are %u-bit GStreamer \"base\" plugins installed?\n",
+                    8 * (int)sizeof(void *));
+            goto out;
+        }
 
         /* decodebin considers many YUV formats to be "raw", but some quartz
          * filters can't handle those. Also, videoflip can't handle all "raw"
@@ -1018,14 +1027,18 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
             goto out;
         }
 
-        gst_bin_add(GST_BIN(This->container), vconv); /* bin takes ownership */
+        /* The bin takes ownership of these elements. */
+        gst_bin_add(GST_BIN(This->container), deinterlace);
+        gst_element_sync_state_with_parent(deinterlace);
+        gst_bin_add(GST_BIN(This->container), vconv);
         gst_element_sync_state_with_parent(vconv);
-        gst_bin_add(GST_BIN(This->container), flip); /* bin takes ownership */
+        gst_bin_add(GST_BIN(This->container), flip);
         gst_element_sync_state_with_parent(flip);
 
+        gst_element_link(deinterlace, vconv);
         gst_element_link(vconv, flip);
 
-        pin->post_sink = gst_element_get_static_pad(vconv, "sink");
+        pin->post_sink = gst_element_get_static_pad(deinterlace, "sink");
         pin->post_src = gst_element_get_static_pad(flip, "src");
         pin->flip = flip;
     }
