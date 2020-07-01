@@ -437,11 +437,16 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_CreateSample(IDirectDrawMedia
         IDirectDrawStreamSample **sample)
 {
     struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
+    HRESULT hr;
 
     TRACE("stream %p, surface %p, rect %s, flags %#x, sample %p.\n",
             stream, surface, wine_dbgstr_rect(rect), flags, sample);
 
-    return ddrawstreamsample_create(stream, surface, rect, sample);
+    EnterCriticalSection(&stream->cs);
+    hr = ddrawstreamsample_create(stream, surface, rect, sample);
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetTimePerFrame(IDirectDrawMediaStream *iface,
@@ -1163,10 +1168,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;
     object->ref = 1;
     object->parent = parent;
-
-    EnterCriticalSection(&parent->cs);
     ++parent->sample_refs;
-    LeaveCriticalSection(&parent->cs);
 
     if (surface)
     {
