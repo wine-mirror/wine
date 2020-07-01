@@ -50,6 +50,10 @@ struct video_presenter
     IUnknown *outer_unk;
     LONG refcount;
 
+    IMFTransform *mixer;
+    IMFClock *clock;
+    IMediaEventSink *event_sink;
+
     unsigned int state;
     CRITICAL_SECTION cs;
 };
@@ -136,6 +140,19 @@ static ULONG WINAPI video_presenter_inner_AddRef(IUnknown *iface)
     return refcount;
 }
 
+static void video_presenter_clear_container(struct video_presenter *presenter)
+{
+    if (presenter->clock)
+        IMFClock_Release(presenter->clock);
+    if (presenter->mixer)
+        IMFTransform_Release(presenter->mixer);
+    if (presenter->event_sink)
+        IMediaEventSink_Release(presenter->event_sink);
+    presenter->clock = NULL;
+    presenter->mixer = NULL;
+    presenter->event_sink = NULL;
+}
+
 static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
 {
     struct video_presenter *presenter = impl_from_IUnknown(iface);
@@ -145,6 +162,7 @@ static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        video_presenter_clear_container(presenter);
         DeleteCriticalSection(&presenter->cs);
         heap_free(presenter);
     }
@@ -324,9 +342,53 @@ static ULONG WINAPI video_presenter_service_client_Release(IMFTopologyServiceLoo
 static HRESULT WINAPI video_presenter_service_client_InitServicePointers(IMFTopologyServiceLookupClient *iface,
         IMFTopologyServiceLookup *service_lookup)
 {
-    FIXME("%p, %p.\n", iface, service_lookup);
+    struct video_presenter *presenter = impl_from_IMFTopologyServiceLookupClient(iface);
+    unsigned int count;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, service_lookup);
+
+    if (!service_lookup)
+        return E_POINTER;
+
+    EnterCriticalSection(&presenter->cs);
+
+    if (presenter->state == PRESENTER_STATE_STARTED ||
+            presenter->state == PRESENTER_STATE_PAUSED)
+    {
+        hr = MF_E_INVALIDREQUEST;
+    }
+    else
+    {
+        video_presenter_clear_container(presenter);
+
+        count = 1;
+        IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+                &MR_VIDEO_RENDER_SERVICE, &IID_IMFClock, (void **)&presenter->clock, &count);
+
+        count = 1;
+        if (SUCCEEDED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+                &MR_VIDEO_MIXER_SERVICE, &IID_IMFTransform, (void **)&presenter->mixer, &count)))
+        {
+            /* FIXME: presumably should validate mixer's device id. */
+        }
+        else
+            WARN("Failed to get mixer interface, hr %#x.\n", hr);
+
+        count = 1;
+        if (FAILED(hr = IMFTopologyServiceLookup_LookupService(service_lookup, MF_SERVICE_LOOKUP_GLOBAL, 0,
+                &MR_VIDEO_RENDER_SERVICE, &IID_IMediaEventSink, (void **)&presenter->event_sink, &count)))
+        {
+            WARN("Failed to get renderer event sink, hr %#x.\n", hr);
+        }
+
+        if (SUCCEEDED(hr))
+            presenter->state = PRESENTER_STATE_STOPPED;
+    }
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_service_client_ReleaseServicePointers(IMFTopologyServiceLookupClient *iface)
@@ -336,7 +398,10 @@ static HRESULT WINAPI video_presenter_service_client_ReleaseServicePointers(IMFT
     TRACE("%p.\n", iface);
 
     EnterCriticalSection(&presenter->cs);
+
     presenter->state = PRESENTER_STATE_SHUT_DOWN;
+    video_presenter_clear_container(presenter);
+
     LeaveCriticalSection(&presenter->cs);
 
     return S_OK;
@@ -527,7 +592,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
 {
     struct video_presenter *object;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFVideoPresenter_iface.lpVtbl = &video_presenter_vtbl;
