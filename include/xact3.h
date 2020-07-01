@@ -331,6 +331,23 @@ typedef struct XACT_NOTIFICATION_CUE
 } XACT_NOTIFICATION_CUE, *LPXACT_NOTIFICATION_CUE;
 typedef const XACT_NOTIFICATION_CUE *LPCXACT_NOTIFICATION_CUE;
 
+typedef struct XACT_WAVE_PROPERTIES
+{
+    char friendlyName[WAVEBANK_ENTRYNAME_LENGTH];
+    WAVEBANKMINIWAVEFORMAT format;
+    DWORD durationInSamples;
+    WAVEBANKSAMPLEREGION loopRegion;
+    BOOL streaming;
+} XACT_WAVE_PROPERTIES, *LPXACT_WAVE_PROPERTIES;
+typedef const XACT_WAVE_PROPERTIES *LPCXACT_WAVE_PROPERTIES;
+
+typedef struct XACT_WAVE_INSTANCE_PROPERTIES
+{
+    XACT_WAVE_PROPERTIES properties;
+    BOOL backgroundMusic;
+} XACT_WAVE_INSTANCE_PROPERTIES, *LPXACT_WAVE_INSTANCE_PROPERTIES;
+typedef const XACT_WAVE_INSTANCE_PROPERTIES *LPCXACT_WAVE_INSTANCE_PROPERTIES;
+
 typedef struct XACT_NOTIFICATION_MARKER
 {
     XACTINDEX cueIndex;
@@ -480,6 +497,49 @@ DECLARE_INTERFACE(IXACT3Cue)
 #define IXACT3Cue_GetProperties(p,a)    (p)->GetProperties(a)
 #define IXACT3Cue_SetOutputVoices(p,a)  (p)->SetOutputVoices(a)
 #define IXACT3Cue_SetOutputVoiceMatrix(p,a,b,c,d) (p)->SetOutputVoiceMatrix(a,b,c,d)
+#endif
+
+/*****************************************************************************
+ * IXACT3Wave interface
+ */
+#define INTERFACE IXACT3Wave
+DECLARE_INTERFACE(IXACT3Wave)
+{
+    /*** IXACT3Wave methods ***/
+    STDMETHOD(Destroy)(THIS) PURE;
+    STDMETHOD(Play)(THIS) PURE;
+    STDMETHOD(Stop)(THIS_ DWORD pdwFlags) PURE;
+    STDMETHOD(Pause)(THIS_ BOOL fPause) PURE;
+    STDMETHOD(GetState)(THIS_ DWORD *pdwState) PURE;
+    STDMETHOD(SetPitch)(THIS_ XACTPITCH pitch) PURE;
+    STDMETHOD(SetVolume)(THIS_ XACTVOLUME volume) PURE;
+    STDMETHOD(SetMatrixCoefficients)(THIS_ UINT32 uSrcChannelCount, UINT32 uDstChannelCount, float *pMatrixCoefficients) PURE;
+    STDMETHOD(GetProperties)(THIS_ LPXACT_WAVE_INSTANCE_PROPERTIES pProperties) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IXACT3Wave methods ***/
+#define IXACT3Wave_Destroy(p)            (p)->lpVtbl->Destroy(p)
+#define IXACT3Wave_Play(p)               (p)->lpVtbl->Destroy(p)
+#define IXACT3Wave_Stop(p,a)             (p)->lpVtbl->Stop(p,a)
+#define IXACT3Wave_Pause(p,a)            (p)->lpVtbl->Pause(p,a)
+#define IXACT3Wave_GetState(p,a)         (p)->lpVtbl->GetState(p,a)
+#define IXACT3Wave_SetPitch(p,a)         (p)->lpVtbl->SetPitch(p,a)
+#define IXACT3Wave_SetVolume(p,a)        (p)->lpVtbl->SetVolume(p,a)
+#define IXACT3Wave_SetMatrixCoefficients(p,a,b,c) (p)->lpVtbl->SetMatrixCoefficients(p,a,b,c)
+#define IXACT3Wave_GetProperties(p,a)    (p)->lpVtbl->GetProperties(p,a)
+#else
+/*** IXACT3Wave methods ***/
+#define IXACT3Wave_Destroy(p)            (p)->Destroy()
+#define IXACT3Wave_Play(p)               (p)->Destroy()
+#define IXACT3Wave_Stop(p,a)             (p)->Stop(a)
+#define IXACT3Wave_Pause(p,a)            (p)->Pause(a)
+#define IXACT3Wave_GetState(p,a)         (p)->Stop(a)
+#define IXACT3Wave_SetPitch(p,a)         (p)->SetVariable(a)
+#define IXACT3Wave_SetVolume(p,a)        (p)->SetVolume(a)
+#define IXACT3Wave_SetMatrixCoefficients(p,a,b,c) (p)->SetMatrixCoefficients(a,b,c)
+#define IXACT3Wave_GetProperties(p,a)    (p)->GetProperties(a)
 #endif
 
 #define XACT_FLAG_ENGINE_CREATE_MANAGEDATA XACT_FLAG_MANAGEDATA
