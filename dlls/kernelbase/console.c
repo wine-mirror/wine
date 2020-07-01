@@ -198,6 +198,112 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
 }
 
 
+/******************************************************************
+ *      AllocConsole   (kernelbase.@)
+ */
+BOOL WINAPI AllocConsole(void)
+{
+    SECURITY_ATTRIBUTES inheritable_attr = { sizeof(inheritable_attr), NULL, TRUE };
+    HANDLE std_in  = INVALID_HANDLE_VALUE;
+    HANDLE std_out = INVALID_HANDLE_VALUE;
+    HANDLE std_err = INVALID_HANDLE_VALUE;
+    STARTUPINFOW app_si, console_si;
+    WCHAR buffer[1024], cmd[256];
+    PROCESS_INFORMATION pi;
+    HANDLE event;
+    DWORD mode;
+    BOOL ret;
+
+    TRACE("()\n");
+
+    std_in = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    if (GetConsoleMode( std_in, &mode ))
+    {
+        /* we already have a console opened on this process, don't create a new one */
+        CloseHandle( std_in );
+        return FALSE;
+    }
+
+    GetStartupInfoW(&app_si);
+
+    memset(&console_si, 0, sizeof(console_si));
+    console_si.cb = sizeof(console_si);
+    /* setup a view arguments for wineconsole (it'll use them as default values)  */
+    if (app_si.dwFlags & STARTF_USECOUNTCHARS)
+    {
+        console_si.dwFlags |= STARTF_USECOUNTCHARS;
+        console_si.dwXCountChars = app_si.dwXCountChars;
+        console_si.dwYCountChars = app_si.dwYCountChars;
+    }
+    if (app_si.dwFlags & STARTF_USEFILLATTRIBUTE)
+    {
+        console_si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+        console_si.dwFillAttribute = app_si.dwFillAttribute;
+    }
+    if (app_si.dwFlags & STARTF_USESHOWWINDOW)
+    {
+        console_si.dwFlags |= STARTF_USESHOWWINDOW;
+        console_si.wShowWindow = app_si.wShowWindow;
+    }
+    if (app_si.lpTitle)
+        console_si.lpTitle = app_si.lpTitle;
+    else if (GetModuleFileNameW(0, buffer, ARRAY_SIZE(buffer)))
+    {
+        buffer[ARRAY_SIZE(buffer) - 1] = 0;
+        console_si.lpTitle = buffer;
+    }
+
+    if (!(event = CreateEventW( &inheritable_attr, TRUE, FALSE, NULL ))) return FALSE;
+
+    swprintf( cmd, ARRAY_SIZE(cmd),  L"wineconsole --use-event=%ld", (DWORD_PTR)event );
+    if ((ret = CreateProcessW( NULL, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &console_si, &pi )))
+    {
+        HANDLE wait_handles[2] = { event, pi.hProcess };
+        ret = WaitForMultipleObjects( ARRAY_SIZE(wait_handles), wait_handles, FALSE, INFINITE ) == WAIT_OBJECT_0;
+        CloseHandle( pi.hThread );
+        CloseHandle( pi.hProcess );
+    }
+    CloseHandle( event );
+    if (!ret) goto error;
+    TRACE( "Started wineconsole pid=%08x tid=%08x\n", pi.dwProcessId, pi.dwThreadId );
+
+    if (!(app_si.dwFlags & STARTF_USESTDHANDLES))
+    {
+
+        std_in = CreateFileW( L"CONIN$", GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 0, &inheritable_attr,
+                              OPEN_EXISTING, 0, 0);
+        if (std_in == INVALID_HANDLE_VALUE) goto error;
+
+        std_out = CreateFileW( L"CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, &inheritable_attr, OPEN_EXISTING, 0, 0);
+        if (std_out == INVALID_HANDLE_VALUE) goto error;
+
+        if (!DuplicateHandle( GetCurrentProcess(), std_out, GetCurrentProcess(),
+                              &std_err, 0, TRUE, DUPLICATE_SAME_ACCESS) )
+            goto error;
+    }
+    else
+    {
+        std_in  = app_si.hStdInput;
+        std_out = app_si.hStdOutput;
+        std_err = app_si.hStdError;
+    }
+
+    SetStdHandle( STD_INPUT_HANDLE,  std_in );
+    SetStdHandle( STD_OUTPUT_HANDLE, std_out );
+    SetStdHandle( STD_ERROR_HANDLE,  std_err );
+    SetLastError( ERROR_SUCCESS );
+    return TRUE;
+
+error:
+    ERR("Can't allocate console\n");
+    if (std_in != INVALID_HANDLE_VALUE)  CloseHandle(std_in);
+    if (std_out != INVALID_HANDLE_VALUE) CloseHandle(std_out);
+    if (std_err != INVALID_HANDLE_VALUE) CloseHandle(std_err);
+    FreeConsole();
+    return FALSE;
+}
+
+
 /******************************************************************************
  *	CreateConsoleScreenBuffer   (kernelbase.@)
  */
