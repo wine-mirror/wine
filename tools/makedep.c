@@ -3355,6 +3355,7 @@ static void output_module( struct makefile *make )
         output_filename( tools_path( make, "winegcc" ));
         output( "\n" );
         output_winegcc_command( make, 0 );
+        output_filename( "-munix" );
         output_filename( "-shared" );
         if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) output_filename( "-nodefaultlibs" );
         output_filenames_obj_dir( make, make->unixobj_files );
