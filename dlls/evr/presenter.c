@@ -31,6 +31,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
+enum presenter_state
+{
+    PRESENTER_STATE_SHUT_DOWN = 0,
+    PRESENTER_STATE_STARTED,
+    PRESENTER_STATE_STOPPED,
+    PRESENTER_STATE_PAUSED,
+};
+
 struct video_presenter
 {
     IMFVideoPresenter IMFVideoPresenter_iface;
@@ -41,6 +49,9 @@ struct video_presenter
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
+
+    unsigned int state;
+    CRITICAL_SECTION cs;
 };
 
 static struct video_presenter *impl_from_IUnknown(IUnknown *iface)
@@ -134,6 +145,7 @@ static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        DeleteCriticalSection(&presenter->cs);
         heap_free(presenter);
     }
 
@@ -167,30 +179,54 @@ static ULONG WINAPI video_presenter_Release(IMFVideoPresenter *iface)
 
 static HRESULT WINAPI video_presenter_OnClockStart(IMFVideoPresenter *iface, MFTIME systime, LONGLONG offset)
 {
-    FIXME("%p, %s, %s.\n", iface, debugstr_time(systime), wine_dbgstr_longlong(offset));
+    struct video_presenter *presenter = impl_from_IMFVideoPresenter(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %s.\n", iface, debugstr_time(systime), wine_dbgstr_longlong(offset));
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->state = PRESENTER_STATE_STARTED;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_OnClockStop(IMFVideoPresenter *iface, MFTIME systime)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+    struct video_presenter *presenter = impl_from_IMFVideoPresenter(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->state = PRESENTER_STATE_STOPPED;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_OnClockPause(IMFVideoPresenter *iface, MFTIME systime)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+    struct video_presenter *presenter = impl_from_IMFVideoPresenter(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->state = PRESENTER_STATE_PAUSED;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_OnClockRestart(IMFVideoPresenter *iface, MFTIME systime)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(systime));
+    struct video_presenter *presenter = impl_from_IMFVideoPresenter(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(systime));
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->state = PRESENTER_STATE_STARTED;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_presenter_OnClockSetRate(IMFVideoPresenter *iface, MFTIME systime, float rate)
@@ -295,9 +331,15 @@ static HRESULT WINAPI video_presenter_service_client_InitServicePointers(IMFTopo
 
 static HRESULT WINAPI video_presenter_service_client_ReleaseServicePointers(IMFTopologyServiceLookupClient *iface)
 {
-    FIXME("%p.\n", iface);
+    struct video_presenter *presenter = impl_from_IMFTopologyServiceLookupClient(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&presenter->cs);
+    presenter->state = PRESENTER_STATE_SHUT_DOWN;
+    LeaveCriticalSection(&presenter->cs);
+
+    return S_OK;
 }
 
 static const IMFTopologyServiceLookupClientVtbl video_presenter_service_client_vtbl =
@@ -496,6 +538,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
 
     *out = &object->IUnknown_inner;
 
