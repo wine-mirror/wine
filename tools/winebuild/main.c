@@ -680,7 +680,7 @@ int main(int argc, char **argv)
     case MODE_EXE:
         load_resources( argv, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
-        if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point( spec ));
+        if (!spec->init_func && !unix_lib) spec->init_func = xstrdup( get_default_entry_point( spec ));
 
         if (fake_module)
         {
