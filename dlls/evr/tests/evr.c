@@ -119,6 +119,7 @@ static void test_aggregation(void)
     IBaseFilter *filter, *filter2;
     IMFVideoPresenter *presenter;
     IUnknown *unk, *unk2;
+    IMFTransform *mixer;
     HRESULT hr;
     ULONG ref;
 
@@ -191,6 +192,22 @@ static void test_aggregation(void)
 
         IUnknown_Release(unk);
     }
+
+    /* Default mixer. */
+    presenter = (void *)0xdeadbeef;
+    hr = CoCreateInstance(&CLSID_MFVideoMixer9, &test_outer, CLSCTX_INPROC_SERVER, &IID_IMFTransform,
+            (void **)&mixer);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    ok(!mixer, "Got interface %p.\n", mixer);
+
+    hr = CoCreateInstance(&CLSID_MFVideoMixer9, &test_outer, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(outer_ref == 1, "Got unexpected refcount %d.\n", outer_ref);
+    ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
+    ref = get_refcount(unk);
+    ok(ref == 1, "Got unexpected refcount %d.\n", ref);
+
+    IUnknown_Release(unk);
 }
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)

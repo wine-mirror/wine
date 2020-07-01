@@ -60,6 +60,8 @@ struct video_mixer
     IMFVideoMixerBitmap IMFVideoMixerBitmap_iface;
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IMFVideoProcessor IMFVideoProcessor_iface;
+    IUnknown IUnknown_inner;
+    IUnknown *outer_unk;
     LONG refcount;
 
     struct input_stream inputs[MAX_MIXER_INPUT_STREAMS];
@@ -73,6 +75,11 @@ struct video_mixer
 
     CRITICAL_SECTION cs;
 };
+
+static struct video_mixer *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IUnknown_inner);
+}
 
 static struct video_mixer *impl_from_IMFTransform(IMFTransform *iface)
 {
@@ -155,16 +162,19 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
     mixer->output.media_type = NULL;
 }
 
-static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, REFIID riid, void **obj)
+static HRESULT WINAPI video_mixer_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
-    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct video_mixer *mixer = impl_from_IUnknown(iface);
 
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
-    if (IsEqualIID(riid, &IID_IMFTransform) ||
-            IsEqualIID(riid, &IID_IUnknown))
+    if (IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFTransform))
+    {
+        *obj = &mixer->IMFTransform_iface;
     }
     else if (IsEqualIID(riid, &IID_IMFVideoDeviceID))
     {
@@ -206,9 +216,9 @@ static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, 
     return S_OK;
 }
 
-static ULONG WINAPI video_mixer_transform_AddRef(IMFTransform *iface)
+static ULONG WINAPI video_mixer_inner_AddRef(IUnknown *iface)
 {
-    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct video_mixer *mixer = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&mixer->refcount);
 
     TRACE("%p, refcount %u.\n", iface, refcount);
@@ -216,9 +226,9 @@ static ULONG WINAPI video_mixer_transform_AddRef(IMFTransform *iface)
     return refcount;
 }
 
-static ULONG WINAPI video_mixer_transform_Release(IMFTransform *iface)
+static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
 {
-    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct video_mixer *mixer = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&mixer->refcount);
     unsigned int i;
 
@@ -239,6 +249,31 @@ static ULONG WINAPI video_mixer_transform_Release(IMFTransform *iface)
     }
 
     return refcount;
+}
+
+static const IUnknownVtbl video_mixer_inner_vtbl =
+{
+    video_mixer_inner_QueryInterface,
+    video_mixer_inner_AddRef,
+    video_mixer_inner_Release,
+};
+
+static HRESULT WINAPI video_mixer_transform_QueryInterface(IMFTransform *iface, REFIID riid, void **obj)
+{
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    return IUnknown_QueryInterface(mixer->outer_unk, riid, obj);
+}
+
+static ULONG WINAPI video_mixer_transform_AddRef(IMFTransform *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    return IUnknown_AddRef(mixer->outer_unk);
+}
+
+static ULONG WINAPI video_mixer_transform_Release(IMFTransform *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    return IUnknown_Release(mixer->outer_unk);
 }
 
 static HRESULT WINAPI video_mixer_transform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
@@ -1251,9 +1286,6 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
 {
     struct video_mixer *object;
 
-    if (outer)
-        return E_NOINTERFACE;
-
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
@@ -1265,12 +1297,14 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFVideoMixerBitmap_iface.lpVtbl = &video_mixer_bitmap_vtbl;
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_mixer_position_mapper_vtbl;
     object->IMFVideoProcessor_iface.lpVtbl = &video_mixer_processor_vtbl;
+    object->IUnknown_inner.lpVtbl = &video_mixer_inner_vtbl;
+    object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
     object->input_count = 1;
     video_mixer_init_input(&object->inputs[0]);
     InitializeCriticalSection(&object->cs);
 
-    *out = &object->IMFTransform_iface;
+    *out = &object->IUnknown_inner;
 
     return S_OK;
 }
