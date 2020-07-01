@@ -542,6 +542,49 @@ DECLARE_INTERFACE(IXACT3Wave)
 #define IXACT3Wave_GetProperties(p,a)    (p)->GetProperties(a)
 #endif
 
+#define XACT_FLAG_SOUNDBANK_STOP_IMMEDIATE XACT_FLAG_STOP_IMMEDIATE
+#define XACT_SOUNDBANKSTATE_INUSE          XACT_STATE_INUSE
+
+/*****************************************************************************
+ * IXACT3SoundBank interface
+ */
+#define INTERFACE IXACT3SoundBank
+DECLARE_INTERFACE(IXACT3SoundBank)
+{
+    /*** IXACT3SoundBank methods ***/
+    STDMETHOD_(XACTINDEX,GetCueIndex)(THIS_ PCSTR szFriendlyName) PURE;
+    STDMETHOD(GetNumCues)(THIS_ XACTINDEX *pnNumCues) PURE;
+    STDMETHOD(GetCueProperties)(THIS_ XACTINDEX nCueIndex, LPXACT_CUE_PROPERTIES pProperties) PURE;
+    STDMETHOD(Prepare)(THIS_ XACTINDEX nCueIndex, DWORD dwFlags, XACTTIME timeOffset, IXACT3Cue **ppCue) PURE;
+    STDMETHOD(Play)(THIS_ XACTINDEX nCueIndex, DWORD dwFlags, XACTTIME timeOffset, IXACT3Cue **ppCue) PURE;
+    STDMETHOD(Stop)(THIS_ XACTINDEX nCueIndex, DWORD dwFlags) PURE;
+    STDMETHOD(Destroy)(THIS) PURE;
+    STDMETHOD(GetState)(THIS_ DWORD *pdwState) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IXACT3SoundBank methods ***/
+#define IXACT3SoundBank_GetCueIndex(p,a)   (p)->lpVtbl->GetCueIndex(p,a)
+#define IXACT3SoundBank_GetNumCues(p,a)    (p)->lpVtbl->GetNumCues(p,a)
+#define IXACT3SoundBank_GetCueProperties(p,a,b) (p)->lpVtbl->GetCueProperties(p,a,b)
+#define IXACT3SoundBank_Prepare(p,a,b,c,d) (p)->lpVtbl->Prepare(p,a,b,c,d)
+#define IXACT3SoundBank_Play(p,a,b,c,d)    (p)->lpVtbl->Play(p,a,b,c,d)
+#define IXACT3SoundBank_Stop(p,a,b)        (p)->lpVtbl->Stop(p,a,b)
+#define IXACT3SoundBank_Destroy(p)         (p)->lpVtbl->Destroy(p)
+#define IXACT3SoundBank_GetState(p,a)      (p)->lpVtbl->GetState(p,a)
+#else
+/*** IXACT3SoundBank methods ***/
+#define IXACT3SoundBank_GetCueIndex(p,a)   (p)->GetCueIndex(a)
+#define IXACT3SoundBank_GetNumCues(p,a)    (p)->GetNumCues(a)
+#define IXACT3SoundBank_GetCueProperties(p,a,b) (p)->GetCueProperties(a,b)
+#define IXACT3SoundBank_Prepare(p,a,b,c,d) (p)->Prepare(a,b,c,d)
+#define IXACT3SoundBank_Play(p,a,b,c,d)    (p)->Play(a,b,c,d)
+#define IXACT3SoundBank_Stop(p,a,b)        (p)->Stop(a,b)
+#define IXACT3SoundBank_Destroy(p)         (p)->Destroy()
+#define IXACT3SoundBank_GetState(p,a)      (p)->GetState(a)
+#endif
+
 #define XACT_FLAG_ENGINE_CREATE_MANAGEDATA XACT_FLAG_MANAGEDATA
 #define XACT_FLAG_ENGINE_STOP_IMMEDIATE    XACT_FLAG_STOP_IMMEDIATE
 
