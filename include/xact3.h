@@ -585,6 +585,50 @@ DECLARE_INTERFACE(IXACT3SoundBank)
 #define IXACT3SoundBank_GetState(p,a)      (p)->GetState(a)
 #endif
 
+#define XACT_WAVEBANKSTATE_INUSE         XACT_STATE_INUSE
+#define XACT_WAVEBANKSTATE_PREPARED      XACT_STATE_PREPARED
+#define XACT_WAVEBANKSTATE_PREPAREFAILED XACT_STATE_PREPAREFAILED
+
+/*****************************************************************************
+ * IXACT3WaveBank interface
+ */
+#define INTERFACE IXACT3WaveBank
+DECLARE_INTERFACE(IXACT3WaveBank)
+{
+    /*** IXACT3WaveBank methods ***/
+    STDMETHOD(Destroy)(THIS) PURE;
+    STDMETHOD(GetNumWaves)(THIS_ XACTINDEX *pnNumWaves) PURE;
+    STDMETHOD_(XACTINDEX,GetWaveIndex)(THIS_ PCSTR szFriendlyName) PURE;
+    STDMETHOD(GetWaveProperties)(THIS_ XACTINDEX nWaveIndex, LPXACT_WAVE_PROPERTIES pWaveProperties) PURE;
+    STDMETHOD(Prepare)(THIS_ XACTINDEX nWaveIndex, DWORD dwFlags, DWORD dwPlayOffset, XACTLOOPCOUNT nLoopCount, IXACT3Wave **ppWave) PURE;
+    STDMETHOD(Play)(THIS_ XACTINDEX nWaveIndex, DWORD dwFlags, DWORD dwPlayOffset, XACTLOOPCOUNT nLoopCount, IXACT3Wave **ppWave) PURE;
+    STDMETHOD(Stop)(THIS_ XACTINDEX nWaveIndex, DWORD dwFlags) PURE;
+    STDMETHOD(GetState)(THIS_ DWORD *pdwState) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IXACT3WaveBank methods ***/
+#define IXACT3WaveBank_Destroy(p)          (p)->lpVtbl->Destroy(p)
+#define IXACT3WaveBank_GetNumWaves(p,a)    (p)->lpVtbl->GetNumCues(p,a)
+#define IXACT3WaveBank_GetWaveIndex(p,a)   (p)->lpVtbl->GetWaveIndex(p,a)
+#define IXACT3WaveBank_GetWaveProperties(p,a,b) (p)->lpVtbl->GetWaveProperties(p,a,b)
+#define IXACT3WaveBank_Prepare(p,a,b,c,d,e)     (p)->lpVtbl->Prepare(p,a,b,c,d,e)
+#define IXACT3WaveBank_Play(p,a,b,c,d,e)   (p)->lpVtbl->Play(p,a,b,c,d,e)
+#define IXACT3WaveBank_Stop(p,a,b)         (p)->lpVtbl->Stop(p,a,b)
+#define IXACT3WaveBank_GetState(p,a)       (p)->lpVtbl->GetState(p,a)
+#else
+/*** IXACT3WaveBank methods ***/
+#define IXACT3WaveBank_Destroy(p)          (p)->Destroy()
+#define IXACT3WaveBank_GetNumWaves(p,a)    (p)->GetNumWaves(a)
+#define IXACT3WaveBank_GetWaveIndex(p,a)   (p)->GetWaveIndex(a)
+#define IXACT3WaveBank_GetWaveProperties(p,a,b) (p)->GetWaveProperties(a,b)
+#define IXACT3WaveBank_Prepare(p,a,b,c,d,e)     (p)->Prepare(a,b,c,d,e)
+#define IXACT3WaveBank_Play(p,a,b,c,d,e)  (p)->Play(a,b,c,d,e)
+#define IXACT3WaveBank_Stop(p,a,b)        (p)->Stop(a,b)
+#define IXACT3WaveBank_GetState(p,a)      (p)->GetState(a)
+#endif
+
 #define XACT_FLAG_ENGINE_CREATE_MANAGEDATA XACT_FLAG_MANAGEDATA
 #define XACT_FLAG_ENGINE_STOP_IMMEDIATE    XACT_FLAG_STOP_IMMEDIATE
 
