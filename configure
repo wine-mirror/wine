@@ -8713,7 +8713,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     WINELOADER_LDFLAGS="-Wl,-pie,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
 
     wine_can_build_preloader=yes
-    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7c400000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
+    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
 $as_echo_n "checking whether the compiler supports -Wl,-no_new_main -e _main... " >&6; }
 if ${ac_cv_cflags__Wl__no_new_main__e__main+:} false; then :
@@ -9141,7 +9141,7 @@ $as_echo "$ac_cv_cflags__fPIC__Wl___export_dynamic" >&6; }
 if test "x$ac_cv_cflags__fPIC__Wl___export_dynamic" = xyes; then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
-    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000"
+    WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
     as_ac_var=`$as_echo "ac_cv_cflags_-fPIC -Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -Wl,--rpath,\$ORIGIN/../lib... " >&6; }
@@ -9497,7 +9497,7 @@ $as_echo "$ac_cv_cflags__Wl___export_dynamic" >&6; }
 if test "x$ac_cv_cflags__Wl___export_dynamic" = xyes; then :
   WINELOADER_LDFLAGS="-Wl,--export-dynamic"
 fi
-      WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000"
+      WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
       as_ac_var=`$as_echo "ac_cv_cflags_-Wl,--rpath,\\$ORIGIN/../lib" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--rpath,\$ORIGIN/../lib" >&5
@@ -9610,35 +9610,35 @@ $as_echo "$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&6; }
 if test "x$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" = xyes; then :
   case $host_os in
                            freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x60000000" ;;
-                           *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7c000000" ;;
+                           *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,-Ttext-segment=0x7d000000" ;;
                            esac
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7c000400" >&5
-$as_echo_n "checking whether the compiler supports -Wl,--section-start,.interp=0x7c000400... " >&6; }
-if ${ac_cv_cflags__Wl___section_start__interp_0x7c000400+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400" >&5
+$as_echo_n "checking whether the compiler supports -Wl,--section-start,.interp=0x7d000400... " >&6; }
+if ${ac_cv_cflags__Wl___section_start__interp_0x7d000400+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x7c000400"
+CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x7d000400"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wl___section_start__interp_0x7c000400=yes
+  ac_cv_cflags__Wl___section_start__interp_0x7d000400=yes
 else
-  ac_cv_cflags__Wl___section_start__interp_0x7c000400=no
+  ac_cv_cflags__Wl___section_start__interp_0x7d000400=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___section_start__interp_0x7c000400" >&5
-$as_echo "$ac_cv_cflags__Wl___section_start__interp_0x7c000400" >&6; }
-if test "x$ac_cv_cflags__Wl___section_start__interp_0x7c000400" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___section_start__interp_0x7d000400" >&5
+$as_echo "$ac_cv_cflags__Wl___section_start__interp_0x7d000400" >&6; }
+if test "x$ac_cv_cflags__Wl___section_start__interp_0x7d000400" = xyes; then :
   case $host_os in
                                               freebsd* | kfreebsd*-gnu) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x60000400" ;;
-                                              *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7c000400" ;;
+                                              *) WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -Wl,--section-start,.interp=0x7d000400" ;;
                                            esac
 fi
                            # Extract the first word of "prelink", so it can be a program name with args.
