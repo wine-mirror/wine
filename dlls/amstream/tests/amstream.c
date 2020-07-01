@@ -27,6 +27,7 @@
 #include "ks.h"
 #include "initguid.h"
 #include "ksmedia.h"
+#include "dvdmedia.h"
 #include "wine/strmbase.h"
 
 static const WAVEFORMATEX audio_format =
@@ -1859,7 +1860,11 @@ static void test_enum_media_types(void)
 
 static void test_media_types(void)
 {
-    static const VIDEOINFOHEADER req_vih = {};
+    static const VIDEOINFOHEADER2 req_vih2;
+    static const VIDEOINFOHEADER req_vih;
+    static const MPEG2VIDEOINFO req_m2vi;
+    static const MPEG1VIDEOINFO req_m1vi;
+    static const WAVEFORMATEX req_wfx;
     static const WAVEFORMATEX expect_wfx =
     {
         .wFormatTag = WAVE_FORMAT_PCM,
@@ -1878,6 +1883,23 @@ static void test_media_types(void)
     unsigned int i;
     HRESULT hr;
     IPin *pin;
+
+    static const struct
+    {
+        const GUID *type;
+        BYTE *format;
+        ULONG size;
+    }
+    tests[] =
+    {
+        {&GUID_NULL, NULL, 0 },
+        {&FORMAT_None, NULL, 0 },
+        {&FORMAT_WaveFormatEx, (BYTE *)&req_wfx, sizeof(WAVEFORMATEX)},
+        {&FORMAT_MPEG2Video, (BYTE *)&req_m2vi, sizeof(MPEG2VIDEOINFO)},
+        {&FORMAT_MPEGVideo, (BYTE *)&req_m1vi, sizeof(MPEG2VIDEOINFO)},
+        {&FORMAT_VideoInfo2, (BYTE *)&req_vih2, sizeof(VIDEOINFOHEADER2)},
+        {&FORMAT_VideoInfo, (BYTE *)&req_vih, sizeof(VIDEOINFOHEADER)},
+    };
 
     static const GUID *rejected_subtypes[] =
     {
@@ -1918,14 +1940,15 @@ static void test_media_types(void)
             wine_dbgstr_guid(&pmt->formattype));
     ok(!pmt->pUnk, "Got pUnk %p.\n", pmt->pUnk);
 
-    hr = IPin_QueryAccept(pin, pmt);
-    todo_wine ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
-
-    pmt->formattype = FORMAT_VideoInfo;
-    pmt->cbFormat = sizeof(VIDEOINFOHEADER);
-    pmt->pbFormat = (BYTE *)&req_vih;
-    hr = IPin_QueryAccept(pin, pmt);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        pmt->formattype = *tests[i].type;
+        pmt->cbFormat = tests[i].size;
+        pmt->pbFormat = tests[i].format;
+        hr = IPin_QueryAccept(pin, pmt);
+        todo_wine_if (i != 6)
+            ok(hr == (i == 6) ? S_OK : VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
+    }
 
     pmt->bFixedSizeSamples = FALSE;
     pmt->bTemporalCompression = TRUE;
