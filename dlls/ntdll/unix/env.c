@@ -836,6 +836,8 @@ static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
         if (!unix_name || !unix_name[0]) return FALSE;
     }
 
+    if (strlen( unix_name ) >= LOCALE_NAME_MAX_LENGTH) return FALSE;
+    strcpy( buffer, unix_name );
     if (!(p = strpbrk( buffer, sep )))
     {
         if (!strcmp( buffer, "POSIX" ) || !strcmp( buffer, "C" ))
@@ -1247,6 +1249,6 @@ USHORT * CDECL get_unix_codepage_data(void)
  */
 void CDECL get_locales( WCHAR *sys, WCHAR *user )
 {
-    ntdll_umbstowcs( system_locale, ARRAY_SIZE(system_locale), sys, LOCALE_NAME_MAX_LENGTH * sizeof(WCHAR) );
-    ntdll_umbstowcs( user_locale, ARRAY_SIZE(user_locale), user, LOCALE_NAME_MAX_LENGTH * sizeof(WCHAR) );
+    ntdll_umbstowcs( system_locale, strlen(system_locale) + 1, sys, LOCALE_NAME_MAX_LENGTH );
+    ntdll_umbstowcs( user_locale, strlen(user_locale) + 1, user, LOCALE_NAME_MAX_LENGTH );
 }
