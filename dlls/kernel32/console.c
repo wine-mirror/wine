@@ -76,9 +76,6 @@ static CRITICAL_SECTION CONSOLE_CritSect = { &critsect_debug, -1, 0, 0, 0, 0 };
 static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
 static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
-/* FIXME: this is not thread safe */
-static HANDLE console_wait_event;
-
 /* map input records to ASCII */
 static void input_records_WtoA( INPUT_RECORD *buffer, int count )
 {
@@ -302,16 +299,7 @@ BOOL WINAPI CloseConsoleHandle(HANDLE handle)
  */
 HANDLE WINAPI GetConsoleInputWaitHandle(void)
 {
-    if (!console_wait_event)
-    {
-        SERVER_START_REQ(get_console_wait_event)
-        {
-            if (!wine_server_call_err( req ))
-                console_wait_event = wine_server_ptr_handle( reply->event );
-        }
-        SERVER_END_REQ;
-    }
-    return console_wait_event;
+    return GetStdHandle( STD_INPUT_HANDLE );
 }
 
 
@@ -629,9 +617,6 @@ BOOL WINAPI AllocConsole(void)
 	CloseHandle(handle_in);
 	return FALSE;
     }
-
-    /* invalidate local copy of input event handle */
-    console_wait_event = 0;
 
     GetStartupInfoA(&siCurrent);
 

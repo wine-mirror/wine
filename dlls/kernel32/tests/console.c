@@ -30,6 +30,8 @@ static HANDLE (WINAPI *pOpenConsoleW)(LPCWSTR,DWORD,BOOL,DWORD);
 static BOOL (WINAPI *pSetConsoleInputExeNameA)(LPCSTR);
 static BOOL (WINAPI *pVerifyConsoleIoHandle)(HANDLE handle);
 
+static BOOL skip_nt;
+
 /* DEFAULT_ATTRIB is used for all initial filling of the console.
  * all modifications are made with TEST_ATTRIB so that we could check
  * what has to be modified or not
@@ -1267,7 +1269,6 @@ static void test_CreateFileW(void)
     UNICODE_STRING string;
     IO_STATUS_BLOCK iosb;
     NTSTATUS status;
-    BOOL skip_nt = FALSE;
 
     for (index = 0; index < ARRAY_SIZE(cf_table); index++)
     {
@@ -3225,6 +3226,16 @@ static void test_FreeConsole(void)
     ok(handle == INVALID_HANDLE_VALUE &&
        (GetLastError() == ERROR_INVALID_HANDLE || broken(GetLastError() == ERROR_FILE_NOT_FOUND /* winxp */)),
        "CreateFileA failed: %u\n", GetLastError());
+
+    if (!skip_nt)
+    {
+        SetStdHandle( STD_INPUT_HANDLE, (HANDLE)0xdeadbeef );
+        handle = GetConsoleInputWaitHandle();
+        ok(handle == (HANDLE)0xdeadbeef, "GetConsoleInputWaitHandle returned %p\n", handle);
+        SetStdHandle( STD_INPUT_HANDLE, NULL );
+        handle = GetConsoleInputWaitHandle();
+        ok(!handle, "GetConsoleInputWaitHandle returned %p\n", handle);
+    }
 }
 
 static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
