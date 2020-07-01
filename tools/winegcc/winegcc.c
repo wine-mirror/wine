@@ -207,6 +207,7 @@ struct options
     int nostartfiles;
     int nodefaultlibs;
     int noshortwchar;
+    int unix_lib;
     int gui_app;
     int unicode_app;
     int win16_app;
@@ -964,7 +965,8 @@ static strarray *get_winebuild_args(struct options *opts)
         for (i = 0; i < opts->prefix->size; i++)
             strarray_add( spec_args, strmake( "-B%s", opts->prefix->base[i] ));
     }
-    if (!opts->use_msvcrt) strarray_add( spec_args, "-munix" );
+    if (opts->use_msvcrt) strarray_add( spec_args, "-mno-cygwin" );
+    if (opts->unix_lib) strarray_add( spec_args, "-munix" );
     if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
     else strarray_add( spec_args, "-fno-asynchronous-unwind-tables" );
     return spec_args;
@@ -1790,6 +1792,7 @@ int main(int argc, char **argv)
                     {
 			opts.use_msvcrt = 1;
                         raw_compiler_arg = 0;
+                        strarray_add( opts.winebuild_args, opts.args->base[i] );
                     }
 		    else if (strcmp("-mwindows", opts.args->base[i]) == 0)
                     {
@@ -1808,6 +1811,11 @@ int main(int argc, char **argv)
                     }
 		    else if (strcmp("-mthreads", opts.args->base[i]) == 0)
                     {
+                        raw_compiler_arg = 0;
+                    }
+		    else if (strcmp("-munix", opts.args->base[i]) == 0)
+                    {
+			opts.unix_lib = 1;
                         raw_compiler_arg = 0;
                     }
 		    else if (strcmp("-m16", opts.args->base[i]) == 0)
