@@ -643,7 +643,7 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
             add_undef_import( p + strlen( import_func_prefix ), 0 );
         else if (!strncmp( p, import_ord_prefix, strlen(import_ord_prefix) ))
             add_undef_import( p + strlen( import_ord_prefix ), 1 );
-        else if (!unix_lib || !find_name( p, &stdc_functions ))
+        else if (use_msvcrt || !find_name( p, &stdc_functions ))
             strarray_add( &undef_symbols, xstrdup( p ), NULL );
     }
     if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
