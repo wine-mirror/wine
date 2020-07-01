@@ -206,6 +206,57 @@ typedef struct XACT_STREAMING_PARAMETERS
 typedef const XACT_STREAMING_PARAMETERS *LPCXACT_STREAMING_PARAMETERS;
 typedef const XACT_WAVE_STREAMING_PARAMETERS *LPCXACT_WAVE_STREAMING_PARAMETERS;
 
+typedef struct XACT_CUE_PROPERTIES
+{
+    char friendlyName[XACT_CUE_NAME_LENGTH];
+    BOOL interactive;
+    XACTINDEX iaVariableIndex;
+    XACTINDEX numVariations;
+    XACTINSTANCELIMIT maxInstances;
+    XACTINSTANCELIMIT currentInstances;
+} XACT_CUE_PROPERTIES, *LPXACT_CUE_PROPERTIES;
+
+typedef struct XACT_TRACK_PROPERTIES
+{
+    XACTTIME duration;
+    XACTINDEX numVariations;
+    XACTCHANNEL numChannels;
+    XACTINDEX waveVariation;
+    XACTLOOPCOUNT loopCount;
+} XACT_TRACK_PROPERTIES, *LPXACT_TRACK_PROPERTIES;
+
+typedef struct XACT_VARIATION_PROPERTIES
+{
+    XACTINDEX index;
+    XACTVARIATIONWEIGHT weight;
+    XACTVARIABLEVALUE iaVariableMin;
+    XACTVARIABLEVALUE iaVariableMax;
+    BOOL linger;
+} XACT_VARIATION_PROPERTIES, *LPXACT_VARIATION_PROPERTIES;
+
+typedef struct XACT_SOUND_PROPERTIES
+{
+    XACTCATEGORY category;
+    BYTE priority;
+    XACTPITCH pitch;
+    XACTVOLUME volume;
+    XACTINDEX numTracks;
+    XACT_TRACK_PROPERTIES arrTrackProperties[1];
+} XACT_SOUND_PROPERTIES, *LPXACT_SOUND_PROPERTIES;
+
+typedef struct XACT_SOUND_VARIATION_PROPERTIES
+{
+    XACT_VARIATION_PROPERTIES variationProperties;
+    XACT_SOUND_PROPERTIES soundProperties;
+} XACT_SOUND_VARIATION_PROPERTIES, *LPXACT_SOUND_VARIATION_PROPERTIES;
+
+typedef struct XACT_CUE_INSTANCE_PROPERTIES
+{
+    DWORD allocAttributes;
+    XACT_CUE_PROPERTIES cueProperties;
+    XACT_SOUND_VARIATION_PROPERTIES activeVariationProperties;
+} XACT_CUE_INSTANCE_PROPERTIES, *LPXACT_CUE_INSTANCE_PROPERTIES;
+
 typedef struct XACTCHANNELMAPENTRY
 {
     XACTCHANNEL InputChannel;
@@ -367,6 +418,69 @@ typedef struct XACT_RUNTIME_PARAMETERS
 typedef const XACT_RUNTIME_PARAMETERS *LPCXACT_RUNTIME_PARAMETERS;
 
 #include <poppack.h>
+
+#define XACT_FLAG_CUE_STOP_RELEASE   XACT_FLAG_STOP_RELEASE
+#define XACT_FLAG_CUE_STOP_IMMEDIATE XACT_FLAG_STOP_IMMEDIATE
+
+#define XACT_CUESTATE_CREATED   XACT_STATE_CREATED
+#define XACT_CUESTATE_PREPARING XACT_STATE_PREPARING
+#define XACT_CUESTATE_PREPARED  XACT_STATE_PREPARED
+#define XACT_CUESTATE_PLAYING   XACT_STATE_PLAYING
+#define XACT_CUESTATE_STOPPING  XACT_STATE_STOPPING
+#define XACT_CUESTATE_STOPPED   XACT_STATE_STOPPED
+#define XACT_CUESTATE_PAUSED    XACT_STATE_PAUSED
+
+/*****************************************************************************
+ * IXACT3Cue interface
+ */
+#define INTERFACE IXACT3Cue
+DECLARE_INTERFACE(IXACT3Cue)
+{
+    /*** IXACT3Cue methods ***/
+    STDMETHOD(Play)(THIS) PURE;
+    STDMETHOD(Stop)(THIS_ DWORD pdwFlags) PURE;
+    STDMETHOD(GetState)(THIS_ DWORD *pdwState) PURE;
+    STDMETHOD(Destroy)(THIS) PURE;
+    STDMETHOD(SetMatrixCoefficients)(THIS_ UINT32 uSrcChannelCount, UINT32 uDstChannelCount, float *pMatrixCoefficients) PURE;
+    STDMETHOD_(XACTVARIABLEINDEX,GetVariableIndex)(THIS_ PCSTR szFriendlyName) PURE;
+    STDMETHOD(SetVariable)(THIS_ XACTVARIABLEINDEX nIndex, XACTVARIABLEVALUE nValue) PURE;
+    STDMETHOD(GetVariable)(THIS_ XACTVARIABLEINDEX nIndex, XACTVARIABLEVALUE *nValue) PURE;
+    STDMETHOD(Pause)(THIS_ BOOL fPause) PURE;
+    STDMETHOD(GetProperties)(THIS_ LPXACT_CUE_INSTANCE_PROPERTIES *ppProperties) PURE;
+    STDMETHOD(SetOutputVoices)(THIS_ const XAUDIO2_VOICE_SENDS *pSendList) PURE;
+    STDMETHOD(SetOutputVoiceMatrix)(THIS_ IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels, UINT32 DestinationChannels, const float *pLevelMatrix) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IXACT3Cue methods ***/
+#define IXACT3Cue_Play(p)               (p)->lpVtbl->Destroy(p)
+#define IXACT3Cue_Stop(p,a)             (p)->lpVtbl->Stop(p,a)
+#define IXACT3Cue_GetState(p,a)         (p)->lpVtbl->GetState(p,a)
+#define IXACT3Cue_Destroy(p)            (p)->lpVtbl->Destroy(p)
+#define IXACT3Cue_SetMatrixCoefficients(p,a,b,c) (p)->lpVtbl->SetMatrixCoefficients(p,a,b,c)
+#define IXACT3Cue_GetVariableIndex(p,a) (p)->lpVtbl->GetVariableIndex(p,a)
+#define IXACT3Cue_SetVariable(p,a,b)    (p)->lpVtbl->SetVariable(p,a,b)
+#define IXACT3Cue_GetVariable(p,a,b)    (p)->lpVtbl->GetVariable(p,a,b)
+#define IXACT3Cue_Pause(p,a)            (p)->lpVtbl->Pause(p,a)
+#define IXACT3Cue_GetProperties(p,a)    (p)->lpVtbl->GetProperties(p,a)
+#define IXACT3Cue_SetOutputVoices(p,a)  (p)->lpVtbl->SetOutputVoices(p,a)
+#define IXACT3Cue_SetOutputVoiceMatrix(p,a,b,c,d) (p)->lpVtbl->SetOutputVoiceMatrix(p,a,b,c,d)
+#else
+/*** IXACT3Cue methods ***/
+#define IXACT3Cue_Play(p)               (p)->Destroy()
+#define IXACT3Cue_Stop(p,a)             (p)->Stop(a)
+#define IXACT3Cue_GetState(p,a)         (p)->Stop(a)
+#define IXACT3Cue_Destroy(p)            (p)->Destroy()
+#define IXACT3Cue_SetMatrixCoefficients(p,a,b,c) (p)->SetMatrixCoefficients(a,b,c)
+#define IXACT3Cue_GetVariableIndex(p,a) (p)->GetVariableIndex(a)
+#define IXACT3Cue_SetVariable(p,a,b)    (p)->SetVariable(a,b)
+#define IXACT3Cue_GetVariable(p,a,b)    (p)->GetVariable(a,b)
+#define IXACT3Cue_Pause(p,a)            (p)->Pause(a)
+#define IXACT3Cue_GetProperties(p,a)    (p)->GetProperties(a)
+#define IXACT3Cue_SetOutputVoices(p,a)  (p)->SetOutputVoices(a)
+#define IXACT3Cue_SetOutputVoiceMatrix(p,a,b,c,d) (p)->SetOutputVoiceMatrix(a,b,c,d)
+#endif
 
 #define XACT_FLAG_ENGINE_CREATE_MANAGEDATA XACT_FLAG_MANAGEDATA
 #define XACT_FLAG_ENGINE_STOP_IMMEDIATE    XACT_FLAG_STOP_IMMEDIATE
