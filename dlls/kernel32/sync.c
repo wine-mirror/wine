@@ -85,24 +85,6 @@ static BOOL get_open_object_attributes( OBJECT_ATTRIBUTES *attr, UNICODE_STRING 
     return TRUE;
 }
 
-static HANDLE normalize_handle_if_console(HANDLE handle)
-{
-    if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
-        (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
-        (handle == (HANDLE)STD_ERROR_HANDLE))
-        handle = GetStdHandle( HandleToULong(handle) );
-
-    /* yes, even screen buffer console handles are waitable, and are
-     * handled as a handle to the console itself !!
-     */
-    if (is_console_handle(handle))
-    {
-        if (VerifyConsoleIoHandle(handle))
-            handle = GetConsoleInputWaitHandle();
-    }
-    return handle;
-}
-
 /******************************************************************************
  *           GetTickCount64       (KERNEL32.@)
  */
@@ -135,10 +117,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTickCount(void)
 BOOL WINAPI RegisterWaitForSingleObject( HANDLE *wait, HANDLE object, WAITORTIMERCALLBACK callback,
                                          void *context, ULONG timeout, ULONG flags )
 {
-    TRACE( "%p %p %p %p %d %d\n", wait, object, callback, context, timeout, flags );
-
-    object = normalize_handle_if_console( object );
-    return set_ntstatus( RtlRegisterWait( wait, object, callback, context, timeout, flags ));
+    return (*wait = RegisterWaitForSingleObjectEx( object, callback, context, timeout, flags)) != NULL;
 }
 
 /***********************************************************************

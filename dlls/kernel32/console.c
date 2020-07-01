@@ -425,7 +425,7 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
     if ((fd = get_console_bare_fd(handle)) != -1)
     {
         put_console_into_raw_mode(fd);
-        if (WaitForSingleObject(GetConsoleInputWaitHandle(), 0) != WAIT_OBJECT_0)
+        if (WaitForSingleObject(handle, 0) != WAIT_OBJECT_0)
         {
             ret = bare_console_fetch_input(handle, fd, timeout);
         }
@@ -437,7 +437,7 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
     {
         if (!VerifyConsoleIoHandle(handle)) return rci_error;
 
-        if (WaitForSingleObject(GetConsoleInputWaitHandle(), timeout) != WAIT_OBJECT_0)
+        if (WaitForSingleObject(handle, timeout) != WAIT_OBJECT_0)
             return rci_timeout;
     }
 
@@ -530,24 +530,6 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title, DWORD size)
 
 static WCHAR*	S_EditString /* = NULL */;
 static unsigned S_EditStrPos /* = 0 */;
-
-/***********************************************************************
- *            FreeConsole (KERNEL32.@)
- */
-BOOL WINAPI FreeConsole(VOID)
-{
-    BOOL ret;
-
-    /* invalidate local copy of input event handle */
-    console_wait_event = 0;
-
-    SERVER_START_REQ(free_console)
-    {
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
 
 /******************************************************************
  *		start_console_renderer

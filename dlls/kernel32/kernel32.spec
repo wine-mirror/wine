@@ -524,7 +524,7 @@
 @ stdcall -import FoldStringW(long wstr long ptr long)
 @ stdcall -import FormatMessageA(long ptr long long ptr long ptr)
 @ stdcall -import FormatMessageW(long ptr long long ptr long ptr)
-@ stdcall FreeConsole()
+@ stdcall -import FreeConsole()
 @ stdcall -import FreeEnvironmentStringsA(ptr)
 @ stdcall -import FreeEnvironmentStringsW(ptr)
 @ stub -i386 FreeLSCallback
