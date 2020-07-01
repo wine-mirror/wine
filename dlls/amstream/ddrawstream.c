@@ -632,23 +632,12 @@ static HRESULT WINAPI ddraw_sink_Connect(IPin *iface, IPin *peer, const AM_MEDIA
     return E_UNEXPECTED;
 }
 
-static BOOL check_media_type(const AM_MEDIA_TYPE *media_type)
+static BOOL check_media_type(const AM_MEDIA_TYPE *mt)
 {
-    if (IsEqualGUID(&media_type->majortype, &MEDIATYPE_Video)
-            && IsEqualGUID(&media_type->formattype, &FORMAT_VideoInfo))
-    {
-        if (IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB1) ||
-            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB4) ||
-            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB8)  ||
-            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB565) ||
-            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB555) ||
-            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB24) ||
-            IsEqualGUID(&media_type->subtype, &MEDIASUBTYPE_RGB32))
-        {
-            TRACE("Video sub-type %s matches\n", debugstr_guid(&media_type->subtype));
-            return TRUE;
-        }
-    }
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video)
+            && IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB8)
+            && IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+        return TRUE;
 
     return FALSE;
 }
