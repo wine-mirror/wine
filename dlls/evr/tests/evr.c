@@ -950,6 +950,18 @@ static void test_default_presenter(void)
     IMFVideoPresenter_Release(presenter);
 }
 
+static void test_MFCreateVideoMixerAndPresenter(void)
+{
+    IUnknown *mixer, *presenter;
+    HRESULT hr;
+
+    hr = MFCreateVideoMixerAndPresenter(NULL, NULL, &IID_IUnknown, (void **)&mixer, &IID_IUnknown, (void **)&presenter);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IUnknown_Release(mixer);
+    IUnknown_Release(presenter);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -965,6 +977,7 @@ START_TEST(evr)
     test_default_mixer_type_negotiation();
     test_surface_sample();
     test_default_presenter();
+    test_MFCreateVideoMixerAndPresenter();
 
     CoUninitialize();
 }

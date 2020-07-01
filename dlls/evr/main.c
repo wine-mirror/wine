@@ -196,3 +196,31 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     return __wine_unregister_resources(instance_evr);
 }
+
+HRESULT WINAPI MFCreateVideoMixerAndPresenter(IUnknown *mixer_outer, IUnknown *presenter_outer,
+        REFIID riid_mixer, void **mixer, REFIID riid_presenter, void **presenter)
+{
+    HRESULT hr;
+
+    TRACE("%p, %p, %s, %p, %s, %p.\n", mixer_outer, presenter_outer, debugstr_guid(riid_mixer), mixer,
+            debugstr_guid(riid_presenter), presenter);
+
+    if (!mixer || !presenter)
+        return E_POINTER;
+
+    *mixer = *presenter = NULL;
+
+    if (SUCCEEDED(hr = CoCreateInstance(&CLSID_MFVideoMixer9, mixer_outer, CLSCTX_INPROC_SERVER, riid_mixer, mixer)))
+        hr = CoCreateInstance(&CLSID_MFVideoPresenter9, presenter_outer, CLSCTX_INPROC_SERVER, riid_presenter, presenter);
+
+    if (FAILED(hr))
+    {
+        if (*mixer)
+            IUnknown_Release((IUnknown *)*mixer);
+        if (*presenter)
+            IUnknown_Release((IUnknown *)*presenter);
+        *mixer = *presenter = NULL;
+    }
+
+    return hr;
+}
