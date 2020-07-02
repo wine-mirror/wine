@@ -1018,6 +1018,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**) DECL
 IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*) DECLSPEC_HIDDEN;
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*) DECLSPEC_HIDDEN;
 HRESULT HTMLDOMRange_Create(nsIDOMRange*,IHTMLDOMRange**) DECLSPEC_HIDDEN;
+HRESULT create_markup_pointer(IMarkupPointer**) DECLSPEC_HIDDEN;
 
 void detach_document_node(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_selection(HTMLDocumentNode*) DECLSPEC_HIDDEN;

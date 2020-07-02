@@ -5882,6 +5882,27 @@ static void test_txtrange(IHTMLDocument2 *doc)
     IHTMLTxtRange_Release(range);
 }
 
+static void test_markup_services(IHTMLDocument2 *doc)
+{
+    IMarkupServices *markup_services;
+    IMarkupPointer *markup_pointer;
+    IMarkupPointer2 *markup_pointer2;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IMarkupServices, (void**)&markup_services);
+    ok(hres == S_OK, "Could not get IMarkupServices iface: %08x\n", hres);
+
+    hres = IMarkupServices_CreateMarkupPointer(markup_services, &markup_pointer);
+    ok(hres == S_OK, "CreateMarkupPointer failed: %08x\n", hres);
+
+    hres = IMarkupPointer_QueryInterface(markup_pointer, &IID_IMarkupPointer2, (void**)&markup_pointer2);
+    ok(hres == S_OK, "Could not get IMarkupPointer2 iface: %08x\n", hres);
+
+    IMarkupPointer_Release(markup_pointer);
+    IMarkupPointer2_Release(markup_pointer2);
+    IMarkupServices_Release(markup_services);
+}
+
 static void test_range(IHTMLDocument2 *doc)
 {
     if(is_ie9plus) {
@@ -5905,6 +5926,7 @@ static void test_range(IHTMLDocument2 *doc)
     }
 
     test_txtrange(doc);
+    test_markup_services(doc);
 }
 
 #define test_compatmode(a,b) _test_compatmode(__LINE__,a,b)

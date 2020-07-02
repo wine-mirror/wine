@@ -4840,8 +4840,10 @@ static ULONG WINAPI MarkupServices_Release(IMarkupServices *iface)
 static HRESULT WINAPI MarkupServices_CreateMarkupPointer(IMarkupServices *iface, IMarkupPointer **ppPointer)
 {
     HTMLDocument *This = impl_from_IMarkupServices(iface);
-    FIXME("(%p)->(%p)\n", This, ppPointer);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppPointer);
+
+    return create_markup_pointer(ppPointer);
 }
 
 static HRESULT WINAPI MarkupServices_CreateMarkupContainer(IMarkupServices *iface, IMarkupContainer **ppMarkupContainer)
