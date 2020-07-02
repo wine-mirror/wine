@@ -1731,7 +1731,7 @@
 @ cdecl isxdigit(long) MSVCRT_isxdigit
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
-@ cdecl ldiv(long long) MSVCRT_ldiv
+@ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
 @ cdecl -ret64 llabs(int64) MSVCRT_llabs
 @ cdecl lldiv(int64 int64) MSVCRT_lldiv
 @ cdecl localeconv() MSVCRT_localeconv

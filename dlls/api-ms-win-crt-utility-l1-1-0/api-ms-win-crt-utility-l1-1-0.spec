@@ -20,7 +20,7 @@
 @ stub imaxabs
 @ stub imaxdiv
 @ cdecl labs(long) ucrtbase.labs
-@ cdecl ldiv(long long) ucrtbase.ldiv
+@ cdecl -ret64 ldiv(long long) ucrtbase.ldiv
 @ cdecl -ret64 llabs(int64) ucrtbase.llabs
 @ cdecl lldiv(int64 int64) ucrtbase.lldiv
 @ cdecl qsort(ptr long long ptr) ucrtbase.qsort

@@ -1905,7 +1905,7 @@
 @ cdecl isxdigit(long) msvcr120.isxdigit
 @ cdecl labs(long) msvcr120.labs
 @ cdecl ldexp(double long) msvcr120.ldexp
-@ cdecl ldiv(long long) msvcr120.ldiv
+@ cdecl -ret64 ldiv(long long) msvcr120.ldiv
 @ cdecl lgamma(double) msvcr120.lgamma
 @ cdecl lgammaf(float) msvcr120.lgammaf
 @ cdecl lgammal(double) msvcr120.lgammal

@@ -2242,7 +2242,7 @@
 @ cdecl isxdigit(long) MSVCRT_isxdigit
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
-@ cdecl ldiv(long long) MSVCRT_ldiv
+@ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
 @ cdecl lgamma(double) MSVCR120_lgamma
 @ cdecl lgammaf(float) MSVCR120_lgammaf
 @ cdecl lgammal(double) MSVCR120_lgammal
