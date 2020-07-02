@@ -28003,6 +28003,61 @@ interface IDOMMessageEvent : IDispatch
             [in] IHTMLWindow2 *source);
 }
 
+
+/*****************************************************************************
+ *    IHTMLNamespaceCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f6b8-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLNamespaceCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLNAMESPACECOLLECTION_LENGTH)]
+    HRESULT length([out, retval] long *p);
+
+    [id(DISPID_IHTMLNAMESPACECOLLECTION_ITEM)]
+    HRESULT item(
+            [in] VARIANT index,
+            [out, retval] IDispatch **ppNamespace);
+
+    [id(DISPID_IHTMLNAMESPACECOLLECTION_ADD)]
+    HRESULT add(
+            [in] BSTR bstrNamespace,
+            [in] BSTR bstrUrn,
+            [in, optional] VARIANT implementationUrl,
+            [out, retval] IDispatch **ppNamespace);
+}
+
+/*****************************************************************************
+ *    DispHTMLNamespaceCollection dispinterface
+ */
+[
+    hidden,
+    uuid(3050f550-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLNamespaceCollection
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLNAMESPACECOLLECTION_LENGTH)]
+    long length();
+
+    [id(DISPID_IHTMLNAMESPACECOLLECTION_ITEM)]
+    IDispatch *item([in] VARIANT index);
+
+    [id(DISPID_IHTMLNAMESPACECOLLECTION_ADD)]
+    IDispatch *add(
+            [in] BSTR bstrNamespace,
+            [in] BSTR bstrUrn,
+            [in, optional] VARIANT implementationUrl);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
 /*****************************************************************************
  *    ILineInfo interface
  */
