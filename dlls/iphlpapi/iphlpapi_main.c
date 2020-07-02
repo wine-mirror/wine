@@ -742,6 +742,8 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               }
               /* Find first router through this interface, which we'll assume
                * is the default gateway for this adapter */
+              strcpy(ptr->GatewayList.IpAddress.String, "0.0.0.0");
+              strcpy(ptr->GatewayList.IpMask.String, "255.255.255.255");
               for (i = 0; i < routeTable->dwNumEntries; i++)
                 if (routeTable->table[i].dwForwardIfIndex == ptr->Index
                  && routeTable->table[i].u1.ForwardType ==

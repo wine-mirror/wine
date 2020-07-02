@@ -1120,10 +1120,13 @@ static void testGetAdaptersInfo(void)
            apiReturn);
         ptr = buf;
         while (ptr) {
-            ok(ptr->IpAddressList.IpAddress.String[0], "A valid IP must be present\n");
+            ok(ptr->IpAddressList.IpAddress.String[0], "A valid IP address must be present\n");
             ok(ptr->IpAddressList.IpMask.String[0], "A valid mask must be present\n");
-            trace("Adapter '%s', IP %s, Mask %s\n", ptr->AdapterName,
-                  ptr->IpAddressList.IpAddress.String, ptr->IpAddressList.IpMask.String);
+            ok(ptr->GatewayList.IpAddress.String[0], "A valid IP address must be present\n");
+            ok(ptr->GatewayList.IpMask.String[0], "A valid mask must be present\n");
+            trace("adapter '%s', address %s/%s gateway %s/%s\n", ptr->AdapterName,
+                  ptr->IpAddressList.IpAddress.String, ptr->IpAddressList.IpMask.String,
+                  ptr->GatewayList.IpAddress.String, ptr->GatewayList.IpMask.String);
             ptr = ptr->Next;
         }
         HeapFree(GetProcessHeap(), 0, buf);
