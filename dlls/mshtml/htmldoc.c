@@ -2662,11 +2662,23 @@ static HRESULT WINAPI HTMLDocument4_get_onselectionchange(IHTMLDocument4 *iface,
     return get_doc_event(This, EVENTID_SELECTIONCHANGE, p);
 }
 
-static HRESULT WINAPI HTMLDocument4_get_namespace(IHTMLDocument4 *iface, IDispatch **p)
+static HRESULT WINAPI HTMLDocument4_get_namespaces(IHTMLDocument4 *iface, IDispatch **p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument4(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc_node->namespaces) {
+        HRESULT hres;
+
+        hres = create_namespace_collection(&This->doc_node->namespaces);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IHTMLNamespaceCollection_AddRef(This->doc_node->namespaces);
+    *p = (IDispatch*)This->doc_node->namespaces;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument4_createDocumentFromUrl(IHTMLDocument4 *iface, BSTR bstrUrl,
@@ -2757,7 +2769,7 @@ static const IHTMLDocument4Vtbl HTMLDocument4Vtbl = {
     HTMLDocument4_hasFocus,
     HTMLDocument4_put_onselectionchange,
     HTMLDocument4_get_onselectionchange,
-    HTMLDocument4_get_namespace,
+    HTMLDocument4_get_namespaces,
     HTMLDocument4_createDocumentFromUrl,
     HTMLDocument4_put_media,
     HTMLDocument4_get_media,
@@ -5421,6 +5433,11 @@ void detach_document_node(HTMLDocumentNode *doc)
         detach_dom_implementation(doc->dom_implementation);
         IHTMLDOMImplementation_Release(doc->dom_implementation);
         doc->dom_implementation = NULL;
+    }
+
+    if(doc->namespaces) {
+        IHTMLNamespaceCollection_Release(doc->namespaces);
+        doc->namespaces = NULL;
     }
 
     detach_events(doc);

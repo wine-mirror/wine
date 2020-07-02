@@ -2203,3 +2203,157 @@ HRESULT create_performance(IHTMLPerformance **ret)
     *ret = &performance->IHTMLPerformance_iface;
     return S_OK;
 }
+
+typedef struct {
+    DispatchEx dispex;
+    IHTMLNamespaceCollection IHTMLNamespaceCollection_iface;
+
+    LONG ref;
+} HTMLNamespaceCollection;
+
+static inline HTMLNamespaceCollection *impl_from_IHTMLNamespaceCollection(IHTMLNamespaceCollection *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLNamespaceCollection, IHTMLNamespaceCollection_iface);
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_QueryInterface(IHTMLNamespaceCollection *iface, REFIID riid, void **ppv)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &This->IHTMLNamespaceCollection_iface;
+    }else if(IsEqualGUID(&IID_IHTMLNamespaceCollection, riid)) {
+        *ppv = &This->IHTMLNamespaceCollection_iface;
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI HTMLNamespaceCollection_AddRef(IHTMLNamespaceCollection *iface)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLNamespaceCollection_Release(IHTMLNamespaceCollection *iface)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        release_dispex(&This->dispex);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_GetTypeInfoCount(IHTMLNamespaceCollection *iface, UINT *pctinfo)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_GetTypeInfo(IHTMLNamespaceCollection *iface, UINT iTInfo,
+                                                  LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_GetIDsOfNames(IHTMLNamespaceCollection *iface, REFIID riid,
+                                                    LPOLESTR *rgszNames, UINT cNames,
+                                                    LCID lcid, DISPID *rgDispId)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_Invoke(IHTMLNamespaceCollection *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_get_length(IHTMLNamespaceCollection *iface, LONG *p)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+    FIXME("(%p)->(%p) returning 0\n", This, p);
+    *p = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_item(IHTMLNamespaceCollection *iface, VARIANT index, IDispatch **p)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(&index), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLNamespaceCollection_add(IHTMLNamespaceCollection *iface, BSTR namespace, BSTR urn,
+                                                  VARIANT implementation_url, IDispatch **p)
+{
+    HTMLNamespaceCollection *This = impl_from_IHTMLNamespaceCollection(iface);
+    FIXME("(%p)->(%s %s %s %p)\n", This, debugstr_w(namespace), debugstr_w(urn), debugstr_variant(&implementation_url), p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLNamespaceCollectionVtbl HTMLNamespaceCollectionVtbl = {
+    HTMLNamespaceCollection_QueryInterface,
+    HTMLNamespaceCollection_AddRef,
+    HTMLNamespaceCollection_Release,
+    HTMLNamespaceCollection_GetTypeInfoCount,
+    HTMLNamespaceCollection_GetTypeInfo,
+    HTMLNamespaceCollection_GetIDsOfNames,
+    HTMLNamespaceCollection_Invoke,
+    HTMLNamespaceCollection_get_length,
+    HTMLNamespaceCollection_item,
+    HTMLNamespaceCollection_add
+};
+
+static const tid_t HTMLNamespaceCollection_iface_tids[] = {
+    IHTMLNamespaceCollection_tid,
+    0
+};
+static dispex_static_data_t HTMLNamespaceCollection_dispex = {
+    NULL,
+    DispHTMLNamespaceCollection_tid,
+    HTMLNamespaceCollection_iface_tids
+};
+
+HRESULT create_namespace_collection(IHTMLNamespaceCollection **ret)
+{
+    HTMLNamespaceCollection *namespaces;
+
+    if (!(namespaces = heap_alloc_zero(sizeof(*namespaces))))
+        return E_OUTOFMEMORY;
+
+    namespaces->IHTMLNamespaceCollection_iface.lpVtbl = &HTMLNamespaceCollectionVtbl;
+    namespaces->ref = 1;
+    init_dispex(&namespaces->dispex, (IUnknown*)&namespaces->IHTMLNamespaceCollection_iface, &HTMLNamespaceCollection_dispex);
+    *ret = &namespaces->IHTMLNamespaceCollection_iface;
+    return S_OK;
+}

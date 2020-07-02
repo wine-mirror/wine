@@ -6577,9 +6577,13 @@ static void test_unique_id(IHTMLDocument2 *doc, IHTMLElement *elem)
 
 static void test_doc_elem(IHTMLDocument2 *doc)
 {
+    IHTMLNamespaceCollection *namespaces;
     IHTMLDocument2 *doc_node, *owner_doc;
+    IHTMLDocument4 *doc4;
     IHTMLElement *elem;
     IHTMLDocument3 *doc3;
+    IDispatch *disp;
+    LONG l;
     HRESULT hres;
     BSTR bstr;
 
@@ -6614,6 +6618,25 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     test_doc_dir(doc);
 
     IHTMLElement_Release(elem);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument4, (void**)&doc4);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument4) failed: %08x\n", hres);
+
+    hres = IHTMLDocument4_get_namespaces(doc4, &disp);
+    ok(hres == S_OK, "get_namespaces failed: %08x\n", hres);
+
+    test_disp((IUnknown*)disp, &DIID_DispHTMLNamespaceCollection, NULL, L"[object]");
+
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLNamespaceCollection, (void**)&namespaces);
+    ok(hres == S_OK, "Could not get IHTMLNamespaceCollection iface: %08x\n", hres);
+
+    hres = IHTMLNamespaceCollection_get_length(namespaces, &l);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    ok(l == 0, "length = %d\n", l);
+
+    IHTMLNamespaceCollection_Release(namespaces);
+    IDispatch_Release(disp);
+    IHTMLDocument4_Release(doc4);
 }
 
 static void test_default_body(IHTMLBodyElement *body)
