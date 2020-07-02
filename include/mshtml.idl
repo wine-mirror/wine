@@ -28449,6 +28449,10 @@ interface IMarkupPointer2 : IMarkupPointer
         [in] IMarkupContainer *pContainer,
         [in] long lMP);
 
+    HRESULT MoveUnitBounded(
+        [in] MOVEUNIT_ACTION muAction,
+        [in] IMarkupPointer *pIBoundary);
+
     HRESULT IsInsideURL(
         [in] IMarkupPointer *pRight,
         [out] BOOL *pfResult);
