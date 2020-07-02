@@ -1979,17 +1979,18 @@ __ASM_GLOBAL_FUNC( user_exception_dispatcher_trampoline,
 
 void WINAPI do_call_user_exception_dispatcher(EXCEPTION_RECORD *rec, CONTEXT *context, struct stack_layout *stack)
 {
-    memcpy(&stack->context, context, sizeof(*context));
+    memmove(&stack->context, context, sizeof(*context));
     memcpy(&stack->rec, rec, sizeof(*rec));
 
     user_exception_dispatcher_trampoline( stack, pKiUserExceptionDispatcher );
 }
 
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
-                   "movq 0x98(%rdx),%rsp\n\t" /* context->Rsp */
-                   "and $~0xf,%rsp\n\t"
-                   "sub $0x630,%rsp\n\t" /* sizeof(struct stack_layout) */
-                   "movq %rsp,%r8\n\t"
+                   "movq 0x98(%rdx),%r8\n\t" /* context->Rsp */
+                   "andq $~0xf,%r8\n\t"
+                   "subq $0x630,%r8\n\t" /* sizeof(struct stack_layout) */
+                   "cmpq %r8,%rsp\n\t"
+                   "cmovbq %r8,%rsp\n\t"
                    "jmp " __ASM_NAME("do_call_user_exception_dispatcher") "\n\t")
 
 /***********************************************************************
