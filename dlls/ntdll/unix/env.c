@@ -557,7 +557,7 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
         }
         reslen = dstlen - (dstend - dst);
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces NFD */
-        if (reslen && nfc_table) reslen = compose_string( nfc_table, dst, reslen );
+        if (reslen && nfc_table) reslen = compose_string( nfc_table, dst - reslen, reslen );
 #endif
     }
     return reslen;
