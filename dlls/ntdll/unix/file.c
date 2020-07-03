@@ -4489,11 +4489,11 @@ static struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback,
     while (io)
     {
         struct async_fileio *next = io->next;
-        RtlFreeHeap( GetProcessHeap(), 0, io );
+        free( io );
         io = next;
     }
 
-    if ((io = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+    if ((io = malloc( size )))
     {
         io->callback = callback;
         io->handle   = handle;
@@ -4676,7 +4676,7 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
     }
     SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
+    if (status != STATUS_PENDING) free( async );
 
     if (wait_handle) status = wait_async( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), io );
     return status;
@@ -4714,7 +4714,7 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
     }
     SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
+    if (status != STATUS_PENDING) free( async );
 
     if (wait_handle) status = wait_async( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), io );
     return status;
@@ -4759,7 +4759,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
         FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
 
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
+    if (status != STATUS_PENDING) free( async );
 
     if (wait_handle) status = wait_async( wait_handle, (options & FILE_SYNCHRONOUS_IO_ALERT), io );
     return status;
@@ -4922,7 +4922,7 @@ static NTSTATUS register_async_file_read( HANDLE handle, HANDLE event,
     }
     SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+    if (status != STATUS_PENDING) free( fileio );
     return status;
 }
 
@@ -5388,7 +5388,7 @@ NTSTATUS WINAPI NtWriteFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
             }
             SERVER_END_REQ;
 
-            if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+            if (status != STATUS_PENDING) free( fileio );
             goto err;
         }
         else  /* synchronous write, wait for the fd to become ready */
@@ -5752,7 +5752,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
         }
         SERVER_END_REQ;
 
-        if (ret != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, async );
+        if (ret != STATUS_PENDING) free( async );
 
         if (wait_handle) ret = wait_async( wait_handle, FALSE, io );
     }
@@ -5883,7 +5883,7 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
     }
     SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, fileio );
+    if (status != STATUS_PENDING) free( fileio );
     return status;
 }
 

@@ -1007,7 +1007,7 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
     }
     stop_waiting(commio->hDevice);
     if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
-    RtlFreeHeap(GetProcessHeap(), 0, commio);
+    free( commio );
     return 0;
 }
 
@@ -1019,7 +1019,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
     if ((status = NtResetEvent(hEvent, NULL)))
         return status;
 
-    commio = RtlAllocateHeap(GetProcessHeap(), 0, sizeof (async_commio));
+    commio = malloc( sizeof(async_commio) );
     if (!commio) return STATUS_NO_MEMORY;
 
     commio->hDevice = hDevice;
@@ -1030,7 +1030,7 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
     status = get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, TRUE);
     if (status)
     {
-        RtlFreeHeap(GetProcessHeap(), 0, commio);
+        free( commio );
         return status;
     }
 
@@ -1098,7 +1098,7 @@ error_caps:
 #endif
 out_now:
     stop_waiting(commio->hDevice);
-    RtlFreeHeap(GetProcessHeap(), 0, commio);
+    free( commio );
     return status;
 }
 
