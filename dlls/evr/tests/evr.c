@@ -962,6 +962,24 @@ static void test_MFCreateVideoMixerAndPresenter(void)
     IUnknown_Release(presenter);
 }
 
+static void test_MFCreateVideoSampleAllocator(void)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = MFCreateVideoSampleAllocator(&IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocatorCallback, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+}
+
 START_TEST(evr)
 {
     CoInitialize(NULL);
@@ -978,6 +996,7 @@ START_TEST(evr)
     test_surface_sample();
     test_default_presenter();
     test_MFCreateVideoMixerAndPresenter();
+    test_MFCreateVideoSampleAllocator();
 
     CoUninitialize();
 }

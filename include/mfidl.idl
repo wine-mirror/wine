@@ -1040,6 +1040,63 @@ interface IMFAudioPolicy : IUnknown
     HRESULT GetIconPath([out] LPWSTR *path);
 }
 
+[
+    object,
+    uuid(86cbc910-e533-4751-8e3b-f19b5b806a03),
+    local
+]
+interface IMFVideoSampleAllocator : IUnknown
+{
+    HRESULT SetDirectXManager(
+        [in, unique] IUnknown *manager
+    );
+    HRESULT UninitializeSampleAllocator();
+    HRESULT InitializeSampleAllocator(
+        [in] DWORD sample_count,
+        [in] IMFMediaType *media_type
+    );
+
+    HRESULT AllocateSample(
+        [out] IMFSample **sample
+    );
+}
+
+[
+    object,
+    uuid(a792cdbe-c374-4e89-8335-278e7b9956a4),
+    local
+]
+interface IMFVideoSampleAllocatorNotify : IUnknown
+{
+    HRESULT NotifyRelease();
+}
+
+[
+    object,
+    uuid(3978aa1a-6d5b-4b7f-a340-90899189ae34),
+    local
+]
+interface IMFVideoSampleAllocatorNotifyEx : IMFVideoSampleAllocatorNotify
+{
+    HRESULT NotifyPrune(IMFSample *sample);
+}
+
+[
+    object,
+    uuid(992388b4-3372-4f67-8b6f-c84c071f4751),
+    local
+]
+interface IMFVideoSampleAllocatorCallback : IUnknown
+{
+    HRESULT SetCallback(
+        [in, unique] IMFVideoSampleAllocatorNotify *callback
+    );
+
+    HRESULT GetFreeSampleCount(
+        [out] LONG *count
+    );
+}
+
 enum
 {
     MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL = 0x00000001,

@@ -9,6 +9,7 @@ C_SRCS = \
 	evr.c \
 	main.c \
 	mixer.c \
-	presenter.c
+	presenter.c \
+	sample.c
 
 IDL_SRCS = evr_classes.idl
