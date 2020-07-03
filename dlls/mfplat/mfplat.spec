@@ -70,6 +70,7 @@
 @ stdcall MFCreateSystemTimeSource(ptr)
 @ stub MFCreateSystemUnderlyingClock
 @ stub MFCreateTempFile
+@ stdcall MFCreateTrackedSample(ptr)
 @ stdcall MFCreateTransformActivate(ptr)
 @ stub MFCreateURLFromPath
 @ stub MFCreateUdpSockets

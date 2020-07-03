@@ -648,6 +648,7 @@ cpp_quote("HRESULT WINAPI MFGetService(IUnknown *object, REFGUID service, REFIID
 cpp_quote("MFTIME  WINAPI MFGetSystemTime(void);")
 cpp_quote("HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);")
 cpp_quote("HRESULT WINAPI MFShutdownObject(IUnknown *object);")
+cpp_quote("HRESULT WINAPI MFCreateTrackedSample(IMFTrackedSample **sample);")
 
 typedef enum _MFMEDIASOURCE_CHARACTERISTICS
 {

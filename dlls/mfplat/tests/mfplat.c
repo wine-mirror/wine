@@ -107,6 +107,7 @@ static HRESULT (WINAPI *pMFCreate2DMediaBuffer)(DWORD width, DWORD height, DWORD
 static HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_type, LONGLONG duration, DWORD min_length,
         DWORD min_alignment, IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateDXSurfaceBuffer)(REFIID riid, IUnknown *surface, BOOL bottom_up, IMFMediaBuffer **buffer);
+static HRESULT (WINAPI *pMFCreateTrackedSample)(IMFTrackedSample **sample);
 
 static HWND create_window(void)
 {
@@ -715,6 +716,7 @@ static void init_functions(void)
     X(MFCreateSourceResolver);
     X(MFCreateMediaBufferFromMediaType);
     X(MFCreateMFByteStreamOnStream);
+    X(MFCreateTrackedSample);
     X(MFCreateTransformActivate);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
@@ -5465,6 +5467,40 @@ done:
     DestroyWindow(window);
 }
 
+static void test_MFCreateTrackedSample(void)
+{
+    IMFTrackedSample *tracked_sample;
+    IMFDesiredSample *desired_sample;
+    IMFSample *sample;
+    IUnknown *unk;
+    HRESULT hr;
+
+    if (!pMFCreateTrackedSample)
+    {
+        win_skip("MFCreateTrackedSample() is not available.\n");
+        return;
+    }
+
+    hr = pMFCreateTrackedSample(&tracked_sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* It's actually a sample. */
+    hr = IMFTrackedSample_QueryInterface(tracked_sample, &IID_IMFSample, (void **)&sample);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTrackedSample_QueryInterface(tracked_sample, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == (IUnknown *)sample, "Unexpected pointer.\n");
+    IUnknown_Release(unk);
+
+    IMFSample_Release(sample);
+
+    hr = IMFTrackedSample_QueryInterface(tracked_sample, &IID_IMFDesiredSample, (void **)&desired_sample);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    IMFTrackedSample_Release(tracked_sample);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -5522,6 +5558,7 @@ START_TEST(mfplat)
     test_MFInitMediaTypeFromWaveFormatEx();
     test_MFCreateMFVideoFormatFromMFMediaType();
     test_MFCreateDXSurfaceBuffer();
+    test_MFCreateTrackedSample();
 
     CoUninitialize();
 }

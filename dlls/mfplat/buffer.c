@@ -62,6 +62,7 @@ struct sample
 {
     struct attributes attributes;
     IMFSample IMFSample_iface;
+    IMFTrackedSample IMFTrackedSample_iface;
 
     IMFMediaBuffer **buffers;
     size_t buffer_count;
@@ -85,6 +86,11 @@ static struct memory_buffer *impl_from_IMF2DBuffer2(IMF2DBuffer2 *iface)
 static inline struct sample *impl_from_IMFSample(IMFSample *iface)
 {
     return CONTAINING_RECORD(iface, struct sample, IMFSample_iface);
+}
+
+static struct sample *impl_from_IMFTrackedSample(IMFTrackedSample *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample, IMFTrackedSample_iface);
 }
 
 static HRESULT WINAPI memory_buffer_QueryInterface(IMFMediaBuffer *iface, REFIID riid, void **out)
@@ -711,20 +717,29 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
 
 static HRESULT WINAPI sample_QueryInterface(IMFSample *iface, REFIID riid, void **out)
 {
+    struct sample *sample = impl_from_IMFSample(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualIID(riid, &IID_IMFSample) ||
             IsEqualIID(riid, &IID_IMFAttributes) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
-        *out = iface;
-        IMFSample_AddRef(iface);
-        return S_OK;
+        *out = &sample->IMFSample_iface;
+    }
+    else if (sample->IMFTrackedSample_iface.lpVtbl && IsEqualIID(riid, &IID_IMFTrackedSample))
+    {
+        *out = &sample->IMFTrackedSample_iface;
+    }
+    else
+    {
+        WARN("Unsupported %s.\n", debugstr_guid(riid));
+        *out = NULL;
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported %s.\n", debugstr_guid(riid));
-    *out = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI sample_AddRef(IMFSample *iface)
@@ -1448,6 +1463,40 @@ static const IMFSampleVtbl samplevtbl =
     sample_CopyToBuffer,
 };
 
+static HRESULT WINAPI tracked_sample_QueryInterface(IMFTrackedSample *iface, REFIID riid, void **obj)
+{
+    struct sample *sample = impl_from_IMFTrackedSample(iface);
+    return IMFSample_QueryInterface(&sample->IMFSample_iface, riid, obj);
+}
+
+static ULONG WINAPI tracked_sample_AddRef(IMFTrackedSample *iface)
+{
+    struct sample *sample = impl_from_IMFTrackedSample(iface);
+    return IMFSample_AddRef(&sample->IMFSample_iface);
+}
+
+static ULONG WINAPI tracked_sample_Release(IMFTrackedSample *iface)
+{
+    struct sample *sample = impl_from_IMFTrackedSample(iface);
+    return IMFSample_Release(&sample->IMFSample_iface);
+}
+
+static HRESULT WINAPI tracked_sample_SetAllocator(IMFTrackedSample *iface,
+        IMFAsyncCallback *sample_allocator, IUnknown *state)
+{
+    FIXME("%p, %p, %p.\n", iface, sample_allocator, state);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTrackedSampleVtbl tracked_sample_vtbl =
+{
+    tracked_sample_QueryInterface,
+    tracked_sample_AddRef,
+    tracked_sample_Release,
+    tracked_sample_SetAllocator,
+};
+
 /***********************************************************************
  *      MFCreateSample (mfplat.@)
  */
@@ -1473,6 +1522,34 @@ HRESULT WINAPI MFCreateSample(IMFSample **sample)
     *sample = &object->IMFSample_iface;
 
     TRACE("Created sample %p.\n", *sample);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFCreateTrackedSample (mfplat.@)
+ */
+HRESULT WINAPI MFCreateTrackedSample(IMFTrackedSample **sample)
+{
+    struct sample *object;
+    HRESULT hr;
+
+    TRACE("%p.\n", sample);
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
+    {
+        heap_free(object);
+        return hr;
+    }
+
+    object->IMFSample_iface.lpVtbl = &samplevtbl;
+    object->IMFTrackedSample_iface.lpVtbl = &tracked_sample_vtbl;
+
+    *sample = &object->IMFTrackedSample_iface;
 
     return S_OK;
 }
