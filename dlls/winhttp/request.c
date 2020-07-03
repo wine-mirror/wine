@@ -2720,6 +2720,8 @@ static DWORD receive_response( struct request *request, BOOL async )
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
                 request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) break;
 
+            if (++request->redirect_count > request->max_redirects) return ERROR_WINHTTP_REDIRECT_FAILED;
+
             if ((ret = handle_redirect( request, status ))) break;
 
             /* recurse synchronously */

@@ -189,6 +189,8 @@ struct request
     int send_timeout;
     int receive_timeout;
     int receive_response_timeout;
+    DWORD max_redirects;
+    DWORD redirect_count; /* total number of redirects during this request */
     WCHAR *status_text;
     DWORD content_length; /* total number of bytes to be read */
     DWORD content_read;   /* bytes read so far */

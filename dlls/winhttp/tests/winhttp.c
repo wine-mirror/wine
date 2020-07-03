@@ -5102,7 +5102,7 @@ static void test_max_http_automatic_redirects (void)
 
     max_redirects = 2;
     ret = WinHttpSetOption(request, WINHTTP_OPTION_MAX_HTTP_AUTOMATIC_REDIRECTS, &max_redirects, sizeof(max_redirects));
-    todo_wine ok(ret, "WinHttpSetOption failed: %u\n", GetLastError());
+    ok(ret, "WinHttpSetOption failed: %u\n", GetLastError());
 
     ret = WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
     err = GetLastError();
@@ -5115,8 +5115,8 @@ static void test_max_http_automatic_redirects (void)
 
     SetLastError(0xdeadbeef);
     ret = WinHttpReceiveResponse(request, NULL);
-    todo_wine ok(!ret, "WinHttpReceiveResponse succeeded, expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_WINHTTP_REDIRECT_FAILED, "Expected ERROR_WINHTTP_REDIRECT_FAILED, got %u.\n", GetLastError());
+    ok(!ret, "WinHttpReceiveResponse succeeded, expected failure\n");
+    ok(GetLastError() == ERROR_WINHTTP_REDIRECT_FAILED, "Expected ERROR_WINHTTP_REDIRECT_FAILED, got %u.\n", GetLastError());
 
  done:
     ret = WinHttpCloseHandle(request);

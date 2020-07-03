@@ -820,6 +820,11 @@ static BOOL request_query_option( struct object_header *hdr, DWORD option, void 
         str_to_buffer( buffer, request->connect->session->proxy_password, buflen );
         return TRUE;
 
+    case WINHTTP_OPTION_MAX_HTTP_AUTOMATIC_REDIRECTS:
+        *(DWORD *)buffer = request->max_redirects;
+        *buflen = sizeof(DWORD);
+        return TRUE;
+
     default:
         FIXME("unimplemented option %u\n", option);
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -1028,6 +1033,17 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
         FIXME("WINHTTP_OPTION_CONNECT_RETRIES\n");
         return TRUE;
 
+    case WINHTTP_OPTION_MAX_HTTP_AUTOMATIC_REDIRECTS:
+        if (buflen == sizeof(DWORD))
+        {
+            request->max_redirects = *(DWORD *)buffer;
+            SetLastError(NO_ERROR);
+            return TRUE;
+        }
+
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+
     default:
         FIXME("unimplemented option %u\n", option);
         SetLastError( ERROR_WINHTTP_INVALID_OPTION );
@@ -1121,6 +1137,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     request->send_timeout = connect->session->send_timeout;
     request->receive_timeout = connect->session->receive_timeout;
     request->receive_response_timeout = connect->session->receive_response_timeout;
+    request->max_redirects = 10;
 
     if (!verb || !verb[0]) verb = L"GET";
     if (!(request->verb = strdupW( verb ))) goto end;
