@@ -1062,15 +1062,46 @@ static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, 
 
     if (flag)
     {
+        DWORD last_thread;
+
         next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         ok(ctx.pid == pi.dwProcessId, "unexpected dwProcessId %x\n", ctx.ev.dwProcessId == ctx.pid);
 
         next_event(&ctx, WAIT_EVENT_TIMEOUT);
         ok(ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        last_thread = ctx.ev.dwThreadId;
 
         wait_for_breakpoint(&ctx);
         ok(ctx.dll_cnt > 2, "dll_cnt = %d\n", ctx.dll_cnt);
+
+        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(ctx.ev.dwThreadId == last_thread, "unexpected thread\n");
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+           ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
+
+        /* Except for wxppro and w2008, the initial breakpoint is now somewhere else, possibly within LdrInitShimEngineDynamic,
+         * It's also catching exceptions and ContinueDebugEvent(DBG_EXCEPTION_NOT_HANDLED) should not crash the child now */
+        if (broken(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint))
+        {
+            win_skip("Ignoring initial breakpoint address check\n");
+            pass_exception = FALSE;
+        }
+        else
+        {
+            todo_wine
+            ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress != pDbgBreakPoint, "ExceptionAddress == pDbgBreakPoint\n");
+        }
+
+        if (pass_exception)
+        {
+            ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
+            ok(ret, "ContinueDebugEvent failed, last error %d.\n", GetLastError());
+            ctx.ev.dwDebugEventCode = -1;
+
+            next_event(&ctx, WAIT_EVENT_TIMEOUT);
+            ok(ctx.ev.dwDebugEventCode != EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        }
     }
     else
     {
@@ -1713,6 +1744,7 @@ START_TEST(debugger)
         test_debug_children(myARGV[0], DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS, FALSE, FALSE);
         test_debug_children(myARGV[0], 0, FALSE, FALSE);
         test_debug_children(myARGV[0], 0, FALSE, TRUE);
+        test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE, TRUE);
         test_debugger(myARGV[0]);
     }
 }

@@ -155,6 +155,15 @@ void CDECL __wine_start_process( LPTHREAD_START_ROUTINE entry, PEB *peb )
 
         SetLastError( 0 );  /* clear error code */
         if (being_debugged) DbgBreakPoint();
+    }
+    __EXCEPT_ALL
+    {
+        /* do nothing */
+    }
+    __ENDTRY
+
+    __TRY
+    {
         ExitThread( call_process_entry( peb, entry ));
     }
     __EXCEPT(UnhandledExceptionFilter)
