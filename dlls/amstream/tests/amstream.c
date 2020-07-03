@@ -701,9 +701,13 @@ static void test_add_stream(void)
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_GetMediaStream(mmstream, &MSPID_PrimaryAudio, NULL);
-    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
     hr = IMediaStreamFilter_GetMediaStream(stream_filter, &MSPID_PrimaryAudio, NULL);
-    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetMediaStream(mmstream, &MSPID_PrimaryVideo, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_GetMediaStream(stream_filter, &MSPID_PrimaryVideo, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     check_enum_stream(mmstream, stream_filter, 0, NULL);
 

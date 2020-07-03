@@ -513,6 +513,9 @@ static HRESULT WINAPI filter_GetMediaStream(IMediaStreamFilter *iface, REFMSPID 
 
     TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(idPurpose), ppMediaStream);
 
+    if (!ppMediaStream)
+        return E_POINTER;
+
     for (i = 0; i < This->nb_streams; i++)
     {
         IAMMediaStream_GetInformation(This->streams[i], &purpose_id, NULL);
