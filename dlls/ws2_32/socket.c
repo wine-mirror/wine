@@ -3788,7 +3788,7 @@ static void interface_bind_check(int fd, struct sockaddr_in *addr)
     ret = getsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, &len);
     if (!ret) ifindex = ntohl(ifindex);
 #endif
-    if (!ret)
+    if (!ret && ifindex)
     {
         EnterCriticalSection(&cs_if_addr_cache);
         if (ifindex < if_addr_cache_size)
