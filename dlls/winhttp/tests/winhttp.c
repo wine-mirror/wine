@@ -5076,6 +5076,57 @@ done:
     if (ses) WinHttpCloseHandle( ses );
 }
 
+static void test_max_http_automatic_redirects (void)
+{
+    HINTERNET session, request, connection;
+    DWORD max_redirects, err;
+    BOOL ret;
+
+    session = WinHttpOpen(L"winetest", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    ok(session != NULL, "WinHttpOpen failed to open session.\n");
+
+    connection = WinHttpConnect (session, L"test.winehq.org", INTERNET_DEFAULT_HTTP_PORT, 0);
+    ok(connection != NULL, "WinHttpConnect failed to open a connection, error: %u.\n", GetLastError());
+
+    /* Test with 2 redirects (page will try to redirect 3 times) */
+    request = WinHttpOpenRequest(connection, L"GET", L"tests/redirecttest.php?max=3", NULL, WINHTTP_NO_REFERER,
+        WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_BYPASS_PROXY_CACHE);
+    if (request == NULL && GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED)
+    {
+        skip("Network unreachable, skipping.\n");
+        goto done;
+    }
+    ok(request != NULL, "WinHttpOpenRequest failed to open a request, error: %u.\n", GetLastError());
+    if (!request) goto done;
+
+    max_redirects = 2;
+    ret = WinHttpSetOption(request, WINHTTP_OPTION_MAX_HTTP_AUTOMATIC_REDIRECTS, &max_redirects, sizeof(max_redirects));
+    todo_wine ok(ret, "WinHttpSetOption failed: %u\n", GetLastError());
+
+    ret = WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
+    {
+        skip("connection failed, skipping\n");
+        goto done;
+    }
+    ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpReceiveResponse(request, NULL);
+    todo_wine ok(!ret, "WinHttpReceiveResponse succeeded, expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_WINHTTP_REDIRECT_FAILED, "Expected ERROR_WINHTTP_REDIRECT_FAILED, got %u.\n", GetLastError());
+
+ done:
+    ret = WinHttpCloseHandle(request);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
+    ret = WinHttpCloseHandle(connection);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing connection, got %d.\n", ret);
+    ret = WinHttpCloseHandle(session);
+    ok(ret == TRUE, "WinHttpCloseHandle failed on closing session, got %d.\n", ret);
+}
+
 START_TEST (winhttp)
 {
     struct server_info si;
@@ -5108,6 +5159,7 @@ START_TEST (winhttp)
     test_WinHttpGetIEProxyConfigForCurrentUser();
     test_WinHttpGetProxyForUrl();
     test_chunked_read();
+    test_max_http_automatic_redirects();
 
     si.event = CreateEventW(NULL, 0, 0, NULL);
     si.port = 7532;
