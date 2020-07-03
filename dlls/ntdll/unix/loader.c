@@ -426,13 +426,13 @@ static void preloader_exec( char **argv )
     execv( argv[1], argv + 1 );
 }
 
-static NTSTATUS loader_exec( const char *loader, char **argv, int is_child_64bit )
+static NTSTATUS loader_exec( const char *loader, char **argv, client_cpu_t cpu )
 {
     char *p, *path;
 
     if (build_dir)
     {
-        argv[1] = build_path( build_dir, is_child_64bit ? "loader/wine64" : "loader/wine" );
+        argv[1] = build_path( build_dir, (cpu == CPU_x86_64) ? "loader/wine64" : "loader/wine" );
         preloader_exec( argv );
         return STATUS_INVALID_IMAGE_FORMAT;
     }
@@ -465,9 +465,11 @@ static NTSTATUS loader_exec( const char *loader, char **argv, int is_child_64bit
  *
  * argv[0] and argv[1] must be reserved for the preloader and loader respectively.
  */
-NTSTATUS exec_wineloader( char **argv, int socketfd, int is_child_64bit,
-                          ULONGLONG res_start, ULONGLONG res_end )
+NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info )
 {
+    int is_child_64bit = (pe_info->cpu == CPU_x86_64 || pe_info->cpu == CPU_ARM64);
+    ULONGLONG res_start = pe_info->base;
+    ULONGLONG res_end = pe_info->base + pe_info->map_size;
     const char *loader = argv0;
     const char *loader_env = getenv( "WINELOADER" );
     char preloader_reserve[64], socket_env[64];
@@ -507,7 +509,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, int is_child_64bit,
     putenv( preloader_reserve );
     putenv( socket_env );
 
-    return loader_exec( loader, argv, is_child_64bit );
+    return loader_exec( loader, argv, pe_info->cpu );
 }
 
 
@@ -1805,7 +1807,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
         {
             char **new_argv = malloc( (argc + 2) * sizeof(*argv) );
             memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
-            loader_exec( argv0, new_argv, is_win64 );
+            loader_exec( argv0, new_argv, client_cpu );
             fatal_error( "could not exec the wine loader\n" );
         }
     }

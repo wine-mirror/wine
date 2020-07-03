@@ -523,7 +523,6 @@ static void set_stdio_fd( int stdin_fd, int stdout_fd )
 static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int socketfd,
                                int unixdir, char *winedebug, const pe_image_info_t *pe_info )
 {
-    const int is_child_64bit = (pe_info->cpu == CPU_x86_64 || pe_info->cpu == CPU_ARM64);
     NTSTATUS status = STATUS_SUCCESS;
     int stdin_fd = -1, stdout_fd = -1;
     pid_t pid;
@@ -556,8 +555,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
             }
             argv = build_argv( &params->CommandLine, 2 );
 
-            exec_wineloader( argv, socketfd, is_child_64bit,
-                             pe_info->base, pe_info->base + pe_info->map_size );
+            exec_wineloader( argv, socketfd, pe_info );
             _exit(1);
         }
 
@@ -586,7 +584,6 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
 NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTSTATUS status )
 {
     pe_image_info_t pe_info;
-    BOOL is_child_64bit;
     int unixdir, socketfd[2];
     char **argv;
     HANDLE handle;
@@ -601,7 +598,6 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
     case STATUS_INVALID_IMAGE_NOT_MZ:
         if (getenv( "WINEPRELOADRESERVE" )) return status;
         if ((status = get_pe_file_info( path, &handle, &pe_info ))) return status;
-        is_child_64bit = (pe_info.cpu == CPU_x86_64 || pe_info.cpu == CPU_ARM64);
         break;
     case STATUS_INVALID_IMAGE_WIN_16:
     case STATUS_INVALID_IMAGE_NE_FORMAT:
@@ -609,7 +605,6 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
         /* we'll start winevdm */
         memset( &pe_info, 0, sizeof(pe_info) );
         pe_info.cpu = CPU_x86;
-        is_child_64bit = FALSE;
         break;
     default:
         return status;
@@ -642,8 +637,7 @@ NTSTATUS CDECL exec_process( UNICODE_STRING *path, UNICODE_STRING *cmdline, NTST
         fchdir( unixdir );
         do
         {
-            status = exec_wineloader( argv, socketfd[0], is_child_64bit,
-                                      pe_info.base, pe_info.base + pe_info.map_size );
+            status = exec_wineloader( argv, socketfd[0], &pe_info );
         }
 #ifdef __APPLE__
         while (errno == ENOTSUP && terminate_main_thread());
