@@ -1677,6 +1677,19 @@ static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGIST
     return ExceptionContinueExecution;
 }
 
+static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTERS *e)
+{
+    EXCEPTION_RECORD *rec = e->ExceptionRecord;
+    CONTEXT *context = e->ContextRecord;
+
+    trace("dbg_except_continue_vectored_handler, code %#x, eip %#x.\n", rec->ExceptionCode, context->Eip);
+
+    got_exception = 1;
+    ++context->Eip;
+
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
 /* Use CDECL to leave arguments on stack. */
 void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
@@ -1714,8 +1727,10 @@ static void test_kiuserexceptiondispatcher(void)
         0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
     };
     void *phook_KiUserExceptionDispatcher = hook_KiUserExceptionDispatcher;
+    BYTE patched_KiUserExceptionDispatcher_bytes[7];
     void *phook_trampoline = hook_trampoline;
     DWORD old_protect1, old_protect2;
+    EXCEPTION_RECORD record;
     BYTE *ptr;
     BOOL ret;
 
@@ -1738,7 +1753,8 @@ static void test_kiuserexceptiondispatcher(void)
 
     memcpy(saved_KiUserExceptionDispatcher_bytes, pKiUserExceptionDispatcher,
             sizeof(saved_KiUserExceptionDispatcher_bytes));
-    ptr = (BYTE *)pKiUserExceptionDispatcher;
+
+    ptr = patched_KiUserExceptionDispatcher_bytes;
     /* mov hook_trampoline, %eax */
     *ptr++ = 0xa1;
     *(void **)ptr = &phook_trampoline;
@@ -1747,9 +1763,12 @@ static void test_kiuserexceptiondispatcher(void)
     *ptr++ = 0xff;
     *ptr++ = 0xe0;
 
+    memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+            sizeof(patched_KiUserExceptionDispatcher_bytes));
     got_exception = 0;
     run_exception_test(dbg_except_continue_handler, NULL, except_code, ARRAY_SIZE(except_code),
             PAGE_EXECUTE_READ);
+
     ok(got_exception, "Handler was not called.\n");
     ok(hook_called, "Hook was not called.\n");
 
@@ -1761,6 +1780,25 @@ static void test_kiuserexceptiondispatcher(void)
     ok(dbg_except_continue_handler_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
             dbg_except_continue_handler_eip, code_mem);
 
+    record.ExceptionCode = 0x80000003;
+    record.ExceptionFlags = 0;
+    record.ExceptionRecord = NULL;
+    record.ExceptionAddress = NULL; /* does not matter, copied return address */
+    record.NumberParameters = 0;
+
+    AddVectoredExceptionHandler(TRUE, dbg_except_continue_vectored_handler);
+
+    memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+            sizeof(patched_KiUserExceptionDispatcher_bytes));
+    got_exception = 0;
+    hook_called = FALSE;
+
+    pRtlRaiseException(&record);
+
+    ok(got_exception, "Handler was not called.\n");
+    ok(hook_called, "Hook was not called.\n");
+
+    RemoveVectoredExceptionHandler(dbg_except_continue_vectored_handler);
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             old_protect2, &old_protect2);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
@@ -2777,17 +2815,37 @@ static void *hook_exception_address;
 static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
-    ok(hook_called, "Hook was not called.\n");
+    trace("handler context->Rip %#lx, codemem %p.\n", context->Rip, code_mem);
     got_exception = 1;
     dbg_except_continue_handler_rip = (void *)context->Rip;
     ++context->Rip;
+    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
+
     return ExceptionContinueExecution;
+}
+
+static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTERS *e)
+{
+    EXCEPTION_RECORD *rec = e->ExceptionRecord;
+    CONTEXT *context = e->ContextRecord;
+
+    trace("dbg_except_continue_vectored_handler, code %#x, Rip %#lx.\n", rec->ExceptionCode, context->Rip);
+
+    got_exception = 1;
+    if (NtCurrentTeb()->Peb->BeingDebugged || !strcmp( winetest_platform, "wine" ))
+    {
+        todo_wine_if(!NtCurrentTeb()->Peb->BeingDebugged)
+        ok(NtCurrentTeb()->Peb->BeingDebugged, "context->Rip misplaced for dbg breakpoint exception.\n");
+        ++context->Rip;
+    }
+    return EXCEPTION_CONTINUE_EXECUTION;
 }
 
 void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
     trace("rec %p, context %p.\n", rec, context);
-    trace("context->Rip %#lx, context->Rsp %#lx, ContextFlags %#lx.\n", sizeof(*context),
+    trace("context->Rip %#lx, context->Rsp %#lx, ContextFlags %#lx.\n",
             context->Rip, context->Rsp, context->ContextFlags);
 
     hook_called = TRUE;
@@ -2824,8 +2882,11 @@ static void test_kiuserexceptiondispatcher(void)
         /* offset: 27 bytes */
         0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
     };
+
     void *phook_KiUserExceptionDispatcher = hook_KiUserExceptionDispatcher;
+    BYTE patched_KiUserExceptionDispatcher_bytes[12];
     DWORD old_protect1, old_protect2;
+    EXCEPTION_RECORD record;
     BYTE *ptr;
     BOOL ret;
 
@@ -2847,11 +2908,13 @@ static void test_kiuserexceptiondispatcher(void)
     ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), PAGE_EXECUTE_READWRITE, &old_protect1);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 
-    ret = VirtualProtect(pKiUserExceptionDispatcher, 5, PAGE_EXECUTE_READWRITE, &old_protect2);
+    ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
+            PAGE_EXECUTE_READWRITE, &old_protect2);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 
-    memcpy(saved_KiUserExceptionDispatcher_bytes, pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes));
-    ptr = (BYTE *)pKiUserExceptionDispatcher;
+    memcpy(saved_KiUserExceptionDispatcher_bytes, pKiUserExceptionDispatcher,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
+    ptr = (BYTE *)patched_KiUserExceptionDispatcher_bytes;
     /* mov hook_trampoline, %rax */
     *ptr++ = 0x48;
     *ptr++ = 0xb8;
@@ -2861,6 +2924,8 @@ static void test_kiuserexceptiondispatcher(void)
     *ptr++ = 0xff;
     *ptr++ = 0xe0;
 
+    memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+            sizeof(patched_KiUserExceptionDispatcher_bytes));
     got_exception = 0;
     run_exception_test(dbg_except_continue_handler, NULL, except_code, ARRAY_SIZE(except_code), PAGE_EXECUTE_READ);
     ok(got_exception, "Handler was not called.\n");
@@ -2874,7 +2939,42 @@ static void test_kiuserexceptiondispatcher(void)
     ok(dbg_except_continue_handler_rip == code_mem, "Got unexpected exception address %p, expected %p.\n",
             dbg_except_continue_handler_rip, code_mem);
 
-    ret = VirtualProtect(pKiUserExceptionDispatcher, 5, old_protect2, &old_protect2);
+    memset(&record, 0, sizeof(record));
+    record.ExceptionCode = 0x80000003;
+    record.ExceptionFlags = 0;
+    record.ExceptionRecord = NULL;
+    record.ExceptionAddress = NULL;
+    record.NumberParameters = 0;
+
+    AddVectoredExceptionHandler(TRUE, dbg_except_continue_vectored_handler);
+
+    memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+            sizeof(patched_KiUserExceptionDispatcher_bytes));
+    got_exception = 0;
+    hook_called = FALSE;
+
+    pRtlRaiseException(&record);
+
+    ok(got_exception, "Handler was not called.\n");
+    ok(!hook_called, "Hook was called.\n");
+
+    memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+            sizeof(patched_KiUserExceptionDispatcher_bytes));
+    got_exception = 0;
+    hook_called = FALSE;
+    NtCurrentTeb()->Peb->BeingDebugged = 1;
+
+    pRtlRaiseException(&record);
+
+    ok(got_exception, "Handler was not called.\n");
+    ok(hook_called, "Hook was not called.\n");
+
+    NtCurrentTeb()->Peb->BeingDebugged = 0;
+
+    RemoveVectoredExceptionHandler(dbg_except_continue_vectored_handler);
+
+    ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
+            old_protect2, &old_protect2);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
     ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), old_protect1, &old_protect1);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
