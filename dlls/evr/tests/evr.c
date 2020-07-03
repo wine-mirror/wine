@@ -623,6 +623,7 @@ todo_wine
 static void test_surface_sample(void)
 {
     IDirect3DSurface9 *backbuffer = NULL;
+    IMFDesiredSample *desired_sample;
     IMFMediaBuffer *buffer, *buffer2;
     IDirect3DSwapChain9 *swapchain;
     IDirect3DDevice9 *device;
@@ -662,9 +663,20 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
 
-    hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&unk);
+    hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&desired_sample);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+
+    hr = IMFSample_GetCount(sample, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count %u.\n", count);
+
+    IMFDesiredSample_SetDesiredSampleTimeAndDuration(desired_sample, 123, 456);
+
+    hr = IMFSample_GetCount(sample, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count %u.\n", count);
+
+    IMFDesiredSample_Release(desired_sample);
 
     hr = IMFSample_GetCount(sample, &count);
     ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
@@ -964,16 +976,123 @@ static void test_MFCreateVideoMixerAndPresenter(void)
 
 static void test_MFCreateVideoSampleAllocator(void)
 {
+    IMFVideoSampleAllocatorCallback *allocator_cb;
+    IMFVideoSampleAllocator *allocator;
+    IMFVideoMediaType *video_type;
+    IMFSample *sample, *sample2;
+    IDirect3DSurface9 *surface;
+    IMFMediaType *media_type;
+    IMFMediaBuffer *buffer;
+    IMFGetService *gs;
     IUnknown *unk;
     HRESULT hr;
+    LONG count;
 
     hr = MFCreateVideoSampleAllocator(&IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
 
-    hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&unk);
+    hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&allocator);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+
+    hr = IMFVideoSampleAllocator_QueryInterface(allocator, &IID_IMFVideoSampleAllocatorCallback, (void **)&allocator_cb);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = 10;
+    hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected count %d.\n", count);
+}
+    hr = IMFVideoSampleAllocator_UninitializeSampleAllocator(allocator);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+todo_wine
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* It expects IMFVideoMediaType. */
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, media_type);
+todo_wine
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB32, &video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, (IMFMediaType *)video_type);
+todo_wine
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    /* Frame size is required. */
+    hr = IMFVideoMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 320 << 32 | 240);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, (IMFMediaType *)video_type);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected count %d.\n", count);
+}
+    sample = NULL;
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ok(get_refcount(sample) == 3, "Unexpected refcount %u.\n", get_refcount(sample));
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample2);
+todo_wine
+    ok(hr == MF_E_SAMPLEALLOCATOR_EMPTY, "Unexpected hr %#x.\n", hr);
+
+    /* Reinitialize with active sample. */
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 4, (IMFMediaType *)video_type);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (sample)
+        ok(get_refcount(sample) == 3, "Unexpected refcount %u.\n", get_refcount(sample));
+
+    hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 4, "Unexpected count %d.\n", count);
+}
+    if (sample)
+    {
+        hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&unk);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        IUnknown_Release(unk);
+
+        hr = IMFSample_QueryInterface(sample, &IID_IMFTrackedSample, (void **)&unk);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        IUnknown_Release(unk);
+
+        hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&gs);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        /* Device manager wasn't set, sample get regular memory buffers. */
+        hr = IMFGetService_GetService(gs, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface);
+        ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
+
+        IMFMediaBuffer_Release(buffer);
+
+        IMFGetService_Release(gs);
+        IMFSample_Release(sample);
+    }
+
+    IMFVideoSampleAllocatorCallback_Release(allocator_cb);
+
+    IMFMediaType_Release(media_type);
+
+    IMFVideoSampleAllocator_Release(allocator);
 
     hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocatorCallback, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
