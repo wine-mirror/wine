@@ -1660,6 +1660,114 @@ static void test_thread_context(void)
 #undef COMPARE
 }
 
+static BYTE saved_KiUserExceptionDispatcher_bytes[7];
+static void *pKiUserExceptionDispatcher;
+static BOOL hook_called;
+static void *hook_KiUserExceptionDispatcher_eip;
+static void *dbg_except_continue_handler_eip;
+static void *hook_exception_address;
+
+static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    ok(hook_called, "Hook was not called.\n");
+    got_exception = 1;
+    dbg_except_continue_handler_eip = (void *)context->Eip;
+    ++context->Eip;
+    return ExceptionContinueExecution;
+}
+
+/* Use CDECL to leave arguments on stack. */
+void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
+{
+    trace("rec %p, context %p.\n", rec, context);
+    trace("context->Eip %#x, context->Esp %#x, ContextFlags %#x.\n",
+            context->Eip, context->Esp, context->ContextFlags);
+
+    hook_called = TRUE;
+    /* Broken on Win2008, probably rec offset in stack is different. */
+    ok(rec->ExceptionCode == 0x80000003 || broken(!rec->ExceptionCode),
+            "Got unexpected ExceptionCode %#x.\n", rec->ExceptionCode);
+
+    hook_KiUserExceptionDispatcher_eip = (void *)context->Eip;
+    hook_exception_address = rec->ExceptionAddress;
+    memcpy(pKiUserExceptionDispatcher, saved_KiUserExceptionDispatcher_bytes,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
+}
+
+static void test_kiuserexceptiondispatcher(void)
+{
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    static const BYTE except_code[] =
+    {
+        0xcc,  /* int3 */
+        0xc3,  /* ret  */
+    };
+    static BYTE hook_trampoline[] =
+    {
+        0xff, 0x15,
+        /* offset: 2 bytes */
+        0x00, 0x00, 0x00, 0x00,     /* callq *addr */ /* call hook implementation. */
+
+        0xff, 0x25,
+        /* offset: 8 bytes */
+        0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
+    };
+    void *phook_KiUserExceptionDispatcher = hook_KiUserExceptionDispatcher;
+    void *phook_trampoline = hook_trampoline;
+    DWORD old_protect1, old_protect2;
+    BYTE *ptr;
+    BOOL ret;
+
+    pKiUserExceptionDispatcher = (void *)GetProcAddress(hntdll, "KiUserExceptionDispatcher");
+    if (!pKiUserExceptionDispatcher)
+    {
+        win_skip("KiUserExceptionDispatcher is not available.\n");
+        return;
+    }
+
+    *(unsigned int *)(hook_trampoline + 2) = (ULONG_PTR)&phook_KiUserExceptionDispatcher;
+    *(unsigned int *)(hook_trampoline + 8) = (ULONG_PTR)&pKiUserExceptionDispatcher;
+
+    ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), PAGE_EXECUTE_READWRITE, &old_protect1);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
+            PAGE_EXECUTE_READWRITE, &old_protect2);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    memcpy(saved_KiUserExceptionDispatcher_bytes, pKiUserExceptionDispatcher,
+            sizeof(saved_KiUserExceptionDispatcher_bytes));
+    ptr = (BYTE *)pKiUserExceptionDispatcher;
+    /* mov hook_trampoline, %eax */
+    *ptr++ = 0xa1;
+    *(void **)ptr = &phook_trampoline;
+    ptr += sizeof(void *);
+    /* jmp *eax */
+    *ptr++ = 0xff;
+    *ptr++ = 0xe0;
+
+    got_exception = 0;
+    run_exception_test(dbg_except_continue_handler, NULL, except_code, ARRAY_SIZE(except_code),
+            PAGE_EXECUTE_READ);
+    ok(got_exception, "Handler was not called.\n");
+    ok(hook_called, "Hook was not called.\n");
+
+    ok(hook_exception_address == code_mem || broken(!hook_exception_address) /* Win2008 */,
+            "Got unexpected exception address %p, expected %p.\n",
+            hook_exception_address, code_mem);
+    todo_wine ok(hook_KiUserExceptionDispatcher_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+            hook_KiUserExceptionDispatcher_eip, code_mem);
+    ok(dbg_except_continue_handler_eip == code_mem, "Got unexpected exception address %p, expected %p.\n",
+            dbg_except_continue_handler_eip, code_mem);
+
+    ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
+            old_protect2, &old_protect2);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), old_protect1, &old_protect1);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+}
+
 #elif defined(__x86_64__)
 
 #define is_wow64 0
@@ -3707,6 +3815,7 @@ START_TEST(exception)
     test_suspend_thread();
     test_suspend_process();
     test_unload_trace();
+    test_kiuserexceptiondispatcher();
 
     /* Call of Duty WWII writes to BeingDebugged then closes an invalid handle,
      * crashing the game if an exception is raised. */

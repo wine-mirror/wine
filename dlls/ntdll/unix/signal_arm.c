@@ -531,9 +531,10 @@ static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func fun
     return &stack->rec;
 }
 
-void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
+extern void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
+                                                   NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
 {
-    pKiUserExceptionDispatcher( rec, context );
+    dispatcher( rec, context );
 }
 
 /**********************************************************************

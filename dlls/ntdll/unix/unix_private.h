@@ -242,7 +242,8 @@ extern void init_cpu_info(void) DECLSPEC_HIDDEN;
 
 extern void dbg_init(void) DECLSPEC_HIDDEN;
 
-extern void WINAPI call_user_exception_dispatcher(EXCEPTION_RECORD *rec, CONTEXT *context) DECLSPEC_HIDDEN;
+extern void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
+                                                   NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) ) DECLSPEC_HIDDEN;
 
 #define TICKSPERSEC 10000000
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)

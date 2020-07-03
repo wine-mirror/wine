@@ -428,7 +428,6 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 /* stack layout when calling an exception raise function */
 struct stack_layout
 {
-    void             *ret_addr;      /* return address from raise_generic_exception */
     EXCEPTION_RECORD *rec_ptr;       /* first arg for raise_generic_exception */
     CONTEXT          *context_ptr;   /* second arg for raise_generic_exception */
     CONTEXT           context;
@@ -1583,15 +1582,13 @@ static void setup_raise_exception( ucontext_t *sigcontext, struct stack_layout *
     FS_sig(sigcontext)  = get_fs();
     GS_sig(sigcontext)  = get_gs();
     SS_sig(sigcontext)  = get_ds();
-    stack->ret_addr     = (void *)0xdeadbabe;  /* KiUserExceptionDispatcher must not return */
     stack->rec_ptr      = &stack->rec;         /* arguments for KiUserExceptionDispatcher */
     stack->context_ptr  = &stack->context;
 }
 
-void WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    pKiUserExceptionDispatcher( rec, context );
-}
+__ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
+                   "add $4,%esp\n\t"
+                   "jmp *8(%esp)")
 
 /**********************************************************************
  *		get_fpu_code
