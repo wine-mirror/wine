@@ -2538,6 +2538,7 @@ NTSTATUS virtual_create_builtin_view( void *module )
             set_page_vprot( (char *)base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
         }
         VIRTUAL_DEBUG_DUMP_VIEW( view );
+        if (is_beyond_limit( base, size, working_set_limit )) working_set_limit = address_space_limit;
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
