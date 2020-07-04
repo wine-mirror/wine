@@ -286,7 +286,7 @@ static void reserve_area( void *addr, void *end )
 
 static void mmap_init( const struct preload_info *preload_info )
 {
-#ifdef __i386__
+#ifndef _WIN64
 #ifndef __APPLE__
     char stack;
     char * const stack_ptr = &stack;
@@ -329,7 +329,7 @@ static void mmap_init( const struct preload_info *preload_info )
 #endif
         reserve_area( user_space_limit, 0 );
 
-#elif defined(__x86_64__) || defined(__aarch64__)
+#else
 
     if (preload_info) return;
     /* if we don't have a preloader, try to reserve the space now */
