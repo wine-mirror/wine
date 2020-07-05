@@ -943,6 +943,7 @@ static void init_locale(void)
         if (preferred_langs) CFRelease( preferred_langs );
     }
 #endif
+    setlocale( LC_NUMERIC, "C" );  /* FIXME: oleaut32 depends on this */
 }
 
 
