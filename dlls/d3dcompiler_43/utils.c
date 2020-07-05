@@ -1823,41 +1823,34 @@ static void debug_dump_deref(const struct hlsl_deref *deref)
 static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
 {
     struct hlsl_type *type = constant->node.data_type;
-    unsigned int x, y;
+    unsigned int x;
 
-    if (type->dimy != 1)
+    if (type->dimx != 1)
         wine_dbg_printf("{");
-    for (y = 0; y < type->dimy; ++y)
+    for (x = 0; x < type->dimx; ++x)
     {
-        if (type->dimx != 1)
-            wine_dbg_printf("{");
-        for (x = 0; x < type->dimx; ++x)
+        switch (type->base_type)
         {
-            switch (type->base_type)
-            {
-                case HLSL_TYPE_FLOAT:
-                    wine_dbg_printf("%.8e ", constant->value.f[y * type->dimx + x]);
-                    break;
-                case HLSL_TYPE_DOUBLE:
-                    wine_dbg_printf("%.16e ", constant->value.d[y * type->dimx + x]);
-                    break;
-                case HLSL_TYPE_INT:
-                    wine_dbg_printf("%d ", constant->value.i[y * type->dimx + x]);
-                    break;
-                case HLSL_TYPE_UINT:
-                    wine_dbg_printf("%u ", constant->value.u[y * type->dimx + x]);
-                    break;
-                case HLSL_TYPE_BOOL:
-                    wine_dbg_printf("%s ", constant->value.b[y * type->dimx + x] == FALSE ? "false" : "true");
-                    break;
-                default:
-                    wine_dbg_printf("Constants of type %s not supported\n", debug_base_type(type));
-            }
+            case HLSL_TYPE_FLOAT:
+                wine_dbg_printf("%.8e ", constant->value.f[x]);
+                break;
+            case HLSL_TYPE_DOUBLE:
+                wine_dbg_printf("%.16e ", constant->value.d[x]);
+                break;
+            case HLSL_TYPE_INT:
+                wine_dbg_printf("%d ", constant->value.i[x]);
+                break;
+            case HLSL_TYPE_UINT:
+                wine_dbg_printf("%u ", constant->value.u[x]);
+                break;
+            case HLSL_TYPE_BOOL:
+                wine_dbg_printf("%s ", constant->value.b[x] ? "true" : "false");
+                break;
+            default:
+                wine_dbg_printf("Constants of type %s not supported\n", debug_base_type(type));
         }
-        if (type->dimx != 1)
-            wine_dbg_printf("}");
     }
-    if (type->dimy != 1)
+    if (type->dimx != 1)
         wine_dbg_printf("}");
 }
 

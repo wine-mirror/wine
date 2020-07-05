@@ -874,11 +874,11 @@ struct hlsl_ir_constant
     struct hlsl_ir_node node;
     union
     {
-        unsigned u[16];
-        int i[16];
-        float f[16];
-        double d[16];
-        BOOL b[16];
+        unsigned u[4];
+        int i[4];
+        float f[4];
+        double d[4];
+        BOOL b[4];
     } value;
 };
 
