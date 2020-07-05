@@ -360,24 +360,21 @@ static struct list *create_loop(enum loop_type type, struct list *init, struct l
         goto oom;
     init_node(&loop->node, HLSL_IR_LOOP, NULL, loc);
     list_add_tail(list, &loop->node.entry);
-    loop->body = d3dcompiler_alloc(sizeof(*loop->body));
-    if (!loop->body)
-        goto oom;
-    list_init(loop->body);
+    list_init(&loop->body);
 
     if (!append_conditional_break(cond))
         goto oom;
 
     if (type != LOOP_DO_WHILE)
-        list_move_tail(loop->body, cond);
+        list_move_tail(&loop->body, cond);
 
-    list_move_tail(loop->body, body);
+    list_move_tail(&loop->body, body);
 
     if (iter)
-        list_move_tail(loop->body, iter);
+        list_move_tail(&loop->body, iter);
 
     if (type == LOOP_DO_WHILE)
-        list_move_tail(loop->body, cond);
+        list_move_tail(&loop->body, cond);
 
     d3dcompiler_free(init);
     d3dcompiler_free(cond);
@@ -386,8 +383,6 @@ static struct list *create_loop(enum loop_type type, struct list *init, struct l
 
 oom:
     ERR("Out of memory.\n");
-    if (loop)
-        d3dcompiler_free(loop->body);
     d3dcompiler_free(loop);
     d3dcompiler_free(cond_jump);
     d3dcompiler_free(list);
@@ -2857,7 +2852,7 @@ static unsigned int index_instructions(struct list *instrs, unsigned int index)
         }
         else if (instr->type == HLSL_IR_LOOP)
         {
-            index = index_instructions(loop_from_node(instr)->body, index);
+            index = index_instructions(&loop_from_node(instr)->body, index);
             loop_from_node(instr)->next_index = index;
         }
     }
@@ -2919,7 +2914,7 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
         case HLSL_IR_LOOP:
         {
             struct hlsl_ir_loop *loop = loop_from_node(instr);
-            compute_liveness_recurse(loop->body, loop_first ? loop_first : instr->index,
+            compute_liveness_recurse(&loop->body, loop_first ? loop_first : instr->index,
                     loop_last ? loop_last : loop->next_index);
             break;
         }

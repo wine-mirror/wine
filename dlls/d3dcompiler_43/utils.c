@@ -2027,7 +2027,7 @@ static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
 static void debug_dump_ir_loop(const struct hlsl_ir_loop *loop)
 {
     wine_dbg_printf("for (;;)\n{\n");
-    debug_dump_instr_list(loop->body);
+    debug_dump_instr_list(&loop->body);
     wine_dbg_printf("}\n");
 }
 
@@ -2165,7 +2165,10 @@ static void free_ir_if(struct hlsl_ir_if *if_node)
 
 static void free_ir_loop(struct hlsl_ir_loop *loop)
 {
-    free_instr_list(loop->body);
+    struct hlsl_ir_node *node, *next_node;
+
+    LIST_FOR_EACH_ENTRY_SAFE(node, next_node, &loop->body, struct hlsl_ir_node, entry)
+        free_instr(node);
     d3dcompiler_free(loop);
 }
 

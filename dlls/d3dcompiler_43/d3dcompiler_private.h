@@ -750,7 +750,7 @@ struct hlsl_ir_loop
 {
     struct hlsl_ir_node node;
     /* loop condition is stored in the body (as "if (!condition) break;") */
-    struct list *body;
+    struct list body;
     unsigned int next_index; /* liveness index of the end of the loop */
 };
 
