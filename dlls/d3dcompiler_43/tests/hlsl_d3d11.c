@@ -564,7 +564,7 @@ static void test_reflection(void)
         "        float b;\n"
         "        float c;\n"
         "    } s;\n"
-        "    float g;\n"
+        "    bool g;\n"
         "    float h[2];\n"
         "    int i;\n"
         "    uint_t j;\n"
@@ -605,7 +605,7 @@ static void test_reflection(void)
         {{"c", 16, 16}, {D3D_SVC_VECTOR, D3D_SVT_FLOAT, 1, 4, 0, 0, 0, "float4"}},
         {{"d", 32, 4}, {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 0, "float"}},
         {{"s", 48, 24}, {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 6, 0, 3, 0, "<unnamed>"}},
-        {{"g", 72, 4}, {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 0, 0, "float"}},
+        {{"g", 72, 4}, {D3D_SVC_SCALAR, D3D_SVT_BOOL, 1, 1, 0, 0, 0, "bool"}},
         {{"h", 80, 20}, {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 2, 0, 0, "float"}},
         {{"i", 100, 4}, {D3D_SVC_SCALAR, D3D_SVT_INT, 1, 1, 0, 0, 0, "int"}},
         {{"j", 104, 4}, {D3D_SVC_SCALAR, D3D_SVT_UINT, 1, 1, 0, 0, 0, "uint_t"}},
