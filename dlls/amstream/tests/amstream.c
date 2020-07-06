@@ -4262,6 +4262,67 @@ static void test_ammediastream_join_am_multi_media_stream(void)
     check_ammediastream_join_am_multi_media_stream(&CLSID_AMDirectDrawStream);
 }
 
+static void check_ammediastream_join_filter(const CLSID *clsid)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IMediaStreamFilter *filter, *filter2, *filter3;
+    IAMMediaStream *stream;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected non-null filter.\n");
+    EXPECT_REF(filter, 3);
+
+    hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IAMMediaStream, (void **)&stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(filter, 3);
+
+    hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaStreamFilter, (void **)&filter2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(filter, 3);
+    EXPECT_REF(filter2, 1);
+
+    hr = IAMMediaStream_JoinFilter(stream, filter2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    EXPECT_REF(filter, 3);
+    EXPECT_REF(filter2, 1);
+
+    /* Crashes on native. */
+    if (0)
+    {
+        hr = IAMMediaStream_JoinFilter(stream, NULL);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    }
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter3);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(filter3 == filter, "Expected filter %p, got %p.\n", filter, filter3);
+    EXPECT_REF(filter, 4);
+
+    IMediaStreamFilter_Release(filter3);
+    EXPECT_REF(filter, 3);
+
+    ref = IMediaStreamFilter_Release(filter2);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IAMMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    EXPECT_REF(filter, 3);
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    EXPECT_REF(filter, 1);
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_ammediastream_join_filter(void)
+{
+    check_ammediastream_join_filter(&CLSID_AMAudioStream);
+    check_ammediastream_join_filter(&CLSID_AMDirectDrawStream);
+}
+
 void test_mediastreamfilter_get_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -4956,6 +5017,7 @@ START_TEST(amstream)
     test_ddrawstream_getsetdirectdraw();
 
     test_ammediastream_join_am_multi_media_stream();
+    test_ammediastream_join_filter();
 
     test_mediastreamfilter_get_state();
     test_mediastreamfilter_stop_pause_run();
