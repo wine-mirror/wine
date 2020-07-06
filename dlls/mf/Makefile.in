@@ -5,6 +5,7 @@ IMPORTS   = advapi32 mfplat ole32 uuid mfuuid
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	evr.c \
 	main.c \
 	samplegrabber.c \
 	sar.c \

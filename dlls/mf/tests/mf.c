@@ -3250,23 +3250,23 @@ static void test_evr(void)
     ok(!value, "Unexpected value.\n");
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
-todo_wine
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
 
-if (hr == S_OK)
-{
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     /* Activate again. */
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink2);
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
+todo_wine
     ok(sink == sink2, "Unexpected instance.\n");
     IMFMediaSink_Release(sink2);
 
@@ -3274,6 +3274,7 @@ if (hr == S_OK)
     ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
+todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink2);
@@ -3284,7 +3285,7 @@ if (hr == S_OK)
 
     IMFMediaSink_Release(sink2);
     IMFMediaSink_Release(sink);
-}
+
     IMFActivate_Release(activate);
 
     CoUninitialize();
