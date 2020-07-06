@@ -1706,16 +1706,6 @@ struct console_renderer_event
 @END
 
 
-/* Fetch input records from a console input queue */
-@REQ(read_console_input)
-    obj_handle_t handle;        /* handle to the console input */
-    int          flush;         /* flush the retrieved records from the queue? */
-@REPLY
-    int          read;          /* number of records read */
-    VARARG(rec,input_records);  /* input records */
-@END
-
-
 /* write data (chars and/or attributes) in a screen buffer */
 @REQ(write_console_output)
     obj_handle_t handle;        /* handle to the console output */

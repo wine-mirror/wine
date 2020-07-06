@@ -196,7 +196,6 @@ DECL_HANDLER(create_console_output);
 DECL_HANDLER(set_console_output_info);
 DECL_HANDLER(get_console_output_info);
 DECL_HANDLER(write_console_input);
-DECL_HANDLER(read_console_input);
 DECL_HANDLER(write_console_output);
 DECL_HANDLER(fill_console_output);
 DECL_HANDLER(read_console_output);
@@ -499,7 +498,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_console_output_info,
     (req_handler)req_get_console_output_info,
     (req_handler)req_write_console_input,
-    (req_handler)req_read_console_input,
     (req_handler)req_write_console_output,
     (req_handler)req_fill_console_output,
     (req_handler)req_read_console_output,
@@ -1246,11 +1244,6 @@ C_ASSERT( FIELD_OFFSET(struct write_console_input_request, handle) == 12 );
 C_ASSERT( sizeof(struct write_console_input_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct write_console_input_reply, written) == 8 );
 C_ASSERT( sizeof(struct write_console_input_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct read_console_input_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct read_console_input_request, flush) == 16 );
-C_ASSERT( sizeof(struct read_console_input_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct read_console_input_reply, read) == 8 );
-C_ASSERT( sizeof(struct read_console_input_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct write_console_output_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct write_console_output_request, x) == 16 );
 C_ASSERT( FIELD_OFFSET(struct write_console_output_request, y) == 20 );

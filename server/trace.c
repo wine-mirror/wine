@@ -2194,18 +2194,6 @@ static void dump_write_console_input_reply( const struct write_console_input_rep
     fprintf( stderr, " written=%d", req->written );
 }
 
-static void dump_read_console_input_request( const struct read_console_input_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", flush=%d", req->flush );
-}
-
-static void dump_read_console_input_reply( const struct read_console_input_reply *req )
-{
-    fprintf( stderr, " read=%d", req->read );
-    dump_varargs_input_records( ", rec=", cur_size );
-}
-
 static void dump_write_console_output_request( const struct write_console_output_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4700,7 +4688,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_console_output_info_request,
     (dump_func)dump_get_console_output_info_request,
     (dump_func)dump_write_console_input_request,
-    (dump_func)dump_read_console_input_request,
     (dump_func)dump_write_console_output_request,
     (dump_func)dump_fill_console_output_request,
     (dump_func)dump_read_console_output_request,
@@ -5000,7 +4987,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_get_console_output_info_reply,
     (dump_func)dump_write_console_input_reply,
-    (dump_func)dump_read_console_input_reply,
     (dump_func)dump_write_console_output_reply,
     (dump_func)dump_fill_console_output_reply,
     (dump_func)dump_read_console_output_reply,
@@ -5300,7 +5286,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_console_output_info",
     "get_console_output_info",
     "write_console_input",
-    "read_console_input",
     "write_console_output",
     "fill_console_output",
     "read_console_output",

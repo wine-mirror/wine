@@ -798,48 +798,6 @@ static int write_console_input( struct console_input* console, int count,
     return count;
 }
 
-/* retrieve a pointer to the console input records */
-static int read_console_input_req( obj_handle_t handle, int count, int flush )
-{
-    struct console_input *console;
-
-    if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
-                                                            FILE_READ_DATA, &console_input_ops )))
-        return -1;
-
-    if (!count)
-    {
-        /* special case: do not retrieve anything, but return
-         * the total number of records available */
-        count = console->recnum;
-    }
-    else
-    {
-        if (count > console->recnum) count = console->recnum;
-        set_reply_data( console->records, count * sizeof(INPUT_RECORD) );
-    }
-    if (flush)
-    {
-        int i;
-        for (i = count; i < console->recnum; i++)
-            console->records[i-count] = console->records[i];
-        if ((console->recnum -= count) > 0)
-        {
-            INPUT_RECORD *new_rec = realloc( console->records,
-                                             console->recnum * sizeof(INPUT_RECORD) );
-            if (new_rec) console->records = new_rec;
-        }
-        else
-        {
-            free( console->records );
-            console->records = NULL;
-            reset_event( console->event );
-        }
-    }
-    release_object( console );
-    return count;
-}
-
 /* set misc console input information */
 static int set_console_input_info( const struct set_console_input_info_request *req,
 				   const WCHAR *title, data_size_t len )
@@ -1893,13 +1851,6 @@ DECL_HANDLER(write_console_input)
     reply->written = write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD),
                                           get_req_data() );
     release_object( console );
-}
-
-/* fetch input records from a console input queue */
-DECL_HANDLER(read_console_input)
-{
-    int count = get_reply_max_size() / sizeof(INPUT_RECORD);
-    reply->read = read_console_input_req( req->handle, count, req->flush );
 }
 
 /* appends a string to console's history */
