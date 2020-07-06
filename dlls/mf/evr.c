@@ -91,9 +91,11 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
 
 static HRESULT WINAPI video_renderer_sink_GetCharacteristics(IMFMediaSink *iface, DWORD *flags)
 {
-    FIXME("%p, %p.\n", iface, flags);
+    TRACE("%p, %p.\n", iface, flags);
 
-    return E_NOTIMPL;
+    *flags = MEDIASINK_CLOCK_REQUIRED | MEDIASINK_CAN_PREROLL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_renderer_sink_AddStreamSink(IMFMediaSink *iface, DWORD stream_sink_id,
