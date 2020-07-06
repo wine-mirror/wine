@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include "mfplat_private.h"
+#include "rtworkq.h"
 
 #include "wine/debug.h"
 
@@ -71,6 +72,10 @@ struct sample
     DWORD prop_flags;
     LONGLONG duration;
     LONGLONG timestamp;
+
+    /* Tracked sample functionality. */
+    IRtwqAsyncResult *tracked_result;
+    LONG tracked_refcount;
 };
 
 static inline struct memory_buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *iface)
@@ -752,22 +757,53 @@ static ULONG WINAPI sample_AddRef(IMFSample *iface)
     return refcount;
 }
 
+static void release_sample_object(struct sample *sample)
+{
+    size_t i;
+
+    for (i = 0; i < sample->buffer_count; ++i)
+        IMFMediaBuffer_Release(sample->buffers[i]);
+    clear_attributes_object(&sample->attributes);
+    heap_free(sample->buffers);
+    heap_free(sample);
+}
+
 static ULONG WINAPI sample_Release(IMFSample *iface)
 {
     struct sample *sample = impl_from_IMFSample(iface);
     ULONG refcount = InterlockedDecrement(&sample->attributes.ref);
-    size_t i;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
+        release_sample_object(sample);
+
+    return refcount;
+}
+
+static ULONG WINAPI sample_tracked_Release(IMFSample *iface)
+{
+    struct sample *sample = impl_from_IMFSample(iface);
+    ULONG refcount;
+    HRESULT hr;
+
+    EnterCriticalSection(&sample->attributes.cs);
+    refcount = InterlockedDecrement(&sample->attributes.ref);
+    if (sample->tracked_result && sample->tracked_refcount == refcount)
     {
-        for (i = 0; i < sample->buffer_count; ++i)
-            IMFMediaBuffer_Release(sample->buffers[i]);
-        clear_attributes_object(&sample->attributes);
-        heap_free(sample->buffers);
-        heap_free(sample);
+        /* Call could fail if queue system is not initialized, it's not critical. */
+        if (FAILED(hr = RtwqInvokeCallback(sample->tracked_result)))
+            WARN("Failed to invoke tracking callback, hr %#x.\n", hr);
+        IRtwqAsyncResult_Release(sample->tracked_result);
+        sample->tracked_result = NULL;
+        sample->tracked_refcount = 0;
     }
+    LeaveCriticalSection(&sample->attributes.cs);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+        release_sample_object(sample);
 
     return refcount;
 }
@@ -1484,9 +1520,34 @@ static ULONG WINAPI tracked_sample_Release(IMFTrackedSample *iface)
 static HRESULT WINAPI tracked_sample_SetAllocator(IMFTrackedSample *iface,
         IMFAsyncCallback *sample_allocator, IUnknown *state)
 {
-    FIXME("%p, %p, %p.\n", iface, sample_allocator, state);
+    struct sample *sample = impl_from_IMFTrackedSample(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, sample_allocator, state);
+
+    EnterCriticalSection(&sample->attributes.cs);
+
+    if (sample->tracked_result)
+        hr = MF_E_NOTACCEPTING;
+    else
+    {
+        if (SUCCEEDED(hr = RtwqCreateAsyncResult((IUnknown *)iface, (IRtwqAsyncCallback *)sample_allocator,
+                state, &sample->tracked_result)))
+        {
+            /* Account for additional refcount brought by 'state' object. This threshold is used
+               on Release() to invoke tracker callback.  */
+            sample->tracked_refcount = 1;
+            if (state == (IUnknown *)&sample->IMFTrackedSample_iface ||
+                    state == (IUnknown *)&sample->IMFSample_iface)
+            {
+                ++sample->tracked_refcount;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&sample->attributes.cs);
+
+    return hr;
 }
 
 static const IMFTrackedSampleVtbl tracked_sample_vtbl =
@@ -1496,6 +1557,58 @@ static const IMFTrackedSampleVtbl tracked_sample_vtbl =
     tracked_sample_Release,
     tracked_sample_SetAllocator,
 };
+
+static const IMFSampleVtbl sample_tracked_vtbl =
+{
+    sample_QueryInterface,
+    sample_AddRef,
+    sample_tracked_Release,
+    sample_GetItem,
+    sample_GetItemType,
+    sample_CompareItem,
+    sample_Compare,
+    sample_GetUINT32,
+    sample_GetUINT64,
+    sample_GetDouble,
+    sample_GetGUID,
+    sample_GetStringLength,
+    sample_GetString,
+    sample_GetAllocatedString,
+    sample_GetBlobSize,
+    sample_GetBlob,
+    sample_GetAllocatedBlob,
+    sample_GetUnknown,
+    sample_SetItem,
+    sample_DeleteItem,
+    sample_DeleteAllItems,
+    sample_SetUINT32,
+    sample_SetUINT64,
+    sample_SetDouble,
+    sample_SetGUID,
+    sample_SetString,
+    sample_SetBlob,
+    sample_SetUnknown,
+    sample_LockStore,
+    sample_UnlockStore,
+    sample_GetCount,
+    sample_GetItemByIndex,
+    sample_CopyAllItems,
+    sample_GetSampleFlags,
+    sample_SetSampleFlags,
+    sample_GetSampleTime,
+    sample_SetSampleTime,
+    sample_GetSampleDuration,
+    sample_SetSampleDuration,
+    sample_GetBufferCount,
+    sample_GetBufferByIndex,
+    sample_ConvertToContiguousBuffer,
+    sample_AddBuffer,
+    sample_RemoveBufferByIndex,
+    sample_RemoveAllBuffers,
+    sample_GetTotalLength,
+    sample_CopyToBuffer,
+};
+
 
 /***********************************************************************
  *      MFCreateSample (mfplat.@)
@@ -1546,7 +1659,7 @@ HRESULT WINAPI MFCreateTrackedSample(IMFTrackedSample **sample)
         return hr;
     }
 
-    object->IMFSample_iface.lpVtbl = &samplevtbl;
+    object->IMFSample_iface.lpVtbl = &sample_tracked_vtbl;
     object->IMFTrackedSample_iface.lpVtbl = &tracked_sample_vtbl;
 
     *sample = &object->IMFTrackedSample_iface;
