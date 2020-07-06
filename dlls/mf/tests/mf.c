@@ -3226,6 +3226,7 @@ todo_wine
 
 static void test_evr(void)
 {
+    IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
     IMFActivate *activate;
     DWORD flags, count;
@@ -3252,9 +3253,15 @@ static void test_evr(void)
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
 
+    flags = 0;
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
-todo_wine
+todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(flags == (MEDIASINK_CAN_PREROLL | MEDIASINK_CLOCK_REQUIRED), "Unexpected flags %#x.\n", flags);
+}
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaSinkPreroll, (void **)&preroll);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFMediaSinkPreroll_Release(preroll);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

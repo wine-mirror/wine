@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 struct video_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
+    IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
     LONG refcount;
 };
 
@@ -33,14 +34,25 @@ static struct video_renderer *impl_from_IMFMediaSink(IMFMediaSink *iface)
     return CONTAINING_RECORD(iface, struct video_renderer, IMFMediaSink_iface);
 }
 
+static struct video_renderer *impl_from_IMFMediaSinkPreroll(IMFMediaSinkPreroll *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFMediaSinkPreroll_iface);
+}
+
 static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
 {
+    struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFMediaSink) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
-        *obj = iface;
+        *obj = &renderer->IMFMediaSink_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFMediaSinkPreroll))
+    {
+        *obj = &renderer->IMFMediaSinkPreroll_iface;
     }
     else
     {
@@ -159,6 +171,39 @@ static const IMFMediaSinkVtbl video_renderer_sink_vtbl =
     video_renderer_sink_Shutdown,
 };
 
+static HRESULT WINAPI video_renderer_preroll_QueryInterface(IMFMediaSinkPreroll *iface, REFIID riid, void **obj)
+{
+    struct video_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI video_renderer_preroll_AddRef(IMFMediaSinkPreroll *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_preroll_Release(IMFMediaSinkPreroll *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_preroll_NotifyPreroll(IMFMediaSinkPreroll *iface, MFTIME start_time)
+{
+    FIXME("%p, %s.\n", iface, debugstr_time(start_time));
+
+    return E_NOTIMPL;
+}
+
+static const IMFMediaSinkPrerollVtbl video_renderer_preroll_vtbl =
+{
+    video_renderer_preroll_QueryInterface,
+    video_renderer_preroll_AddRef,
+    video_renderer_preroll_Release,
+    video_renderer_preroll_NotifyPreroll,
+};
+
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
@@ -169,6 +214,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
         return E_OUTOFMEMORY;
 
     object->IMFMediaSink_iface.lpVtbl = &video_renderer_sink_vtbl;
+    object->IMFMediaSinkPreroll_iface.lpVtbl = &video_renderer_preroll_vtbl;
     object->refcount = 1;
 
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
