@@ -36,6 +36,7 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "wincon.h"
+#include "wine/condrv.h"
 #include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -760,24 +761,11 @@ COORD WINAPI DECLSPEC_HOTPATCH GetLargestConsoleWindowSize( HANDLE handle )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetNumberOfConsoleInputEvents( HANDLE handle, DWORD *count )
 {
-    BOOL ret;
-
-    SERVER_START_REQ( read_console_input )
-    {
-        req->handle = console_handle_unmap( handle );
-        req->flush  = FALSE;
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (count) *count = reply->read;
-            else
-            {
-                SetLastError( ERROR_INVALID_ACCESS );
-                ret = FALSE;
-            }
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    struct condrv_input_info info;
+    if (!DeviceIoControl( handle, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL ))
+        return FALSE;
+    *count = info.input_count;
+    return TRUE;
 }
 
 
