@@ -893,7 +893,7 @@ static inline unsigned int handle_to_index( HANDLE handle, unsigned int *entry )
 /***********************************************************************
  *           add_fd_to_cache
  *
- * Caller must hold fd_cache_section.
+ * Caller must hold fd_cache_mutex.
  */
 static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
                             unsigned int access, unsigned int options )
