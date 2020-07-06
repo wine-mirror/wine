@@ -497,6 +497,10 @@ static HRESULT WINAPI filter_AddMediaStream(IMediaStreamFilter *iface, IAMMediaS
     if (FAILED(hr))
         return hr;
 
+    hr = IAMMediaStream_JoinFilterGraph(pAMMediaStream, This->graph);
+    if (FAILED(hr))
+        return hr;
+
     This->streams[This->nb_streams] = pAMMediaStream;
     This->nb_streams++;
 
