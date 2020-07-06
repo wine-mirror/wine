@@ -54,6 +54,7 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "wincon.h"
+#include "wine/condrv.h"
 #include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
@@ -409,6 +410,8 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
 {
     int fd;
     enum read_console_input_return      ret;
+    int blocking = timeout != 0;
+    DWORD read_bytes;
 
     if ((fd = get_console_bare_fd(handle)) != -1)
     {
@@ -421,25 +424,10 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
         close(fd);
         if (ret != rci_gotone) return ret;
     }
-    else
-    {
-        if (!VerifyConsoleIoHandle(handle)) return rci_error;
 
-        if (WaitForSingleObject(handle, timeout) != WAIT_OBJECT_0)
-            return rci_timeout;
-    }
-
-    SERVER_START_REQ( read_console_input )
-    {
-        req->handle = console_handle_unmap(handle);
-        req->flush = TRUE;
-        wine_server_set_reply( req, ir, sizeof(INPUT_RECORD) );
-        if (wine_server_call_err( req ) || !reply->read) ret = rci_error;
-        else ret = rci_gotone;
-    }
-    SERVER_END_REQ;
-
-    return ret;
+    if (!DeviceIoControl( handle, IOCTL_CONDRV_READ_INPUT, &blocking, sizeof(blocking), ir, sizeof(*ir), &read_bytes, NULL ))
+        return rci_error;
+    return read_bytes ? rci_gotone : rci_timeout;
 }
 
 
