@@ -38,6 +38,7 @@
 #include "unicode.h"
 #include "wincon.h"
 #include "winternl.h"
+#include "wine/condrv.h"
 
 struct screen_buffer;
 struct console_input_events;
@@ -200,6 +201,7 @@ static const struct object_ops screen_buffer_ops =
 };
 
 static enum server_fd_type console_get_fd_type( struct fd *fd );
+static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops console_fd_ops =
 {
@@ -211,7 +213,7 @@ static const struct fd_ops console_fd_ops =
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
-    default_fd_ioctl,             /* ioctl */
+    console_ioctl,                /* ioctl */
     default_fd_queue_async,       /* queue_async */
     default_fd_reselect_async     /* reselect_async */
 };
@@ -1485,6 +1487,30 @@ static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc
     evt.u.update.top    = min(ysrc, ydst);
     evt.u.update.bottom = max(ysrc, ydst) + h - 1;
     console_input_events_append( screen_buffer->input, &evt );
+}
+
+static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
+{
+    struct console_input *console = get_fd_user( fd );
+
+    switch (code)
+    {
+    case IOCTL_CONDRV_GET_INPUT_INFO:
+        {
+            struct condrv_input_info info;
+            if (get_reply_max_size() != sizeof(info))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            info.input_count = console->recnum;
+            return set_reply_data( &info, sizeof(info) ) != NULL;
+        }
+
+    default:
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
 }
 
 static struct object_type *console_device_get_type( struct object *obj )
