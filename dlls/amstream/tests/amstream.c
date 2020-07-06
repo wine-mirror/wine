@@ -1140,7 +1140,7 @@ static void test_enum_pins(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = get_refcount(filter);
-    todo_wine ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
 
     hr = IMediaStreamFilter_EnumPins(filter, NULL);
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -1148,7 +1148,7 @@ static void test_enum_pins(void)
     hr = IMediaStreamFilter_EnumPins(filter, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
-    todo_wine ok(ref == 3, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
 
@@ -1186,7 +1186,7 @@ static void test_enum_pins(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = get_refcount(filter);
-    todo_wine ok(ref == 4, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 4, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -1196,7 +1196,7 @@ static void test_enum_pins(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(pins[0] == pin, "Expected pin %p, got %p.\n", pin, pins[0]);
     ref = get_refcount(filter);
-    todo_wine ok(ref == 4, "Got unexpected refcount %d.\n", ref);
+    ok(ref == 4, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(enum1);
     ok(ref == 1, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);

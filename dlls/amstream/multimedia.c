@@ -92,6 +92,7 @@ static ULONG WINAPI multimedia_stream_Release(IAMMultiMediaStream *iface)
         if (This->ipin)
             IPin_Release(This->ipin);
         IMediaStreamFilter_Release(This->filter);
+        IMediaStreamFilter_Release(This->filter);
         if (This->media_seeking)
             IMediaSeeking_Release(This->media_seeking);
         if (This->media_control)
@@ -517,6 +518,9 @@ HRESULT multimedia_stream_create(IUnknown *outer, void **out)
         heap_free(object);
         return hr;
     }
+
+    /* The stream takes an additional reference to the filter. */
+    IMediaStreamFilter_AddRef(object->filter);
 
     TRACE("Created multimedia stream %p.\n", object);
     *out = &object->IAMMultiMediaStream_iface;
