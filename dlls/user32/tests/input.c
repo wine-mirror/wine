@@ -1760,7 +1760,6 @@ static void test_GetRawInputData(void)
     SetLastError(0xdeadbeef);
     ret = GetRawInputData(NULL, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER));
     ok(ret == ~0U, "Expect ret %u, got %u\n", ~0U, ret);
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetRawInputData returned %08x\n", GetLastError());
 }
 
@@ -1916,36 +1915,30 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
             SetLastError(0xdeadbeef);
             count = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &ri, &size, 0);
             ok(count == ~0U, "GetRawInputData succeeded\n");
-            todo_wine
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRawInputData returned %08x\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             size = 0;
             count = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER));
             ok(count == ~0U, "GetRawInputData succeeded\n");
-            todo_wine
             ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetRawInputData returned %08x\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             size = sizeof(ri);
             count = GetRawInputData((HRAWINPUT)lparam, 0, &ri, &size, sizeof(RAWINPUTHEADER));
             ok(count == ~0U, "GetRawInputData succeeded\n");
-            todo_wine
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetRawInputData returned %08x\n", GetLastError());
 
             SetLastError(0xdeadbeef);
             size = sizeof(ri);
             count = GetRawInputData((HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER));
-            todo_wine
             ok(count == sizeof(ri), "GetRawInputData failed\n");
-            todo_wine
             ok(ri.data.mouse.lLastX == 6, "Unexpected rawinput data: %d\n", ri.data.mouse.lLastX);
             ok(GetLastError() == 0xdeadbeef, "GetRawInputData returned %08x\n", GetLastError());
         }
         else
         {
             ok(count == ~0U, "GetRawInputData succeeded\n");
-            todo_wine
             ok(GetLastError() == ERROR_INVALID_HANDLE, "GetRawInputData returned %08x\n", GetLastError());
         }
 

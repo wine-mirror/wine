@@ -223,12 +223,14 @@ static void find_devices(void)
 }
 
 
-RAWINPUT *rawinput_thread_data(void)
+struct rawinput_thread_data *rawinput_thread_data(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
-    RAWINPUT *rawinput = thread_info->rawinput;
-    if (!rawinput) rawinput = thread_info->rawinput = HeapAlloc( GetProcessHeap(), 0, RAWINPUT_BUFFER_SIZE );
-    return rawinput;
+    struct rawinput_thread_data *data = thread_info->rawinput;
+    if (data) return data;
+    data = thread_info->rawinput = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                              RAWINPUT_BUFFER_SIZE + sizeof(struct user_thread_info) );
+    return data;
 }
 
 
@@ -453,43 +455,51 @@ BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(RAWINPUTDEVICE *devices, U
  */
 UINT WINAPI GetRawInputData(HRAWINPUT rawinput, UINT command, void *data, UINT *data_size, UINT header_size)
 {
-    RAWINPUT *ri = (RAWINPUT *)rawinput;
-    UINT s;
+    struct rawinput_thread_data *thread_data = rawinput_thread_data();
+    UINT size;
 
     TRACE("rawinput %p, command %#x, data %p, data_size %p, header_size %u.\n",
             rawinput, command, data, data_size, header_size);
 
-    if (!ri || !ri->header.dwSize)
+    if (!rawinput || thread_data->hw_id != (UINT_PTR)rawinput)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
         return ~0U;
+    }
 
     if (header_size != sizeof(RAWINPUTHEADER))
     {
         WARN("Invalid structure size %u.\n", header_size);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return ~0U;
     }
 
     switch (command)
     {
     case RID_INPUT:
-        s = ri->header.dwSize;
+        size = thread_data->buffer->header.dwSize;
         break;
     case RID_HEADER:
-        s = sizeof(RAWINPUTHEADER);
+        size = sizeof(RAWINPUTHEADER);
         break;
     default:
+        SetLastError(ERROR_INVALID_PARAMETER);
         return ~0U;
     }
 
     if (!data)
     {
-        *data_size = s;
+        *data_size = size;
         return 0;
     }
 
-    if (*data_size < s) return ~0U;
-    memcpy(data, ri, s);
-    ri->header.dwSize = 0;
-    return s;
+    if (*data_size < size)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return ~0U;
+    }
+    memcpy(data, thread_data->buffer, size);
+    return size;
 }
 
 #ifdef _WIN64
@@ -513,6 +523,7 @@ typedef struct
 UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size, UINT header_size)
 {
     struct hardware_msg_data *msg_data;
+    struct rawinput_thread_data *thread_data;
     RAWINPUT *rawinput;
     UINT count = 0, rawinput_size, next_size, overhead;
     BOOL is_wow64;
@@ -551,8 +562,10 @@ UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size,
         return 0;
     }
 
-    if (!(rawinput = rawinput_thread_data())) return ~0U;
+    if (!(thread_data = rawinput_thread_data())) return ~0U;
+    rawinput = thread_data->buffer;
 
+    /* first RAWINPUT block in the buffer is used for WM_INPUT message data */
     msg_data = (struct hardware_msg_data *)NEXTRAWINPUTBLOCK(rawinput);
     SERVER_START_REQ( get_rawinput_buffer )
     {

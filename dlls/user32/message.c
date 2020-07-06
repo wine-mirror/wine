@@ -2283,13 +2283,14 @@ static void accept_hardware_message( UINT hw_id )
 }
 
 
-static BOOL process_rawinput_message( MSG *msg, const struct hardware_msg_data *msg_data )
+static BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
 {
-    RAWINPUT *rawinput = rawinput_thread_data();
-    if (!rawinput_from_hardware_message(rawinput, msg_data))
+    struct rawinput_thread_data *thread_data = rawinput_thread_data();
+    if (!rawinput_from_hardware_message( thread_data->buffer, msg_data ))
         return FALSE;
 
-    msg->lParam = (LPARAM)rawinput;
+    thread_data->hw_id = hw_id;
+    msg->lParam = (LPARAM)hw_id;
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
     return TRUE;
 }
@@ -2610,7 +2611,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
 
     if (msg->message == WM_INPUT)
-        ret = process_rawinput_message( msg, msg_data );
+        ret = process_rawinput_message( msg, hw_id, msg_data );
     else if (is_keyboard_message( msg->message ))
         ret = process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
     else if (is_mouse_message( msg->message ))
