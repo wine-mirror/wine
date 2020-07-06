@@ -96,6 +96,13 @@ static int has_relays( DLLSPEC *spec )
     return 0;
 }
 
+static int get_exports_count( DLLSPEC *spec )
+{
+    if (unix_lib) return 0;
+    if (spec->base > spec->limit) return 0;
+    return spec->limit - spec->base + 1;
+}
+
 static int cmp_func_args( const void *p1, const void *p2 )
 {
     const ORDDEF *odp1 = *(const ORDDEF **)p1;
@@ -384,7 +391,7 @@ void output_exports( DLLSPEC *spec )
     int i, fwd_size = 0;
     int needs_imports = 0;
     int needs_relay = has_relays( spec );
-    int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
+    int nr_exports = get_exports_count( spec );
     const char *func_ptr = (target_platform == PLATFORM_WINDOWS) ? ".rva" : get_asm_ptr_keyword();
     const char *name;
 
@@ -704,7 +711,7 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* LoaderFlags */
     output( "\t.long 16\n" );             /* NumberOfRvaAndSizes */
 
-    if (spec->base <= spec->limit)
+    if (get_exports_count( spec ))
         data_dirs[0] = ".L__wine_spec_exports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT] */
     if (has_imports())
         data_dirs[1] = ".L__wine_spec_imports";   /* DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT] */

@@ -460,6 +460,9 @@ static void add_undef_import( const char *name, int is_ordinal )
 static int has_stubs( const DLLSPEC *spec )
 {
     int i;
+
+    if (unix_lib) return 0;
+
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
@@ -503,6 +506,8 @@ static void check_undefined_forwards( DLLSPEC *spec )
     char *link_name, *api_name, *dll_name, *p;
     int i;
 
+    if (unix_lib) return;
+
     for (i = 0; i < spec->nb_entry_points; i++)
     {
         ORDDEF *odp = &spec->entry_points[i];
@@ -532,6 +537,8 @@ static void check_undefined_forwards( DLLSPEC *spec )
 static void check_undefined_exports( DLLSPEC *spec )
 {
     int i;
+
+    if (unix_lib) return;
 
     for (i = 0; i < spec->nb_entry_points; i++)
     {
@@ -569,6 +576,8 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     char *as_file, *obj_file;
     int i;
     unsigned int j;
+
+    if (unix_lib) return NULL;
 
     as_file = open_temp_output_file( ".s" );
     output( "\t.data\n" );

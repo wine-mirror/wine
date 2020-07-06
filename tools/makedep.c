@@ -3349,6 +3349,7 @@ static void output_module( struct makefile *make )
         strarray_add( &make->all_targets, unix_lib );
         add_install_rule( make, make->module, unix_lib, strmake( "p$(dlldir)/%s", unix_lib ));
         output( "%s:", unix_lib );
+        if (spec_file) output_filename( spec_file );
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_deps );
         output_filename( tools_path( make, "winebuild" ));
@@ -3357,6 +3358,7 @@ static void output_module( struct makefile *make )
         output_winegcc_command( make, 0 );
         output_filename( "-munix" );
         output_filename( "-shared" );
+        if (spec_file) output_filename( spec_file );
         if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) output_filename( "-nodefaultlibs" );
         output_filenames_obj_dir( make, make->unixobj_files );
         output_filenames( unix_libs );
