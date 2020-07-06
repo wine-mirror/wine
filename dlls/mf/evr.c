@@ -22,11 +22,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+enum video_renderer_flags
+{
+    EVR_SHUT_DOWN = 0x1,
+};
+
 struct video_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
     IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
     LONG refcount;
+    unsigned int flags;
+    CRITICAL_SECTION cs;
 };
 
 static struct video_renderer *impl_from_IMFMediaSink(IMFMediaSink *iface)
@@ -83,6 +90,7 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
 
     if (!refcount)
     {
+        DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
 
@@ -91,7 +99,12 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
 
 static HRESULT WINAPI video_renderer_sink_GetCharacteristics(IMFMediaSink *iface, DWORD *flags)
 {
+    struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
+
     TRACE("%p, %p.\n", iface, flags);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        return MF_E_SHUTDOWN;
 
     *flags = MEDIASINK_CLOCK_REQUIRED | MEDIASINK_CAN_PREROLL;
 
@@ -152,9 +165,18 @@ static HRESULT WINAPI video_renderer_sink_GetPresentationClock(IMFMediaSink *ifa
 
 static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
 {
-    FIXME("%p.\n", iface);
+    struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        return MF_E_SHUTDOWN;
+
+    EnterCriticalSection(&renderer->cs);
+    renderer->flags |= EVR_SHUT_DOWN;
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static const IMFMediaSinkVtbl video_renderer_sink_vtbl =
@@ -218,6 +240,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMFMediaSink_iface.lpVtbl = &video_renderer_sink_vtbl;
     object->IMFMediaSinkPreroll_iface.lpVtbl = &video_renderer_preroll_vtbl;
     object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
 
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
 

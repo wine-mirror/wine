@@ -27,7 +27,6 @@
 #undef INITGUID
 #include <guiddef.h>
 #include "mfapi.h"
-#include "mferror.h"
 #include "mfidl.h"
 
 #include "wine/debug.h"

@@ -27,7 +27,6 @@
 #include "rpcproxy.h"
 
 #include "mfapi.h"
-#include "mferror.h"
 
 #include "mf_private.h"
 

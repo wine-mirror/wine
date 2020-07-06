@@ -25,7 +25,6 @@
 #include "winbase.h"
 #include "mfidl.h"
 #include "mfapi.h"
-#include "mferror.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
