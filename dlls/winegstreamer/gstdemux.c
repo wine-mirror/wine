@@ -1001,7 +1001,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
          * necessarily consume it. In particular, the video renderer can't. */
         if (!(deinterlace = gst_element_factory_make("deinterlace", NULL)))
         {
-            ERR("Failed to create deinterlace, are %u-bit GStreamer \"base\" plugins installed?\n",
+            ERR("Failed to create deinterlace, are %u-bit GStreamer \"good\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             goto out;
         }
