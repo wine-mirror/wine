@@ -790,20 +790,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH PeekConsoleInputA( HANDLE handle, INPUT_RECORD *bu
 BOOL WINAPI DECLSPEC_HOTPATCH PeekConsoleInputW( HANDLE handle, INPUT_RECORD *buffer,
                                                  DWORD length, DWORD *count )
 {
-    BOOL ret;
-
-    SERVER_START_REQ( read_console_input )
-    {
-        req->handle = console_handle_unmap( handle );
-        req->flush  = FALSE;
-        wine_server_set_reply( req, buffer, length * sizeof(INPUT_RECORD) );
-        if ((ret = !wine_server_call_err( req )))
-        {
-            if (count) *count = length ? reply->read : 0;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
+    DWORD read;
+    if (!DeviceIoControl( handle, IOCTL_CONDRV_PEEK, NULL, 0, buffer, length * sizeof(*buffer), &read, NULL ))
+        return FALSE;
+    if (count) *count = read / sizeof(*buffer);
+    return TRUE;
 }
 
 
