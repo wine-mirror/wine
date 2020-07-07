@@ -1887,56 +1887,69 @@ struct pid_map
 
 static struct pid_map *get_pid_map( unsigned int *num_entries )
 {
-    HANDLE snapshot = NULL;
     struct pid_map *map;
-    unsigned int i = 0, count = 16, size = count * sizeof(*map);
+    unsigned int i = 0, map_count = 16, buffer_len = 4096, process_count, pos = 0;
     NTSTATUS ret;
+    char *buffer = NULL, *new_buffer;
 
-    if (!(map = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_len ))) return NULL;
 
-    SERVER_START_REQ( create_snapshot )
+    for (;;)
     {
-        req->flags      = SNAP_PROCESS;
-        req->attributes = 0;
-        if (!(ret = wine_server_call( req )))
-            snapshot = wine_server_ptr_handle( reply->handle );
-    }
-    SERVER_END_REQ;
-
-    *num_entries = 0;
-    while (ret == STATUS_SUCCESS)
-    {
-        SERVER_START_REQ( next_process )
+        SERVER_START_REQ( list_processes )
         {
-            req->handle = wine_server_obj_handle( snapshot );
-            req->reset = (i == 0);
-            if (!(ret = wine_server_call( req )))
-            {
-                if (i >= count)
-                {
-                    struct pid_map *new_map;
-                    count *= 2;
-                    size = count * sizeof(*new_map);
-
-                    if (!(new_map = HeapReAlloc( GetProcessHeap(), 0, map, size )))
-                    {
-                        HeapFree( GetProcessHeap(), 0, map );
-                        map = NULL;
-                        goto done;
-                    }
-                    map = new_map;
-                }
-                map[i].pid = reply->pid;
-                map[i].unix_pid = reply->unix_pid;
-                (*num_entries)++;
-                i++;
-            }
+            wine_server_set_reply( req, buffer, buffer_len );
+            ret = wine_server_call( req );
+            buffer_len = reply->info_size;
+            process_count = reply->process_count;
         }
         SERVER_END_REQ;
+
+        if (ret != STATUS_INFO_LENGTH_MISMATCH) break;
+
+        if (!(new_buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, buffer_len )))
+        {
+            HeapFree( GetProcessHeap(), 0, buffer );
+            return NULL;
+        }
     }
 
-done:
-    NtClose( snapshot );
+    if (!(map = HeapAlloc( GetProcessHeap(), 0, map_count * sizeof(*map) )))
+    {
+        HeapFree( GetProcessHeap(), 0, buffer );
+        return NULL;
+    }
+
+    for (i = 0; i < process_count; ++i)
+    {
+        const struct process_info *process;
+
+        pos = (pos + 7) & ~7;
+        process = (const struct process_info *)(buffer + pos);
+
+        if (i >= map_count)
+        {
+            struct pid_map *new_map;
+            map_count *= 2;
+            if (!(new_map = HeapReAlloc( GetProcessHeap(), 0, map, map_count * sizeof(*map))))
+            {
+                HeapFree( GetProcessHeap(), 0, map );
+                HeapFree( GetProcessHeap(), 0, buffer );
+                return NULL;
+            }
+            map = new_map;
+        }
+
+        map[i].pid = process->pid;
+        map[i].unix_pid = process->unix_pid;
+
+        pos += sizeof(struct process_info) + process->name_len;
+        pos = (pos + 7) & ~7;
+        pos += process->thread_count * sizeof(struct thread_info);
+    }
+
+    HeapFree( GetProcessHeap(), 0, buffer );
+    *num_entries = process_count;
     return map;
 }
 
