@@ -1909,6 +1909,36 @@ enum char_info_mode
 @END
 
 
+struct thread_info
+{
+    thread_id_t     tid;
+    int             base_priority;
+    int             current_priority;
+    int             unix_tid;
+};
+
+struct process_info
+{
+    data_size_t     name_len;
+    int             thread_count;
+    int             priority;
+    process_id_t    pid;
+    process_id_t    parent_pid;
+    int             handle_count;
+    int             unix_pid;
+    /* VARARG(name,unicode_str,name_len); */
+    /* VARARG(threads,struct thread_info,thread_count); */
+};
+
+/* Get a list of processes and threads currently running */
+@REQ(list_processes)
+@REPLY
+    data_size_t     info_size;
+    int             process_count;
+    VARARG(data,process_info,info_size);
+@END
+
+
 /* Wait for a debug event */
 @REQ(wait_debug_event)
     int           get_handle;  /* should we alloc a handle for waiting? */

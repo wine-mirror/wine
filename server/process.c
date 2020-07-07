@@ -22,6 +22,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <string.h>
@@ -1817,5 +1818,72 @@ DECL_HANDLER(resume_process)
         }
 
         release_object( process );
+    }
+}
+
+/* Get a list of processes and threads currently running */
+DECL_HANDLER(list_processes)
+{
+    struct process *process;
+    struct thread *thread;
+    unsigned int pos = 0;
+    char *buffer;
+
+    reply->process_count = 0;
+    reply->info_size = 0;
+
+    LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
+    {
+        struct process_dll *exe = get_process_exe_module( process );
+        reply->info_size = (reply->info_size + 7) & ~7;
+        reply->info_size += sizeof(struct process_info);
+        if (exe) reply->info_size += exe->namelen;
+        reply->info_size = (reply->info_size + 7) & ~7;
+        reply->info_size += process->running_threads * sizeof(struct thread_info);
+        reply->process_count++;
+    }
+
+    if (reply->info_size > get_reply_max_size())
+    {
+        set_error( STATUS_INFO_LENGTH_MISMATCH );
+        return;
+    }
+
+    if (!(buffer = set_reply_data_size( reply->info_size ))) return;
+
+    memset( buffer, 0, reply->info_size );
+    LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
+    {
+        struct process_info *process_info;
+        struct process_dll *exe = get_process_exe_module( process );
+
+        pos = (pos + 7) & ~7;
+        process_info = (struct process_info *)(buffer + pos);
+        process_info->name_len = exe ? exe->namelen : 0;
+        process_info->thread_count = process->running_threads;
+        process_info->priority = process->priority;
+        process_info->pid = process->id;
+        process_info->parent_pid = process->parent_id;
+        process_info->handle_count = get_handle_table_count(process);
+        process_info->unix_pid = process->unix_pid;
+        pos += sizeof(*process_info);
+
+        if (exe)
+        {
+            memcpy( buffer + pos, exe->filename, exe->namelen );
+            pos += exe->namelen;
+        }
+
+        pos = (pos + 7) & ~7;
+        LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+        {
+            struct thread_info *thread_info = (struct thread_info *)(buffer + pos);
+
+            thread_info->tid = thread->id;
+            thread_info->base_priority = thread->priority;
+            thread_info->current_priority = thread->priority; /* FIXME */
+            thread_info->unix_tid = thread->unix_tid;
+            pos += sizeof(*thread_info);
+        }
     }
 }

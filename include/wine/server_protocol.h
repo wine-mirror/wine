@@ -2481,6 +2481,42 @@ struct next_thread_reply
 };
 
 
+struct thread_info
+{
+    thread_id_t     tid;
+    int             base_priority;
+    int             current_priority;
+    int             unix_tid;
+};
+
+struct process_info
+{
+    data_size_t     name_len;
+    int             thread_count;
+    int             priority;
+    process_id_t    pid;
+    process_id_t    parent_pid;
+    int             handle_count;
+    int             unix_pid;
+
+
+};
+
+
+struct list_processes_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct list_processes_reply
+{
+    struct reply_header __header;
+    data_size_t     info_size;
+    int             process_count;
+    /* VARARG(data,process_info,info_size); */
+};
+
+
 
 struct wait_debug_event_request
 {
@@ -5893,6 +5929,7 @@ enum request
     REQ_create_snapshot,
     REQ_next_process,
     REQ_next_thread,
+    REQ_list_processes,
     REQ_wait_debug_event,
     REQ_queue_exception_event,
     REQ_get_exception_status,
@@ -6196,6 +6233,7 @@ union generic_request
     struct create_snapshot_request create_snapshot_request;
     struct next_process_request next_process_request;
     struct next_thread_request next_thread_request;
+    struct list_processes_request list_processes_request;
     struct wait_debug_event_request wait_debug_event_request;
     struct queue_exception_event_request queue_exception_event_request;
     struct get_exception_status_request get_exception_status_request;
@@ -6497,6 +6535,7 @@ union generic_reply
     struct create_snapshot_reply create_snapshot_reply;
     struct next_process_reply next_process_reply;
     struct next_thread_reply next_thread_reply;
+    struct list_processes_reply list_processes_reply;
     struct wait_debug_event_reply wait_debug_event_reply;
     struct queue_exception_event_reply queue_exception_event_reply;
     struct get_exception_status_reply get_exception_status_reply;
@@ -6702,7 +6741,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 614
+#define SERVER_PROTOCOL_VERSION 615
 
 /* ### protocol_version end ### */
 

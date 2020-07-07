@@ -1115,6 +1115,44 @@ static void dump_varargs_token_groups( const char *prefix, data_size_t size )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_process_info( const char *prefix, data_size_t size )
+{
+    data_size_t pos = 0;
+    unsigned int i;
+
+    fprintf( stderr,"%s{", prefix );
+
+    while (size - pos >= sizeof(struct process_info))
+    {
+        const struct process_info *process;
+        pos = (pos + 7) & ~7;
+        process = (const struct process_info *)((const char *)cur_data + pos);
+        if (size - pos < sizeof(*process)) break;
+        if (pos) fputc( ',', stderr );
+        fprintf( stderr, "{thread_count=%u,priority=%d,pid=%04x,parent_pid=%04x,handle_count=%u,unix_pid=%d,",
+                 process->thread_count, process->priority, process->pid,
+                 process->parent_pid, process->handle_count, process->unix_pid );
+        pos += sizeof(*process);
+
+        pos = dump_inline_unicode_string( "name=L\"", pos, process->name_len, size );
+
+        pos = (pos + 7) & ~7;
+        fprintf( stderr, "\",threads={" );
+        for (i = 0; i < process->thread_count; i++)
+        {
+            const struct thread_info *thread = (const struct thread_info *)((const char *)cur_data + pos);
+            if (size - pos < sizeof(*thread)) break;
+            if (i) fputc( ',', stderr );
+            fprintf( stderr, "{tid=%04x,base_priority=%d,current_priority=%d,unix_tid=%d}",
+                     thread->tid, thread->base_priority, thread->current_priority, thread->unix_tid );
+            pos += sizeof(*thread);
+        }
+        fprintf( stderr, "}}" );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 static void dump_varargs_object_attributes( const char *prefix, data_size_t size )
 {
     const struct object_attributes *objattr = cur_data;
@@ -2402,6 +2440,17 @@ static void dump_next_thread_reply( const struct next_thread_reply *req )
     fprintf( stderr, ", base_pri=%d", req->base_pri );
     fprintf( stderr, ", delta_pri=%d", req->delta_pri );
     fprintf( stderr, ", unix_tid=%d", req->unix_tid );
+}
+
+static void dump_list_processes_request( const struct list_processes_request *req )
+{
+}
+
+static void dump_list_processes_reply( const struct list_processes_reply *req )
+{
+    fprintf( stderr, " info_size=%u", req->info_size );
+    fprintf( stderr, ", process_count=%d", req->process_count );
+    dump_varargs_process_info( ", data=", min(cur_size,req->info_size) );
 }
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )
@@ -4706,6 +4755,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_snapshot_request,
     (dump_func)dump_next_process_request,
     (dump_func)dump_next_thread_request,
+    (dump_func)dump_list_processes_request,
     (dump_func)dump_wait_debug_event_request,
     (dump_func)dump_queue_exception_event_request,
     (dump_func)dump_get_exception_status_request,
@@ -5005,6 +5055,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_snapshot_reply,
     (dump_func)dump_next_process_reply,
     (dump_func)dump_next_thread_reply,
+    (dump_func)dump_list_processes_reply,
     (dump_func)dump_wait_debug_event_reply,
     (dump_func)dump_queue_exception_event_reply,
     NULL,
@@ -5304,6 +5355,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_snapshot",
     "next_process",
     "next_thread",
+    "list_processes",
     "wait_debug_event",
     "queue_exception_event",
     "get_exception_status",

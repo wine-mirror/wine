@@ -214,6 +214,7 @@ DECL_HANDLER(is_same_mapping);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
 DECL_HANDLER(next_thread);
+DECL_HANDLER(list_processes);
 DECL_HANDLER(wait_debug_event);
 DECL_HANDLER(queue_exception_event);
 DECL_HANDLER(get_exception_status);
@@ -516,6 +517,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_snapshot,
     (req_handler)req_next_process,
     (req_handler)req_next_thread,
+    (req_handler)req_list_processes,
     (req_handler)req_wait_debug_event,
     (req_handler)req_queue_exception_event,
     (req_handler)req_get_exception_status,
@@ -1360,6 +1362,10 @@ C_ASSERT( FIELD_OFFSET(struct next_thread_reply, base_pri) == 20 );
 C_ASSERT( FIELD_OFFSET(struct next_thread_reply, delta_pri) == 24 );
 C_ASSERT( FIELD_OFFSET(struct next_thread_reply, unix_tid) == 28 );
 C_ASSERT( sizeof(struct next_thread_reply) == 32 );
+C_ASSERT( sizeof(struct list_processes_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct list_processes_reply, info_size) == 8 );
+C_ASSERT( FIELD_OFFSET(struct list_processes_reply, process_count) == 12 );
+C_ASSERT( sizeof(struct list_processes_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct wait_debug_event_request, get_handle) == 12 );
 C_ASSERT( sizeof(struct wait_debug_event_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct wait_debug_event_reply, pid) == 8 );

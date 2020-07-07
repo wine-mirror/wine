@@ -2083,132 +2083,102 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemProcessInformation:
     {
-        SYSTEM_PROCESS_INFORMATION *spi = info;
-        SYSTEM_PROCESS_INFORMATION *last = NULL;
-        HANDLE handle = 0;
-        WCHAR procname[1024];
-        WCHAR* exename;
-        DWORD wlen = 0;
-        DWORD procstructlen = 0;
+        unsigned int process_count, i, j;
+        char *buffer = NULL;
+        unsigned int pos = 0;
 
-        SERVER_START_REQ( create_snapshot )
+        if (size && !(buffer = RtlAllocateHeap( GetProcessHeap(), 0, size )))
         {
-            req->flags = SNAP_PROCESS | SNAP_THREAD;
-            if (!(ret = wine_server_call( req ))) handle = wine_server_ptr_handle( reply->handle );
+            ret = STATUS_NO_MEMORY;
+            break;
+        }
+
+        SERVER_START_REQ( list_processes )
+        {
+            wine_server_set_reply( req, buffer, size );
+            ret = wine_server_call( req );
+            len = reply->info_size;
+            process_count = reply->process_count;
         }
         SERVER_END_REQ;
 
-        len = 0;
-        while (ret == STATUS_SUCCESS)
+        if (ret)
         {
-            int unix_pid = -1;
-            SERVER_START_REQ( next_process )
+            RtlFreeHeap( GetProcessHeap(), 0, buffer );
+            break;
+        }
+
+        len = 0;
+
+        for (i = 0; i < process_count; i++)
+        {
+            SYSTEM_PROCESS_INFORMATION *nt_process = (SYSTEM_PROCESS_INFORMATION *)((char *)info + len);
+            const struct process_info *server_process;
+            const WCHAR *server_name, *file_part;
+            ULONG proc_len;
+            ULONG name_len = 0;
+
+            pos = (pos + 7) & ~7;
+            server_process = (const struct process_info *)(buffer + pos);
+            pos += sizeof(*server_process);
+
+            server_name = (const WCHAR *)(buffer + pos);
+            file_part = server_name + (server_process->name_len / sizeof(WCHAR));
+            pos += server_process->name_len;
+            while (file_part > server_name && file_part[-1] != '\\')
             {
-                req->handle = wine_server_obj_handle( handle );
-                req->reset = (len == 0);
-                wine_server_set_reply( req, procname, sizeof(procname) - sizeof(WCHAR) );
-                if (!(ret = wine_server_call( req )))
-                {
-                    unix_pid = reply->unix_pid;
-
-                    /* Make sure procname is 0 terminated */
-                    procname[wine_server_reply_size(reply) / sizeof(WCHAR)] = 0;
-
-                    /* Get only the executable name, not the path */
-                    if ((exename = wcsrchr(procname, '\\')) != NULL) exename++;
-                    else exename = procname;
-
-                    wlen = (wcslen(exename) + 1) * sizeof(WCHAR);
-                    procstructlen = sizeof(*spi) + wlen + ((reply->threads - 1) * sizeof(SYSTEM_THREAD_INFORMATION));
-
-                    if (size >= len + procstructlen)
-                    {
-                        /* ftCreationTime, ftUserTime, ftKernelTime;
-                         * vmCounters, ioCounters
-                         */
-                        memset(spi, 0, sizeof(*spi));
-
-                        spi->NextEntryOffset = procstructlen - wlen;
-                        spi->dwThreadCount = reply->threads;
-
-                        /* spi->pszProcessName will be set later on */
-
-                        spi->dwBasePriority = reply->priority;
-                        spi->UniqueProcessId = UlongToHandle(reply->pid);
-                        spi->ParentProcessId = UlongToHandle(reply->ppid);
-                        spi->HandleCount = reply->handles;
-
-                        /* spi->ti will be set later on */
-
-                    }
-                    len += procstructlen;
-                }
-            }
-            SERVER_END_REQ;
-            if (ret != STATUS_SUCCESS)
-            {
-                if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
-                break;
+                file_part--;
+                name_len++;
             }
 
-            if (size >= len)
+            proc_len = sizeof(*nt_process) + server_process->thread_count * sizeof(SYSTEM_THREAD_INFORMATION)
+                         + (name_len + 1) * sizeof(WCHAR);
+            len += proc_len;
+
+            if (len <= size)
             {
-                int     i, j;
+                memset(nt_process, 0, sizeof(*nt_process));
+                if (i < process_count - 1)
+                    nt_process->NextEntryOffset = proc_len;
+                nt_process->dwThreadCount = server_process->thread_count;
+                nt_process->dwBasePriority = server_process->priority;
+                nt_process->UniqueProcessId = UlongToHandle(server_process->pid);
+                nt_process->ParentProcessId = UlongToHandle(server_process->parent_pid);
+                nt_process->HandleCount = server_process->handle_count;
+                get_thread_times( server_process->unix_pid, -1, &nt_process->KernelTime, &nt_process->UserTime );
+            }
 
-                get_thread_times(unix_pid, -1, &spi->KernelTime, &spi->UserTime);
+            pos = (pos + 7) & ~7;
+            for (j = 0; j < server_process->thread_count; j++)
+            {
+                const struct thread_info *server_thread = (const struct thread_info *)(buffer + pos);
 
-                /* set thread info */
-                i = j = 0;
-                while (ret == STATUS_SUCCESS)
+                if (len <= size)
                 {
-                    int unix_tid, pid, tid, base_pri, delta_pri;
-                    SERVER_START_REQ( next_thread )
-                    {
-                        req->handle = wine_server_obj_handle( handle );
-                        req->reset = (j == 0);
-                        if (!(ret = wine_server_call( req )))
-                        {
-                            unix_tid = reply->unix_tid;
-                            pid = reply->pid;
-                            tid = reply->tid;
-                            base_pri = reply->base_pri;
-                            delta_pri = reply->delta_pri;
-                            j++;
-                        }
-                    }
-                    SERVER_END_REQ;
-
-                    if (!ret)
-                    {
-                        if (UlongToHandle(pid) == spi->UniqueProcessId)
-                        {
-                            memset(&spi->ti[i], 0, sizeof(spi->ti));
-
-                            spi->ti[i].CreateTime.QuadPart = 0xdeadbeef;
-                            spi->ti[i].ClientId.UniqueProcess = UlongToHandle(pid);
-                            spi->ti[i].ClientId.UniqueThread  = UlongToHandle(tid);
-                            spi->ti[i].dwCurrentPriority = base_pri + delta_pri;
-                            spi->ti[i].dwBasePriority = base_pri;
-                            get_thread_times(unix_pid, unix_tid, &spi->ti[i].KernelTime, &spi->ti[i].UserTime);
-                            i++;
-                        }
-                    }
+                    nt_process->ti[j].CreateTime.QuadPart = 0xdeadbeef;
+                    nt_process->ti[j].ClientId.UniqueProcess = UlongToHandle(server_process->pid);
+                    nt_process->ti[j].ClientId.UniqueThread = UlongToHandle(server_thread->tid);
+                    nt_process->ti[j].dwCurrentPriority = server_thread->current_priority;
+                    nt_process->ti[j].dwBasePriority = server_thread->base_priority;
+                    get_thread_times( server_process->unix_pid, server_thread->unix_tid,
+                                      &nt_process->ti[j].KernelTime, &nt_process->ti[j].UserTime );
                 }
-                if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
 
-                /* now append process name */
-                spi->ProcessName.Buffer = (WCHAR*)((char*)spi + spi->NextEntryOffset);
-                spi->ProcessName.Length = wlen - sizeof(WCHAR);
-                spi->ProcessName.MaximumLength = wlen;
-                memcpy( spi->ProcessName.Buffer, exename, wlen );
-                spi->NextEntryOffset += wlen;
-                last = spi;
-                spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->NextEntryOffset);
+                pos += sizeof(*server_thread);
+            }
+
+            if (len <= size)
+            {
+                nt_process->ProcessName.Buffer = (WCHAR *)&nt_process->ti[server_process->thread_count];
+                nt_process->ProcessName.Length = name_len * sizeof(WCHAR);
+                nt_process->ProcessName.MaximumLength = (name_len + 1) * sizeof(WCHAR);
+                memcpy(nt_process->ProcessName.Buffer, file_part, name_len * sizeof(WCHAR));
+                nt_process->ProcessName.Buffer[name_len] = 0;
             }
         }
-        if (ret == STATUS_SUCCESS && last) last->NextEntryOffset = 0;
+
         if (len > size) ret = STATUS_INFO_LENGTH_MISMATCH;
-        if (handle) NtClose( handle );
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
         break;
     }
 
