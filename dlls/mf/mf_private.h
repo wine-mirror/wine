@@ -18,6 +18,7 @@
 
 #include "mferror.h"
 #include "mfidl.h"
+#include "mfapi.h"
 
 #include "wine/heap.h"
 #include "wine/debug.h"

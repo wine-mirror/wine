@@ -3227,6 +3227,7 @@ todo_wine
 
 static void test_evr(void)
 {
+    IMFMediaEventGenerator *ev_generator;
     IMFVideoRenderer *video_renderer;
     IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
@@ -3266,6 +3267,10 @@ static void test_evr(void)
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&video_renderer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IMFVideoRenderer_Release(video_renderer);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&ev_generator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFMediaEventGenerator_Release(ev_generator);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

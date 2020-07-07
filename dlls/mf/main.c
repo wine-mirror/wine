@@ -26,8 +26,6 @@
 #include "mfidl.h"
 #include "rpcproxy.h"
 
-#include "mfapi.h"
-
 #include "mf_private.h"
 
 #include "wine/debug.h"
