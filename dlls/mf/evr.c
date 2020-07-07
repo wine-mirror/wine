@@ -258,15 +258,10 @@ static void evr_shutdown_object(void *user_context, IUnknown *obj)
     }
 }
 
-static void evr_free_private(void *user_context)
-{
-}
-
 static const struct activate_funcs evr_activate_funcs =
 {
-    evr_create_object,
-    evr_shutdown_object,
-    evr_free_private,
+    .create_object = evr_create_object,
+    .shutdown_object = evr_shutdown_object,
 };
 
 /***********************************************************************
