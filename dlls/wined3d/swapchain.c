@@ -2065,7 +2065,7 @@ static LONG fullscreen_exstyle(LONG exstyle)
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, int x, int y, int width, int height)
 {
-    unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE;
+    unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_NOACTIVATE;
     LONG style, exstyle;
     BOOL filter;
 
@@ -2085,6 +2085,8 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
 
     if (state->desc.flags & WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES)
         window_pos_flags |= SWP_NOZORDER;
+    else
+        window_pos_flags |= SWP_SHOWWINDOW;
 
     state->style = GetWindowLongW(window, GWL_STYLE);
     state->exstyle = GetWindowLongW(window, GWL_EXSTYLE);
