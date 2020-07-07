@@ -20,6 +20,7 @@
 
 #include "mf_private.h"
 #include "uuids.h"
+#include "evr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -35,6 +36,7 @@ struct video_renderer
     LONG refcount;
 
     IMFTransform *mixer;
+    IMFVideoPresenter *presenter;
     unsigned int flags;
     CRITICAL_SECTION cs;
 };
@@ -95,6 +97,8 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
     {
         if (renderer->mixer)
             IMFTransform_Release(renderer->mixer);
+        if (renderer->presenter)
+            IMFVideoPresenter_Release(renderer->presenter);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -256,6 +260,29 @@ static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransfo
     return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
 }
 
+static HRESULT video_renderer_create_presenter(IMFAttributes *attributes, IMFVideoPresenter **out)
+{
+    unsigned int flags = 0;
+    IMFActivate *activate;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (SUCCEEDED(IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_ACTIVATE,
+            &IID_IMFActivate, (void **)&activate)))
+    {
+        IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_FLAGS, &flags);
+        hr = IMFActivate_ActivateObject(activate, &IID_IMFVideoPresenter, (void **)out);
+        IMFActivate_Release(activate);
+        if (FAILED(hr) && !(flags & MF_ACTIVATE_CUSTOM_PRESENTER_ALLOWFAIL))
+            return hr;
+    }
+
+    if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_CLSID, &clsid)))
+        memcpy(&clsid, &CLSID_MFVideoPresenter9, sizeof(clsid));
+
+    return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter, (void **)out);
+}
+
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
@@ -271,8 +298,11 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
-    /* Create mixer. */
+    /* Create mixer and presenter. */
     if (FAILED(hr = video_renderer_create_mixer(attributes, &object->mixer)))
+        goto done;
+
+    if (FAILED(hr = video_renderer_create_presenter(attributes, &object->presenter)))
         goto done;
 
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
