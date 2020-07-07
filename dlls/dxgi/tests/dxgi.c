@@ -5888,10 +5888,8 @@ static void test_swapchain_window_styles(void)
 
         style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
         exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
-        todo_wine_if(!(tests[i].expected_style & WS_VISIBLE))
         ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
                 i, style, tests[i].expected_style);
-        todo_wine_if(!(tests[i].expected_exstyle & WS_EX_TOPMOST))
         ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
                 i, exstyle, tests[i].expected_exstyle);
 

@@ -2112,12 +2112,21 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
         HWND window, const RECT *window_rect)
 {
     unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
+    HWND window_pos_after = NULL;
     LONG style, exstyle;
     RECT rect = {0};
     BOOL filter;
 
     if (!state->style && !state->exstyle)
         return;
+
+    if ((state->desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE)
+            && !(state->desc.flags & WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES))
+    {
+        window_pos_after = (state->exstyle & WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_NOTOPMOST;
+        window_pos_flags |= (state->style & WS_VISIBLE) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW;
+        window_pos_flags &= ~SWP_NOZORDER;
+    }
 
     style = GetWindowLongW(window, GWL_STYLE);
     exstyle = GetWindowLongW(window, GWL_EXSTYLE);
@@ -2150,7 +2159,7 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
         rect = *window_rect;
     else
         window_pos_flags |= (SWP_NOMOVE | SWP_NOSIZE);
-    SetWindowPos(window, 0, rect.left, rect.top,
+    SetWindowPos(window, window_pos_after, rect.left, rect.top,
             rect.right - rect.left, rect.bottom - rect.top, window_pos_flags);
 
     wined3d_filter_messages(window, filter);
