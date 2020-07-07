@@ -886,6 +886,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_CreateAdditionalSwapChain(ID
         D3DPRESENT_PARAMETERS *present_parameters, IDirect3DSwapChain9 **swapchain)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    struct wined3d_device_creation_parameters creation_parameters;
     struct wined3d_swapchain_desc desc;
     struct d3d9_swapchain *object;
     unsigned int swap_interval;
@@ -924,6 +925,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_CreateAdditionalSwapChain(ID
     if (!wined3d_swapchain_desc_from_d3d9(&desc, device->d3d_parent->wined3d_outputs[output_idx],
             present_parameters, device->d3d_parent->extended))
         return D3DERR_INVALIDCALL;
+    wined3d_device_get_creation_parameters(device->wined3d_device, &creation_parameters);
+    if (creation_parameters.flags & WINED3DCREATE_NOWINDOWCHANGES)
+        desc.flags |= WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES;
     swap_interval = wined3dswapinterval_from_d3d(present_parameters->PresentationInterval);
     if (SUCCEEDED(hr = d3d9_swapchain_create(device, &desc, swap_interval, &object)))
         *swapchain = (IDirect3DSwapChain9 *)&object->IDirect3DSwapChain9Ex_iface;
@@ -4780,6 +4784,8 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
             return D3DERR_INVALIDCALL;
         }
         swapchain_desc[i].flags |= WINED3D_SWAPCHAIN_IMPLICIT;
+        if (flags & D3DCREATE_NOWINDOWCHANGES)
+            swapchain_desc[i].flags |= WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES;
     }
 
     if (FAILED(hr = d3d9_swapchain_create(device, swapchain_desc,

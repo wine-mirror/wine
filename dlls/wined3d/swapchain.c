@@ -2065,6 +2065,7 @@ static LONG fullscreen_exstyle(LONG exstyle)
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, int x, int y, int width, int height)
 {
+    unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE;
     LONG style, exstyle;
     BOOL filter;
 
@@ -2082,6 +2083,9 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
                 window, state->style, state->exstyle);
     }
 
+    if (state->desc.flags & WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES)
+        window_pos_flags |= SWP_NOZORDER;
+
     state->style = GetWindowLongW(window, GWL_STYLE);
     state->exstyle = GetWindowLongW(window, GWL_EXSTYLE);
 
@@ -2095,8 +2099,7 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
 
     SetWindowLongW(window, GWL_STYLE, style);
     SetWindowLongW(window, GWL_EXSTYLE, exstyle);
-    SetWindowPos(window, HWND_TOPMOST, x, y, width, height,
-            SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+    SetWindowPos(window, HWND_TOPMOST, x, y, width, height, window_pos_flags);
 
     wined3d_filter_messages(window, filter);
 

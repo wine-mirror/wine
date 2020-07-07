@@ -905,6 +905,7 @@ enum wined3d_shader_type
 #define WINED3D_SWAPCHAIN_GDI_COMPATIBLE                        0x00008000u
 #define WINED3D_SWAPCHAIN_IMPLICIT                              0x00010000u
 #define WINED3D_SWAPCHAIN_HOOK                                  0x00020000u
+#define WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES                     0x00040000u
 
 #define WINED3DDP_MAXTEXCOORD                                   8
 
