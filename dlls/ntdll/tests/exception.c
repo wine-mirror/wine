@@ -3912,9 +3912,6 @@ START_TEST(exception)
     test_dpe_exceptions();
     test_prot_fault();
     test_thread_context();
-    test_suspend_thread();
-    test_suspend_process();
-    test_unload_trace();
     test_kiuserexceptiondispatcher();
 
     /* Call of Duty WWII writes to BeingDebugged then closes an invalid handle,
@@ -3957,9 +3954,6 @@ START_TEST(exception)
     test_prot_fault();
     test_dpe_exceptions();
     test_wow64_context();
-    test_suspend_thread();
-    test_suspend_process();
-    test_unload_trace();
     test_kiuserexceptiondispatcher();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
@@ -3975,5 +3969,8 @@ START_TEST(exception)
 
 #endif
 
+    test_suspend_thread();
+    test_suspend_process();
+    test_unload_trace();
     VirtualFree(code_mem, 0, MEM_RELEASE);
 }
