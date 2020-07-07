@@ -1829,6 +1829,7 @@ DECL_HANDLER(list_processes)
 
         pos = (pos + 7) & ~7;
         process_info = (struct process_info *)(buffer + pos);
+        process_info->start_time = process->start_time;
         process_info->name_len = exe ? exe->namelen : 0;
         process_info->thread_count = process->running_threads;
         process_info->priority = process->priority;

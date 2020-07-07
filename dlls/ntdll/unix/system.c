@@ -2140,6 +2140,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 memset(nt_process, 0, sizeof(*nt_process));
                 if (i < process_count - 1)
                     nt_process->NextEntryOffset = proc_len;
+                nt_process->CreationTime.QuadPart = server_process->start_time;
                 nt_process->dwThreadCount = server_process->thread_count;
                 nt_process->dwBasePriority = server_process->priority;
                 nt_process->UniqueProcessId = UlongToHandle(server_process->pid);
