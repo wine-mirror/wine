@@ -4939,12 +4939,14 @@ static void test_window_style(void)
     static const struct
     {
         DWORD device_flags;
-        LONG style, focus_loss_style, exstyle;
+        LONG create_style, style, focus_loss_style, exstyle, focus_loss_exstyle;
     }
     tests[] =
     {
-        {0,                                 WS_VISIBLE, WS_MINIMIZE,    WS_EX_TOPMOST},
-        {CREATE_DEVICE_NOWINDOWCHANGES,     0,          0,              0},
+        {0,                                 0,          WS_VISIBLE, WS_MINIMIZE,    WS_EX_TOPMOST, WS_EX_TOPMOST},
+        {0,                                 WS_VISIBLE, WS_VISIBLE, WS_MINIMIZE,    0,             WS_EX_TOPMOST},
+        {CREATE_DEVICE_NOWINDOWCHANGES,     0,          0,          0,              0,             0},
+        {CREATE_DEVICE_NOWINDOWCHANGES,     WS_VISIBLE, WS_VISIBLE, 0,              0,             0},
     };
     unsigned int i;
 
@@ -4954,9 +4956,9 @@ static void test_window_style(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+        focus_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].create_style,
                 0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
-        device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+        device_window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | tests[i].create_style,
                 0, 0, registry_mode.dmPelsWidth / 2, registry_mode.dmPelsHeight / 2, 0, 0, 0, 0);
 
         device_style = GetWindowLongA(device_window, GWL_STYLE);
@@ -5018,12 +5020,12 @@ static void test_window_style(void)
 
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style | tests[i].style;
-        todo_wine_if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+        todo_wine_if ((tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES) && !(tests[i].create_style & WS_VISIBLE))
             ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
                     expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
         expected_style = device_exstyle | tests[i].exstyle;
-        todo_wine_if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+        todo_wine_if ((tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES) || (tests[i].create_style & WS_VISIBLE))
             ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
                     expected_style, style, i);
 
@@ -5045,7 +5047,7 @@ static void test_window_style(void)
         todo_wine ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
-        expected_style = device_exstyle | tests[i].exstyle;
+        expected_style = device_exstyle | tests[i].focus_loss_exstyle | tests[i].exstyle;
         todo_wine ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
 
