@@ -31,6 +31,9 @@
 /* IOCTL_CONDRV_GET_INPUT_INFO result */
 struct condrv_input_info
 {
+    unsigned int  history_mode;   /* whether we duplicate lines in history */
+    unsigned int  history_size;   /* number of lines in history */
+    unsigned int  edition_mode;   /* index to the edition mode flavors */
     unsigned int  input_count;    /* number of available input records */
 };
 

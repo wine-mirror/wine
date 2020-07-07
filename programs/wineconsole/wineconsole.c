@@ -27,6 +27,7 @@
 #include "winecon_private.h"
 #include "winnls.h"
 #include "winuser.h"
+#include "wine/condrv.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -603,19 +604,16 @@ static void WINECON_Delete(struct inner_data* data)
  */
 static BOOL WINECON_GetServerConfig(struct inner_data* data)
 {
+    struct condrv_input_info input_info;
     BOOL  ret;
     DWORD mode;
 
-    SERVER_START_REQ(get_console_input_info)
-    {
-        req->handle = wine_server_obj_handle( data->hConIn );
-        ret = !wine_server_call_err( req );
-        data->curcfg.history_size = reply->history_size;
-        data->curcfg.history_nodup = reply->history_mode;
-        data->curcfg.edition_mode = reply->edition_mode;
-    }
-    SERVER_END_REQ;
-    if (!ret) return FALSE;
+    if (!DeviceIoControl(data->hConIn, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0,
+                         &input_info, sizeof(input_info), NULL, NULL))
+        return FALSE;
+    data->curcfg.history_size  = input_info.history_size;
+    data->curcfg.history_nodup = input_info.history_mode;
+    data->curcfg.edition_mode  = input_info.edition_mode;
 
     GetConsoleMode(data->hConIn, &mode);
     data->curcfg.insert_mode = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==

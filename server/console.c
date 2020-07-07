@@ -1554,7 +1554,10 @@ static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
                 set_error( STATUS_INVALID_PARAMETER );
                 return 0;
             }
-            info.input_count = console->recnum;
+            info.history_mode  = console->history_mode;
+            info.history_size  = console->history_size;
+            info.edition_mode  = console->edition_mode;
+            info.input_count   = console->recnum;
             return set_reply_data( &info, sizeof(info) ) != NULL;
         }
 
