@@ -175,9 +175,10 @@ struct strarray
 #define FLAG_REGISTER  0x0010  /* use register calling convention */
 #define FLAG_PRIVATE   0x0020  /* function is private (cannot be imported) */
 #define FLAG_ORDINAL   0x0040  /* function should be imported by ordinal */
-#define FLAG_THISCALL  0x0080  /* use thiscall calling convention */
-#define FLAG_FASTCALL  0x0100  /* use fastcall calling convention */
-#define FLAG_IMPORT    0x0200  /* export is imported from another module */
+#define FLAG_THISCALL  0x0080  /* function uses thiscall calling convention */
+#define FLAG_FASTCALL  0x0100  /* function uses fastcall calling convention */
+#define FLAG_SYSCALL   0x0200  /* function is a system call */
+#define FLAG_IMPORT    0x0400  /* export is imported from another module */
 
 #define FLAG_FORWARD   0x1000  /* function is a forwarded name */
 #define FLAG_EXT_LINK  0x2000  /* function links to an external symbol */

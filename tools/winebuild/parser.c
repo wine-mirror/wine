@@ -70,6 +70,7 @@ static const char * const FlagNames[] =
     "ordinal",     /* FLAG_ORDINAL */
     "thiscall",    /* FLAG_THISCALL */
     "fastcall",    /* FLAG_FASTCALL */
+    "syscall",     /* FLAG_SYCALL */
     "import",      /* FLAG_IMPORT */
     NULL
 };
@@ -317,6 +318,14 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
         if (i > 1 && odp->u.func.args[1] != ARG_PTR && odp->u.func.args[1] != ARG_LONG)
         {
             error( "Second argument of a fastcall function must be a pointer or integer\n" );
+            return 0;
+        }
+    }
+    if (odp->flags & FLAG_SYSCALL)
+    {
+        if (odp->type != TYPE_STDCALL)
+        {
+            error( "A syscall function must use the stdcall convention\n" );
             return 0;
         }
     }

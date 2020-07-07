@@ -338,6 +338,12 @@ The function uses the
 calling convention (first two parameters in %ecx/%edx registers on
 i386).
 .TP
+.B -syscall
+The function is an NT system call. A system call thunk will be
+generated, and the actual function will be called by the
+\fI__wine_syscall_dispatcher\fR function that will be generated on the
+Unix library side.
+.TP
 .B -import
 The function is imported from another module. This can be used instead
 of a
