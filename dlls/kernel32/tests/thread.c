@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <float.h>
+#include <math.h>
 
 /* the tests intentionally pass invalid pointers and need an exception handler */
 #define WINE_NO_INLINE_STRING
@@ -1829,6 +1830,28 @@ static inline unsigned long get_fpu_cw(void)
 #endif
 }
 
+static inline void fpu_invalid_operation(void)
+{
+    double d;
+
+#if defined(__i386__)
+    unsigned int sse;
+#ifdef _MSC_VER
+    __asm { stmxcsr [sse] }
+    sse |= 1; /* invalid operation flag */
+    __asm { ldmxcsr [sse] }
+#else
+    __asm__ volatile ("stmxcsr %0" : "=m" (sse));
+    sse |= 1;
+    __asm__ volatile ("ldmxcsr %0" : : "m" (sse));
+#endif
+#endif
+
+    d = acos(2.0);
+    ok(_isnan(d), "d = %lf\n", d);
+    ok(_statusfp() == _SW_INVALID, "_statusfp() = %x\n", _statusfp());
+}
+
 static DWORD WINAPI fpu_thread(void *param)
 {
     struct fpu_thread_ctx *ctx = param;
@@ -1870,7 +1893,7 @@ static void test_thread_fpu_cw(void)
 {
     static const struct {
         unsigned int cw; unsigned long fpu_cw; unsigned long fpu_cw_broken;
-    } expected_cw[6] =
+    } expected_cw[8] =
     {
 #ifdef __i386__
         { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
@@ -1878,20 +1901,26 @@ static void test_thread_fpu_cw(void)
         { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ), MAKELONG( 0xc60, 0x1f80 ) },
         { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
         { _EM_INEXACT | _RC_CHOP | _PC_24, MAKELONG( 0xc60, 0x7000 ), MAKELONG( 0xc60, 0x1f80 ) },
-        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) }
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f80 ) },
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f81 ) },
+        { _MCW_EM | _PC_53, MAKELONG( 0x27f, 0x1f81 ) }
 #elif defined(__x86_64__)
         { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
         { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
         { _EM_INEXACT | _RC_CHOP | _PC_64, MAKELONG( 0x27f, 0x7000 ) },
         { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
         { _EM_INEXACT | _RC_CHOP | _PC_64, MAKELONG( 0x27f, 0x7000 ) },
-        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) }
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f80 ) },
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f81 ) },
+        { _MCW_EM | _PC_64, MAKELONG( 0x27f, 0x1f81 ) }
 #elif defined(__aarch64__)
         { _MCW_EM | _PC_64, 0 },
         { _MCW_EM | _PC_64, 0 },
         { _EM_INEXACT | _RC_CHOP | _PC_64, 0xc08f00 },
         { _MCW_EM | _PC_64, 0 },
         { _EM_INEXACT | _RC_CHOP | _PC_64, 0xc08f00 },
+        { _MCW_EM | _PC_64, 0 },
+        { _MCW_EM | _PC_64, 0 },
         { _MCW_EM | _PC_64, 0 }
 #else
         { 0xdeadbeef, 0xdeadbeef }
@@ -1933,6 +1962,18 @@ static void test_thread_fpu_cw(void)
     fpu_cw = get_fpu_cw();
     ok(cw == expected_cw[5].cw, "expected %#x got %#x\n", expected_cw[5].cw, cw);
     ok(fpu_cw == expected_cw[5].fpu_cw, "expected %#lx got %#lx\n", expected_cw[5].fpu_cw, fpu_cw);
+
+    fpu_invalid_operation();
+    cw = _control87( 0, 0 );
+    fpu_cw = get_fpu_cw();
+    ok(cw == expected_cw[6].cw, "expected %#x got %#x\n", expected_cw[6].cw, cw);
+    ok(fpu_cw == expected_cw[6].fpu_cw, "expected %#lx got %#lx\n", expected_cw[6].fpu_cw, fpu_cw);
+
+    cw = _control87( initial_cw, _MCW_EM | _MCW_RC | _MCW_PC );
+    fpu_cw = get_fpu_cw();
+    ok(cw == expected_cw[7].cw, "expected %#x got %#x\n", expected_cw[6].cw, cw);
+    ok(fpu_cw == expected_cw[7].fpu_cw, "expected %#lx got %#lx\n", expected_cw[6].fpu_cw, fpu_cw);
+    _clearfp();
 }
 
 static const char manifest_dep[] =
