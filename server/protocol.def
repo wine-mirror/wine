@@ -1697,14 +1697,6 @@ struct console_renderer_event
     VARARG(face_name,unicode_str);  /* font face name */
 @END
 
-/* Add input records to a console input queue */
-@REQ(write_console_input)
-    obj_handle_t handle;        /* handle to the console input */
-    VARARG(rec,input_records);  /* input records */
-@REPLY
-    int          written;       /* number of records written */
-@END
-
 
 /* write data (chars and/or attributes) in a screen buffer */
 @REQ(write_console_output)

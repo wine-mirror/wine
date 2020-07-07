@@ -755,12 +755,12 @@ static int write_console_input( struct console_input* console, int count,
     INPUT_RECORD *new_rec;
     struct async *async;
 
-    if (!count) return 0;
+    if (!count) return 1;
     if (!(new_rec = realloc( console->records,
                              (console->recnum + count) * sizeof(INPUT_RECORD) )))
     {
         set_error( STATUS_NO_MEMORY );
-        return -1;
+        return 0;
     }
     console->records = new_rec;
     memcpy( new_rec + console->recnum, records, count * sizeof(INPUT_RECORD) );
@@ -795,7 +795,7 @@ static int write_console_input( struct console_input* console, int count,
         release_object( async );
     }
     if (console->recnum) set_event( console->event );
-    return count;
+    return 1;
 }
 
 /* set misc console input information */
@@ -1538,7 +1538,7 @@ static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
         }
 
     case IOCTL_CONDRV_WRITE_INPUT:
-        return write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD), get_req_data() ) != -1;
+        return write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD), get_req_data() );
 
     case IOCTL_CONDRV_PEEK:
         if (get_reply_max_size() % sizeof(INPUT_RECORD))
@@ -1843,20 +1843,6 @@ DECL_HANDLER(get_console_mode)
 DECL_HANDLER(set_console_mode)
 {
     set_console_mode( req->handle, req->mode );
-}
-
-/* add input records to a console input queue */
-DECL_HANDLER(write_console_input)
-{
-    struct console_input *console;
-
-    reply->written = 0;
-    if (!(console = (struct console_input *)get_handle_obj( current->process, req->handle,
-                                                            FILE_WRITE_PROPERTIES, &console_input_ops )))
-        return;
-    reply->written = write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD),
-                                          get_req_data() );
-    release_object( console );
 }
 
 /* appends a string to console's history */

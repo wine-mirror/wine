@@ -2148,20 +2148,6 @@ struct get_console_output_info_reply
 };
 
 
-struct write_console_input_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    /* VARARG(rec,input_records); */
-};
-struct write_console_input_reply
-{
-    struct reply_header __header;
-    int          written;
-    char __pad_12[4];
-};
-
-
 
 struct write_console_output_request
 {
@@ -5847,7 +5833,6 @@ enum request
     REQ_create_console_output,
     REQ_set_console_output_info,
     REQ_get_console_output_info,
-    REQ_write_console_input,
     REQ_write_console_output,
     REQ_fill_console_output,
     REQ_read_console_output,
@@ -6148,7 +6133,6 @@ union generic_request
     struct create_console_output_request create_console_output_request;
     struct set_console_output_info_request set_console_output_info_request;
     struct get_console_output_info_request get_console_output_info_request;
-    struct write_console_input_request write_console_input_request;
     struct write_console_output_request write_console_output_request;
     struct fill_console_output_request fill_console_output_request;
     struct read_console_output_request read_console_output_request;
@@ -6447,7 +6431,6 @@ union generic_reply
     struct create_console_output_reply create_console_output_reply;
     struct set_console_output_info_reply set_console_output_info_reply;
     struct get_console_output_info_reply get_console_output_info_reply;
-    struct write_console_input_reply write_console_input_reply;
     struct write_console_output_reply write_console_output_reply;
     struct fill_console_output_reply fill_console_output_reply;
     struct read_console_output_reply read_console_output_reply;
@@ -6669,7 +6652,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 617
+#define SERVER_PROTOCOL_VERSION 618
 
 /* ### protocol_version end ### */
 
