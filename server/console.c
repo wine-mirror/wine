@@ -1537,6 +1537,9 @@ static int console_ioctl( struct fd *fd, ioctl_code_t code, struct async *async 
             return read_console_input( console, async, 1 );
         }
 
+    case IOCTL_CONDRV_WRITE_INPUT:
+        return write_console_input( console, get_req_data_size() / sizeof(INPUT_RECORD), get_req_data() ) != -1;
+
     case IOCTL_CONDRV_PEEK:
         if (get_reply_max_size() % sizeof(INPUT_RECORD))
         {
