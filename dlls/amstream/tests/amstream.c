@@ -894,8 +894,6 @@ static void test_add_stream(void)
         hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(!!graph, "Got graph %p.\n", graph);
-        hr = IAMMultiMediaStream_GetFilter(mmstream, &stream_filter);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IGraphBuilder_EnumFilters(graph, &enum_filters);
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         hr = IEnumFilters_Next(enum_filters, 3, filters, &count);
@@ -907,7 +905,7 @@ static void test_add_stream(void)
         ok(hr == S_OK, "Got hr %#x.\n", hr);
         ok(IsEqualGUID(&clsid, &CLSID_DSoundRender), "Got unexpected filter %s.\n", wine_dbgstr_guid(&clsid));
         IBaseFilter_Release(filters[0]);
-        IMediaStreamFilter_Release(stream_filter);
+        IBaseFilter_Release(filters[1]);
         IEnumFilters_Release(enum_filters);
         IGraphBuilder_Release(graph);
     }
@@ -919,8 +917,9 @@ static void test_add_stream(void)
             AMMSF_ADDDEFAULTRENDERER, &audio_stream);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
 
-    IMediaStreamFilter_Release(stream_filter);
     ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(stream_filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
