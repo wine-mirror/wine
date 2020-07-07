@@ -349,6 +349,8 @@ static BOOL wined3d_swapchain_desc_from_d3d9(struct wined3d_swapchain_desc *swap
             = wined3dformat_from_d3dformat(present_parameters->AutoDepthStencilFormat);
     swapchain_desc->flags
             = (present_parameters->Flags & D3DPRESENTFLAGS_MASK) | WINED3D_SWAPCHAIN_ALLOW_MODE_SWITCH;
+    if (extended)
+        swapchain_desc->flags |= WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE;
     if ((present_parameters->Flags & D3DPRESENTFLAG_LOCKABLE_BACKBUFFER)
             && (is_gdi_compat_wined3dformat(swapchain_desc->backbuffer_format)
             /* WINED3DFMT_UNKNOWN creates the swapchain with the current

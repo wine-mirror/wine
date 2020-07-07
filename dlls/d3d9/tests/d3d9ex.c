@@ -3569,12 +3569,10 @@ static void test_window_style(void)
 
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style;
-        todo_wine_if (!(tests[i].style_flags & WS_VISIBLE) && !(tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES))
-            ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
-                    expected_style, style, i);
+        ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
         expected_style = device_exstyle;
-        todo_wine_if (!(tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES))
         ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
 
@@ -3590,12 +3588,10 @@ static void test_window_style(void)
 
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style;
-        todo_wine_if (!(tests[i].style_flags & WS_VISIBLE) && !(tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES))
-            ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
-                    expected_style, style, i);
+        ok(style == expected_style, "Expected device window style %#x, got %#x, i=%u.\n",
+                expected_style, style, i);
         style = GetWindowLongA(device_window, GWL_EXSTYLE);
         expected_style = device_exstyle;
-        todo_wine_if (!(tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES))
         ok(style == expected_style, "Expected device window extended style %#x, got %#x, i=%u.\n",
                 expected_style, style, i);
 
