@@ -230,45 +230,44 @@ static DWORD WINAPI get_id_thread(void* curr_pid)
     ok(found == FALSE, "The thread order is not strictly consistent\n");
 
     /* Determine the order by NtQuerySystemInformation function */
-    pcs_buffer = NULL;
-    status = pNtQuerySystemInformation(SystemProcessInformation, pcs_buffer, buf_size, &buf_size);
-    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Failed with %x\n", status);
-    if (status == STATUS_INFO_LENGTH_MISMATCH)
+
+    while ((status = NtQuerySystemInformation(SystemProcessInformation,
+            pcs_buffer, buf_size, &buf_size)) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        pcs_buffer = HeapAlloc(GetProcessHeap(), 0, buf_size);
-        ok(pcs_buffer != NULL, "Unable to allocate space\n");
-        found = FALSE;
-        matched_idx = -1;
+        free(pcs_buffer);
+        pcs_buffer = malloc(buf_size);
+    }
+    ok(status == STATUS_SUCCESS, "got %#x\n", status);
+    found = FALSE;
+    matched_idx = -1;
 
-        status = NtQuerySystemInformation(SystemProcessInformation, pcs_buffer, buf_size, &buf_size);
-        do {
-            spi = (SYSTEM_PROCESS_INFORMATION*)&pcs_buffer[pcs_offset];
-            if (spi->UniqueProcessId == curr_pid)
-            {
-                found = TRUE;
-                break;
-            }
-            pcs_offset += spi->NextEntryOffset;
-        } while (spi->NextEntryOffset != 0);
-
-        ok(found && spi, "No process found\n");
-        for (i = 0; i < spi->dwThreadCount; i++)
+    do
+    {
+        spi = (SYSTEM_PROCESS_INFORMATION*)&pcs_buffer[pcs_offset];
+        if (spi->UniqueProcessId == curr_pid)
         {
-            tid = HandleToULong(spi->ti[i].ClientId.UniqueThread);
-            if (matched_idx > 0)
-            {
-                thread_traversed[matched_idx++] = tid;
-                if (matched_idx >= NUM_THREADS) break;
-            }
-            else if (tid == thread_ids[0])
-            {
-                matched_idx = 0;
-                thread_traversed[matched_idx++] = tid;
-            }
+            found = TRUE;
+            break;
         }
-	}
-    if (pcs_buffer)
-        HeapFree(GetProcessHeap(), 0, pcs_buffer);
+        pcs_offset += spi->NextEntryOffset;
+    } while (spi->NextEntryOffset != 0);
+
+    ok(found && spi, "No process found\n");
+    for (i = 0; i < spi->dwThreadCount; i++)
+    {
+        tid = HandleToULong(spi->ti[i].ClientId.UniqueThread);
+        if (matched_idx > 0)
+        {
+            thread_traversed[matched_idx++] = tid;
+            if (matched_idx >= NUM_THREADS) break;
+        }
+        else if (tid == thread_ids[0])
+        {
+            matched_idx = 0;
+            thread_traversed[matched_idx++] = tid;
+        }
+    }
+    free(pcs_buffer);
 
     ok(matched_idx > 0, "No thread id match found\n");
 
