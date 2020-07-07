@@ -340,6 +340,8 @@ static BOOL output_belongs_to_adapter(IDXGIOutput *output, IDXGIAdapter *adapter
 
 struct fullscreen_state
 {
+    DWORD style;
+    DWORD exstyle;
     RECT window_rect;
     RECT client_rect;
     HMONITOR monitor;
@@ -359,6 +361,9 @@ static void capture_fullscreen_state_(unsigned int line, struct fullscreen_state
     MONITORINFOEXW monitor_info;
     BOOL ret;
 
+    state->style = GetWindowLongA(window, GWL_STYLE);
+    state->exstyle = GetWindowLongA(window, GWL_EXSTYLE);
+
     ret = GetWindowRect(window, &state->window_rect);
     ok_(__FILE__, line)(ret, "GetWindowRect failed.\n");
     ret = GetClientRect(window, &state->client_rect);
@@ -373,10 +378,16 @@ static void capture_fullscreen_state_(unsigned int line, struct fullscreen_state
     state->monitor_rect = monitor_info.rcMonitor;
 }
 
-#define check_fullscreen_state(a, b) check_fullscreen_state_(__LINE__, a, b)
 static void check_fullscreen_state_(unsigned int line, const struct fullscreen_state *state,
-        const struct fullscreen_state *expected_state)
+        const struct fullscreen_state *expected_state, BOOL windowed)
 {
+    todo_wine_if(!windowed)
+    ok_(__FILE__, line)((state->style & ~WS_VISIBLE) == (expected_state->style & ~WS_VISIBLE),
+            "Got style %#x, expected %#x.\n",
+            state->style & ~(DWORD)WS_VISIBLE, expected_state->style & ~(DWORD)WS_VISIBLE);
+    ok_(__FILE__, line)((state->exstyle & ~WS_EX_TOPMOST) == (expected_state->exstyle & ~WS_EX_TOPMOST),
+            "Got exstyle %#x, expected %#x.\n",
+            state->exstyle & ~(DWORD)WS_EX_TOPMOST, expected_state->exstyle & ~(DWORD)WS_EX_TOPMOST);
     ok_(__FILE__, line)(EqualRect(&state->window_rect, &expected_state->window_rect),
             "Got window rect %s, expected %s.\n",
             wine_dbgstr_rect(&state->window_rect), wine_dbgstr_rect(&expected_state->window_rect));
@@ -391,13 +402,13 @@ static void check_fullscreen_state_(unsigned int line, const struct fullscreen_s
             wine_dbgstr_rect(&state->monitor_rect), wine_dbgstr_rect(&expected_state->monitor_rect));
 }
 
-#define check_window_fullscreen_state(a, b) check_window_fullscreen_state_(__LINE__, a, b)
+#define check_window_fullscreen_state(a, b) check_window_fullscreen_state_(__LINE__, a, b, TRUE)
 static void check_window_fullscreen_state_(unsigned int line, HWND window,
-        const struct fullscreen_state *expected_state)
+        const struct fullscreen_state *expected_state, BOOL windowed)
 {
     struct fullscreen_state current_state;
     capture_fullscreen_state_(line, &current_state, window);
-    check_fullscreen_state_(line, &current_state, expected_state);
+    check_fullscreen_state_(line, &current_state, expected_state, windowed);
 }
 
 #define check_swapchain_fullscreen_state(a, b) check_swapchain_fullscreen_state_(__LINE__, a, b)
@@ -411,7 +422,8 @@ static void check_swapchain_fullscreen_state_(unsigned int line, IDXGISwapChain 
 
     hr = IDXGISwapChain_GetDesc(swapchain, &swapchain_desc);
     ok_(__FILE__, line)(hr == S_OK, "Failed to get swapchain desc, hr %#x.\n", hr);
-    check_window_fullscreen_state_(line, swapchain_desc.OutputWindow, &expected_state->fullscreen_state);
+    check_window_fullscreen_state_(line, swapchain_desc.OutputWindow,
+            &expected_state->fullscreen_state, swapchain_desc.Windowed);
 
     ok_(__FILE__, line)(swapchain_desc.Windowed == !expected_state->fullscreen,
             "Got windowed %#x, expected %#x.\n",
@@ -475,6 +487,9 @@ static void compute_expected_swapchain_fullscreen_state_after_fullscreen_change_
         new_width = mode_desc.Width;
         new_height = mode_desc.Height;
     }
+
+    state->fullscreen_state.style &= WS_VISIBLE | WS_CLIPSIBLINGS;
+    state->fullscreen_state.exstyle &= WS_EX_TOPMOST;
 
     state->fullscreen = TRUE;
     if (swapchain_desc->Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH)
@@ -1947,6 +1962,8 @@ static void test_create_swapchain(void)
     creation_desc.OutputWindow = CreateWindowA("static", "dxgi_test",
             WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
             0, 0, 222, 222, 0, 0, 0, 0);
+    expected_state.fullscreen_state.style = WS_CLIPSIBLINGS | WS_CAPTION
+            | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
     SetRect(&expected_state.fullscreen_state.window_rect, 0, 0, 222, 222);
     GetClientRect(creation_desc.OutputWindow, expected_client_rect);
     expected_width = expected_client_rect->right;
@@ -1969,6 +1986,8 @@ static void test_create_swapchain(void)
     creation_desc.OutputWindow = CreateWindowA("static", "dxgi_test",
             WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
             1, 1, 0, 0, 0, 0, 0, 0);
+    expected_state.fullscreen_state.style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+    expected_state.fullscreen_state.exstyle = 0;
     SetRect(&expected_state.fullscreen_state.window_rect, 1, 1, 1, 1);
     SetRectEmpty(expected_client_rect);
     expected_width = expected_height = 8;
@@ -5772,12 +5791,22 @@ static void test_swapchain_window_styles(void)
          WS_EX_WINDOWEDGE},
         {WS_OVERLAPPED | WS_VISIBLE, 0,
          WS_OVERLAPPED | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION, WS_EX_WINDOWEDGE},
+        {WS_OVERLAPPED | WS_MAXIMIZE, 0,
+         WS_OVERLAPPED | WS_MAXIMIZE | WS_CLIPSIBLINGS | WS_CAPTION, WS_EX_WINDOWEDGE},
+        {WS_OVERLAPPED | WS_MINIMIZE, 0,
+         WS_OVERLAPPED | WS_MINIMIZE | WS_CLIPSIBLINGS | WS_CAPTION, WS_EX_WINDOWEDGE},
         {WS_CAPTION | WS_DISABLED, WS_EX_TOPMOST,
          WS_CAPTION | WS_DISABLED | WS_CLIPSIBLINGS, WS_EX_TOPMOST | WS_EX_WINDOWEDGE},
         {WS_CAPTION | WS_DISABLED | WS_VISIBLE, WS_EX_TOPMOST,
          WS_CAPTION | WS_DISABLED | WS_VISIBLE | WS_CLIPSIBLINGS, WS_EX_TOPMOST | WS_EX_WINDOWEDGE},
         {WS_CAPTION | WS_SYSMENU | WS_VISIBLE, WS_EX_APPWINDOW,
          WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS, WS_EX_APPWINDOW | WS_EX_WINDOWEDGE},
+        {WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_BORDER | WS_DLGFRAME
+         | WS_VSCROLL | WS_HSCROLL | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+         0,
+         WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_BORDER | WS_DLGFRAME
+         | WS_VSCROLL | WS_HSCROLL | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+         WS_EX_WINDOWEDGE},
     };
 
     if (!(device = create_device(0)))
@@ -5819,8 +5848,11 @@ static void test_swapchain_window_styles(void)
         ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
                 i, exstyle, tests[i].expected_exstyle);
 
-        fullscreen_style = tests[i].expected_style & (WS_VISIBLE | WS_DISABLED | WS_CLIPSIBLINGS);
-        fullscreen_exstyle = (tests[i].expected_exstyle & WS_EX_APPWINDOW) | WS_EX_TOPMOST;
+        fullscreen_style = tests[i].expected_style & ~(WS_POPUP | WS_MAXIMIZEBOX
+                | WS_MINIMIZEBOX | WS_THICKFRAME | WS_SYSMENU | WS_DLGFRAME | WS_BORDER);
+        fullscreen_exstyle = tests[i].expected_exstyle & ~(WS_EX_DLGMODALFRAME
+                | WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_CONTEXTHELP);
+        fullscreen_exstyle |= WS_EX_TOPMOST;
 
         hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
         ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
@@ -5863,15 +5895,49 @@ static void test_swapchain_window_styles(void)
         ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
                 i, exstyle, tests[i].expected_exstyle);
 
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+        ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+                || broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
+                "Failed to set fullscreen state, hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+            exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+            todo_wine
+            ok(style == fullscreen_style, "Test %u: Got style %#x, expected %#x.\n",
+                    i, style, fullscreen_style);
+            ok(exstyle == fullscreen_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                    i, exstyle, fullscreen_exstyle);
+
+            SetWindowLongW(swapchain_desc.OutputWindow, GWL_STYLE, fullscreen_style);
+            SetWindowLongW(swapchain_desc.OutputWindow, GWL_EXSTYLE, fullscreen_exstyle);
+
+            hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+            ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+            style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
+            exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
+            todo_wine
+            ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
+                    i, style, tests[i].expected_style);
+            todo_wine
+            ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
+                    i, exstyle, tests[i].expected_exstyle);
+        }
+        else
+        {
+            skip("Test %u: Could not change fullscreen state.\n", i);
+        }
+
         refcount = IDXGISwapChain_Release(swapchain);
         ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
 
         style = GetWindowLongA(swapchain_desc.OutputWindow, GWL_STYLE);
         exstyle = GetWindowLongA(swapchain_desc.OutputWindow, GWL_EXSTYLE);
-        todo_wine_if(!(tests[i].expected_style & WS_VISIBLE))
+        todo_wine
         ok(style == tests[i].expected_style, "Test %u: Got style %#x, expected %#x.\n",
                 i, style, tests[i].expected_style);
-        todo_wine_if(!(tests[i].expected_exstyle & WS_EX_TOPMOST))
+        todo_wine
         ok(exstyle == tests[i].expected_exstyle, "Test %u: Got exstyle %#x, expected %#x.\n",
                 i, exstyle, tests[i].expected_exstyle);
 
