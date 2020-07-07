@@ -284,6 +284,19 @@ static BOOL type_is_void(const struct hlsl_type *type)
     return type->type == HLSL_CLASS_OBJECT && type->base_type == HLSL_TYPE_VOID;
 }
 
+static struct hlsl_ir_if *new_if(struct hlsl_ir_node *condition, struct source_location loc)
+{
+    struct hlsl_ir_if *iff;
+
+    if (!(iff = d3dcompiler_alloc(sizeof(*iff))))
+        return NULL;
+    init_node(&iff->node, HLSL_IR_IF, NULL, loc);
+    hlsl_src_from_node(&iff->condition, condition);
+    list_init(&iff->then_instrs);
+    list_init(&iff->else_instrs);
+    return iff;
+}
+
 static BOOL append_conditional_break(struct list *cond_list)
 {
     struct hlsl_ir_node *condition, *not;
@@ -302,21 +315,12 @@ static BOOL append_conditional_break(struct list *cond_list)
     }
     list_add_tail(cond_list, &not->entry);
 
-    if (!(iff = d3dcompiler_alloc(sizeof(*iff))))
+    if (!(iff = new_if(not, condition->loc)))
     {
         ERR("Out of memory.\n");
         return FALSE;
     }
-    init_node(&iff->node, HLSL_IR_IF, NULL, condition->loc);
-    hlsl_src_from_node(&iff->condition, not);
     list_add_tail(cond_list, &iff->node.entry);
-
-    if (!(iff->then_instrs = d3dcompiler_alloc(sizeof(*iff->then_instrs))))
-    {
-        ERR("Out of memory.\n");
-        return FALSE;
-    }
-    list_init(iff->then_instrs);
 
     if (!(jump = d3dcompiler_alloc(sizeof(*jump))))
     {
@@ -325,7 +329,7 @@ static BOOL append_conditional_break(struct list *cond_list)
     }
     init_node(&jump->node, HLSL_IR_JUMP, NULL, condition->loc);
     jump->type = HLSL_IR_JUMP_BREAK;
-    list_add_head(iff->then_instrs, &jump->node.entry);
+    list_add_head(&iff->then_instrs, &jump->node.entry);
     return TRUE;
 }
 
@@ -2211,18 +2215,15 @@ jump_statement:
 
 selection_statement:      KW_IF '(' expr ')' if_body
                             {
-                                struct hlsl_ir_if *instr = d3dcompiler_alloc(sizeof(*instr));
                                 struct hlsl_ir_node *condition = node_from_list($3);
+                                struct hlsl_ir_if *instr;
 
-                                if (!instr)
-                                {
-                                    ERR("Out of memory\n");
+                                if (!(instr = new_if(condition, get_location(&@1))))
                                     YYABORT;
-                                }
-                                init_node(&instr->node, HLSL_IR_IF, NULL, get_location(&@1));
-                                hlsl_src_from_node(&instr->condition, condition);
-                                instr->then_instrs = $5.then_instrs;
-                                instr->else_instrs = $5.else_instrs;
+                                list_move_tail(&instr->then_instrs, $5.then_instrs);
+                                list_move_tail(&instr->else_instrs, $5.else_instrs);
+                                d3dcompiler_free($5.then_instrs);
+                                d3dcompiler_free($5.else_instrs);
                                 if (condition->data_type->dimx > 1 || condition->data_type->dimy > 1)
                                 {
                                     hlsl_report_message(instr->node.loc, HLSL_LEVEL_ERROR,
@@ -2851,9 +2852,8 @@ static unsigned int index_instructions(struct list *instrs, unsigned int index)
         if (instr->type == HLSL_IR_IF)
         {
             struct hlsl_ir_if *iff = if_from_node(instr);
-            index = index_instructions(iff->then_instrs, index);
-            if (iff->else_instrs)
-                index = index_instructions(iff->else_instrs, index);
+            index = index_instructions(&iff->then_instrs, index);
+            index = index_instructions(&iff->else_instrs, index);
         }
         else if (instr->type == HLSL_IR_LOOP)
         {
@@ -2902,9 +2902,8 @@ static void compute_liveness_recurse(struct list *instrs, unsigned int loop_firs
         case HLSL_IR_IF:
         {
             struct hlsl_ir_if *iff = if_from_node(instr);
-            compute_liveness_recurse(iff->then_instrs, loop_first, loop_last);
-            if (iff->else_instrs)
-                compute_liveness_recurse(iff->else_instrs, loop_first, loop_last);
+            compute_liveness_recurse(&iff->then_instrs, loop_first, loop_last);
+            compute_liveness_recurse(&iff->else_instrs, loop_first, loop_last);
             iff->condition.node->last_read = instr->index;
             break;
         }

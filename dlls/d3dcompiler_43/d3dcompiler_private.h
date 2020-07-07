@@ -742,8 +742,8 @@ struct hlsl_ir_if
 {
     struct hlsl_ir_node node;
     struct hlsl_src condition;
-    struct list *then_instrs;
-    struct list *else_instrs;
+    struct list then_instrs;
+    struct list else_instrs;
 };
 
 struct hlsl_ir_loop

@@ -2018,14 +2018,10 @@ static void debug_dump_ir_if(const struct hlsl_ir_if *if_node)
     wine_dbg_printf("if (");
     debug_dump_src(&if_node->condition);
     wine_dbg_printf(")\n{\n");
-    debug_dump_instr_list(if_node->then_instrs);
+    debug_dump_instr_list(&if_node->then_instrs);
+    wine_dbg_printf("}\nelse\n{\n");
+    debug_dump_instr_list(&if_node->else_instrs);
     wine_dbg_printf("}\n");
-    if (if_node->else_instrs)
-    {
-        wine_dbg_printf("else\n{\n");
-        debug_dump_instr_list(if_node->else_instrs);
-        wine_dbg_printf("}\n");
-    }
 }
 
 static void debug_dump_ir_loop(const struct hlsl_ir_loop *loop)
@@ -2157,8 +2153,12 @@ static void free_ir_assignment(struct hlsl_ir_assignment *assignment)
 
 static void free_ir_if(struct hlsl_ir_if *if_node)
 {
-    free_instr_list(if_node->then_instrs);
-    free_instr_list(if_node->else_instrs);
+    struct hlsl_ir_node *node, *next_node;
+
+    LIST_FOR_EACH_ENTRY_SAFE(node, next_node, &if_node->then_instrs, struct hlsl_ir_node, entry)
+        free_instr(node);
+    LIST_FOR_EACH_ENTRY_SAFE(node, next_node, &if_node->else_instrs, struct hlsl_ir_node, entry)
+        free_instr(node);
     hlsl_src_remove(&if_node->condition);
     d3dcompiler_free(if_node);
 }
