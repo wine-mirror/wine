@@ -41,6 +41,7 @@ DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 
 #include "initguid.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
+#include "evr.h"
 
 #include "wine/test.h"
 
@@ -3226,6 +3227,7 @@ todo_wine
 
 static void test_evr(void)
 {
+    IMFVideoRenderer *video_renderer;
     IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
     IMFActivate *activate;
@@ -3260,6 +3262,10 @@ static void test_evr(void)
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaSinkPreroll, (void **)&preroll);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IMFMediaSinkPreroll_Release(preroll);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&video_renderer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFVideoRenderer_Release(video_renderer);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

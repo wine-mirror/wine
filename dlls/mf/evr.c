@@ -33,6 +33,7 @@ struct video_renderer
 {
     IMFMediaSink IMFMediaSink_iface;
     IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
+    IMFVideoRenderer IMFVideoRenderer_iface;
     LONG refcount;
 
     IMFTransform *mixer;
@@ -51,6 +52,11 @@ static struct video_renderer *impl_from_IMFMediaSinkPreroll(IMFMediaSinkPreroll 
     return CONTAINING_RECORD(iface, struct video_renderer, IMFMediaSinkPreroll_iface);
 }
 
+static struct video_renderer *impl_from_IMFVideoRenderer(IMFVideoRenderer *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFVideoRenderer_iface);
+}
+
 static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, REFIID riid, void **obj)
 {
     struct video_renderer *renderer = impl_from_IMFMediaSink(iface);
@@ -65,6 +71,10 @@ static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFMediaSinkPreroll))
     {
         *obj = &renderer->IMFMediaSinkPreroll_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoRenderer))
+    {
+        *obj = &renderer->IMFVideoRenderer_iface;
     }
     else
     {
@@ -237,6 +247,40 @@ static const IMFMediaSinkPrerollVtbl video_renderer_preroll_vtbl =
     video_renderer_preroll_NotifyPreroll,
 };
 
+static HRESULT WINAPI video_renderer_QueryInterface(IMFVideoRenderer *iface, REFIID riid, void **obj)
+{
+    struct video_renderer *renderer = impl_from_IMFVideoRenderer(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI video_renderer_AddRef(IMFVideoRenderer *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFVideoRenderer(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_Release(IMFVideoRenderer *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFVideoRenderer(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface, IMFTransform *mixer,
+        IMFVideoPresenter *presenter)
+{
+    FIXME("%p, %p, %p.\n", iface, mixer, presenter);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoRendererVtbl video_renderer_vtbl =
+{
+    video_renderer_QueryInterface,
+    video_renderer_AddRef,
+    video_renderer_Release,
+    video_renderer_InitializeRenderer,
+};
+
 static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
 {
     unsigned int flags = 0;
@@ -295,6 +339,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
 
     object->IMFMediaSink_iface.lpVtbl = &video_renderer_sink_vtbl;
     object->IMFMediaSinkPreroll_iface.lpVtbl = &video_renderer_preroll_vtbl;
+    object->IMFVideoRenderer_iface.lpVtbl = &video_renderer_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
