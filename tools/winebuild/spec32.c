@@ -739,6 +739,7 @@ void output_spec32_file( DLLSPEC *spec )
     output_stubs( spec );
     output_exports( spec );
     output_imports( spec );
+    output_syscalls( spec );
     if (needs_get_pc_thunk) output_get_pc_thunk();
     output_resources( spec );
     output_gnu_stack_note();

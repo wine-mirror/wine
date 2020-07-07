@@ -496,27 +496,6 @@ static int relay_type_compare( const void *e1, const void *e2 )
 
 
 /*******************************************************************
- *         sort_func_list
- *
- * Sort a list of functions, removing duplicates.
- */
-static int sort_func_list( ORDDEF **list, int count,
-                           int (*compare)(const void *, const void *) )
-{
-    int i, j;
-
-    if (!count) return 0;
-    qsort( list, count, sizeof(*list), compare );
-
-    for (i = j = 0; i < count; i++)
-    {
-        if (compare( &list[j], &list[i] )) list[++j] = list[i];
-    }
-    return j + 1;
-}
-
-
-/*******************************************************************
  *         output_module16
  *
  * Output code for a 16-bit module.

@@ -960,6 +960,22 @@ const char *get_link_name( const ORDDEF *odp )
     return ret;
 }
 
+/*******************************************************************
+ *         sort_func_list
+ *
+ * Sort a list of functions, removing duplicates.
+ */
+int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *, const void *) )
+{
+    int i, j;
+
+    if (!count) return 0;
+    qsort( list, count, sizeof(*list), compare );
+    for (i = j = 0; i < count; i++) if (compare( &list[j], &list[i] )) list[++j] = list[i];
+    return j + 1;
+}
+
+
 /* parse a cpu name and return the corresponding value */
 int get_cpu_from_name( const char *name )
 {
