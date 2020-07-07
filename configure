@@ -1030,6 +1030,7 @@ enable_api_ms_win_core_synch_l1_2_1
 enable_api_ms_win_core_sysinfo_l1_1_0
 enable_api_ms_win_core_sysinfo_l1_2_0
 enable_api_ms_win_core_sysinfo_l1_2_1
+enable_api_ms_win_core_systemtopology_l1_1_0
 enable_api_ms_win_core_threadpool_l1_1_0
 enable_api_ms_win_core_threadpool_l1_2_0
 enable_api_ms_win_core_threadpool_legacy_l1_1_0
@@ -20362,6 +20363,7 @@ wine_fn_config_makefile dlls/api-ms-win-core-synch-l1-2-1 enable_api_ms_win_core
 wine_fn_config_makefile dlls/api-ms-win-core-sysinfo-l1-1-0 enable_api_ms_win_core_sysinfo_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-sysinfo-l1-2-0 enable_api_ms_win_core_sysinfo_l1_2_0
 wine_fn_config_makefile dlls/api-ms-win-core-sysinfo-l1-2-1 enable_api_ms_win_core_sysinfo_l1_2_1
+wine_fn_config_makefile dlls/api-ms-win-core-systemtopology-l1-1-0 enable_api_ms_win_core_systemtopology_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-threadpool-l1-1-0 enable_api_ms_win_core_threadpool_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-core-threadpool-l1-2-0 enable_api_ms_win_core_threadpool_l1_2_0
 wine_fn_config_makefile dlls/api-ms-win-core-threadpool-legacy-l1-1-0 enable_api_ms_win_core_threadpool_legacy_l1_1_0
