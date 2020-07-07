@@ -1159,10 +1159,14 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
 
     if (count > 0)
     {
+        check_property( obj, L"BankLabel", VT_BSTR, CIM_STRING );
         check_property( obj, L"Capacity", VT_BSTR, CIM_UINT64 );
+        check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"DeviceLocator", VT_BSTR, CIM_STRING );
         check_property( obj, L"FormFactor", VT_I4, CIM_UINT16 );
         check_property( obj, L"MemoryType", VT_I4, CIM_UINT16 );
+        check_property( obj, L"PartNumber", VT_NULL, CIM_STRING );
+        check_property( obj, L"SerialNumber", VT_NULL, CIM_STRING );
         IWbemClassObject_Release( obj );
     }
     IEnumWbemClassObject_Release( result );
