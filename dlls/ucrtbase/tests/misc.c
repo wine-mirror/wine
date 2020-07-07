@@ -335,6 +335,33 @@ static void test___fpe_flt_rounds(void)
     ok((_controlfp(_RC_CHOP, _RC_CHOP) & _RC_CHOP) == _RC_CHOP, "_controlfp(_RC_CHOP, _RC_CHOP) failed\n");
     ret = __fpe_flt_rounds();
     ok(ret == 0, "__fpe_flt_rounds returned %d\n", ret);
+
+    _controlfp(cfp, _MCW_EM | _MCW_RC | _MCW_PC);
+}
+
+static void test__control87_2(void)
+{
+#ifdef __i386__
+    unsigned int x86_cw_init, sse2_cw_init, x86_cw, sse2_cw, r;
+
+    r = __control87_2(0, 0, &x86_cw_init, &sse2_cw_init);
+    ok(r == 1, "__control87_2 returned %d\n", r);
+
+    r = __control87_2(0, _EM_INVALID, &x86_cw, NULL);
+    ok(r == 1, "__control87_2 returned %d\n", r);
+    ok(x86_cw == (x86_cw_init & ~_EM_INVALID), "x86_cw = %x, x86_cw_init = %x\n", x86_cw, x86_cw_init);
+
+    r = __control87_2(0, 0, &x86_cw, &sse2_cw);
+    ok(r == 1, "__control87_2 returned %d\n", r);
+    ok(x86_cw == (x86_cw_init & ~_EM_INVALID), "x86_cw = %x, x86_cw_init = %x\n", x86_cw, x86_cw_init);
+    ok(sse2_cw == sse2_cw_init, "sse2_cw = %x, sse2_cw_init = %x\n", sse2_cw, sse2_cw_init);
+
+    r = _control87(0, 0);
+    ok(r == (x86_cw | sse2_cw | _EM_AMBIGUOUS), "r = %x, expected %x\n",
+            r, x86_cw | sse2_cw | _EM_AMBIGUOUS);
+
+    _control87(x86_cw_init, ~0);
+#endif
 }
 
 static void __cdecl global_invalid_parameter_handler(
@@ -1347,6 +1374,7 @@ START_TEST(misc)
     test__register_onexit_function();
     test__execute_onexit_table();
     test___fpe_flt_rounds();
+    test__control87_2();
     test__get_narrow_winmain_command_line(arg_v[0]);
     test__sopen_dispatch();
     test__sopen_s();

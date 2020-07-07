@@ -1250,6 +1250,7 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
     __control87_2( newval, mask, &flags, &sse2_cw );
 
     if ((flags ^ sse2_cw) & (MSVCRT__MCW_EM | MSVCRT__MCW_RC)) flags |= MSVCRT__EM_AMBIGUOUS;
+    flags |= sse2_cw;
 #elif defined(__x86_64__)
     unsigned long fpword;
     unsigned int old_flags;
