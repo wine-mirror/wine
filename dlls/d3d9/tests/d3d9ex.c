@@ -3559,6 +3559,14 @@ static void test_window_style(void)
         hr = reset_device(device, &device_desc);
         ok(SUCCEEDED(hr), "Failed to reset device, hr %#x.\n", hr);
 
+        GetWindowRect(device_window, &r);
+        if (tests[i].device_flags & CREATE_DEVICE_NOWINDOWCHANGES)
+            todo_wine ok(EqualRect(&r, &device_rect), "Expected %s, got %s, i=%u.\n",
+                    wine_dbgstr_rect(&device_rect), wine_dbgstr_rect(&r), i);
+        else
+            ok(EqualRect(&r, &fullscreen_rect), "Expected %s, got %s, i=%u.\n",
+                    wine_dbgstr_rect(&fullscreen_rect), wine_dbgstr_rect(&r), i);
+
         style = GetWindowLongA(device_window, GWL_STYLE);
         expected_style = device_style;
         todo_wine_if (!(tests[i].style_flags & WS_VISIBLE))
