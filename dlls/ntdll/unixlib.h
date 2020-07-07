@@ -28,7 +28,7 @@ struct msghdr;
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 70
+#define NTDLL_UNIXLIB_VERSION 71
 
 struct unix_funcs
 {
@@ -45,10 +45,6 @@ struct unix_funcs
     NTSTATUS      (WINAPI *NtContinue)( CONTEXT *context, BOOLEAN alertable );
     NTSTATUS      (WINAPI *NtCreateEvent)( HANDLE *handle, ACCESS_MASK access,
                                            const OBJECT_ATTRIBUTES *attr, EVENT_TYPE type, BOOLEAN state );
-    NTSTATUS      (WINAPI *NtCreateFile)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                          IO_STATUS_BLOCK *io, LARGE_INTEGER *alloc_size,
-                                          ULONG attributes, ULONG sharing, ULONG disposition,
-                                          ULONG options, void *ea_buffer, ULONG ea_length );
     NTSTATUS      (WINAPI *NtCreateIoCompletion)( HANDLE *handle, ACCESS_MASK access,
                                                   OBJECT_ATTRIBUTES *attr, ULONG threads );
     NTSTATUS      (WINAPI *NtCreateJobObject)( HANDLE *handle, ACCESS_MASK access,
@@ -120,8 +116,6 @@ struct unix_funcs
                                                          ULONG filter, BOOLEAN subtree );
     NTSTATUS      (WINAPI *NtOpenEvent)( HANDLE *handle, ACCESS_MASK access,
                                          const OBJECT_ATTRIBUTES *attr );
-    NTSTATUS      (WINAPI *NtOpenFile)( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                        IO_STATUS_BLOCK *io, ULONG sharing, ULONG options );
     NTSTATUS      (WINAPI *NtOpenIoCompletion)( HANDLE *handle, ACCESS_MASK access,
                                                 const OBJECT_ATTRIBUTES *attr );
     NTSTATUS      (WINAPI *NtOpenJobObject)( HANDLE *handle, ACCESS_MASK access,

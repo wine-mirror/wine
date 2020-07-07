@@ -162,7 +162,7 @@
 @ stdcall NtCreateDirectoryObject(ptr long ptr)
 @ stdcall NtCreateEvent(ptr long ptr long long)
 @ stub NtCreateEventPair
-@ stdcall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
+@ stdcall -syscall NtCreateFile(ptr long ptr ptr ptr long long long long ptr long)
 @ stdcall NtCreateIoCompletion(ptr long ptr long)
 @ stdcall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
@@ -253,7 +253,7 @@
 @ stdcall NtOpenDirectoryObject(ptr long ptr)
 @ stdcall NtOpenEvent(ptr long ptr)
 @ stub NtOpenEventPair
-@ stdcall NtOpenFile(ptr long ptr ptr long long)
+@ stdcall -syscall NtOpenFile(ptr long ptr ptr long long)
 @ stdcall NtOpenIoCompletion(ptr long ptr)
 @ stdcall NtOpenJobObject(ptr long ptr)
 @ stdcall NtOpenKey(ptr long ptr)
@@ -1151,7 +1151,7 @@
 @ stdcall -private ZwCreateDirectoryObject(ptr long ptr) NtCreateDirectoryObject
 @ stdcall -private ZwCreateEvent(ptr long ptr long long) NtCreateEvent
 @ stub ZwCreateEventPair
-@ stdcall -private ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
+@ stdcall -private -syscall ZwCreateFile(ptr long ptr ptr ptr long long long long ptr long) NtCreateFile
 @ stdcall -private ZwCreateIoCompletion(ptr long ptr long) NtCreateIoCompletion
 @ stdcall -private ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
@@ -1237,7 +1237,7 @@
 @ stdcall -private ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
 @ stdcall -private ZwOpenEvent(ptr long ptr) NtOpenEvent
 @ stub ZwOpenEventPair
-@ stdcall -private ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
+@ stdcall -private -syscall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 @ stdcall -private ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
 @ stdcall -private ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall -private ZwOpenKey(ptr long ptr) NtOpenKey
@@ -1583,6 +1583,7 @@
 @ cdecl wine_server_send_fd(long)
 @ cdecl __wine_make_process_system()
 @ cdecl __wine_set_unix_funcs(long ptr)
+@ extern __wine_syscall_dispatcher
 @ extern -arch=i386 __wine_ldt_copy
 
 # Debugging

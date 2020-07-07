@@ -38,65 +38,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 
-/**************************************************************************
- *                 NtOpenFile				[NTDLL.@]
- *                 ZwOpenFile				[NTDLL.@]
- *
- * Open a file.
- *
- * PARAMS
- *  handle    [O] Variable that receives the file handle on return
- *  access    [I] Access desired by the caller to the file
- *  attr      [I] Structure describing the file to be opened
- *  io        [O] Receives details about the result of the operation
- *  sharing   [I] Type of shared access the caller requires
- *  options   [I] Options for the file open
- *
- * RETURNS
- *  Success: 0. FileHandle and IoStatusBlock are updated.
- *  Failure: An NTSTATUS error code describing the error.
- */
-NTSTATUS WINAPI NtOpenFile( PHANDLE handle, ACCESS_MASK access,
-                            POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK io,
-                            ULONG sharing, ULONG options )
-{
-    return unix_funcs->NtOpenFile( handle, access, attr, io, sharing, options );
-}
-
-/**************************************************************************
- *		NtCreateFile				[NTDLL.@]
- *		ZwCreateFile				[NTDLL.@]
- *
- * Either create a new file or directory, or open an existing file, device,
- * directory or volume.
- *
- * PARAMS
- *	handle       [O] Points to a variable which receives the file handle on return
- *	access       [I] Desired access to the file
- *	attr         [I] Structure describing the file
- *	io           [O] Receives information about the operation on return
- *	alloc_size   [I] Initial size of the file in bytes
- *	attributes   [I] Attributes to create the file with
- *	sharing      [I] Type of shared access the caller would like to the file
- *	disposition  [I] Specifies what to do, depending on whether the file already exists
- *	options      [I] Options for creating a new file
- *	ea_buffer    [I] Pointer to an extended attributes buffer
- *	ea_length    [I] Length of ea_buffer
- *
- * RETURNS
- *  Success: 0. handle and io are updated.
- *  Failure: An NTSTATUS error code describing the error.
- */
-NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIBUTES attr,
-                              PIO_STATUS_BLOCK io, PLARGE_INTEGER alloc_size,
-                              ULONG attributes, ULONG sharing, ULONG disposition,
-                              ULONG options, PVOID ea_buffer, ULONG ea_length )
-{
-    return unix_funcs->NtCreateFile( handle, access, attr, io, alloc_size, attributes,
-                                     sharing, disposition, options, ea_buffer, ea_length );
-}
-
-
 /******************************************************************************
  *  NtReadFile					[NTDLL.@]
  *  ZwReadFile					[NTDLL.@]
