@@ -1862,6 +1862,7 @@ enum char_info_mode
 
 struct thread_info
 {
+    timeout_t       start_time;
     thread_id_t     tid;
     int             base_priority;
     int             current_priority;

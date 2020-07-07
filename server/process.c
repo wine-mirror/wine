@@ -1850,6 +1850,7 @@ DECL_HANDLER(list_processes)
         {
             struct thread_info *thread_info = (struct thread_info *)(buffer + pos);
 
+            thread_info->start_time = thread->creation_time;
             thread_info->tid = thread->id;
             thread_info->base_priority = thread->priority;
             thread_info->current_priority = thread->priority; /* FIXME */

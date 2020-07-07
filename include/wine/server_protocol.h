@@ -2408,6 +2408,7 @@ struct is_same_mapping_reply
 
 struct thread_info
 {
+    timeout_t       start_time;
     thread_id_t     tid;
     int             base_priority;
     int             current_priority;
@@ -6654,7 +6655,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 619
+#define SERVER_PROTOCOL_VERSION 620
 
 /* ### protocol_version end ### */
 

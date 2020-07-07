@@ -2156,7 +2156,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
                 if (len <= size)
                 {
-                    nt_process->ti[j].CreateTime.QuadPart = 0xdeadbeef;
+                    nt_process->ti[j].CreateTime.QuadPart = server_thread->start_time;
                     nt_process->ti[j].ClientId.UniqueProcess = UlongToHandle(server_process->pid);
                     nt_process->ti[j].ClientId.UniqueThread = UlongToHandle(server_thread->tid);
                     nt_process->ti[j].dwCurrentPriority = server_thread->current_priority;

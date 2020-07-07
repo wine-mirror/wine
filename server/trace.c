@@ -1128,7 +1128,8 @@ static void dump_varargs_process_info( const char *prefix, data_size_t size )
             const struct thread_info *thread = (const struct thread_info *)((const char *)cur_data + pos);
             if (size - pos < sizeof(*thread)) break;
             if (i) fputc( ',', stderr );
-            fprintf( stderr, "{tid=%04x,base_priority=%d,current_priority=%d,unix_tid=%d}",
+            dump_timeout( "{start_time=", &thread->start_time );
+            fprintf( stderr, ",tid=%04x,base_priority=%d,current_priority=%d,unix_tid=%d}",
                      thread->tid, thread->base_priority, thread->current_priority, thread->unix_tid );
             pos += sizeof(*thread);
         }
