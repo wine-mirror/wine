@@ -1384,11 +1384,11 @@ static void update_desktop_mouse_state( struct desktop *desktop, unsigned int fl
 }
 
 /* release the hardware message currently being processed by the given thread */
-static void release_hardware_message( struct msg_queue *queue, unsigned int hw_id,
-                                      int remove )
+static void release_hardware_message( struct msg_queue *queue, unsigned int hw_id )
 {
     struct thread_input *input = queue->input;
-    struct message *msg;
+    struct message *msg, *other;
+    int clr_bit;
 
     LIST_FOR_EACH_ENTRY( msg, &input->msg_list, struct message, entry )
     {
@@ -1397,26 +1397,20 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
     if (&msg->entry == &input->msg_list) return;  /* not found */
 
     /* clear the queue bit for that message */
-    if (remove)
+    clr_bit = get_hardware_msg_bit( msg );
+    LIST_FOR_EACH_ENTRY( other, &input->msg_list, struct message, entry )
     {
-        struct message *other;
-        int clr_bit;
-
-        clr_bit = get_hardware_msg_bit( msg );
-        LIST_FOR_EACH_ENTRY( other, &input->msg_list, struct message, entry )
+        if (other != msg && get_hardware_msg_bit( other ) == clr_bit)
         {
-            if (other != msg && get_hardware_msg_bit( other ) == clr_bit)
-            {
-                clr_bit = 0;
-                break;
-            }
+            clr_bit = 0;
+            break;
         }
-        if (clr_bit) clear_queue_bits( queue, clr_bit );
-
-        update_input_key_state( input->desktop, input->keystate, msg->msg, msg->wparam );
-        list_remove( &msg->entry );
-        free_message( msg );
     }
+    if (clr_bit) clear_queue_bits( queue, clr_bit );
+
+    update_input_key_state( input->desktop, input->keystate, msg->msg, msg->wparam );
+    list_remove( &msg->entry );
+    free_message( msg );
 }
 
 static int queue_hotkey_message( struct desktop *desktop, struct message *msg )
@@ -2080,7 +2074,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
         if (msg->msg == WM_INPUT && (flags & PM_REMOVE))
-            release_hardware_message( current->queue, data->hw_id, 1 );
+            release_hardware_message( current->queue, data->hw_id );
         return 1;
     }
     /* nothing found, clear the hardware queue bits */
@@ -2606,7 +2600,7 @@ DECL_HANDLER(reply_message)
 DECL_HANDLER(accept_hardware_message)
 {
     if (current->queue)
-        release_hardware_message( current->queue, req->hw_id, req->remove );
+        release_hardware_message( current->queue, req->hw_id );
     else
         set_error( STATUS_ACCESS_DENIED );
 }

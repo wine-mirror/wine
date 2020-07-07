@@ -2887,7 +2887,6 @@ static void dump_reply_message_request( const struct reply_message_request *req 
 static void dump_accept_hardware_message_request( const struct accept_hardware_message_request *req )
 {
     fprintf( stderr, " hw_id=%08x", req->hw_id );
-    fprintf( stderr, ", remove=%d", req->remove );
 }
 
 static void dump_get_message_reply_request( const struct get_message_reply_request *req )

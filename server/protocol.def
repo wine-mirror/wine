@@ -2352,10 +2352,9 @@ enum message_type
 @END
 
 
-/* Accept the current hardware message */
+/* Accept and remove the current hardware message */
 @REQ(accept_hardware_message)
     unsigned int    hw_id;     /* id of the hardware message */
-    int             remove;    /* should we remove the message? */
 @END
 
 
