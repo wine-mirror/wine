@@ -1,8 +1,10 @@
 MODULE    = qdvd.dll
+IMPORTS   = strmiids uuid ole32
 
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	graph.c \
 	qdvd_main.c
 
 IDL_SRCS = \

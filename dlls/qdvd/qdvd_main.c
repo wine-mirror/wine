@@ -18,16 +18,88 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
-#include "oleidl.h"
+#include "qdvd_private.h"
 #include "rpcproxy.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qdvd);
 
 static HINSTANCE qdvd_instance;
+
+struct class_factory
+{
+    IClassFactory IClassFactory_iface;
+    HRESULT (*create_instance)(IUnknown **out);
+};
+
+static struct class_factory *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct class_factory, IClassFactory_iface);
+}
+
+static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IClassFactory))
+    {
+        IClassFactory_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI class_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI class_factory_CreateInstance(IClassFactory *iface,
+        IUnknown *outer, REFIID iid, void **out)
+{
+    struct class_factory *factory = impl_from_IClassFactory(iface);
+    IUnknown *unk;
+    HRESULT hr;
+
+    TRACE("iface %p, outer %p, iid %s, out %p.\n", iface, outer, debugstr_guid(iid), out);
+
+    *out = NULL;
+
+    if (outer)
+        return CLASS_E_NOAGGREGATION;
+
+    if (SUCCEEDED(hr = factory->create_instance(&unk)))
+    {
+        hr = IUnknown_QueryInterface(unk, iid, out);
+        IUnknown_Release(unk);
+    }
+    return hr;
+}
+
+static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    FIXME("lock %d, stub!\n", lock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl class_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    class_factory_CreateInstance,
+    class_factory_LockServer,
+};
+
+static struct class_factory graph_builder_cf = {{&class_factory_vtbl}, graph_builder_create};
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
@@ -44,7 +116,12 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
-    FIXME("clsid %s, iid %s, out %p, stub!\n", debugstr_guid(clsid), debugstr_guid(iid), out);
+    TRACE("clsid %s, iid %s, out %p.\n", debugstr_guid(clsid), debugstr_guid(iid), out);
+
+    if (IsEqualGUID(clsid, &CLSID_DvdGraphBuilder))
+        return IClassFactory_QueryInterface(&graph_builder_cf.IClassFactory_iface, iid, out);
+
+    FIXME("%s not available, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
