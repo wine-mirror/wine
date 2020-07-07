@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include "mf_private.h"
+#include "uuids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -32,6 +33,8 @@ struct video_renderer
     IMFMediaSink IMFMediaSink_iface;
     IMFMediaSinkPreroll IMFMediaSinkPreroll_iface;
     LONG refcount;
+
+    IMFTransform *mixer;
     unsigned int flags;
     CRITICAL_SECTION cs;
 };
@@ -90,6 +93,8 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
 
     if (!refcount)
     {
+        if (renderer->mixer)
+            IMFTransform_Release(renderer->mixer);
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
@@ -228,9 +233,33 @@ static const IMFMediaSinkPrerollVtbl video_renderer_preroll_vtbl =
     video_renderer_preroll_NotifyPreroll,
 };
 
+static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransform **out)
+{
+    unsigned int flags = 0;
+    IMFActivate *activate;
+    CLSID clsid;
+    HRESULT hr;
+
+    if (SUCCEEDED(IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE,
+            &IID_IMFActivate, (void **)&activate)))
+    {
+        IMFAttributes_GetUINT32(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_FLAGS, &flags);
+        hr = IMFActivate_ActivateObject(activate, &IID_IMFTransform, (void **)out);
+        IMFActivate_Release(activate);
+        if (FAILED(hr) && !(flags & MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL))
+            return hr;
+    }
+
+    if (FAILED(IMFAttributes_GetGUID(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID, &clsid)))
+        memcpy(&clsid, &CLSID_MFVideoMixer9, sizeof(clsid));
+
+    return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
+}
+
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
+    HRESULT hr;
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
 
@@ -242,9 +271,19 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
+    /* Create mixer. */
+    if (FAILED(hr = video_renderer_create_mixer(attributes, &object->mixer)))
+        goto done;
+
     *obj = (IUnknown *)&object->IMFMediaSink_iface;
 
     return S_OK;
+
+done:
+
+    IMFMediaSink_Release(&object->IMFMediaSink_iface);
+
+    return hr;
 }
 
 static void evr_shutdown_object(void *user_context, IUnknown *obj)
