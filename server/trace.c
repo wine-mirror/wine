@@ -2397,51 +2397,6 @@ static void dump_is_same_mapping_request( const struct is_same_mapping_request *
     dump_uint64( ", base2=", &req->base2 );
 }
 
-static void dump_create_snapshot_request( const struct create_snapshot_request *req )
-{
-    fprintf( stderr, " attributes=%08x", req->attributes );
-    fprintf( stderr, ", flags=%08x", req->flags );
-}
-
-static void dump_create_snapshot_reply( const struct create_snapshot_reply *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-}
-
-static void dump_next_process_request( const struct next_process_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", reset=%d", req->reset );
-}
-
-static void dump_next_process_reply( const struct next_process_reply *req )
-{
-    fprintf( stderr, " count=%d", req->count );
-    fprintf( stderr, ", pid=%04x", req->pid );
-    fprintf( stderr, ", ppid=%04x", req->ppid );
-    fprintf( stderr, ", threads=%d", req->threads );
-    fprintf( stderr, ", priority=%d", req->priority );
-    fprintf( stderr, ", handles=%d", req->handles );
-    fprintf( stderr, ", unix_pid=%d", req->unix_pid );
-    dump_varargs_unicode_str( ", filename=", cur_size );
-}
-
-static void dump_next_thread_request( const struct next_thread_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", reset=%d", req->reset );
-}
-
-static void dump_next_thread_reply( const struct next_thread_reply *req )
-{
-    fprintf( stderr, " count=%d", req->count );
-    fprintf( stderr, ", pid=%04x", req->pid );
-    fprintf( stderr, ", tid=%04x", req->tid );
-    fprintf( stderr, ", base_pri=%d", req->base_pri );
-    fprintf( stderr, ", delta_pri=%d", req->delta_pri );
-    fprintf( stderr, ", unix_tid=%d", req->unix_tid );
-}
-
 static void dump_list_processes_request( const struct list_processes_request *req )
 {
 }
@@ -4752,9 +4707,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_mapping_committed_range_request,
     (dump_func)dump_add_mapping_committed_range_request,
     (dump_func)dump_is_same_mapping_request,
-    (dump_func)dump_create_snapshot_request,
-    (dump_func)dump_next_process_request,
-    (dump_func)dump_next_thread_request,
     (dump_func)dump_list_processes_request,
     (dump_func)dump_wait_debug_event_request,
     (dump_func)dump_queue_exception_event_request,
@@ -5052,9 +5004,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_mapping_committed_range_reply,
     NULL,
     NULL,
-    (dump_func)dump_create_snapshot_reply,
-    (dump_func)dump_next_process_reply,
-    (dump_func)dump_next_thread_reply,
     (dump_func)dump_list_processes_reply,
     (dump_func)dump_wait_debug_event_reply,
     (dump_func)dump_queue_exception_event_reply,
@@ -5352,9 +5301,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_mapping_committed_range",
     "add_mapping_committed_range",
     "is_same_mapping",
-    "create_snapshot",
-    "next_process",
-    "next_thread",
     "list_processes",
     "wait_debug_event",
     "queue_exception_event",
@@ -5649,7 +5595,6 @@ static const struct
     { "NO_IMPERSONATION_TOKEN",      STATUS_NO_IMPERSONATION_TOKEN },
     { "NO_MEMORY",                   STATUS_NO_MEMORY },
     { "NO_MORE_ENTRIES",             STATUS_NO_MORE_ENTRIES },
-    { "NO_MORE_FILES",               STATUS_NO_MORE_FILES },
     { "NO_SUCH_DEVICE",              STATUS_NO_SUCH_DEVICE },
     { "NO_SUCH_FILE",                STATUS_NO_SUCH_FILE },
     { "NO_TOKEN",                    STATUS_NO_TOKEN },

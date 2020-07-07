@@ -1868,47 +1868,6 @@ enum char_info_mode
 @END
 
 
-#define SNAP_PROCESS    0x00000001
-#define SNAP_THREAD     0x00000002
-/* Create a snapshot */
-@REQ(create_snapshot)
-    unsigned int attributes;    /* object attributes */
-    unsigned int flags;         /* snapshot flags (SNAP_*) */
-@REPLY
-    obj_handle_t handle;        /* handle to the snapshot */
-@END
-
-
-/* Get the next process from a snapshot */
-@REQ(next_process)
-    obj_handle_t handle;        /* handle to the snapshot */
-    int          reset;         /* reset snapshot position? */
-@REPLY
-    int          count;         /* process usage count */
-    process_id_t pid;           /* process id */
-    process_id_t ppid;          /* parent process id */
-    int          threads;       /* number of threads */
-    int          priority;      /* process priority */
-    int          handles;       /* number of handles */
-    int          unix_pid;      /* Unix pid */
-    VARARG(filename,unicode_str); /* file name of main exe */
-@END
-
-
-/* Get the next thread from a snapshot */
-@REQ(next_thread)
-    obj_handle_t handle;        /* handle to the snapshot */
-    int          reset;         /* reset snapshot position? */
-@REPLY
-    int          count;         /* thread usage count */
-    process_id_t pid;           /* process id */
-    thread_id_t  tid;           /* thread id */
-    int          base_pri;      /* base priority */
-    int          delta_pri;     /* delta priority */
-    int          unix_tid;      /* thread native pid */
-@END
-
-
 struct thread_info
 {
     thread_id_t     tid;

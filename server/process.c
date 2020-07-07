@@ -1086,36 +1086,6 @@ int set_process_debug_flag( struct process *process, int flag )
     return write_process_memory( process, process->peb + 2, 1, &data );
 }
 
-/* take a snapshot of currently running processes */
-struct process_snapshot *process_snap( int *count )
-{
-    struct process_snapshot *snapshot, *ptr;
-    struct process *process;
-
-    if (!running_processes) return NULL;
-    if (!(snapshot = mem_alloc( sizeof(*snapshot) * running_processes )))
-        return NULL;
-    ptr = snapshot;
-    LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
-    {
-        if (!process->running_threads) continue;
-        ptr->process  = process;
-        ptr->threads  = process->running_threads;
-        ptr->count    = process->obj.refcount;
-        ptr->priority = process->priority;
-        ptr->handles  = get_handle_table_count(process);
-        grab_object( process );
-        ptr++;
-    }
-
-    if (!(*count = ptr - snapshot))
-    {
-        free( snapshot );
-        snapshot = NULL;
-    }
-    return snapshot;
-}
-
 /* create a new process */
 DECL_HANDLER(new_process)
 {

@@ -1299,30 +1299,6 @@ static unsigned int get_context_system_regs( enum cpu_type cpu )
     return 0;
 }
 
-/* take a snapshot of currently running threads */
-struct thread_snapshot *thread_snap( int *count )
-{
-    struct thread_snapshot *snapshot, *ptr;
-    struct thread *thread;
-    int total = 0;
-
-    LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
-        if (thread->state != TERMINATED) total++;
-    if (!total || !(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
-    ptr = snapshot;
-    LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
-    {
-        if (thread->state == TERMINATED) continue;
-        ptr->thread   = thread;
-        ptr->count    = thread->obj.refcount;
-        ptr->priority = thread->priority;
-        grab_object( thread );
-        ptr++;
-    }
-    *count = total;
-    return snapshot;
-}
-
 /* gets the current impersonation token */
 struct token *thread_get_impersonation_token( struct thread *thread )
 {

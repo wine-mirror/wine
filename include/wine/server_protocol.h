@@ -2420,67 +2420,6 @@ struct is_same_mapping_reply
 };
 
 
-#define SNAP_PROCESS    0x00000001
-#define SNAP_THREAD     0x00000002
-
-struct create_snapshot_request
-{
-    struct request_header __header;
-    unsigned int attributes;
-    unsigned int flags;
-    char __pad_20[4];
-};
-struct create_snapshot_reply
-{
-    struct reply_header __header;
-    obj_handle_t handle;
-    char __pad_12[4];
-};
-
-
-
-struct next_process_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          reset;
-    char __pad_20[4];
-};
-struct next_process_reply
-{
-    struct reply_header __header;
-    int          count;
-    process_id_t pid;
-    process_id_t ppid;
-    int          threads;
-    int          priority;
-    int          handles;
-    int          unix_pid;
-    /* VARARG(filename,unicode_str); */
-    char __pad_36[4];
-};
-
-
-
-struct next_thread_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          reset;
-    char __pad_20[4];
-};
-struct next_thread_reply
-{
-    struct reply_header __header;
-    int          count;
-    process_id_t pid;
-    thread_id_t  tid;
-    int          base_pri;
-    int          delta_pri;
-    int          unix_tid;
-};
-
-
 struct thread_info
 {
     thread_id_t     tid;
@@ -5926,9 +5865,6 @@ enum request
     REQ_get_mapping_committed_range,
     REQ_add_mapping_committed_range,
     REQ_is_same_mapping,
-    REQ_create_snapshot,
-    REQ_next_process,
-    REQ_next_thread,
     REQ_list_processes,
     REQ_wait_debug_event,
     REQ_queue_exception_event,
@@ -6230,9 +6166,6 @@ union generic_request
     struct get_mapping_committed_range_request get_mapping_committed_range_request;
     struct add_mapping_committed_range_request add_mapping_committed_range_request;
     struct is_same_mapping_request is_same_mapping_request;
-    struct create_snapshot_request create_snapshot_request;
-    struct next_process_request next_process_request;
-    struct next_thread_request next_thread_request;
     struct list_processes_request list_processes_request;
     struct wait_debug_event_request wait_debug_event_request;
     struct queue_exception_event_request queue_exception_event_request;
@@ -6532,9 +6465,6 @@ union generic_reply
     struct get_mapping_committed_range_reply get_mapping_committed_range_reply;
     struct add_mapping_committed_range_reply add_mapping_committed_range_reply;
     struct is_same_mapping_reply is_same_mapping_reply;
-    struct create_snapshot_reply create_snapshot_reply;
-    struct next_process_reply next_process_reply;
-    struct next_thread_reply next_thread_reply;
     struct list_processes_reply list_processes_reply;
     struct wait_debug_event_reply wait_debug_event_reply;
     struct queue_exception_event_reply queue_exception_event_reply;
@@ -6741,7 +6671,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 615
+#define SERVER_PROTOCOL_VERSION 616
 
 /* ### protocol_version end ### */
 

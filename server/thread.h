@@ -93,13 +93,6 @@ struct thread
     WCHAR                 *desc;          /* thread description string */
 };
 
-struct thread_snapshot
-{
-    struct thread  *thread;    /* thread ptr */
-    int             count;     /* thread refcount */
-    int             priority;  /* priority class */
-};
-
 extern struct thread *current;
 
 /* thread functions */
@@ -125,7 +118,6 @@ extern int thread_queue_apc( struct process *process, struct thread *thread, str
 extern void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_type type );
 extern int thread_add_inflight_fd( struct thread *thread, int client, int server );
 extern int thread_get_inflight_fd( struct thread *thread, int client );
-extern struct thread_snapshot *thread_snap( int *count );
 extern struct token *thread_get_impersonation_token( struct thread *thread );
 extern int set_thread_affinity( struct thread *thread, affinity_t affinity );
 extern int is_cpu_supported( enum cpu_type cpu );

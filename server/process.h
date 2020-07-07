@@ -100,15 +100,6 @@ struct process
     struct list          kernel_object;   /* list of kernel object pointers */
 };
 
-struct process_snapshot
-{
-    struct process *process;  /* process ptr */
-    int             count;    /* process refcount */
-    int             threads;  /* number of threads */
-    int             priority; /* priority class */
-    int             handles;  /* number of handles */
-};
-
 #define CPU_FLAG(cpu) (1 << (cpu))
 #define CPU_64BIT_MASK (CPU_FLAG(CPU_x86_64) | CPU_FLAG(CPU_ARM64))
 
@@ -137,7 +128,6 @@ extern void kill_process( struct process *process, int violent_death );
 extern void kill_console_processes( struct thread *renderer, int exit_code );
 extern void kill_debugged_processes( struct thread *debugger, int exit_code );
 extern void detach_debugged_processes( struct thread *debugger );
-extern struct process_snapshot *process_snap( int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */
