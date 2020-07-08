@@ -2166,17 +2166,15 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     struct wined3d_adapter *adapter = &adapter_vk->a;
     VkPhysicalDeviceIDProperties id_properties;
     VkPhysicalDeviceProperties2 properties2;
+    LUID *luid = NULL;
 
     TRACE("adapter_vk %p, ordinal %u, wined3d_creation_flags %#x.\n",
             adapter_vk, ordinal, wined3d_creation_flags);
 
-    if (!wined3d_adapter_init(adapter, ordinal, &wined3d_adapter_vk_ops))
-        return FALSE;
-
     if (!wined3d_init_vulkan(vk_info))
     {
         WARN("Failed to initialize Vulkan.\n");
-        goto fail;
+        return FALSE;
     }
 
     if (!(adapter_vk->physical_device = get_vulkan_physical_device(vk_info)))
@@ -2195,6 +2193,12 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
 
     VK_CALL(vkGetPhysicalDeviceMemoryProperties(adapter_vk->physical_device, &adapter_vk->memory_properties));
 
+    if (id_properties.deviceLUIDValid)
+        luid = (LUID *)id_properties.deviceLUID;
+
+    if (!wined3d_adapter_init(adapter, ordinal, luid, &wined3d_adapter_vk_ops))
+        goto fail_vulkan;
+
     adapter_vk_init_driver_info(adapter_vk, &properties2.properties);
     adapter->vram_bytes_used = 0;
     TRACE("Emulating 0x%s bytes of video ram.\n", wine_dbgstr_longlong(adapter->driver_info.vram_bytes));
@@ -2203,7 +2207,7 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
     memcpy(&adapter->device_uuid, id_properties.deviceUUID, sizeof(adapter->device_uuid));
 
     if (!wined3d_adapter_vk_init_format_info(adapter_vk, vk_info))
-        goto fail_vulkan;
+        goto fail;
 
     adapter->vertex_pipe = wined3d_spirv_vertex_pipe_init_vk();
     adapter->fragment_pipe = wined3d_spirv_fragment_pipe_init_vk();
@@ -2214,11 +2218,11 @@ static BOOL wined3d_adapter_vk_init(struct wined3d_adapter_vk *adapter_vk,
 
     return TRUE;
 
+fail:
+    wined3d_adapter_cleanup(adapter);
 fail_vulkan:
     VK_CALL(vkDestroyInstance(vk_info->instance, NULL));
     wined3d_unload_vulkan(vk_info);
-fail:
-    wined3d_adapter_cleanup(adapter);
     return FALSE;
 }
 

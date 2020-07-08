@@ -973,7 +973,7 @@ static void test_adapter_luid(void)
     ok(hr == DXGI_ERROR_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
 
     /* Older versions of WARP aren't enumerated by IDXGIFactory_EnumAdapters(). */
-    todo_wine ok(found_adapter_count == 1 || broken(is_null_luid_adapter),
+    ok(found_adapter_count == 1 || broken(is_null_luid_adapter),
             "Found %u adapters for LUID %08x:%08x.\n",
             found_adapter_count, device_adapter_desc.AdapterLuid.HighPart,
             device_adapter_desc.AdapterLuid.LowPart);
@@ -996,7 +996,7 @@ static void test_adapter_luid(void)
 
     hr = IDXGIFactory4_EnumAdapterByLuid(factory4, device_adapter_desc.AdapterLuid,
             &IID_IDXGIAdapter, (void **)&adapter);
-    todo_wine ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
         hr = IDXGIAdapter_GetDesc(adapter, &desc);

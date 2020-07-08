@@ -2903,6 +2903,7 @@ static void wined3d_adapter_no3d_init_d3d_info(struct wined3d_adapter *adapter, 
 static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal, unsigned int wined3d_creation_flags)
 {
     struct wined3d_adapter *adapter;
+    LUID primary_luid, *luid = NULL;
 
     static const struct wined3d_gpu_description gpu_description =
     {
@@ -2914,7 +2915,10 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
     if (!(adapter = heap_alloc_zero(sizeof(*adapter))))
         return NULL;
 
-    if (!wined3d_adapter_init(adapter, ordinal, &wined3d_adapter_no3d_ops))
+    if (ordinal == 0 && wined3d_get_primary_adapter_luid(&primary_luid))
+        luid = &primary_luid;
+
+    if (!wined3d_adapter_init(adapter, ordinal, luid, &wined3d_adapter_no3d_ops))
     {
         heap_free(adapter);
         return NULL;
@@ -2942,7 +2946,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
     return adapter;
 }
 
-BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
+BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal, const LUID *luid,
         const struct wined3d_adapter_ops *adapter_ops)
 {
     DISPLAY_DEVICEW display_device;
@@ -2952,6 +2956,21 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
 
     adapter->ordinal = ordinal;
     adapter->output_count = 0;
+
+    if (luid)
+    {
+        adapter->luid = *luid;
+    }
+    else
+    {
+        WARN("Allocating a random LUID.\n");
+        if (!AllocateLocallyUniqueId(&adapter->luid))
+        {
+            ERR("Failed to allocate a LUID, error %#x.\n", GetLastError());
+            return FALSE;
+        }
+    }
+    TRACE("adapter %p LUID %08x:%08x.\n", adapter, adapter->luid.HighPart, adapter->luid.LowPart);
 
     display_device.cb = sizeof(display_device);
     EnumDisplayDevicesW(NULL, ordinal, &display_device, 0);
@@ -2971,14 +2990,6 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         goto done;
     }
     adapter->output_count = 1;
-
-    if (!AllocateLocallyUniqueId(&adapter->luid))
-    {
-        ERR("Failed to set adapter LUID (%#x).\n", GetLastError());
-        goto done;
-    }
-    TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
-            adapter->luid.HighPart, adapter->luid.LowPart, adapter);
 
     memset(&adapter->driver_uuid, 0, sizeof(adapter->driver_uuid));
     memset(&adapter->device_uuid, 0, sizeof(adapter->device_uuid));

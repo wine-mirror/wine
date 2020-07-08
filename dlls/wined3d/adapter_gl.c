@@ -5136,12 +5136,16 @@ static BOOL wined3d_adapter_gl_init(struct wined3d_adapter_gl *adapter_gl,
     };
     struct wined3d_gl_info *gl_info = &adapter_gl->a.gl_info;
     struct wined3d_caps_gl_ctx caps_gl_ctx = {0};
+    LUID primary_luid, *luid = NULL;
     unsigned int i;
 
     TRACE("adapter_gl %p, ordinal %u, wined3d_creation_flags %#x.\n",
             adapter_gl, ordinal, wined3d_creation_flags);
 
-    if (!wined3d_adapter_init(&adapter_gl->a, ordinal, &wined3d_adapter_gl_ops))
+    if (ordinal == 0 && wined3d_get_primary_adapter_luid(&primary_luid))
+        luid = &primary_luid;
+
+    if (!wined3d_adapter_init(&adapter_gl->a, ordinal, luid, &wined3d_adapter_gl_ops))
         return FALSE;
 
     /* Dynamically load all GL core functions */

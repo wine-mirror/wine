@@ -139,7 +139,7 @@ static void print_adapter_info(void)
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
     ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
     hr = IDXGIFactory4_EnumAdapterByLuid(factory, luid, &IID_IDXGIAdapter, (void **)&adapter);
-    todo_wine ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
+    ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
     IDXGIFactory4_Release(factory);
 
     if (FAILED(hr))

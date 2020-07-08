@@ -5719,6 +5719,41 @@ void get_fog_start_end(const struct wined3d_context *context, const struct wined
     }
 }
 
+static BOOL wined3d_get_primary_display(WCHAR *display)
+{
+    DISPLAY_DEVICEW display_device;
+    DWORD device_idx = 0;
+
+    display_device.cb = sizeof(display_device);
+    while (EnumDisplayDevicesW(NULL, device_idx++, &display_device, 0))
+    {
+        if (display_device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+        {
+            lstrcpyW(display, display_device.DeviceName);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+BOOL wined3d_get_primary_adapter_luid(LUID *luid)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_param;
+    D3DKMT_CLOSEADAPTER close_adapter_param;
+
+    if (!wined3d_get_primary_display(open_adapter_param.DeviceName))
+        return FALSE;
+
+    if (D3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_param))
+        return FALSE;
+
+    *luid = open_adapter_param.AdapterLuid;
+    close_adapter_param.hAdapter = open_adapter_param.hAdapter;
+    D3DKMTCloseAdapter(&close_adapter_param);
+    return TRUE;
+}
+
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */
