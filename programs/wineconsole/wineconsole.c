@@ -27,7 +27,6 @@
 #include "winecon_private.h"
 #include "winnls.h"
 #include "winuser.h"
-#include "wine/condrv.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -242,21 +241,20 @@ static void WINECON_SetColors(struct inner_data *data, const struct config_data*
  */
 void	WINECON_GrabChanges(struct inner_data* data)
 {
-    struct condrv_renderer_event evts[256];
+    struct condrv_renderer_event *evts = data->events;
     int i, ev_found;
     DWORD num;
     HANDLE h;
 
     if (data->in_grab_changes) return;
 
-    if (!DeviceIoControl( data->hSynchro, IOCTL_CONDRV_GET_RENDERER_EVENTS, NULL, 0, evts,
-                          sizeof(evts), &num, NULL ) || !num)
+    if (!GetOverlappedResult(data->hSynchro, &data->overlapped, &num, FALSE))
     {
         ERR( "failed to get renderer events: %u\n", GetLastError() );
         data->dying = TRUE;
         return;
     }
-    num /= sizeof(*evts);
+    num /= sizeof(data->events[0]);
     WINE_TRACE( "got %u events\n", num );
 
     /* FIXME: should do some event compression here (cursor pos, update) */
@@ -400,6 +398,13 @@ void	WINECON_GrabChanges(struct inner_data* data)
 	}
     }
     data->in_grab_changes = FALSE;
+
+    if (!DeviceIoControl(data->hSynchro, IOCTL_CONDRV_GET_RENDERER_EVENTS, NULL, 0, data->events,
+                         sizeof(data->events), NULL, &data->overlapped) && GetLastError() != ERROR_IO_PENDING)
+    {
+        ERR("failed to get renderer events: %u\n", GetLastError());
+        data->dying = TRUE;
+    }
 }
 
 /******************************************************************
@@ -590,6 +595,7 @@ static void WINECON_Delete(struct inner_data* data)
     if (data->hConOut)		CloseHandle(data->hConOut);
     if (data->hSynchro)		CloseHandle(data->hSynchro);
     if (data->hProcess)         CloseHandle(data->hProcess);
+    if (data->overlapped.hEvent) CloseHandle(data->overlapped.hEvent);
     HeapFree(GetProcessHeap(), 0, data->curcfg.registry);
     HeapFree(GetProcessHeap(), 0, data->cells);
     HeapFree(GetProcessHeap(), 0, data);
@@ -675,6 +681,8 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
             cfg.def_attr = si.dwFillAttribute;
         /* should always be defined */
     }
+
+    if (!(data->overlapped.hEvent = CreateEventW(NULL, TRUE, TRUE, NULL))) goto error;
 
     /* the handles here are created without the whistles and bells required by console
      * (mainly because wineconsole doesn't need it)

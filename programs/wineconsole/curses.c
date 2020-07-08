@@ -1020,7 +1020,7 @@ static int WCCURSES_MainLoop(struct inner_data* data)
     if (pipe( PRIVATE(data)->sync_pipe ) == -1) return 1;
     PRIVATE(data)->input_thread = CreateThread( NULL, 0, input_thread, data, 0, &id );
 
-    while (!data->dying && WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
+    while (!data->dying && WaitForSingleObject(data->overlapped.hEvent, INFINITE) == WAIT_OBJECT_0)
     {
         EnterCriticalSection(&PRIVATE(data)->lock);
         WINECON_GrabChanges(data);

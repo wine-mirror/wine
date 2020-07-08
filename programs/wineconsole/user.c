@@ -1365,7 +1365,7 @@ static int WCUSER_MainLoop(struct inner_data* data)
     ShowWindow(data->hWnd, data->nCmdShow);
     while (!data->dying || !data->curcfg.exit_on_die)
     {
-	switch (MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
+	switch (MsgWaitForMultipleObjects(1, &data->overlapped.hEvent, FALSE, INFINITE, QS_ALLINPUT))
 	{
 	case WAIT_OBJECT_0:
 	    WINECON_GrabChanges(data);

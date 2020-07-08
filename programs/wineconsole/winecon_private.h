@@ -22,6 +22,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <wincon.h>
+#include <wine/condrv.h>
 
 #include "wineconsole_res.h"
 
@@ -68,6 +69,9 @@ struct inner_data {
     BOOL                in_set_config;  /* to handle re-entrant calls to WINECON_SetConfig */
     BOOL                in_grab_changes;/* to handle re-entrant calls to WINECON_GrabChanges */
     BOOL                dying;          /* to TRUE when we've been notified by server that child has died */
+
+    OVERLAPPED          overlapped;
+    struct condrv_renderer_event events[256];
 
     int			(*fnMainLoop)(struct inner_data* data);
     void		(*fnPosCursor)(const struct inner_data* data);
