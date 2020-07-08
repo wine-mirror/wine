@@ -1484,12 +1484,46 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tjmp 2b\n" );
             break;
         case CPU_x86_64:
+            output( "\tpushq %%rbp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 8" );
+            output_cfi( ".cfi_rel_offset %%rbp,0" );
+            output( "\tmovq %%rsp,%%rbp\n" );
+            output_cfi( ".cfi_def_cfa_register %%rbp" );
+            output( "\tpushq %%rsi\n" );
+            output_cfi( ".cfi_rel_offset %%rsi,-8" );
+            output( "\tpushq %%rdi\n" );
+            output_cfi( ".cfi_rel_offset %%rdi,-16" );
+            /* Legends of Runeterra hooks the first system call return instruction, and
+             * depends on us returning to it. Adjust the return address accordingly. */
+            output( "\tsubq $0xb,0x8(%%rbp)\n" );
             output( "\tcmpq $%u,%%rax\n", count );
-            output( "\tjae 1f\n" );
+            output( "\tjae 3f\n" );
+            output( "\tmovzbq .Lsyscall_args(%%rip),%%rcx\n" );
+            output( "\tsubq $0x20,%%rcx\n" );
+            output( "\tjbe 1f\n" );
+            output( "\tsubq %%rcx,%%rsp\n" );
+            output( "\tshrq $3,%%rcx\n" );
+            output( "\tleaq 0x38(%%rbp),%%rsi\n" );
+            output( "\tandq $~15,%%rsp\n\t" );
+            output( "\tmovq %%rsp,%%rdi\n" );
+            output( "\tcld\n" );
+            output( "\trep; movsq\n" );
+            output( "1:\tmovq %%r10,%%rcx\n" );
+            output( "\tsubq $0x20,%%rsp\n" );
             output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
-            output( "\tjmpq *(%%r10,%%rax,8)\n" );
-            output( "1:\tmovl $0x%x,%%eax\n", invalid_param );
+            output( "\tcallq *(%%r10,%%rax,8)\n" );
+            output( "2:\tleaq -0x10(%%rbp),%%rsp\n" );
+            output( "\tpopq %%rdi\n" );
+            output_cfi( ".cfi_same_value %%rdi" );
+            output( "\tpopq %%rsi\n" );
+            output_cfi( ".cfi_same_value %%rsi" );
+            output_cfi( ".cfi_def_cfa_register %%rsp" );
+            output( "\tpopq %%rbp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -8" );
+            output_cfi( ".cfi_same_value %%rbp" );
             output( "\tret\n" );
+            output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+            output( "\tjmp 2b\n" );
             break;
         case CPU_ARM:
             output( "\tldr r1, 4f\n" );
@@ -1562,9 +1596,31 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tret $%u\n", get_args_size( odp ));
             break;
         case CPU_x86_64:
-            /* FIXME: syscall thunks not binary-compatible yet */
-            output( "\tmovl $%u,%%eax\n", i );
-            output( "\tjmpq *%s(%%rip)\n", asm_name("__wine_syscall_dispatcher") );
+            /* Chromium depends on syscall thunks having the same form as on
+             * Windows. For 64-bit systems the only viable form we can emulate is
+             * having an int $0x2e fallback. Since actually using an interrupt is
+             * expensive, and since for some reason Chromium doesn't actually
+             * validate that instruction, we can just put a jmp there instead. */
+            output( "\t.byte 0x4c,0x8b,0xd1\n" ); /* movq %rcx,%r10 */
+            output( "\t.byte 0xb8\n" );           /* movl $i,%eax */
+            output( "\t.long %u\n", i );
+            output( "\t.byte 0xf6,0x04,0x25,0x08,0x03,0xfe,0x7f,0x01\n" ); /* testb $1,0x7ffe0308 */
+            output( "\t.byte 0x75,0x03\n" );      /* jne 1f */
+            output( "\t.byte 0x0f,0x05\n" );      /* syscall */
+            output( "\t.byte 0xc3\n" );           /* ret */
+            output( "\tjmp 1f\n" );
+            output( "\t.byte 0xc3\n" );           /* ret */
+            if (target_platform == PLATFORM_WINDOWS)
+            {
+                output( "1:\t.byte 0xff,0x14,0x25\n" ); /* 2: callq *(__wine_syscall_dispatcher) */
+                output( "\t.long __wine_syscall_dispatcher\n" );
+            }
+            else
+            {
+                output( "\tnop\n" );
+                output( "1:\tcallq *%s(%%rip)\n", asm_name("__wine_syscall_dispatcher") );
+            }
+            output( "\tret\n" );
             break;
         case CPU_ARM:
             output( "\tpush {r0-r1}\n" );
